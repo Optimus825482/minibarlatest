@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Railway - Sadece Superadmin Oluştur
+Coolify - Sadece Superadmin Oluştur
 """
 
 import os
 
-
+# Coolify PostgreSQL URL
+DATABASE_URL = 'postgresql://postgres:518518Erkan@b4oo4wg8kwgw4c8kc4k444c8:5432/minibar_takip'
 os.environ['DATABASE_URL'] = DATABASE_URL
 
 from app import app, db
@@ -22,7 +23,7 @@ def create_superadmin():
         
         with app.app_context():
             # Superadmin var mı kontrol et
-            existing = Kullanici.query.filter_by(kullanici_adi='superadmin').first()
+            existing = Kullanici.query.filter_by(kullanici_adi='Mradmin').first()
             
             if existing:
                 print("\nℹ️  Superadmin zaten mevcut")
@@ -30,9 +31,9 @@ def create_superadmin():
                 print(f"   Ad: {existing.ad} {existing.soyad}")
                 print(f"   Rol: {existing.rol}")
                 
-                cevap = input("\nŞifreyi 'Admin123!' olarak sıfırla? (E/H): ")
+                cevap = input("\nŞifreyi 'Mr12141618.' olarak sıfırla? (E/H): ")
                 if cevap.upper() == 'E':
-                    existing.sifre = generate_password_hash('Admin123!')
+                    existing.sifre = generate_password_hash('Mr12141618.')
                     db.session.commit()
                     print("✅ Şifre sıfırlandı!")
                 return True
@@ -40,10 +41,10 @@ def create_superadmin():
             # Yeni superadmin oluştur
             print("\n👤 Yeni superadmin oluşturuluyor...")
             superadmin = Kullanici(
-                kullanici_adi='superadmin',
-                sifre=generate_password_hash('Admin123!'),
-                ad='Super',
-                soyad='Admin',
+                kullanici_adi='Mradmin',
+                sifre=generate_password_hash('Mr12141618.'),
+                ad='Meril',
+                soyad='Royal',
                 rol='sistem_yoneticisi',
                 aktif=True,
                 olusturma_tarihi=datetime.utcnow()
@@ -56,9 +57,9 @@ def create_superadmin():
             print("\n" + "=" * 60)
             print("GİRİŞ BİLGİLERİ")
             print("=" * 60)
-            print("\n🌐 URL: https://web-production-243c.up.railway.app")
-            print("\n📝 Kullanıcı: superadmin")
-            print("📝 Şifre: Admin123!")
+            print("\n🌐 URL: http://h8k8wo040wc48gc4k8skwokw.185.9.38.66.sslip.io")
+            print("\n📝 Kullanıcı: Mradmin")
+            print("📝 Şifre: Mr12141618.")
             print()
             
             return True
