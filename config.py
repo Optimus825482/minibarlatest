@@ -103,7 +103,8 @@ class Config:
         raise ValueError("SECRET_KEY must be at least 32 characters long for security.")
     
     # Oturum ayarları - GÜVENLİK: Session güvenliği artırıldı
-    SESSION_COOKIE_SECURE = not IS_DEVELOPMENT  # Development'ta HTTP'ye izin ver, prod'da zorunlu kıl
+    # Coolify HTTP kullanıyorsa SECURE=False olmalı
+    SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'  # 'Strict' önerilen ama 'Lax' uyumluluk için
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=30)  # 1 saatten 30 dakikaya düşürüldü
