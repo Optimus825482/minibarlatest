@@ -33,7 +33,7 @@ def create_superadmin():
                 
                 cevap = input("\nŞifreyi 'Mr12141618.' olarak sıfırla? (E/H): ")
                 if cevap.upper() == 'E':
-                    existing.sifre = generate_password_hash('Mr12141618.')
+                    existing.sifre_hash = generate_password_hash('Mr12141618.')
                     db.session.commit()
                     print("✅ Şifre sıfırlandı!")
                 return True
@@ -42,7 +42,7 @@ def create_superadmin():
             print("\n👤 Yeni superadmin oluşturuluyor...")
             superadmin = Kullanici(
                 kullanici_adi='Mradmin',
-                sifre=generate_password_hash('Mr12141618.'),
+                sifre_hash=generate_password_hash('Mr12141618.'),
                 ad='Meril',
                 soyad='Royal',
                 rol='sistem_yoneticisi',
