@@ -5,7 +5,7 @@ Railway - Sadece Superadmin Oluştur
 
 import os
 
-DATABASE_URL = "postgresql://postgres:NEOcbkYOOSzROELtJEuVZxdPphGLIXnx@shinkansen.proxy.rlwy.net:36747/railway"
+
 os.environ['DATABASE_URL'] = DATABASE_URL
 
 from app import app, db
