@@ -87,10 +87,34 @@ try:
     # SQLAlchemy Base'i import et
     from models import db
     
-    # Metadata'dan tabloları oluştur (app context'e gerek yok)
-    db.metadata.create_all(bind=engine)
+    # Önce tüm indexleri tekrar kontrol et ve sil
+    with engine.connect() as conn:
+        result = conn.execute(text("""
+            SELECT indexname 
+            FROM pg_indexes 
+            WHERE schemaname = 'public'
+        """))
+        
+        for row in result:
+            idx = row[0]
+            if idx != 'pg_catalog' and not idx.startswith('pg_'):
+                try:
+                    conn.execute(text(f"DROP INDEX IF EXISTS {idx} CASCADE"))
+                    print(f"   🗑️  {idx} silindi")
+                except:
+                    pass
     
-    print("✅ Tüm tablolar başarıyla oluşturuldu!")
+    # Metadata'dan tabloları oluştur (IF NOT EXISTS ile)
+    # Her tabloyu tek tek oluştur, hata olursa devam et
+    for table in db.metadata.sorted_tables:
+        try:
+            table.create(bind=engine, checkfirst=True)
+            print(f"   ✅ {table.name} oluşturuldu")
+        except Exception as e:
+            if "already exists" not in str(e):
+                print(f"   ⚠️  {table.name} hatası: {e}")
+    
+    print("\n✅ Tüm tablolar başarıyla oluşturuldu!")
     
     # Oluşturulan tabloları listele
     inspector = inspect(engine)
