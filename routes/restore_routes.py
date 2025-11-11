@@ -175,52 +175,54 @@ def restore_table():
         return jsonify({'error': 'Backup dosyası bulunamadı'}), 400
     
     try:
-        # SQL dosyasını oku
-        with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        # İlgili tabloyu bul
-        # CREATE TABLE statement
-        create_pattern = re.compile(
-            rf'CREATE TABLE {table_name}.*?;',
-            re.IGNORECASE | re.DOTALL
-        )
-        create_match = create_pattern.search(content)
-        
-        # INSERT statements
-        insert_pattern = re.compile(
-            rf'INSERT INTO {table_name}.*?;',
-            re.IGNORECASE
-        )
-        insert_matches = insert_pattern.findall(content)
-        
-        # Her INSERT'i ayrı transaction'da çalıştır
-        success_count = 0
-        
         # Önce tabloyu temizle
         with db.engine.connect() as conn:
             conn.execute(text(f"TRUNCATE TABLE {table_name} CASCADE"))
             conn.commit()
         
-        # INSERT'leri tek tek çalıştır
-        for insert_sql in insert_matches:
-            try:
-                with db.engine.connect() as conn:
-                    conn.execute(text(insert_sql))
-                    conn.commit()
-                    success_count += 1
-            except Exception as e:
-                print(f"Insert hatası: {e}")
-                # Hata olursa devam et
-                continue
+        # SQL dosyasını satır satır oku ve sadece ilgili tabloyu işle
+        success_count = 0
+        error_count = 0
+        in_insert = False
+        current_statement = []
+        
+        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+            for line in f:
+                line_upper = line.upper().strip()
+                
+                # INSERT INTO table_name ile başlayan satır
+                if f'INSERT INTO {table_name.upper()}' in line_upper:
+                    in_insert = True
+                    current_statement = [line]
+                elif in_insert:
+                    current_statement.append(line)
+                    
+                    # Statement bitişi (satır sonu ; ile)
+                    if line.strip().endswith(');'):
+                        statement = ''.join(current_statement)
+                        try:
+                            with db.engine.connect() as conn:
+                                conn.execute(text(statement))
+                                conn.commit()
+                                success_count += 1
+                        except Exception as e:
+                            error_count += 1
+                            # Hata olursa devam et
+                            pass
+                        
+                        in_insert = False
+                        current_statement = []
         
         return jsonify({
             'success': True,
             'table': table_name,
-            'restored_count': success_count
+            'restored_count': success_count,
+            'error_count': error_count
         })
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @restore_bp.route('/api/restore_all', methods=['POST'])
