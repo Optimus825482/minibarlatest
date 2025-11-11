@@ -15,6 +15,7 @@ restore_bp = Blueprint('restore', __name__)
 
 ALLOWED_EXTENSIONS = {'sql'}
 UPLOAD_FOLDER = 'uploads/backups'
+MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
 
 # Upload klasörünü oluştur
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -84,22 +85,28 @@ def restore_backup_page():
 def upload_backup():
     """Backup dosyasını yükle ve analiz et"""
     
-    if 'backup_file' not in request.files:
-        return jsonify({'error': 'Dosya seçilmedi'}), 400
-    
-    file = request.files['backup_file']
-    
-    if file.filename == '':
-        return jsonify({'error': 'Dosya seçilmedi'}), 400
-    
-    if not allowed_file(file.filename):
-        return jsonify({'error': 'Sadece .sql dosyaları yüklenebilir'}), 400
-    
     try:
-        # Dosyayı kaydet
+        if 'backup_file' not in request.files:
+            return jsonify({'error': 'Dosya seçilmedi'}), 400
+    
+        file = request.files['backup_file']
+        
+        if file.filename == '':
+            return jsonify({'error': 'Dosya seçilmedi'}), 400
+        
+        if not allowed_file(file.filename):
+            return jsonify({'error': 'Sadece .sql dosyaları yüklenebilir'}), 400
+        # Dosyayı kaydet (chunk olarak)
         filename = secure_filename(file.filename)
         filepath = os.path.join(UPLOAD_FOLDER, filename)
-        file.save(filepath)
+        
+        # Chunk olarak kaydet (büyük dosyalar için)
+        with open(filepath, 'wb') as f:
+            while True:
+                chunk = file.stream.read(8192)  # 8KB chunks
+                if not chunk:
+                    break
+                f.write(chunk)
         
         # Session'a kaydet
         session['backup_filepath'] = filepath
@@ -130,8 +137,10 @@ def upload_backup():
             'filename': filename,
             'comparison': comparison
         })
-        
+    
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @restore_bp.route('/api/restore_table', methods=['POST'])

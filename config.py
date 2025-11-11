@@ -115,9 +115,9 @@ class Config:
     WTF_CSRF_HEADERS = ['X-CSRFToken', 'X-CSRF-Token']
     
     # Dosya yükleme ayarları - GÜVENLİK
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB - güvenlik için sınırlandırıldı
+    MAX_CONTENT_LENGTH = 100 * 1024 * 1024  # 100MB - backup restore için artırıldı
     UPLOAD_FOLDER = 'uploads'
-    ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'pdf'}  # Güvenli dosya türleri
+    ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'pdf', 'sql'}  # SQL backup için eklendi
     
     # GÜVENLİK HEADERS - Production için önerilen
     SECURITY_HEADERS = {
