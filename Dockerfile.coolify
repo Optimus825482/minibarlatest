@@ -23,9 +23,9 @@ COPY . .
 # Port
 EXPOSE 5000
 
-# Healthcheck
+# Healthcheck - requests yerine urllib kullan (built-in)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:5000/health', timeout=5)"
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/health', timeout=5)"
 
 # Güvenli başlatma scripti
 CMD ["sh", "-c", "python safe_deploy.py && gunicorn --bind 0.0.0.0:${PORT:-5000} --workers ${GUNICORN_WORKERS:-2} --threads ${GUNICORN_THREADS:-4} --timeout ${GUNICORN_TIMEOUT:-120} --access-logfile - --error-logfile - --log-level info app:app"]
