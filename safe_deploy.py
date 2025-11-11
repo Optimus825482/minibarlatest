@@ -123,14 +123,44 @@ def create_missing_tables_only(engine, existing_tables):
         print(f"   - {table}")
     
     print()
-    print("🚫 GÜVENLİK: Eksik tablolar manuel olarak oluşturulmalı!")
-    print("   Otomatik tablo oluşturma devre dışı (veri kaybı riski)")
-    print()
-    print("📝 Eksik tabloları oluşturmak için:")
-    print("   1. Coolify Shell'e bağlan")
-    print("   2. python create_missing_tables.py komutunu çalıştır")
+    print("🔧 Eksik tablolar otomatik oluşturuluyor...")
     
-    return False
+    try:
+        # Flask app context'i içinde db.create_all() çalıştır
+        # Bu sadece eksik tabloları oluşturur, mevcut tablolara dokunmaz
+        from app import app, db
+        
+        with app.app_context():
+            # SQLAlchemy create_all() sadece eksik tabloları oluşturur
+            db.create_all()
+            
+            # Kontrol et
+            from sqlalchemy import inspect
+            inspector = inspect(engine)
+            new_tables = inspector.get_table_names()
+            newly_created = [t for t in missing_tables if t in new_tables]
+            
+            if newly_created:
+                print(f"✅ {len(newly_created)} yeni tablo oluşturuldu:")
+                for table in newly_created:
+                    print(f"   ✓ {table}")
+            
+            still_missing = [t for t in missing_tables if t not in new_tables]
+            if still_missing:
+                print(f"⚠️  {len(still_missing)} tablo oluşturulamadı:")
+                for table in still_missing:
+                    print(f"   - {table}")
+                return False
+            
+            return True
+            
+    except Exception as e:
+        print(f"❌ Tablo oluşturma hatası: {str(e)}")
+        print()
+        print("📝 Manuel oluşturma için:")
+        print("   1. Coolify Shell'e bağlan")
+        print("   2. python init_db.py komutunu çalıştır")
+        return False
 
 def verify_critical_data():
     """Kritik verilerin varlığını kontrol et"""
