@@ -27,54 +27,70 @@ def parse_sql_backup(filepath):
     """SQL backup dosyasını parse et ve tablo bilgilerini çıkar"""
     tables = {}
     
-    with open(filepath, 'r', encoding='utf-8') as f:
-        content = f.read()
-    
-    # CREATE TABLE statement'larını bul
-    create_pattern = re.compile(r'CREATE TABLE (\w+)', re.IGNORECASE)
-    table_names = create_pattern.findall(content)
-    
-    # Her tablo için INSERT sayısını say
-    for table in table_names:
-        insert_pattern = re.compile(rf'INSERT INTO {table}', re.IGNORECASE)
-        insert_count = len(insert_pattern.findall(content))
-        tables[table] = insert_count
-    
-    return tables
+    try:
+        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+        
+        # CREATE TABLE statement'larını bul
+        create_pattern = re.compile(r'CREATE TABLE (\w+)', re.IGNORECASE)
+        table_names = create_pattern.findall(content)
+        
+        # Her tablo için INSERT sayısını say
+        for table in table_names:
+            insert_pattern = re.compile(rf'INSERT INTO {table}', re.IGNORECASE)
+            insert_count = len(insert_pattern.findall(content))
+            tables[table] = insert_count
+        
+        return tables
+    except Exception as e:
+        print(f"Parse error: {e}")
+        return {}
 
 def get_table_dependencies():
     """Tablo bağımlılıklarını döndür (foreign key ilişkileri)"""
-    inspector = inspect(db.engine)
-    dependencies = {}
-    
-    for table_name in inspector.get_table_names():
-        foreign_keys = inspector.get_foreign_keys(table_name)
-        deps = []
+    try:
+        inspector = inspect(db.engine)
+        dependencies = {}
         
-        for fk in foreign_keys:
-            referred_table = fk['referred_table']
-            deps.append(referred_table)
+        for table_name in inspector.get_table_names():
+            try:
+                foreign_keys = inspector.get_foreign_keys(table_name)
+                deps = []
+                
+                for fk in foreign_keys:
+                    referred_table = fk.get('referred_table')
+                    if referred_table:
+                        deps.append(referred_table)
+                
+                if deps:
+                    dependencies[table_name] = deps
+            except:
+                continue
         
-        if deps:
-            dependencies[table_name] = deps
-    
-    return dependencies
+        return dependencies
+    except Exception as e:
+        print(f"Dependency error: {e}")
+        return {}
 
 def get_current_table_counts():
     """Mevcut database'deki tablo kayıt sayılarını döndür"""
-    inspector = inspect(db.engine)
-    counts = {}
-    
-    with db.engine.connect() as conn:
-        for table_name in inspector.get_table_names():
-            try:
-                result = conn.execute(text(f"SELECT COUNT(*) FROM {table_name}"))
-                count = result.scalar()
-                counts[table_name] = count
-            except:
-                counts[table_name] = 0
-    
-    return counts
+    try:
+        inspector = inspect(db.engine)
+        counts = {}
+        
+        with db.engine.connect() as conn:
+            for table_name in inspector.get_table_names():
+                try:
+                    result = conn.execute(text(f"SELECT COUNT(*) FROM {table_name}"))
+                    count = result.scalar()
+                    counts[table_name] = count if count else 0
+                except:
+                    counts[table_name] = 0
+        
+        return counts
+    except Exception as e:
+        print(f"Count error: {e}")
+        return {}
 
 @restore_bp.route('/restore_backup')
 def restore_backup_page():
