@@ -180,3 +180,35 @@ def pool_statistics():
             'error': str(e),
             'timestamp': datetime.now(timezone.utc).isoformat()
         }), 500
+
+
+@health_bp.route('/health/routes', methods=['GET'])
+def list_routes():
+    """
+    Tüm kayıtlı route'ları listele - Debug için
+    """
+    try:
+        from flask import current_app
+        
+        routes = []
+        for rule in current_app.url_map.iter_rules():
+            routes.append({
+                'endpoint': rule.endpoint,
+                'methods': list(rule.methods),
+                'path': str(rule)
+            })
+        
+        # Alfabetik sırala
+        routes.sort(key=lambda x: x['path'])
+        
+        return jsonify({
+            'total_routes': len(routes),
+            'routes': routes,
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        }), 500
