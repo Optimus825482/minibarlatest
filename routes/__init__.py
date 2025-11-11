@@ -88,4 +88,8 @@ def register_all_routes(app):
     from routes.ml_routes import register_ml_routes
     register_ml_routes(app)
     
+    # Restore Routes
+    from routes.restore_routes import restore_bp
+    app.register_blueprint(restore_bp)
+    
     print("✅ Tüm route modülleri başarıyla register edildi!")

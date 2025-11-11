@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yedek Geri Yükleme - Minibar Takip</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .restore-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        
+        .upload-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .upload-area {
+            border: 2px dashed #4CAF50;
+            border-radius: 8px;
+            padding: 40px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            background: #f0f8f0;
+            border-color: #45a049;
+        }
+        
+        .upload-area.dragover {
+            background: #e8f5e9;
+            border-color: #2e7d32;
+        }
+        
+        .comparison-table {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: none;
+        }
+        
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .comparison-table th {
+            background: #4CAF50;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .comparison-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .comparison-table tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .count-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .count-backup {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .count-current {
+            background: #FF9800;
+            color: white;
+        }
+        
+        .count-zero {
+            background: #e0e0e0;
+            color: #666;
+        }
+        
+        .dependencies {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        .dependency-tag {
+            display: inline-block;
+            background: #FFF3E0;
+            color: #F57C00;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin: 2px;
+            font-size: 11px;
+        }
+        
+        .warning-icon {
+            color: #FF9800;
+            margin-right: 5px;
+        }
+        
+        .btn-restore {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-restore:hover {
+            background: #45a049;
+        }
+        
+        .btn-restore:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-restore-all {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 20px;
+        }
+        
+        .btn-restore-all:hover {
+            background: #1976D2;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <div class="restore-container">
+        <h1>🔄 Yedek Geri Yükleme</h1>
+        
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <h2>1. Yedek Dosyası Yükle</h2>
+            <p>Railway veya başka bir kaynaktan aldığınız .sql yedek dosyasını yükleyin</p>
+            
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="backupFile" accept=".sql" style="display: none;">
+                <div>
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <h3>Dosya Seç veya Sürükle Bırak</h3>
+                    <p>Sadece .sql dosyaları kabul edilir</p>
+                </div>
+            </div>
+            
+            <button class="btn-restore-all" id="uploadBtn" style="display: none;">
+                📤 Dosyayı Yükle ve Analiz Et
+            </button>
+        </div>
+        
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Yedek dosyası analiz ediliyor...</p>
+        </div>
+        
+        <!-- Comparison Table -->
+        <div class="comparison-table" id="comparisonTable">
+            <div style="padding: 20px; background: #f5f5f5; border-bottom: 2px solid #4CAF50;">
+                <h2>2. Tablo Karşılaştırması</h2>
+                <p>Yedekteki ve mevcut database'deki tablo kayıt sayıları</p>
+                <button class="btn-restore-all" id="restoreAllBtn">
+                    🔄 Tüm Tabloları Geri Yükle
+                </button>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tablo Adı</th>
+                        <th>Yedekteki Kayıt</th>
+                        <th>Mevcut Kayıt</th>
+                        <th>Bağımlılıklar</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody id="comparisonBody">
+                    <!-- JavaScript ile doldurulacak -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const backupFile = document.getElementById('backupFile');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const loading = document.getElementById('loading');
+        const comparisonTable = document.getElementById('comparisonTable');
+        const comparisonBody = document.getElementById('comparisonBody');
+        const restoreAllBtn = document.getElementById('restoreAllBtn');
+        
+        let selectedFile = null;
+        
+        // Upload area click
+        uploadArea.addEventListener('click', () => {
+            backupFile.click();
+        });
+        
+        // File select
+        backupFile.addEventListener('change', (e) => {
+            selectedFile = e.target.files[0];
+            if (selectedFile) {
+                uploadArea.innerHTML = `
+                    <div>
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <h3>✅ ${selectedFile.name}</h3>
+                        <p>${(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                `;
+                uploadBtn.style.display = 'inline-block';
+            }
+        });
+        
+        // Drag & Drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                selectedFile = files[0];
+                backupFile.files = files;
+                backupFile.dispatchEvent(new Event('change'));
+            }
+        });
+        
+        // Upload button
+        uploadBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            
+            const formData = new FormData();
+            formData.append('backup_file', selectedFile);
+            
+            loading.style.display = 'block';
+            uploadBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/upload_backup', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayComparison(data.comparison);
+                    comparisonTable.style.display = 'block';
+                } else {
+                    alert('Hata: ' + data.error);
+                }
+            } catch (error) {
+                alert('Hata: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+                uploadBtn.disabled = false;
+            }
+        });
+        
+        // Display comparison
+        function displayComparison(comparison) {
+            comparisonBody.innerHTML = '';
+            
+            comparison.forEach(item => {
+                const row = document.createElement('tr');
+                
+                // Bağımlılık uyarısı
+                let dependencyWarning = '';
+                if (item.has_dependencies) {
+                    dependencyWarning = `
+                        <span class="warning-icon">⚠️</span>
+                        <div class="dependencies">
+                            Bağımlı tablolar: 
+                            ${item.dependencies.map(dep => `<span class="dependency-tag">${dep}</span>`).join('')}
+                        </div>
+                    `;
+                }
+                
+                row.innerHTML = `
+                    <td>
+                        <strong>${item.table}</strong>
+                        ${dependencyWarning}
+                    </td>
+                    <td>
+                        <span class="count-badge ${item.backup_count > 0 ? 'count-backup' : 'count-zero'}">
+                            ${item.backup_count} kayıt
+                        </span>
+                    </td>
+                    <td>
+                        <span class="count-badge ${item.current_count > 0 ? 'count-current' : 'count-zero'}">
+                            ${item.current_count} kayıt
+                        </span>
+                    </td>
+                    <td>
+                        ${item.has_dependencies ? 
+                            `<span style="color: #F57C00;">⚠️ ${item.dependencies.length} bağımlılık</span>` : 
+                            '<span style="color: #4CAF50;">✅ Bağımsız</span>'}
+                    </td>
+                    <td>
+                        <button class="btn-restore" onclick="restoreTable('${item.table}')">
+                            🔄 Aktar
+                        </button>
+                    </td>
+                `;
+                
+                comparisonBody.appendChild(row);
+            });
+        }
+        
+        // Restore single table
+        async function restoreTable(tableName) {
+            if (!confirm(`"${tableName}" tablosunu geri yüklemek istediğinize emin misiniz?\n\nMevcut veriler silinecek!`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/restore_table', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ table: tableName })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`✅ ${tableName} tablosu başarıyla geri yüklendi!\n${data.restored_count} kayıt aktarıldı.`);
+                    location.reload();
+                } else {
+                    alert('Hata: ' + data.error);
+                }
+            } catch (error) {
+                alert('Hata: ' + error.message);
+            }
+        }
+        
+        // Restore all
+        restoreAllBtn.addEventListener('click', async () => {
+            if (!confirm('⚠️ TÜM VERİLER SİLİNECEK!\n\nTüm tabloları geri yüklemek istediğinize emin misiniz?')) {
+                return;
+            }
+            
+            if (!confirm('Son kez soruyorum: EVET, TÜM VERİLERİ SİL VE YEDEKTEKİLERİ YÜKLEyeceğim!')) {
+                return;
+            }
+            
+            loading.style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/restore_all', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('✅ Tüm veriler başarıyla geri yüklendi!');
+                    location.href = '/login';
+                } else {
+                    alert('Hata: ' + data.error);
+                }
+            } catch (error) {
+                alert('Hata: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
