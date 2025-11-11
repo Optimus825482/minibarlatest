@@ -92,4 +92,9 @@ def register_all_routes(app):
     from routes.restore_routes import restore_bp
     app.register_blueprint(restore_bp)
     
+    # Restore API endpoint'lerini CSRF'den muaf tut
+    from flask_wtf.csrf import CSRFProtect
+    csrf = CSRFProtect()
+    csrf.exempt(restore_bp)
+    
     print("✅ Tüm route modülleri başarıyla register edildi!")
