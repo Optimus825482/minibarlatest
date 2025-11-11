@@ -32,6 +32,7 @@ instance/
 .env.local
 .env.*.local
 .env.railway
+# .env.coolify - Coolify için template, commit edilmeli
 
 # IDEs
 .vscode/

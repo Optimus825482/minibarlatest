@@ -587,12 +587,13 @@ def hata_cozuldu_isaretle(hata_id, cozum_notu=None):
 # ADMIN MINIBAR YÖNETİMİ HELPER FONKSIYONLARI
 # ============================================
 
-def get_depo_stok_durumu(grup_id=None):
+def get_depo_stok_durumu(grup_id=None, depo_sorumlusu_id=None):
     """
-    Depo stok durumlarını hesaplar
+    Depo stok durumlarını hesaplar (Depo + Kat Sorumlusu Zimmetleri)
     
     Args:
         grup_id (int, optional): Ürün grubu filtresi
+        depo_sorumlusu_id (int, optional): Depo sorumlusu filtresi
     
     Returns:
         list: [
@@ -601,7 +602,9 @@ def get_depo_stok_durumu(grup_id=None):
                 'urun_adi': str,
                 'grup_adi': str,
                 'birim': str,
-                'mevcut_stok': int,
+                'depo_stok': int,
+                'zimmet_stok': int,
+                'toplam_stok': int,
                 'kritik_stok': int,
                 'durum': 'kritik'|'dikkat'|'normal',
                 'badge_class': str,
@@ -611,7 +614,7 @@ def get_depo_stok_durumu(grup_id=None):
         ]
     """
     try:
-        from models import UrunGrup
+        from models import UrunGrup, PersonelZimmet, PersonelZimmetDetay, Kullanici
         
         # Ürünleri getir
         query = Urun.query.filter_by(aktif=True)
@@ -620,26 +623,54 @@ def get_depo_stok_durumu(grup_id=None):
         
         urunler = query.all()
         
-        # Stok durumlarını hesapla
-        stok_map = get_stok_toplamlari([urun.id for urun in urunler])
+        # Depo stok durumlarını hesapla
+        depo_stok_map = get_stok_toplamlari([urun.id for urun in urunler])
+        
+        # Kat sorumlusu zimmet stoklarını hesapla
+        zimmet_query = db.session.query(
+            PersonelZimmetDetay.urun_id,
+            db.func.sum(PersonelZimmetDetay.kalan_miktar).label('toplam_zimmet')
+        ).join(
+            PersonelZimmet, PersonelZimmetDetay.zimmet_id == PersonelZimmet.id
+        ).join(
+            Kullanici, PersonelZimmet.personel_id == Kullanici.id
+        ).filter(
+            PersonelZimmet.durum == 'aktif',
+            Kullanici.rol == 'kat_sorumlusu',
+            Kullanici.aktif == True
+        )
+        
+        # Depo sorumlusu filtresi varsa, onun zimmet verdiği kat sorumlularını filtrele
+        if depo_sorumlusu_id:
+            zimmet_query = zimmet_query.filter(
+                PersonelZimmet.depo_sorumlusu_id == depo_sorumlusu_id
+            )
+        
+        zimmet_query = zimmet_query.group_by(PersonelZimmetDetay.urun_id)
+        zimmet_sonuclar = zimmet_query.all()
+        
+        # Zimmet map oluştur
+        zimmet_map = {z.urun_id: float(z.toplam_zimmet or 0) for z in zimmet_sonuclar}
         
         sonuclar = []
         for urun in urunler:
-            mevcut_stok = stok_map.get(urun.id, 0)
+            depo_stok = depo_stok_map.get(urun.id, 0)
+            zimmet_stok = zimmet_map.get(urun.id, 0)
+            toplam_stok = depo_stok + zimmet_stok
             
-            # Mevcut stoku 0 olan ürünleri atla
-            if mevcut_stok == 0:
+            # Toplam stoku 0 olan ürünleri atla
+            if toplam_stok == 0:
                 continue
             
             kritik_seviye = urun.kritik_stok_seviyesi
             dikkat_esigi = kritik_seviye * 1.5
             
-            # Durum belirleme
-            if mevcut_stok <= kritik_seviye:
+            # Durum belirleme (toplam stoka göre)
+            if toplam_stok <= kritik_seviye:
                 durum = 'kritik'
                 badge_class = 'bg-red-100 text-red-800 border border-red-300 dark:bg-red-900/20 dark:text-red-400'
                 badge_text = 'Kritik'
-            elif mevcut_stok <= dikkat_esigi:
+            elif toplam_stok <= dikkat_esigi:
                 durum = 'dikkat'
                 badge_class = 'bg-yellow-100 text-yellow-800 border border-yellow-300 dark:bg-yellow-900/20 dark:text-yellow-400'
                 badge_text = 'Dikkat'
@@ -653,7 +684,9 @@ def get_depo_stok_durumu(grup_id=None):
                 'urun_adi': urun.urun_adi,
                 'grup_adi': urun.grup.grup_adi,
                 'birim': urun.birim,
-                'mevcut_stok': mevcut_stok,
+                'depo_stok': depo_stok,
+                'zimmet_stok': zimmet_stok,
+                'toplam_stok': toplam_stok,
                 'kritik_stok': kritik_seviye,
                 'durum': durum,
                 'badge_class': badge_class,

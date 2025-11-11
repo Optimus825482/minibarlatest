@@ -1,57 +1,31 @@
-# Coolify için Optimize Edilmiş Dockerfile
-# Python 3.11 slim image
-FROM python:3.11-slim
+# Coolify için Güvenli Dockerfile
+# Mevcut veritabanına dokunmaz
 
-# Metadata
-LABEL maintainer="Erkan"
-LABEL description="Minibar Takip Sistemi - Coolify Deployment"
+FROM python:3.11-slim
 
 # Çalışma dizini
 WORKDIR /app
 
-# Sistem bağımlılıkları (minimal)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 \
-    curl \
-    && apt-get clean \
+# Sistem bağımlılıkları
+RUN apt-get update && apt-get install -y \
+    gcc \
+    postgresql-client \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Python bağımlılıklarını kopyala ve yükle
+# Python bağımlılıkları
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Uygulama dosyalarını kopyala
 COPY . .
 
-# Gerekli dizinleri oluştur
-RUN mkdir -p uploads xls backups static/uploads static/qr_codes
-
-# Güvenlik: Non-root user
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app && \
-    chmod -R 755 /app/uploads /app/xls /app/backups /app/static
-
-USER appuser
-
-# Port expose
+# Port
 EXPOSE 5000
 
-# Health check
+# Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:5000/health || exit 1
+    CMD python -c "import requests; requests.get('http://localhost:5000/health', timeout=5)"
 
-# Gunicorn ile başlat (Coolify için optimize)
-CMD ["gunicorn", "app:app", \
-     "--bind", "0.0.0.0:5000", \
-     "--workers", "2", \
-     "--threads", "4", \
-     "--worker-class", "sync", \
-     "--timeout", "120", \
-     "--graceful-timeout", "30", \
-     "--keep-alive", "5", \
-     "--max-requests", "1000", \
-     "--max-requests-jitter", "100", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-", \
-     "--log-level", "info"]
+# Güvenli başlatma scripti
+CMD ["sh", "-c", "python safe_deploy.py && gunicorn --bind 0.0.0.0:${PORT:-5000} --workers ${GUNICORN_WORKERS:-2} --threads ${GUNICORN_THREADS:-4} --timeout ${GUNICORN_TIMEOUT:-120} --access-logfile - --error-logfile - --log-level info app:app"]

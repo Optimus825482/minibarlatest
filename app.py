@@ -20,6 +20,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from dotenv import load_dotenv
 from sqlalchemy.exc import OperationalError, TimeoutError
+from sqlalchemy import inspect
 
 # Logging ayarla
 logging.basicConfig(level=logging.INFO)
@@ -2299,13 +2300,21 @@ def system_backup_download():
         return redirect(url_for('system_backup_panel'))
 
 def init_database():
-    """Veritabanı ve tabloları otomatik kontrol et ve oluştur"""
+    """Veritabanı ve tabloları otomatik kontrol et - GÜVENLİ MOD"""
     try:
         with app.app_context():
-            # Tabloları oluştur (yoksa)
-            db.create_all()
-            print("✅ Veritabanı tabloları kontrol edildi ve hazır.")
-            return True
+            # Sadece bağlantı testi yap, tablo oluşturma!
+            # Production'da mevcut verilere dokunmamak için
+            inspector = inspect(db.engine)
+            existing_tables = inspector.get_table_names()
+            
+            if existing_tables:
+                print(f"✅ Veritabanı bağlantısı başarılı - {len(existing_tables)} tablo mevcut")
+                return True
+            else:
+                print("⚠️  Henüz tablo yok!")
+                print("🔧 Lütfen 'python init_db.py' komutunu çalıştırın.")
+                return False
     except Exception as e:
         print(f"❌ Veritabanı hatası: {e}")
         print()

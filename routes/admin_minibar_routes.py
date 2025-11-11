@@ -50,14 +50,13 @@ def register_admin_minibar_routes(app):
             # Filtre için gerekli verileri getir
             from models import Otel
             oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
-            depo_sorumlular = Kullanici.query.filter_by(rol='depo_sorumlusu', aktif=True).order_by(Kullanici.ad, Kullanici.soyad).all()
             gruplar = UrunGrup.query.filter_by(aktif=True).order_by(UrunGrup.grup_adi).all()
             
             # Otel seçilmeden stok listesi gösterme
             stok_listesi = []
             if otel_id:
-                # Stok durumlarını getir
-                stok_listesi = get_depo_stok_durumu(grup_id=grup_id)
+                # Stok durumlarını getir (depo + zimmet)
+                stok_listesi = get_depo_stok_durumu(grup_id=grup_id, depo_sorumlusu_id=depo_id)
                 
                 # Excel export
                 if export_format == 'excel':
@@ -93,7 +92,6 @@ def register_admin_minibar_routes(app):
             return render_template('sistem_yoneticisi/depo_stoklari.html',
                                  stok_listesi=stok_listesi,
                                  oteller=oteller,
-                                 depo_sorumlular=depo_sorumlular,
                                  gruplar=gruplar,
                                  secili_otel_id=otel_id,
                                  secili_depo_id=depo_id,

@@ -78,10 +78,10 @@ def create_database():
         return False
 
 def create_tables():
-    """SQLAlchemy tablolarını oluştur"""
+    """SQLAlchemy tablolarını oluştur - GÜVENLİ MOD: Sadece eksik tabloları oluştur"""
     
     print()
-    print("📊 Tablolar oluşturuluyor...")
+    print("📊 Tablolar kontrol ediliyor...")
     
     try:
         with app.app_context():
@@ -91,13 +91,49 @@ def create_tables():
             
             if existing_tables:
                 print(f"ℹ️  Mevcut tablolar bulundu: {len(existing_tables)} tablo")
-                for table in existing_tables:
-                    print(f"   - {table}")
-                print("✅ Tablolar zaten mevcut, yeniden oluşturma atlanıyor")
+                for table in sorted(existing_tables):
+                    print(f"   ✓ {table}")
+                
+                # Beklenen tablolar
+                expected_tables = [
+                    'oteller', 'kullanicilar', 'kullanici_otel', 'katlar', 'odalar',
+                    'urun_gruplari', 'urunler', 'stok_hareketleri',
+                    'personel_zimmet', 'personel_zimmet_detay',
+                    'minibar_islemleri', 'minibar_islem_detay',
+                    'sistem_ayarlari', 'sistem_loglari', 'hata_loglari',
+                    'audit_logs', 'otomatik_raporlar',
+                    'minibar_dolum_talepleri', 'qr_kod_okutma_loglari',
+                    'ml_metrics', 'ml_predictions', 'ml_anomalies'
+                ]
+                
+                missing_tables = [t for t in expected_tables if t not in existing_tables]
+                
+                if missing_tables:
+                    print(f"⚠️  {len(missing_tables)} eksik tablo bulundu:")
+                    for table in missing_tables:
+                        print(f"   - {table}")
+                    print()
+                    print("🔧 Sadece eksik tablolar oluşturuluyor...")
+                    
+                    # Sadece eksik tabloları oluştur
+                    db.create_all()
+                    
+                    # Kontrol et
+                    inspector = inspect(db.engine)
+                    new_tables = inspector.get_table_names()
+                    newly_created = [t for t in new_tables if t not in existing_tables]
+                    
+                    if newly_created:
+                        print(f"✅ {len(newly_created)} yeni tablo oluşturuldu:")
+                        for table in sorted(newly_created):
+                            print(f"   ✓ {table}")
+                else:
+                    print("✅ Tüm tablolar mevcut - Hiçbir değişiklik yapılmadı")
+                    print("🔒 Mevcut veriler korundu")
             else:
                 print("ℹ️  Henüz tablo yok, yeni tablolar oluşturuluyor...")
                 
-                # Tüm tabloları oluştur
+                # Tüm tabloları oluştur (ilk kurulum)
                 db.create_all()
                 
                 # Oluşturulan tabloları kontrol et

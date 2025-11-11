@@ -11,59 +11,60 @@
  
     <!-- Filtre Bölümü -->
     <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
-        <form id="filtreForm" method="GET" action="{{ url_for('admin_depo_stoklari') }}" class="grid grid-cols-1 md:grid-cols-3 gap-3"></form>
-            <div>
-                <label for="otel_id" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Otel
-                </label>
-                <select name="otel_id" id="filtre_otel_id" 
-                        class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200">
-                    <option value="">Tüm Oteller</option>
-                    {% for otel in oteller %}
-                    <option value="{{ otel.id }}" {% if secili_otel_id == otel.id %}selected{% endif %}>
-                        {{ otel.ad }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label for="depo_sorumlusu_id" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Depo Sorumlusu
-                </label>
-                <select name="depo_sorumlusu_id" id="filtre_depo_sorumlusu_id" 
-                        class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
-                        disabled>
-                    <option value="">Önce otel seçin</option>
-                </select>
-            </div>
-            <div class="flex items-end gap-2">
-                <button type="submit" id="filtreButton"
-                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
-                    Filtrele
-                </button>
-                {% if secili_otel_id or secili_depo_id %}
-                <a href="{{ url_for('admin_depo_stoklari') }}" 
-                   class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-colors">
-                    Temizle
-                </a>
-                {% endif %}
-                <a href="{{ url_for('admin_depo_stoklari', format='excel') }}" 
-                   class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                        </path>
-                    </svg>
-                    Excel İndir
-                </a>
+        <form id="filtreForm" method="GET" action="{{ url_for('admin_depo_stoklari') }}">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                    <label for="otel_id" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Otel
+                    </label>
+                    <select name="otel_id" id="filtre_otel_id" 
+                            class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200">
+                        <option value="">Tüm Oteller</option>
+                        {% for otel in oteller %}
+                        <option value="{{ otel.id }}" {% if secili_otel_id == otel.id %}selected{% endif %}>
+                            {{ otel.ad }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="depo_sorumlusu_id" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Depo Sorumlusu
+                    </label>
+                    <select name="depo_sorumlusu_id" id="filtre_depo_sorumlusu_id" 
+                            class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
+                            disabled>
+                        <option value="">Önce otel seçin</option>
+                    </select>
+                </div>
+                <div class="flex items-end gap-2">
+                    <button type="submit" id="filtreButton"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                        Filtrele
+                    </button>
+                    {% if secili_otel_id or secili_depo_id %}
+                    <a href="{{ url_for('admin_depo_stoklari') }}" 
+                       class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-colors">
+                        Temizle
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('admin_depo_stoklari', format='excel') }}" 
+                       class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                        Excel İndir
+                    </a>
+                </div>
             </div>
         </form>
-     
     </div>
 
     <!-- İstatistik Kartları -->
     {% if secili_otel_id %}
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 rounded-lg p-3">
@@ -97,15 +98,15 @@
 
         <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
             <div class="flex items-center">
-                <div class="flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg p-3">
-                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                <div class="flex-shrink-0 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg p-3">
+                    <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
                     </svg>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Normal Stok</p>
-                    <p class="text-2xl font-bold text-green-600 dark:text-green-400">
-                        {{ stok_listesi|selectattr('durum', 'equalto', 'normal')|list|length }}
+                    <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Dikkat Stok</p>
+                    <p class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                        {{ stok_listesi|selectattr('durum', 'equalto', 'dikkat')|list|length }}
                     </p>
                 </div>
             </div>
@@ -151,7 +152,13 @@
                                 Birim
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Mevcut Stok
+                                Depo Stok
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Zimmet Stok
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Toplam Stok
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Kritik Seviye
@@ -173,11 +180,17 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">
                                 {{ item.birim }}
                             </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">
+                                {{ item.depo_stok }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 dark:text-blue-400">
+                                {{ item.zimmet_stok }}
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold 
                                 {% if item.durum == 'kritik' %}text-red-600 dark:text-red-400
                                 {% elif item.durum == 'dikkat' %}text-yellow-600 dark:text-yellow-400
                                 {% else %}text-green-600 dark:text-green-400{% endif %}">
-                                {{ item.mevcut_stok }}
+                                {{ item.toplam_stok }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">
                                 {{ item.kritik_stok }}
@@ -232,18 +245,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Depo sorumlularını yükle
         await loadDepoSorumluları(otelId);
-        
-        // Depo sorumlularını yükledikten sonra otomatik submit
-        // Eğer tek sorumlu varsa zaten seçilmiş olacak
-        filtreForm.submit();
-    });
-    
-    // Depo sorumlusu değiştiğinde otomatik submit
-    depoSelect.addEventListener('change', function() {
-        if (otelSelect.value && this.value) {
-            filtreForm.submit();
-        }
     });
     
     // Tablo scroll indicator
@@ -270,12 +273,20 @@ async function loadDepoSorumluları(otelId, seciliDepoId = null) {
         const response = await fetch(`/api/oteller/${otelId}/depo-sorumluları`);
         
         if (!response.ok) {
-            throw new Error('Depo sorumluları yüklenemedi');
+            const errorText = await response.text();
+            console.error('API Hatası:', response.status, errorText);
+            throw new Error(`HTTP ${response.status}: Depo sorumluları yüklenemedi`);
         }
         
         const depoSorumlular = await response.json();
         
         depoSelect.innerHTML = '<option value="">Tüm Depo Sorumluları</option>';
+        
+        if (depoSorumlular.length === 0) {
+            depoSelect.innerHTML = '<option value="">Bu otelde depo sorumlusu yok</option>';
+            depoSelect.disabled = true;
+            return;
+        }
         
         depoSorumlular.forEach(depo => {
             const option = document.createElement('option');
@@ -299,8 +310,13 @@ async function loadDepoSorumluları(otelId, seciliDepoId = null) {
         
     } catch (error) {
         console.error('Depo sorumluları yüklenirken hata:', error);
-        depoSelect.innerHTML = '<option value="">Hata oluştu</option>';
+        depoSelect.innerHTML = '<option value="">Hata oluştu - Lütfen tekrar deneyin</option>';
         depoSelect.disabled = true;
+        
+        // Kullanıcıya bildirim göster
+        if (typeof showError === 'function') {
+            showError('Depo sorumluları yüklenirken hata oluştu');
+        }
     }
 }
 </script>
