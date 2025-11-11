@@ -138,6 +138,9 @@
         </div>
     </div>
 
+    <!-- Toast Notification -->
+    <script src="/static/js/toast.js"></script>
+
     <!-- JavaScript for Login Form Validation -->
     <script>
         document.addEventListener( 'DOMContentLoaded', function () {
@@ -149,6 +152,32 @@
                 togglePassword.addEventListener( 'click', function () {
                     const type = sifreInput.getAttribute( 'type' ) === 'password' ? 'text' : 'password';
                     sifreInput.setAttribute( 'type', type );
+                } );
+            }
+
+            // Caps Lock Uyarısı
+            let capsLockWarningShown = false;
+
+            if ( sifreInput ) {
+                sifreInput.addEventListener( 'keyup', function ( event ) {
+                    // Caps Lock kontrolü
+                    const isCapsLock = event.getModifierState && event.getModifierState( 'CapsLock' );
+
+                    if ( isCapsLock && !capsLockWarningShown ) {
+                        // Toast bildirimi göster
+                        if ( typeof showToast === 'function' ) {
+                            showToast( '⚠️ Caps Lock açık! Şifrenizi girerken dikkat edin.', 'warning', 3000 );
+                        }
+                        capsLockWarningShown = true;
+                    } else if ( !isCapsLock && capsLockWarningShown ) {
+                        // Caps Lock kapatıldığında flag'i sıfırla
+                        capsLockWarningShown = false;
+                    }
+                } );
+
+                // Focus olduğunda da kontrol et
+                sifreInput.addEventListener( 'focus', function ( event ) {
+                    capsLockWarningShown = false; // Reset flag on focus
                 } );
             }
 
