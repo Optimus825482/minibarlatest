@@ -194,22 +194,25 @@ def restore_table():
         )
         insert_matches = insert_pattern.findall(content)
         
+        # Her INSERT'i ayrı transaction'da çalıştır
+        success_count = 0
+        
+        # Önce tabloyu temizle
         with db.engine.connect() as conn:
-            # Tabloyu temizle
             conn.execute(text(f"TRUNCATE TABLE {table_name} CASCADE"))
             conn.commit()
-            
-            # INSERT'leri çalıştır
-            success_count = 0
-            for insert_sql in insert_matches:
-                try:
+        
+        # INSERT'leri tek tek çalıştır
+        for insert_sql in insert_matches:
+            try:
+                with db.engine.connect() as conn:
                     conn.execute(text(insert_sql))
+                    conn.commit()
                     success_count += 1
-                except Exception as e:
-                    print(f"Insert hatası: {e}")
-                    continue
-            
-            conn.commit()
+            except Exception as e:
+                print(f"Insert hatası: {e}")
+                # Hata olursa devam et
+                continue
         
         return jsonify({
             'success': True,
@@ -239,15 +242,33 @@ def restore_all():
             conn.execute(text("DROP SCHEMA public CASCADE"))
             conn.execute(text("CREATE SCHEMA public"))
             conn.commit()
+        
+        # SQL'i satırlara böl ve tek tek çalıştır
+        statements = content.split(';')
+        success_count = 0
+        error_count = 0
+        
+        for statement in statements:
+            statement = statement.strip()
+            if not statement or statement.startswith('--'):
+                continue
             
-            # Backup'ı restore et
-            conn.execute(text(content))
-            conn.commit()
+            try:
+                with db.engine.connect() as conn:
+                    conn.execute(text(statement + ';'))
+                    conn.commit()
+                    success_count += 1
+            except Exception as e:
+                error_count += 1
+                print(f"Statement error: {e}")
+                continue
         
         return jsonify({
             'success': True,
-            'message': 'Tüm veriler başarıyla restore edildi'
+            'message': f'Restore tamamlandı! Başarılı: {success_count}, Hatalı: {error_count}'
         })
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
