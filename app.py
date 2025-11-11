@@ -37,6 +37,11 @@ app.config.from_object('config.Config')
 # CSRF Koruması Aktif
 csrf = CSRFProtect(app)
 
+# API endpoint'lerini CSRF'den muaf tut
+csrf.exempt('restore.upload_backup')
+csrf.exempt('restore.restore_table')
+csrf.exempt('restore.restore_all')
+
 # CSRF token'ı tüm template'lere ekle
 @app.context_processor
 def inject_csrf_token():

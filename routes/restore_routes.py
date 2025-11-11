@@ -100,6 +100,7 @@ def restore_backup_page():
 @restore_bp.route('/api/upload_backup', methods=['POST'])
 def upload_backup():
     """Backup dosyasını yükle ve analiz et"""
+    # CSRF korumasını devre dışı bırak (file upload için)
     
     try:
         if 'backup_file' not in request.files:
