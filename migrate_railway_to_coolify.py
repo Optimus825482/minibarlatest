@@ -14,10 +14,10 @@ print("🚀 RAILWAY → COOLIFY DATABASE MIGRATION")
 print("=" * 70)
 
 # Source: Railway Database
-RAILWAY_URL = 'postgresql://postgres:kJQQiRoGKGgWRPWGsRrSdKRoMogEVAGy@postgres.railway.internal:5432/railway'
+RAILWAY_URL = 'postgresql://postgres:kJQQiRoGKGgWRPWGsRrSdKRoMogEVAGy@shinkansen.proxy.rlwy.net:27699/railway'
 
 # Target: Coolify Database
-COOLIFY_URL = 'postgresql://postgres:518518Erkan@b4oo4wg8kwgw4c8kc4k444c8:5432/minibar_takip'
+COOLIFY_URL = 'postgres://postgres:518518Erkan@b4oo4wg8kwgw4c8kc4k444c8:5432/minibar_takip'
 
 print("\n📊 Kaynak Database: Railway")
 print("📊 Hedef Database: Coolify")

@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Gelişmiş Yedek Geri Yükleme - Minibar Takip</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .restore-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .upload-section {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 60px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .upload-area:hover {
+            background: #f8f9ff;
+            border-color: #764ba2;
+            transform: translateY(-2px);
+        }
+        
+        .upload-area.dragover {
+            background: #e8ebff;
+            border-color: #667eea;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .comparison-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            display: none;
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+        }
+        
+        .section-header h2 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+        
+        .stats-bar {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: rgba(255,255,255,0.2);
+            padding: 15px 25px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stat-item .label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        
+        .stat-item .value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .comparison-table thead {
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .comparison-table th {
+            padding: 20px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .comparison-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .comparison-table tbody tr {
+            transition: all 0.2s;
+        }
+        
+        .comparison-table tbody tr:hover {
+            background: #f8f9ff;
+        }
+        
+        .table-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+        
+        .table-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .table-name strong {
+            font-size: 1.05em;
+            color: #333;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        
+        .badge-backup {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .badge-current {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .badge-zero {
+            background: #e9ecef;
+            color: #6c757d;
+        }
+        
+        .badge-new {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        
+        .badge-success {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+        
+        .badge-error {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+        
+        .dependencies {
+            margin-top: 8px;
+            font-size: 0.85em;
+        }
+        
+        .dep-tag {
+            display: inline-block;
+            background: #fff3cd;
+            color: #856404;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin: 2px;
+            font-size: 0.85em;
+        }
+        
+        .status-cell {
+            font-weight: 600;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+        
+        .action-bar {
+            padding: 30px;
+            background: #f8f9fa;
+            border-top: 2px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .alert {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="restore-container">
+        <div class="header">
+            <h1>🔄 Gelişmiş Yedek Geri Yükleme</h1>
+            <p>Railway veya diğer kaynaklardan SQL yedeklerini analiz edin ve geri yükleyin</p>
+        </div>
+        
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <h2 style="margin-bottom: 20px;">📤 Adım 1: Yedek Dosyası Yükle</h2>
+            
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="backupFile" accept=".sql" style="display: none;">
+                <div class="upload-icon">📁</div>
+                <h3>Dosya Seç veya Sürükle Bırak</h3>
+                <p style="color: #666; margin-top: 10px;">Sadece .sql dosyaları kabul edilir (Max 100MB)</p>
+            </div>
+            
+            <div style="text-align: center;">
+                <button class="btn btn-primary" id="uploadBtn" style="display: none;">
+                    🚀 Dosyayı Yükle ve Analiz Et
+                </button>
+            </div>
+        </div>
+        
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <h3>Yedek dosyası analiz ediliyor...</h3>
+            <p style="color: #666; margin-top: 10px;">Tablolar ve kayıtlar taranıyor</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+        
+        <!-- Alerts -->
+        <div class="alert alert-success" id="alertSuccess"></div>
+        <div class="alert alert-danger" id="alertDanger"></div>
+        <div class="alert alert-warning" id="alertWarning"></div>
+        
+        <!-- Comparison Section -->
+        <div class="comparison-section" id="comparisonSection">
+            <div class="section-header">
+                <h2>📊 Adım 2: Tablo Karşılaştırması ve Seçim</h2>
+                <p>Yedekteki ve mevcut database'deki tablolar karşılaştırılıyor</p>
+                
+                <div class="stats-bar" id="statsBar">
+                    <!-- JavaScript ile doldurulacak -->
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">
+                                <input type="checkbox" id="selectAll" class="table-checkbox">
+                            </th>
+                            <th>Tablo Adı</th>
+                            <th>Yedekteki Kayıt</th>
+                            <th>Mevcut Kayıt</th>
+                            <th>Bağımlılıklar</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparisonBody">
+                        <!-- JavaScript ile doldurulacak -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="action-bar">
+                <div>
+                    <strong id="selectedInfo">0 tablo seçildi</strong>
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    <button class="btn btn-success" id="restoreSelectedBtn" style="display: none;">
+                        ✅ Seçili Tabloları Aktar (<span id="selectedCount">0</span>)
+                    </button>
+                    <button class="btn btn-danger" id="restoreAllBtn">
+                        🔄 Tüm Database'i Geri Yükle
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const backupFile = document.getElementById('backupFile');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const loading = document.getElementById('loading');
+        const progressFill = document.getElementById('progressFill');
+        const comparisonSection = document.getElementById('comparisonSection');
+        const comparisonBody = document.getElementById('comparisonBody');
+        const statsBar = document.getElementById('statsBar');
+        const selectAll = document.getElementById('selectAll');
+        const restoreSelectedBtn = document.getElementById('restoreSelectedBtn');
+        const restoreAllBtn = document.getElementById('restoreAllBtn');
+        const selectedInfo = document.getElementById('selectedInfo');
+        const selectedCount = document.getElementById('selectedCount');
+        
+        let selectedFile = null;
+        let comparisonData = [];
+        
+        // Upload area click
+        uploadArea.addEventListener('click', () => backupFile.click());
+        
+        // File select
+        backupFile.addEventListener('change', (e) => {
+            selectedFile = e.target.files[0];
+            if (selectedFile) {
+                uploadArea.innerHTML = `
+                    <div class="upload-icon">✅</div>
+                    <h3>${selectedFile.name}</h3>
+                    <p style="color: #667eea; margin-top: 10px; font-weight: 600;">
+                        ${(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                `;
+                uploadBtn.style.display = 'inline-flex';
+            }
+        });
+        
+        // Drag & Drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].name.endsWith('.sql')) {
+                selectedFile = files[0];
+                backupFile.files = files;
+                backupFile.dispatchEvent(new Event('change'));
+            } else {
+                showAlert('danger', 'Sadece .sql dosyaları yüklenebilir!');
+            }
+        });
+        
+        // Upload button
+        uploadBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            
+            const formData = new FormData();
+            formData.append('backup_file', selectedFile);
+            
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            
+            loading.style.display = 'block';
+            uploadBtn.disabled = true;
+            
+            // Progress animation
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 5;
+                if (progress <= 90) {
+                    progressFill.style.width = progress + '%';
+                }
+            }, 200);
+            
+            try {
+                const response = await fetch('/api/upload_backup', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': csrfToken || ''
+                    }
+                });
+                
+                const data = await response.json();
+                
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+                
+                if (data.success) {
+                    comparisonData = data.comparison;
+                    displayComparison(data);
+                    comparisonSection.style.display = 'block';
+                    showAlert('success', `✅ Dosya başarıyla analiz edildi! ${data.total_tables} tablo bulundu.`);
+                } else {
+                    showAlert('danger', '❌ Hata: ' + data.error);
+                }
+            } catch (error) {
+                clearInterval(progressInterval);
+                showAlert('danger', '❌ Hata: ' + error.message);
+            } finally {
+                setTimeout(() => {
+                    loading.style.display = 'none';
+                    uploadBtn.disabled = false;
+                    progressFill.style.width = '0%';
+                }, 500);
+            }
+        });
+        
+        // Display comparison
+        function displayComparison(data) {
+            // Stats
+            const totalTables = data.total_tables;
+            const totalBackupRecords = data.comparison.reduce((sum, t) => sum + t.backup_count, 0);
+            const totalCurrentRecords = data.comparison.reduce((sum, t) => sum + t.current_count, 0);
+            const newTables = data.comparison.filter(t => !t.exists).length;
+            
+            statsBar.innerHTML = `
+                <div class="stat-item">
+                    <div class="label">Toplam Tablo</div>
+                    <div class="value">${totalTables}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">Yedekteki Kayıt</div>
+                    <div class="value">${totalBackupRecords.toLocaleString()}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">Mevcut Kayıt</div>
+                    <div class="value">${totalCurrentRecords.toLocaleString()}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">Yeni Tablo</div>
+                    <div class="value">${newTables}</div>
+                </div>
+            `;
+            
+            // Table rows
+            comparisonBody.innerHTML = '';
+            
+            data.comparison.forEach(item => {
+                const row = document.createElement('tr');
+                
+                const dependenciesHtml = item.has_dependencies ? `
+                    <div class="dependencies">
+                        ⚠️ Bağımlı: ${item.dependencies.map(d => `<span class="dep-tag">${d}</span>`).join('')}
+                    </div>
+                ` : '';
+                
+                const existsBadge = item.exists ? 
+                    '<span class="badge badge-current">Mevcut</span>' : 
+                    '<span class="badge badge-new">Yeni Tablo</span>';
+                
+                row.innerHTML = `
+                    <td>
+                        <input type="checkbox" 
+                               class="table-checkbox" 
+                               data-table="${item.table}"
+                               data-dependencies='${JSON.stringify(item.dependencies)}'
+                               id="cb_${item.table}">
+                    </td>
+                    <td>
+                        <div class="table-name">
+                            <strong>${item.table}</strong>
+                            ${existsBadge}
+                        </div>
+                        ${dependenciesHtml}
+                    </td>
+                    <td>
+                        <span class="badge ${item.backup_count > 0 ? 'badge-backup' : 'badge-zero'}">
+                            ${item.backup_count.toLocaleString()} kayıt
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge ${item.current_count > 0 ? 'badge-current' : 'badge-zero'}">
+                            ${item.current_count.toLocaleString()} kayıt
+                        </span>
+                    </td>
+                    <td>
+                        ${item.has_dependencies ? 
+                            `<span style="color: #f5576c;">⚠️ ${item.dependencies.length} bağımlılık</span>` : 
+                            '<span style="color: #43e97b;">✅ Bağımsız</span>'}
+                    </td>
+                    <td>
+                        <span class="status-cell" id="status_${item.table}" style="color: #6c757d;">
+                            Bekliyor
+                        </span>
+                    </td>
+                `;
+                
+                comparisonBody.appendChild(row);
+                
+                // Checkbox event
+                const checkbox = row.querySelector('.table-checkbox');
+                checkbox.addEventListener('change', () => handleTableSelection(item.table));
+            });
+        }
+        
+        // Select all
+        selectAll.addEventListener('change', () => {
+            const checkboxes = document.querySelectorAll('.table-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+                const tableName = cb.dataset.table;
+                updateTableStatus(tableName, selectAll.checked ? 'Seçildi' : 'Bekliyor');
+            });
+            updateSelectedCount();
+        });
+        
+        // Handle table selection
+        function handleTableSelection(tableName) {
+            const checkbox = document.getElementById(`cb_${tableName}`);
+            const dependencies = JSON.parse(checkbox.dataset.dependencies || '[]');
+            
+            if (checkbox.checked) {
+                // Auto-select dependencies
+                dependencies.forEach(dep => {
+                    const depCheckbox = document.getElementById(`cb_${dep}`);
+                    if (depCheckbox && !depCheckbox.checked) {
+                        depCheckbox.checked = true;
+                        updateTableStatus(dep, 'Otomatik seçildi');
+                    }
+                });
+                updateTableStatus(tableName, 'Seçildi');
+            } else {
+                updateTableStatus(tableName, 'Bekliyor');
+            }
+            
+            updateSelectedCount();
+        }
+        
+        // Update table status
+        function updateTableStatus(tableName, status) {
+            const statusEl = document.getElementById(`status_${tableName}`);
+            if (statusEl) {
+                statusEl.textContent = status;
+                
+                if (status.includes('Seçildi')) {
+                    statusEl.style.color = '#667eea';
+                } else if (status.includes('✅')) {
+                    statusEl.style.color = '#43e97b';
+                } else if (status.includes('❌')) {
+                    statusEl.style.color = '#fa709a';
+                } else if (status.includes('⏳')) {
+                    statusEl.style.color = '#ffc107';
+                } else {
+                    statusEl.style.color = '#6c757d';
+                }
+            }
+        }
+        
+        // Update selected count
+        function updateSelectedCount() {
+            const checkboxes = document.querySelectorAll('.table-checkbox:checked');
+            const count = checkboxes.length;
+            
+            selectedCount.textContent = count;
+            selectedInfo.textContent = `${count} tablo seçildi`;
+            restoreSelectedBtn.style.display = count > 0 ? 'inline-flex' : 'none';
+        }
+        
+        // Restore selected tables
+        restoreSelectedBtn.addEventListener('click', async () => {
+            const checkboxes = document.querySelectorAll('.table-checkbox:checked');
+            const selectedTables = Array.from(checkboxes).map(cb => cb.dataset.table);
+            
+            if (selectedTables.length === 0) {
+                showAlert('warning', 'Lütfen en az bir tablo seçin!');
+                return;
+            }
+            
+            if (!confirm(`${selectedTables.length} tablo aktarılacak. Emin misiniz?\n\n${selectedTables.join(', ')}`)) {
+                return;
+            }
+            
+            loading.style.display = 'block';
+            restoreSelectedBtn.disabled = true;
+            
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            
+            try {
+                const response = await fetch('/api/restore_tables', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken || ''
+                    },
+                    body: JSON.stringify({ tables: selectedTables })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    let successCount = 0;
+                    let errorCount = 0;
+                    
+                    data.results.forEach(result => {
+                        if (result.success) {
+                            successCount++;
+                            const msg = result.created ? 
+                                `✅ Oluşturuldu: ${result.restored_count} kayıt` : 
+                                `✅ Aktarıldı: ${result.restored_count} kayıt`;
+                            updateTableStatus(result.table, msg);
+                        } else {
+                            errorCount++;
+                            updateTableStatus(result.table, '❌ Hata');
+                        }
+                    });
+                    
+                    showAlert('success', `✅ Tamamlandı! Başarılı: ${successCount}, Hatalı: ${errorCount}`);
+                    
+                    if (successCount > 0) {
+                        setTimeout(() => location.reload(), 3000);
+                    }
+                } else {
+                    showAlert('danger', '❌ Hata: ' + data.error);
+                }
+            } catch (error) {
+                showAlert('danger', '❌ Hata: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+                restoreSelectedBtn.disabled = false;
+            }
+        });
+        
+        // Restore all
+        restoreAllBtn.addEventListener('click', async () => {
+            if (!confirm('⚠️ DİKKAT!\n\nTÜM DATABASE SİLİNECEK ve yedekten geri yüklenecek!\n\nEmin misiniz?')) {
+                return;
+            }
+            
+            if (!confirm('SON UYARI!\n\nBu işlem geri alınamaz. Devam edilsin mi?')) {
+                return;
+            }
+            
+            loading.style.display = 'block';
+            restoreAllBtn.disabled = true;
+            
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            
+            try {
+                const response = await fetch('/api/restore_full', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken || ''
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('success', `✅ ${data.message}\n\nBaşarılı: ${data.success_count}, Hatalı: ${data.error_count}`);
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 3000);
+                } else {
+                    showAlert('danger', '❌ Hata: ' + data.error);
+                }
+            } catch (error) {
+                showAlert('danger', '❌ Hata: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+                restoreAllBtn.disabled = false;
+            }
+        });
+        
+        // Show alert
+        function showAlert(type, message) {
+            const alertEl = document.getElementById(`alert${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            alertEl.textContent = message;
+            alertEl.style.display = 'block';
+            
+            setTimeout(() => {
+                alertEl.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
