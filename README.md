@@ -25,7 +25,38 @@ Flask tabanlı, MySQL veritabanı kullanan profesyonel otel minibar yönetim sis
 
 ## 🛠️ Kurulum
 
-### 🐳 Docker ile Kurulum (En Kolay - Önerilen)
+### ⚡ Hızlı Kurulum (Yeni Sistem - Önerilen)
+
+Sıfırdan yeni veritabanı kurulumu için:
+
+**Windows:**
+```cmd
+kurulum.bat
+```
+
+**Linux/Mac:**
+```bash
+chmod +x kurulum.sh
+./kurulum.sh
+```
+
+**Manuel:**
+```bash
+python quick_setup.py
+```
+
+Bu komut:
+- ✅ Veritabanını oluşturur
+- ✅ Tüm tabloları oluşturur
+- ✅ Varsayılan admin oluşturur (admin/admin123)
+- ✅ Örnek veriler ekler (opsiyonel)
+
+📖 **Detaylı kılavuz:** [ILK_KURULUM_REHBERI.md](ILK_KURULUM_REHBERI.md)  
+⚡ **Hızlı başlangıç:** [KURULUM_HIZLI_BASLANGIC.md](KURULUM_HIZLI_BASLANGIC.md)
+
+---
+
+### 🐳 Docker ile Kurulum (Alternatif)
 
 Docker ile tek komutla tüm sistemi çalıştırabilirsiniz:
 
