@@ -191,6 +191,66 @@ def verify_critical_data():
         print(f"⚠️  Veri kontrolü yapılamadı: {str(e)}")
         return True  # Hata durumunda devam et
 
+def fix_sequences(engine, existing_tables):
+    """PostgreSQL sequence'larını düzelt"""
+    print()
+    print("🔧 PostgreSQL Sequence'ları kontrol ediliyor...")
+    
+    try:
+        with engine.connect() as conn:
+            fixed_count = 0
+            
+            for table in existing_tables:
+                try:
+                    # Max ID'yi al
+                    result = conn.execute(text(f"SELECT MAX(id) FROM {table}"))
+                    max_id = result.scalar() or 0
+                    result.close()
+                    
+                    # Sequence adı
+                    sequence_name = f"{table}_id_seq"
+                    
+                    # Sequence var mı kontrol et
+                    result = conn.execute(text(f"""
+                        SELECT EXISTS (
+                            SELECT FROM pg_sequences 
+                            WHERE schemaname = 'public' 
+                            AND sequencename = '{sequence_name}'
+                        );
+                    """))
+                    sequence_exists = result.scalar()
+                    result.close()
+                    
+                    if sequence_exists:
+                        # Sequence'ı güncelle
+                        conn.execute(text(f"SELECT setval('{sequence_name}', {max_id + 1}, false)"))
+                        conn.commit()
+                        fixed_count += 1
+                    else:
+                        # Sequence yoksa oluştur
+                        conn.execute(text(f"""
+                            CREATE SEQUENCE IF NOT EXISTS {sequence_name};
+                            ALTER TABLE {table} ALTER COLUMN id SET DEFAULT nextval('{sequence_name}');
+                            SELECT setval('{sequence_name}', {max_id + 1}, false);
+                        """))
+                        conn.commit()
+                        fixed_count += 1
+                    
+                except Exception as e:
+                    # ID kolonu olmayan tablolar için normal
+                    continue
+            
+            if fixed_count > 0:
+                print(f"✅ {fixed_count} tablo için sequence düzeltildi")
+            else:
+                print("ℹ️  Sequence düzeltmesi gerekmiyor")
+            
+            return True
+            
+    except Exception as e:
+        print(f"⚠️  Sequence düzeltme hatası: {str(e)}")
+        return False
+
 def main():
     """Ana fonksiyon - Güvenli deployment"""
     
@@ -212,6 +272,10 @@ def main():
     
     # 4. Eksik tabloları kontrol et (ama oluşturma!)
     create_missing_tables_only(engine, existing_tables)
+    
+    # 5. Sequence'ları düzelt (KRİTİK!)
+    if existing_tables:
+        fix_sequences(engine, existing_tables)
     
     # Başarılı
     print()
