@@ -225,6 +225,7 @@ class MetricsCalculator:
                         alert = MLAlert(
                             alert_type='stok_bitis_uyari',
                             severity=severity,
+                            entity_type='urun',
                             entity_id=urun.id,
                             metric_value=mevcut_stok,
                             expected_value=gunluk_tuketim * 7,  # 7 günlük ideal stok

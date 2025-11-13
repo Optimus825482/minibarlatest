@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Coolify Database Restore Script
-Railway backup'ını Coolify'a yükler
+Backup'ı Coolify'a yükler
 """
 
 import os
@@ -60,7 +60,7 @@ try:
         print("✅ RESTORE BAŞARILI!")
         print("=" * 60)
         print()
-        print("🎉 Coolify database'i Railway verileriyle dolu!")
+        print("🎉 Coolify database'i backup verileriyle dolu!")
         print()
         print("📝 Sonraki adım:")
         print("   http://h8k8wo040wc48gc4k8skwokw.185.9.38.66.sslip.io/login")

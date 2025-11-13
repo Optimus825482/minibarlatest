@@ -1,0 +1,1033 @@
+{% extends "base.html" %}
+
+{% block title %}Kampanya Yönetimi - Minibar Takip Sistemi{% endblock %}
+{% block page_title %}Kampanya Yönetimi{% endblock %}
+
+{% block extra_head %}
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+
+<!-- Date Range Picker -->
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+<style>
+    /* Kampanya Kartları */
+    .campaign-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    /* Kampanya Badge */
+    .campaign-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    
+    .campaign-badge.active {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+    
+    .dark .campaign-badge.active {
+        background-color: #14532d;
+        color: #86efac;
+    }
+    
+    .campaign-badge.inactive {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .dark .campaign-badge.inactive {
+        background-color: #7f1d1d;
+        color: #fca5a5;
+    }
+    
+    .campaign-badge.expired {
+        background-color: #f3f4f6;
+        color: #6b7280;
+    }
+    
+    .dark .campaign-badge.expired {
+        background-color: #374151;
+        color: #9ca3af;
+    }
+    
+    /* Progress Bar */
+    .progress-bar {
+        height: 8px;
+        background-color: #e5e7eb;
+        border-radius: 9999px;
+        overflow: hidden;
+    }
+    
+    .dark .progress-bar {
+        background-color: #374151;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        transition: width 0.3s ease;
+    }
+    
+    /* DataTables Dark Mode */
+    .dark .dataTables_wrapper {
+        color: #e2e8f0;
+    }
+    
+    .dark .dataTables_wrapper .dataTables_filter input,
+    .dark .dataTables_wrapper .dataTables_length select {
+        background-color: #1e293b;
+        border-color: #334155;
+        color: #e2e8f0;
+    }
+    
+    .dark table.dataTable tbody tr {
+        background-color: #1e293b;
+    }
+    
+    .dark table.dataTable tbody tr:hover {
+        background-color: #334155 !important;
+    }
+    
+    /* Form Styling */
+    .form-section {
+        background: linear-gradient(to right, #f8fafc, #ffffff);
+        border-left: 4px solid #8b5cf6;
+    }
+    
+    .dark .form-section {
+        background: linear-gradient(to right, #0f172a, #1e293b);
+        border-left-color: #a78bfa;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Kampanya İstatistikleri -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <!-- Aktif Kampanyalar -->
+        <div class="campaign-card bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-check-circle text-2xl text-green-600 dark:text-green-400"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Aktif Kampanyalar</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-semibold text-slate-900 dark:text-slate-100" id="aktif-kampanya-sayisi">0</div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toplam İndirim -->
+        <div class="campaign-card bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-tags text-2xl text-blue-600 dark:text-blue-400"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Toplam İndirim</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-semibold text-slate-900 dark:text-slate-100" id="toplam-indirim">₺0</div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kullanım Oranı -->
+        <div class="campaign-card bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-chart-pie text-2xl text-purple-600 dark:text-purple-400"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Kullanım Oranı</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-semibold text-slate-900 dark:text-slate-100" id="kullanim-orani">%0</div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toplam Kullanım -->
+        <div class="campaign-card bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-shopping-cart text-2xl text-yellow-600 dark:text-yellow-400"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Toplam Kullanım</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-semibold text-slate-900 dark:text-slate-100" id="toplam-kullanim">0</div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kampanya Oluşturma Formu -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+        <div class="form-section px-6 py-4">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Yeni Kampanya Oluştur
+            </h3>
+        </div>
+        
+        <form id="kampanya-form" class="p-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Kampanya Adı -->
+                <div class="md:col-span-2 lg:col-span-3">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Kampanya Adı <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="kampanya_adi" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200" placeholder="Örn: Yaz İndirimi 2024" required>
+                </div>
+                
+                <!-- Ürün Seçimi -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Ürün (Opsiyonel)
+                    </label>
+                    <select name="urun_id" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200">
+                        <option value="">Tüm Ürünler</option>
+                        {% for urun in urunler %}
+                        <option value="{{ urun.id }}">{{ urun.urun_adi }}</option>
+                        {% endfor %}
+                    </select>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Boş bırakılırsa tüm ürünlere uygulanır</p>
+                </div>
+                
+                <!-- İndirim Tipi -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        İndirim Tipi <span class="text-red-500">*</span>
+                    </label>
+                    <select id="indirim-tipi" name="indirim_tipi" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200" required>
+                        <option value="yuzde">Yüzde (%)</option>
+                        <option value="tutar">Tutar (₺)</option>
+                    </select>
+                </div>
+                
+                <!-- İndirim Değeri -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        İndirim Değeri <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input type="number" id="indirim-degeri" name="indirim_degeri" step="0.01" min="0" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200" placeholder="0.00" required>
+                        <span id="indirim-simge" class="absolute right-3 top-2.5 text-slate-500 dark:text-slate-400">%</span>
+                    </div>
+                </div>
+                
+                <!-- Başlangıç Tarihi -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Başlangıç Tarihi <span class="text-red-500">*</span>
+                    </label>
+                    <input type="datetime-local" name="baslangic_tarihi" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200" required>
+                </div>
+                
+                <!-- Bitiş Tarihi -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Bitiş Tarihi <span class="text-red-500">*</span>
+                    </label>
+                    <input type="datetime-local" name="bitis_tarihi" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200" required>
+                </div>
+                
+                <!-- Minimum Sipariş Miktarı -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Minimum Sipariş Miktarı
+                    </label>
+                    <input type="number" name="min_siparis_miktari" value="1" min="1" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200">
+                </div>
+                
+                <!-- Maksimum Kullanım Sayısı -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Maksimum Kullanım Sayısı
+                    </label>
+                    <input type="number" name="max_kullanim_sayisi" min="1" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200" placeholder="Sınırsız">
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Boş bırakılırsa sınırsız kullanım</p>
+                </div>
+                
+                <!-- Aktif Durumu -->
+                <div class="flex items-center">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" name="aktif" value="true" checked class="w-5 h-5 text-purple-600 border-slate-300 rounded focus:ring-purple-500 dark:border-slate-600 dark:bg-slate-700">
+                        <span class="ml-2 text-sm font-medium text-slate-700 dark:text-slate-300">Kampanyayı Aktif Et</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Butonlar -->
+            <div class="mt-6 flex gap-3">
+                <button type="submit" class="flex-1 md:flex-none px-6 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                    <i class="fas fa-save mr-2"></i>
+                    Kampanya Oluştur
+                </button>
+                <button type="button" id="form-temizle" class="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
+                    <i class="fas fa-eraser mr-2"></i>
+                    Temizle
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Aktif Kampanyalar Tablosu -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Aktif Kampanyalar
+            </h3>
+            <button id="kampanya-yenile" class="px-4 py-2 text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                <i class="fas fa-sync-alt mr-2"></i>
+                Yenile
+            </button>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table id="aktif-kampanyalar-table" class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                <thead class="bg-slate-50 dark:bg-slate-700">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Kampanya Adı
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Ürün
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            İndirim
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Geçerlilik
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Kullanım
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Durum
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            İşlemler
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                    <!-- DataTables ile doldurulacak -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Kampanya Performans Metrikleri -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            Kampanya Performans Metrikleri
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- En Çok Kullanılan Kampanyalar -->
+            <div>
+                <h4 class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">En Çok Kullanılan Kampanyalar</h4>
+                <div id="en-cok-kullanilan" class="space-y-3">
+                    <!-- JavaScript ile doldurulacak -->
+                </div>
+            </div>
+            
+            <!-- En Yüksek İndirim Sağlayan Kampanyalar -->
+            <div>
+                <h4 class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">En Yüksek İndirim Sağlayan</h4>
+                <div id="en-yuksek-indirim" class="space-y-3">
+                    <!-- JavaScript ile doldurulacak -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tüm Kampanyalar Tablosu -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                </svg>
+                Tüm Kampanyalar
+            </h3>
+            <div class="flex gap-2">
+                <select id="durum-filter" class="px-4 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200">
+                    <option value="">Tüm Durumlar</option>
+                    <option value="aktif">Aktif</option>
+                    <option value="pasif">Pasif</option>
+                    <option value="suresi_dolmus">Süresi Dolmuş</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table id="tum-kampanyalar-table" class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                <thead class="bg-slate-50 dark:bg-slate-700">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Kampanya Adı
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Ürün
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            İndirim
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Tarih Aralığı
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Kullanım
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Durum
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            İşlemler
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                    <!-- DataTables ile doldurulacak -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+
+<!-- Date Range Picker -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
+<script>
+// Kampanya Yönetimi Manager
+class KampanyaYonetimiManager {
+    constructor() {
+        this.aktifKampanyalarTable = null;
+        this.tumKampanyalarTable = null;
+        this.init();
+    }
+
+    init() {
+        this.initEventListeners();
+        this.loadIstatistikler();
+        this.loadAktifKampanyalar();
+        this.loadTumKampanyalar();
+        this.loadPerformansMetrikleri();
+    }
+
+    initEventListeners() {
+        // Form submit
+        $('#kampanya-form').on('submit', (e) => {
+            e.preventDefault();
+            this.kampanyaOlustur();
+        });
+
+        // İndirim tipi değişimi
+        $('#indirim-tipi').on('change', (e) => {
+            const simge = e.target.value === 'yuzde' ? '%' : '₺';
+            $('#indirim-simge').text(simge);
+        });
+
+        // Form temizle
+        $('#form-temizle').on('click', () => {
+            this.formTemizle();
+        });
+
+        // Kampanya yenile
+        $('#kampanya-yenile').on('click', () => {
+            this.loadAktifKampanyalar();
+            this.loadIstatistikler();
+        });
+
+        // Durum filtresi
+        $('#durum-filter').on('change', () => {
+            this.loadTumKampanyalar();
+        });
+    }
+
+    async loadIstatistikler() {
+        try {
+            const response = await fetch('/api/v1/fiyat/kampanya/istatistikler');
+            const data = await response.json();
+
+            if (data.success) {
+                $('#aktif-kampanya-sayisi').text(data.aktif_kampanya_sayisi || 0);
+                $('#toplam-indirim').text(this.formatCurrency(data.toplam_indirim || 0));
+                $('#kullanim-orani').text(`%${(data.kullanim_orani || 0).toFixed(2)}`);
+                $('#toplam-kullanim').text(data.toplam_kullanim || 0);
+            }
+        } catch (error) {
+            console.error('İstatistik yükleme hatası:', error);
+        }
+    }
+
+    async kampanyaOlustur() {
+        try {
+            const formData = new FormData($('#kampanya-form')[0]);
+            const data = Object.fromEntries(formData.entries());
+
+            // Validasyon
+            if (!data.kampanya_adi || !data.indirim_tipi || !data.indirim_degeri || 
+                !data.baslangic_tarihi || !data.bitis_tarihi) {
+                this.showError('Lütfen tüm zorunlu alanları doldurun');
+                return;
+            }
+
+            if (parseFloat(data.indirim_degeri) <= 0) {
+                this.showError('İndirim değeri 0\'dan büyük olmalıdır');
+                return;
+            }
+
+            if (data.indirim_tipi === 'yuzde' && parseFloat(data.indirim_degeri) > 100) {
+                this.showError('Yüzde indirimi 100\'den büyük olamaz');
+                return;
+            }
+
+            if (new Date(data.baslangic_tarihi) >= new Date(data.bitis_tarihi)) {
+                this.showError('Bitiş tarihi başlangıç tarihinden sonra olmalıdır');
+                return;
+            }
+
+            // Aktif checkbox değerini düzelt
+            data.aktif = $('#kampanya-form input[name="aktif"]').is(':checked');
+
+            const response = await fetch('/api/v1/fiyat/kampanya', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': data.csrf_token
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showSuccess('Kampanya başarıyla oluşturuldu');
+                this.formTemizle();
+                this.loadAktifKampanyalar();
+                this.loadTumKampanyalar();
+                this.loadIstatistikler();
+                this.loadPerformansMetrikleri();
+            } else {
+                this.showError(result.message || 'Kampanya oluşturulurken hata oluştu');
+            }
+        } catch (error) {
+            console.error('Kampanya oluşturma hatası:', error);
+            this.showError('Kampanya oluşturulurken hata oluştu');
+        }
+    }
+
+    async loadAktifKampanyalar() {
+        try {
+            const response = await fetch('/api/v1/fiyat/kampanya/aktif');
+            const data = await response.json();
+
+            if (this.aktifKampanyalarTable) {
+                this.aktifKampanyalarTable.destroy();
+            }
+
+            this.aktifKampanyalarTable = $('#aktif-kampanyalar-table').DataTable({
+                data: data.kampanyalar || [],
+                columns: [
+                    { data: 'kampanya_adi' },
+                    { 
+                        data: 'urun_adi',
+                        render: (data) => data || '<span class="text-slate-500 italic">Tüm Ürünler</span>'
+                    },
+                    { 
+                        data: null,
+                        render: (row) => {
+                            if (row.indirim_tipi === 'yuzde') {
+                                return `<span class="font-semibold text-blue-600 dark:text-blue-400">%${row.indirim_degeri}</span>`;
+                            } else {
+                                return `<span class="font-semibold text-green-600 dark:text-green-400">${this.formatCurrency(row.indirim_degeri)}</span>`;
+                            }
+                        }
+                    },
+                    { 
+                        data: null,
+                        render: (row) => {
+                            const baslangic = new Date(row.baslangic_tarihi).toLocaleDateString('tr-TR');
+                            const bitis = new Date(row.bitis_tarihi).toLocaleDateString('tr-TR');
+                            return `${baslangic} - ${bitis}`;
+                        }
+                    },
+                    { 
+                        data: null,
+                        render: (row) => {
+                            const kullanilan = row.kullanilan_sayisi || 0;
+                            const maksimum = row.max_kullanim_sayisi || '∞';
+                            const oran = row.max_kullanim_sayisi ? 
+                                (kullanilan / row.max_kullanim_sayisi * 100).toFixed(0) : 0;
+                            
+                            return `
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>${kullanilan} / ${maksimum}</span>
+                                        ${row.max_kullanim_sayisi ? `<span>${oran}%</span>` : ''}
+                                    </div>
+                                    ${row.max_kullanim_sayisi ? `
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: ${oran}%"></div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                        }
+                    },
+                    { 
+                        data: 'aktif',
+                        render: (data) => {
+                            return data ? 
+                                '<span class="campaign-badge active">Aktif</span>' : 
+                                '<span class="campaign-badge inactive">Pasif</span>';
+                        }
+                    },
+                    {
+                        data: null,
+                        render: (row) => {
+                            return `
+                                <div class="flex gap-2">
+                                    <button onclick="kampanyaYonetimiManager.kampanyaDuzenle(${row.id})" 
+                                            class="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50">
+                                        <i class="fas fa-edit mr-1"></i>Düzenle
+                                    </button>
+                                    <button onclick="kampanyaYonetimiManager.kampanyaSil(${row.id})" 
+                                            class="px-3 py-1 text-sm bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-900/50">
+                                        <i class="fas fa-trash mr-1"></i>Sil
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+                ],
+                order: [[0, 'asc']],
+                pageLength: 10,
+                responsive: true,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                }
+            });
+        } catch (error) {
+            console.error('Aktif kampanyalar yükleme hatası:', error);
+        }
+    }
+
+    async loadTumKampanyalar() {
+        try {
+            const durum = $('#durum-filter').val();
+            const url = durum ? `/api/v1/fiyat/kampanya/tumu?durum=${durum}` : '/api/v1/fiyat/kampanya/tumu';
+            
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (this.tumKampanyalarTable) {
+                this.tumKampanyalarTable.destroy();
+            }
+
+            this.tumKampanyalarTable = $('#tum-kampanyalar-table').DataTable({
+                data: data.kampanyalar || [],
+                columns: [
+                    { data: 'kampanya_adi' },
+                    { 
+                        data: 'urun_adi',
+                        render: (data) => data || '<span class="text-slate-500 italic">Tüm Ürünler</span>'
+                    },
+                    { 
+                        data: null,
+                        render: (row) => {
+                            if (row.indirim_tipi === 'yuzde') {
+                                return `%${row.indirim_degeri}`;
+                            } else {
+                                return this.formatCurrency(row.indirim_degeri);
+                            }
+                        }
+                    },
+                    { 
+                        data: null,
+                        render: (row) => {
+                            const baslangic = new Date(row.baslangic_tarihi).toLocaleDateString('tr-TR');
+                            const bitis = new Date(row.bitis_tarihi).toLocaleDateString('tr-TR');
+                            return `${baslangic} - ${bitis}`;
+                        }
+                    },
+                    { 
+                        data: null,
+                        render: (row) => {
+                            const kullanilan = row.kullanilan_sayisi || 0;
+                            const maksimum = row.max_kullanim_sayisi || '∞';
+                            return `${kullanilan} / ${maksimum}`;
+                        }
+                    },
+                    { 
+                        data: null,
+                        render: (row) => {
+                            const now = new Date();
+                            const bitis = new Date(row.bitis_tarihi);
+                            
+                            if (!row.aktif) {
+                                return '<span class="campaign-badge inactive">Pasif</span>';
+                            } else if (bitis < now) {
+                                return '<span class="campaign-badge expired">Süresi Dolmuş</span>';
+                            } else {
+                                return '<span class="campaign-badge active">Aktif</span>';
+                            }
+                        }
+                    },
+                    {
+                        data: null,
+                        render: (row) => {
+                            const aktifBtn = row.aktif ? 
+                                `<button onclick="kampanyaYonetimiManager.kampanyaPasifYap(${row.id})" 
+                                        class="px-3 py-1 text-sm bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded hover:bg-yellow-200 dark:hover:bg-yellow-900/50">
+                                    <i class="fas fa-pause mr-1"></i>Pasif Yap
+                                </button>` :
+                                `<button onclick="kampanyaYonetimiManager.kampanyaAktifYap(${row.id})" 
+                                        class="px-3 py-1 text-sm bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded hover:bg-green-200 dark:hover:bg-green-900/50">
+                                    <i class="fas fa-play mr-1"></i>Aktif Yap
+                                </button>`;
+                            
+                            return `
+                                <div class="flex gap-2 flex-wrap">
+                                    ${aktifBtn}
+                                    <button onclick="kampanyaYonetimiManager.kampanyaDuzenle(${row.id})" 
+                                            class="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50">
+                                        <i class="fas fa-edit mr-1"></i>Düzenle
+                                    </button>
+                                    <button onclick="kampanyaYonetimiManager.kampanyaSil(${row.id})" 
+                                            class="px-3 py-1 text-sm bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-900/50">
+                                        <i class="fas fa-trash mr-1"></i>Sil
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+                ],
+                order: [[0, 'asc']],
+                pageLength: 10,
+                responsive: true,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                }
+            });
+        } catch (error) {
+            console.error('Tüm kampanyalar yükleme hatası:', error);
+        }
+    }
+
+    async loadPerformansMetrikleri() {
+        try {
+            const response = await fetch('/api/v1/fiyat/kampanya/performans');
+            const data = await response.json();
+
+            if (data.success) {
+                // En çok kullanılan kampanyalar
+                const enCokKullanilanHtml = (data.en_cok_kullanilan || []).map(k => `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                        <div class="flex-1">
+                            <p class="font-medium text-slate-900 dark:text-slate-100">${k.kampanya_adi}</p>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">${k.kullanilan_sayisi} kullanım</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-lg font-bold text-blue-600 dark:text-blue-400">${k.kullanim_orani}%</span>
+                        </div>
+                    </div>
+                `).join('');
+                $('#en-cok-kullanilan').html(enCokKullanilanHtml || '<p class="text-slate-500 text-sm">Henüz veri yok</p>');
+
+                // En yüksek indirim sağlayan
+                const enYuksekIndirimHtml = (data.en_yuksek_indirim || []).map(k => `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                        <div class="flex-1">
+                            <p class="font-medium text-slate-900 dark:text-slate-100">${k.kampanya_adi}</p>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">${k.kullanilan_sayisi} kullanım</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-lg font-bold text-green-600 dark:text-green-400">${this.formatCurrency(k.toplam_indirim)}</span>
+                        </div>
+                    </div>
+                `).join('');
+                $('#en-yuksek-indirim').html(enYuksekIndirimHtml || '<p class="text-slate-500 text-sm">Henüz veri yok</p>');
+            }
+        } catch (error) {
+            console.error('Performans metrikleri yükleme hatası:', error);
+        }
+    }
+
+    async kampanyaDuzenle(kampanyaId) {
+        try {
+            const response = await fetch(`/api/v1/fiyat/kampanya/${kampanyaId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                const kampanya = data.kampanya;
+                
+                // Formu doldur
+                $('input[name="kampanya_adi"]').val(kampanya.kampanya_adi);
+                $('select[name="urun_id"]').val(kampanya.urun_id || '');
+                $('select[name="indirim_tipi"]').val(kampanya.indirim_tipi).trigger('change');
+                $('input[name="indirim_degeri"]').val(kampanya.indirim_degeri);
+                $('input[name="baslangic_tarihi"]').val(moment(kampanya.baslangic_tarihi).format('YYYY-MM-DDTHH:mm'));
+                $('input[name="bitis_tarihi"]').val(moment(kampanya.bitis_tarihi).format('YYYY-MM-DDTHH:mm'));
+                $('input[name="min_siparis_miktari"]').val(kampanya.min_siparis_miktari);
+                $('input[name="max_kullanim_sayisi"]').val(kampanya.max_kullanim_sayisi || '');
+                $('input[name="aktif"]').prop('checked', kampanya.aktif);
+
+                // Form submit'i güncelleme moduna al
+                $('#kampanya-form').off('submit').on('submit', (e) => {
+                    e.preventDefault();
+                    this.kampanyaGuncelle(kampanyaId);
+                });
+
+                // Scroll to form
+                $('html, body').animate({
+                    scrollTop: $('#kampanya-form').offset().top - 100
+                }, 500);
+
+                this.showInfo('Kampanya düzenleme modunda. Değişiklikleri yapıp kaydedin.');
+            }
+        } catch (error) {
+            console.error('Kampanya düzenleme hatası:', error);
+            this.showError('Kampanya bilgileri yüklenirken hata oluştu');
+        }
+    }
+
+    async kampanyaGuncelle(kampanyaId) {
+        try {
+            const formData = new FormData($('#kampanya-form')[0]);
+            const data = Object.fromEntries(formData.entries());
+            data.aktif = $('#kampanya-form input[name="aktif"]').is(':checked');
+
+            const response = await fetch(`/api/v1/fiyat/kampanya/${kampanyaId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': data.csrf_token
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showSuccess('Kampanya başarıyla güncellendi');
+                this.formTemizle();
+                this.loadAktifKampanyalar();
+                this.loadTumKampanyalar();
+                this.loadIstatistikler();
+                
+                // Form'u tekrar oluşturma moduna al
+                $('#kampanya-form').off('submit').on('submit', (e) => {
+                    e.preventDefault();
+                    this.kampanyaOlustur();
+                });
+            } else {
+                this.showError(result.message || 'Kampanya güncellenirken hata oluştu');
+            }
+        } catch (error) {
+            console.error('Kampanya güncelleme hatası:', error);
+            this.showError('Kampanya güncellenirken hata oluştu');
+        }
+    }
+
+    async kampanyaSil(kampanyaId) {
+        const result = await Swal.fire({
+            title: 'Kampanyayı Sil?',
+            text: 'Bu işlem geri alınamaz!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Evet, Sil',
+            cancelButtonText: 'İptal'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch(`/api/v1/fiyat/kampanya/${kampanyaId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.showSuccess('Kampanya başarıyla silindi');
+                    this.loadAktifKampanyalar();
+                    this.loadTumKampanyalar();
+                    this.loadIstatistikler();
+                    this.loadPerformansMetrikleri();
+                } else {
+                    this.showError(data.message || 'Kampanya silinirken hata oluştu');
+                }
+            } catch (error) {
+                console.error('Kampanya silme hatası:', error);
+                this.showError('Kampanya silinirken hata oluştu');
+            }
+        }
+    }
+
+    async kampanyaAktifYap(kampanyaId) {
+        try {
+            const response = await fetch(`/api/v1/fiyat/kampanya/${kampanyaId}/aktif-yap`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.showSuccess('Kampanya aktif edildi');
+                this.loadAktifKampanyalar();
+                this.loadTumKampanyalar();
+                this.loadIstatistikler();
+            } else {
+                this.showError(data.message || 'Kampanya aktif edilirken hata oluştu');
+            }
+        } catch (error) {
+            console.error('Kampanya aktif etme hatası:', error);
+            this.showError('Kampanya aktif edilirken hata oluştu');
+        }
+    }
+
+    async kampanyaPasifYap(kampanyaId) {
+        try {
+            const response = await fetch(`/api/v1/fiyat/kampanya/${kampanyaId}/pasif-yap`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.showSuccess('Kampanya pasif edildi');
+                this.loadAktifKampanyalar();
+                this.loadTumKampanyalar();
+                this.loadIstatistikler();
+            } else {
+                this.showError(data.message || 'Kampanya pasif edilirken hata oluştu');
+            }
+        } catch (error) {
+            console.error('Kampanya pasif etme hatası:', error);
+            this.showError('Kampanya pasif edilirken hata oluştu');
+        }
+    }
+
+    formTemizle() {
+        $('#kampanya-form')[0].reset();
+        $('#indirim-simge').text('%');
+        
+        // Form'u tekrar oluşturma moduna al
+        $('#kampanya-form').off('submit').on('submit', (e) => {
+            e.preventDefault();
+            this.kampanyaOlustur();
+        });
+    }
+
+    formatCurrency(value) {
+        return new Intl.NumberFormat('tr-TR', {
+            style: 'currency',
+            currency: 'TRY'
+        }).format(value);
+    }
+
+    showSuccess(message) {
+        Swal.fire({
+            icon: 'success',
+            title: 'Başarılı',
+            text: message,
+            timer: 2000,
+            showConfirmButton: false
+        });
+    }
+
+    showError(message) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Hata',
+            text: message,
+            confirmButtonText: 'Tamam'
+        });
+    }
+
+    showInfo(message) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Bilgi',
+            text: message,
+            confirmButtonText: 'Tamam'
+        });
+    }
+}
+
+// Global instance
+let kampanyaYonetimiManager;
+
+// Sayfa yüklendiğinde başlat
+$(document).ready(function() {
+    kampanyaYonetimiManager = new KampanyaYonetimiManager();
+});
+</script>
+{% endblock %}

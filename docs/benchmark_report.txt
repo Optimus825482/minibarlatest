@@ -1,0 +1,79 @@
+================================================================================
+ML SİSTEM PERFORMANS RAPORU
+================================================================================
+Tarih: 2025-11-12 20:46:52
+
+
+Veri Toplama (Eski)
+------------------------------------------------------------
+  Süre: 0.427 saniye
+  Bellek: 5.97 MB
+  Peak Bellek: 2.86 MB
+  Başarılı: ✅
+  collected_count: 44
+
+Veri Toplama (Yeni - Incremental)
+------------------------------------------------------------
+  Süre: 0.083 saniye
+  Bellek: 0.07 MB
+  Peak Bellek: 0.15 MB
+  Başarılı: ✅
+  collected_count: 0
+
+Feature Engineering (Tek Entity)
+------------------------------------------------------------
+  Süre: 0.020 saniye
+  Bellek: 0.16 MB
+  Peak Bellek: 0.21 MB
+  Başarılı: ✅
+  feature_count: 24
+
+Feature Engineering (Matrix)
+------------------------------------------------------------
+  Süre: 0.411 saniye
+  Bellek: 0.37 MB
+  Peak Bellek: 0.21 MB
+  Başarılı: ✅
+  entity_count: 44
+  feature_count: 26
+
+Feature Selection (Auto)
+------------------------------------------------------------
+  Süre: 0.010 saniye
+  Bellek: 0.42 MB
+  Peak Bellek: 0.04 MB
+  Başarılı: ✅
+  original_features: 26
+  selected_features: 2
+  reduction_percent: 92.3076923076923
+
+Feature Interaction
+------------------------------------------------------------
+  Süre: 0.006 saniye
+  Bellek: 0.01 MB
+  Peak Bellek: 0.03 MB
+  Başarılı: ✅
+  original_features: 26
+  final_features: 35
+  added_features: 9
+
+Model Eğitimi (Ham Veri)
+------------------------------------------------------------
+  Süre: 1.156 saniye
+  Bellek: 0.54 MB
+  Peak Bellek: 0.40 MB
+  Başarılı: ✅
+  data_points: 528
+  accuracy: 0.9283018867924528
+
+Model Eğitimi (Feature Engineering)
+------------------------------------------------------------
+  Süre: 0.819 saniye
+  Bellek: 0.72 MB
+  Peak Bellek: 0.77 MB
+  Başarılı: ✅
+  data_points: 528
+  feature_count: 0
+  accuracy: 0
+
+================================================================================

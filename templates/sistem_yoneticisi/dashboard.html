@@ -5,6 +5,85 @@
 
 {% block content %}
 <div class="space-y-4 md:space-y-6">
+    <!-- Satın Alma Modülü Bildirimleri -->
+    {% if dashboard_bildirimleri %}
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 md:p-6">
+        <div class="flex items-center mb-4">
+            <h3 class="text-lg font-medium text-slate-900 dark:text-white">
+                <i class="fas fa-bell mr-2 text-slate-600 dark:text-slate-400"></i>
+                Satın Alma & Stok Bildirimleri
+                {% if bildirim_sayilari.toplam > 0 %}
+                <span class="ml-2 px-2 py-1 text-xs font-bold rounded-full bg-red-500 text-white">
+                    {{ bildirim_sayilari.toplam }}
+                </span>
+                {% endif %}
+            </h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for bildirim in dashboard_bildirimleri %}
+            <a href="{{ bildirim.link }}" class="block group">
+                <div class="p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-lg
+                    {% if bildirim.tip == 'danger' %}
+                        bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700 hover:border-red-500
+                    {% elif bildirim.tip == 'warning' %}
+                        bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700 hover:border-yellow-500
+                    {% elif bildirim.tip == 'info' %}
+                        bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700 hover:border-blue-500
+                    {% elif bildirim.tip == 'success' %}
+                        bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700 hover:border-green-500
+                    {% endif %}">
+                    
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center
+                                {% if bildirim.tip == 'danger' %}
+                                    bg-red-100 dark:bg-red-800
+                                {% elif bildirim.tip == 'warning' %}
+                                    bg-yellow-100 dark:bg-yellow-800
+                                {% elif bildirim.tip == 'info' %}
+                                    bg-blue-100 dark:bg-blue-800
+                                {% elif bildirim.tip == 'success' %}
+                                    bg-green-100 dark:bg-green-800
+                                {% endif %}">
+                                <i class="fas fa-{{ bildirim.ikon }}
+                                    {% if bildirim.tip == 'danger' %}
+                                        text-red-600 dark:text-red-300
+                                    {% elif bildirim.tip == 'warning' %}
+                                        text-yellow-600 dark:text-yellow-300
+                                    {% elif bildirim.tip == 'info' %}
+                                        text-blue-600 dark:text-blue-300
+                                    {% elif bildirim.tip == 'success' %}
+                                        text-green-600 dark:text-green-300
+                                    {% endif %}"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium
+                                    {% if bildirim.tip == 'danger' %}
+                                        text-red-900 dark:text-red-100
+                                    {% elif bildirim.tip == 'warning' %}
+                                        text-yellow-900 dark:text-yellow-100
+                                    {% elif bildirim.tip == 'info' %}
+                                        text-blue-900 dark:text-blue-100
+                                    {% elif bildirim.tip == 'success' %}
+                                        text-green-900 dark:text-green-100
+                                    {% endif %}">
+                                    {{ bildirim.mesaj }}
+                                </p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    Detaylar için tıklayın
+                                </p>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors"></i>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Otel Bazlı Doluluk Durumu -->
     {% if otel_doluluk_raporlari %}
     <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 md:p-6">
@@ -90,11 +169,7 @@
                             <span class="text-xs font-bold text-slate-900 dark:text-white">{{ rapor.doluluk_orani }}%</span>
                         </div>
                         <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                            <div class="h-2 rounded-full transition-all duration-300 
-                                {% if rapor.doluluk_orani >= 80 %}bg-gradient-to-r from-red-500 to-red-600
-                                {% elif rapor.doluluk_orani >= 50 %}bg-gradient-to-r from-yellow-500 to-orange-500
-                                {% else %}bg-gradient-to-r from-green-500 to-green-600{% endif %}"
-                                style="width: {{ rapor.doluluk_orani }}%">
+                            <div class="h-2 rounded-full transition-all duration-300 {% if rapor.doluluk_orani >= 80 %}bg-gradient-to-r from-red-500 to-red-600{% elif rapor.doluluk_orani >= 50 %}bg-gradient-to-r from-yellow-500 to-orange-500{% else %}bg-gradient-to-r from-green-500 to-green-600{% endif %}" style="width: {{ rapor.doluluk_orani }}%;">
                             </div>
                         </div>
                     </div>
@@ -148,29 +223,27 @@
 
         <div class="space-y-3">
             {% for alert in ml_alerts %}
-            <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border-l-4 
-                {% if alert.severity == 'kritik' %}
-                    border-red-500
-                {% elif alert.severity == 'yuksek' %}
-                    border-orange-500
-                {% elif alert.severity == 'orta' %}
-                    border-yellow-500
-                {% else %}
-                    border-blue-500
-                {% endif %}">
+            {% if alert.severity == 'kritik' %}
+            <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border-l-4 border-red-500">
+            {% elif alert.severity == 'yuksek' %}
+            <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border-l-4 border-orange-500">
+            {% elif alert.severity == 'orta' %}
+            <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border-l-4 border-yellow-500">
+            {% else %}
+            <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border-l-4 border-blue-500">
+            {% endif %}
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-2">
-                            <span class="px-2 py-1 text-xs font-semibold rounded
-                                {% if alert.severity == 'kritik' %}
-                                    bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200
-                                {% elif alert.severity == 'yuksek' %}
-                                    bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200
-                                {% elif alert.severity == 'orta' %}
-                                    bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200
-                                {% else %}
-                                    bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200
-                                {% endif %}">
+                            {% if alert.severity == 'kritik' %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200">
+                            {% elif alert.severity == 'yuksek' %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200">
+                            {% elif alert.severity == 'orta' %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200">
+                            {% else %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
+                            {% endif %}
                                 {{ alert.severity.upper() }}
                             </span>
                             <span class="text-xs text-slate-500 dark:text-slate-400">
@@ -497,7 +570,7 @@
                         </div>
                         <div class="mt-2">
                             <div class="w-full bg-red-200 rounded-full h-1.5">
-                                <div class="bg-red-600 h-1.5 rounded-full" style="width: {{ [item.yuzde, 100]|min }}%">
+                                <div class="bg-red-600 h-1.5 rounded-full" style="width: {% if item.yuzde > 100 %}100{% else %}{{ item.yuzde }}{% endif %}%;">
                                 </div>
                             </div>
                         </div>
@@ -616,93 +689,96 @@
 </div>
 
 <script>
+    // Utility: Fetch wrapper
+    async function fetchWithLoading(url, options = {}) {
+        return fetch(url);
+    }
+
     // Ürün Bazlı Tüketim Grafiği
     {% if urun_labels %}
-    const urunTuketimCtx = document.getElementById( 'urunTuketimChart' );
-    if ( urunTuketimCtx ) {
+    (function() {
+        const urunTuketimCtx = document.getElementById('urunTuketimChart');
+        if (!urunTuketimCtx) return;
+        
         // Gradient oluştur
-        const gradient = urunTuketimCtx.getContext( '2d' ).createLinearGradient( 0, 0, 0, 400 );
-        gradient.addColorStop( 0, 'rgba(59, 130, 246, 0.8)' );
-        gradient.addColorStop( 0.5, 'rgba(99, 102, 241, 0.6)' );
-        gradient.addColorStop( 1, 'rgba(139, 92, 246, 0.4)' );
+        const gradient = urunTuketimCtx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.8)');
+        gradient.addColorStop(0.5, 'rgba(99, 102, 241, 0.6)');
+        gradient.addColorStop(1, 'rgba(139, 92, 246, 0.4)');
 
-        new Chart( urunTuketimCtx, {
+        new Chart(urunTuketimCtx, {
             type: 'bar',
             data: {
                 labels: {{ urun_labels | tojson }},
-    datasets: [{
-        label: 'Tüketim Miktarı',
-        data: {{ urun_tuketim_miktarlari | tojson }},
-        backgroundColor: gradient,
-        borderColor: 'rgba(99, 102, 241, 1)',
-        borderWidth: 2,
-        borderRadius: 8,
-        borderSkipped: false,
+                datasets: [{
+                    label: 'Tüketim Miktarı',
+                    data: {{ urun_tuketim_miktarlari | tojson }},
+                    backgroundColor: gradient,
+                    borderColor: 'rgba(99, 102, 241, 1)',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    borderSkipped: false
                 }]
             },
-    options: {
-        responsive: true,
-            maintainAspectRatio: false,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
-            legend: {
-                display: false
-            },
-            title: {
-                display: false
-            },
-            tooltip: {
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 12,
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
                         titleFont: {
-                    size: 14,
-                        weight: 'bold'
-                },
-                bodyFont: {
-                    size: 13
-                },
-                callbacks: {
-                    label: function( context ) {
-                        return ' Tüketim: ' + context.parsed.y + ' adet';
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        callbacks: {
+                            label: function(context) {
+                                return ' Tüketim: ' + context.parsed.y + ' adet';
+                            }
+                        }
                     }
-                }
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                    grid: {
-                    color: 'rgba(0, 0, 0, 0.05)',
-                        drawBorder: false
                 },
-                ticks: {
-                    font: {
-                        size: window.innerWidth < 768 ? 10 : 11
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            precision: 0
+                        }
                     },
-                    color: '#64748b',
-                        precision: 0
-                }
-            },
-            x: {
-                grid: {
-                    display: false
-                },
-                ticks: {
-                    font: {
-                        size: window.innerWidth < 768 ? 10 : 11
-                    },
-                    color: '#64748b',
-                        maxRotation: 45,
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: window.innerWidth < 768 ? 10 : 11
+                            },
+                            color: '#64748b',
+                            maxRotation: 45,
                             minRotation: 45
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeInOutQuart'
                 }
             }
-        },
-        animation: {
-            duration: 1000,
-                easing: 'easeInOutQuart'
-        }
-    }
         });
-    }
+    })();
     {% endif %}
 
     

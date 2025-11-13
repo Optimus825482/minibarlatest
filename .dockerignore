@@ -63,6 +63,9 @@ backups/
 uploads/
 static/uploads/
 
+# ML Models (runtime'da oluşturulacak)
+ml_models/
+
 # Documentation
 docs/
 *.md

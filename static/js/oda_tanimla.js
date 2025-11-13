@@ -4,7 +4,7 @@
  */
 
 // Global değişkenler
-let yeniEklenenOdaId = null;
+var yeniEklenenOdaId = yeniEklenenOdaId || null;
 
 /**
  * Yeni oda modal'ını aç

@@ -6,6 +6,7 @@ Anomali tespit motoru: Z-Score ve Isolation Forest algoritmaları
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import func
 import numpy as np
+import pickle
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,6 +17,20 @@ class AnomalyDetector:
     
     def __init__(self, db):
         self.db = db
+        
+        # ModelManager instance oluştur
+        from utils.ml.model_manager import ModelManager
+        self.model_manager = ModelManager(db)
+        
+        # Fallback tracking
+        self.fallback_count = 0
+        self.total_detections = 0
+        self.fallback_reasons = {
+            'file_not_found': 0,
+            'corrupt_file': 0,
+            'load_error': 0,
+            'prediction_error': 0
+        }
     
     def calculate_severity(self, deviation_percent):
         """
@@ -60,6 +75,115 @@ class AnomalyDetector:
         
         return is_anomaly, z_score, mean, std
     
+    def detect_with_model(self, metric_type: str, values: list):
+        """
+        Model ile anomali tespiti (fallback: Z-Score)
+        
+        Args:
+            metric_type: Metrik tipi
+            values: Değerler listesi
+            
+        Returns:
+            Anomali tespit sonucu
+        """
+        self.total_detections += 1
+        
+        try:
+            # Model yükle (dosyadan)
+            model = self.model_manager.load_model_from_file(
+                model_type='isolation_forest',
+                metric_type=metric_type
+            )
+            
+            if model is None:
+                # Fallback: Z-Score kullan
+                self.fallback_count += 1
+                self.fallback_reasons['file_not_found'] += 1
+                
+                logger.warning(
+                    f"⚠️  [FALLBACK_FILE_NOT_FOUND] Model bulunamadı, Z-Score fallback: {metric_type} | "
+                    f"Fallback rate: {self._get_fallback_rate():.1f}%"
+                )
+                
+                # Fallback oranı yüksekse alert oluştur
+                self._check_fallback_rate_alert()
+                
+                return self.detect_with_zscore(values)
+            
+            # Model ile tahmin yap
+            try:
+                values_array = np.array(values).reshape(-1, 1)
+                predictions = model.predict(values_array)
+                
+                # Modeli bellekten temizle
+                del model
+                
+                # -1: anomali, 1: normal
+                is_anomaly = predictions[-1] == -1
+                
+                return is_anomaly
+                
+            except Exception as pred_error:
+                # Prediction hatası - fallback
+                self.fallback_count += 1
+                self.fallback_reasons['prediction_error'] += 1
+                
+                logger.error(
+                    f"❌ [FALLBACK_PREDICTION_ERROR] Model prediction hatası: {metric_type} | "
+                    f"Error: {str(pred_error)} | "
+                    f"Fallback rate: {self._get_fallback_rate():.1f}%"
+                )
+                
+                # Model'i temizle
+                try:
+                    del model
+                except:
+                    pass
+                
+                # Fallback: Z-Score
+                return self.detect_with_zscore(values)
+            
+        except FileNotFoundError as e:
+            # Dosya bulunamadı
+            self.fallback_count += 1
+            self.fallback_reasons['file_not_found'] += 1
+            
+            logger.warning(
+                f"⚠️  [FALLBACK_FILE_NOT_FOUND] Model dosyası bulunamadı: {metric_type} | "
+                f"Fallback rate: {self._get_fallback_rate():.1f}%"
+            )
+            
+            self._check_fallback_rate_alert()
+            return self.detect_with_zscore(values)
+            
+        except (EOFError, pickle.UnpicklingError) as e:
+            # Corrupt file
+            self.fallback_count += 1
+            self.fallback_reasons['corrupt_file'] += 1
+            
+            logger.error(
+                f"❌ [FALLBACK_CORRUPT_FILE] Model dosyası bozuk: {metric_type} | "
+                f"Error: {str(e)} | "
+                f"Fallback rate: {self._get_fallback_rate():.1f}%"
+            )
+            
+            self._check_fallback_rate_alert()
+            return self.detect_with_zscore(values)
+            
+        except Exception as e:
+            # Genel hata
+            self.fallback_count += 1
+            self.fallback_reasons['load_error'] += 1
+            
+            logger.error(
+                f"❌ [FALLBACK_LOAD_ERROR] Model yükleme hatası: {metric_type} | "
+                f"Error: {str(e)} | "
+                f"Fallback rate: {self._get_fallback_rate():.1f}%"
+            )
+            
+            self._check_fallback_rate_alert()
+            return self.detect_with_zscore(values)
+    
     def detect_stok_anomalies(self):
         """
         Stok seviyesi anomalilerini tespit et
@@ -84,10 +208,49 @@ class AnomalyDetector:
                     MLMetric.timestamp >= son_30_gun
                 ).order_by(MLMetric.timestamp).all()
                 
-                if len(metrikler) < 3:
+                if len(metrikler) < 1:
                     continue
                 
                 values = [m.metric_value for m in metrikler]
+                current_value = values[-1]
+                
+                # 🚨 KRİTİK: NEGATİF STOK KONTROLÜ (En yüksek öncelik!)
+                if current_value < 0:
+                    # Negatif stok = KRİTİK anomali
+                    # Son 1 saatte aynı ürün için alert var mı kontrol et
+                    son_1_saat = datetime.now(timezone.utc) - timedelta(hours=1)
+                    existing_alert = MLAlert.query.filter(
+                        MLAlert.alert_type == 'stok_anomali',
+                        MLAlert.entity_type == 'urun',
+                        MLAlert.entity_id == urun.id,
+                        MLAlert.created_at >= son_1_saat,
+                        MLAlert.is_false_positive == False
+                    ).first()
+                    
+                    if not existing_alert:
+                        message = f"🚨 NEGATİF STOK: {urun.urun_adi} - Mevcut stok: {int(current_value)}"
+                        suggested_action = f"ACİL: Stok hareketlerini kontrol edin. Veri tutarsızlığı var!"
+                        
+                        alert = MLAlert(
+                            alert_type='stok_anomali',
+                            severity='kritik',
+                            entity_type='urun',
+                            entity_id=urun.id,
+                            metric_value=current_value,
+                            expected_value=0,
+                            deviation_percent=100,
+                            message=message,
+                            suggested_action=suggested_action
+                        )
+                        self.db.session.add(alert)
+                        alert_count += 1
+                        logger.warning(f"⚠️  NEGATİF STOK ALERT: {urun.urun_adi} = {int(current_value)}")
+                    
+                    continue  # Negatif stok için Z-Score kontrolüne gerek yok
+                
+                # Normal Z-Score anomali tespiti (sadece pozitif stoklar için)
+                if len(metrikler) < 3:
+                    continue
                 
                 # Z-Score ile anomali tespiti
                 is_anomaly, z_score, mean, std = self.detect_with_zscore(values)
@@ -119,6 +282,7 @@ class AnomalyDetector:
                         alert = MLAlert(
                             alert_type='stok_anomali',
                             severity=severity,
+                            entity_type='urun',
                             entity_id=urun.id,
                             metric_value=current_value,
                             expected_value=mean,
@@ -203,6 +367,7 @@ class AnomalyDetector:
                             alert = MLAlert(
                                 alert_type='tuketim_anomali',
                                 severity=severity,
+                                entity_type='oda',
                                 entity_id=oda.id,
                                 metric_value=current_value,
                                 expected_value=mean,
@@ -286,6 +451,7 @@ class AnomalyDetector:
                             alert = MLAlert(
                                 alert_type='dolum_gecikme',
                                 severity=severity,
+                                entity_type='personel',
                                 entity_id=personel.id,
                                 metric_value=current_value,
                                 expected_value=mean,
@@ -364,6 +530,7 @@ class AnomalyDetector:
                             alert = MLAlert(
                                 alert_type='zimmet_fire_yuksek',
                                 severity=severity,
+                                entity_type='personel',
                                 entity_id=personel.id,
                                 metric_value=son_fire,
                                 expected_value=10.0,  # Beklenen fire oranı %10
@@ -388,7 +555,7 @@ class AnomalyDetector:
                     if son_kullanim < 30:
                         son_24_saat = datetime.now(timezone.utc) - timedelta(hours=24)
                         existing_alert = MLAlert.query.filter(
-                            MLAlert.alert_type == 'zimmet_kullanim_dusuk',
+                            MLAlert.alert_type == 'zimmet_fire_yuksek',  # Düzeltildi: zimmet_kullanim_dusuk kaldırıldı
                             MLAlert.entity_id == personel.id,
                             MLAlert.created_at >= son_24_saat,
                             MLAlert.is_false_positive == False
@@ -400,8 +567,9 @@ class AnomalyDetector:
                             suggested_action = "Zimmet kullanımını kontrol edin. Fazla zimmet verilmiş olabilir."
                             
                             alert = MLAlert(
-                                alert_type='zimmet_kullanim_dusuk',
+                                alert_type='zimmet_fire_yuksek',  # Düzeltildi: zimmet_kullanim_dusuk kaldırıldı
                                 severity=severity,
+                                entity_type='personel',
                                 entity_id=personel.id,
                                 metric_value=son_kullanim,
                                 expected_value=70.0,
@@ -465,6 +633,7 @@ class AnomalyDetector:
                     alert = MLAlert(
                         alert_type='bosta_tuketim_var',
                         severity=severity,
+                        entity_type='oda',
                         entity_id=metrik.entity_id,
                         metric_value=metrik.metric_value,
                         expected_value=0.0,
@@ -533,6 +702,7 @@ class AnomalyDetector:
                     alert = MLAlert(
                         alert_type='talep_yanitlanmadi',
                         severity=severity,
+                        entity_type='oda',
                         entity_id=talep.oda_id,
                         metric_value=bekle_sure,
                         expected_value=15.0,  # Beklenen yanıt süresi 15 dakika
@@ -605,6 +775,7 @@ class AnomalyDetector:
                             alert = MLAlert(
                                 alert_type='qr_kullanim_dusuk',
                                 severity=severity,
+                                entity_type='personel',
                                 entity_id=personel.id,
                                 metric_value=son_deger,
                                 expected_value=ortalama,
@@ -657,8 +828,114 @@ class AnomalyDetector:
             else:
                 logger.info("✅ Anomali tespit edilmedi")
             
+            # Fallback istatistiklerini logla
+            fallback_stats = self.get_fallback_stats()
+            if fallback_stats['total_detections'] > 0:
+                logger.info(
+                    f"📊 [FALLBACK_STATS] Fallback kullanımı: {fallback_stats['fallback_rate']:.1f}% | "
+                    f"Total: {fallback_stats['total_detections']} | "
+                    f"Fallback: {fallback_stats['fallback_count']} | "
+                    f"Status: {fallback_stats['status']}"
+                )
+            
             return total_count
             
         except Exception as e:
             logger.error(f"❌ Anomali tespiti hatası: {str(e)}")
             return 0
+
+    def _get_fallback_rate(self) -> float:
+        """
+        Fallback kullanım oranını hesapla
+        
+        Returns:
+            float: Fallback oranı (%)
+        """
+        if self.total_detections == 0:
+            return 0.0
+        return (self.fallback_count / self.total_detections) * 100
+    
+    def _check_fallback_rate_alert(self):
+        """
+        Fallback oranı yüksekse kritik alert oluştur
+        """
+        fallback_rate = self._get_fallback_rate()
+        
+        # %50'den fazla fallback kullanılıyorsa kritik alert
+        if fallback_rate > 50 and self.total_detections >= 10:
+            try:
+                from models import MLAlert
+                
+                # Son 1 saatte aynı alert var mı kontrol et
+                son_1_saat = datetime.now(timezone.utc) - timedelta(hours=1)
+                existing_alert = MLAlert.query.filter(
+                    MLAlert.alert_type == 'stok_anomali',  # En yakın tip
+                    MLAlert.entity_id == 0,  # Sistem seviyesi
+                    MLAlert.message.like('%Fallback%'),
+                    MLAlert.created_at >= son_1_saat
+                ).first()
+                
+                if existing_alert:
+                    return  # Zaten alert var
+                
+                # Yeni alert oluştur
+                alert = MLAlert(
+                    alert_type='stok_anomali',
+                    severity='kritik',
+                    entity_type='sistem',
+                    entity_id=0,  # Sistem seviyesi
+                    metric_value=fallback_rate,
+                    expected_value=10.0,
+                    deviation_percent=(fallback_rate - 10.0) / 10.0 * 100,
+                    message=f"ML Model Fallback oranı kritik seviyede: {fallback_rate:.1f}%",
+                    suggested_action=(
+                        f"Model dosyaları kontrol edilmeli. "
+                        f"Fallback sebepleri: "
+                        f"File not found: {self.fallback_reasons['file_not_found']}, "
+                        f"Corrupt file: {self.fallback_reasons['corrupt_file']}, "
+                        f"Load error: {self.fallback_reasons['load_error']}, "
+                        f"Prediction error: {self.fallback_reasons['prediction_error']}"
+                    ),
+                    created_at=datetime.now(timezone.utc)
+                )
+                
+                self.db.session.add(alert)
+                self.db.session.commit()
+                
+                logger.critical(
+                    f"🚨 [CRITICAL_FALLBACK_RATE] Fallback oranı kritik: {fallback_rate:.1f}% | "
+                    f"Total detections: {self.total_detections} | "
+                    f"Fallback count: {self.fallback_count}"
+                )
+                
+            except Exception as e:
+                logger.error(f"❌ Fallback alert oluşturma hatası: {str(e)}")
+                self.db.session.rollback()
+    
+    def get_fallback_stats(self) -> dict:
+        """
+        Fallback istatistiklerini getir
+        
+        Returns:
+            dict: Fallback istatistikleri
+        """
+        return {
+            'total_detections': self.total_detections,
+            'fallback_count': self.fallback_count,
+            'fallback_rate': round(self._get_fallback_rate(), 2),
+            'fallback_reasons': self.fallback_reasons.copy(),
+            'status': 'critical' if self._get_fallback_rate() > 50 else 
+                     'warning' if self._get_fallback_rate() > 20 else 'ok'
+        }
+    
+    def reset_fallback_stats(self):
+        """Fallback istatistiklerini sıfırla"""
+        self.fallback_count = 0
+        self.total_detections = 0
+        self.fallback_reasons = {
+            'file_not_found': 0,
+            'corrupt_file': 0,
+            'load_error': 0,
+            'prediction_error': 0
+        }
+        logger.info("📊 Fallback istatistikleri sıfırlandı")

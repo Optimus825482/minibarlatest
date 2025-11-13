@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 # Coolify için Docker Compose Konfigürasyonu
 # Not: Coolify kendi orchestration'ını kullanır, bu dosya referans amaçlıdır
@@ -51,21 +51,22 @@ services:
       # Database
       DATABASE_URL: postgresql://${DB_USER:-minibar_user}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-minibar_takip}
       DB_TYPE: postgresql
-      
+
       # Flask
       SECRET_KEY: ${SECRET_KEY}
       FLASK_ENV: production
-      
+
       # ML System
       ML_ENABLED: ${ML_ENABLED:-true}
       ML_DATA_COLLECTION_INTERVAL: ${ML_DATA_COLLECTION_INTERVAL:-900}
       ML_ANOMALY_CHECK_INTERVAL: ${ML_ANOMALY_CHECK_INTERVAL:-300}
-      
+      ML_MODELS_DIR: ${ML_MODELS_DIR:-/app/ml_models}
+
       # Gunicorn
       GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
       GUNICORN_THREADS: ${GUNICORN_THREADS:-4}
       GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-120}
-      
+
       # Timezone
       TZ: Europe/Istanbul
       PYTHONUNBUFFERED: 1
@@ -74,6 +75,7 @@ services:
       - ./xls:/app/xls
       - ./static:/app/static
       - ./backups:/app/backups
+      - ml_models:/app/ml_models
     depends_on:
       postgres:
         condition: service_healthy
@@ -88,6 +90,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  ml_models:
     driver: local
 
 networks:

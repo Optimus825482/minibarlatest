@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+
+{% block title %}Sipariş Listesi - Minibar Takip Sistemi{% endblock %}
+{% block page_title %}Satın Alma Siparişleri{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- İstatistik Kartları -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Toplam Sipariş</dt>
+                            <dd class="text-lg font-medium text-slate-900 dark:text-slate-100">{{ istatistikler.toplam }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Beklemede</dt>
+                            <dd class="text-lg font-medium text-slate-900 dark:text-slate-100">{{ istatistikler.beklemede }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Onaylandı</dt>
+                            <dd class="text-lg font-medium text-slate-900 dark:text-slate-100">{{ istatistikler.onaylandi }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Geciken</dt>
+                            <dd class="text-lg font-medium text-slate-900 dark:text-slate-100">{{ istatistikler.geciken }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hızlı İşlemler -->
+    <div class="flex justify-between items-center">
+        <div class="flex space-x-3">
+            <button onclick="openSiparisModal()" type="button"
+                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Yeni Sipariş Oluştur
+            </button>
+            <a href="{{ url_for('otomatik_siparis_onerileri') }}"
+                class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                Otomatik Öneriler
+            </a>
+        </div>
+    </div>
+
+    <!-- Sipariş Listesi -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4">Sipariş Listesi</h3>
+
+            {% if siparisler %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                    <thead class="bg-slate-50 dark:bg-slate-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Sipariş Tarihi
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Tedarikçi
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Ürün Adedi
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Toplam Miktar
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Durum
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Tedarik Tarihi
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                İşlemler
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                        {% for siparis in siparisler %}
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                                {{ siparis['siparis_tarihi'].strftime('%d.%m.%Y') if siparis['siparis_tarihi'] else '-' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">
+                                {{ siparis.tedarikci.tedarikci_adi if siparis.tedarikci else 'Belirtilmemiş' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                                {{ siparis.detaylar|length }} Ürün
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                                {% set toplam_miktar = siparis.detaylar|sum(attribute='miktar') %}
+                                {{ toplam_miktar }} Adet
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if siparis.durum == 'beklemede' %}
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                    Beklemede
+                                </span>
+                                {% elif siparis.durum == 'teslim_alindi' %}
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                    Tedarik Edildi
+                                </span>
+                                {% elif siparis.durum == 'iptal' %}
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                    İptal Edildi
+                                </span>
+                                {% else %}
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200">
+                                    {{ siparis.durum }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                                {% if siparis.durum == 'teslim_alindi' and siparis.gerceklesen_teslimat_tarihi %}
+                                {{ siparis.gerceklesen_teslimat_tarihi.strftime('%d.%m.%Y') }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                                <a href="{{ url_for('siparis_detay', siparis_id=siparis.id) }}"
+                                    class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
+                                    Detay
+                                </a>
+                                <span class="text-slate-300 dark:text-slate-600">|</span>
+                                <button type="button" onclick="event.preventDefault(); downloadSiparisExcel({{ siparis.id }}); return false;" class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 font-medium">
+                                    Excel
+                                </button>
+                                <span class="text-slate-300 dark:text-slate-600">|</span>
+                                <button onclick="deleteSiparis({{ siparis.id }}, '{{ siparis.siparis_no }}')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 font-medium">
+                                    Sil
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">Henüz sipariş bulunmuyor</h3>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Yeni sipariş oluşturmak için "Yeni Sipariş" butonuna tıklayın.</p>
+                <div class="mt-6">
+                    <a href="{{ url_for('satin_alma_siparis') }}"
+                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Yeni Sipariş Oluştur
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% include 'depo_sorumlusu/siparis_modal.html' %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let siparisUrunCounter = 0;
+
+// Modal aç
+function openSiparisModal() {
+    document.getElementById('siparisModal').classList.remove('hidden');
+    document.getElementById('siparis_tarihi').valueAsDate = new Date();
+    siparisUrunCounter = 0;
+    document.getElementById('siparis_urunler_container').innerHTML = '';
+    addSiparisUrun();
+}
+
+// Modal kapat
+function closeSiparisModal() {
+    document.getElementById('siparisModal').classList.add('hidden');
+    document.getElementById('siparisForm').reset();
+}
+
+// Ürün satırı ekle
+function addSiparisUrun() {
+    siparisUrunCounter++;
+    const rowId = `siparis-urun-row-${siparisUrunCounter}`;
+    
+    const urunRow = document.createElement('div');
+    urunRow.id = rowId;
+    urunRow.className = 'bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3 border border-slate-200 dark:border-slate-600';
+    
+    urunRow.innerHTML = `
+        <div class="grid grid-cols-12 gap-2">
+            <div class="col-span-8">
+                <select name="urun_ids[]" class="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded dark:bg-slate-700" required>
+                    <option value="">Ürün seçiniz...</option>
+                    {% for urun in urunler %}
+                    <option value="{{ urun.id }}">{{ urun.urun_adi }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-span-3">
+                <input type="number" name="miktarlar[]" value="1" min="1" placeholder="Miktar" class="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded dark:bg-slate-700" required>
+            </div>
+            <div class="col-span-1 flex items-center justify-center">
+                <button type="button" onclick="document.getElementById('${rowId}').remove();" class="text-red-600 hover:text-red-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('siparis_urunler_container').appendChild(urunRow);
+}
+
+// Excel indir
+async function downloadSiparisExcel(siparisId) {
+    try {
+        // Eğer loading açıksa kapat
+        if (typeof Swal !== 'undefined' && Swal.isVisible()) {
+            Swal.close();
+        }
+        
+        const response = await fetch(`/siparis-excel-export/${siparisId}`);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `siparis_${siparisId}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Başarılı',
+                text: 'Excel dosyası başarıyla indirildi',
+                icon: 'success',
+                confirmButtonText: 'Tamam'
+            });
+        
+        }
+    } catch (error) {
+        console.error('Excel indirme hatası:', error);
+        if (typeof Swal !== 'undefined') {
+            Swal.close();
+        }
+        alert('Excel dosyası indirilemedi');
+    }
+}
+
+// Sipariş sil
+function deleteSiparis(id, siparisNo) {
+    if (confirm(`${siparisNo} nolu siparişi silmek istediğinizden emin misiniz?`)) {
+        fetch(`/siparis-sil/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Silme işlemi başarısız oldu');
+            }
+        });
+    }
+}
+
+// Sayfa yüklendiğinde loading'i kapat
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof hideLoading === 'function') {
+        hideLoading();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Developer Dashboard - System Monitor</title>
+<!-- Font Awesome - jsdelivr (CORS-free) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" crossorigin="anonymous">
+<style>
+:root{--p:#667eea;--s:#48bb78;--w:#ed8936;--e:#f56565;--g1:#f7fafc;--g2:#e2e8f0;--g7:#2d3748;--g8:#1a202c;--bg:#fff;--text:#2d3748;--border:#e2e8f0}
+*{box-sizing:border-box}
+body{background:var(--g1);font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0;transition:background .3s;min-height:100vh}
+body.dark{--g1:#1a202c;--g2:#2d3748;--g7:#e2e8f0;--g8:#f7fafc;--bg:#2d3748;--text:#e2e8f0;--border:#4a5568;background:#1a202c}
+.sidebar{position:fixed;left:0;top:0;height:100vh;width:280px;background:var(--bg);border-right:1px solid var(--border);overflow-y:auto;z-index:100;transition:transform .3s;box-shadow:2px 0 10px rgba(0,0,0,.1)}
+.sidebar.collapsed{transform:translateX(-280px)}
+.sidebar-header{padding:1.5rem;background:linear-gradient(135deg,var(--p),#764ba2);color:#fff;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.sidebar-header h2{margin:0;font-size:1.5rem;font-weight:700}
+.sidebar-header p{margin:.5rem 0 0;font-size:.875rem;opacity:.9}
+.menu{padding:1rem}
+.menu-item{display:flex;align-items:center;padding:1rem 1.25rem;color:var(--text);cursor:pointer;border-left:4px solid transparent;transition:all .2s;border-radius:.5rem;margin-bottom:.5rem;font-size:.95rem;font-weight:500}
+.menu-item:hover{background:var(--g2);transform:translateX(4px)}
+.menu-item.active{background:linear-gradient(90deg,rgba(102,126,234,.1),transparent);color:var(--p);border-left-color:var(--p);font-weight:600}
+.menu-item i{width:24px;height:24px;margin-right:1rem;font-size:1.1rem;display:flex;align-items:center;justify-content:center}
+.main{margin-left:280px;padding:2rem;min-height:100vh;transition:margin .3s;max-width:100%}
+.main.expanded{margin-left:0}
+.hamburger{display:none;position:fixed;top:1rem;left:1rem;z-index:101;background:var(--p);color:#fff;border:none;padding:.875rem;border-radius:.5rem;cursor:pointer;box-shadow:0 4px 12px rgba(102,126,234,.4);transition:all .2s}
+.hamburger:hover{transform:scale(1.05);box-shadow:0 6px 16px rgba(102,126,234,.6)}
+.dark-toggle{background:rgba(255,255,255,.2);border:none;color:#fff;padding:.625rem;border-radius:.5rem;cursor:pointer;font-size:1.1rem;transition:all .2s}
+.dark-toggle:hover{background:rgba(255,255,255,.3);transform:rotate(15deg)}
+@media(max-width:768px){.hamburger{display:block}.sidebar{transform:translateX(-280px);width:280px}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:1rem}}
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.card{background:var(--bg);border-radius:.75rem;padding:2rem;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:1.5rem;color:var(--text);border:1px solid var(--border);transition:all .2s}
+.card:hover{box-shadow:0 4px 16px rgba(0,0,0,.12);transform:translateY(-2px)}
+.card h1{font-size:2rem;font-weight:700;margin:0 0 1.5rem;color:var(--text)}
+.card h3{font-size:1.25rem;font-weight:600;margin:0 0 1rem;color:var(--text)}
+.metric{display:inline-block;margin-right:3rem;margin-bottom:1rem}
+.metric-value{font-size:2.5rem;font-weight:700;color:var(--p);line-height:1}
+.metric-label{font-size:.875rem;color:var(--text);opacity:.7;text-transform:uppercase;letter-spacing:.05em;margin-top:.5rem}
+.btn{padding:.5rem 1rem;border-radius:.375rem;border:none;cursor:pointer;font-weight:600;transition:all .2s}
+.btn-primary{background:var(--p);color:#fff}
+.btn-primary:hover{background:#5568d3}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:.75rem;text-align:left;border-bottom:1px solid var(--border);color:var(--text)}
+.table th{font-weight:600}
+.badge{display:inline-block;padding:.25rem .75rem;border-radius:9999px;font-size:.75rem;font-weight:600}
+.badge-success{background:#c6f6d5;color:#22543d}
+.badge-warning{background:#feebc8;color:#7c2d12}
+.badge-error{background:#fed7d7;color:#742a2a}
+.loading{text-align:center;padding:3rem;color:#718096;font-size:1.1rem}
+.loading::after{content:'...';animation:dots 1.5s infinite}
+@keyframes dots{0%,20%{content:''}40%{content:'.'}60%{content:'..'}80%,100%{content:'...'}}
+.chart-container{position:relative;height:300px;margin:1rem 0}
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:1rem;margin:1rem 0}
+h1,h2,h3,h4,h5,h6{color:var(--text);line-height:1.3}
+p{color:var(--text);line-height:1.6}
+input,textarea,select{background:var(--bg);color:var(--text);border:1px solid var(--border);padding:.75rem;border-radius:.5rem;transition:all .2s}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(102,126,234,.1)}
+.btn{color:#fff;transition:all .2s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15)}
+</style>
+</head>
+<body>
+<button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+<div class="sidebar" id="sidebar">
+<div class="sidebar-header">
+<div>
+<h2 style="margin:0;font-size:1.25rem">🔧 Dev Dashboard</h2>
+<p style="margin:.5rem 0 0;font-size:.875rem;opacity:.9">System Monitor</p>
+</div>
+<button class="dark-toggle" onclick="toggleDark()" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button>
+</div>
+<div class="menu">
+<div class="menu-item active" onclick="switchTab('overview')"><i class="fas fa-home"></i>Overview</div>
+<div class="menu-item" onclick="switchTab('cache')"><i class="fas fa-database"></i>Cache</div>
+<div class="menu-item" onclick="switchTab('queries')"><i class="fas fa-search"></i>Queries</div>
+<div class="menu-item" onclick="switchTab('api')"><i class="fas fa-plug"></i>API Metrics</div>
+<div class="menu-item" onclick="switchTab('jobs')"><i class="fas fa-tasks"></i>Jobs</div>
+<div class="menu-item" onclick="switchTab('redis')"><i class="fas fa-server"></i>Redis</div>
+<div class="menu-item" onclick="switchTab('ml')"><i class="fas fa-brain"></i>ML Models</div>
+<div class="menu-item" onclick="switchTab('logs')"><i class="fas fa-file-alt"></i>Logs</div>
+<div class="menu-item" onclick="switchTab('backup')"><i class="fas fa-save"></i>Backup</div>
+<div class="menu-item" onclick="switchTab('config')"><i class="fas fa-cog"></i>Config</div>
+<div class="menu-item" onclick="switchTab('profiler')"><i class="fas fa-tachometer-alt"></i>Profiler</div>
+</div>
+</div>
+<div class="main">
+<div id="overview" class="tab-content active"></div>
+<div id="cache" class="tab-content"></div>
+<div id="queries" class="tab-content"></div>
+<div id="api" class="tab-content"></div>
+<div id="jobs" class="tab-content"></div>
+<div id="redis" class="tab-content"></div>
+<div id="ml" class="tab-content"></div>
+<div id="logs" class="tab-content"></div>
+<div id="backup" class="tab-content"></div>
+<div id="config" class="tab-content"></div>
+<div id="profiler" class="tab-content"></div>
+</div>
+<script>
+let currentTab='overview',cache={},darkMode=false;
+try{darkMode=localStorage.getItem('darkMode')==='true'}catch(e){console.log('localStorage blocked')}
+if(darkMode)document.body.classList.add('dark');
+function toggleSidebar(){const s=document.getElementById('sidebar'),m=document.querySelector('.main');
+s.classList.toggle('open');s.classList.toggle('collapsed');m.classList.toggle('expanded')}
+function toggleDark(){darkMode=!darkMode;document.body.classList.toggle('dark');
+try{localStorage.setItem('darkMode',darkMode)}catch(e){console.log('localStorage blocked')}
+document.querySelector('.dark-toggle i').className=darkMode?'fas fa-sun':'fas fa-moon'}
+function switchTab(tab){document.querySelectorAll('.menu-item').forEach(m=>m.classList.remove('active'));
+event.target.closest('.menu-item').classList.add('active');
+document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+document.getElementById(tab).classList.add('active');
+currentTab=tab;if(!cache[tab])loadTab(tab);
+if(window.innerWidth<=768)toggleSidebar()}
+async function api(url){try{const r=await fetch(url);return await r.json()}catch(e){return{success:false,error:e.message}}}
+function loadTab(tab){const el=document.getElementById(tab);el.innerHTML='<div class="loading">Loading...</div>';
+switch(tab){case 'overview':loadOverview();break;case 'cache':loadCache();break;case 'queries':loadQueries();break;
+case 'api':loadAPI();break;case 'jobs':loadJobs();break;case 'redis':loadRedis();break;case 'ml':loadML();break;
+case 'logs':loadLogs();break;case 'backup':loadBackup();break;case 'config':loadConfig();break;case 'profiler':loadProfiler();break}}
+async function loadOverview(){
+const [health,metrics,errors]=await Promise.all([
+api('/developer/api/system-health'),
+api('/developer/api/metrics/summary'),
+api('/developer/api/logs/filter?level=ERROR&lines=5')
+]);
+const uptime=health.uptime||0;
+const uptimeStr=uptime>86400?`${Math.floor(uptime/86400)}d ${Math.floor((uptime%86400)/3600)}h`:`${Math.floor(uptime/3600)}h ${Math.floor((uptime%3600)/60)}m`;
+document.getElementById('overview').innerHTML=`
+
+
+<div class="chart-grid">
+<div class="card">
+<h3>Performance Metrics</h3>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-bottom:1rem">
+<div class="metric"><div class="metric-value" style="font-size:1.8rem">${metrics.data?.requests_per_sec||0}</div><div class="metric-label">Req/sec</div></div>
+<div class="metric"><div class="metric-value" style="font-size:1.8rem;color:var(--w)">${(metrics.data?.error_rate*100||0).toFixed(2)}%</div><div class="metric-label">Error Rate</div></div>
+<div class="metric"><div class="metric-value" style="font-size:1.8rem">${metrics.data?.avg_response_time||0}ms</div><div class="metric-label">Avg Response</div></div>
+</div>
+<div class="chart-container"><canvas id="perfChart"></canvas></div>
+</div>
+<div class="card">
+<h3>System Health Status</h3>
+<div style="padding:1rem 0">
+<div style="display:flex;align-items:center;margin-bottom:1rem">
+<div style="width:12px;height:12px;border-radius:50%;background:${health.cpu?.percent>80?'var(--e)':health.cpu?.percent>60?'var(--w)':'var(--s)'};margin-right:1rem"></div>
+<span style="flex:1">CPU</span>
+<span style="font-weight:600">${health.cpu?.percent||0}%</span>
+</div>
+<div style="display:flex;align-items:center;margin-bottom:1rem">
+<div style="width:12px;height:12px;border-radius:50%;background:${health.memory?.percent>80?'var(--e)':health.memory?.percent>60?'var(--w)':'var(--s)'};margin-right:1rem"></div>
+<span style="flex:1">Memory</span>
+<span style="font-weight:600">${health.memory?.percent||0}%</span>
+</div>
+<div style="display:flex;align-items:center;margin-bottom:1rem">
+<div style="width:12px;height:12px;border-radius:50%;background:${health.disk?.percent>80?'var(--e)':health.disk?.percent>60?'var(--w)':'var(--s)'};margin-right:1rem"></div>
+<span style="flex:1">Disk</span>
+<span style="font-weight:600">${health.disk?.percent||0}%</span>
+</div>
+<div style="display:flex;align-items:center">
+<div style="width:12px;height:12px;border-radius:50%;background:${health.database?.status=='healthy'?'var(--s)':'var(--e)'};margin-right:1rem"></div>
+<span style="flex:1">Database</span>
+<span style="font-weight:600">${health.database?.status||'N/A'}</span>
+</div>
+</div>
+</div>
+</div>
+<div class="card">
+<h3>Top Endpoints (Last Hour)</h3>
+<table class="table"><thead><tr><th>Endpoint</th><th>Requests</th><th>Avg Time</th><th>Status</th></tr></thead><tbody>
+${(metrics.data?.top_endpoints||[]).slice(0,5).map(e=>`<tr>
+<td>${e.endpoint}</td>
+<td>${e.count}</td>
+<td>${e.avg_time}ms</td>
+<td><span class="badge badge-${e.error_rate>5?'error':e.error_rate>2?'warning':'success'}">${(e.error_rate||0).toFixed(1)}%</span></td>
+</tr>`).join('')||'<tr><td colspan="4">No data</td></tr>'}
+</tbody></table>
+</div>
+<div class="card">
+<h3>Recent Errors</h3>
+<div style="max-height:300px;overflow-y:auto">
+${(errors.data||[]).length?errors.data.map(e=>`
+<div style="padding:1rem;margin-bottom:.5rem;background:var(--g1);border-left:3px solid var(--e);border-radius:.5rem">
+<div style="display:flex;justify-content:space-between;margin-bottom:.5rem">
+<span style="font-weight:600;color:var(--e)">${e.level||'ERROR'}</span>
+<span style="font-size:.875rem;opacity:.7">${e.timestamp||''}</span>
+</div>
+<div style="font-size:.875rem">${(e.message||e).substring(0,150)}...</div>
+</div>
+`).join(''):'<p style="text-align:center;padding:2rem;opacity:.5">No recent errors</p>'}
+</div>
+</div>
+`;
+if(metrics.data?.performance_history){
+const labels=metrics.data.performance_history.map(p=>p.time);
+const cpu=metrics.data.performance_history.map(p=>p.cpu);
+const memory=metrics.data.performance_history.map(p=>p.memory);
+createLineChart('perfChart',labels,[
+{label:'CPU %',data:cpu},
+{label:'Memory %',data:memory}
+]);
+}
+cache.overview=true}
+async function loadCache(){const d=await api('/developer/api/cache/stats');
+document.getElementById('cache').innerHTML=`<h1>Cache Management</h1>
+<div class="card"><h3>Stats</h3><p>Total Keys: ${d.data?.total_keys||0}</p><p>Memory: ${d.data?.used_memory_human||'0B'}</p>
+<p>Hit Rate: ${d.data?.hit_rate||0}%</p><button class="btn btn-primary" onclick="clearCache()">Clear Cache</button></div>`;
+cache.cache=true}
+async function clearCache(){
+if(confirm('Clear all cache?')){
+const result=await fetch('/developer/api/cache/clear',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({pattern:'*'})
+});
+const data=await result.json();
+if(data.success){alert('✅ Cache cleared!');loadCache()}else{alert('❌ Failed: '+data.error)}
+}}
+
+async function loadQueries(){const d=await api('/developer/api/queries/recent?limit=20');
+let html='<h1>Query Analyzer</h1><div class="card"><h3>Recent Queries</h3><table class="table"><thead><tr><th>Query</th><th>Time</th><th>Endpoint</th></tr></thead><tbody>';
+(d.data||[]).forEach(q=>html+=`<tr><td>${q.query_text.substring(0,50)}...</td><td>${q.execution_time}s</td><td>${q.endpoint||'-'}</td></tr>`);
+html+='</tbody></table></div>';document.getElementById('queries').innerHTML=html;cache.queries=true}
+async function loadAPI(){loadAPIWithCharts()}
+async function loadJobs(){const d=await api('/developer/api/jobs/active');
+let html='<h1>Background Jobs</h1><div class="card"><h3>Active Jobs</h3>';
+if(d.data?.length){html+='<table class="table"><thead><tr><th>Job</th><th>Status</th><th>Started</th></tr></thead><tbody>';
+d.data.forEach(j=>html+=`<tr><td>${j.job_name}</td><td><span class="badge badge-${j.status=='running'?'success':'warning'}">${j.status}</span></td><td>${j.started_at||'-'}</td></tr>`);
+html+='</tbody></table>'}else{html+='<p>No active jobs</p>'}
+html+='</div>';document.getElementById('jobs').innerHTML=html;cache.jobs=true}
+async function loadRedis(){const d=await api('/developer/api/redis/summary');
+document.getElementById('redis').innerHTML=`<h1>Redis Monitor</h1>
+<div class="card"><h3>Status</h3><p>Connected: ${d.data?.connected?'✅ Yes':'❌ No'}</p>
+<p>Memory: ${d.data?.used_memory_human||'0B'}</p><p>Clients: ${d.data?.connected_clients||0}</p>
+<p>Hit Rate: ${d.data?.hit_rate||0}%</p></div>`;cache.redis=true}
+async function loadML(){
+const models=await api('/developer/api/ml/models');
+const summary=await api('/developer/api/ml/summary');
+let html='<h1>ML Model Metrics</h1>';
+
+// Model yoksa uyarı göster
+if(!models.data || models.data.length===0){
+html+=`<div class="card" style="text-align:center;padding:4rem">
+<i class="fas fa-brain" style="font-size:4rem;color:var(--g2);margin-bottom:1rem"></i>
+<h2 style="color:var(--text);margin-bottom:1rem">Henüz ML Model Yok</h2>
+<p style="color:var(--text);opacity:.7;font-size:1.1rem">Sistemde kayıtlı makine öğrenmesi modeli bulunmuyor.</p>
+<p style="color:var(--text);opacity:.5;margin-top:1rem">ML model eklemek için utils/monitoring/ml_metrics.py dosyasını kullanın.</p>
+</div>`;
+document.getElementById('ml').innerHTML=html;
+cache.ml=true;
+return;
+}
+
+// Model varsa normal göster
+html+='<div class="card"><h3>Summary</h3>';
+html+=`<div class="metric"><div class="metric-value">${summary.data?.total_models||0}</div><div class="metric-label">Total Models</div></div>`;
+html+=`<div class="metric"><div class="metric-value">${summary.data?.active_models||0}</div><div class="metric-label">Active</div></div>`;
+html+=`<div class="metric"><div class="metric-value">${summary.data?.avg_inference_time_ms||0}ms</div><div class="metric-label">Avg Inference</div></div>`;
+html+=`<div class="metric"><div class="metric-value">${(summary.data?.error_rate*100||0).toFixed(2)}%</div><div class="metric-label">Error Rate</div></div>`;
+html+='</div>';
+html+='<div class="chart-grid">';
+html+='<div class="card"><h3>Model Performance</h3><div class="chart-container"><canvas id="mlPerformanceChart"></canvas></div></div>';
+html+='<div class="card"><h3>Prediction Volume</h3><div class="chart-container"><canvas id="mlVolumeChart"></canvas></div></div>';
+html+='</div>';
+html+='<div class="card"><h3>Models</h3><table class="table"><thead><tr><th>Name</th><th>Version</th><th>Type</th><th>Status</th><th>Accuracy</th><th>Predictions</th></tr></thead><tbody>';
+models.data.forEach(m=>html+=`<tr><td>${m.name}</td><td>${m.version}</td><td>${m.type}</td><td><span class="badge badge-${m.status=='active'?'success':'warning'}">${m.status}</span></td><td>${(m.accuracy*100).toFixed(1)}%</td><td>${m.predictions_count||0}</td></tr>`);
+html+='</tbody></table></div>';
+document.getElementById('ml').innerHTML=html;
+const labels=models.data.map(m=>m.name);
+const accuracy=models.data.map(m=>m.accuracy*100);
+const predictions=models.data.map(m=>m.predictions_count||0);
+createBarChart('mlPerformanceChart',labels,[{label:'Accuracy %',data:accuracy}]);
+createBarChart('mlVolumeChart',labels,[{label:'Predictions',data:predictions}]);
+cache.ml=true}
+async function loadLogs(){
+const logs=await api('/developer/api/logs/tail?lines=100');
+const stats=await api('/developer/api/logs/stats?lines=1000');
+let html='<h1>Real-time Log Viewer</h1>';
+html+='<div class="card"><h3>Log Statistics</h3>';
+html+=`<div class="metric"><div class="metric-value">${stats.data?.total_lines||0}</div><div class="metric-label">Total Lines</div></div>`;
+html+=`<div class="metric"><div class="metric-value">${stats.data?.error_count||0}</div><div class="metric-label">Errors</div></div>`;
+html+=`<div class="metric"><div class="metric-value">${stats.data?.warning_count||0}</div><div class="metric-label">Warnings</div></div>`;
+html+=`<div class="metric"><div class="metric-value">${stats.data?.info_count||0}</div><div class="metric-label">Info</div></div>`;
+html+='</div>';
+html+='<div class="card"><h3>Log Level Distribution</h3><div class="chart-container"><canvas id="logLevelChart"></canvas></div></div>';
+html+='<div class="card">';
+html+='<h3>Recent Logs</h3>';
+html+='<div style="margin-bottom:1rem"><select id="logLevel" onchange="filterLogs()" style="padding:.5rem;border-radius:.375rem;border:1px solid var(--border)">';
+html+='<option value="">All Levels</option><option value="ERROR">ERROR</option><option value="WARNING">WARNING</option><option value="INFO">INFO</option><option value="DEBUG">DEBUG</option></select></div>';
+html+='<div id="logContent" style="background:var(--g8);color:#000000;padding:1rem;border-radius:.5rem;max-height:500px;overflow-y:auto;font-family:monospace;font-size:.875rem">';
+(logs.data||[]).forEach(l=>{
+const level=l.level||'INFO';
+const color=level=='ERROR'?'#f56565':level=='WARNING'?'#ed8936':level=='INFO'?'#48bb78':'#718096';
+html+=`<div style="margin-bottom:.5rem;border-left:3px solid ${color};padding-left:.5rem"><span style="color:${color};font-weight:600">[${level}]</span> ${l.timestamp||''} - ${(l.message||l).replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+});
+html+='</div></div>';
+document.getElementById('logs').innerHTML=html;
+if(stats.data?.by_level){
+const levels=Object.keys(stats.data.by_level);
+const counts=Object.values(stats.data.by_level);
+createPieChart('logLevelChart',levels,counts);
+}
+cache.logs=true}
+async function filterLogs(){
+const level=document.getElementById('logLevel').value;
+const url=level?`/developer/api/logs/filter?level=${level}&lines=100`:'/developer/api/logs/tail?lines=100';
+const d=await api(url);
+let html='';
+(d.data||[]).forEach(l=>{
+const lvl=l.level||'INFO';
+const color=lvl=='ERROR'?'#f56565':lvl=='WARNING'?'#ed8936':lvl=='INFO'?'#48bb78':'#718096';
+html+=`<div style="margin-bottom:.5rem;border-left:3px solid ${color};padding-left:.5rem"><span style="color:${color};font-weight:600">[${lvl}]</span> ${l.timestamp||''} - ${(l.message||l).replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+});
+document.getElementById('logContent').innerHTML=html||'<p>No logs found</p>'}
+async function loadBackup(){
+const d=await api('/developer/api/backup/list');
+let html='<h1>Database Backup/Restore Manager</h1>';
+html+='<div class="card">';
+html+='<h3>Create New Backup</h3>';
+html+='<div style="display:flex;gap:1rem;align-items:center">';
+html+='<input type="text" id="backupDesc" placeholder="Backup description (optional)" style="flex:1;padding:.5rem;border-radius:.375rem;border:1px solid var(--border)">';
+html+='<button class="btn btn-primary" onclick="createBackup()"><i class="fas fa-save"></i> Create Backup</button>';
+html+='</div></div>';
+html+='<div class="card"><h3>Backup Statistics</h3>';
+const totalSize=(d.data||[]).reduce((sum,b)=>sum+(b.file_size_mb||0),0);
+html+=`<div class="metric"><div class="metric-value">${d.data?.length||0}</div><div class="metric-label">Total Backups</div></div>`;
+html+=`<div class="metric"><div class="metric-value">${totalSize.toFixed(2)}MB</div><div class="metric-label">Total Size</div></div>`;
+html+='</div>';
+html+='<div class="card"><h3>Backup History</h3><table class="table"><thead><tr><th>Filename</th><th>Size</th><th>Description</th><th>Created</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+(d.data||[]).forEach(b=>{
+const statusBadge=b.status=='completed'?'success':b.status=='failed'?'error':'warning';
+html+=`<tr><td>${b.filename}</td><td>${b.file_size_mb||0}MB</td><td>${b.description||'-'}</td><td>${new Date(b.created_at).toLocaleString()}</td><td><span class="badge badge-${statusBadge}">${b.status}</span></td><td>`;
+html+=`<button class="btn" onclick="restoreBackup('${b.backup_id}')" title="Restore"><i class="fas fa-undo"></i></button> `;
+html+=`<button class="btn" onclick="deleteBackup('${b.backup_id}')" title="Delete" style="background:#f56565"><i class="fas fa-trash"></i></button>`;
+html+=`</td></tr>`;
+});
+html+='</tbody></table></div>';
+document.getElementById('backup').innerHTML=html;
+cache.backup=true}
+async function createBackup(){
+const desc=document.getElementById('backupDesc')?.value||'';
+if(confirm('Create new backup?')){
+const result=await fetch('/developer/api/backup/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({description:desc})});
+const data=await result.json();
+if(data.success){alert('Backup created successfully!');loadBackup()}else{alert('Backup failed: '+data.error)}
+}}
+async function restoreBackup(id){
+if(confirm('⚠️ WARNING: This will restore the backup and overwrite current data!\n\nAre you sure?')){
+const result=await fetch(`/developer/api/backup/${id}/restore`,{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({})
+});
+const data=await result.json();
+if(data.success){alert('✅ Backup restored successfully!')}else{alert('❌ Restore failed: '+data.error)}
+}}
+async function deleteBackup(id){
+if(confirm('Delete this backup permanently?')){
+const result=await fetch(`/developer/api/backup/${id}`,{method:'DELETE'});
+const data=await result.json();
+if(data.success){alert('Backup deleted');loadBackup()}else{alert('Delete failed: '+data.error)}
+}}
+
+// Chart.js helper functions
+let charts={};
+function createChart(canvasId,type,data,options={}){
+if(charts[canvasId])charts[canvasId].destroy();
+const ctx=document.getElementById(canvasId);
+if(!ctx)return null;
+const isDark=document.body.classList.contains('dark');
+const defaultOptions={
+responsive:true,maintainAspectRatio:false,
+plugins:{legend:{labels:{color:isDark?'#e2e8f0':'#2d3748'}}},
+scales:type!=='pie'&&type!=='doughnut'?{
+y:{ticks:{color:isDark?'#e2e8f0':'#718096'},grid:{color:isDark?'#4a5568':'#e2e8f0'}},
+x:{ticks:{color:isDark?'#e2e8f0':'#718096'},grid:{color:isDark?'#4a5568':'#e2e8f0'}}
+}:{}
+};
+charts[canvasId]=new Chart(ctx,{type,data,options:{...defaultOptions,...options}});
+return charts[canvasId]}
+
+function createLineChart(canvasId,labels,datasets){
+return createChart(canvasId,'line',{labels,datasets:datasets.map((d,i)=>({
+...d,borderColor:['#667eea','#48bb78','#ed8936','#f56565'][i%4],
+backgroundColor:['rgba(102,126,234,0.1)','rgba(72,187,120,0.1)','rgba(237,137,54,0.1)','rgba(245,101,101,0.1)'][i%4],
+tension:0.4,fill:true
+}))})}
+
+function createBarChart(canvasId,labels,datasets){
+return createChart(canvasId,'bar',{labels,datasets:datasets.map((d,i)=>({
+...d,backgroundColor:['#667eea','#48bb78','#ed8936','#f56565'][i%4]
+}))})}
+
+function createPieChart(canvasId,labels,data){
+return createChart(canvasId,'pie',{labels,datasets:[{
+data,backgroundColor:['#667eea','#48bb78','#ed8936','#f56565','#9f7aea','#38b2ac']
+}]})}
+
+// Enhanced loadAPI with charts
+async function loadAPIWithCharts(){
+const d=await api('/developer/api/metrics/endpoints');
+let html='<h1>API Metrics</h1>';
+html+='<div class="chart-grid">';
+html+='<div class="card"><h3>Response Times</h3><div class="chart-container"><canvas id="apiResponseChart"></canvas></div></div>';
+html+='<div class="card"><h3>Request Volume</h3><div class="chart-container"><canvas id="apiVolumeChart"></canvas></div></div>';
+html+='</div>';
+html+='<div class="card"><h3>Endpoints</h3><table class="table"><thead><tr><th>Endpoint</th><th>Requests</th><th>Avg Time</th><th>Errors</th></tr></thead><tbody>';
+(d.data||[]).forEach(e=>html+=`<tr><td>${e.endpoint}</td><td>${e.request_count}</td><td>${e.avg_response_time}s</td><td>${e.error_count}</td></tr>`);
+html+='</tbody></table></div>';
+document.getElementById('api').innerHTML=html;
+if(d.data?.length){
+const labels=d.data.slice(0,10).map(e=>e.endpoint.split('/').pop()||'root');
+const times=d.data.slice(0,10).map(e=>e.avg_response_time);
+const volumes=d.data.slice(0,10).map(e=>e.request_count);
+createLineChart('apiResponseChart',labels,[{label:'Avg Response Time (s)',data:times}]);
+createBarChart('apiVolumeChart',labels,[{label:'Request Count',data:volumes}]);
+}
+cache.api=true}
+
+async function loadConfig(){
+const files=await api('/developer/api/config/files');
+let html='<h1>System Configuration Editor</h1>';
+html+='<div class="card"><h3>Configuration Files</h3><table class="table"><thead><tr><th>Filename</th><th>Size</th><th>Modified</th><th>Actions</th></tr></thead><tbody>';
+(files.data||[]).forEach(f=>{
+if(f.exists){
+html+=`<tr><td>${f.filename}</td><td>${(f.file_size/1024).toFixed(2)}KB</td><td>${new Date(f.modified_at).toLocaleString()}</td><td>`;
+html+=`<button class="btn btn-primary" onclick="editConfig('${f.filename}')"><i class="fas fa-edit"></i> Edit</button> `;
+html+=`<button class="btn" onclick="viewHistory('${f.filename}')"><i class="fas fa-history"></i> History</button>`;
+html+=`</td></tr>`;
+}else{
+html+=`<tr><td>${f.filename}</td><td colspan="3"><span class="badge badge-warning">Not Found</span></td></tr>`;
+}
+});
+html+='</tbody></table></div>';
+html+='<div id="configEditor" style="display:none"></div>';
+document.getElementById('config').innerHTML=html;
+cache.config=true}
+async function editConfig(filename){
+const d=await api(`/developer/api/config/file/${filename}`);
+let html='<div class="card"><h3>Edit: '+filename+'</h3>';
+html+='<textarea id="configContent" style="width:100%;height:400px;font-family:monospace;padding:1rem;border:1px solid var(--border);border-radius:.375rem">'+d.data.content+'</textarea>';
+html+='<div style="margin-top:1rem;display:flex;gap:1rem">';
+html+=`<button class="btn btn-primary" onclick="saveConfig('${filename}')"><i class="fas fa-save"></i> Save</button>`;
+html+=`<button class="btn" onclick="validateConfig('${filename}')"><i class="fas fa-check"></i> Validate</button>`;
+html+=`<button class="btn" onclick="loadConfig()"><i class="fas fa-times"></i> Cancel</button>`;
+html+='</div></div>';
+document.getElementById('configEditor').innerHTML=html;
+document.getElementById('configEditor').style.display='block'}
+async function saveConfig(filename){
+const content=document.getElementById('configContent').value;
+const result=await fetch(`/developer/api/config/file/${filename}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({content,change_reason:'Manual edit from dashboard'})});
+const data=await result.json();
+if(data.success){alert('✅ Config saved!');loadConfig()}else{alert('❌ Save failed: '+data.error)}}
+async function validateConfig(filename){
+const content=document.getElementById('configContent').value;
+const result=await fetch('/developer/api/config/validate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename,content})});
+const data=await result.json();
+if(data.data.valid){alert('✅ Config is valid!')}else{alert('❌ Validation errors:\n'+data.data.errors.map(e=>e.message).join('\n'))}}
+
+async function loadProfiler(){
+const profiles=await api('/developer/api/profiler/list');
+let html='<h1>Performance Profiler</h1>';
+html+='<div class="card"><h3>Start New Profile</h3>';
+html+='<div style="display:flex;gap:1rem;align-items:center">';
+html+='<label>Duration (seconds):</label>';
+html+='<input type="number" id="profileDuration" value="60" min="10" max="300" style="padding:.5rem;border-radius:.375rem;border:1px solid var(--border);width:100px">';
+html+='<button class="btn btn-primary" onclick="startProfiling()"><i class="fas fa-play"></i> Start Profiling</button>';
+html+='</div></div>';
+html+='<div class="card"><h3>Active Profiles</h3>';
+if(profiles.data?.length){
+html+='<table class="table"><thead><tr><th>Profile ID</th><th>Started</th><th>Duration</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+profiles.data.forEach(p=>{
+html+=`<tr><td>${p.profile_id}</td><td>${new Date(p.start_time).toLocaleString()}</td><td>${p.duration}s</td><td><span class="badge badge-${p.status=='running'?'warning':'success'}">${p.status}</span></td><td>`;
+if(p.status=='running'){
+html+=`<button class="btn" onclick="stopProfiling('${p.profile_id}')"><i class="fas fa-stop"></i> Stop</button>`;
+}else{
+html+=`<button class="btn btn-primary" onclick="viewProfile('${p.profile_id}')"><i class="fas fa-eye"></i> View Results</button>`;
+}
+html+=`</td></tr>`;
+});
+html+='</tbody></table>';
+}else{
+html+='<p>No active profiles</p>';
+}
+html+='</div>';
+html+='<div id="profileResults"></div>';
+document.getElementById('profiler').innerHTML=html;
+cache.profiler=true}
+async function startProfiling(){
+const duration=document.getElementById('profileDuration').value;
+const result=await fetch('/developer/api/profiler/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({duration:parseInt(duration)})});
+const data=await result.json();
+if(data.success){alert(`✅ Profiling started! ID: ${data.profile_id}`);loadProfiler()}else{alert('❌ Failed to start profiling')}}
+async function stopProfiling(id){
+const result=await fetch('/developer/api/profiler/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profile_id:id})});
+const data=await result.json();
+if(data.success){alert('✅ Profiling stopped!');loadProfiler()}else{alert('❌ Failed to stop profiling')}}
+async function viewProfile(id){
+const results=await api(`/developer/api/profiler/${id}/results`);
+const cpu=await api(`/developer/api/profiler/${id}/cpu`);
+let html='<div class="card"><h3>Profile Results: '+id+'</h3>';
+html+='<h4>CPU Hotspots</h4><table class="table"><thead><tr><th>Function</th><th>Calls</th><th>Total Time</th><th>Cumulative</th></tr></thead><tbody>';
+(cpu.data||[]).forEach(h=>{
+html+=`<tr><td>${h.function}</td><td>${h.call_count}</td><td>${h.total_time}s</td><td>${h.cumulative_time}s</td></tr>`;
+});
+html+='</tbody></table></div>';
+document.getElementById('profileResults').innerHTML=html}
+
+loadOverview();setInterval(()=>{if(currentTab=='overview')loadOverview()},30000)
+</script>
+<!-- Chart.js - jsdelivr (CORS-free) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+</body>
+</html>

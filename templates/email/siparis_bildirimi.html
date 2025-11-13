@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yeni Satın Alma Siparişi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #3b82f6;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .info-box {
+            background-color: #f9fafb;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border-left: 4px solid #3b82f6;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #6b7280;
+        }
+        .info-value {
+            color: #111827;
+            text-align: right;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #f3f4f6;
+            font-weight: bold;
+            color: #374151;
+        }
+        tfoot td {
+            font-weight: bold;
+            background-color: #f9fafb;
+        }
+        .total {
+            font-size: 20px;
+            color: #3b82f6;
+        }
+        .footer {
+            background-color: #f9fafb;
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+            font-size: 12px;
+        }
+        @media only screen and (max-width: 600px) {
+            .info-row {
+                flex-direction: column;
+            }
+            .info-value {
+                text-align: left;
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Yeni Satın Alma Siparişi</h1>
+        </div>
+        
+        <div class="content">
+            <p>Sayın <strong>{{ siparis.tedarikci.tedarikci_adi }}</strong>,</p>
+            <p>Aşağıdaki detaylarda yeni bir satın alma siparişi oluşturulmuştur:</p>
+            
+            <div class="info-box">
+                <div class="info-row">
+                    <span class="info-label">Sipariş No:</span>
+                    <span class="info-value">{{ siparis.siparis_no }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Sipariş Tarihi:</span>
+                    <span class="info-value">{{ siparis.siparis_tarihi.strftime('%d.%m.%Y %H:%M') }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Tahmini Teslimat:</span>
+                    <span class="info-value">{{ siparis.tahmini_teslimat_tarihi.strftime('%d.%m.%Y') }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Otel:</span>
+                    <span class="info-value">{{ siparis.otel.otel_adi }}</span>
+                </div>
+            </div>
+            
+            <h3 style="color: #374151; margin-top: 30px;">Sipariş Detayları</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ürün</th>
+                        <th style="text-align: center;">Miktar</th>
+                        <th style="text-align: right;">Birim Fiyat</th>
+                        <th style="text-align: right;">Toplam</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detay in siparis.detaylar %}
+                    <tr>
+                        <td>{{ detay.urun.urun_adi }}</td>
+                        <td style="text-align: center;">{{ detay.miktar }} {{ detay.urun.birim }}</td>
+                        <td style="text-align: right;">{{ "%.2f"|format(detay.birim_fiyat) }} ₺</td>
+                        <td style="text-align: right;">{{ "%.2f"|format(detay.toplam_fiyat) }} ₺</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" style="text-align: right;">Genel Toplam:</td>
+                        <td style="text-align: right;" class="total">{{ "%.2f"|format(siparis.toplam_tutar) }} ₺</td>
+                    </tr>
+                </tfoot>
+            </table>
+            
+            {% if siparis.aciklama %}
+            <div class="info-box">
+                <strong style="color: #374151;">Açıklama:</strong>
+                <p style="margin: 10px 0 0 0;">{{ siparis.aciklama }}</p>
+            </div>
+            {% endif %}
+            
+            <p style="margin-top: 30px;">Lütfen siparişi onaylayıp <strong>{{ siparis.tahmini_teslimat_tarihi.strftime('%d.%m.%Y') }}</strong> tarihinde teslim etmenizi rica ederiz.</p>
+            
+            <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
+                Herhangi bir sorunuz olması durumunda lütfen bizimle iletişime geçin.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>Bu otomatik bir bildirimdir. Lütfen yanıtlamayın.</p>
+            <p>&copy; 2024 Minibar Takip Sistemi</p>
+        </div>
+    </div>
+</body>
+</html>

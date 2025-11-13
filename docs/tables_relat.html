@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+table{
+border-collapse: collapse;
+width: 100%;
+}
+th, td{
+text-align: left;
+padding: 8px;
+}
+tr:nth-child(even){
+background-color: #fafafa;
+}
+th{
+background-color: #7799AA;
+color: white;
+}
+</style>
+</head>
+<body>
+<table>
+<tr><th>table_name</th><th>column_name</th><th>data_type</th><th>is_nullable</th><th>column_default</th><th>constraint_type</th><th>foreign_table</th><th>foreign_column</th></tr>
+<tr><td>alembic_version</td><td>version_num</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>id</td><td>integer</td><td>NO</td><td>nextval('audit_logs_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>audit_logs</td><td>id</td></tr>
+<tr><td>audit_logs</td><td>kullanici_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>kullanici_adi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>kullanici_rol</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>islem_tipi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>tablo_adi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>kayit_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>eski_deger</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>yeni_deger</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>degisiklik_ozeti</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>http_method</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>url</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>endpoint</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>ip_adresi</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>user_agent</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>islem_tarihi</td><td>date</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>aciklama</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>basarili</td><td>boolean</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>audit_logs</td><td>hata_mesaji</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>background_jobs</td><td>id</td><td>integer</td><td>NO</td><td>nextval('background_jobs_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>background_jobs</td><td>id</td></tr>
+<tr><td>background_jobs</td><td>job_id</td><td>character varying</td><td>NO</td><td></td><td>UNIQUE</td><td>background_jobs</td><td>job_id</td></tr>
+<tr><td>background_jobs</td><td>job_name</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>background_jobs</td><td>status</td><td>USER-DEFINED</td><td>NO</td><td>'pending'::job_status</td><td></td><td></td><td></td></tr>
+<tr><td>background_jobs</td><td>started_at</td><td>timestamp with time zone</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>background_jobs</td><td>completed_at</td><td>timestamp with time zone</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>background_jobs</td><td>duration</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>background_jobs</td><td>error_message</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>background_jobs</td><td>stack_trace</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>background_jobs</td><td>job_metadata</td><td>jsonb</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>background_jobs</td><td>created_at</td><td>timestamp with time zone</td><td>NO</td><td>CURRENT_TIMESTAMP</td><td></td><td></td><td></td></tr>
+<tr><td>backup_history</td><td>id</td><td>integer</td><td>NO</td><td>nextval('backup_history_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>backup_history</td><td>id</td></tr>
+<tr><td>backup_history</td><td>backup_id</td><td>character varying</td><td>NO</td><td></td><td>UNIQUE</td><td>backup_history</td><td>backup_id</td></tr>
+<tr><td>backup_history</td><td>filename</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>backup_history</td><td>file_size</td><td>bigint</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>backup_history</td><td>description</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>backup_history</td><td>created_at</td><td>timestamp with time zone</td><td>NO</td><td>CURRENT_TIMESTAMP</td><td></td><td></td><td></td></tr>
+<tr><td>backup_history</td><td>created_by</td><td>integer</td><td>YES</td><td></td><td>FOREIGN KEY</td><td>kullanicilar</td><td>id</td></tr>
+<tr><td>backup_history</td><td>status</td><td>USER-DEFINED</td><td>NO</td><td>'in_progress'::backup_status</td><td></td><td></td><td></td></tr>
+<tr><td>backup_history</td><td>restore_count</td><td>integer</td><td>YES</td><td>0</td><td></td><td></td><td></td></tr>
+<tr><td>bedelsiz_kullanim_log</td><td>id</td><td>integer</td><td>NO</td><td>nextval('bedelsiz_kullanim_log_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>bedelsiz_kullanim_log</td><td>oda_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>bedelsiz_kullanim_log</td><td>urun_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>bedelsiz_kullanim_log</td><td>miktar</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>bedelsiz_kullanim_log</td><td>islem_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>bedelsiz_kullanim_log</td><td>kullanilma_tarihi</td><td>timestamp with time zone</td><td>YES</td><td>now()</td><td></td><td></td><td></td></tr>
+<tr><td>bedelsiz_kullanim_log</td><td>limit_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>bedelsiz_limitler</td><td>id</td><td>integer</td><td>NO</td><td>nextval('bedelsiz_limitler_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>bedelsiz_limitler</td><td>oda_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>bedelsiz_limitler</td><td>urun_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>bedelsiz_limitler</td><td>max_miktar</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>bedelsiz_limitler</td><td>kullanilan_miktar</td><td>integer</td><td>YES</td><td>0</td><td></td><td></td><td></td></tr>
+<tr><td>bedelsiz_limitler</td><td>baslangic_tarihi</td><td>timestamp with time zone</td><td>YES</td><td>now()</td><td></td><td></td><td></td></tr>
+<tr><td>bedelsiz_limitler</td><td>bitis_tarihi</td><td>timestamp with time zone</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>bedelsiz_limitler</td><td>limit_tipi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>bedelsiz_limitler</td><td>kampanya_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>config_audit</td><td>id</td><td>integer</td><td>NO</td><td>nextval('config_audit_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>config_audit</td><td>id</td></tr>
+<tr><td>config_audit</td><td>filename</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>config_audit</td><td>old_content</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>config_audit</td><td>new_content</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>config_audit</td><td>changed_by</td><td>integer</td><td>YES</td><td></td><td>FOREIGN KEY</td><td>kullanicilar</td><td>id</td></tr>
+<tr><td>config_audit</td><td>changed_at</td><td>timestamp with time zone</td><td>NO</td><td>CURRENT_TIMESTAMP</td><td></td><td></td><td></td></tr>
+<tr><td>config_audit</td><td>change_reason</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>donemsel_kar_analizi</td><td>id</td><td>integer</td><td>NO</td><td>nextval('donemsel_kar_analizi_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>donemsel_kar_analizi</td><td>otel_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>donemsel_kar_analizi</td><td>donem_tipi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>donemsel_kar_analizi</td><td>baslangic_tarihi</td><td>date</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>donemsel_kar_analizi</td><td>bitis_tarihi</td><td>date</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>donemsel_kar_analizi</td><td>toplam_gelir</td><td>numeric</td><td>YES</td><td>0.00</td><td></td><td></td><td></td></tr>
+<tr><td>donemsel_kar_analizi</td><td>toplam_maliyet</td><td>numeric</td><td>YES</td><td>0.00</td><td></td><td></td><td></td></tr>
+<tr><td>donemsel_kar_analizi</td><td>net_kar</td><td>numeric</td><td>YES</td><td>0.00</td><td></td><td></td><td></td></tr>
+<tr><td>donemsel_kar_analizi</td><td>kar_marji</td><td>double precision</td><td>YES</td><td>0.00</td><td></td><td></td><td></td></tr>
+<tr><td>donemsel_kar_analizi</td><td>analiz_verisi</td><td>jsonb</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>donemsel_kar_analizi</td><td>olusturma_tarihi</td><td>timestamp with time zone</td><td>YES</td><td>now()</td><td></td><td></td><td></td></tr>
+<tr><td>dosya_yuklemeleri</td><td>id</td><td>integer</td><td>NO</td><td>nextval('dosya_yuklemeleri_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>dosya_yuklemeleri</td><td>islem_kodu</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>dosya_yuklemeleri</td><td>dosya_adi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>dosya_yuklemeleri</td><td>dosya_yolu</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>dosya_yuklemeleri</td><td>dosya_tipi</td><td>USER-DEFINED</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>dosya_yuklemeleri</td><td>dosya_boyutu</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>dosya_yuklemeleri</td><td>yukleme_tarihi</td><td>timestamp with time zone</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>dosya_yuklemeleri</td><td>silme_tarihi</td><td>timestamp with time zone</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>dosya_yuklemeleri</td><td>durum</td><td>USER-DEFINED</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>dosya_yuklemeleri</td><td>toplam_satir</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>dosya_yuklemeleri</td><td>basarili_satir</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>dosya_yuklemeleri</td><td>hatali_satir</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>dosya_yuklemeleri</td><td>hata_detaylari</td><td>jsonb</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>dosya_yuklemeleri</td><td>yuklenen_kullanici_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>fiyat_guncelleme_kurallari</td><td>id</td><td>integer</td><td>NO</td><td>nextval('fiyat_guncelleme_kurallari_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>fiyat_guncelleme_kurallari</td><td>urun_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>fiyat_guncelleme_kurallari</td><td>kural_tipi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>fiyat_guncelleme_kurallari</td><td>artirma_orani</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>fiyat_guncelleme_kurallari</td><td>azaltma_orani</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>fiyat_guncelleme_kurallari</td><td>min_fiyat</td><td>numeric</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>fiyat_guncelleme_kurallari</td><td>max_fiyat</td><td>numeric</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>fiyat_guncelleme_kurallari</td><td>aktif</td><td>boolean</td><td>YES</td><td>true</td><td></td><td></td><td></td></tr>
+<tr><td>fiyat_guncelleme_kurallari</td><td>son_uygulama</td><td>timestamp with time zone</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>fiyat_guncelleme_kurallari</td><td>olusturma_tarihi</td><td>timestamp with time zone</td><td>YES</td><td>now()</td><td></td><td></td><td></td></tr>
+<tr><td>hata_loglari</td><td>id</td><td>integer</td><td>NO</td><td>nextval('hata_loglari_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>hata_loglari</td><td>id</td></tr>
+<tr><td>hata_loglari</td><td>kullanici_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>hata_loglari</td><td>hata_tipi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>hata_loglari</td><td>hata_mesaji</td><td>text</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>hata_loglari</td><td>hata_detay</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>hata_loglari</td><td>modul</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>hata_loglari</td><td>url</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>hata_loglari</td><td>method</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>hata_loglari</td><td>ip_adresi</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>hata_loglari</td><td>tarayici</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>hata_loglari</td><td>olusturma_tarihi</td><td>date</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>hata_loglari</td><td>cozuldu</td><td>boolean</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>hata_loglari</td><td>cozum_notu</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kampanyalar</td><td>id</td><td>integer</td><td>NO</td><td>nextval('kampanyalar_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>kampanyalar</td><td>kampanya_adi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kampanyalar</td><td>baslangic_tarihi</td><td>timestamp with time zone</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kampanyalar</td><td>bitis_tarihi</td><td>timestamp with time zone</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kampanyalar</td><td>urun_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kampanyalar</td><td>indirim_tipi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kampanyalar</td><td>indirim_degeri</td><td>numeric</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kampanyalar</td><td>min_siparis_miktari</td><td>integer</td><td>YES</td><td>1</td><td></td><td></td><td></td></tr>
+<tr><td>kampanyalar</td><td>max_kullanim_sayisi</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kampanyalar</td><td>kullanilan_sayisi</td><td>integer</td><td>YES</td><td>0</td><td></td><td></td><td></td></tr>
+<tr><td>kampanyalar</td><td>aktif</td><td>boolean</td><td>YES</td><td>true</td><td></td><td></td><td></td></tr>
+<tr><td>katlar</td><td>id</td><td>integer</td><td>NO</td><td>nextval('katlar_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>katlar</td><td>id</td></tr>
+<tr><td>katlar</td><td>otel_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>katlar</td><td>kat_adi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>katlar</td><td>kat_no</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>katlar</td><td>aciklama</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>katlar</td><td>aktif</td><td>boolean</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>katlar</td><td>olusturma_tarihi</td><td>date</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kullanici_otel</td><td>id</td><td>integer</td><td>NO</td><td>nextval('kullanici_otel_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>kullanici_otel</td><td>kullanici_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kullanici_otel</td><td>otel_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kullanici_otel</td><td>olusturma_tarihi</td><td>timestamp with time zone</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kullanicilar</td><td>id</td><td>integer</td><td>NO</td><td>nextval('kullanicilar_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>kullanicilar</td><td>id</td></tr>
+<tr><td>kullanicilar</td><td>kullanici_adi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kullanicilar</td><td>sifre_hash</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kullanicilar</td><td>ad</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kullanicilar</td><td>soyad</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kullanicilar</td><td>email</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kullanicilar</td><td>telefon</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kullanicilar</td><td>rol</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kullanicilar</td><td>aktif</td><td>boolean</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kullanicilar</td><td>olusturma_tarihi</td><td>date</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kullanicilar</td><td>son_giris</td><td>date</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>kullanicilar</td><td>otel_id</td><td>integer</td><td>YES</td><td></td><td>FOREIGN KEY</td><td>oteller</td><td>id</td></tr>
+<tr><td>kullanicilar</td><td>depo_sorumlusu_id</td><td>integer</td><td>YES</td><td></td><td>FOREIGN KEY</td><td>kullanicilar</td><td>id</td></tr>
+<tr><td>minibar_dolum_talepleri</td><td>id</td><td>integer</td><td>NO</td><td>nextval('minibar_dolum_talepleri_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>minibar_dolum_talepleri</td><td>id</td></tr>
+<tr><td>minibar_dolum_talepleri</td><td>oda_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>minibar_dolum_talepleri</td><td>talep_tarihi</td><td>date</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>minibar_dolum_talepleri</td><td>durum</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>minibar_dolum_talepleri</td><td>tamamlanma_tarihi</td><td>date</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>minibar_dolum_talepleri</td><td>notlar</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>minibar_islem_detay</td><td>id</td><td>integer</td><td>NO</td><td>nextval('minibar_islem_detay_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>minibar_islem_detay</td><td>id</td></tr>
+<tr><td>minibar_islem_detay</td><td>islem_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>minibar_islem_detay</td><td>urun_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>minibar_islem_detay</td><td>baslangic_stok</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>minibar_islem_detay</td><td>bitis_stok</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>minibar_islem_detay</td><td>tuketim</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>minibar_islem_detay</td><td>eklenen_miktar</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>minibar_islem_detay</td><td>zimmet_detay_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>minibar_islemleri</td><td>id</td><td>integer</td><td>NO</td><td>nextval('minibar_islemleri_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>minibar_islemleri</td><td>id</td></tr>
+<tr><td>minibar_islemleri</td><td>oda_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>minibar_islemleri</td><td>personel_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>minibar_islemleri</td><td>islem_tipi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>minibar_islemleri</td><td>islem_tarihi</td><td>date</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>minibar_islemleri</td><td>aciklama</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>misafir_kayitlari</td><td>id</td><td>integer</td><td>NO</td><td>nextval('misafir_kayitlari_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>misafir_kayitlari</td><td>oda_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>misafir_kayitlari</td><td>islem_kodu</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>misafir_kayitlari</td><td>misafir_sayisi</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>misafir_kayitlari</td><td>giris_tarihi</td><td>date</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>misafir_kayitlari</td><td>giris_saati</td><td>time without time zone</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>misafir_kayitlari</td><td>cikis_tarihi</td><td>date</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>misafir_kayitlari</td><td>kayit_tipi</td><td>USER-DEFINED</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>misafir_kayitlari</td><td>olusturma_tarihi</td><td>timestamp with time zone</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>misafir_kayitlari</td><td>olusturan_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_alerts</td><td>id</td><td>integer</td><td>NO</td><td>nextval('ml_alerts_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>ml_alerts</td><td>alert_type</td><td>USER-DEFINED</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_alerts</td><td>severity</td><td>USER-DEFINED</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_alerts</td><td>entity_type</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_alerts</td><td>entity_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_alerts</td><td>metric_value</td><td>double precision</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_alerts</td><td>expected_value</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_alerts</td><td>deviation_percent</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_alerts</td><td>message</td><td>text</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_alerts</td><td>suggested_action</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_alerts</td><td>created_at</td><td>timestamp with time zone</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_alerts</td><td>is_read</td><td>boolean</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_alerts</td><td>is_false_positive</td><td>boolean</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_alerts</td><td>resolved_at</td><td>timestamp with time zone</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_alerts</td><td>resolved_by_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>id</td><td>integer</td><td>NO</td><td>nextval('ml_features_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>ml_features</td><td>id</td></tr>
+<tr><td>ml_features</td><td>metric_type</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>entity_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>timestamp</td><td>timestamp with time zone</td><td>NO</td><td>now()</td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>mean_value</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>std_value</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>min_value</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>max_value</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>median_value</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>q25_value</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>q75_value</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>trend_slope</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>trend_direction</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>volatility</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>momentum</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>hour_of_day</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>day_of_week</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>is_weekend</td><td>boolean</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>day_of_month</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>days_since_last_change</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>change_frequency</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>avg_change_magnitude</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>zero_count</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>lag_1</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>lag_7</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>lag_30</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>rolling_mean_7</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>rolling_std_7</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>rolling_mean_30</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>rolling_std_30</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>feature_version</td><td>character varying</td><td>YES</td><td>'1.0'::character varying</td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>extra_features</td><td>jsonb</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_features</td><td>created_at</td><td>timestamp with time zone</td><td>YES</td><td>now()</td><td></td><td></td><td></td></tr>
+<tr><td>ml_metrics</td><td>id</td><td>integer</td><td>NO</td><td>nextval('ml_metrics_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>ml_metrics</td><td>metric_type</td><td>USER-DEFINED</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_metrics</td><td>entity_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_metrics</td><td>metric_value</td><td>double precision</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_metrics</td><td>timestamp</td><td>timestamp with time zone</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_metrics</td><td>extra_data</td><td>jsonb</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_models</td><td>id</td><td>integer</td><td>NO</td><td>nextval('ml_models_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>ml_models</td><td>model_type</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_models</td><td>metric_type</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_models</td><td>model_data</td><td>bytea</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_models</td><td>parameters</td><td>jsonb</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_models</td><td>training_date</td><td>timestamp with time zone</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_models</td><td>accuracy</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_models</td><td>precision</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_models</td><td>recall</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_models</td><td>is_active</td><td>boolean</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_models</td><td>model_path</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_training_logs</td><td>id</td><td>integer</td><td>NO</td><td>nextval('ml_training_logs_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>ml_training_logs</td><td>model_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_training_logs</td><td>training_start</td><td>timestamp with time zone</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_training_logs</td><td>training_end</td><td>timestamp with time zone</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_training_logs</td><td>data_points</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_training_logs</td><td>success</td><td>boolean</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_training_logs</td><td>error_message</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>ml_training_logs</td><td>metrics</td><td>jsonb</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>oda_tipi_satis_fiyatlari</td><td>id</td><td>integer</td><td>NO</td><td>nextval('oda_tipi_satis_fiyatlari_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>oda_tipi_satis_fiyatlari</td><td>oda_tipi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>oda_tipi_satis_fiyatlari</td><td>urun_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>oda_tipi_satis_fiyatlari</td><td>satis_fiyati</td><td>numeric</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>oda_tipi_satis_fiyatlari</td><td>baslangic_tarihi</td><td>timestamp with time zone</td><td>YES</td><td>now()</td><td></td><td></td><td></td></tr>
+<tr><td>oda_tipi_satis_fiyatlari</td><td>bitis_tarihi</td><td>timestamp with time zone</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>oda_tipi_satis_fiyatlari</td><td>aktif</td><td>boolean</td><td>YES</td><td>true</td><td></td><td></td><td></td></tr>
+<tr><td>odalar</td><td>id</td><td>integer</td><td>NO</td><td>nextval('odalar_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>odalar</td><td>id</td></tr>
+<tr><td>odalar</td><td>kat_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>odalar</td><td>oda_no</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>odalar</td><td>oda_tipi</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>odalar</td><td>kapasite</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>odalar</td><td>aktif</td><td>boolean</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>odalar</td><td>olusturma_tarihi</td><td>date</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>odalar</td><td>qr_kod_token</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>odalar</td><td>qr_kod_gorsel</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>odalar</td><td>qr_kod_olusturma_tarihi</td><td>date</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>odalar</td><td>misafir_mesaji</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>oteller</td><td>id</td><td>integer</td><td>NO</td><td>nextval('oteller_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>oteller</td><td>id</td></tr>
+<tr><td>oteller</td><td>ad</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>oteller</td><td>adres</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>oteller</td><td>telefon</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>oteller</td><td>email</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>oteller</td><td>vergi_no</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>oteller</td><td>olusturma_tarihi</td><td>date</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>oteller</td><td>aktif</td><td>boolean</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>oteller</td><td>logo</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>otomatik_raporlar</td><td>id</td><td>integer</td><td>NO</td><td>nextval('otomatik_raporlar_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>otomatik_raporlar</td><td>id</td></tr>
+<tr><td>otomatik_raporlar</td><td>rapor_tipi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>otomatik_raporlar</td><td>baslik</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>otomatik_raporlar</td><td>aciklama</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>otomatik_raporlar</td><td>rapor_verisi</td><td>text</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>otomatik_raporlar</td><td>toplam_urun</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>otomatik_raporlar</td><td>kritik_stok_sayisi</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>otomatik_raporlar</td><td>toplam_deger</td><td>numeric</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>otomatik_raporlar</td><td>olusturan</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>otomatik_raporlar</td><td>olusturma_tarihi</td><td>date</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>personel_zimmet</td><td>id</td><td>integer</td><td>NO</td><td>nextval('personel_zimmet_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>personel_zimmet</td><td>id</td></tr>
+<tr><td>personel_zimmet</td><td>personel_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>personel_zimmet</td><td>zimmet_tarihi</td><td>date</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>personel_zimmet</td><td>teslim_eden_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>personel_zimmet</td><td>durum</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>personel_zimmet</td><td>aciklama</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>personel_zimmet</td><td>iade_tarihi</td><td>timestamp with time zone</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>personel_zimmet_detay</td><td>id</td><td>integer</td><td>NO</td><td>nextval('personel_zimmet_detay_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>personel_zimmet_detay</td><td>id</td></tr>
+<tr><td>personel_zimmet_detay</td><td>zimmet_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>personel_zimmet_detay</td><td>urun_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>personel_zimmet_detay</td><td>miktar</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>personel_zimmet_detay</td><td>kullanilan_miktar</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>personel_zimmet_detay</td><td>kalan_miktar</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>personel_zimmet_detay</td><td>iade_edilen_miktar</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>personel_zimmet_detay</td><td>kritik_stok_seviyesi</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>qr_kod_okutma_loglari</td><td>id</td><td>integer</td><td>NO</td><td>nextval('qr_kod_okutma_loglari_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>qr_kod_okutma_loglari</td><td>id</td></tr>
+<tr><td>qr_kod_okutma_loglari</td><td>oda_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>qr_kod_okutma_loglari</td><td>kullanici_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>qr_kod_okutma_loglari</td><td>okutma_tarihi</td><td>date</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>qr_kod_okutma_loglari</td><td>okutma_tipi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>qr_kod_okutma_loglari</td><td>ip_adresi</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>qr_kod_okutma_loglari</td><td>user_agent</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>qr_kod_okutma_loglari</td><td>basarili</td><td>boolean</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>qr_kod_okutma_loglari</td><td>hata_mesaji</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>query_logs</td><td>id</td><td>integer</td><td>NO</td><td>nextval('query_logs_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>query_logs</td><td>id</td></tr>
+<tr><td>query_logs</td><td>query_text</td><td>text</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>query_logs</td><td>execution_time</td><td>double precision</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>query_logs</td><td>timestamp</td><td>timestamp with time zone</td><td>NO</td><td>CURRENT_TIMESTAMP</td><td></td><td></td><td></td></tr>
+<tr><td>query_logs</td><td>endpoint</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>query_logs</td><td>user_id</td><td>integer</td><td>YES</td><td></td><td>FOREIGN KEY</td><td>kullanicilar</td><td>id</td></tr>
+<tr><td>query_logs</td><td>parameters</td><td>jsonb</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>roi_hesaplamalari</td><td>id</td><td>integer</td><td>NO</td><td>nextval('roi_hesaplamalari_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>roi_hesaplamalari</td><td>otel_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>roi_hesaplamalari</td><td>urun_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>roi_hesaplamalari</td><td>kategori_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>roi_hesaplamalari</td><td>hesaplama_tipi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>roi_hesaplamalari</td><td>baslangic_tarihi</td><td>date</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>roi_hesaplamalari</td><td>bitis_tarihi</td><td>date</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>roi_hesaplamalari</td><td>toplam_yatirim</td><td>numeric</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>roi_hesaplamalari</td><td>toplam_getiri</td><td>numeric</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>roi_hesaplamalari</td><td>net_getiri</td><td>numeric</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>roi_hesaplamalari</td><td>roi_orani</td><td>double precision</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>roi_hesaplamalari</td><td>hesaplama_detaylari</td><td>jsonb</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>roi_hesaplamalari</td><td>olusturma_tarihi</td><td>timestamp with time zone</td><td>YES</td><td>now()</td><td></td><td></td><td></td></tr>
+<tr><td>sezon_fiyatlandirma</td><td>id</td><td>integer</td><td>NO</td><td>nextval('sezon_fiyatlandirma_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>sezon_fiyatlandirma</td><td>sezon_adi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>sezon_fiyatlandirma</td><td>baslangic_tarihi</td><td>date</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>sezon_fiyatlandirma</td><td>bitis_tarihi</td><td>date</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>sezon_fiyatlandirma</td><td>urun_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>sezon_fiyatlandirma</td><td>fiyat_carpani</td><td>double precision</td><td>NO</td><td>1.0</td><td></td><td></td><td></td></tr>
+<tr><td>sezon_fiyatlandirma</td><td>aktif</td><td>boolean</td><td>YES</td><td>true</td><td></td><td></td><td></td></tr>
+<tr><td>sistem_ayarlari</td><td>id</td><td>integer</td><td>NO</td><td>nextval('sistem_ayarlari_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>sistem_ayarlari</td><td>id</td></tr>
+<tr><td>sistem_ayarlari</td><td>anahtar</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>sistem_ayarlari</td><td>deger</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>sistem_ayarlari</td><td>aciklama</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>sistem_loglari</td><td>id</td><td>integer</td><td>NO</td><td>nextval('sistem_loglari_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>sistem_loglari</td><td>id</td></tr>
+<tr><td>sistem_loglari</td><td>kullanici_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>sistem_loglari</td><td>islem_tipi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>sistem_loglari</td><td>modul</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>sistem_loglari</td><td>islem_detay</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>sistem_loglari</td><td>ip_adresi</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>sistem_loglari</td><td>tarayici</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>sistem_loglari</td><td>islem_tarihi</td><td>date</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>stok_hareketleri</td><td>id</td><td>integer</td><td>NO</td><td>nextval('stok_hareketleri_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>stok_hareketleri</td><td>id</td></tr>
+<tr><td>stok_hareketleri</td><td>urun_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>stok_hareketleri</td><td>hareket_tipi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>stok_hareketleri</td><td>miktar</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>stok_hareketleri</td><td>aciklama</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>stok_hareketleri</td><td>islem_yapan_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>stok_hareketleri</td><td>islem_tarihi</td><td>date</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>tedarikciler</td><td>id</td><td>integer</td><td>NO</td><td>nextval('tedarikciler_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>tedarikciler</td><td>tedarikci_adi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>tedarikciler</td><td>iletisim_bilgileri</td><td>jsonb</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>tedarikciler</td><td>aktif</td><td>boolean</td><td>YES</td><td>true</td><td></td><td></td><td></td></tr>
+<tr><td>tedarikciler</td><td>olusturma_tarihi</td><td>timestamp with time zone</td><td>YES</td><td>now()</td><td></td><td></td><td></td></tr>
+<tr><td>tedarikciler</td><td>guncelleme_tarihi</td><td>timestamp with time zone</td><td>YES</td><td>now()</td><td></td><td></td><td></td></tr>
+<tr><td>tuketim_kalibi</td><td>id</td><td>integer</td><td>NO</td><td>nextval('tuketim_kalibi_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>tuketim_kalibi</td><td>urun_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>tuketim_kalibi</td><td>oda_tipi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>tuketim_kalibi</td><td>gunler_haftasi</td><td>jsonb</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>tuketim_kalibi</td><td>saat_araligi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>tuketim_kalibi</td><td>ortalama_tuketim</td><td>double precision</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>tuketim_kalibi</td><td>mevsimsel_degisim</td><td>double precision</td><td>YES</td><td>0.00</td><td></td><td></td><td></td></tr>
+<tr><td>tuketim_kalibi</td><td>olusturma_tarihi</td><td>timestamp with time zone</td><td>YES</td><td>now()</td><td></td><td></td><td></td></tr>
+<tr><td>urun_fiyat_gecmisi</td><td>id</td><td>integer</td><td>NO</td><td>nextval('urun_fiyat_gecmisi_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>urun_fiyat_gecmisi</td><td>urun_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_fiyat_gecmisi</td><td>eski_fiyat</td><td>numeric</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_fiyat_gecmisi</td><td>yeni_fiyat</td><td>numeric</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_fiyat_gecmisi</td><td>degisiklik_tipi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_fiyat_gecmisi</td><td>degisiklik_tarihi</td><td>timestamp with time zone</td><td>YES</td><td>now()</td><td></td><td></td><td></td></tr>
+<tr><td>urun_fiyat_gecmisi</td><td>degisiklik_sebebi</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_fiyat_gecmisi</td><td>olusturan_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_gruplari</td><td>id</td><td>integer</td><td>NO</td><td>nextval('urun_gruplari_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>urun_gruplari</td><td>id</td></tr>
+<tr><td>urun_gruplari</td><td>grup_adi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_gruplari</td><td>aciklama</td><td>text</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_gruplari</td><td>aktif</td><td>boolean</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_gruplari</td><td>olusturma_tarihi</td><td>date</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_tedarikci_fiyatlari</td><td>id</td><td>integer</td><td>NO</td><td>nextval('urun_tedarikci_fiyatlari_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>urun_tedarikci_fiyatlari</td><td>urun_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_tedarikci_fiyatlari</td><td>tedarikci_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_tedarikci_fiyatlari</td><td>alis_fiyati</td><td>numeric</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_tedarikci_fiyatlari</td><td>minimum_miktar</td><td>integer</td><td>YES</td><td>1</td><td></td><td></td><td></td></tr>
+<tr><td>urun_tedarikci_fiyatlari</td><td>baslangic_tarihi</td><td>timestamp with time zone</td><td>YES</td><td>now()</td><td></td><td></td><td></td></tr>
+<tr><td>urun_tedarikci_fiyatlari</td><td>bitis_tarihi</td><td>timestamp with time zone</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_tedarikci_fiyatlari</td><td>aktif</td><td>boolean</td><td>YES</td><td>true</td><td></td><td></td><td></td></tr>
+<tr><td>urun_tedarikci_fiyatlari</td><td>olusturma_tarihi</td><td>timestamp with time zone</td><td>YES</td><td>now()</td><td></td><td></td><td></td></tr>
+<tr><td>urun_tedarikci_fiyatlari</td><td>olusturan_id</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_trend_analizi</td><td>id</td><td>integer</td><td>NO</td><td>nextval('urun_trend_analizi_id_seq'::regclass)</td><td></td><td></td><td></td></tr>
+<tr><td>urun_trend_analizi</td><td>urun_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_trend_analizi</td><td>donem</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_trend_analizi</td><td>baslangic_tarihi</td><td>date</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_trend_analizi</td><td>tuketim_miktari</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_trend_analizi</td><td>tuketim_degeri</td><td>numeric</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_trend_analizi</td><td>onceki_donem_miktari</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_trend_analizi</td><td>degisim_orani</td><td>double precision</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urun_trend_analizi</td><td>trend_yonu</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urunler</td><td>id</td><td>integer</td><td>NO</td><td>nextval('urunler_id_seq'::regclass)</td><td>PRIMARY KEY</td><td>urunler</td><td>id</td></tr>
+<tr><td>urunler</td><td>grup_id</td><td>integer</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urunler</td><td>urun_adi</td><td>character varying</td><td>NO</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urunler</td><td>barkod</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urunler</td><td>birim</td><td>character varying</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urunler</td><td>kritik_stok_seviyesi</td><td>integer</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urunler</td><td>aktif</td><td>boolean</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+<tr><td>urunler</td><td>olusturma_tarihi</td><td>date</td><td>YES</td><td></td><td></td><td></td><td></td></tr>
+</table>
+</body>
+</html>

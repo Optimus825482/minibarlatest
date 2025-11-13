@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dashboard Test</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+body{margin:0;font-family:system-ui;background:#f7fafc}
+.sidebar{position:fixed;left:0;top:0;width:240px;height:100vh;background:#fff;border-right:1px solid #e2e8f0;overflow-y:auto}
+.sidebar-header{padding:1.5rem;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.menu-item{padding:.75rem 1.5rem;cursor:pointer;display:flex;align-items:center}
+.menu-item:hover{background:#f7fafc}
+.menu-item i{margin-right:.75rem}
+.main{margin-left:240px;padding:2rem}
+.card{background:#fff;padding:1.5rem;border-radius:.5rem;box-shadow:0 1px 3px rgba(0,0,0,.1);margin-bottom:1rem}
+</style>
+</head>
+<body>
+<div class="sidebar">
+<div class="sidebar-header">
+<h2 style="margin:0">🔧 Dev Dashboard</h2>
+<p style="margin:.5rem 0 0;font-size:.875rem">System Monitor</p>
+</div>
+<div class="menu-item" onclick="alert('Overview clicked')"><i class="fas fa-home"></i>Overview</div>
+<div class="menu-item" onclick="alert('Cache clicked')"><i class="fas fa-database"></i>Cache</div>
+</div>
+<div class="main">
+<h1>Dashboard Test</h1>
+<div class="card">
+<h3>Test Card</h3>
+<p>If you see this, the template is working!</p>
+<button onclick="testAPI()">Test API</button>
+<div id="result"></div>
+</div>
+</div>
+<script>
+async function testAPI(){
+try{
+const response=await fetch('/developer/api/system-health');
+const data=await response.json();
+document.getElementById('result').innerHTML='<pre>'+JSON.stringify(data,null,2)+'</pre>';
+}catch(e){
+document.getElementById('result').innerHTML='<p style="color:red">Error: '+e.message+'</p>';
+}
+}
+console.log('Dashboard test loaded!');
+</script>
+</body>
+</html>

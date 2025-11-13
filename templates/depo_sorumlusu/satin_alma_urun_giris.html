@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Ürün Fiyat Girişi - {{ siparis.siparis_no }}{% endblock %}
+{% block page_title %}Ürün Fiyat Girişi{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Geri Dön -->
+    <div>
+        <a href="{{ url_for('satin_alma_giris', siparis_id=siparis.id) }}"
+           class="inline-flex items-center px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Geri Dön
+        </a>
+    </div>
+
+    <!-- Satın Alma Bilgileri -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-6">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+            <i class="fas fa-info-circle mr-2"></i>
+            Satın Alma Bilgileri
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <p class="text-sm text-slate-600 dark:text-slate-400">Sipariş No</p>
+                <p class="text-lg font-semibold text-slate-900 dark:text-white">{{ siparis.siparis_no }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-slate-600 dark:text-slate-400">Tedarikçi</p>
+                <p class="text-lg font-semibold text-slate-900 dark:text-white">{{ tedarikci.tedarikci_adi }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-slate-600 dark:text-slate-400">İşlem Tarihi</p>
+                <p class="text-lg font-semibold text-slate-900 dark:text-white">{{ islem_tarihi.strftime('%d.%m.%Y') }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-slate-600 dark:text-slate-400">Otel</p>
+                <p class="text-lg font-semibold text-slate-900 dark:text-white">{{ siparis.otel.ad }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ürün Fiyat Girişi Formu -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-6">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-6">
+            <i class="fas fa-money-bill-wave mr-2"></i>
+            Ürün Fiyatları
+        </h3>
+
+        <form method="POST" action="{{ url_for('satin_alma_urun_giris', siparis_id=siparis.id, tedarikci_id=tedarikci.id, islem_tarihi=islem_tarihi_str) }}" id="fiyatForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                    <thead class="bg-slate-50 dark:bg-slate-900">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                                Ürün
+                            </th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                                Miktar
+                            </th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                                Birim Fiyat (₺) <span class="text-red-500">*</span>
+                            </th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                                Toplam (₺)
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                        {% for detay in detaylar %}
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                            <td class="px-4 py-4">
+                                <div class="text-sm font-medium text-slate-900 dark:text-white">
+                                    {{ detay.urun.urun_adi }}
+                                </div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400">
+                                    {{ detay.urun.birim }}
+                                </div>
+                                <input type="hidden" name="urun_ids[]" value="{{ detay.urun_id }}"/>
+                            </td>
+                            <td class="px-4 py-4 text-center">
+                                <span class="text-sm font-semibold text-slate-900 dark:text-white">
+                                    {{ detay.miktar }}
+                                </span>
+                                <input type="hidden" name="miktarlar[]" value="{{ detay.miktar }}"/>
+                            </td>
+                            <td class="px-4 py-4">
+                                <input type="number" 
+                                       name="birim_fiyatlar[]" 
+                                       step="0.01" 
+                                       min="0"
+                                       value="{{ '%.2f'|format(detay.birim_fiyat) if detay.birim_fiyat else '' }}"
+                                       required
+                                       class="w-full px-3 py-2 text-right border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 fiyat-input"
+                                       data-miktar="{{ detay.miktar }}"
+                                       data-row="{{ loop.index0 }}">
+                            </td>
+                            <td class="px-4 py-4 text-right">
+                                <span class="text-sm font-bold text-slate-900 dark:text-white toplam-cell" data-row="{{ loop.index0 }}">
+                                    0.00 ₺
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="bg-slate-50 dark:bg-slate-900">
+                        <tr>
+                            <td colspan="3" class="px-4 py-4 text-right text-sm font-semibold text-slate-900 dark:text-white">
+                                Genel Toplam:
+                            </td>
+                            <td class="px-4 py-4 text-right">
+                                <span class="text-lg font-bold text-slate-900 dark:text-white" id="genelToplam">
+                                    0.00 ₺
+                                </span>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Butonlar -->
+            <div class="mt-6 flex justify-end gap-3">
+                <a href="{{ url_for('satin_alma_giris', siparis_id=siparis.id) }}"
+                   class="px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-semibold transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Geri
+                </a>
+                <button type="submit"
+                        class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors">
+                    <i class="fas fa-check mr-2"></i>
+                    Satın Alma İşlemini Tamamla
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fiyatInputs = document.querySelectorAll('.fiyat-input');
+    
+    function hesaplaToplam() {
+        let genelToplam = 0;
+        
+        fiyatInputs.forEach(input => {
+            const miktar = parseFloat(input.dataset.miktar) || 0;
+            const birimFiyat = parseFloat(input.value) || 0;
+            const toplam = miktar * birimFiyat;
+            
+            const row = input.dataset.row;
+            const toplamCell = document.querySelector(`.toplam-cell[data-row="${row}"]`);
+            if (toplamCell) {
+                toplamCell.textContent = toplam.toFixed(2) + ' ₺';
+            }
+            
+            genelToplam += toplam;
+        });
+        
+        document.getElementById('genelToplam').textContent = genelToplam.toFixed(2) + ' ₺';
+    }
+    
+    fiyatInputs.forEach(input => {
+        input.addEventListener('input', hesaplaToplam);
+    });
+    
+    // İlk yüklemede hesapla
+    hesaplaToplam();
+});
+</script>
+{% endblock %}

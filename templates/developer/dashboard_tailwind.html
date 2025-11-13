@@ -1,0 +1,813 @@
+{% extends "base.html" %}
+
+{% block title %}Developer Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Light mode (default) */
+    .developer-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 3px solid #667eea;
+        display: inline-block;
+    }
+    
+    .metric-card {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 1px solid #e2e8f0;
+        height: 100%;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        border-color: #667eea;
+    }
+    
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2d3748;
+        line-height: 1;
+        margin: 0.5rem 0;
+    }
+    
+    .metric-label {
+        color: #718096;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    
+    .status-healthy { color: #48bb78; }
+    .status-warning { color: #ed8936; }
+    .status-error { color: #f56565; }
+    
+    .log-container {
+        background: #1a202c;
+        color: #e2e8f0;
+        padding: 1.25rem;
+        border-radius: 0.75rem;
+        max-height: 450px;
+        overflow-y: auto;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 0.8rem;
+        line-height: 1.6;
+    }
+    
+    .error-line {
+        color: #fc8181;
+        background: rgba(245, 101, 101, 0.1);
+        padding: 2px 5px;
+        border-radius: 3px;
+        display: block;
+        margin: 2px 0;
+    }
+    
+    /* Dark mode */
+    @media (prefers-color-scheme: dark) {
+        body {
+            background: #1a202c !important;
+        }
+        
+        .section-title {
+            color: #e2e8f0;
+            border-bottom-color: #667eea;
+        }
+        
+        .metric-card {
+            background: #2d3748;
+            border-color: #4a5568;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .metric-card:hover {
+            background: #374151;
+            border-color: #667eea;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+        
+        .metric-value {
+            color: #e2e8f0;
+        }
+        
+        .metric-label {
+            color: #a0aec0;
+        }
+        
+        /* Dark mode için özel renkler */
+        .bg-white { background: #2d3748 !important; }
+        .bg-gray-50 { background: #374151 !important; }
+        .bg-gray-100 { background: #4a5568 !important; }
+        .text-gray-800 { color: #e2e8f0 !important; }
+        .text-gray-700 { color: #cbd5e0 !important; }
+        .text-gray-600 { color: #a0aec0 !important; }
+        .text-gray-500 { color: #718096 !important; }
+        .border-gray-200 { border-color: #4a5568 !important; }
+        .border-gray-300 { border-color: #4a5568 !important; }
+        
+        /* Renkli arka planlar dark mode'da */
+        .bg-green-50 { background: rgba(72, 187, 120, 0.1) !important; }
+        .bg-yellow-50 { background: rgba(237, 137, 54, 0.1) !important; }
+        .bg-red-50 { background: rgba(245, 101, 101, 0.1) !important; }
+        .bg-blue-50 { background: rgba(102, 126, 234, 0.1) !important; }
+        .bg-purple-50 { background: rgba(159, 122, 234, 0.1) !important; }
+        .bg-cyan-50 { background: rgba(6, 182, 212, 0.1) !important; }
+        .bg-orange-50 { background: rgba(251, 146, 60, 0.1) !important; }
+        
+        /* Border renkler */
+        .border-green-200 { border-color: rgba(72, 187, 120, 0.3) !important; }
+        .border-yellow-200 { border-color: rgba(237, 137, 54, 0.3) !important; }
+        .border-red-200 { border-color: rgba(245, 101, 101, 0.3) !important; }
+        .border-red-300 { border-color: rgba(245, 101, 101, 0.4) !important; }
+        
+        /* Log container dark mode'da daha koyu */
+        .log-container {
+            background: #0f1419;
+            border: 1px solid #4a5568;
+        }
+    }
+    
+    /* Manuel dark mode class desteği */
+    .dark .section-title {
+        color: #e2e8f0;
+    }
+    
+    .dark .metric-card {
+        background: #2d3748;
+        border-color: #4a5568;
+    }
+    
+    .dark .metric-value {
+        color: #e2e8f0;
+    }
+    
+    .dark .metric-label {
+        color: #a0aec0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4">
+    <!-- Header -->
+    <div class="developer-header">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold mb-1"><i class="fas fa-code"></i> Developer Dashboard</h1>
+                <p class="text-sm opacity-90">Sistem Geliştirici Kontrol Paneli</p>
+            </div>
+            <div>
+                <a href="{{ url_for('developer.logout') }}" class="bg-white text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-100 transition text-sm font-semibold inline-block">
+                    <i class="fas fa-sign-out-alt"></i> Çıkış
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
+        <i class="fas fa-exclamation-triangle"></i> {{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Sistem Sağlık Durumu -->
+    <div class="mb-8">
+        <h3 class="section-title"><i class="fas fa-heartbeat"></i> Sistem Sağlık Durumu</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+            <div class="metric-card text-center">
+                <div class="text-5xl mb-3">
+                    <i class="fas fa-database status-healthy"></i>
+                </div>
+                <div class="metric-label">Database</div>
+                <div class="metric-value status-healthy">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+            <div class="metric-card text-center">
+                <div class="text-5xl mb-3 text-blue-500">
+                    <i class="fas fa-microchip"></i>
+                </div>
+                <div class="metric-label">CPU Kullanımı</div>
+                <div class="metric-value">{{ "%.1f"|format(system_metrics.cpu.percent if system_metrics.cpu else 0) }}%</div>
+            </div>
+            <div class="metric-card text-center">
+                <div class="text-5xl mb-3 text-yellow-500">
+                    <i class="fas fa-memory"></i>
+                </div>
+                <div class="metric-label">RAM Kullanımı</div>
+                <div class="metric-value">{{ "%.1f"|format(system_metrics.memory.percent if system_metrics.memory else 0) }}%</div>
+            </div>
+            <div class="metric-card text-center">
+                <div class="text-5xl mb-3 text-red-500">
+                    <i class="fas fa-hdd"></i>
+                </div>
+                <div class="metric-label">Disk Kullanımı</div>
+                <div class="metric-value">{{ "%.1f"|format(system_metrics.disk.percent if system_metrics.disk else 0) }}%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Database İstatistikleri -->
+    <div class="mb-8">
+        <h3 class="section-title"><i class="fas fa-database"></i> Database İstatistikleri</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mt-6">
+            <!-- Kullanıcılar -->
+            <div class="metric-card text-center group hover:scale-105 transition-transform">
+                <div class="w-16 h-16 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-200 transition">
+                    <i class="fas fa-users text-2xl text-blue-600"></i>
+                </div>
+                <div class="metric-value text-2xl">{{ db_stats.users if db_stats.users else 0 }}</div>
+                <div class="metric-label">Kullanıcılar</div>
+            </div>
+            <!-- Oteller -->
+            <div class="metric-card text-center group hover:scale-105 transition-transform">
+                <div class="w-16 h-16 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center group-hover:bg-green-200 transition">
+                    <i class="fas fa-hotel text-2xl text-green-600"></i>
+                </div>
+                <div class="metric-value text-2xl">{{ db_stats.otels if db_stats.otels else 0 }}</div>
+                <div class="metric-label">Oteller</div>
+            </div>
+            <!-- Odalar -->
+            <div class="metric-card text-center group hover:scale-105 transition-transform">
+                <div class="w-16 h-16 mx-auto mb-3 bg-cyan-100 rounded-full flex items-center justify-center group-hover:bg-cyan-200 transition">
+                    <i class="fas fa-door-open text-2xl text-cyan-600"></i>
+                </div>
+                <div class="metric-value text-2xl">{{ db_stats.odas if db_stats.odas else 0 }}</div>
+                <div class="metric-label">Odalar</div>
+            </div>
+            <!-- Rezervasyonlar -->
+            <div class="metric-card text-center group hover:scale-105 transition-transform">
+                <div class="w-16 h-16 mx-auto mb-3 bg-yellow-100 rounded-full flex items-center justify-center group-hover:bg-yellow-200 transition">
+                    <i class="fas fa-calendar-check text-2xl text-yellow-600"></i>
+                </div>
+                <div class="metric-value text-2xl">{{ db_stats.rezervasyons if db_stats.rezervasyons else 0 }}</div>
+                <div class="metric-label">Rezervasyonlar</div>
+            </div>
+            <!-- Misafirler -->
+            <div class="metric-card text-center group hover:scale-105 transition-transform">
+                <div class="w-16 h-16 mx-auto mb-3 bg-red-100 rounded-full flex items-center justify-center group-hover:bg-red-200 transition">
+                    <i class="fas fa-user-friends text-2xl text-red-600"></i>
+                </div>
+                <div class="metric-value text-2xl">{{ db_stats.misafirs if db_stats.misafirs else 0 }}</div>
+                <div class="metric-label">Misafirler</div>
+            </div>
+            <!-- Son 24 Saat -->
+            <div class="metric-card text-center group hover:scale-105 transition-transform bg-gradient-to-br from-purple-50 to-pink-50">
+                <div class="w-16 h-16 mx-auto mb-3 bg-purple-100 rounded-full flex items-center justify-center group-hover:bg-purple-200 transition">
+                    <i class="fas fa-clock text-2xl text-purple-600"></i>
+                </div>
+                <div class="metric-value text-2xl text-purple-600">{{ db_stats.new_rezervasyons_24h if db_stats.new_rezervasyons_24h else 0 }}</div>
+                <div class="metric-label">Son 24 Saat</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- İstatistik Kartları -->
+    <div class="mb-8">
+      
+
+        <!-- Ürün İstatistikleri Widget - Gelişmiş -->
+        <div class="metric-card">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-800">
+                    <i class="fas fa-box text-blue-600"></i> Ürün İstatistikleri
+                </h3>
+                <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">
+                    {{ product_stats.total if product_stats.total else 0 }} Ürün
+                </span>
+            </div>
+            
+            <!-- Stok Durum Özeti -->
+            <div class="grid grid-cols-4 gap-2 mb-4">
+                <div class="text-center p-2 bg-green-50 rounded-lg border border-green-200">
+                    <div class="text-lg font-bold text-green-600">{{ product_stats.normal_stok }}</div>
+                    <div class="text-xs text-gray-600">Normal</div>
+                </div>
+                <div class="text-center p-2 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div class="text-lg font-bold text-yellow-600">{{ product_stats.dusuk_stok }}</div>
+                    <div class="text-xs text-gray-600">Düşük</div>
+                </div>
+                <div class="text-center p-2 bg-red-50 rounded-lg border border-red-200">
+                    <div class="text-lg font-bold text-red-600">{{ product_stats.kritik }}</div>
+                    <div class="text-xs text-gray-600">Kritik</div>
+                </div>
+                <div class="text-center p-2 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="text-lg font-bold text-gray-600">{{ product_stats.stoksuz }}</div>
+                    <div class="text-xs text-gray-600">Stoksuz</div>
+                </div>
+            </div>
+            
+            <!-- Detaylı İstatistikler -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-layer-group text-blue-600"></i>
+                        <span class="text-sm text-gray-700">Ürün Grupları</span>
+                    </div>
+                    <span class="font-bold text-gray-800">{{ product_stats.groups }}</span>
+                </div>
+                <div class="flex items-center justify-between p-2 bg-purple-50 rounded-lg">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-cubes text-purple-600"></i>
+                        <span class="text-sm text-gray-700">Toplam Stok</span>
+                    </div>
+                    <span class="font-bold text-purple-600">{{ product_stats.toplam_stok_miktar }}</span>
+                </div>
+                <div class="flex items-center justify-between p-2 bg-green-50 rounded-lg">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-arrow-down text-green-600"></i>
+                        <span class="text-sm text-gray-700">Giriş (24s)</span>
+                    </div>
+                    <span class="font-bold text-green-600">{{ product_stats.giris_24h }}</span>
+                </div>
+                <div class="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-arrow-up text-orange-600"></i>
+                        <span class="text-sm text-gray-700">Çıkış (24s)</span>
+                    </div>
+                    <span class="font-bold text-orange-600">{{ product_stats.cikis_24h }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ürün Grup Detayları -->
+    {% if product_stats.grup_stats %}
+    <div class="mb-8">
+        <h3 class="section-title"><i class="fas fa-layer-group"></i> Ürün Grupları Detay</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mt-6">
+            {% for grup in product_stats.grup_stats %}
+            <div class="metric-card hover:shadow-lg transition">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-bold text-light truncate">{{ grup.ad }}</h4>
+                    {% if grup.kritik_urun > 0 %}
+                    <span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
+                        <i class="fas fa-exclamation-triangle"></i> {{ grup.kritik_urun }}
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-light">Ürün Sayısı</span>
+                        <span class="font-semibold text-blue-600">{{ grup.urun_sayisi }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-light">Toplam Stok</span>
+                        <span class="font-semibold text-green-600">{{ grup.toplam_stok }}</span>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-t border-gray-200">
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full" 
+                             style="width: {{ (grup.toplam_stok / (product_stats.toplam_stok_miktar or 1) * 100)|round }}%"></div>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1 text-center">
+                        {{ (grup.toplam_stok / (product_stats.toplam_stok_miktar or 1) * 100)|round }}% toplam stoktan
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Kritik Ürünler Listesi -->
+    {% if product_stats.kritik_urunler %}
+    <div class="mb-8">
+        <div class="metric-card bg-red-50 border-2 border-red-200">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-red-800">
+                    <i class="fas fa-exclamation-triangle"></i> Kritik Stok Uyarısı
+                </h3>
+                <span class="bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-full animate-pulse">
+                    {{ product_stats.kritik_urunler|length }} Ürün
+                </span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                {% for urun in product_stats.kritik_urunler %}
+                <div class="bg-white p-3 rounded-lg border border-red-300">
+                    <div class="font-semibold text-gray-800 text-sm mb-2 truncate" title="{{ urun.ad }}">
+                        {{ urun.ad }}
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="text-xs text-gray-600">Mevcut</div>
+                            <div class="text-lg font-bold text-red-600">{{ urun.stok }}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-gray-600">Kritik</div>
+                            <div class="text-lg font-bold text-gray-700">{{ urun.kritik_seviye }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- En Çok Hareket Gören Ürün -->
+    {% if product_stats.top_product and product_stats.top_product != 'N/A' %}
+    <div class="mb-8">
+        <div class="metric-card bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-sm opacity-90 mb-1">🏆 En Çok Hareket Gören Ürün (24 Saat)</div>
+                    <div class="text-2xl font-bold">{{ product_stats.top_product }}</div>
+                </div>
+                <div class="text-right">
+                    <div class="text-4xl font-bold">{{ product_stats.top_product_count }}</div>
+                    <div class="text-sm opacity-90">Hareket</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Son Hatalar -->
+    <div class="mb-8">
+        <h3 class="section-title"><i class="fas fa-exclamation-triangle"></i> Son Hatalar ({{ recent_errors|length if recent_errors else 0 }})</h3>
+        <div class="log-container mt-6">
+            {% if recent_errors %}
+                {% for error in recent_errors[-20:] %}
+                <div class="error-line">{{ error }}</div>
+                {% endfor %}
+            {% else %}
+                <div class="text-green-400">✓ Hata bulunamadı</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Hızlı Aksiyonlar -->
+    <div class="mb-8">
+        <h3 class="section-title"><i class="fas fa-bolt"></i> Hızlı Aksiyonlar</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+            <button onclick="refreshMetrics()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition">
+                <i class="fas fa-sync"></i> Metrikleri Yenile
+            </button>
+            <button onclick="viewLogs()" class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3 px-6 rounded-lg transition">
+                <i class="fas fa-file-alt"></i> Logları Görüntüle
+            </button>
+            <button onclick="clearCache()" class="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-3 px-6 rounded-lg transition">
+                <i class="fas fa-trash"></i> Cache Temizle
+            </button>
+            <button onclick="runHealthCheck()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition">
+                <i class="fas fa-heartbeat"></i> Sağlık Kontrolü
+            </button>
+        </div>
+    </div>
+
+    <!-- Negatif Stok Kontrol ve Düzeltme -->
+    <div class="mb-8">
+        <div class="metric-card bg-gradient-to-r from-red-500 to-pink-500 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-bold mb-2">
+                        <i class="fas fa-exclamation-circle"></i> Negatif Stok Kontrolü
+                    </h3>
+                    <p class="text-sm opacity-90">Sistemdeki negatif stokları tespit edin ve otomatik düzeltin</p>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="checkNegativeStock()" class="bg-white text-red-600 font-semibold py-3 px-6 rounded-lg hover:bg-gray-100 transition">
+                        <i class="fas fa-search"></i> Kontrol Et
+                    </button>
+                    <button onclick="fixNegativeStock()" class="bg-yellow-400 text-gray-900 font-semibold py-3 px-6 rounded-lg hover:bg-yellow-300 transition">
+                        <i class="fas fa-wrench"></i> Düzelt
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// [JavaScript kodları aynı kalacak - önceki versiyondan kopyala]
+function refreshMetrics() {
+    const btn = event.target.closest('button');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Yükleniyor...';
+    btn.disabled = true;
+    
+    fetch('/developer/api/system-health')
+        .then(response => response.json())
+        .then(data => {
+            updateMetric('cpu', data.cpu.percent);
+            updateMetric('memory', data.memory.percent);
+            updateMetric('disk', data.disk.percent);
+            console.log('✅ Metrikler güncellendi:', data);
+            showToast('Metrikler başarıyla güncellendi!', 'success');
+        })
+        .catch(err => {
+            console.error('Metrik güncelleme hatası:', err);
+            showToast('Metrikler güncellenirken hata oluştu!', 'error');
+        })
+        .finally(() => {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        });
+}
+
+function updateMetric(type, percent) {
+    document.querySelectorAll('.metric-card').forEach(card => {
+        const label = card.querySelector('.metric-label');
+        if (label) {
+            const labelText = label.textContent.toLowerCase();
+            if ((type === 'cpu' && labelText.includes('cpu')) ||
+                (type === 'memory' && labelText.includes('ram')) ||
+                (type === 'disk' && labelText.includes('disk'))) {
+                const valueEl = card.querySelector('.metric-value');
+                if (valueEl && !valueEl.querySelector('i')) {
+                    valueEl.textContent = percent.toFixed(1) + '%';
+                }
+                // Progress bar güncelle
+                const progressBar = card.querySelector('[style*="width"]');
+                if (progressBar) {
+                    progressBar.style.width = percent + '%';
+                    progressBar.textContent = percent.toFixed(1) + '%';
+                }
+            }
+        }
+    });
+}
+
+function showToast(message, type = 'info') {
+    const colors = {
+        success: '#48bb78',
+        error: '#f56565',
+        info: '#667eea',
+        warning: '#ed8936'
+    };
+    
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${colors[type]};
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+        font-weight: 600;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function viewLogs() {
+    const btn = event.target.closest('button');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Yükleniyor...';
+    btn.disabled = true;
+    
+    fetch('/developer/api/logs?lines=200')
+        .then(response => response.json())
+        .then(data => {
+            showLogsModal(data.logs || []);
+        })
+        .catch(err => {
+            console.error('Log hatası:', err);
+            showToast('Log alınırken hata oluştu!', 'error');
+        })
+        .finally(() => {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        });
+}
+
+function showLogsModal(logs) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-5';
+    
+    const content = document.createElement('div');
+    content.className = 'bg-white rounded-xl max-w-4xl w-full max-h-[80vh] overflow-hidden flex flex-col';
+    
+    content.innerHTML = `
+        <div class="p-5 border-b-2 border-gray-200 flex justify-between items-center">
+            <h4 class="text-xl font-semibold"><i class="fas fa-file-alt"></i> Sistem Logları (Son ${logs.length} satır)</h4>
+            <button onclick="this.closest('.modal-overlay').remove()" class="text-3xl text-gray-600 hover:text-gray-800">&times;</button>
+        </div>
+        <div class="p-5 overflow-y-auto flex-1 bg-gray-900 text-gray-200 font-mono text-sm">
+            ${logs.length === 0 ? '<div class="text-green-400">✓ Log bulunamadı</div>' : 
+              logs.map(log => {
+                  const isError = log.includes('ERROR') || log.includes('CRITICAL');
+                  return `<div class="${isError ? 'text-red-400 bg-red-900 bg-opacity-20 p-1 rounded my-1' : ''}">${escapeHtml(log)}</div>`;
+              }).join('')}
+        </div>
+    `;
+    
+    modal.appendChild(content);
+    modal.className += ' modal-overlay';
+    document.body.appendChild(modal);
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function clearCache() {
+    if(confirm('⚠️ Cache temizlensin mi?\n\nBu işlem tüm tarayıcı cache\'ini temizleyecek.')) {
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                names.forEach(name => caches.delete(name));
+            });
+            showToast('Cache başarıyla temizlendi!', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast('Cache API desteklenmiyor!', 'warning');
+        }
+    }
+}
+
+function runHealthCheck() {
+    const btn = event.target.closest('button');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Kontrol ediliyor...';
+    btn.disabled = true;
+    
+    fetch('/developer/api/system-health')
+        .then(response => response.json())
+        .then(data => {
+            console.log('🏥 Health Check Sonuçları:', data);
+            
+            let message = '🏥 Sistem Sağlık Kontrolü\n\n';
+            message += `✅ Database: ${data.database.status}\n`;
+            message += `📊 CPU: ${data.cpu.percent.toFixed(1)}% (${data.cpu.status})\n`;
+            message += `💾 RAM: ${data.memory.percent.toFixed(1)}% (${data.memory.status})\n`;
+            message += `💿 Disk: ${data.disk.percent.toFixed(1)}% (${data.disk.status})\n`;
+            message += `\n⏰ Zaman: ${new Date(data.timestamp).toLocaleString('tr-TR')}`;
+            
+            alert(message);
+            showToast('Sağlık kontrolü tamamlandı!', 'success');
+        })
+        .catch(err => {
+            console.error('Health check hatası:', err);
+            showToast('Sağlık kontrolü yapılırken hata oluştu!', 'error');
+        })
+        .finally(() => {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        });
+}
+
+setInterval(function() {
+    fetch('/developer/api/system-health')
+        .then(response => response.json())
+        .then(data => {
+            console.log('🔄 Auto-refresh:', new Date().toLocaleTimeString('tr-TR'), data);
+            updateMetric('cpu', data.cpu.percent);
+            updateMetric('memory', data.memory.percent);
+            updateMetric('disk', data.disk.percent);
+        })
+        .catch(err => console.error('Auto-refresh hatası:', err));
+}, 30000);
+
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
+// Negatif stok kontrolü
+function checkNegativeStock() {
+    const btn = event.target.closest('button');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Kontrol ediliyor...';
+    btn.disabled = true;
+    
+    fetch('/developer/api/check-negative-stock')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.result) {
+                const result = data.result;
+                let message = `🔍 Negatif Stok Kontrol Sonuçları\n\n`;
+                message += `✅ Kontrol edilen ürün: ${result.total_checked}\n`;
+                message += `❌ Negatif stokta: ${result.negative_count}\n`;
+                message += `⚠️  Oluşturulan alert: ${result.alerts_created}\n`;
+                
+                if (result.negative_count > 0) {
+                    message += `\n⚠️  ${result.negative_count} ürün negatif stokta!\n`;
+                    message += `Düzeltmek için "Düzelt" butonuna tıklayın.`;
+                    showToast(`${result.negative_count} negatif stok tespit edildi!`, 'error');
+                } else {
+                    message += `\n✅ Tüm stoklar pozitif!`;
+                    showToast('Negatif stok bulunamadı!', 'success');
+                }
+                
+                alert(message);
+                console.log('Negatif stok kontrolü:', data.result);
+            }
+        })
+        .catch(err => {
+            console.error('Negatif stok kontrolü hatası:', err);
+            showToast('Kontrol yapılırken hata oluştu!', 'error');
+        })
+        .finally(() => {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        });
+}
+
+// Negatif stok düzeltme
+function fixNegativeStock() {
+    if (!confirm('⚠️  NEGATİF STOKLARI DÜZELT\n\nBu işlem:\n- Negatif stokları tespit eder\n- Eksik miktarları giriş olarak ekler\n- ML Alert oluşturur\n\nDevam etmek istiyor musunuz?')) {
+        return;
+    }
+    
+    const btn = event.target.closest('button');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Düzeltiliyor...';
+    btn.disabled = true;
+    
+    fetch('/developer/api/fix-negative-stock', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let message = `✅ Negatif Stok Düzeltme Tamamlandı!\n\n`;
+                message += `🔧 Düzeltilen ürün: ${data.fixed_count}\n`;
+                
+                if (data.fixed_count > 0) {
+                    message += `\nDüzeltilen ürünler:\n`;
+                    data.items.slice(0, 5).forEach(item => {
+                        message += `- ${item.urun_adi}: +${item.fark} giriş eklendi\n`;
+                    });
+                    
+                    if (data.items.length > 5) {
+                        message += `... ve ${data.items.length - 5} ürün daha\n`;
+                    }
+                    
+                    showToast(`${data.fixed_count} ürün düzeltildi!`, 'success');
+                    
+                    // Sayfayı 2 saniye sonra yenile
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    message += `\n✅ Düzeltilecek negatif stok bulunamadı!`;
+                    showToast('Düzeltilecek stok yok!', 'info');
+                }
+                
+                alert(message);
+                console.log('Düzeltme sonucu:', data);
+            } else {
+                showToast('Düzeltme hatası: ' + data.error, 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Düzeltme hatası:', err);
+            showToast('Düzeltme yapılırken hata oluştu!', 'error');
+        })
+        .finally(() => {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        });
+}
+
+console.log('✅ Developer Dashboard JavaScript yüklendi!');
+console.log('🔄 Auto-refresh: Her 30 saniyede metrikler güncelleniyor');
+console.log('🔧 Negatif stok kontrol ve düzeltme sistemi aktif');
+</script>
+
+{% endblock %}

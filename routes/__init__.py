@@ -96,10 +96,44 @@ def register_all_routes(app):
     from routes.restore_routes_v2 import restore_v2_bp
     app.register_blueprint(restore_v2_bp)
     
-    # Restore API endpoint'lerini CSRF'den muaf tut
-    from flask_wtf.csrf import CSRFProtect
-    csrf = CSRFProtect()
-    csrf.exempt(restore_bp)
-    csrf.exempt(restore_v2_bp)
+    # Developer Routes
+    from routes.developer_routes import developer_bp
+    app.register_blueprint(developer_bp)
+    
+    # Fiyatlandırma Routes
+    from routes.fiyatlandirma_routes import fiyatlandirma_bp
+    app.register_blueprint(fiyatlandirma_bp)
+    
+    # Karlılık Routes
+    from routes.karlilik_routes import karlilik_bp
+    app.register_blueprint(karlilik_bp)
+    
+    # Stok Yönetimi Routes
+    from routes.stok_routes import stok_bp
+    app.register_blueprint(stok_bp)
+    
+    # Celery Task Yönetimi Routes
+    from routes.celery_routes import celery_bp
+    app.register_blueprint(celery_bp)
+    
+    # Database Optimizasyon Routes
+    from routes.db_optimization_routes import db_optimization_bp
+    app.register_blueprint(db_optimization_bp)
+    
+    # API endpoint'lerini CSRF'den muaf tut
+    # Blueprint'leri register ettikten sonra CSRF exempt yap
+    if hasattr(app, 'extensions') and 'csrf' in app.extensions:
+        csrf_protect = app.extensions['csrf']
+        csrf_protect.exempt(restore_bp)
+        csrf_protect.exempt(restore_v2_bp)
+        csrf_protect.exempt(developer_bp)
+        csrf_protect.exempt(fiyatlandirma_bp)
+        csrf_protect.exempt(karlilik_bp)
+        csrf_protect.exempt(stok_bp)
+        csrf_protect.exempt(celery_bp)
+        csrf_protect.exempt(db_optimization_bp)
+        print("✅ CSRF exemptions uygulandı (restore, restore_v2, developer, fiyatlandirma, karlilik, stok, celery, db_optimization)")
+    else:
+        print("⚠️ CSRF extension bulunamadı")
     
     print("✅ Tüm route modülleri başarıyla register edildi!")

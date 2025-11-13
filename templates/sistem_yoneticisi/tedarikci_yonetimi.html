@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}Tedarikçi Yönetimi - Minibar Takip Sistemi{% endblock %}
+{% block page_title %}Tedarikçi Yönetimi{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Başlık ve Yeni Tedarikçi Butonu -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Tedarikçi Yönetimi</h2>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Tedarikçi bilgilerini görüntüleyin ve yönetin</p>
+        </div>
+        <button onclick="yeniTedarikciModal()" 
+                class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm">
+            <i class="fas fa-plus mr-2"></i>
+            Yeni Tedarikçi
+        </button>
+    </div>
+
+    <!-- Filtre ve Arama -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Arama</label>
+                <input type="text" id="searchInput" placeholder="Tedarikçi adı, telefon..." 
+                       class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Durum</label>
+                <select id="statusFilter" 
+                        class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white">
+                    <option value="">Tümü</option>
+                    <option value="aktif">Aktif</option>
+                    <option value="pasif">Pasif</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button onclick="filtreUygula()" 
+                        class="w-full px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors">
+                    <i class="fas fa-filter mr-2"></i>Filtrele
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tedarikçi Listesi -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-slate-50 dark:bg-slate-700 border-b border-slate-200 dark:border-slate-600">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                            Tedarikçi Adı
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                            İletişim
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                            Vergi No
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                            Durum
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                            Performans
+                        </th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                            İşlemler
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                    {% if tedarikciler %}
+                        {% for tedarikci in tedarikciler %}
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-truck text-blue-600 dark:text-blue-400"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-slate-900 dark:text-white">
+                                            {{ tedarikci.tedarikci_adi }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-slate-900 dark:text-white">{{ tedarikci.telefon or '-' }}</div>
+                                <div class="text-sm text-slate-500 dark:text-slate-400">{{ tedarikci.email or '-' }}</div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-900 dark:text-white">
+                                {{ tedarikci.vergi_no or '-' }}
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if tedarikci.aktif %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                    <i class="fas fa-check-circle mr-1"></i>Aktif
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                    <i class="fas fa-times-circle mr-1"></i>Pasif
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if tedarikci.performans_skoru %}
+                                <div class="flex items-center">
+                                    <div class="flex-1">
+                                        <div class="text-xs text-slate-600 dark:text-slate-400 mb-1">
+                                            Skor: {{ "%.1f"|format(tedarikci.performans_skoru) }}
+                                        </div>
+                                        <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                            <div class="h-2 rounded-full transition-all 
+                                                {% if tedarikci.performans_skoru >= 80 %}bg-green-500
+                                                {% elif tedarikci.performans_skoru >= 60 %}bg-yellow-500
+                                                {% else %}bg-red-500{% endif %}"
+                                                style="width: {{ tedarikci.performans_skoru }}%">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <span class="text-sm text-slate-500 dark:text-slate-400">Veri yok</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
+                                <a href="{{ url_for('tedarikci_performans', tedarikci_id=tedarikci.id) }}" 
+                                   class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                                   title="Performans">
+                                    <i class="fas fa-chart-line"></i>
+                                </a>
+                                <a href="{{ url_for('tedarikci_duzenle', tedarikci_id=tedarikci.id) }}" 
+                                   class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                   title="Düzenle">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if tedarikci.aktif %}
+                                <button onclick="durumDegistir({{ tedarikci.id }}, false)" 
+                                        class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                        title="Pasif Yap">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                                {% else %}
+                                <button onclick="durumDegistir({{ tedarikci.id }}, true)" 
+                                        class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                                        title="Aktif Yap">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center justify-center">
+                                <i class="fas fa-truck text-slate-300 dark:text-slate-600 text-5xl mb-4"></i>
+                                <p class="text-slate-500 dark:text-slate-400 text-lg">Henüz tedarikçi eklenmemiş</p>
+                                <button onclick="yeniTedarikciModal()" 
+                                        class="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                                    İlk Tedarikçiyi Ekle
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Yeni Tedarikçi Modal -->
+<div id="tedarikciModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-4 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white">Yeni Tedarikçi Ekle</h3>
+            <button onclick="modalKapat()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <form method="POST" action="{{ url_for('tedarikci_yonetimi') }}" class="p-6 space-y-4">
+            {{ form.hidden_tag() }}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Tedarikçi Adı <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.tedarikci_adi(class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white") }}
+                    {% if form.tedarikci_adi.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.tedarikci_adi.errors[0] }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Telefon <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.telefon(class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white") }}
+                    {% if form.telefon.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.telefon.errors[0] }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        E-posta
+                    </label>
+                    {{ form.email(class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white") }}
+                    {% if form.email.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.email.errors[0] }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Vergi No
+                    </label>
+                    {{ form.vergi_no(class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white") }}
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Adres
+                    </label>
+                    {{ form.adres(rows=3, class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white") }}
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Ödeme Koşulları
+                    </label>
+                    {{ form.odeme_kosullari(rows=2, class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white", placeholder="Örn: 30 gün vadeli") }}
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="flex items-center">
+                        {{ form.aktif(class="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500") }}
+                        <span class="ml-2 text-sm text-slate-700 dark:text-slate-300">Aktif</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <button type="button" onclick="modalKapat()" 
+                        class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                    İptal
+                </button>
+                <button type="submit" 
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                    <i class="fas fa-save mr-2"></i>Kaydet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function yeniTedarikciModal() {
+    document.getElementById('tedarikciModal').classList.remove('hidden');
+    document.getElementById('tedarikciModal').classList.add('flex');
+}
+
+function modalKapat() {
+    document.getElementById('tedarikciModal').classList.add('hidden');
+    document.getElementById('tedarikciModal').classList.remove('flex');
+}
+
+function filtreUygula() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const statusBadge = row.querySelector('span');
+        const status = statusBadge ? (statusBadge.textContent.includes('Aktif') ? 'aktif' : 'pasif') : '';
+        
+        const matchesSearch = text.includes(searchTerm);
+        const matchesStatus = !statusFilter || status === statusFilter;
+        
+        row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+    });
+}
+
+function durumDegistir(tedarikciId, aktif) {
+    const mesaj = aktif ? 'Tedarikçiyi aktif yapmak istediğinize emin misiniz?' : 'Tedarikçiyi pasif yapmak istediğinize emin misiniz?';
+    
+    Swal.fire({
+        title: 'Emin misiniz?',
+        text: mesaj,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: aktif ? '#10b981' : '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: aktif ? 'Evet, Aktif Yap' : 'Evet, Pasif Yap',
+        cancelButtonText: 'İptal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const url = aktif ? `/tedarikci-aktif-yap/${tedarikciId}` : `/tedarikci-pasif-yap/${tedarikciId}`;
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Başarılı!', data.message, 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Hata!', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                Swal.fire('Hata!', 'İşlem sırasında bir hata oluştu', 'error');
+            });
+        }
+    });
+}
+
+// Arama inputunda enter tuşu
+document.getElementById('searchInput').addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') {
+        filtreUygula();
+    } else {
+        // Anlık arama
+        filtreUygula();
+    }
+});
+</script>
+{% endblock %}

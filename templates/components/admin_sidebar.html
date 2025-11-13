@@ -108,6 +108,57 @@
     ML Analiz Sistemi
 </a>
 
+<!-- Satın Alma & Tedarik -->
+<div class="px-4 py-2 mt-4">
+    <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center">
+        <i class="fas fa-shopping-cart text-xs mr-2"></i>
+        Satın Alma & Tedarik
+    </h3>
+</div>
+<a href="{{ url_for('yonetici_siparis_listesi') }}"
+    class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+    <i class="fas fa-shopping-cart w-5 text-center mr-3 text-slate-500 dark:text-slate-400"></i>
+    Sipariş Yönetimi
+</a>
+<a href="{{ url_for('satin_alma_siparis') }}"
+    class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+    <i class="fas fa-plus-circle w-5 text-center mr-3 text-slate-500 dark:text-slate-400"></i>
+    Yeni Sipariş
+</a>
+<a href="{{ url_for('tedarikci_yonetimi') }}"
+    class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+    <i class="fas fa-truck w-5 text-center mr-3 text-slate-500 dark:text-slate-400"></i>
+    Tedarikçiler
+</a>
+<a href="{{ url_for('urun_tedarikci_fiyat') }}"
+    class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+    <i class="fas fa-money-bill-wave w-5 text-center mr-3 text-slate-500 dark:text-slate-400"></i>
+    Tedarikçi Fiyatları
+</a>
+
+<!-- Fiyatlandırma & Karlılık -->
+<div class="px-4 py-2 mt-4">
+    <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center">
+        <i class="fas fa-dollar-sign text-xs mr-2"></i>
+        Fiyatlandırma & Karlılık
+    </h3>
+</div>
+<a href="{{ url_for('urun_fiyat_yonetimi') }}"
+    class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+    <i class="fas fa-tags w-5 text-center mr-3 text-blue-500 dark:text-blue-400"></i>
+    <span class="font-medium">Fiyat Yönetimi</span>
+</a>
+<a href="{{ url_for('kampanya_yonetimi') }}"
+    class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+    <i class="fas fa-percent w-5 text-center mr-3 text-purple-500 dark:text-purple-400"></i>
+    <span class="font-medium">Kampanya Yönetimi</span>
+</a>
+<a href="{{ url_for('karlilik_dashboard') }}"
+    class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+    <i class="fas fa-chart-line w-5 text-center mr-3 text-green-500 dark:text-green-400"></i>
+    <span class="font-medium">Karlılık Dashboard</span>
+</a>
+
 <!-- Raporlar & Analiz -->
 <div class="px-4 py-2 mt-4">
     <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center">

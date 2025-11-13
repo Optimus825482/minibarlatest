@@ -18,7 +18,7 @@
                             Kat Sorumlusu <span class="text-red-500">*</span>
                         </label>
                         <div class="mt-1">
-                            <select id="personel_id" name="personel_id" required
+                            <select id="personel_id" name="personel_id" required data-choice="manual"
                                 class="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-slate-500 focus:border-slate-500 sm:text-sm">
                                 <option value="">Kat sorumlusu seçiniz...</option>
                                 {% for personel in kat_sorumlulari %}
@@ -51,7 +51,7 @@
                                 Ürün Grubu <span class="text-red-500">*</span>
                             </label>
                             <div class="mt-1">
-                                <select id="urun_grubu"
+                                <select id="urun_grubu" data-choice="manual"
                                     class="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-slate-500 focus:border-slate-500 sm:text-sm">
                                     <option value="">Ürün grubu seçiniz...</option>
                                     {% for grup in urun_gruplari %}
@@ -67,7 +67,7 @@
                                 Ürün <span class="text-red-500">*</span>
                             </label>
                             <div class="mt-1">
-                                <select id="urun_secim" disabled
+                                <select id="urun_secim" disabled data-choice="manual"
                                     class="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-slate-500 focus:border-slate-500 sm:text-sm">
                                     <option value="">Önce grup seçiniz...</option>
                                 </select>
@@ -245,7 +245,7 @@
                                         class="text-blue-600 hover:text-blue-900 whitespace-nowrap">Detay</a>
                                     {% if zimmet.durum == 'aktif' %}
                                     <button
-                                        onclick="zimmetIptalEt({{ zimmet.id }}, '{{ zimmet.personel.ad }} {{ zimmet.personel.soyad }}')"
+                                        onclick="zimmetIptalEt({{ zimmet.id }}, '{{ zimmet.personel.ad|safe }} {{ zimmet.personel.soyad|safe }}')"
                                         class="text-red-600 hover:text-red-900 whitespace-nowrap">İptal Et</button>
                                     {% endif %}
                                 </div>
@@ -270,10 +270,39 @@
     </div>
 </div>
 
+{% endblock %}
+
 {% block extra_scripts %}
 <script>
-    // Tablo arama/filtreleme için
+    // Tüm script'leri DOMContentLoaded içinde çalıştır
     document.addEventListener( 'DOMContentLoaded', function () {
+        // Önce tüm Choices.js instance'larını temizle
+        const allSelects = document.querySelectorAll('#personel_id, #urun_grubu, #urun_secim');
+        allSelects.forEach(select => {
+            if (select.choices) {
+                try {
+                    select.choices.destroy();
+                    console.log('Choices.js temizlendi:', select.id);
+                } catch(e) {
+                    console.log('Choices temizleme hatası:', e);
+                }
+            }
+            // Choices tarafından eklenen özellikleri temizle
+            select.classList.remove('choices__input', 'choices__input--cloned');
+            select.removeAttribute('data-choice');
+            select.removeAttribute('hidden');
+            select.removeAttribute('tabindex');
+            select.style.display = '';
+            
+            // Wrapper'ı kaldır
+            const wrapper = select.closest('.choices');
+            if (wrapper && wrapper.parentNode) {
+                wrapper.parentNode.insertBefore(select, wrapper);
+                wrapper.remove();
+            }
+        });
+        
+        // Tablo arama/filtreleme için
         const zimmetlerTable = document.getElementById( 'zimmetler-table' );
         if ( zimmetlerTable ) {
             new TableSearchFilter( 'zimmetler-table', {
@@ -282,14 +311,22 @@
                 defaultItemsPerPage: 25
             } );
         }
-    } );
 
-    // Zimmet yönetimi için mevcut script kodları
-    let secilenUrunler = [];
-    let mevcutUrunDetay = null;
+        // Zimmet yönetimi için mevcut script kodları
+        let secilenUrunler = [];
+        let mevcutUrunDetay = null;
+        
+        // Choices.js instance'larını sakla
+        let urunSecimChoices = null;
 
-    // Ürün grubu değiştiğinde
-    document.getElementById( 'urun_grubu' ).addEventListener( 'change', async function () {
+        // Ürün grubu değiştiğinde
+        const urunGrubuSelect = document.getElementById( 'urun_grubu' );
+        if (!urunGrubuSelect) {
+            console.error('urun_grubu elementi bulunamadı!');
+            return;
+        }
+        
+        urunGrubuSelect.addEventListener( 'change', async function () {
         const grupId = this.value;
         const urunSelect = document.getElementById( 'urun_secim' );
         const miktarInput = document.getElementById( 'urun_miktar' );
@@ -309,29 +346,98 @@
         }
 
         try {
+            console.log('Ürünler yükleniyor, grup ID:', grupId);
             const response = await fetch( `/api/urunler-by-grup/${grupId}` );
-            const urunler = await response.json();
+            
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+            }
+            
+            const data = await response.json();
+            console.log('API yanıtı:', data);
+            console.log('Data tipi:', typeof data);
+            console.log('Array mi?', Array.isArray(data));
+            
+            // Hata kontrolü
+            if (data.success === false) {
+                throw new Error(data.error || 'Bilinmeyen hata');
+            }
+            
+            // Array kontrolü - eğer obje içinde array varsa onu al
+            let urunler = [];
+            if (Array.isArray(data)) {
+                urunler = data;
+            } else if (data && typeof data === 'object') {
+                // Obje içinde array ara
+                const keys = Object.keys(data);
+                console.log('Obje anahtarları:', keys);
+                if (keys.length > 0 && Array.isArray(data[keys[0]])) {
+                    urunler = data[keys[0]];
+                }
+            }
+            console.log('İşlenmiş ürünler:', urunler);
 
             if ( urunler.length === 0 ) {
                 urunSelect.innerHTML = '<option value="">Bu grupta ürün yok</option>';
                 urunSelect.disabled = true;
+                console.log('Bu grupta ürün bulunamadı');
             } else {
+                console.log(urunler.length + ' ürün bulundu');
+                
+                // Choices.js'i tamamen yok et ve basit select kullan
+                if (urunSecimChoices) {
+                    try {
+                        urunSecimChoices.destroy();
+                        urunSecimChoices = null;
+                    } catch(e) {}
+                }
+                
+                // Element üzerindeki Choices'ı da temizle
+                if (urunSelect.choices) {
+                    try {
+                        urunSelect.choices.destroy();
+                    } catch(e) {}
+                }
+                
+                // Choices tarafından eklenen class'ları temizle
+                urunSelect.classList.remove('choices__input', 'choices__input--cloned');
+                urunSelect.removeAttribute('data-choice');
+                urunSelect.removeAttribute('hidden');
+                urunSelect.removeAttribute('tabindex');
+                urunSelect.style.display = '';
+                
+                // Select'i temizle ve doldur
+                urunSelect.innerHTML = '<option value="">Ürün seçiniz...</option>';
                 urunler.forEach( urun => {
                     const option = document.createElement( 'option' );
                     option.value = urun.id;
                     option.textContent = urun.urun_adi;
                     urunSelect.appendChild( option );
                 } );
+                
+                // Select'i aktif et
                 urunSelect.disabled = false;
+                urunSelect.removeAttribute('disabled');
+                
+                // Choices wrapper'ı varsa kaldır
+                const choicesWrapper = urunSelect.closest('.choices');
+                if (choicesWrapper && choicesWrapper.parentNode) {
+                    choicesWrapper.parentNode.insertBefore(urunSelect, choicesWrapper);
+                    choicesWrapper.remove();
+                }
+                
+                console.log('Ürün select\'i güncellendi ve aktif edildi (Choices.js kaldırıldı)');
             }
         } catch ( error ) {
             console.error( 'Ürünler yüklenirken hata:', error );
-            alert( 'Ürünler yüklenirken bir hata oluştu!' );
+            urunSelect.innerHTML = '<option value="">Hata: Ürünler yüklenemedi</option>';
+            urunSelect.disabled = true;
+            alert( 'Ürünler yüklenirken bir hata oluştu: ' + error.message );
         }
-    } );
+        } );
 
-    // Ürün seçildiğinde
-    document.getElementById( 'urun_secim' ).addEventListener( 'change', async function () {
+        // Ürün seçildiğinde
+        document.getElementById( 'urun_secim' ).addEventListener( 'change', async function () {
         const urunId = this.value;
         const miktarInput = document.getElementById( 'urun_miktar' );
         const urunDetay = document.getElementById( 'urun_detay' );
@@ -376,17 +482,17 @@
             console.error( 'Ürün stok bilgisi yüklenirken hata:', error );
             alert( 'Ürün bilgisi yüklenirken bir hata oluştu!' );
         }
-    } );
+        } );
 
-    // Miktar değiştiğinde ekle butonunu aktif et
-    document.getElementById( 'urun_miktar' ).addEventListener( 'input', function () {
+        // Miktar değiştiğinde ekle butonunu aktif et
+        document.getElementById( 'urun_miktar' ).addEventListener( 'input', function () {
         const miktar = parseInt( this.value );
         const ekleBtn = document.getElementById( 'urun_ekle_btn' );
         ekleBtn.disabled = !( miktar > 0 && mevcutUrunDetay );
-    } );
+        } );
 
-    // Listeye ekle butonu
-    document.getElementById( 'urun_ekle_btn' ).addEventListener( 'click', function () {
+        // Listeye ekle butonu
+        document.getElementById( 'urun_ekle_btn' ).addEventListener( 'click', function () {
         const urunId = document.getElementById( 'urun_secim' ).value;
         const miktar = parseInt( document.getElementById( 'urun_miktar' ).value );
 
@@ -434,10 +540,10 @@
         document.getElementById( 'urun_detay' ).classList.add( 'hidden' );
         document.getElementById( 'urun_ekle_btn' ).disabled = true;
         mevcutUrunDetay = null;
-    } );
+        } );
 
-    // Seçilen ürünler tablosunu güncelle
-    function updateSecilenUrunlerTable() {
+        // Seçilen ürünler tablosunu güncelle
+        function updateSecilenUrunlerTable() {
         const container = document.getElementById( 'secilen_urunler_container' );
         const tbody = document.getElementById( 'secilen_urunler_tbody' );
         const hiddenInputs = document.getElementById( 'hidden_inputs' );
@@ -482,24 +588,26 @@
             hiddenMiktar.value = urun.miktar;
             hiddenInputs.appendChild( hiddenMiktar );
         } );
-    }
+        }
 
-    // Ürünü listeden kaldır
-    function removeUrun( index ) {
+        // Ürünü listeden kaldır - Global scope'a taşı
+        window.removeUrun = function( index ) {
         secilenUrunler.splice( index, 1 );
         updateSecilenUrunlerTable();
-    }
+        };
 
-    // Form submit kontrolü
-    document.querySelector( 'form' ).addEventListener( 'submit', function ( e ) {
+        // Form submit kontrolü
+        document.querySelector( 'form' ).addEventListener( 'submit', function ( e ) {
         if ( secilenUrunler.length === 0 ) {
             e.preventDefault();
             alert( 'Lütfen en az bir ürün seçiniz!' );
             return false;
         }
-    } );
+        } );
 
-    // Zimmet iptal et
+    }); // DOMContentLoaded sonu
+
+    // Zimmet iptal et - Global scope'ta kalmalı (onclick'ten çağrılıyor)
     function zimmetIptalEt( zimmetId, personelAdi ) {
         if ( confirm( `${personelAdi} adlı personelin zimmetini iptal etmek istediğinize emin misiniz?\n\nBu işlemle:\n- Tüm zimmet iptal edilecek\n- Kullanılmayan ürünler depoya iade edilecek\n- Bu işlem geri alınamaz!` ) ) {
             // Form oluştur ve submit et
@@ -511,6 +619,4 @@
         }
     }
 </script>
-{% endblock %}
-
 {% endblock %}

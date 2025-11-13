@@ -4,10 +4,13 @@ Her veri değişikliğini otomatik olarak kaydeder
 """
 
 import json
+import logging
 from datetime import datetime
 from flask import request, session
 from models import db, AuditLog
 from functools import wraps
+
+logger = logging.getLogger(__name__)
 
 
 def get_client_info():
@@ -344,3 +347,157 @@ def audit_import(tablo_adi, aciklama=None):
         tablo_adi=tablo_adi,
         aciklama=aciklama
     )
+
+
+def log_fiyat_degisiklik(
+    urun_id: int,
+    eski_fiyat,
+    yeni_fiyat,
+    degisiklik_tipi: str,
+    sebep: str = None,
+    kullanici_id: int = None
+):
+    """
+    Fiyat değişikliklerini hem UrunFiyatGecmisi hem de AuditLog'a kaydet
+    
+    Bu fonksiyon Requirements 16.1, 16.2, 16.3 ve 19.5'i karşılar:
+    - Tüm fiyat değişikliklerini UrunFiyatGecmisi tablosuna kaydeder
+    - Tüm fiyat değişikliklerini AuditLog tablosuna kaydeder
+    - Değişiklik tipini, sebebini ve yapan kullanıcıyı kaydeder
+    - Eski ve yeni fiyat bilgilerini saklar
+    
+    Args:
+        urun_id: Ürün ID
+        eski_fiyat: Eski fiyat (Decimal veya None)
+        yeni_fiyat: Yeni fiyat (Decimal)
+        degisiklik_tipi: 'alis_fiyati', 'satis_fiyati', 'kampanya'
+        sebep: Değişiklik sebebi (opsiyonel)
+        kullanici_id: İşlemi yapan kullanıcı ID (opsiyonel, session'dan alınır)
+    
+    Returns:
+        tuple: (UrunFiyatGecmisi instance, AuditLog instance)
+    
+    Raises:
+        ValueError: Geçersiz parametreler için
+        Exception: Veritabanı hataları için
+    """
+    from models import UrunFiyatGecmisi, FiyatDegisiklikTipi, Kullanici, Urun
+    from decimal import Decimal
+    
+    try:
+        # Validasyon
+        if not urun_id:
+            raise ValueError("Ürün ID zorunludur")
+        
+        if not yeni_fiyat:
+            raise ValueError("Yeni fiyat zorunludur")
+        
+        if degisiklik_tipi not in ['alis_fiyati', 'satis_fiyati', 'kampanya']:
+            raise ValueError(f"Geçersiz değişiklik tipi: {degisiklik_tipi}")
+        
+        # Kullanıcı bilgilerini al
+        if kullanici_id is None:
+            kullanici_id, kullanici_adi, kullanici_rol = get_user_info()
+        else:
+            kullanici = Kullanici.query.get(kullanici_id)
+            if kullanici:
+                kullanici_adi = kullanici.kullanici_adi
+                kullanici_rol = kullanici.rol
+            else:
+                kullanici_adi = 'Bilinmeyen'
+                kullanici_rol = 'bilinmeyen'
+        
+        # Ürün bilgisini al
+        urun = Urun.query.get(urun_id)
+        if not urun:
+            raise ValueError(f"Ürün {urun_id} bulunamadı")
+        
+        # Fiyatları Decimal'e çevir
+        if eski_fiyat is not None and not isinstance(eski_fiyat, Decimal):
+            eski_fiyat = Decimal(str(eski_fiyat))
+        
+        if not isinstance(yeni_fiyat, Decimal):
+            yeni_fiyat = Decimal(str(yeni_fiyat))
+        
+        # 1. UrunFiyatGecmisi kaydı oluştur
+        # Enum instance oluştur - value kullan (küçük harf)
+        if isinstance(degisiklik_tipi, str):
+            degisiklik_tipi_value = degisiklik_tipi
+        else:
+            degisiklik_tipi_value = degisiklik_tipi.value if hasattr(degisiklik_tipi, 'value') else str(degisiklik_tipi)
+        
+        fiyat_gecmisi = UrunFiyatGecmisi(
+            urun_id=urun_id,
+            eski_fiyat=eski_fiyat,
+            yeni_fiyat=yeni_fiyat,
+            degisiklik_tipi=degisiklik_tipi_value,  # String value kullan
+            degisiklik_sebebi=sebep,
+            olusturan_id=kullanici_id
+        )
+        
+        db.session.add(fiyat_gecmisi)
+        
+        # 2. AuditLog kaydı oluştur
+        eski_deger_dict = {
+            'urun_id': urun_id,
+            'urun_adi': urun.urun_adi,
+            'fiyat': float(eski_fiyat) if eski_fiyat else None,
+            'degisiklik_tipi': degisiklik_tipi
+        }
+        
+        yeni_deger_dict = {
+            'urun_id': urun_id,
+            'urun_adi': urun.urun_adi,
+            'fiyat': float(yeni_fiyat),
+            'degisiklik_tipi': degisiklik_tipi
+        }
+        
+        # Değişiklik özetini oluştur
+        if eski_fiyat:
+            degisiklik_ozeti = f"{urun.urun_adi} - {degisiklik_tipi}: ₺{eski_fiyat} → ₺{yeni_fiyat}"
+            if sebep:
+                degisiklik_ozeti += f" (Sebep: {sebep})"
+        else:
+            degisiklik_ozeti = f"{urun.urun_adi} - {degisiklik_tipi}: İlk fiyat ₺{yeni_fiyat}"
+            if sebep:
+                degisiklik_ozeti += f" (Sebep: {sebep})"
+        
+        # İstemci bilgilerini al
+        client_info = get_client_info()
+        
+        audit_log = AuditLog(
+            kullanici_id=kullanici_id,
+            kullanici_adi=kullanici_adi,
+            kullanici_rol=kullanici_rol,
+            islem_tipi='update',
+            tablo_adi='urun_fiyat',
+            kayit_id=urun_id,
+            eski_deger=json.dumps(eski_deger_dict, ensure_ascii=False),
+            yeni_deger=json.dumps(yeni_deger_dict, ensure_ascii=False),
+            degisiklik_ozeti=degisiklik_ozeti,
+            http_method=client_info['method'],
+            url=client_info['url'],
+            endpoint=client_info['endpoint'],
+            ip_adresi=client_info['ip'],
+            user_agent=client_info['user_agent'],
+            aciklama=sebep,
+            basarili=True
+        )
+        
+        db.session.add(audit_log)
+        
+        # Commit işlemi
+        db.session.commit()
+        
+        logger.info(f"✅ Fiyat değişikliği kaydedildi: Ürün {urun_id} - {degisiklik_tipi}")
+        
+        return (fiyat_gecmisi, audit_log)
+        
+    except ValueError as ve:
+        db.session.rollback()
+        logger.error(f"❌ Fiyat değişikliği validasyon hatası: {str(ve)}")
+        raise ve
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ Fiyat değişikliği kaydetme hatası: {str(e)}")
+        raise Exception(f"Fiyat değişikliği kaydetme hatası: {str(e)}")

@@ -1,0 +1,1080 @@
+{% extends "base.html" %}
+
+{% block title %}Bedelsiz Limit Yönetimi - Minibar Takip Sistemi{% endblock %}
+{% block page_title %}Bedelsiz Limit Yönetimi{% endblock %}
+
+{% block extra_head %}
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+
+<!-- Date Range Picker -->
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+<style>
+    /* Limit Kartları */
+    .limit-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    /* Limit Badge */
+    .limit-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    
+    .limit-badge.aktif {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+    
+    .dark .limit-badge.aktif {
+        background-color: #14532d;
+        color: #86efac;
+    }
+    
+    .limit-badge.pasif {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .dark .limit-badge.pasif {
+        background-color: #7f1d1d;
+        color: #fca5a5;
+    }
+    
+    .limit-badge.dolmus {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .dark .limit-badge.dolmus {
+        background-color: #78350f;
+        color: #fde047;
+    }
+    
+    /* Progress Bar */
+    .progress-bar {
+        height: 8px;
+        background-color: #e5e7eb;
+        border-radius: 9999px;
+        overflow: hidden;
+    }
+    
+    .dark .progress-bar {
+        background-color: #374151;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+    
+    .progress-fill.low {
+        background: linear-gradient(90deg, #10b981, #34d399);
+    }
+    
+    .progress-fill.medium {
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    }
+    
+    .progress-fill.high {
+        background: linear-gradient(90deg, #ef4444, #f87171);
+    }
+    
+    /* DataTables Dark Mode */
+    .dark .dataTables_wrapper {
+        color: #e2e8f0;
+    }
+    
+    .dark .dataTables_wrapper .dataTables_filter input,
+    .dark .dataTables_wrapper .dataTables_length select {
+        background-color: #1e293b;
+        border-color: #334155;
+        color: #e2e8f0;
+    }
+    
+    .dark table.dataTable tbody tr {
+        background-color: #1e293b;
+    }
+    
+    .dark table.dataTable tbody tr:hover {
+        background-color: #334155 !important;
+    }
+    
+    /* Form Styling */
+    .form-section {
+        background: linear-gradient(to right, #f8fafc, #ffffff);
+        border-left: 4px solid #8b5cf6;
+    }
+    
+    .dark .form-section {
+        background: linear-gradient(to right, #0f172a, #1e293b);
+        border-left-color: #a78bfa;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Bedelsiz Limit İstatistikleri -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <!-- Aktif Limitler -->
+        <div class="limit-card bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-gift text-2xl text-green-600 dark:text-green-400"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Aktif Limitler</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-semibold text-slate-900 dark:text-slate-100" id="aktif-limit-sayisi">0</div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toplam Kullanım -->
+        <div class="limit-card bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-chart-line text-2xl text-blue-600 dark:text-blue-400"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Toplam Kullanım</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-semibold text-slate-900 dark:text-slate-100" id="toplam-kullanim">0</div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kullanım Oranı -->
+        <div class="limit-card bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-percentage text-2xl text-purple-600 dark:text-purple-400"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Kullanım Oranı</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-semibold text-slate-900 dark:text-slate-100" id="kullanim-orani">%0</div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dolmuş Limitler -->
+        <div class="limit-card bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-exclamation-triangle text-2xl text-yellow-600 dark:text-yellow-400"></i>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Dolmuş Limitler</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-semibold text-slate-900 dark:text-slate-100" id="dolmus-limit-sayisi">0</div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Limit Tanımlama Formu -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+        <div class="form-section px-6 py-4">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Yeni Bedelsiz Limit Tanımla
+            </h3>
+        </div>
+        
+        <form id="limit-form" class="p-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Oda Seçimi -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Oda <span class="text-red-500">*</span>
+                    </label>
+                    <select name="oda_id" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200" required>
+                        <option value="">Oda Seçin</option>
+                        {% for oda in odalar %}
+                        <option value="{{ oda.id }}">{{ oda.oda_no }} - {{ oda.otel.otel_adi if oda.otel else '' }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Ürün Seçimi -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Ürün <span class="text-red-500">*</span>
+                    </label>
+                    <select name="urun_id" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200" required>
+                        <option value="">Ürün Seçin</option>
+                        {% for urun in urunler %}
+                        <option value="{{ urun.id }}">{{ urun.urun_adi }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Maksimum Miktar -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Maksimum Miktar <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" name="max_miktar" min="1" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200" placeholder="0" required>
+                </div>
+                
+                <!-- Limit Tipi -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Limit Tipi <span class="text-red-500">*</span>
+                    </label>
+                    <select id="limit-tipi" name="limit_tipi" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200" required>
+                        <option value="misafir">Misafir</option>
+                        <option value="kampanya">Kampanya</option>
+                        <option value="personel">Personel</option>
+                    </select>
+                </div>
+                
+                <!-- Kampanya Seçimi (Sadece kampanya tipinde göster) -->
+                <div id="kampanya-secim-div" style="display: none;">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Kampanya
+                    </label>
+                    <select name="kampanya_id" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200">
+                        <option value="">Kampanya Seçin</option>
+                        {% for kampanya in kampanyalar %}
+                        <option value="{{ kampanya.id }}">{{ kampanya.kampanya_adi }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Başlangıç Tarihi -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Başlangıç Tarihi <span class="text-red-500">*</span>
+                    </label>
+                    <input type="datetime-local" name="baslangic_tarihi" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200" required>
+                </div>
+                
+                <!-- Bitiş Tarihi -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Bitiş Tarihi
+                    </label>
+                    <input type="datetime-local" name="bitis_tarihi" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200">
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Boş bırakılırsa süresiz</p>
+                </div>
+                
+                <!-- Aktif Durumu -->
+                <div class="flex items-center">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" name="aktif" value="true" checked class="w-5 h-5 text-purple-600 border-slate-300 rounded focus:ring-purple-500 dark:border-slate-600 dark:bg-slate-700">
+                        <span class="ml-2 text-sm font-medium text-slate-700 dark:text-slate-300">Limiti Aktif Et</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Butonlar -->
+            <div class="mt-6 flex gap-3">
+                <button type="submit" class="flex-1 md:flex-none px-6 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                    <i class="fas fa-save mr-2"></i>
+                    Limit Tanımla
+                </button>
+                <button type="button" id="form-temizle" class="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
+                    <i class="fas fa-eraser mr-2"></i>
+                    Temizle
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Oda Bazlı Limit Listesi -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                Oda Bazlı Limitler
+            </h3>
+            <div class="flex gap-2">
+                <select id="otel-filter" class="px-4 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200">
+                    <option value="">Tüm Oteller</option>
+                    {% for otel in oteller %}
+                    <option value="{{ otel.id }}">{{ otel.otel_adi }}</option>
+                    {% endfor %}
+                </select>
+                <button id="limit-yenile" class="px-4 py-2 text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                    <i class="fas fa-sync-alt mr-2"></i>
+                    Yenile
+                </button>
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table id="oda-limitler-table" class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                <thead class="bg-slate-50 dark:bg-slate-700">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Oda
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Ürün
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Limit Tipi
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Kullanım
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Geçerlilik
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Durum
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            İşlemler
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                    <!-- DataTables ile doldurulacak -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Kullanım Takibi -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            Kullanım Takibi
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- En Çok Kullanılan Limitler -->
+            <div>
+                <h4 class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">En Çok Kullanılan Limitler</h4>
+                <div id="en-cok-kullanilan" class="space-y-3">
+                    <!-- JavaScript ile doldurulacak -->
+                </div>
+            </div>
+            
+            <!-- Dolmak Üzere Olan Limitler -->
+            <div>
+                <h4 class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Dolmak Üzere Olan Limitler</h4>
+                <div id="dolmak-uzere" class="space-y-3">
+                    <!-- JavaScript ile doldurulacak -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tüm Limitler Tablosu -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                </svg>
+                Tüm Limitler
+            </h3>
+            <div class="flex gap-2">
+                <select id="durum-filter" class="px-4 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200">
+                    <option value="">Tüm Durumlar</option>
+                    <option value="aktif">Aktif</option>
+                    <option value="pasif">Pasif</option>
+                    <option value="dolmus">Dolmuş</option>
+                </select>
+                <select id="tip-filter" class="px-4 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200">
+                    <option value="">Tüm Tipler</option>
+                    <option value="misafir">Misafir</option>
+                    <option value="kampanya">Kampanya</option>
+                    <option value="personel">Personel</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table id="tum-limitler-table" class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                <thead class="bg-slate-50 dark:bg-slate-700">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Oda
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Ürün
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Limit Tipi
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Kullanım
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Tarih Aralığı
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            Durum
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            İşlemler
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                    <!-- DataTables ile doldurulacak -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+
+<!-- Date Range Picker -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
+<script>
+// Bedelsiz Limit Yönetimi Manager
+class BedelsizLimitYonetimiManager {
+    constructor() {
+        this.odaLimitlerTable = null;
+        this.tumLimitlerTable = null;
+        this.init();
+    }
+
+    init() {
+        this.initEventListeners();
+        this.loadIstatistikler();
+        this.loadOdaLimitler();
+        this.loadTumLimitler();
+        this.loadKullanimTakibi();
+    }
+
+    initEventListeners() {
+        // Form submit
+        $('#limit-form').on('submit', (e) => {
+            e.preventDefault();
+            this.limitTanimla();
+        });
+
+        // Limit tipi değişimi
+        $('#limit-tipi').on('change', (e) => {
+            if (e.target.value === 'kampanya') {
+                $('#kampanya-secim-div').show();
+            } else {
+                $('#kampanya-secim-div').hide();
+                $('select[name="kampanya_id"]').val('');
+            }
+        });
+
+        // Form temizle
+        $('#form-temizle').on('click', () => {
+            this.formTemizle();
+        });
+
+        // Limit yenile
+        $('#limit-yenile').on('click', () => {
+            this.loadOdaLimitler();
+            this.loadIstatistikler();
+        });
+
+        // Filtreler
+        $('#otel-filter, #durum-filter, #tip-filter').on('change', () => {
+            this.loadTumLimitler();
+        });
+    }
+
+    async loadIstatistikler() {
+        try {
+            const response = await fetch('/api/v1/fiyat/bedelsiz/istatistikler');
+            const data = await response.json();
+
+            if (data.success) {
+                $('#aktif-limit-sayisi').text(data.aktif_limit_sayisi || 0);
+                $('#toplam-kullanim').text(data.toplam_kullanim || 0);
+                $('#kullanim-orani').text(`%${(data.kullanim_orani || 0).toFixed(2)}`);
+                $('#dolmus-limit-sayisi').text(data.dolmus_limit_sayisi || 0);
+            }
+        } catch (error) {
+            console.error('İstatistik yükleme hatası:', error);
+        }
+    }
+
+    async limitTanimla() {
+        try {
+            const formData = new FormData($('#limit-form')[0]);
+            const data = Object.fromEntries(formData.entries());
+
+            // Validasyon
+            if (!data.oda_id || !data.urun_id || !data.max_miktar || 
+                !data.limit_tipi || !data.baslangic_tarihi) {
+                this.showError('Lütfen tüm zorunlu alanları doldurun');
+                return;
+            }
+
+            if (parseInt(data.max_miktar) <= 0) {
+                this.showError('Maksimum miktar 0\'dan büyük olmalıdır');
+                return;
+            }
+
+            if (data.bitis_tarihi && new Date(data.baslangic_tarihi) >= new Date(data.bitis_tarihi)) {
+                this.showError('Bitiş tarihi başlangıç tarihinden sonra olmalıdır');
+                return;
+            }
+
+            if (data.limit_tipi === 'kampanya' && !data.kampanya_id) {
+                this.showError('Kampanya tipi için kampanya seçilmelidir');
+                return;
+            }
+
+            // Aktif checkbox değerini düzelt
+            data.aktif = $('#limit-form input[name="aktif"]').is(':checked');
+
+            const response = await fetch('/api/v1/fiyat/bedelsiz', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': data.csrf_token
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showSuccess('Bedelsiz limit başarıyla tanımlandı');
+                this.formTemizle();
+                this.loadOdaLimitler();
+                this.loadTumLimitler();
+                this.loadIstatistikler();
+                this.loadKullanimTakibi();
+            } else {
+                this.showError(result.message || 'Limit tanımlanırken hata oluştu');
+            }
+        } catch (error) {
+            console.error('Limit tanımlama hatası:', error);
+            this.showError('Limit tanımlanırken hata oluştu');
+        }
+    }
+
+    async loadOdaLimitler() {
+        try {
+            const otelId = $('#otel-filter').val();
+            const url = otelId ? `/api/v1/fiyat/bedelsiz/oda-limitler?otel_id=${otelId}` : '/api/v1/fiyat/bedelsiz/oda-limitler';
+            
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (this.odaLimitlerTable) {
+                this.odaLimitlerTable.destroy();
+            }
+
+            this.odaLimitlerTable = $('#oda-limitler-table').DataTable({
+                data: data.limitler || [],
+                columns: [
+                    { 
+                        data: null,
+                        render: (row) => {
+                            return `${row.oda_no} - ${row.otel_adi || ''}`;
+                        }
+                    },
+                    { data: 'urun_adi' },
+                    { 
+                        data: 'limit_tipi',
+                        render: (data) => {
+                            const tipMap = {
+                                'misafir': '<span class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">Misafir</span>',
+                                'kampanya': '<span class="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded">Kampanya</span>',
+                                'personel': '<span class="px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded">Personel</span>'
+                            };
+                            return tipMap[data] || data;
+                        }
+                    },
+                    { 
+                        data: null,
+                        render: (row) => {
+                            const kullanilan = row.kullanilan_miktar || 0;
+                            const maksimum = row.max_miktar;
+                            const oran = (kullanilan / maksimum * 100).toFixed(0);
+                            
+                            let progressClass = 'low';
+                            if (oran >= 80) progressClass = 'high';
+                            else if (oran >= 50) progressClass = 'medium';
+                            
+                            return `
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>${kullanilan} / ${maksimum}</span>
+                                        <span>${oran}%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill ${progressClass}" style="width: ${oran}%"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    },
+                    { 
+                        data: null,
+                        render: (row) => {
+                            const baslangic = new Date(row.baslangic_tarihi).toLocaleDateString('tr-TR');
+                            const bitis = row.bitis_tarihi ? new Date(row.bitis_tarihi).toLocaleDateString('tr-TR') : 'Süresiz';
+                            return `${baslangic} - ${bitis}`;
+                        }
+                    },
+                    { 
+                        data: null,
+                        render: (row) => {
+                            const kullanilan = row.kullanilan_miktar || 0;
+                            const maksimum = row.max_miktar;
+                            
+                            if (!row.aktif) {
+                                return '<span class="limit-badge pasif">Pasif</span>';
+                            } else if (kullanilan >= maksimum) {
+                                return '<span class="limit-badge dolmus">Dolmuş</span>';
+                            } else {
+                                return '<span class="limit-badge aktif">Aktif</span>';
+                            }
+                        }
+                    },
+                    {
+                        data: null,
+                        render: (row) => {
+                            return `
+                                <div class="flex gap-2">
+                                    <button onclick="bedelsizLimitManager.limitDuzenle(${row.id})" 
+                                            class="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50">
+                                        <i class="fas fa-edit mr-1"></i>Düzenle
+                                    </button>
+                                    <button onclick="bedelsizLimitManager.limitSil(${row.id})" 
+                                            class="px-3 py-1 text-sm bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-900/50">
+                                        <i class="fas fa-trash mr-1"></i>Sil
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+                ],
+                order: [[0, 'asc']],
+                pageLength: 10,
+                responsive: true,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                }
+            });
+        } catch (error) {
+            console.error('Oda limitler yükleme hatası:', error);
+        }
+    }
+
+    async loadTumLimitler() {
+        try {
+            const durum = $('#durum-filter').val();
+            const tip = $('#tip-filter').val();
+            
+            let url = '/api/v1/fiyat/bedelsiz/tumu?';
+            if (durum) url += `durum=${durum}&`;
+            if (tip) url += `tip=${tip}`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (this.tumLimitlerTable) {
+                this.tumLimitlerTable.destroy();
+            }
+
+            this.tumLimitlerTable = $('#tum-limitler-table').DataTable({
+                data: data.limitler || [],
+                columns: [
+                    { 
+                        data: null,
+                        render: (row) => `${row.oda_no} - ${row.otel_adi || ''}`
+                    },
+                    { data: 'urun_adi' },
+                    { 
+                        data: 'limit_tipi',
+                        render: (data) => {
+                            const tipMap = {
+                                'misafir': 'Misafir',
+                                'kampanya': 'Kampanya',
+                                'personel': 'Personel'
+                            };
+                            return tipMap[data] || data;
+                        }
+                    },
+                    { 
+                        data: null,
+                        render: (row) => {
+                            const kullanilan = row.kullanilan_miktar || 0;
+                            const maksimum = row.max_miktar;
+                            return `${kullanilan} / ${maksimum}`;
+                        }
+                    },
+                    { 
+                        data: null,
+                        render: (row) => {
+                            const baslangic = new Date(row.baslangic_tarihi).toLocaleDateString('tr-TR');
+                            const bitis = row.bitis_tarihi ? new Date(row.bitis_tarihi).toLocaleDateString('tr-TR') : 'Süresiz';
+                            return `${baslangic} - ${bitis}`;
+                        }
+                    },
+                    { 
+                        data: null,
+                        render: (row) => {
+                            const kullanilan = row.kullanilan_miktar || 0;
+                            const maksimum = row.max_miktar;
+                            
+                            if (!row.aktif) {
+                                return '<span class="limit-badge pasif">Pasif</span>';
+                            } else if (kullanilan >= maksimum) {
+                                return '<span class="limit-badge dolmus">Dolmuş</span>';
+                            } else {
+                                return '<span class="limit-badge aktif">Aktif</span>';
+                            }
+                        }
+                    },
+                    {
+                        data: null,
+                        render: (row) => {
+                            const aktifBtn = row.aktif ? 
+                                `<button onclick="bedelsizLimitManager.limitPasifYap(${row.id})" 
+                                        class="px-3 py-1 text-sm bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded hover:bg-yellow-200 dark:hover:bg-yellow-900/50">
+                                    <i class="fas fa-pause mr-1"></i>Pasif Yap
+                                </button>` :
+                                `<button onclick="bedelsizLimitManager.limitAktifYap(${row.id})" 
+                                        class="px-3 py-1 text-sm bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded hover:bg-green-200 dark:hover:bg-green-900/50">
+                                    <i class="fas fa-play mr-1"></i>Aktif Yap
+                                </button>`;
+                            
+                            return `
+                                <div class="flex gap-2 flex-wrap">
+                                    ${aktifBtn}
+                                    <button onclick="bedelsizLimitManager.limitDuzenle(${row.id})" 
+                                            class="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50">
+                                        <i class="fas fa-edit mr-1"></i>Düzenle
+                                    </button>
+                                    <button onclick="bedelsizLimitManager.limitSil(${row.id})" 
+                                            class="px-3 py-1 text-sm bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded hover:bg-red-200 dark:hover:bg-red-900/50">
+                                        <i class="fas fa-trash mr-1"></i>Sil
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+                ],
+                order: [[0, 'asc']],
+                pageLength: 10,
+                responsive: true,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                }
+            });
+        } catch (error) {
+            console.error('Tüm limitler yükleme hatası:', error);
+        }
+    }
+
+    async loadKullanimTakibi() {
+        try {
+            const response = await fetch('/api/v1/fiyat/bedelsiz/kullanim-takibi');
+            const data = await response.json();
+
+            if (data.success) {
+                // En çok kullanılan limitler
+                const enCokKullanilanHtml = (data.en_cok_kullanilan || []).map(l => `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                        <div class="flex-1">
+                            <p class="font-medium text-slate-900 dark:text-slate-100">${l.oda_no} - ${l.urun_adi}</p>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">${l.kullanilan_miktar} / ${l.max_miktar} kullanıldı</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-lg font-bold text-blue-600 dark:text-blue-400">${l.kullanim_orani}%</span>
+                        </div>
+                    </div>
+                `).join('');
+                $('#en-cok-kullanilan').html(enCokKullanilanHtml || '<p class="text-slate-500 text-sm">Henüz veri yok</p>');
+
+                // Dolmak üzere olan limitler
+                const dolmakUzereHtml = (data.dolmak_uzere || []).map(l => `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                        <div class="flex-1">
+                            <p class="font-medium text-slate-900 dark:text-slate-100">${l.oda_no} - ${l.urun_adi}</p>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">${l.kullanilan_miktar} / ${l.max_miktar} kullanıldı</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-lg font-bold text-yellow-600 dark:text-yellow-400">${l.kalan_miktar} kaldı</span>
+                        </div>
+                    </div>
+                `).join('');
+                $('#dolmak-uzere').html(dolmakUzereHtml || '<p class="text-slate-500 text-sm">Henüz veri yok</p>');
+            }
+        } catch (error) {
+            console.error('Kullanım takibi yükleme hatası:', error);
+        }
+    }
+
+    async limitDuzenle(limitId) {
+        try {
+            const response = await fetch(`/api/v1/fiyat/bedelsiz/${limitId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                const limit = data.limit;
+                
+                // Formu doldur
+                $('select[name="oda_id"]').val(limit.oda_id);
+                $('select[name="urun_id"]').val(limit.urun_id);
+                $('input[name="max_miktar"]').val(limit.max_miktar);
+                $('select[name="limit_tipi"]').val(limit.limit_tipi).trigger('change');
+                
+                if (limit.kampanya_id) {
+                    $('select[name="kampanya_id"]').val(limit.kampanya_id);
+                }
+                
+                $('input[name="baslangic_tarihi"]').val(moment(limit.baslangic_tarihi).format('YYYY-MM-DDTHH:mm'));
+                
+                if (limit.bitis_tarihi) {
+                    $('input[name="bitis_tarihi"]').val(moment(limit.bitis_tarihi).format('YYYY-MM-DDTHH:mm'));
+                }
+                
+                $('input[name="aktif"]').prop('checked', limit.aktif);
+
+                // Form submit'i güncelleme moduna al
+                $('#limit-form').off('submit').on('submit', (e) => {
+                    e.preventDefault();
+                    this.limitGuncelle(limitId);
+                });
+
+                // Scroll to form
+                $('html, body').animate({
+                    scrollTop: $('#limit-form').offset().top - 100
+                }, 500);
+
+                this.showInfo('Limit düzenleme modunda. Değişiklikleri yapıp kaydedin.');
+            }
+        } catch (error) {
+            console.error('Limit düzenleme hatası:', error);
+            this.showError('Limit bilgileri yüklenirken hata oluştu');
+        }
+    }
+
+    async limitGuncelle(limitId) {
+        try {
+            const formData = new FormData($('#limit-form')[0]);
+            const data = Object.fromEntries(formData.entries());
+            data.aktif = $('#limit-form input[name="aktif"]').is(':checked');
+
+            const response = await fetch(`/api/v1/fiyat/bedelsiz/${limitId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': data.csrf_token
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.showSuccess('Limit başarıyla güncellendi');
+                this.formTemizle();
+                this.loadOdaLimitler();
+                this.loadTumLimitler();
+                this.loadIstatistikler();
+                
+                // Form'u tekrar oluşturma moduna al
+                $('#limit-form').off('submit').on('submit', (e) => {
+                    e.preventDefault();
+                    this.limitTanimla();
+                });
+            } else {
+                this.showError(result.message || 'Limit güncellenirken hata oluştu');
+            }
+        } catch (error) {
+            console.error('Limit güncelleme hatası:', error);
+            this.showError('Limit güncellenirken hata oluştu');
+        }
+    }
+
+    async limitSil(limitId) {
+        const result = await Swal.fire({
+            title: 'Limiti Sil?',
+            text: 'Bu işlem geri alınamaz!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Evet, Sil',
+            cancelButtonText: 'İptal'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch(`/api/v1/fiyat/bedelsiz/${limitId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.showSuccess('Limit başarıyla silindi');
+                    this.loadOdaLimitler();
+                    this.loadTumLimitler();
+                    this.loadIstatistikler();
+                    this.loadKullanimTakibi();
+                } else {
+                    this.showError(data.message || 'Limit silinirken hata oluştu');
+                }
+            } catch (error) {
+                console.error('Limit silme hatası:', error);
+                this.showError('Limit silinirken hata oluştu');
+            }
+        }
+    }
+
+    async limitAktifYap(limitId) {
+        try {
+            const response = await fetch(`/api/v1/fiyat/bedelsiz/${limitId}/aktif-yap`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.showSuccess('Limit aktif edildi');
+                this.loadOdaLimitler();
+                this.loadTumLimitler();
+                this.loadIstatistikler();
+            } else {
+                this.showError(data.message || 'Limit aktif edilirken hata oluştu');
+            }
+        } catch (error) {
+            console.error('Limit aktif etme hatası:', error);
+            this.showError('Limit aktif edilirken hata oluştu');
+        }
+    }
+
+    async limitPasifYap(limitId) {
+        try {
+            const response = await fetch(`/api/v1/fiyat/bedelsiz/${limitId}/pasif-yap`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.showSuccess('Limit pasif edildi');
+                this.loadOdaLimitler();
+                this.loadTumLimitler();
+                this.loadIstatistikler();
+            } else {
+                this.showError(data.message || 'Limit pasif edilirken hata oluştu');
+            }
+        } catch (error) {
+            console.error('Limit pasif etme hatası:', error);
+            this.showError('Limit pasif edilirken hata oluştu');
+        }
+    }
+
+    formTemizle() {
+        $('#limit-form')[0].reset();
+        $('#kampanya-secim-div').hide();
+        
+        // Form'u tekrar oluşturma moduna al
+        $('#limit-form').off('submit').on('submit', (e) => {
+            e.preventDefault();
+            this.limitTanimla();
+        });
+    }
+
+    showSuccess(message) {
+        Swal.fire({
+            icon: 'success',
+            title: 'Başarılı',
+            text: message,
+            timer: 2000,
+            showConfirmButton: false
+        });
+    }
+
+    showError(message) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Hata',
+            text: message,
+            confirmButtonText: 'Tamam'
+        });
+    }
+
+    showInfo(message) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Bilgi',
+            text: message,
+            confirmButtonText: 'Tamam'
+        });
+    }
+}
+
+// Global instance
+let bedelsizLimitManager;
+
+// Sayfa yüklendiğinde başlat
+$(document).ready(function() {
+    bedelsizLimitManager = new BedelsizLimitYonetimiManager();
+});
+</script>
+{% endblock %}

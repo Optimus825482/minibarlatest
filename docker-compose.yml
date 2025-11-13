@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # PostgreSQL Database (Primary)
@@ -20,7 +20,11 @@ services:
     networks:
       - minibar_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-minibar_user} -d ${DB_NAME:-minibar_takip}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USER:-minibar_user} -d ${DB_NAME:-minibar_takip}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -59,12 +63,22 @@ services:
     networks:
       - minibar_network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-rootpassword}"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${DB_PASSWORD:-rootpassword}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
     profiles:
-      - migration  # Sadece migration sırasında çalıştır
+      - migration # Sadece migration sırasında çalıştır
 
   # Flask Application
   web:
@@ -83,14 +97,14 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-minibar123}
       DB_NAME: ${DB_NAME:-minibar_takip}
       DB_PORT: 5432
-      
+
       # Flask Configuration
       FLASK_ENV: ${FLASK_ENV:-production}
       SECRET_KEY: ${SECRET_KEY:-change-this-secret-key-in-production}
-      
+
       # Backup Configuration
       BACKUP_DIR: /backups
-      
+
       # Python Configuration
       PYTHONUNBUFFERED: 1
     volumes:
@@ -98,6 +112,7 @@ services:
       - ./xls:/app/xls
       - ./static:/app/static
       - ./backups:/backups
+      - ml_models:/app/ml_models
     depends_on:
       postgres:
         condition: service_healthy
@@ -120,7 +135,7 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@minibar.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_SERVER_MODE: "False"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
@@ -155,6 +170,8 @@ volumes:
   mysql_data:
     driver: local
   pgadmin_data:
+    driver: local
+  ml_models:
     driver: local
 
 networks:

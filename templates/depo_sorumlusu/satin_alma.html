@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+
+{% block title %}Satın Alma - Minibar Takip Sistemi{% endblock %}
+{% block page_title %}Satın Alma İşlemi{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Bilgilendirme -->
+    <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+        <div class="flex items-start">
+            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+                <h3 class="text-sm font-medium text-blue-900 dark:text-blue-100">Satın Alma İşlemi</h3>
+                <p class="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                    Bu sayfadan tedarikçiden aldığınız ürünleri manuel olarak veya Excel ile toplu şekilde sisteme girebilirsiniz. 
+                    İşlem sonrası otomatik olarak stok girişi yapılır ve fiyat bilgileri kaydedilir.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Menü -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+        <div class="border-b border-slate-200 dark:border-slate-700">
+            <nav class="flex -mb-px">
+                <button onclick="showTab('manuel')" id="tab-manuel" 
+                    class="tab-button active px-6 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600 dark:text-blue-400">
+                    <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Manuel Giriş
+                </button>
+                <button onclick="showTab('excel')" id="tab-excel"
+                    class="tab-button px-6 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-300">
+                    <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    Excel ile Toplu Giriş
+                </button>
+            </nav>
+        </div>
+
+        <!-- Manuel Giriş Tab -->
+        <div id="content-manuel" class="tab-content p-6">
+            <form method="POST" id="satin-alma-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+                <!-- Temel Bilgiler -->
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 mb-6">
+                    <div>
+                        <label for="tedarikci_id" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Tedarikçi <span class="text-slate-400">(Opsiyonel)</span>
+                        </label>
+                        <select id="tedarikci_id" name="tedarikci_id"
+                            class="mt-1 block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200">
+                            <option value="">Tedarikçi seçiniz...</option>
+                            {% for tedarikci in tedarikciler %}
+                            <option value="{{ tedarikci.id }}">{{ tedarikci.tedarikci_adi }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="satin_alma_tarihi" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Satın Alma Tarihi <span class="text-red-500">*</span>
+                        </label>
+                        <input type="date" id="satin_alma_tarihi" name="satin_alma_tarihi" required
+                            value="{{ now().strftime('%Y-%m-%d') }}"
+                            class="mt-1 block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200">
+                    </div>
+
+                    <div>
+                        <label for="otel_id" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Otel <span class="text-red-500">*</span>
+                        </label>
+                        <select id="otel_id" name="otel_id" required
+                            class="mt-1 block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200">
+                            {% for otel in otel_secenekleri %}
+                            <option value="{{ otel.id }}" {% if otel.id == secili_otel_id %}selected{% endif %}>
+                                {{ otel.ad }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="fatura_no" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Fatura No
+                        </label>
+                        <input type="text" id="fatura_no" name="fatura_no"
+                            class="mt-1 block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200">
+                    </div>
+
+                    <div>
+                        <label for="fatura_tarihi" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Fatura Tarihi
+                        </label>
+                        <input type="date" id="fatura_tarihi" name="fatura_tarihi"
+                            class="mt-1 block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200">
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label for="aciklama" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                        Açıklama
+                    </label>
+                    <textarea id="aciklama" name="aciklama" rows="2"
+                        class="mt-1 block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200"></textarea>
+                </div>
+
+                <!-- Ürün Listesi -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100">Ürünler</h3>
+                        <button type="button" id="add-product-btn"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Ürün Ekle
+                        </button>
+                    </div>
+
+                    <div id="products-container" class="space-y-4">
+                        <!-- Ürün satırları buraya eklenecek -->
+                    </div>
+                </div>
+
+                <!-- Toplam Tutar -->
+                <div class="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 mb-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-slate-600 dark:text-slate-400">Ara Toplam:</span>
+                            <span id="ara-toplam" class="font-semibold text-slate-900 dark:text-slate-100">0.00 ₺</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-600 dark:text-slate-400">KDV:</span>
+                            <span id="kdv-toplam" class="font-semibold text-slate-900 dark:text-slate-100">0.00 ₺</span>
+                        </div>
+                        <div class="flex justify-between border-t sm:border-t-0 sm:border-l border-slate-300 dark:border-slate-600 pt-2 sm:pt-0 sm:pl-4">
+                            <span class="text-slate-900 dark:text-slate-100 font-medium">Genel Toplam:</span>
+                            <span id="genel-toplam" class="font-bold text-lg text-blue-600 dark:text-blue-400">0.00 ₺</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Butonlar -->
+                <div class="flex justify-end space-x-3">
+                    <a href="{{ url_for('satin_alma_listesi') }}"
+                        class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                        İptal
+                    </a>
+                    <button type="submit"
+                        class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                        Satın Alma İşlemini Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Excel ile Toplu Giriş Tab -->
+        <div id="content-excel" class="tab-content hidden p-6">
+            <div class="space-y-6">
+                <!-- Excel Şablon İndirme -->
+                <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                    <div class="flex items-start">
+                        <svg class="w-6 h-6 text-green-600 dark:text-green-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <div class="flex-1">
+                            <h3 class="text-sm font-medium text-green-900 dark:text-green-100">Excel Şablonu</h3>
+                            <p class="mt-1 text-sm text-green-700 dark:text-green-300 mb-3">
+                                Toplu satın alma işlemi için önce Excel şablonunu indirin, doldurun ve yükleyin.
+                            </p>
+                            <a href="{{ url_for('static', filename='templates/satin_alma_sablonu.xlsx') }}" download
+                                class="inline-flex items-center px-3 py-2 border border-green-300 dark:border-green-700 rounded-md text-sm font-medium text-green-700 dark:text-green-300 bg-white dark:bg-slate-800 hover:bg-green-50 dark:hover:bg-green-900/30">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Excel Şablonunu İndir
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Excel Yükleme Formu -->
+                <form method="POST" action="{{ url_for('satin_alma_excel') }}" enctype="multipart/form-data" id="excel-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 mb-6">
+                        <div>
+                            <label for="excel_tedarikci_id" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                Tedarikçi <span class="text-slate-400">(Opsiyonel)</span>
+                            </label>
+                            <select id="excel_tedarikci_id" name="tedarikci_id"
+                                class="mt-1 block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200">
+                                <option value="">Tedarikçi seçiniz...</option>
+                                {% for tedarikci in tedarikciler %}
+                                <option value="{{ tedarikci.id }}">{{ tedarikci.tedarikci_adi }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="excel_otel_id" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                Otel <span class="text-red-500">*</span>
+                            </label>
+                            <select id="excel_otel_id" name="otel_id" required
+                                class="mt-1 block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200">
+                                {% for otel in otel_secenekleri %}
+                                <option value="{{ otel.id }}" {% if otel.id == secili_otel_id %}selected{% endif %}>
+                                    {{ otel.ad }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Excel Dosyası <span class="text-red-500">*</span>
+                        </label>
+                        <div class="flex items-center justify-center w-full">
+                            <label for="excel-file" class="flex flex-col items-center justify-center w-full h-64 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-lg cursor-pointer bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <svg class="w-10 h-10 mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                    </svg>
+                                    <p class="mb-2 text-sm text-slate-500 dark:text-slate-400"><span class="font-semibold">Tıklayın</span> veya sürükleyin</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Excel dosyası (.xlsx, .xls)</p>
+                                </div>
+                                <input id="excel-file" name="excel_file" type="file" accept=".xlsx,.xls" class="hidden" required />
+                            </label>
+                        </div>
+                        <p id="file-name" class="mt-2 text-sm text-slate-600 dark:text-slate-400"></p>
+                    </div>
+
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="showTab('manuel')"
+                            class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                            İptal
+                        </button>
+                        <button type="submit"
+                            class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                            Excel Dosyasını Yükle ve İşle
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Tab değiştirme
+function showTab(tabName) {
+    // Tüm tab butonlarını pasif yap
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active', 'border-blue-500', 'text-blue-600', 'dark:text-blue-400');
+        btn.classList.add('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+    });
+    
+    // Tüm içerikleri gizle
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Seçili tab'ı aktif yap
+    const activeBtn = document.getElementById(`tab-${tabName}`);
+    activeBtn.classList.add('active', 'border-blue-500', 'text-blue-600', 'dark:text-blue-400');
+    activeBtn.classList.remove('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+    
+    // Seçili içeriği göster
+    document.getElementById(`content-${tabName}`).classList.remove('hidden');
+}
+
+// Ürün satırı sayacı
+let productRowCounter = 0;
+const urunler = {{ urunler|tojson }};
+const tedarikciFiyatlar = {{ tedarikci_fiyatlar|tojson }};
+
+// Ürün satırı ekle
+document.getElementById('add-product-btn').addEventListener('click', function() {
+    addProductRow();
+});
+
+function addProductRow(urunId = null, miktar = null, birimFiyat = null, kdvOrani = 18) {
+    productRowCounter++;
+    const rowId = `product-row-${productRowCounter}`;
+    
+    const productRow = document.createElement('div');
+    productRow.id = rowId;
+    productRow.className = 'bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 border border-slate-200 dark:border-slate-600';
+    
+    productRow.innerHTML = `
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-12">
+            <div class="sm:col-span-4">
+                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Ürün</label>
+                <select name="urun_ids[]" class="urun-select w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200" required onchange="updatePrice(this, ${productRowCounter})">
+                    <option value="">Ürün seçiniz...</option>
+                    ${urunler.map(u => `<option value="${u.id}" ${u.id === urunId ? 'selected' : ''}>${u.urun_adi} (${u.birim})</option>`).join('')}
+                </select>
+            </div>
+            <div class="sm:col-span-2">
+                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Miktar</label>
+                <input type="number" name="miktarlar[]" value="${miktar || 1}" min="1" class="miktar-input w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200" required onchange="calculateRowTotal(${productRowCounter})">
+            </div>
+            <div class="sm:col-span-2">
+                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Birim Fiyat</label>
+                <input type="number" name="birim_fiyatlar[]" value="${birimFiyat || 0}" step="0.01" min="0" class="birim-fiyat-input w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200" required onchange="calculateRowTotal(${productRowCounter})">
+            </div>
+            <div class="sm:col-span-2">
+                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">KDV %</label>
+                <input type="number" name="kdv_oranlari[]" value="${kdvOrani}" step="0.01" min="0" max="100" class="kdv-input w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200" onchange="calculateRowTotal(${productRowCounter})">
+            </div>
+            <div class="sm:col-span-1 flex items-end">
+                <span class="row-total text-sm font-semibold text-slate-900 dark:text-slate-100">0.00 ₺</span>
+            </div>
+            <div class="sm:col-span-1 flex items-end">
+                <button type="button" onclick="removeProductRow('${rowId}')" class="w-full px-3 py-2 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">
+                    <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('products-container').appendChild(productRow);
+    calculateRowTotal(productRowCounter);
+}
+
+function removeProductRow(rowId) {
+    document.getElementById(rowId).remove();
+    calculateGrandTotal();
+}
+
+function updatePrice(selectElement, rowCounter) {
+    const tedarikciId = document.getElementById('tedarikci_id').value;
+    const urunId = selectElement.value;
+    
+    if (tedarikciId && urunId && tedarikciFiyatlar[tedarikciId] && tedarikciFiyatlar[tedarikciId][urunId]) {
+        const row = selectElement.closest('.grid');
+        const birimFiyatInput = row.querySelector('.birim-fiyat-input');
+        birimFiyatInput.value = tedarikciFiyatlar[tedarikciId][urunId];
+        calculateRowTotal(rowCounter);
+    }
+}
+
+function calculateRowTotal(rowCounter) {
+    const row = document.getElementById(`product-row-${rowCounter}`);
+    if (!row) return;
+    
+    const miktar = parseFloat(row.querySelector('.miktar-input').value) || 0;
+    const birimFiyat = parseFloat(row.querySelector('.birim-fiyat-input').value) || 0;
+    const kdvOrani = parseFloat(row.querySelector('.kdv-input').value) || 0;
+    
+    const araToplam = miktar * birimFiyat;
+    const kdvTutari = araToplam * (kdvOrani / 100);
+    const toplam = araToplam + kdvTutari;
+    
+    row.querySelector('.row-total').textContent = toplam.toFixed(2) + ' ₺';
+    
+    calculateGrandTotal();
+}
+
+function calculateGrandTotal() {
+    let araToplam = 0;
+    let kdvToplam = 0;
+    
+    document.querySelectorAll('#products-container > div').forEach(row => {
+        const miktar = parseFloat(row.querySelector('.miktar-input').value) || 0;
+        const birimFiyat = parseFloat(row.querySelector('.birim-fiyat-input').value) || 0;
+        const kdvOrani = parseFloat(row.querySelector('.kdv-input').value) || 0;
+        
+        const rowAraToplam = miktar * birimFiyat;
+        const rowKdv = rowAraToplam * (kdvOrani / 100);
+        
+        araToplam += rowAraToplam;
+        kdvToplam += rowKdv;
+    });
+    
+    const genelToplam = araToplam + kdvToplam;
+    
+    document.getElementById('ara-toplam').textContent = araToplam.toFixed(2) + ' ₺';
+    document.getElementById('kdv-toplam').textContent = kdvToplam.toFixed(2) + ' ₺';
+    document.getElementById('genel-toplam').textContent = genelToplam.toFixed(2) + ' ₺';
+}
+
+// Excel dosya seçimi
+document.getElementById('excel-file').addEventListener('change', function(e) {
+    const fileName = e.target.files[0]?.name;
+    if (fileName) {
+        document.getElementById('file-name').textContent = `Seçilen dosya: ${fileName}`;
+    }
+});
+
+// Sayfa yüklendiğinde bir ürün satırı ekle
+document.addEventListener('DOMContentLoaded', function() {
+    addProductRow();
+});
+</script>
+{% endblock %}

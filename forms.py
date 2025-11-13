@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, PasswordField, BooleanField, TextAreaField, IntegerField, SelectField, SelectMultipleField
+from wtforms import StringField, PasswordField, BooleanField, TextAreaField, IntegerField, SelectField, SelectMultipleField, DecimalField, DateField, DateTimeField
 from wtforms.validators import DataRequired, InputRequired, Email, Length, EqualTo, NumberRange, Optional, ValidationError
 import re
 
@@ -970,3 +970,284 @@ class KatSorumlusuDuzenleForm(BaseForm):
     )
     
     aktif = BooleanField('Aktif', default=True)
+
+
+# ============================================================================
+# TEDARİKÇİ VE SATIN ALMA MODÜLÜ FORMLARI
+# ============================================================================
+
+class TedarikciForm(BaseForm):
+    """
+    Tedarikçi tanımlama ve düzenleme formu
+    Gereksinimler: 1.1, 1.2, 1.3
+    """
+    tedarikci_adi = StringField(
+        'Tedarikçi Adı',
+        validators=[
+            DataRequired(message='Tedarikçi adı zorunludur.'),
+            Length(min=2, max=200, message='Tedarikçi adı 2-200 karakter arasında olmalıdır.')
+        ]
+    )
+    
+    telefon = StringField(
+        'Telefon',
+        validators=[
+            DataRequired(message='Telefon numarası zorunludur.'),
+            Length(min=10, max=20, message='Telefon numarası 10-20 karakter arasında olmalıdır.'),
+            pattern_validator(r'^[\d\s\-\+\(\)\.]+$', 'Geçerli bir telefon numarası giriniz.')
+        ]
+    )
+    
+    email = StringField(
+        'E-posta',
+        validators=[
+            Optional(),
+            Email(message='Geçerli bir e-posta adresi giriniz.'),
+            Length(max=100, message='E-posta adresi 100 karakterden uzun olamaz.')
+        ]
+    )
+    
+    adres = TextAreaField(
+        'Adres',
+        validators=[
+            Optional(),
+            Length(max=500, message='Adres 500 karakterden uzun olamaz.')
+        ]
+    )
+    
+    vergi_no = StringField(
+        'Vergi Numarası',
+        validators=[
+            Optional(),
+            Length(max=50, message='Vergi numarası 50 karakterden uzun olamaz.')
+        ]
+    )
+    
+    odeme_kosullari = TextAreaField(
+        'Ödeme Koşulları',
+        validators=[
+            Optional(),
+            Length(max=500, message='Ödeme koşulları 500 karakterden uzun olamaz.')
+        ]
+    )
+    
+    aktif = BooleanField('Aktif', default=True)
+
+
+class UrunTedarikciFiyatForm(BaseForm):
+    """
+    Ürün-tedarikçi fiyat tanımlama formu
+    Gereksinimler: 2.1, 2.2, 2.3
+    """
+    urun_id = SelectField(
+        'Ürün',
+        coerce=int,
+        choices=[],
+        validators=[DataRequired(message='Ürün seçimi zorunludur.')]
+    )
+    
+    tedarikci_id = SelectField(
+        'Tedarikçi',
+        coerce=int,
+        choices=[],
+        validators=[DataRequired(message='Tedarikçi seçimi zorunludur.')]
+    )
+    
+    alis_fiyati = DecimalField(
+        'Alış Fiyatı',
+        places=2,
+        validators=[
+            DataRequired(message='Alış fiyatı zorunludur.'),
+            NumberRange(min=0, message='Alış fiyatı 0\'dan büyük olmalıdır.')
+        ]
+    )
+    
+    minimum_miktar = IntegerField(
+        'Minimum Sipariş Miktarı',
+        validators=[
+            DataRequired(message='Minimum sipariş miktarı zorunludur.'),
+            NumberRange(min=1, message='Minimum sipariş miktarı en az 1 olmalıdır.')
+        ]
+    )
+    
+    baslangic_tarihi = DateField(
+        'Başlangıç Tarihi',
+        format='%Y-%m-%d',
+        validators=[DataRequired(message='Başlangıç tarihi zorunludur.')]
+    )
+    
+    bitis_tarihi = DateField(
+        'Bitiş Tarihi',
+        format='%Y-%m-%d',
+        validators=[Optional()]
+    )
+    
+    aktif = BooleanField('Aktif', default=True)
+    
+    def validate_bitis_tarihi(self, field):
+        """Bitiş tarihinin başlangıç tarihinden sonra olduğunu kontrol et"""
+        if field.data and self.baslangic_tarihi.data:
+            if field.data < self.baslangic_tarihi.data:
+                raise ValidationError('Bitiş tarihi başlangıç tarihinden önce olamaz.')
+
+
+class TedarikciIletisimForm(BaseForm):
+    """
+    Tedarikçi iletişim kaydı formu
+    Gereksinimler: 10.1, 10.2
+    """
+    siparis_id = SelectField(
+        'İlgili Sipariş',
+        coerce=int,
+        choices=[],
+        validators=[Optional()]
+    )
+    
+    konu = StringField(
+        'Konu',
+        validators=[
+            DataRequired(message='Konu zorunludur.'),
+            Length(min=2, max=200, message='Konu 2-200 karakter arasında olmalıdır.')
+        ]
+    )
+    
+    aciklama = TextAreaField(
+        'Açıklama',
+        validators=[
+            DataRequired(message='Açıklama zorunludur.'),
+            Length(min=5, max=1000, message='Açıklama 5-1000 karakter arasında olmalıdır.')
+        ]
+    )
+    
+    iletisim_tarihi = DateTimeField(
+        'İletişim Tarihi',
+        format='%Y-%m-%d %H:%M',
+        validators=[DataRequired(message='İletişim tarihi zorunludur.')]
+    )
+
+
+class SatinAlmaSiparisForm(BaseForm):
+    """
+    Satın alma siparişi oluşturma formu
+    Gereksinimler: 3.1, 3.2, 3.3
+    """
+    tedarikci_id = SelectField(
+        'Tedarikçi',
+        coerce=int,
+        choices=[],
+        validators=[DataRequired(message='Tedarikçi seçimi zorunludur.')]
+    )
+    
+    tahmini_teslimat_tarihi = DateField(
+        'Tahmini Teslimat Tarihi',
+        format='%Y-%m-%d',
+        validators=[DataRequired(message='Tahmini teslimat tarihi zorunludur.')]
+    )
+    
+    aciklama = TextAreaField(
+        'Açıklama',
+        validators=[
+            Optional(),
+            Length(max=1000, message='Açıklama 1000 karakterden uzun olamaz.')
+        ]
+    )
+    
+    def validate_tahmini_teslimat_tarihi(self, field):
+        """Teslimat tarihinin bugünden önce olmadığını kontrol et"""
+        from datetime import date
+        if field.data and field.data < date.today():
+            raise ValidationError('Tahmini teslimat tarihi bugünden önce olamaz.')
+
+
+class SiparisStokGirisForm(BaseForm):
+    """
+    Sipariş teslimatından stok giriş formu
+    Gereksinimler: 5.1, 5.2, 5.3
+    """
+    gerceklesen_teslimat_tarihi = DateField(
+        'Gerçekleşen Teslimat Tarihi',
+        format='%Y-%m-%d',
+        validators=[DataRequired(message='Teslimat tarihi zorunludur.')]
+    )
+    
+    aciklama = TextAreaField(
+        'Açıklama',
+        validators=[
+            Optional(),
+            Length(max=500, message='Açıklama 500 karakterden uzun olamaz.')
+        ]
+    )
+    
+    def validate_gerceklesen_teslimat_tarihi(self, field):
+        """Teslimat tarihinin gelecekte olmadığını kontrol et"""
+        from datetime import date
+        if field.data and field.data > date.today():
+            raise ValidationError('Teslimat tarihi gelecekte olamaz.')
+
+
+class TedarikciDokumanForm(BaseForm):
+    """
+    Tedarikçi belge yükleme formu
+    Gereksinimler: 10.3, 10.4
+    """
+    siparis_id = SelectField(
+        'İlgili Sipariş',
+        coerce=int,
+        choices=[],
+        validators=[Optional()]
+    )
+    
+    dokuman_tipi = SelectField(
+        'Belge Tipi',
+        choices=[
+            ('fatura', 'Fatura'),
+            ('irsaliye', 'İrsaliye'),
+            ('sozlesme', 'Sözleşme'),
+            ('diger', 'Diğer')
+        ],
+        validators=[DataRequired(message='Belge tipi seçimi zorunludur.')]
+    )
+    
+    dosya = FileField(
+        'Belge Dosyası',
+        validators=[
+            DataRequired(message='Dosya seçimi zorunludur.'),
+            FileAllowed(['pdf', 'xlsx', 'xls', 'jpg', 'jpeg', 'png'], 
+                       'Sadece PDF, Excel ve resim dosyaları yüklenebilir.')
+        ]
+    )
+    
+    aciklama = TextAreaField(
+        'Açıklama',
+        validators=[
+            Optional(),
+            Length(max=500, message='Açıklama 500 karakterden uzun olamaz.')
+        ]
+    )
+
+
+class TopluSiparisForm(BaseForm):
+    """
+    Excel ile toplu sipariş yükleme formu
+    Gereksinimler: 9.1, 9.2, 9.3
+    """
+    excel_dosyasi = FileField(
+        'Excel Dosyası',
+        validators=[
+            DataRequired(message='Excel dosyası seçimi zorunludur.'),
+            FileAllowed(['xlsx', 'xls'], 'Sadece Excel dosyaları yüklenebilir.')
+        ]
+    )
+    
+    tedarikci_id = SelectField(
+        'Varsayılan Tedarikçi',
+        coerce=int,
+        choices=[],
+        validators=[Optional()]
+    )
+    
+    tahmini_teslimat_tarihi = DateField(
+        'Varsayılan Teslimat Tarihi',
+        format='%Y-%m-%d',
+        validators=[Optional()]
+    )

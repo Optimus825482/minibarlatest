@@ -1,0 +1,546 @@
+{% extends "base.html" %}
+
+{% block title %}Satın Alma Geçmişi - Minibar Takip Sistemi{% endblock %}
+{% block page_title %}Satın Alma Geçmişi{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- İstatistik Kartları -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Toplam İşlem</dt>
+                            <dd class="text-lg font-medium text-slate-900 dark:text-slate-100">{{ istatistikler.toplam }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Bu Ay</dt>
+                            <dd class="text-lg font-medium text-slate-900 dark:text-slate-100">{{ istatistikler.bu_ay }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Toplam Tutar</dt>
+                            <dd class="text-lg font-medium text-slate-900 dark:text-slate-100">{{ "%.2f"|format(istatistikler.toplam_tutar) }} ₺</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+    <!-- Aksiyon Butonları -->
+    <div class="flex justify-between items-center">
+        <div>
+            <button onclick="openSatinAlmaModal()" type="button"
+                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Yeni Satın Alma İşlemi
+            </button>
+        </div>
+    </div>
+
+    <!-- Satın Alma Listesi -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4">Satın Alma İşlemleri</h3>
+            
+            {% if islemler %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                    <thead class="bg-slate-50 dark:bg-slate-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Tarih
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Tedarikçi
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Toplam Ürün
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Toplam Miktar
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Tutar
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                İşlemler
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                        {% for islem in islemler %}
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                                {{ islem.islem_tarihi.strftime('%d.%m.%Y') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">
+                                {{ islem.tedarikci.tedarikci_adi }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                                {{ islem.detaylar|length }} Ürün
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                                {% set toplam_miktar = islem.detaylar|sum(attribute='miktar') %}
+                                {{ toplam_miktar }} Adet
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                {{ "%.2f"|format(islem.genel_toplam) }} ₺
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                                <a href="{{ url_for('satin_alma_detay', islem_id=islem.id) }}"
+                                    class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
+                                    Detay
+                                </a>
+                                <span class="text-slate-300 dark:text-slate-600">|</span>
+                                <button onclick="editSatinAlma({{ islem.id }})" class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 font-medium">
+                                    Düzenle
+                                </button>
+                                <span class="text-slate-300 dark:text-slate-600">|</span>
+                                <button onclick="deleteSatinAlma({{ islem.id }}, '{{ islem.islem_no }}')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 font-medium">
+                                    Sil
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Henüz satın alma işlemi bulunmuyor.</p>
+                <div class="mt-6">
+                    <a href="{{ url_for('satin_alma') }}"
+                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                        İlk Satın Alma İşlemini Oluştur
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Satın Alma Modal -->
+<div id="satinAlmaModal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white dark:bg-slate-800">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+            <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100" id="modalTitle">Yeni Satın Alma İşlemi</h3>
+            <button onclick="closeSatinAlmaModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="mt-4">
+            <!-- Adım 1: Temel Bilgiler -->
+            <div id="step1" class="step-content">
+                <form id="step1Form" class="space-y-4">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                Satın Alma Tarihi <span class="text-red-500">*</span>
+                            </label>
+                            <input type="date" id="modal_satin_alma_tarihi" required
+                                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                Tedarikçi <span class="text-slate-400">(Opsiyonel)</span>
+                            </label>
+                            <select id="modal_tedarikci_id"
+                                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200">
+                                <option value="">Seçiniz...</option>
+                                {% for tedarikci in tedarikciler %}
+                                <option value="{{ tedarikci.id }}">{{ tedarikci.tedarikci_adi }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                Otel <span class="text-red-500">*</span>
+                            </label>
+                            <select id="modal_otel_id" required
+                                {% if otel_secenekleri|length == 1 %}disabled{% endif %}
+                                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200 {% if otel_secenekleri|length == 1 %}bg-slate-100 dark:bg-slate-600 cursor-not-allowed{% endif %}">
+                                {% for otel_id, otel_ad in otel_secenekleri %}
+                                <option value="{{ otel_id }}" {% if otel_id == secili_otel_id %}selected{% endif %}>
+                                    {{ otel_ad }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                Fatura No
+                            </label>
+                            <input type="text" id="modal_fatura_no"
+                                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Giriş Yöntemi <span class="text-red-500">*</span>
+                        </label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button type="button" onclick="selectMethod('manuel')" 
+                                class="method-btn p-4 border-2 border-slate-300 dark:border-slate-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors">
+                                <svg class="w-8 h-8 mx-auto mb-2 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                                <span class="text-sm font-medium text-slate-900 dark:text-slate-100">Manuel Giriş</span>
+                            </button>
+                            <button type="button" onclick="selectMethod('excel')"
+                                class="method-btn p-4 border-2 border-slate-300 dark:border-slate-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 transition-colors">
+                                <svg class="w-8 h-8 mx-auto mb-2 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
+                                <span class="text-sm font-medium text-slate-900 dark:text-slate-100">Excel ile Toplu</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeSatinAlmaModal()"
+                            class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                            İptal
+                        </button>
+                        <button type="button" onclick="goToStep2()" id="nextStepBtn" disabled
+                            class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Devam Et
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Adım 2: Ürün Girişi -->
+            <div id="step2" class="step-content hidden">
+                <!-- Seçilen Bilgiler Özeti -->
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4">
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-slate-600 dark:text-slate-400">Tarih:</span>
+                            <span id="summary_tarih" class="ml-2 font-medium text-slate-900 dark:text-slate-100"></span>
+                        </div>
+                        <div>
+                            <span class="text-slate-600 dark:text-slate-400">Tedarikçi:</span>
+                            <span id="summary_tedarikci" class="ml-2 font-medium text-slate-900 dark:text-slate-100"></span>
+                        </div>
+                        <div>
+                            <span class="text-slate-600 dark:text-slate-400">Otel:</span>
+                            <span id="summary_otel" class="ml-2 font-medium text-slate-900 dark:text-slate-100"></span>
+                        </div>
+                        <div>
+                            <span class="text-slate-600 dark:text-slate-400">Yöntem:</span>
+                            <span id="summary_yontem" class="ml-2 font-medium text-slate-900 dark:text-slate-100"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manuel Giriş Formu -->
+                <div id="manuelForm" class="hidden">
+                    <form id="manuelSatinAlmaForm" method="POST" action="{{ url_for('satin_alma') }}" onsubmit="enableOtelSelect()">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <input type="hidden" name="satin_alma_tarihi" id="form_satin_alma_tarihi">
+                        <input type="hidden" name="tedarikci_id" id="form_tedarikci_id">
+                        <input type="hidden" name="otel_id" id="form_otel_id">
+                        <input type="hidden" name="fatura_no" id="form_fatura_no">
+                        
+                        <div class="mb-4">
+                            <button type="button" onclick="addProductRowModal()" 
+                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Ürün Ekle
+                            </button>
+                        </div>
+
+                        <div id="modal_products_container" class="space-y-3 mb-4 max-h-96 overflow-y-auto">
+                            <!-- Ürün satırları buraya eklenecek -->
+                        </div>
+
+                        <div class="flex justify-between items-center pt-4 border-t border-slate-200 dark:border-slate-700">
+                            <button type="button" onclick="goToStep1()"
+                                class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                                Geri
+                            </button>
+                            <div class="text-right">
+                                <div class="text-sm text-slate-600 dark:text-slate-400">Toplam Tutar:</div>
+                                <div id="modal_toplam" class="text-lg font-bold text-blue-600 dark:text-blue-400">0.00 ₺</div>
+                            </div>
+                            <button type="submit"
+                                class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                                Kaydet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Excel Yükleme Formu -->
+                <div id="excelForm" class="hidden">
+                    <form id="excelSatinAlmaForm" method="POST" action="{{ url_for('satin_alma_excel') }}" enctype="multipart/form-data" onsubmit="enableOtelSelect()">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <input type="hidden" name="tedarikci_id" id="excel_tedarikci_id">
+                        <input type="hidden" name="otel_id" id="excel_otel_id">
+                        
+                        <div class="mb-4">
+                            <label class="flex flex-col items-center justify-center w-full h-64 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-lg cursor-pointer bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <svg class="w-10 h-10 mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                    </svg>
+                                    <p class="mb-2 text-sm text-slate-500 dark:text-slate-400"><span class="font-semibold">Tıklayın</span> veya sürükleyin</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Excel dosyası (.xlsx, .xls)</p>
+                                </div>
+                                <input id="modal_excel_file" name="excel_file" type="file" accept=".xlsx,.xls" class="hidden" required />
+                            </label>
+                            <p id="modal_file_name" class="mt-2 text-sm text-slate-600 dark:text-slate-400"></p>
+                        </div>
+
+                        <div class="flex justify-between pt-4">
+                            <button type="button" onclick="goToStep1()"
+                                class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                                Geri
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                                Excel'i Yükle ve Kaydet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedMethod = null;
+let modalProductCounter = 0;
+
+// Otel select'i aktif et (form submit öncesi)
+function enableOtelSelect() {
+    const otelSelect = document.getElementById('modal_otel_id');
+    if (otelSelect && otelSelect.disabled) {
+        otelSelect.disabled = false;
+    }
+    return true;
+}
+
+// Modal aç
+function openSatinAlmaModal() {
+    document.getElementById('satinAlmaModal').classList.remove('hidden');
+    document.getElementById('modal_satin_alma_tarihi').valueAsDate = new Date();
+    goToStep1();
+}
+
+// Modal kapat
+function closeSatinAlmaModal() {
+    document.getElementById('satinAlmaModal').classList.add('hidden');
+    document.getElementById('step1Form').reset();
+    selectedMethod = null;
+    document.getElementById('nextStepBtn').disabled = true;
+}
+
+// Yöntem seç
+function selectMethod(method) {
+    selectedMethod = method;
+    document.querySelectorAll('.method-btn').forEach(btn => {
+        btn.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-blue-900/20');
+    });
+    event.target.closest('.method-btn').classList.add('border-blue-500', 'bg-blue-50', 'dark:bg-blue-900/20');
+    document.getElementById('nextStepBtn').disabled = false;
+}
+
+// Adım 2'ye geç
+function goToStep2() {
+    const tarih = document.getElementById('modal_satin_alma_tarihi').value;
+    const tedarikciId = document.getElementById('modal_tedarikci_id').value;
+    const otelId = document.getElementById('modal_otel_id').value;
+    
+    if (!tarih || !tedarikciId || !otelId || !selectedMethod) {
+        alert('Lütfen tüm alanları doldurun ve bir yöntem seçin');
+        return;
+    }
+    
+    // Özet bilgileri göster
+    document.getElementById('summary_tarih').textContent = new Date(tarih).toLocaleDateString('tr-TR');
+    document.getElementById('summary_tedarikci').textContent = document.getElementById('modal_tedarikci_id').selectedOptions[0].text;
+    document.getElementById('summary_otel').textContent = document.getElementById('modal_otel_id').selectedOptions[0].text;
+    document.getElementById('summary_yontem').textContent = selectedMethod === 'manuel' ? 'Manuel Giriş' : 'Excel ile Toplu';
+    
+    // Form değerlerini aktar
+    document.getElementById('form_satin_alma_tarihi').value = tarih;
+    document.getElementById('form_tedarikci_id').value = tedarikciId;
+    document.getElementById('form_otel_id').value = otelId;
+    document.getElementById('form_fatura_no').value = document.getElementById('modal_fatura_no').value;
+    document.getElementById('excel_tedarikci_id').value = tedarikciId;
+    document.getElementById('excel_otel_id').value = otelId;
+    
+    // Adımları değiştir
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.remove('hidden');
+    
+    // İlgili formu göster
+    if (selectedMethod === 'manuel') {
+        document.getElementById('manuelForm').classList.remove('hidden');
+        document.getElementById('excelForm').classList.add('hidden');
+        if (modalProductCounter === 0) {
+            addProductRowModal();
+        }
+    } else {
+        document.getElementById('manuelForm').classList.add('hidden');
+        document.getElementById('excelForm').classList.remove('hidden');
+    }
+}
+
+// Adım 1'e geri dön
+function goToStep1() {
+    document.getElementById('step2').classList.add('hidden');
+    document.getElementById('step1').classList.remove('hidden');
+}
+
+// Modal'da ürün satırı ekle
+function addProductRowModal() {
+    modalProductCounter++;
+    const rowId = `modal-product-row-${modalProductCounter}`;
+    
+    const productRow = document.createElement('div');
+    productRow.id = rowId;
+    productRow.className = 'bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3 border border-slate-200 dark:border-slate-600';
+    
+    productRow.innerHTML = `
+        <div class="grid grid-cols-12 gap-2">
+            <div class="col-span-5">
+                <select name="urun_ids[]" class="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded dark:bg-slate-700" required onchange="calculateModalTotal()">
+                    <option value="">Ürün seçiniz...</option>
+                    {% for urun in urunler %}
+                    <option value="{{ urun.id }}">{{ urun.urun_adi }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-span-2">
+                <input type="number" name="miktarlar[]" value="1" min="1" class="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded dark:bg-slate-700" required onchange="calculateModalTotal()">
+            </div>
+            <div class="col-span-2">
+                <input type="number" name="birim_fiyatlar[]" value="0" step="0.01" min="0" class="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded dark:bg-slate-700" required onchange="calculateModalTotal()">
+            </div>
+            <div class="col-span-2">
+                <input type="number" name="kdv_oranlari[]" value="18" step="0.01" min="0" max="100" class="w-full px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded dark:bg-slate-700" onchange="calculateModalTotal()">
+            </div>
+            <div class="col-span-1 flex items-center justify-center">
+                <button type="button" onclick="document.getElementById('${rowId}').remove(); calculateModalTotal();" class="text-red-600 hover:text-red-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('modal_products_container').appendChild(productRow);
+    calculateModalTotal();
+}
+
+// Modal toplam hesapla
+function calculateModalTotal() {
+    let toplam = 0;
+    document.querySelectorAll('#modal_products_container > div').forEach(row => {
+        const miktar = parseFloat(row.querySelector('input[name="miktarlar[]"]').value) || 0;
+        const birimFiyat = parseFloat(row.querySelector('input[name="birim_fiyatlar[]"]').value) || 0;
+        const kdvOrani = parseFloat(row.querySelector('input[name="kdv_oranlari[]"]').value) || 0;
+        
+        const araToplam = miktar * birimFiyat;
+        const kdv = araToplam * (kdvOrani / 100);
+        toplam += araToplam + kdv;
+    });
+    
+    document.getElementById('modal_toplam').textContent = toplam.toFixed(2) + ' ₺';
+}
+
+// Excel dosya seçimi
+document.getElementById('modal_excel_file')?.addEventListener('change', function(e) {
+    const fileName = e.target.files[0]?.name;
+    if (fileName) {
+        document.getElementById('modal_file_name').textContent = `Seçilen dosya: ${fileName}`;
+    }
+});
+
+// Düzenle
+function editSatinAlma(id) {
+    window.location.href = `/satin-alma-duzenle/${id}`;
+}
+
+// Sil
+function deleteSatinAlma(id, islemNo) {
+    if (confirm(`${islemNo} nolu satın alma işlemini silmek istediğinizden emin misiniz?`)) {
+        fetch(`/satin-alma-sil/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Silme işlemi başarısız oldu');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

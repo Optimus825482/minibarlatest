@@ -63,8 +63,8 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- Tailwind CSS CDN - Play CDN (Stabil) -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -99,8 +99,7 @@
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-    <!-- SweetAlert2 CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
     <!-- Choices.js CSS & JS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/styles/choices.min.css">
@@ -873,13 +872,21 @@
                         </svg>
                         Panel
                     </a>
-                    <a href="{{ url_for('stok_giris') }}"
+                    <a href="{{ url_for('satin_alma') }}"
                         class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
                         </svg>
-                        Stok Girişi
+                        Satın Alma
+                    </a>
+                    <a href="{{ url_for('siparis_listesi') }}"
+                        class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                        </svg>
+                        Sipariş Listesi
                     </a>
                     <a href="{{ url_for('personel_zimmet') }}"
                         class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
@@ -1196,16 +1203,7 @@
                 </div>
             </header>
 
-            <!-- Flash Messages (Hidden - Will be shown as modals) -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            <div id="flash-messages-data" style="display: none;">
-                {% for category, message in messages %}
-                <div data-category="{{ category }}" data-message="{{ message }}"></div>
-                {% endfor %}
-            </div>
-            {% endif %}
-            {% endwith %}
+            <!-- Flash Messages - Sadece toast olarak gösterilecek (JavaScript'te) -->
 
             <!-- Page Content - Mobile optimized -->
             <main class="flex-1 p-3 sm:p-4 md:p-6 overflow-x-hidden">
@@ -1628,7 +1626,7 @@
     <script src="{{ url_for('static', filename='js/toast.js') }}" defer></script>
 
     <!-- Loading & Progress Indicators -->
-    <script src="{{ url_for('static', filename='js/loading.js') }}" defer></script>
+>
 
     <!-- Dark Mode / Theme Switcher -->
     <script src="{{ url_for('static', filename='js/theme.js') }}" defer></script>
@@ -1648,14 +1646,15 @@
             {% for category, message in messages %}
             // Flask kategorilerini toast türlerine çevir
             let toastType = '{{ category }}';
+            let toastMessage = {{ message|tojson }};
             if ( toastType === 'success' ) {
-                toastSuccess( '{{ message|safe }}' );
+                toastSuccess( toastMessage );
             } else if ( toastType === 'danger' || toastType === 'error' ) {
-                toastError( '{{ message|safe }}' );
+                toastError( toastMessage );
             } else if ( toastType === 'warning' ) {
-                toastWarning( '{{ message|safe }}' );
+                toastWarning( toastMessage );
             } else {
-                toastInfo( '{{ message|safe }}' );
+                toastInfo( toastMessage );
             }
             {% endfor %}
         } );
@@ -1703,115 +1702,61 @@
     <!-- Global Notification Functions -->
     <script>
         // SweetAlert2 Dark Mode Konfigürasyonu
-        const getSwalTheme = () => {
-            const isDark = document.documentElement.classList.contains( 'dark' );
-            return {
-                background: isDark ? '#1e293b' : '#ffffff',
-                color: isDark ? '#f1f5f9' : '#0f172a',
-                confirmButtonColor: '#3b82f6',
-                cancelButtonColor: '#64748b',
-                customClass: {
-                    popup: isDark ? 'dark-swal' : '',
-                    confirmButton: 'px-6 py-2.5 rounded-lg font-medium transition-all hover:scale-105',
-                    cancelButton: 'px-6 py-2.5 rounded-lg font-medium transition-all hover:scale-105'
-                }
-            };
+        // Basit fonksiyonlar (SweetAlert2 kaldırıldı)
+        window.showSuccess = (message, title = 'Başarılı!') => {
+            if (window.showToast) {
+                window.showToast(message, 'success');
+            } else {
+                alert(`${title}\n${message}`);
+            }
         };
 
-        // Başarı Mesajı
-        window.showSuccess = ( message, title = 'Başarılı!' ) => {
-            // Önceki modal'ı kapat
-            Swal.close();
-            // Yeni modal'ı göster
-            return Swal.fire( {
-                icon: 'success',
-                title: title,
-                text: message,
-                timer: 3000,
-                timerProgressBar: true,
-                showConfirmButton: false,
-                ...getSwalTheme()
-            } );
+        window.showError = (message, title = 'Hata!') => {
+            if (window.showToast) {
+                window.showToast(message, 'error');
+            } else {
+                alert(`${title}\n${message}`);
+            }
         };
 
-        // Hata Mesajı
-        window.showError = ( message, title = 'Hata!' ) => {
-            // Önceki modal'ı kapat
-            Swal.close();
-            // Yeni modal'ı göster
-            return Swal.fire( {
-                icon: 'error',
-                title: title,
-                text: message,
-                confirmButtonText: 'Tamam',
-                ...getSwalTheme()
-            } );
+        window.showWarning = (message, title = 'Dikkat!') => {
+            if (window.showToast) {
+                window.showToast(message, 'warning');
+            } else {
+                alert(`${title}\n${message}`);
+            }
         };
 
-        // Uyarı Mesajı
-        window.showWarning = ( message, title = 'Dikkat!' ) => {
-            // Önceki modal'ı kapat
-            Swal.close();
-            // Yeni modal'ı göster
-            return Swal.fire( {
-                icon: 'warning',
-                title: title,
-                text: message,
-                confirmButtonText: 'Tamam',
-                ...getSwalTheme()
-            } );
+        window.showInfo = (message, title = 'Bilgi') => {
+            if (window.showToast) {
+                window.showToast(message, 'info');
+            } else {
+                alert(`${title}\n${message}`);
+            }
         };
 
-        // Bilgi Mesajı
-        window.showInfo = ( message, title = 'Bilgi' ) => {
-            // Önceki modal'ı kapat
-            Swal.close();
-            // Yeni modal'ı göster
-            return Swal.fire( {
-                icon: 'info',
-                title: title,
-                text: message,
-                confirmButtonText: 'Tamam',
-                ...getSwalTheme()
-            } );
+        window.showConfirm = (message, title = 'Emin misiniz?') => {
+            return Promise.resolve({
+                isConfirmed: confirm(`${title}\n${message}`)
+            });
         };
 
-        // Onay Mesajı (Promise döner)
-        window.showConfirm = ( message, title = 'Emin misiniz?' ) => {
-            return Swal.fire( {
-                icon: 'question',
-                title: title,
-                text: message,
-                showCancelButton: true,
-                confirmButtonText: 'Evet',
-                cancelButtonText: 'Hayır',
-                reverseButtons: true,
-                ...getSwalTheme()
-            } );
+        window.showLoading = (message = 'İşlem yapılıyor...') => {
+            if (window.Loading) {
+                window.Loading.showOverlay(message);
+            }
         };
 
-        // Loading Göster
-        window.showLoading = ( message = 'İşlem yapılıyor...' ) => {
-            Swal.fire( {
-                title: message,
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                },
-                ...getSwalTheme()
-            } );
-        };
-
-        // Loading Kapat
         window.hideLoading = () => {
-            Swal.close();
+            if (window.Loading) {
+                window.Loading.hideOverlay();
+            }
         };
     </script>
 
-    <!-- Dark Mode için SweetAlert2 Özel Stiller -->
     <style>
-        .dark .swal2-popup {
+        /* SweetAlert2 stilleri kaldırıldı */
+        .removed-swal-styles {
             background-color: #1e293b !important;
             color: #f1f5f9 !important;
         }

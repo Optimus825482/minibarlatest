@@ -24,6 +24,12 @@ from models import db, Kat, Oda, Kullanici, UrunGrup, Urun, StokHareket, Persone
 from utils.decorators import login_required, role_required
 from utils.helpers import get_kritik_stok_urunler, get_tum_urunler_stok_durumlari, get_kat_sorumlusu_kritik_stoklar
 
+# Dashboard bildirim servisini import et
+try:
+    from utils.dashboard_servisleri import DashboardBildirimServisi
+except ImportError:
+    DashboardBildirimServisi = None
+
 
 def register_dashboard_routes(app):
     """Dashboard route'larını kaydet"""
@@ -127,7 +133,22 @@ def register_dashboard_routes(app):
         kritik_urunler = get_kritik_stok_urunler()
         
         # Gelişmiş stok durumları
-        stok_durumlari = get_tum_urunler_stok_durumlari()
+        try:
+            stok_durumlari = get_tum_urunler_stok_durumlari()
+        except Exception as e:
+            print(f"Stok durumları hatası: {str(e)}")
+            flash(f'Stok durumları yüklenirken hata oluştu: {str(e)}', 'warning')
+            stok_durumlari = {
+                'kritik': [],
+                'dikkat': [],
+                'normal': [],
+                'istatistik': {
+                    'toplam': 0,
+                    'kritik_sayi': 0,
+                    'dikkat_sayi': 0,
+                    'normal_sayi': 0
+                }
+            }
         
         # Son eklenen personeller (admin için)
         son_personeller = Kullanici.query.filter(
@@ -138,29 +159,67 @@ def register_dashboard_routes(app):
         # Son eklenen ürünler (admin için)
         son_urunler = Urun.query.filter_by(aktif=True).order_by(Urun.olusturma_tarihi.desc()).limit(5).all()
         
+        # Dashboard bildirimleri (Satın Alma Modülü)
+        dashboard_bildirimleri = []
+        bildirim_sayilari = {
+            'kritik_stok': 0,
+            'geciken_siparis': 0,
+            'onay_bekleyen': 0,
+            'toplam': 0
+        }
+        if DashboardBildirimServisi:
+            try:
+                kullanici_id = session.get('kullanici_id')
+                dashboard_bildirimleri = DashboardBildirimServisi.get_dashboard_bildirimleri(
+                    kullanici_id, 'sistem_yoneticisi'
+                )
+                bildirim_sayilari = DashboardBildirimServisi.get_bildirim_sayilari(
+                    kullanici_id, 'sistem_yoneticisi'
+                )
+            except Exception as e:
+                print(f"Dashboard bildirimleri hatası: {str(e)}")
+                db.session.rollback()  # Transaction'ı temizle
+        
+        # Sipariş istatistikleri
+        from models import SatinAlmaSiparisi
+        istatistikler = {
+            'onaylandi': 0
+        }
+        try:
+            istatistikler['onaylandi'] = SatinAlmaSiparisi.query.filter_by(durum='onaylandi').count()
+        except Exception as e:
+            print(f"Sipariş istatistikleri hatası: {str(e)}")
+            db.session.rollback()
+        
         # Ürün bazlı tüketim verileri (Son 30 günün en çok tüketilen ürünleri)
-        bugun = datetime.now().date()
-        otuz_gun_once = bugun - timedelta(days=30)
-        
-        # Minibar işlemlerinden en çok tüketilen ürünleri al
-        urun_tuketim = db.session.query(
-            Urun.urun_adi,
-            db.func.sum(MinibarIslemDetay.tuketim).label('toplam_tuketim')
-        ).join(
-            MinibarIslemDetay, MinibarIslemDetay.urun_id == Urun.id
-        ).join(
-            MinibarIslem, MinibarIslem.id == MinibarIslemDetay.islem_id
-        ).filter(
-            db.func.date(MinibarIslem.islem_tarihi) >= otuz_gun_once,
-            MinibarIslemDetay.tuketim > 0
-        ).group_by(
-            Urun.id, Urun.urun_adi
-        ).order_by(
-            db.desc('toplam_tuketim')
-        ).limit(10).all()
-        
-        urun_labels = [u[0] for u in urun_tuketim]
-        urun_tuketim_miktarlari = [float(u[1] or 0) for u in urun_tuketim]
+        urun_labels = []
+        urun_tuketim_miktarlari = []
+        try:
+            bugun = datetime.now().date()
+            otuz_gun_once = bugun - timedelta(days=30)
+            
+            # Minibar işlemlerinden en çok tüketilen ürünleri al
+            urun_tuketim = db.session.query(
+                Urun.urun_adi,
+                db.func.sum(MinibarIslemDetay.tuketim).label('toplam_tuketim')
+            ).join(
+                MinibarIslemDetay, MinibarIslemDetay.urun_id == Urun.id
+            ).join(
+                MinibarIslem, MinibarIslem.id == MinibarIslemDetay.islem_id
+            ).filter(
+                db.func.date(MinibarIslem.islem_tarihi) >= otuz_gun_once,
+                MinibarIslemDetay.tuketim > 0
+            ).group_by(
+                Urun.id, Urun.urun_adi
+            ).order_by(
+                db.desc('toplam_tuketim')
+            ).limit(10).all()
+            
+            urun_labels = [u[0] for u in urun_tuketim]
+            urun_tuketim_miktarlari = [float(u[1] or 0) for u in urun_tuketim]
+        except Exception as e:
+            print(f"Ürün tüketim verileri hatası: {str(e)}")
+            db.session.rollback()  # Transaction'ı temizle
         
         return render_template('sistem_yoneticisi/dashboard.html',
                              otel_doluluk_raporlari=otel_doluluk_raporlari,
@@ -185,7 +244,10 @@ def register_dashboard_routes(app):
                              urun_tuketim_miktarlari=urun_tuketim_miktarlari,
                              ml_enabled=ml_enabled,
                              ml_alerts=ml_alerts,
-                             ml_alert_count=ml_alert_count)
+                             ml_alert_count=ml_alert_count,
+                             dashboard_bildirimleri=dashboard_bildirimleri,
+                             bildirim_sayilari=bildirim_sayilari,
+                             istatistikler=istatistikler)
 
     
     @app.route('/depo')
@@ -226,7 +288,22 @@ def register_dashboard_routes(app):
         aktif_zimmetler = PersonelZimmet.query.filter_by(durum='aktif').count()
         
         # Gelişmiş stok durumları
-        stok_durumlari = get_tum_urunler_stok_durumlari()
+        try:
+            stok_durumlari = get_tum_urunler_stok_durumlari()
+        except Exception as e:
+            print(f"Stok durumları hatası: {str(e)}")
+            flash(f'Stok durumları yüklenirken hata oluştu: {str(e)}', 'warning')
+            stok_durumlari = {
+                'kritik': [],
+                'dikkat': [],
+                'normal': [],
+                'istatistik': {
+                    'toplam': 0,
+                    'kritik_sayi': 0,
+                    'dikkat_sayi': 0,
+                    'normal_sayi': 0
+                }
+            }
         
         # Zimmet iade istatistikleri
         toplam_iade_edilen = db.session.query(db.func.sum(PersonelZimmetDetay.iade_edilen_miktar)).filter(
@@ -296,6 +373,28 @@ def register_dashboard_routes(app):
             ).scalar() or 0
             cikis_verileri.append(float(cikis))
         
+        # Dashboard bildirimleri (Satın Alma Modülü)
+        dashboard_bildirimleri = []
+        bildirim_sayilari = {
+            'kritik_stok': 0,
+            'geciken_siparis': 0,
+            'onay_bekleyen': 0,
+            'toplam': 0
+        }
+        if DashboardBildirimServisi and atanan_oteller:
+            try:
+                kullanici_id = session.get('kullanici_id')
+                # İlk atanan otel için bildirimleri al
+                otel_id = atanan_oteller[0].id
+                dashboard_bildirimleri = DashboardBildirimServisi.get_dashboard_bildirimleri(
+                    kullanici_id, 'depo_sorumlusu', otel_id
+                )
+                bildirim_sayilari = DashboardBildirimServisi.get_bildirim_sayilari(
+                    kullanici_id, 'depo_sorumlusu', otel_id
+                )
+            except Exception as e:
+                print(f"Dashboard bildirimleri hatası: {str(e)}")
+        
         # Ürün bazlı tüketim verileri (Son 30 günün en çok tüketilen ürünleri)
         otuz_gun_once = bugun - timedelta(days=30)
         
@@ -335,7 +434,9 @@ def register_dashboard_routes(app):
                              giris_verileri=giris_verileri,
                              cikis_verileri=cikis_verileri,
                              urun_labels=urun_labels,
-                             urun_tuketim_miktarlari=urun_tuketim_miktarlari)
+                             urun_tuketim_miktarlari=urun_tuketim_miktarlari,
+                             dashboard_bildirimleri=dashboard_bildirimleri,
+                             bildirim_sayilari=bildirim_sayilari)
 
     
     @app.route('/kat-sorumlusu')

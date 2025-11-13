@@ -5,6 +5,85 @@
 
 {% block content %}
 <div class="space-y-6">
+    <!-- Satın Alma Modülü Bildirimleri -->
+    {% if dashboard_bildirimleri %}
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 md:p-6">
+        <div class="flex items-center mb-4">
+            <h3 class="text-lg font-medium text-slate-900 dark:text-white">
+                <i class="fas fa-bell mr-2 text-slate-600 dark:text-slate-400"></i>
+                Satın Alma & Stok Bildirimleri
+                {% if bildirim_sayilari.toplam > 0 %}
+                <span class="ml-2 px-2 py-1 text-xs font-bold rounded-full bg-red-500 text-white">
+                    {{ bildirim_sayilari.toplam }}
+                </span>
+                {% endif %}
+            </h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for bildirim in dashboard_bildirimleri %}
+            <a href="{{ bildirim.link }}" class="block group">
+                <div class="p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-lg
+                    {% if bildirim.tip == 'danger' %}
+                        bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700 hover:border-red-500
+                    {% elif bildirim.tip == 'warning' %}
+                        bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700 hover:border-yellow-500
+                    {% elif bildirim.tip == 'info' %}
+                        bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700 hover:border-blue-500
+                    {% elif bildirim.tip == 'success' %}
+                        bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700 hover:border-green-500
+                    {% endif %}">
+                    
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center
+                                {% if bildirim.tip == 'danger' %}
+                                    bg-red-100 dark:bg-red-800
+                                {% elif bildirim.tip == 'warning' %}
+                                    bg-yellow-100 dark:bg-yellow-800
+                                {% elif bildirim.tip == 'info' %}
+                                    bg-blue-100 dark:bg-blue-800
+                                {% elif bildirim.tip == 'success' %}
+                                    bg-green-100 dark:bg-green-800
+                                {% endif %}">
+                                <i class="fas fa-{{ bildirim.ikon }}
+                                    {% if bildirim.tip == 'danger' %}
+                                        text-red-600 dark:text-red-300
+                                    {% elif bildirim.tip == 'warning' %}
+                                        text-yellow-600 dark:text-yellow-300
+                                    {% elif bildirim.tip == 'info' %}
+                                        text-blue-600 dark:text-blue-300
+                                    {% elif bildirim.tip == 'success' %}
+                                        text-green-600 dark:text-green-300
+                                    {% endif %}"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium
+                                    {% if bildirim.tip == 'danger' %}
+                                        text-red-900 dark:text-red-100
+                                    {% elif bildirim.tip == 'warning' %}
+                                        text-yellow-900 dark:text-yellow-100
+                                    {% elif bildirim.tip == 'info' %}
+                                        text-blue-900 dark:text-blue-100
+                                    {% elif bildirim.tip == 'success' %}
+                                        text-green-900 dark:text-green-100
+                                    {% endif %}">
+                                    {{ bildirim.mesaj }}
+                                </p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    Detaylar için tıklayın
+                                </p>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors"></i>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Otel Doluluk Bilgileri -->
     {% if otel_doluluk_bilgileri %}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
@@ -166,28 +245,47 @@
     <div class="bg-white shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">
             <h3 class="text-lg leading-6 font-medium text-slate-900 mb-4">Hızlı İşlemler</h3>
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <a href="{{ url_for('stok_giris') }}"
-                    class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-500 rounded-lg border border-slate-200">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <a href="{{ url_for('satin_alma') }}"
+                    class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-slate-200 hover:border-blue-300 transition-all">
                     <div>
                         <span class="rounded-lg inline-flex p-3 bg-blue-50 text-blue-700 ring-4 ring-white">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
                             </svg>
                         </span>
                     </div>
                     <div class="mt-4">
                         <h3 class="text-lg font-medium">
                             <span class="absolute inset-0" aria-hidden="true"></span>
-                            Stok Girişi
+                            Satın Alma
                         </h3>
-                        <p class="mt-2 text-sm text-slate-500">Yeni ürün stok girişi yapın</p>
+                        <p class="mt-2 text-sm text-slate-500">Direkt stok girişi yap</p>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('siparis_listesi') }}"
+                    class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-purple-500 rounded-lg border border-slate-200 hover:border-purple-300 transition-all">
+                    <div>
+                        <span class="rounded-lg inline-flex p-3 bg-purple-50 text-purple-700 ring-4 ring-white">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="mt-4">
+                        <h3 class="text-lg font-medium">
+                            <span class="absolute inset-0" aria-hidden="true"></span>
+                            Sipariş Listesi
+                        </h3>
+                        <p class="mt-2 text-sm text-slate-500">Siparişleri görüntüle ve yeni sipariş oluştur</p>
                     </div>
                 </a>
 
                 <a href="{{ url_for('personel_zimmet') }}"
-                    class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-500 rounded-lg border border-slate-200">
+                    class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg border border-slate-200 hover:border-green-300 transition-all">
                     <div>
                         <span class="rounded-lg inline-flex p-3 bg-green-50 text-green-700 ring-4 ring-white">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -207,7 +305,7 @@
                 </a>
 
                 <a href="{{ url_for('depo_raporlar') }}"
-                    class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-500 rounded-lg border border-slate-200">
+                    class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-yellow-500 rounded-lg border border-slate-200 hover:border-yellow-300 transition-all">
                     <div>
                         <span class="rounded-lg inline-flex p-3 bg-yellow-50 text-yellow-700 ring-4 ring-white">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

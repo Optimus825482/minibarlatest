@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Satın Alma Detayı - Minibar Takip Sistemi{% endblock %}
+{% block page_title %}Satın Alma Detayı{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Geri Butonu -->
+    <div>
+        <a href="{{ url_for('satin_alma_listesi') }}"
+            class="inline-flex items-center text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Listeye Dön
+        </a>
+    </div>
+
+    <!-- İşlem Bilgileri -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100">
+                    İşlem Bilgileri
+                </h3>
+                <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full
+                    {% if islem.odeme_durumu == 'odendi' %}
+                        bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                    {% elif islem.odeme_durumu == 'kismi' %}
+                        bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                    {% else %}
+                        bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
+                    {% endif %}">
+                    {% if islem.odeme_durumu == 'odendi' %}Ödendi
+                    {% elif islem.odeme_durumu == 'kismi' %}Kısmi Ödendi
+                    {% else %}Ödenmedi{% endif %}
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div>
+                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">İşlem No</dt>
+                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100 font-semibold">{{ islem.islem_no }}</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Tedarikçi</dt>
+                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">{{ islem.tedarikci.tedarikci_adi }}</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Otel</dt>
+                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">{{ islem.otel.ad }}</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Fatura No</dt>
+                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">{{ islem.fatura_no or '-' }}</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Fatura Tarihi</dt>
+                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
+                        {{ islem.fatura_tarihi.strftime('%d.%m.%Y') if islem.fatura_tarihi else '-' }}
+                    </dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">İşlem Tarihi</dt>
+                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">{{ islem.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}</dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Ödeme Şekli</dt>
+                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
+                        {% if islem.odeme_sekli == 'nakit' %}Nakit
+                        {% elif islem.odeme_sekli == 'kredi_karti' %}Kredi Kartı
+                        {% elif islem.odeme_sekli == 'havale' %}Havale/EFT
+                        {% elif islem.odeme_sekli == 'cek' %}Çek
+                        {% else %}-{% endif %}
+                    </dd>
+                </div>
+
+                <div>
+                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">İşlemi Yapan</dt>
+                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
+                        {{ islem.olusturan.ad_soyad if islem.olusturan else '-' }}
+                    </dd>
+                </div>
+            </div>
+
+            {% if islem.aciklama %}
+            <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Açıklama</dt>
+                <dd class="text-sm text-slate-900 dark:text-slate-100">{{ islem.aciklama }}</dd>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Ürün Detayları -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4">Ürün Detayları</h3>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                    <thead class="bg-slate-50 dark:bg-slate-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Ürün
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Miktar
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Birim Fiyat
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                KDV %
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                KDV Tutarı
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Toplam
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                        {% for detay in detaylar %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">
+                                {{ detay.urun.urun_adi }}
+                                <span class="text-xs text-slate-500 dark:text-slate-400">({{ detay.urun.birim }})</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                                {{ detay.miktar }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                                {{ "%.2f"|format(detay.birim_fiyat) }} ₺
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                                %{{ "%.0f"|format(detay.kdv_orani) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                                {{ "%.2f"|format(detay.kdv_tutari) }} ₺
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                {{ "%.2f"|format(detay.toplam_fiyat) }} ₺
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="bg-slate-50 dark:bg-slate-700">
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-right text-sm font-medium text-slate-900 dark:text-slate-100">
+                                Ara Toplam:
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                {{ "%.2f"|format(islem.toplam_tutar) }} ₺
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-right text-sm font-medium text-slate-900 dark:text-slate-100">
+                                KDV Toplamı:
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                {{ "%.2f"|format(islem.kdv_tutari) }} ₺
+                            </td>
+                        </tr>
+                        <tr class="border-t-2 border-slate-300 dark:border-slate-600">
+                            <td colspan="5" class="px-6 py-4 text-right text-base font-bold text-slate-900 dark:text-slate-100">
+                                Genel Toplam:
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-base font-bold text-blue-600 dark:text-blue-400">
+                                {{ "%.2f"|format(islem.genel_toplam) }} ₺
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stok Hareketleri -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4">
+                İlgili Stok Hareketleri
+            </h3>
+            
+            <div class="space-y-2">
+                {% for detay in detaylar %}
+                {% if detay.stok_hareket %}
+                <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-green-600 dark:text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                {{ detay.urun.urun_adi }} - {{ detay.miktar }} {{ detay.urun.birim }}
+                            </p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                Stok girişi yapıldı - {{ detay.stok_hareket.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}
+                            </p>
+                        </div>
+                    </div>
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        Giriş
+                    </span>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

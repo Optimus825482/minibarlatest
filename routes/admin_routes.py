@@ -802,7 +802,7 @@ def register_admin_routes(app):
                 audit_create('otel', otel.id, otel)
                 
                 flash('Otel başarıyla eklendi.', 'success')
-                log_islem('otel_ekle', f'Otel eklendi: {otel.ad}')
+                log_islem('ekleme', 'otel', f'Otel eklendi: {otel.ad}')
                 return redirect(url_for('otel_listesi'))
                 
             except IntegrityError as e:
@@ -852,7 +852,7 @@ def register_admin_routes(app):
                 audit_update('otel', otel.id, eski_deger, otel)
                 
                 flash('Otel başarıyla güncellendi.', 'success')
-                log_islem('otel_duzenle', f'Otel güncellendi: {otel.ad}')
+                log_islem('guncelleme', 'otel', f'Otel güncellendi: {otel.ad}')
                 return redirect(url_for('otel_listesi'))
                 
             except Exception as e:
@@ -895,7 +895,7 @@ def register_admin_routes(app):
             
             durum = 'aktif' if otel.aktif else 'pasif'
             flash(f'Otel başarıyla {durum} yapıldı.', 'success')
-            log_islem('otel_aktif_pasif', f'Otel {durum} yapıldı: {otel.ad}')
+            log_islem('guncelleme', 'otel', f'Otel {durum} yapıldı: {otel.ad}')
             
         except Exception as e:
             db.session.rollback()
@@ -905,3 +905,158 @@ def register_admin_routes(app):
         return redirect(url_for('otel_listesi'))
 
 
+
+
+    # ============================================================================
+    # FİYAT YÖNETİMİ UI
+    # ============================================================================
+    
+    @app.route('/urun-fiyat-yonetimi', methods=['GET'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
+    def urun_fiyat_yonetimi():
+        """
+        Ürün fiyat yönetimi sayfası
+        
+        Özellikler:
+        - Fiyat güncelleme formu
+        - Tedarikçi seçimi
+        - Güncel fiyatlar tablosu
+        - Fiyat geçmişi tablosu
+        """
+        try:
+            from models import Urun, Tedarikci, Otel
+            
+            # Aktif ürünleri getir
+            urunler = Urun.query.filter_by(aktif=True).order_by(Urun.urun_adi).all()
+            
+            # Aktif tedarikçileri getir
+            tedarikciler = Tedarikci.query.filter_by(aktif=True).order_by(Tedarikci.tedarikci_adi).all()
+            
+            # Otelleri getir (filtre için)
+            oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
+            
+            log_islem('goruntuleme', 'urun_fiyat_yonetimi', 'Fiyat yönetimi sayfası görüntülendi')
+            
+            return render_template(
+                'admin/urun_fiyat_yonetimi.html',
+                urunler=urunler,
+                tedarikciler=tedarikciler,
+                oteller=oteller
+            )
+            
+        except Exception as e:
+            log_hata(e, modul='urun_fiyat_yonetimi')
+            flash('Sayfa yüklenirken bir hata oluştu', 'danger')
+            return redirect(url_for('sistem_yoneticisi_dashboard'))
+    
+    
+    @app.route('/karlilik-dashboard', methods=['GET'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def karlilik_dashboard():
+        """
+        Karlılık dashboard sayfası
+        
+        Özellikler:
+        - Özet kartlar (Günlük kar, Aylık kar, Kar marjı, ROI)
+        - Trend grafikleri
+        - En karlı ürünler tablosu
+        """
+        try:
+            from models import Otel
+            
+            # Otelleri getir (filtre için)
+            oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
+            
+            log_islem('goruntuleme', 'karlilik_dashboard', 'Karlılık dashboard görüntülendi')
+            
+            return render_template(
+                'admin/karlilik_dashboard.html',
+                oteller=oteller
+            )
+            
+        except Exception as e:
+            log_hata(e, modul='karlilik_dashboard')
+            flash('Sayfa yüklenirken bir hata oluştu', 'danger')
+            return redirect(url_for('sistem_yoneticisi_dashboard'))
+    
+    
+    @app.route('/kampanya-yonetimi', methods=['GET'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def kampanya_yonetimi():
+        """
+        Kampanya yönetimi sayfası
+        
+        Özellikler:
+        - Kampanya oluşturma formu
+        - Aktif kampanyalar tablosu
+        - Kampanya performans metrikleri
+        - Tüm kampanyalar listesi
+        """
+        try:
+            from models import Urun, Tedarikci
+            
+            # Ürünleri getir (kampanya için)
+            urunler = Urun.query.filter_by(aktif=True).order_by(Urun.urun_adi).all()
+            
+            # Tedarikçileri getir
+            tedarikciler = Tedarikci.query.filter_by(aktif=True).order_by(Tedarikci.tedarikci_adi).all()
+            
+            log_islem('goruntuleme', 'kampanya_yonetimi', 'Kampanya yönetimi sayfası görüntülendi')
+            
+            return render_template(
+                'admin/kampanya_yonetimi.html',
+                urunler=urunler,
+                tedarikciler=tedarikciler
+            )
+            
+        except Exception as e:
+            log_hata(e, modul='kampanya_yonetimi')
+            flash('Sayfa yüklenirken bir hata oluştu', 'danger')
+            return redirect(url_for('sistem_yoneticisi_dashboard'))
+    
+    
+    @app.route('/bedelsiz-limit-yonetimi', methods=['GET'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def bedelsiz_limit_yonetimi():
+        """
+        Bedelsiz limit yönetimi sayfası
+        
+        Özellikler:
+        - Limit tanımlama formu
+        - Oda bazlı limit listesi
+        - Kullanım takibi
+        - Limit tipi yönetimi (misafir, kampanya, personel)
+        """
+        try:
+            from models import Oda, Urun, Kampanya, Otel
+            
+            # Aktif odaları getir
+            odalar = Oda.query.filter_by(aktif=True).order_by(Oda.oda_no).all()
+            
+            # Aktif ürünleri getir
+            urunler = Urun.query.filter_by(aktif=True).order_by(Urun.urun_adi).all()
+            
+            # Aktif kampanyaları getir
+            kampanyalar = Kampanya.query.filter_by(aktif=True).order_by(Kampanya.kampanya_adi).all()
+            
+            # Otelleri getir (filtre için)
+            oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
+            
+            log_islem('goruntuleme', 'bedelsiz_limit_yonetimi', 'Bedelsiz limit yönetimi sayfası görüntülendi')
+            
+            return render_template(
+                'admin/bedelsiz_limit_yonetimi.html',
+                odalar=odalar,
+                urunler=urunler,
+                kampanyalar=kampanyalar,
+                oteller=oteller
+            )
+            
+        except Exception as e:
+            log_hata(e, modul='bedelsiz_limit_yonetimi')
+            flash('Sayfa yüklenirken bir hata oluştu', 'danger')
+            return redirect(url_for('sistem_yoneticisi_dashboard'))

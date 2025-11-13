@@ -23,6 +23,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Uygulama dosyalarını kopyala
 COPY . .
 
+# ML models dizini oluştur
+RUN mkdir -p /app/ml_models && \
+    chmod 755 /app/ml_models
+
 # Entrypoint script'ini executable yap
 RUN chmod +x docker-entrypoint.sh
 
@@ -30,6 +34,9 @@ RUN chmod +x docker-entrypoint.sh
 RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
 USER appuser
+
+# Volume tanımla (persistent storage için)
+VOLUME ["/app/ml_models"]
 
 # Port expose et
 EXPOSE 5000

@@ -7,42 +7,29 @@ class Config:
     ENV = os.getenv('FLASK_ENV', os.getenv('ENV', 'production')).lower()
     IS_DEVELOPMENT = ENV in {'development', 'dev', 'local'}
 
-    # Database Configuration - PostgreSQL & MySQL Support
+    # Database Configuration - PostgreSQL Only (MySQL support removed)
     DATABASE_URL = os.getenv('DATABASE_URL')
-    DB_TYPE = os.getenv('DB_TYPE', 'postgresql')  # 'postgresql' veya 'mysql'
     
-    # PostgreSQL variables (Railway/Heroku)
-    # Railway Private Network için öncelik ver
-    PGHOST = os.getenv('PGHOST_PRIVATE') or os.getenv('PGHOST')
+    # PostgreSQL variables
+    PGHOST = os.getenv('PGHOST')
     PGUSER = os.getenv('PGUSER')
     PGPASSWORD = os.getenv('PGPASSWORD')
     PGDATABASE = os.getenv('PGDATABASE')
-    PGPORT = os.getenv('PGPORT_PRIVATE') or os.getenv('PGPORT', '5432')
-    
-    # MySQL variables (fallback - legacy support)
-    MYSQLHOST = os.getenv('MYSQLHOST')
-    MYSQLUSER = os.getenv('MYSQLUSER')
-    MYSQLPASSWORD = os.getenv('MYSQLPASSWORD')
-    MYSQL_DATABASE = os.getenv('MYSQL_DATABASE')
+    PGPORT = os.getenv('PGPORT', '5432')
     
     # Database URI Construction
     if DATABASE_URL:
-        # Railway/Heroku DATABASE_URL kullan
+        # Coolify/Heroku DATABASE_URL kullan
         if DATABASE_URL.startswith('postgres://'):
             # Heroku postgres:// -> postgresql://
             SQLALCHEMY_DATABASE_URI = DATABASE_URL.replace('postgres://', 'postgresql://')
         elif DATABASE_URL.startswith('postgresql://'):
             SQLALCHEMY_DATABASE_URI = DATABASE_URL
-        elif DATABASE_URL.startswith('mysql://'):
-            SQLALCHEMY_DATABASE_URI = DATABASE_URL.replace('mysql://', 'mysql+pymysql://')
         else:
             SQLALCHEMY_DATABASE_URI = DATABASE_URL
-    elif DB_TYPE == 'postgresql' and PGHOST and PGUSER:
-        # PostgreSQL connection (Railway internal)
+    elif PGHOST and PGUSER:
+        # PostgreSQL connection (Coolify internal)
         SQLALCHEMY_DATABASE_URI = f'postgresql+psycopg2://{PGUSER}:{PGPASSWORD}@{PGHOST}:{PGPORT}/{PGDATABASE}'
-    elif DB_TYPE == 'mysql' and MYSQLHOST and MYSQLUSER:
-        # MySQL connection (legacy)
-        SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{MYSQLUSER}:{MYSQLPASSWORD}@{MYSQLHOST}:3306/{MYSQL_DATABASE}?charset=utf8mb4'
     else:
         # Local development için .env dosyasından oku
         DB_HOST = os.getenv('DB_HOST', 'localhost')
@@ -51,38 +38,31 @@ class Config:
         DB_NAME = os.getenv('DB_NAME', 'minibar_takip')
         DB_PORT = os.getenv('DB_PORT', '5432')
         
-        if DB_TYPE == 'postgresql':
-            SQLALCHEMY_DATABASE_URI = f'postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
-        else:
-            # MySQL fallback
-            SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:3306/{DB_NAME}?charset=utf8mb4'
+        SQLALCHEMY_DATABASE_URI = f'postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # PostgreSQL Optimized Engine Options - Railway Timeout Fix v3 (ULTRA AGRESIF)
+    # PostgreSQL Optimized Engine Options - Coolify Production
     SQLALCHEMY_ENGINE_OPTIONS = {
-        # Connection Pool Configuration - Tek worker için minimal pool
-        'pool_size': 1,                     # Tek connection (1 worker için yeterli)
-        'max_overflow': 2,                  # Max 3 connection total
-        'pool_timeout': 300,                # 5 dakika wait timeout
-        'pool_recycle': 600,                # 10 dakikada bir recycle
-        'pool_pre_ping': True,              # Health check before use (ZORUNLU)
+        # Connection Pool Configuration
+        'pool_size': 5,                     # 5 connection pool
+        'max_overflow': 10,                 # Max 15 connection total
+        'pool_timeout': 30,                 # 30 saniye wait timeout
+        'pool_recycle': 3600,               # 1 saatte bir recycle
+        'pool_pre_ping': True,              # Health check before use
         
         # PostgreSQL Specific Options
         'connect_args': {
-            'connect_timeout': 120,         # 2 dakika connection timeout
-            'options': '-c timezone=utc -c statement_timeout=120000',  # 2 dakika query timeout
+            'connect_timeout': 10,          # 10 saniye connection timeout
+            'options': '-c timezone=utc -c statement_timeout=30000',  # 30 saniye query timeout
             'application_name': 'minibar_takip',
             
-            # Keep-alive settings - Ultra agresif
+            # Keep-alive settings
             'keepalives': 1,
-            'keepalives_idle': 30,          # 30 saniye idle
-            'keepalives_interval': 10,      # 10 saniye interval
-            'keepalives_count': 5,          # 5 deneme
-            
-            # TCP settings - Maximum timeout
-            'tcp_user_timeout': 120000,     # 2 dakika TCP timeout
-        } if 'postgresql' in SQLALCHEMY_DATABASE_URI else {},
+            'keepalives_idle': 30,
+            'keepalives_interval': 10,
+            'keepalives_count': 5,
+        },
         
         # Execution Options
         'execution_options': {
@@ -128,3 +108,27 @@ class Config:
         'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' cdn.jsdelivr.net; img-src 'self' data: https:; connect-src 'self'",
         'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'  # HTTPS için
     }
+    
+    # Redis Cache Configuration
+    REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+    
+    # Flask-Caching Configuration
+    CACHE_TYPE = 'redis' if not IS_DEVELOPMENT else 'simple'  # Development'ta simple cache
+    CACHE_REDIS_URL = REDIS_URL
+    CACHE_DEFAULT_TIMEOUT = 3600  # 1 saat default timeout
+    CACHE_KEY_PREFIX = 'minibar_cache:'
+    
+    # Cache Timeouts (saniye)
+    CACHE_TIMEOUT_FIYAT = 3600  # 1 saat - Fiyat hesaplamaları
+    CACHE_TIMEOUT_KAR = 1800  # 30 dakika - Kar analizleri
+    CACHE_TIMEOUT_STOK = 300  # 5 dakika - Stok durumu
+    CACHE_TIMEOUT_RAPOR = 600  # 10 dakika - Raporlar
+    
+    # Celery Configuration
+    CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/1')
+    CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/1')
+    CELERY_TASK_SERIALIZER = 'json'
+    CELERY_RESULT_SERIALIZER = 'json'
+    CELERY_ACCEPT_CONTENT = ['json']
+    CELERY_TIMEZONE = 'UTC'
+    CELERY_ENABLE_UTC = True

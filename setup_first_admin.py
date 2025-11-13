@@ -277,10 +277,7 @@ def print_success_info(user_data):
     # URL'i tespit et
     port = os.getenv('PORT', '5014')
     
-    if os.getenv('RAILWAY_ENVIRONMENT'):
-        print("   Railway deployment tespit edildi")
-        print("   URL'yi Railway dashboard'dan kontrol edin")
-    elif os.getenv('COOLIFY_URL'):
+    if os.getenv('COOLIFY_URL'):
         coolify_url = os.getenv('COOLIFY_URL')
         print(f"   URL: {coolify_url}")
     else:

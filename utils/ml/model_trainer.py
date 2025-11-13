@@ -21,22 +21,81 @@ class ModelTrainer:
         self.db = db
         self.min_data_points = int(os.getenv('ML_MIN_DATA_POINTS', 100))
         self.accuracy_threshold = float(os.getenv('ML_ACCURACY_THRESHOLD', 0.85))
+        
+        # ModelManager instance oluştur
+        from utils.ml.model_manager import ModelManager
+        self.model_manager = ModelManager(db)
     
-    def train_isolation_forest(self, metric_type, data):
+    def train_isolation_forest(self, metric_type, data, use_feature_engineering=True, use_stored_features=True):
         """
-        Isolation Forest modelini eğit
+        Isolation Forest modelini eğit (Feature Engineering ile)
         Args:
             metric_type: Metrik tipi ('stok_seviye', 'tuketim_miktar', 'dolum_sure')
-            data: Eğitim verisi (numpy array)
-        Returns: (model, accuracy, precision, recall)
+            data: Eğitim verisi (numpy array) - use_feature_engineering=False ise
+            use_feature_engineering: Feature engineering kullan mı?
+            use_stored_features: Kaydedilmiş feature'ları kullan mı? (True ise daha hızlı)
+        Returns: (model, scaler, feature_list, accuracy, precision, recall)
         """
         try:
-            if len(data) < self.min_data_points:
-                logger.warning(f"Yetersiz veri: {len(data)} < {self.min_data_points}")
-                return None, 0, 0, 0
+            from sklearn.preprocessing import StandardScaler
+            
+            # Feature Engineering kullan
+            if use_feature_engineering:
+                # Önce kaydedilmiş feature'ları dene
+                if use_stored_features:
+                    from utils.ml.feature_storage import FeatureStorage
+                    
+                    logger.info(f"🎓 Model eğitimi başladı (Kaydedilmiş Feature'lar ile)...")
+                    
+                    storage = FeatureStorage(self.db)
+                    df = storage.get_feature_matrix(metric_type, lookback_days=30)
+                    
+                    if df is not None and len(df) >= self.min_data_points:
+                        logger.info(f"✅ {len(df)} kaydedilmiş feature bulundu")
+                    else:
+                        logger.info("⚠️ Kaydedilmiş feature yetersiz, yeni hesaplanıyor...")
+                        use_stored_features = False
+                
+                # Kaydedilmiş feature yoksa veya yetersizse, yeni hesapla
+                if not use_stored_features:
+                    from utils.ml.feature_engineer import FeatureEngineer
+                    
+                    logger.info(f"🎓 Model eğitimi başladı (Feature Engineering ile)...")
+                    
+                    engineer = FeatureEngineer(self.db)
+                    df = engineer.create_feature_matrix(metric_type, lookback_days=30)
+                
+                if df is None or len(df) < self.min_data_points:
+                    logger.warning(f"Yetersiz veri: {len(df) if df is not None else 0} < {self.min_data_points}")
+                    return None, None, None, 0, 0, 0
+                
+                # Numeric kolonları seç
+                numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+                feature_cols = [col for col in numeric_cols if col not in ['entity_id']]
+                
+                if not feature_cols:
+                    logger.warning("Feature bulunamadı, ham veri kullanılıyor...")
+                    use_feature_engineering = False
+                else:
+                    X = df[feature_cols].values
+                    logger.info(f"📊 {len(feature_cols)} feature kullanılıyor")
+            
+            # Ham veri kullan
+            if not use_feature_engineering:
+                logger.info(f"🎓 Model eğitimi başladı (Ham veri ile)...")
+                if len(data) < self.min_data_points:
+                    logger.warning(f"Yetersiz veri: {len(data)} < {self.min_data_points}")
+                    return None, None, None, 0, 0, 0
+                X = data.reshape(-1, 1)
+                feature_cols = ['value']
             
             # Train/test split (80/20)
-            X_train, X_test = train_test_split(data, test_size=0.2, random_state=42)
+            X_train, X_test = train_test_split(X, test_size=0.2, random_state=42, shuffle=True)
+            
+            # Standardize et
+            scaler = StandardScaler()
+            X_train_scaled = scaler.fit_transform(X_train)
+            X_test_scaled = scaler.transform(X_test)
             
             # Isolation Forest modeli
             model = IsolationForest(
@@ -46,48 +105,75 @@ class ModelTrainer:
             )
             
             # Modeli eğit
-            model.fit(X_train.reshape(-1, 1))
+            model.fit(X_train_scaled)
             
             # Test verisi ile değerlendir
-            predictions = model.predict(X_test.reshape(-1, 1))
+            predictions = model.predict(X_test_scaled)
             
-            # Performans metrikleri (basit hesaplama)
-            # -1: anomali, 1: normal
+            # Performans metrikleri
             anomaly_count = np.sum(predictions == -1)
-            normal_count = np.sum(predictions == 1)
-            
-            # Basit accuracy hesaplama
-            # Gerçek anomali oranı ~%10 olmalı
             expected_anomaly_ratio = 0.1
             actual_anomaly_ratio = anomaly_count / len(predictions)
             accuracy = 1 - abs(expected_anomaly_ratio - actual_anomaly_ratio)
             
             # Precision ve recall (basitleştirilmiş)
-            precision = 0.85  # Varsayılan
-            recall = 0.80  # Varsayılan
+            precision = 0.85
+            recall = 0.80
             
             logger.info(f"✅ Model eğitildi: {metric_type}")
-            logger.info(f"   - Veri sayısı: {len(data)}")
+            logger.info(f"   - Veri sayısı: {len(X)}")
+            logger.info(f"   - Feature sayısı: {len(feature_cols)}")
             logger.info(f"   - Accuracy: {accuracy:.2%}")
             
-            return model, accuracy, precision, recall
+            return model, scaler, feature_cols, accuracy, precision, recall
             
         except Exception as e:
             logger.error(f"❌ Model eğitim hatası: {str(e)}")
-            return None, 0, 0, 0
+            import traceback
+            traceback.print_exc()
+            return None, None, None, 0, 0, 0
     
-    def save_model(self, model, model_type, metric_type, accuracy, precision, recall):
+    def save_model(self, model, model_type, metric_type, accuracy, precision, recall, scaler=None, feature_list=None):
         """
-        Modeli veritabanına kaydet
+        Modeli dosyaya kaydet (ModelManager kullanarak)
         Args:
             model: Eğitilmiş model
             model_type: Model tipi ('isolation_forest')
             metric_type: Metrik tipi
             accuracy, precision, recall: Performans metrikleri
-        Returns: Model ID
+            scaler: StandardScaler (opsiyonel)
+            feature_list: Feature listesi (opsiyonel)
+        Returns: Model path
+        """
+        try:
+            # Yeni yöntem: ModelManager ile dosyaya kaydet
+            model_path = self.model_manager.save_model_to_file(
+                model=model,
+                model_type=model_type,
+                metric_type=metric_type,
+                accuracy=accuracy,
+                precision=precision,
+                recall=recall,
+                scaler=scaler,
+                feature_list=feature_list
+            )
+            
+            logger.info(f"✅ Model kaydedildi: {model_path}")
+            return model_path
+            
+        except Exception as e:
+            logger.error(f"❌ Model kaydetme hatası: {str(e)}")
+            # Fallback: Eski yöntemi dene (backward compat)
+            return self._save_to_database_legacy(model, model_type, metric_type, accuracy, precision, recall)
+    
+    def _save_to_database_legacy(self, model, model_type, metric_type, accuracy, precision, recall):
+        """
+        Legacy: Modeli veritabanına kaydet (fallback)
         """
         try:
             from models import MLModel
+            
+            logger.warning("⚠️  Fallback: Veritabanına kaydediliyor...")
             
             # Modeli serialize et
             model_data = pickle.dumps(model)
@@ -99,32 +185,38 @@ class ModelTrainer:
                 is_active=True
             ).update({'is_active': False})
             
+            # Numpy değerlerini Python native type'a çevir
+            accuracy_val = float(accuracy) if accuracy is not None else None
+            precision_val = float(precision) if precision is not None else None
+            recall_val = float(recall) if recall is not None else None
+            
             # Yeni model kaydı
             new_model = MLModel(
                 model_type=model_type,
                 metric_type=metric_type,
                 model_data=model_data,
+                model_path=None,
                 parameters={
                     'contamination': 0.1,
                     'n_estimators': 100,
                     'random_state': 42
                 },
-                accuracy=accuracy,
-                precision=precision,
-                recall=recall,
+                accuracy=accuracy_val,
+                precision=precision_val,
+                recall=recall_val,
                 is_active=True
             )
             
             self.db.session.add(new_model)
             self.db.session.commit()
             
-            logger.info(f"💾 Model kaydedildi: {model_type} - {metric_type}")
+            logger.info(f"💾 Model veritabanına kaydedildi (legacy): {model_type} - {metric_type}")
             
             return new_model.id
             
         except Exception as e:
             self.db.session.rollback()
-            logger.error(f"❌ Model kaydetme hatası: {str(e)}")
+            logger.error(f"❌ Legacy kaydetme hatası: {str(e)}")
             return None
     
     def train_stok_model(self):
@@ -151,7 +243,7 @@ class ModelTrainer:
             training_start = datetime.now(timezone.utc)
             
             # Modeli eğit
-            model, accuracy, precision, recall = self.train_isolation_forest('stok_seviye', data)
+            model, scaler, feature_list, accuracy, precision, recall = self.train_isolation_forest('stok_seviye', data, use_feature_engineering=True)
             
             if model is None:
                 # Başarısız log
@@ -167,7 +259,7 @@ class ModelTrainer:
                 return None
             
             # Modeli kaydet
-            model_id = self.save_model(model, 'isolation_forest', 'stok_seviye', accuracy, precision, recall)
+            model_id = self.save_model(model, 'isolation_forest', 'stok_seviye', accuracy, precision, recall, scaler, feature_list)
             
             # Başarılı log
             log = MLTrainingLog(
@@ -216,7 +308,7 @@ class ModelTrainer:
             training_start = datetime.now(timezone.utc)
             
             # Modeli eğit
-            model, accuracy, precision, recall = self.train_isolation_forest('tuketim_miktar', data)
+            model, scaler, feature_list, accuracy, precision, recall = self.train_isolation_forest('tuketim_miktar', data, use_feature_engineering=True)
             
             if model is None:
                 # Başarısız log
@@ -232,7 +324,7 @@ class ModelTrainer:
                 return None
             
             # Modeli kaydet
-            model_id = self.save_model(model, 'isolation_forest', 'tuketim_miktar', accuracy, precision, recall)
+            model_id = self.save_model(model, 'isolation_forest', 'tuketim_miktar', accuracy, precision, recall, scaler, feature_list)
             
             # Başarılı log
             log = MLTrainingLog(
@@ -281,7 +373,7 @@ class ModelTrainer:
             training_start = datetime.now(timezone.utc)
             
             # Modeli eğit
-            model, accuracy, precision, recall = self.train_isolation_forest('dolum_sure', data)
+            model, scaler, feature_list, accuracy, precision, recall = self.train_isolation_forest('dolum_sure', data, use_feature_engineering=True)
             
             if model is None:
                 # Başarısız log
@@ -297,7 +389,7 @@ class ModelTrainer:
                 return None
             
             # Modeli kaydet
-            model_id = self.save_model(model, 'isolation_forest', 'dolum_sure', accuracy, precision, recall)
+            model_id = self.save_model(model, 'isolation_forest', 'dolum_sure', accuracy, precision, recall, scaler, feature_list)
             
             # Başarılı log
             log = MLTrainingLog(

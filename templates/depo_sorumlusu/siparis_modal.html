@@ -1,0 +1,50 @@
+<!-- Sipariş Modal -->
+<div id="siparisModal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white dark:bg-slate-800">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+            <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100">Yeni Sipariş Oluştur</h3>
+            <button onclick="closeSiparisModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <form id="siparisForm" method="POST" action="{{ url_for('satin_alma_siparis') }}" class="mt-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Sipariş Tarihi <span class="text-red-500">*</span>
+                </label>
+                <input type="date" name="siparis_tarihi" id="siparis_tarihi" required
+                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md dark:bg-slate-700 dark:text-slate-200">
+            </div>
+
+            <div class="mb-4">
+                <button type="button" onclick="addSiparisUrun()" 
+                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Ürün Ekle
+                </button>
+            </div>
+
+            <div id="siparis_urunler_container" class="space-y-3 mb-4 max-h-96 overflow-y-auto">
+                <!-- Ürün satırları buraya eklenecek -->
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <button type="button" onclick="closeSiparisModal()"
+                    class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                    İptal
+                </button>
+                <button type="submit"
+                    class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                    Sipariş Oluştur
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sipariş Gecikme Uyarısı</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #ef4444;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 10px 0 0 0;
+            font-size: 24px;
+        }
+        .warning-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 30px 20px;
+            background-color: #fef2f2;
+        }
+        .alert-box {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ef4444;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #6b7280;
+        }
+        .info-value {
+            color: #111827;
+            text-align: right;
+        }
+        .delay-badge {
+            background-color: #ef4444;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .action-list {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .action-list ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .action-list li {
+            margin: 8px 0;
+            color: #374151;
+        }
+        .footer {
+            background-color: #f9fafb;
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+            font-size: 12px;
+        }
+        @media only screen and (max-width: 600px) {
+            .info-row {
+                flex-direction: column;
+            }
+            .info-value {
+                text-align: left;
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="warning-icon">⚠️</div>
+            <h1>Sipariş Gecikme Uyarısı</h1>
+        </div>
+        
+        <div class="content">
+            <p><strong style="color: #ef4444;">Dikkat!</strong> Aşağıdaki sipariş tahmini teslimat tarihini geçmiştir:</p>
+            
+            <div class="alert-box">
+                <div class="info-row">
+                    <span class="info-label">Sipariş No:</span>
+                    <span class="info-value"><strong>{{ siparis.siparis_no }}</strong></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Tedarikçi:</span>
+                    <span class="info-value">{{ siparis.tedarikci.tedarikci_adi }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Sipariş Tarihi:</span>
+                    <span class="info-value">{{ siparis.siparis_tarihi.strftime('%d.%m.%Y') }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Tahmini Teslimat:</span>
+                    <span class="info-value">{{ siparis.tahmini_teslimat_tarihi.strftime('%d.%m.%Y') }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Gecikme Süresi:</span>
+                    <span class="info-value"><span class="delay-badge">{{ gecikme_gun }} Gün</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Toplam Tutar:</span>
+                    <span class="info-value"><strong>{{ "%.2f"|format(siparis.toplam_tutar) }} ₺</strong></span>
+                </div>
+            </div>
+            
+            <div class="action-list">
+                <p><strong style="color: #374151;">Önerilen İşlemler:</strong></p>
+                <ul>
+                    <li>Tedarikçi ile iletişime geçin ve teslimat durumunu sorgulayın</li>
+                    <li>Yeni teslimat tarihi talep edin ve sisteme kaydedin</li>
+                    <li>Gerekirse alternatif tedarikçi değerlendirin</li>
+                    <li>Stok durumunu kontrol edin ve kritik seviyeye düşmemesini sağlayın</li>
+                    <li>Tedarikçi performans kaydını güncelleyin</li>
+                </ul>
+            </div>
+            
+            <p style="background-color: #fef3c7; padding: 15px; border-radius: 5px; border-left: 4px solid #f59e0b;">
+                <strong>Not:</strong> Geciken siparişler tedarikçi performans skorunu olumsuz etkileyecektir.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>Bu otomatik bir uyarıdır. Sistem tarafından oluşturulmuştur.</p>
+            <p>&copy; 2024 Minibar Takip Sistemi</p>
+        </div>
+    </div>
+</body>
+</html>

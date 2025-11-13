@@ -1,28 +1,14 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timezone
-from sqlalchemy import Numeric, Enum as SQLEnum, Text
-from sqlalchemy.dialects.postgresql import JSONB, ENUM as PG_ENUM
+from sqlalchemy import Numeric
+from sqlalchemy.dialects.postgresql import JSONB
 import enum
-import os
 
 db = SQLAlchemy()
 
-# Database type detection
-DB_TYPE = os.getenv('DB_TYPE', 'mysql')
-IS_POSTGRESQL = DB_TYPE == 'postgresql'
-
-# Use JSONB for PostgreSQL, Text for MySQL
-JSONType = JSONB if IS_POSTGRESQL else Text
-
-# DateTime helper
-def get_datetime_column():
-    """Get DateTime column based on database type"""
-    return db.DateTime(timezone=IS_POSTGRESQL)
-
-def get_datetime_default():
-    """Get datetime default based on database type"""
-    return lambda: datetime.now(timezone.utc) if IS_POSTGRESQL else datetime.utcnow
+# PostgreSQL Only - MySQL support removed
+JSONType = JSONB
 
 # PostgreSQL ENUM Types
 # Bu enum'lar hem MySQL hem PostgreSQL ile uyumlu çalışır
@@ -264,6 +250,7 @@ class Urun(db.Model):
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     grup_id = db.Column(db.Integer, db.ForeignKey('urun_gruplari.id'), nullable=False)
+    urun_kodu = db.Column(db.String(50), unique=True, nullable=True)  # Excel için ürün kodu
     urun_adi = db.Column(db.String(200), nullable=False)
     barkod = db.Column(db.String(50), unique=True)
     birim = db.Column(db.String(20), default='Adet')
@@ -373,8 +360,17 @@ class MinibarIslemDetay(db.Model):
     eklenen_miktar = db.Column(db.Integer, default=0)
     zimmet_detay_id = db.Column(db.Integer, db.ForeignKey('personel_zimmet_detay.id'), nullable=True)  # Hangi zimmetten kullanıldığı
     
+    # Fiyatlandırma ve Karlılık Kolonları
+    satis_fiyati = db.Column(Numeric(10, 2), nullable=True)
+    alis_fiyati = db.Column(Numeric(10, 2), nullable=True)
+    kar_tutari = db.Column(Numeric(10, 2), nullable=True)
+    kar_orani = db.Column(Numeric(5, 2), nullable=True)  # Yüzde
+    bedelsiz = db.Column(db.Boolean, default=False)
+    kampanya_id = db.Column(db.Integer, db.ForeignKey('kampanyalar.id'), nullable=True)
+    
     # İlişkiler
     zimmet_detay = db.relationship('PersonelZimmetDetay', foreign_keys=[zimmet_detay_id])
+    kampanya = db.relationship('Kampanya')
     
     def __repr__(self):
         return f'<MinibarIslemDetay #{self.id}>'
@@ -548,9 +544,9 @@ class QRKodOkutmaLog(db.Model):
     """QR kod okutma geçmişi tablosu"""
     __tablename__ = 'qr_kod_okutma_loglari'
     __table_args__ = (
-        db.Index('idx_oda_tarih', 'oda_id', 'okutma_tarihi'),
-        db.Index('idx_kullanici_tarih', 'kullanici_id', 'okutma_tarihi'),
-        db.Index('idx_okutma_tipi', 'okutma_tipi'),
+        db.Index('idx_qr_log_oda_tarih', 'oda_id', 'okutma_tarihi'),
+        db.Index('idx_qr_log_kullanici_tarih', 'kullanici_id', 'okutma_tarihi'),
+        db.Index('idx_qr_log_okutma_tipi', 'okutma_tipi'),
     )
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -679,7 +675,6 @@ class MLAlertType(str, enum.Enum):
     STOK_BITIS_UYARI = 'stok_bitis_uyari'
     # Phase 2 - Zimmet ve Doluluk
     ZIMMET_FIRE_YUKSEK = 'zimmet_fire_yuksek'        # Yüksek fire oranı
-    ZIMMET_KULLANIM_DUSUK = 'zimmet_kullanim_dusuk'  # Düşük kullanım
     BOSTA_TUKETIM_VAR = 'bosta_tuketim_var'          # Boş oda tüketim
     DOLUDA_TUKETIM_YOK = 'doluda_tuketim_yok'        # Dolu oda tüketim yok
     # Phase 3 - QR & Talep Sistemi
@@ -693,6 +688,55 @@ class MLAlertSeverity(str, enum.Enum):
     ORTA = 'orta'
     YUKSEK = 'yuksek'
     KRITIK = 'kritik'
+
+# ============================================
+# FIYATLANDIRMA VE KARLILIK ENUM'LARI
+# ============================================
+
+class FiyatDegisiklikTipi(str, enum.Enum):
+    """Fiyat değişiklik tipleri"""
+    ALIS_FIYATI = 'alis_fiyati'
+    SATIS_FIYATI = 'satis_fiyati'
+    KAMPANYA = 'kampanya'
+
+class IndirimTipi(str, enum.Enum):
+    """İndirim tipleri"""
+    YUZDE = 'yuzde'
+    TUTAR = 'tutar'
+
+class BedelsizLimitTipi(str, enum.Enum):
+    """Bedelsiz limit tipleri"""
+    MISAFIR = 'misafir'
+    KAMPANYA = 'kampanya'
+    PERSONEL = 'personel'
+
+class DonemTipi(str, enum.Enum):
+    """Dönem tipleri"""
+    GUNLUK = 'gunluk'
+    HAFTALIK = 'haftalik'
+    AYLIK = 'aylik'
+
+class KuralTipi(str, enum.Enum):
+    """Fiyat güncelleme kural tipleri"""
+    OTOMATIK_ARTIR = 'otomatik_artir'
+    OTOMATIK_AZALT = 'otomatik_azalt'
+    RAKIP_FIYAT = 'rakip_fiyat'
+
+class SiparisDurum(str, enum.Enum):
+    """Satın alma sipariş durumları"""
+    BEKLEMEDE = 'beklemede'
+    ONAYLANDI = 'onaylandi'
+    TESLIM_ALINDI = 'teslim_alindi'
+    KISMI_TESLIM = 'kismi_teslim'
+    TAMAMLANDI = 'tamamlandi'
+    IPTAL = 'iptal'
+
+class DokumanTipi(str, enum.Enum):
+    """Tedarikçi doküman tipleri"""
+    FATURA = 'fatura'
+    IRSALIYE = 'irsaliye'
+    SOZLESME = 'sozlesme'
+    DIGER = 'diger'
 
 
 class MLMetric(db.Model):
@@ -732,7 +776,8 @@ class MLModel(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     model_type = db.Column(db.String(50), nullable=False)  # 'isolation_forest', 'z_score'
     metric_type = db.Column(db.String(50), nullable=False)
-    model_data = db.Column(db.LargeBinary, nullable=False)  # Pickle serialized model
+    model_data = db.Column(db.LargeBinary, nullable=True)  # Pickle serialized model (opsiyonel - dosya sisteminde ise NULL)
+    model_path = db.Column(db.String(255), nullable=True)  # Dosya yolu (opsiyonel - DB'de ise NULL)
     parameters = db.Column(JSONB, nullable=True)  # Model parametreleri
     training_date = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     accuracy = db.Column(db.Float)
@@ -758,13 +803,19 @@ class MLAlert(db.Model):
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     alert_type = db.Column(
-        db.Enum('stok_anomali', 'tuketim_anomali', 'dolum_gecikme', 'stok_bitis_uyari', name='ml_alert_type'),
+        db.Enum(
+            'stok_anomali', 'tuketim_anomali', 'dolum_gecikme', 'stok_bitis_uyari',
+            'zimmet_fire_yuksek', 'bosta_tuketim_var', 'doluda_tuketim_yok',
+            'talep_yanitlanmadi', 'talep_yogunluk_yuksek', 'qr_kullanim_dusuk',
+            name='ml_alert_type'
+        ),
         nullable=False
     )
     severity = db.Column(
         db.Enum('dusuk', 'orta', 'yuksek', 'kritik', name='ml_alert_severity'),
         nullable=False
     )
+    entity_type = db.Column(db.String(50), nullable=True)  # 'urun', 'oda', 'kullanici'
     entity_id = db.Column(db.Integer, nullable=False)  # urun_id, oda_id, kullanici_id
     metric_value = db.Column(db.Float, nullable=False)
     expected_value = db.Column(db.Float)
@@ -802,3 +853,806 @@ class MLTrainingLog(db.Model):
     
     def __repr__(self):
         return f'<MLTrainingLog #{self.id} - {"Success" if self.success else "Failed"}>'
+
+
+class MLFeature(db.Model):
+    """Feature Engineering sonuçları - İşlenmiş feature'lar"""
+    __tablename__ = 'ml_features'
+    __table_args__ = (
+        db.Index('idx_ml_features_type_entity', 'metric_type', 'entity_id'),
+        db.Index('idx_ml_features_timestamp', 'timestamp'),
+        db.Index('idx_ml_features_entity_time', 'entity_id', 'timestamp'),
+    )
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    metric_type = db.Column(db.String(50), nullable=False)
+    entity_id = db.Column(db.Integer, nullable=False)
+    timestamp = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    
+    # Statistical Features
+    mean_value = db.Column(db.Float)
+    std_value = db.Column(db.Float)
+    min_value = db.Column(db.Float)
+    max_value = db.Column(db.Float)
+    median_value = db.Column(db.Float)
+    q25_value = db.Column(db.Float)
+    q75_value = db.Column(db.Float)
+    
+    # Trend Features
+    trend_slope = db.Column(db.Float)
+    trend_direction = db.Column(db.String(20))
+    volatility = db.Column(db.Float)
+    momentum = db.Column(db.Float)
+    
+    # Time Features
+    hour_of_day = db.Column(db.Integer)
+    day_of_week = db.Column(db.Integer)
+    is_weekend = db.Column(db.Boolean)
+    day_of_month = db.Column(db.Integer)
+    
+    # Domain Specific Features
+    days_since_last_change = db.Column(db.Integer)
+    change_frequency = db.Column(db.Float)
+    avg_change_magnitude = db.Column(db.Float)
+    zero_count = db.Column(db.Integer)
+    
+    # Lag Features
+    lag_1 = db.Column(db.Float)
+    lag_7 = db.Column(db.Float)
+    lag_30 = db.Column(db.Float)
+    
+    # Rolling Features
+    rolling_mean_7 = db.Column(db.Float)
+    rolling_std_7 = db.Column(db.Float)
+    rolling_mean_30 = db.Column(db.Float)
+    rolling_std_30 = db.Column(db.Float)
+    
+    # Metadata
+    feature_version = db.Column(db.String(20), default='1.0')
+    extra_features = db.Column(JSONB, nullable=True)  # Ek feature'lar
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    
+    def __repr__(self):
+        return f'<MLFeature {self.metric_type} - #{self.entity_id}>'
+
+
+# ============================================
+# DEVELOPER DASHBOARD MONITORING MODELS
+# ============================================
+
+class QueryLog(db.Model):
+    """Database query performance log"""
+    __tablename__ = 'query_logs'
+    __table_args__ = (
+        db.Index('idx_query_logs_time', 'execution_time'),
+        db.Index('idx_query_logs_timestamp', 'timestamp'),
+        db.Index('idx_query_logs_endpoint', 'endpoint'),
+    )
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    query_text = db.Column(db.Text, nullable=False)
+    execution_time = db.Column(db.Float, nullable=False)  # Saniye cinsinden
+    timestamp = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    endpoint = db.Column(db.String(255))
+    user_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'))
+    parameters = db.Column(JSONB)
+    
+    # İlişki
+    user = db.relationship('Kullanici', foreign_keys=[user_id], backref='query_logs')
+    
+    def __repr__(self):
+        return f'<QueryLog #{self.id} - {self.execution_time:.3f}s>'
+
+
+class BackgroundJob(db.Model):
+    """Background job tracking"""
+    __tablename__ = 'background_jobs'
+    __table_args__ = (
+        db.Index('idx_background_jobs_status', 'status'),
+        db.Index('idx_background_jobs_started', 'started_at'),
+        db.Index('idx_background_jobs_job_id', 'job_id'),
+    )
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    job_id = db.Column(db.String(255), unique=True, nullable=False)
+    job_name = db.Column(db.String(255), nullable=False)
+    status = db.Column(
+        db.Enum('pending', 'running', 'completed', 'failed', 'cancelled', name='job_status'),
+        nullable=False,
+        default='pending'
+    )
+    started_at = db.Column(db.DateTime(timezone=True))
+    completed_at = db.Column(db.DateTime(timezone=True))
+    duration = db.Column(db.Float)  # Saniye cinsinden
+    error_message = db.Column(db.Text)
+    stack_trace = db.Column(db.Text)
+    job_metadata = db.Column(JSONB)  # metadata yerine job_metadata
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    
+    def __repr__(self):
+        return f'<BackgroundJob {self.job_name} - {self.status}>'
+
+
+class BackupHistory(db.Model):
+    """Database backup history"""
+    __tablename__ = 'backup_history'
+    __table_args__ = (
+        db.Index('idx_backup_history_created', 'created_at'),
+        db.Index('idx_backup_history_backup_id', 'backup_id'),
+    )
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    backup_id = db.Column(db.String(255), unique=True, nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    file_size = db.Column(db.BigInteger)  # Bytes
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'))
+    status = db.Column(
+        db.Enum('in_progress', 'completed', 'failed', name='backup_status'),
+        nullable=False,
+        default='in_progress'
+    )
+    restore_count = db.Column(db.Integer, default=0)
+    
+    # İlişki
+    creator = db.relationship('Kullanici', foreign_keys=[created_by], backref='backups')
+    
+    def __repr__(self):
+        return f'<BackupHistory {self.filename} - {self.status}>'
+
+
+class ConfigAudit(db.Model):
+    """Configuration file change audit"""
+    __tablename__ = 'config_audit'
+    __table_args__ = (
+        db.Index('idx_config_audit_filename', 'filename'),
+        db.Index('idx_config_audit_changed', 'changed_at'),
+    )
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    filename = db.Column(db.String(255), nullable=False)
+    old_content = db.Column(db.Text)
+    new_content = db.Column(db.Text)
+    changed_by = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'))
+    changed_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    change_reason = db.Column(db.Text)
+    
+    # İlişki
+    changer = db.relationship('Kullanici', foreign_keys=[changed_by], backref='config_changes')
+    
+    def __repr__(self):
+        return f'<ConfigAudit {self.filename} - {self.changed_at}>'
+
+
+# ============================================
+# FIYATLANDIRMA VE KARLILIK MODELLERI
+# ============================================
+
+class UrunStok(db.Model):
+    """Ürün stok durumu - Gerçek zamanlı stok takibi"""
+    __tablename__ = 'urun_stok'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=False)
+    otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=False)
+
+    # Stok Bilgileri
+    mevcut_stok = db.Column(db.Integer, default=0, nullable=False)
+    minimum_stok = db.Column(db.Integer, default=10, nullable=False)
+    maksimum_stok = db.Column(db.Integer, default=1000, nullable=False)
+    kritik_stok_seviyesi = db.Column(db.Integer, default=5, nullable=False)
+
+    # Değer Bilgileri
+    birim_maliyet = db.Column(Numeric(10, 2), default=0)  # Ortalama alış fiyatı
+    toplam_deger = db.Column(Numeric(12, 2), default=0)  # mevcut_stok × birim_maliyet
+
+    # Stok Devir Bilgileri
+    son_30gun_cikis = db.Column(db.Integer, default=0)  # Son 30 günde çıkan miktar
+    stok_devir_hizi = db.Column(Numeric(5, 2), default=0)  # Aylık devir hızı
+
+    # Güncelleme Bilgileri
+    son_giris_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    son_cikis_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    son_guncelleme_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    son_guncelleyen_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'), nullable=True)
+
+    # Sayım Bilgileri
+    son_sayim_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    son_sayim_miktari = db.Column(db.Integer, nullable=True)
+    sayim_farki = db.Column(db.Integer, default=0)  # Beklenen - Gerçek
+
+    # İlişkiler
+    urun = db.relationship('Urun', backref=db.backref('stok', uselist=False))
+    otel = db.relationship('Otel', backref='urun_stoklari')
+    son_guncelleyen = db.relationship('Kullanici')
+
+    __table_args__ = (
+        db.Index('idx_urun_stok_otel', 'otel_id', 'urun_id'),
+        db.Index('idx_urun_stok_kritik', 'mevcut_stok', 'kritik_stok_seviyesi'),
+        db.CheckConstraint('mevcut_stok >= 0', name='check_stok_pozitif'),
+        db.CheckConstraint('minimum_stok >= 0', name='check_min_stok_pozitif'),
+    )
+
+    def stok_durumu(self):
+        """Stok durumunu döndür"""
+        try:
+            if self.mevcut_stok <= self.kritik_stok_seviyesi:
+                return 'kritik'
+            elif self.mevcut_stok <= self.minimum_stok:
+                return 'dusuk'
+            elif self.mevcut_stok >= self.maksimum_stok:
+                return 'fazla'
+            return 'normal'
+        except Exception as e:
+            return 'bilinmiyor'
+
+    def stok_guncelle(self, miktar, islem_tipi, kullanici_id):
+        """Stok miktarını güncelle"""
+        try:
+            if islem_tipi in ['giris', 'devir']:
+                self.mevcut_stok += miktar
+                self.son_giris_tarihi = datetime.now(timezone.utc)
+            elif islem_tipi in ['cikis', 'fire']:
+                self.mevcut_stok -= miktar
+                self.son_cikis_tarihi = datetime.now(timezone.utc)
+                self.son_30gun_cikis += miktar
+            elif islem_tipi == 'sayim':
+                self.sayim_farki = self.mevcut_stok - miktar
+                self.mevcut_stok = miktar
+                self.son_sayim_tarihi = datetime.now(timezone.utc)
+                self.son_sayim_miktari = miktar
+
+            self.son_guncelleme_tarihi = datetime.now(timezone.utc)
+            self.son_guncelleyen_id = kullanici_id
+            
+            # Toplam değeri güncelle
+            self.toplam_deger = self.mevcut_stok * self.birim_maliyet
+        except Exception as e:
+            raise Exception(f"Stok güncelleme hatası: {str(e)}")
+
+    def __repr__(self):
+        return f'<UrunStok urun_id={self.urun_id} otel_id={self.otel_id} mevcut={self.mevcut_stok}>'
+
+
+class Kampanya(db.Model):
+    """Kampanya ve promosyon yönetimi"""
+    __tablename__ = 'kampanyalar'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    kampanya_adi = db.Column(db.String(200), nullable=False)
+    baslangic_tarihi = db.Column(db.DateTime(timezone=True), nullable=False)
+    bitis_tarihi = db.Column(db.DateTime(timezone=True), nullable=False)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=True)
+    indirim_tipi = db.Column(db.Enum(IndirimTipi), nullable=False)
+    indirim_degeri = db.Column(Numeric(10, 2), nullable=False)
+    min_siparis_miktari = db.Column(db.Integer, default=1)
+    max_kullanim_sayisi = db.Column(db.Integer, nullable=True)
+    kullanilan_sayisi = db.Column(db.Integer, default=0)
+    aktif = db.Column(db.Boolean, default=True)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'), nullable=False)
+
+    # İlişkiler
+    urun = db.relationship('Urun', backref='kampanyalar')
+    olusturan = db.relationship('Kullanici')
+
+    __table_args__ = (
+        db.Index('idx_kampanya_aktif_tarih', 'aktif', 'baslangic_tarihi', 'bitis_tarihi'),
+    )
+
+    def __repr__(self):
+        return f'<Kampanya {self.kampanya_adi}>'
+
+
+class BedelsizLimit(db.Model):
+    """Bedelsiz tüketim limitleri"""
+    __tablename__ = 'bedelsiz_limitler'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    oda_id = db.Column(db.Integer, db.ForeignKey('odalar.id', ondelete='CASCADE'), nullable=False)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=False)
+    max_miktar = db.Column(db.Integer, nullable=False)
+    kullanilan_miktar = db.Column(db.Integer, default=0)
+    baslangic_tarihi = db.Column(db.DateTime(timezone=True), nullable=False)
+    bitis_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    limit_tipi = db.Column(db.Enum(BedelsizLimitTipi), nullable=False)
+    kampanya_id = db.Column(db.Integer, db.ForeignKey('kampanyalar.id', ondelete='SET NULL'), nullable=True)
+    aktif = db.Column(db.Boolean, default=True)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    # İlişkiler
+    oda = db.relationship('Oda', backref='bedelsiz_limitler')
+    urun = db.relationship('Urun', backref='bedelsiz_limitler')
+    kampanya = db.relationship('Kampanya', backref='bedelsiz_limitler')
+
+    __table_args__ = (
+        db.Index('idx_bedelsiz_oda_aktif', 'oda_id', 'aktif'),
+    )
+
+    def __repr__(self):
+        return f'<BedelsizLimit oda_id={self.oda_id} urun_id={self.urun_id}>'
+
+
+class BedelsizKullanimLog(db.Model):
+    """Bedelsiz kullanım log kayıtları"""
+    __tablename__ = 'bedelsiz_kullanim_log'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    oda_id = db.Column(db.Integer, db.ForeignKey('odalar.id', ondelete='CASCADE'), nullable=False)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=False)
+    miktar = db.Column(db.Integer, nullable=False)
+    islem_id = db.Column(db.Integer, db.ForeignKey('minibar_islemleri.id', ondelete='CASCADE'), nullable=False)
+    kullanilma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    limit_id = db.Column(db.Integer, db.ForeignKey('bedelsiz_limitler.id', ondelete='SET NULL'), nullable=True)
+
+    # İlişkiler
+    oda = db.relationship('Oda')
+    urun = db.relationship('Urun')
+    islem = db.relationship('MinibarIslem')
+    limit = db.relationship('BedelsizLimit')
+
+    __table_args__ = (
+        db.Index('idx_bedelsiz_log_tarih', 'kullanilma_tarihi'),
+    )
+
+    def __repr__(self):
+        return f'<BedelsizKullanimLog oda_id={self.oda_id} miktar={self.miktar}>'
+
+
+class DonemselKarAnalizi(db.Model):
+    """Dönemsel kar analiz raporları"""
+    __tablename__ = 'donemsel_kar_analizi'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=False)
+    donem_tipi = db.Column(db.Enum(DonemTipi), nullable=False)
+    baslangic_tarihi = db.Column(db.Date, nullable=False)
+    bitis_tarihi = db.Column(db.Date, nullable=False)
+    toplam_gelir = db.Column(Numeric(12, 2), default=0)
+    toplam_maliyet = db.Column(Numeric(12, 2), default=0)
+    net_kar = db.Column(Numeric(12, 2), default=0)
+    kar_marji = db.Column(Numeric(5, 2), default=0)  # Yüzde
+    analiz_verisi = db.Column(JSONB, nullable=True)  # Detaylı analiz verileri
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    # İlişkiler
+    otel = db.relationship('Otel', backref='kar_analizleri')
+
+    __table_args__ = (
+        db.Index('idx_kar_analiz_otel_donem', 'otel_id', 'donem_tipi', 'baslangic_tarihi'),
+    )
+
+    def __repr__(self):
+        return f'<DonemselKarAnalizi otel_id={self.otel_id} donem={self.donem_tipi}>'
+
+
+class FiyatGuncellemeKurali(db.Model):
+    """Otomatik fiyat güncelleme kuralları"""
+    __tablename__ = 'fiyat_guncelleme_kurallari'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=True)
+    kural_tipi = db.Column(db.Enum(KuralTipi), nullable=False)
+    artirma_orani = db.Column(Numeric(5, 2), nullable=True)  # Yüzde
+    azaltma_orani = db.Column(Numeric(5, 2), nullable=True)  # Yüzde
+    min_fiyat = db.Column(Numeric(10, 2), nullable=True)
+    max_fiyat = db.Column(Numeric(10, 2), nullable=True)
+    aktif = db.Column(db.Boolean, default=True)
+    son_uygulama = db.Column(db.DateTime(timezone=True), nullable=True)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    # İlişkiler
+    urun = db.relationship('Urun', backref='fiyat_kurallari')
+
+    __table_args__ = (
+        db.Index('idx_fiyat_kural_aktif', 'aktif'),
+    )
+
+    def __repr__(self):
+        return f'<FiyatGuncellemeKurali urun_id={self.urun_id} tip={self.kural_tipi}>'
+
+
+class Tedarikci(db.Model):
+    """Tedarikçi bilgileri"""
+    __tablename__ = 'tedarikciler'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tedarikci_adi = db.Column(db.String(200), nullable=False)
+    iletisim_bilgileri = db.Column(JSONB, nullable=True)  # {telefon, email, adres}
+    vergi_no = db.Column(db.String(50))
+    aktif = db.Column(db.Boolean, default=True)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+
+    # İlişkiler
+    urun_fiyatlari = db.relationship('UrunTedarikciFiyat', backref='tedarikci', lazy=True)
+
+    __table_args__ = (
+        db.Index('idx_tedarikci_aktif', 'aktif'),
+    )
+
+    def __repr__(self):
+        return f'<Tedarikci {self.tedarikci_adi}>'
+
+
+class UrunTedarikciFiyat(db.Model):
+    """Ürün bazında tedarikçi fiyatları"""
+    __tablename__ = 'urun_tedarikci_fiyatlari'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=False)
+    tedarikci_id = db.Column(db.Integer, db.ForeignKey('tedarikciler.id', ondelete='CASCADE'), nullable=False)
+    alis_fiyati = db.Column(Numeric(10, 2), nullable=False)
+    minimum_miktar = db.Column(db.Integer, default=1)
+    baslangic_tarihi = db.Column(db.DateTime(timezone=True), nullable=False)
+    bitis_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    aktif = db.Column(db.Boolean, default=True)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'), nullable=False)
+
+    # İlişkiler
+    urun = db.relationship('Urun', backref='tedarikci_fiyatlari')
+    olusturan = db.relationship('Kullanici')
+
+    __table_args__ = (
+        db.Index('idx_urun_tedarikci_aktif', 'urun_id', 'tedarikci_id', 'aktif'),
+        db.Index('idx_urun_fiyat_tarih', 'urun_id', 'baslangic_tarihi', 'bitis_tarihi'),
+    )
+
+    def __repr__(self):
+        return f'<UrunTedarikciFiyat urun_id={self.urun_id} tedarikci_id={self.tedarikci_id}>'
+
+
+class UrunFiyatGecmisi(db.Model):
+    """Fiyat değişiklik geçmişi"""
+    __tablename__ = 'urun_fiyat_gecmisi'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=False)
+    eski_fiyat = db.Column(Numeric(10, 2))
+    yeni_fiyat = db.Column(Numeric(10, 2), nullable=False)
+    degisiklik_tipi = db.Column(db.Enum(FiyatDegisiklikTipi, name='fiyat_degisiklik_tipi', native_enum=True, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    degisiklik_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    degisiklik_sebebi = db.Column(db.Text)
+    olusturan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'), nullable=False)
+
+    # İlişkiler
+    urun = db.relationship('Urun', backref='fiyat_gecmisi')
+    olusturan = db.relationship('Kullanici')
+
+    __table_args__ = (
+        db.Index('idx_fiyat_gecmis_urun_tarih', 'urun_id', 'degisiklik_tarihi'),
+    )
+
+    def __repr__(self):
+        return f'<UrunFiyatGecmisi urun_id={self.urun_id} tip={self.degisiklik_tipi}>'
+
+
+class OdaTipiSatisFiyati(db.Model):
+    """Oda tipi bazında satış fiyatları"""
+    __tablename__ = 'oda_tipi_satis_fiyatlari'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    oda_tipi = db.Column(db.String(100), nullable=False)  # Standard, Deluxe, Suite
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=False)
+    satis_fiyati = db.Column(Numeric(10, 2), nullable=False)
+    baslangic_tarihi = db.Column(db.DateTime(timezone=True), nullable=False)
+    bitis_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    aktif = db.Column(db.Boolean, default=True)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    # İlişkiler
+    urun = db.relationship('Urun', backref='oda_tipi_fiyatlari')
+
+    __table_args__ = (
+        db.Index('idx_oda_tipi_urun_aktif', 'oda_tipi', 'urun_id', 'aktif'),
+    )
+
+    def __repr__(self):
+        return f'<OdaTipiSatisFiyati oda_tipi={self.oda_tipi} urun_id={self.urun_id}>'
+
+
+class SezonFiyatlandirma(db.Model):
+    """Sezonluk fiyat çarpanları"""
+    __tablename__ = 'sezon_fiyatlandirma'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    sezon_adi = db.Column(db.String(100), nullable=False)  # Yaz, Kış, Bayram
+    baslangic_tarihi = db.Column(db.Date, nullable=False)
+    bitis_tarihi = db.Column(db.Date, nullable=False)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=True)
+    fiyat_carpani = db.Column(Numeric(4, 2), default=1.0)  # 0.50 - 3.00 arası
+    aktif = db.Column(db.Boolean, default=True)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    # İlişkiler
+    urun = db.relationship('Urun', backref='sezon_fiyatlari')
+
+    __table_args__ = (
+        db.Index('idx_sezon_tarih_aktif', 'baslangic_tarihi', 'bitis_tarihi', 'aktif'),
+    )
+
+    def __repr__(self):
+        return f'<SezonFiyatlandirma {self.sezon_adi}>'
+
+
+# ============================================
+# SATIN ALMA VE TEDARİKÇİ YÖNETİMİ MODELLERİ
+# ============================================
+
+class SatinAlmaSiparisi(db.Model):
+    """Satın alma siparişi ana tablosu"""
+    __tablename__ = 'satin_alma_siparisleri'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    siparis_no = db.Column(db.String(50), unique=True, nullable=False)
+    tedarikci_id = db.Column(db.Integer, db.ForeignKey('tedarikciler.id', ondelete='RESTRICT'), nullable=True)
+    otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=False)
+    
+    # Tarih Bilgileri
+    siparis_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    tahmini_teslimat_tarihi = db.Column(db.Date, nullable=False)
+    gerceklesen_teslimat_tarihi = db.Column(db.Date, nullable=True)
+    
+    # Durum ve Tutar
+    durum = db.Column(db.String(20), default='beklemede', nullable=False)
+    toplam_tutar = db.Column(Numeric(12, 2), default=0, nullable=False)
+    
+    # Açıklama ve Notlar
+    aciklama = db.Column(db.Text, nullable=True)
+    
+    # Kullanıcı Bilgileri
+    olusturan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    onaylayan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    onay_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    
+    # Sistem Bilgileri
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+
+    # İlişkiler
+    tedarikci = db.relationship('Tedarikci', backref='siparisler')
+    otel = db.relationship('Otel', backref='satin_alma_siparisleri')
+    detaylar = db.relationship('SatinAlmaSiparisDetay', backref='siparis', lazy=True, cascade='all, delete-orphan')
+    olusturan = db.relationship('Kullanici', foreign_keys=[olusturan_id], backref='olusturdugun_siparisler')
+    onaylayan = db.relationship('Kullanici', foreign_keys=[onaylayan_id], backref='onayladigin_siparisler')
+
+    __table_args__ = (
+        db.Index('idx_siparis_durum_tarih', 'durum', 'siparis_tarihi'),
+        db.Index('idx_siparis_tedarikci', 'tedarikci_id'),
+        db.Index('idx_siparis_otel', 'otel_id'),
+        db.Index('idx_siparis_no', 'siparis_no'),
+    )
+
+    def __repr__(self):
+        return f'<SatinAlmaSiparisi {self.siparis_no} - {self.durum.value}>'
+
+
+class SatinAlmaSiparisDetay(db.Model):
+    """Sipariş detay satırları"""
+    __tablename__ = 'satin_alma_siparis_detaylari'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    siparis_id = db.Column(db.Integer, db.ForeignKey('satin_alma_siparisleri.id', ondelete='CASCADE'), nullable=False)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='RESTRICT'), nullable=False)
+    
+    # Miktar ve Fiyat Bilgileri
+    miktar = db.Column(db.Integer, nullable=False)
+    birim_fiyat = db.Column(Numeric(10, 2), nullable=False)
+    toplam_fiyat = db.Column(Numeric(12, 2), nullable=False)
+    
+    # Teslimat Bilgileri
+    teslim_alinan_miktar = db.Column(db.Integer, default=0, nullable=False)
+    
+    # Sistem Bilgileri
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    # İlişkiler
+    urun = db.relationship('Urun', backref='siparis_detaylari')
+
+    __table_args__ = (
+        db.Index('idx_siparis_detay_siparis', 'siparis_id'),
+        db.Index('idx_siparis_detay_urun', 'urun_id'),
+        db.CheckConstraint('miktar > 0', name='check_siparis_miktar_pozitif'),
+        db.CheckConstraint('birim_fiyat >= 0', name='check_siparis_fiyat_pozitif'),
+        db.CheckConstraint('teslim_alinan_miktar >= 0', name='check_teslim_miktar_pozitif'),
+        db.CheckConstraint('teslim_alinan_miktar <= miktar', name='check_teslim_miktar_limit'),
+    )
+
+    def __repr__(self):
+        return f'<SatinAlmaSiparisDetay siparis_id={self.siparis_id} urun_id={self.urun_id}>'
+
+
+class SatinAlmaIslem(db.Model):
+    """Direkt satın alma işlemleri (Sipariş olmadan stok girişi)"""
+    __tablename__ = 'satin_alma_islemler'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    islem_no = db.Column(db.String(50), unique=True, nullable=False)
+    tedarikci_id = db.Column(db.Integer, db.ForeignKey('tedarikciler.id', ondelete='RESTRICT'), nullable=False)
+    otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=False)
+    siparis_id = db.Column(db.Integer, db.ForeignKey('satin_alma_siparisleri.id', ondelete='SET NULL'), nullable=True)  # İlişkili sipariş (opsiyonel)
+    
+    # Fatura Bilgileri
+    fatura_no = db.Column(db.String(100), nullable=True)
+    fatura_tarihi = db.Column(db.Date, nullable=True)
+    
+    # Ödeme Bilgileri
+    odeme_sekli = db.Column(db.String(50), nullable=True)  # nakit, kredi_karti, havale, cek
+    odeme_durumu = db.Column(db.String(20), default='odenmedi', nullable=False)  # odendi, odenmedi, kismi
+    
+    # Tutar Bilgileri
+    toplam_tutar = db.Column(Numeric(12, 2), default=0, nullable=False)
+    kdv_tutari = db.Column(Numeric(12, 2), default=0, nullable=False)
+    genel_toplam = db.Column(Numeric(12, 2), default=0, nullable=False)
+    
+    # Açıklama
+    aciklama = db.Column(db.Text, nullable=True)
+    
+    # Kullanıcı Bilgileri
+    olusturan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    
+    # Sistem Bilgileri
+    islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+
+    # İlişkiler
+    tedarikci = db.relationship('Tedarikci', backref='satin_alma_islemleri')
+    otel = db.relationship('Otel', backref='satin_alma_islemleri')
+    siparis = db.relationship('SatinAlmaSiparisi', backref='satin_alma_islemleri')
+    detaylar = db.relationship('SatinAlmaIslemDetay', backref='islem', lazy=True, cascade='all, delete-orphan')
+    olusturan = db.relationship('Kullanici', backref='satin_alma_islemleri')
+
+    __table_args__ = (
+        db.Index('idx_satin_alma_islem_tarih', 'islem_tarihi'),
+        db.Index('idx_satin_alma_tedarikci', 'tedarikci_id'),
+        db.Index('idx_satin_alma_otel', 'otel_id'),
+        db.Index('idx_satin_alma_islem_no', 'islem_no'),
+    )
+
+    def __repr__(self):
+        return f'<SatinAlmaIslem {self.islem_no}>'
+
+
+class SatinAlmaIslemDetay(db.Model):
+    """Satın alma işlem detay satırları"""
+    __tablename__ = 'satin_alma_islem_detaylari'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    islem_id = db.Column(db.Integer, db.ForeignKey('satin_alma_islemler.id', ondelete='CASCADE'), nullable=False)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='RESTRICT'), nullable=False)
+    
+    # Miktar ve Fiyat Bilgileri
+    miktar = db.Column(db.Integer, nullable=False)
+    birim_fiyat = db.Column(Numeric(10, 2), nullable=False)
+    kdv_orani = db.Column(Numeric(5, 2), default=0, nullable=False)
+    kdv_tutari = db.Column(Numeric(10, 2), default=0, nullable=False)
+    toplam_fiyat = db.Column(Numeric(12, 2), nullable=False)
+    
+    # Stok Hareket İlişkisi
+    stok_hareket_id = db.Column(db.Integer, db.ForeignKey('stok_hareketleri.id', ondelete='SET NULL'), nullable=True)
+    
+    # Sistem Bilgileri
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    # İlişkiler
+    urun = db.relationship('Urun', backref='satin_alma_detaylari')
+    stok_hareket = db.relationship('StokHareket', backref='satin_alma_detay')
+
+    __table_args__ = (
+        db.Index('idx_satin_alma_detay_islem', 'islem_id'),
+        db.Index('idx_satin_alma_detay_urun', 'urun_id'),
+        db.CheckConstraint('miktar > 0', name='check_satin_alma_miktar_pozitif'),
+        db.CheckConstraint('birim_fiyat >= 0', name='check_satin_alma_fiyat_pozitif'),
+    )
+
+    def __repr__(self):
+        return f'<SatinAlmaIslemDetay islem_id={self.islem_id} urun_id={self.urun_id}>'
+
+
+class TedarikciPerformans(db.Model):
+    """Tedarikçi performans metrikleri"""
+    __tablename__ = 'tedarikci_performans'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tedarikci_id = db.Column(db.Integer, db.ForeignKey('tedarikciler.id', ondelete='CASCADE'), nullable=False)
+    
+    # Dönem Bilgileri
+    donem_baslangic = db.Column(db.Date, nullable=False)
+    donem_bitis = db.Column(db.Date, nullable=False)
+    
+    # Performans Metrikleri
+    toplam_siparis_sayisi = db.Column(db.Integer, default=0, nullable=False)
+    zamaninda_teslimat_sayisi = db.Column(db.Integer, default=0, nullable=False)
+    ortalama_teslimat_suresi = db.Column(db.Integer, nullable=True)  # Gün cinsinden
+    toplam_siparis_tutari = db.Column(Numeric(12, 2), default=0, nullable=False)
+    performans_skoru = db.Column(Numeric(5, 2), nullable=True)  # 0-100 arası
+    
+    # Sistem Bilgileri
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+
+    # İlişkiler
+    tedarikci = db.relationship('Tedarikci', backref='performans_kayitlari')
+
+    __table_args__ = (
+        db.Index('idx_tedarikci_performans_tedarikci', 'tedarikci_id'),
+        db.Index('idx_tedarikci_performans_donem', 'donem_baslangic', 'donem_bitis'),
+        db.CheckConstraint('zamaninda_teslimat_sayisi <= toplam_siparis_sayisi', name='check_zamaninda_teslimat'),
+        db.CheckConstraint('performans_skoru >= 0 AND performans_skoru <= 100', name='check_performans_skoru'),
+    )
+
+    def __repr__(self):
+        return f'<TedarikciPerformans tedarikci_id={self.tedarikci_id} skor={self.performans_skoru}>'
+
+
+class TedarikciIletisim(db.Model):
+    """Tedarikçi iletişim kayıtları"""
+    __tablename__ = 'tedarikci_iletisim'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tedarikci_id = db.Column(db.Integer, db.ForeignKey('tedarikciler.id', ondelete='CASCADE'), nullable=False)
+    siparis_id = db.Column(db.Integer, db.ForeignKey('satin_alma_siparisleri.id', ondelete='SET NULL'), nullable=True)
+    
+    # İletişim Bilgileri
+    iletisim_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    konu = db.Column(db.String(200), nullable=False)
+    aciklama = db.Column(db.Text, nullable=False)
+    
+    # Kullanıcı Bilgileri
+    kullanici_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    
+    # Sistem Bilgileri
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    # İlişkiler
+    tedarikci = db.relationship('Tedarikci', backref='iletisim_kayitlari')
+    siparis = db.relationship('SatinAlmaSiparisi', backref='iletisim_kayitlari')
+    kullanici = db.relationship('Kullanici', backref='tedarikci_iletisimleri')
+
+    __table_args__ = (
+        db.Index('idx_tedarikci_iletisim_tedarikci', 'tedarikci_id'),
+        db.Index('idx_tedarikci_iletisim_siparis', 'siparis_id'),
+        db.Index('idx_tedarikci_iletisim_tarih', 'iletisim_tarihi'),
+    )
+
+    def __repr__(self):
+        return f'<TedarikciIletisim tedarikci_id={self.tedarikci_id} konu={self.konu}>'
+
+
+class TedarikciDokuman(db.Model):
+    """Tedarikçi belge yönetimi"""
+    __tablename__ = 'tedarikci_dokumanlar'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tedarikci_id = db.Column(db.Integer, db.ForeignKey('tedarikciler.id', ondelete='CASCADE'), nullable=False)
+    siparis_id = db.Column(db.Integer, db.ForeignKey('satin_alma_siparisleri.id', ondelete='SET NULL'), nullable=True)
+    
+    # Doküman Bilgileri
+    dokuman_tipi = db.Column(db.Enum(DokumanTipi), nullable=False)
+    dosya_adi = db.Column(db.String(255), nullable=False)
+    dosya_yolu = db.Column(db.String(500), nullable=False)
+    dosya_boyutu = db.Column(db.Integer, nullable=True)  # Bytes
+    
+    # Kullanıcı Bilgileri
+    yuklenen_kullanici_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    
+    # Sistem Bilgileri
+    yuklenme_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    # İlişkiler
+    tedarikci = db.relationship('Tedarikci', backref='dokumanlar')
+    siparis = db.relationship('SatinAlmaSiparisi', backref='dokumanlar')
+    yuklenen_kullanici = db.relationship('Kullanici', backref='yuklenen_tedarikci_dokumanlari')
+
+    __table_args__ = (
+        db.Index('idx_tedarikci_dokuman_tedarikci', 'tedarikci_id'),
+        db.Index('idx_tedarikci_dokuman_siparis', 'siparis_id'),
+        db.Index('idx_tedarikci_dokuman_tipi', 'dokuman_tipi'),
+        db.Index('idx_tedarikci_dokuman_tarih', 'yuklenme_tarihi'),
+    )
+
+    def __repr__(self):
+        return f'<TedarikciDokuman tedarikci_id={self.tedarikci_id} tip={self.dokuman_tipi.value}>'

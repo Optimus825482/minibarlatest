@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+
+{% block title %}Database Optimizasyon Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-database"></i> Database Optimizasyon Dashboard</h2>
+            <p class="text-muted">Veritabanı performans yönetimi ve optimizasyon araçları</p>
+        </div>
+    </div>
+
+    <!-- Sağlık Durumu Kartları -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Veritabanı Durumu</h6>
+                    <h3 id="db-status" class="mb-0">
+                        <span class="spinner-border spinner-border-sm"></span>
+                    </h3>
+                    <small class="text-muted">Sağlık Kontrolü</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Aktif Bağlantı</h6>
+                    <h3 id="active-connections" class="mb-0">-</h3>
+                    <small class="text-muted">Connection Pool</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Cache Hit Ratio</h6>
+                    <h3 id="cache-hit-ratio" class="mb-0">-</h3>
+                    <small class="text-muted">Performans</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Database Boyutu</h6>
+                    <h3 id="db-size" class="mb-0">-</h3>
+                    <small class="text-muted">Disk Kullanımı</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aksiyon Butonları -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-tools"></i> Optimizasyon Araçları</h5>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-primary" onclick="checkHealth()">
+                        <i class="fas fa-heartbeat"></i> Sağlık Kontrolü
+                    </button>
+                    <button class="btn btn-info" onclick="checkIndexes()">
+                        <i class="fas fa-list"></i> Index Kontrolü
+                    </button>
+                    <button class="btn btn-success" onclick="createIndexes()">
+                        <i class="fas fa-plus"></i> Index Oluştur
+                    </button>
+                    <button class="btn btn-warning" onclick="optimizeTables()">
+                        <i class="fas fa-sync"></i> Tabloları Optimize Et
+                    </button>
+                    <button class="btn btn-danger" onclick="runFullOptimization()">
+                        <i class="fas fa-rocket"></i> Tam Optimizasyon
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs" id="optimizationTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="indexes-tab" data-toggle="tab" href="#indexes" role="tab">
+                <i class="fas fa-list"></i> Index'ler
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="performance-tab" data-toggle="tab" href="#performance" role="tab">
+                <i class="fas fa-chart-line"></i> Performans
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="pool-tab" data-toggle="tab" href="#pool" role="tab">
+                <i class="fas fa-network-wired"></i> Connection Pool
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="tables-tab" data-toggle="tab" href="#tables" role="tab">
+                <i class="fas fa-table"></i> Tablolar
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3" id="optimizationTabsContent">
+        <!-- Index'ler Tab -->
+        <div class="tab-pane fade show active" id="indexes" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Eksik Index'ler</h5>
+                </div>
+                <div class="card-body">
+                    <div id="missing-indexes-container">
+                        <p class="text-muted">Index kontrolü yapılmadı. "Index Kontrolü" butonuna tıklayın.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performans Tab -->
+        <div class="tab-pane fade" id="performance" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Yavaş Query'ler (Son 24 Saat)</h5>
+                </div>
+                <div class="card-body">
+                    <div id="slow-queries-container">
+                        <p class="text-muted">Performans analizi yapılmadı.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Kullanılmayan Index'ler</h5>
+                </div>
+                <div class="card-body">
+                    <div id="unused-indexes-container">
+                        <p class="text-muted">Performans analizi yapılmadı.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Pool Tab -->
+        <div class="tab-pane fade" id="pool" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Connection Pool İstatistikleri</h5>
+                </div>
+                <div class="card-body">
+                    <div id="pool-stats-container">
+                        <p class="text-muted">Pool istatistikleri yükleniyor...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tablolar Tab -->
+        <div class="tab-pane fade" id="tables" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5>En Büyük Tablolar</h5>
+                </div>
+                <div class="card-body">
+                    <div id="table-sizes-container">
+                        <p class="text-muted">Tablo boyutları yükleniyor...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// API Base URL
+const API_BASE = '/api/v1/db';
+
+// Sayfa yüklendiğinde
+document.addEventListener('DOMContentLoaded', function() {
+    checkHealth();
+    loadPoolStats();
+});
+
+// Sağlık Kontrolü
+async function checkHealth() {
+    try {
+        const response = await fetch(`${API_BASE}/health`);
+        const data = await response.json();
+        
+        if (data.status === 'healthy') {
+            document.getElementById('db-status').innerHTML = '<span class="text-success"><i class="fas fa-check-circle"></i> Sağlıklı</span>';
+            document.getElementById('active-connections').textContent = data.active_connections || '-';
+            document.getElementById('cache-hit-ratio').textContent = data.cache_hit_ratio ? `${data.cache_hit_ratio}%` : '-';
+            document.getElementById('db-size').textContent = data.database_size || '-';
+        } else {
+            document.getElementById('db-status').innerHTML = '<span class="text-danger"><i class="fas fa-times-circle"></i> Hatalı</span>';
+        }
+    } catch (error) {
+        console.error('Health check hatası:', error);
+        document.getElementById('db-status').innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Hata</span>';
+    }
+}
+
+// Index Kontrolü
+async function checkIndexes() {
+    try {
+        const response = await fetch(`${API_BASE}/indexes/check`);
+        const data = await response.json();
+        
+        const container = document.getElementById('missing-indexes-container');
+        
+        if (data.missing_count === 0) {
+            container.innerHTML = '<div class="alert alert-success">✅ Tüm gerekli index\'ler mevcut!</div>';
+        } else {
+            let html = `<div class="alert alert-warning">⚠️ ${data.missing_count} eksik index tespit edildi</div>`;
+            html += '<table class="table table-sm"><thead><tr><th>Tablo</th><th>Index Adı</th><th>Kolonlar</th></tr></thead><tbody>';
+            
+            data.missing_indexes.forEach(idx => {
+                html += `<tr>
+                    <td>${idx.table}</td>
+                    <td><code>${idx.index_name}</code></td>
+                    <td>${idx.columns.join(', ')}</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+    } catch (error) {
+        console.error('Index check hatası:', error);
+        alert('Index kontrolü sırasında hata oluştu');
+    }
+}
+
+// Index Oluştur
+async function createIndexes() {
+    if (!confirm('Eksik index\'ler oluşturulsun mu?')) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/indexes/create`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+        
+        if (data.created_count > 0) {
+            alert(`✅ ${data.created_count} index başarıyla oluşturuldu!`);
+            checkIndexes();
+        } else {
+            alert('Oluşturulacak index bulunamadı');
+        }
+    } catch (error) {
+        console.error('Index creation hatası:', error);
+        alert('Index oluşturma sırasında hata oluştu');
+    }
+}
+
+// Tabloları Optimize Et
+async function optimizeTables() {
+    if (!confirm('Tablolar optimize edilsin mi? (ANALYZE komutu çalıştırılacak)')) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/tables/optimize`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+        
+        if (data.optimized_count > 0) {
+            alert(`✅ ${data.optimized_count} tablo başarıyla optimize edildi!`);
+        } else {
+            alert('Optimize edilecek tablo bulunamadı');
+        }
+    } catch (error) {
+        console.error('Table optimization hatası:', error);
+        alert('Tablo optimizasyonu sırasında hata oluştu');
+    }
+}
+
+// Tam Optimizasyon
+async function runFullOptimization() {
+    if (!confirm('Tam optimizasyon paketi çalıştırılsın mı? Bu işlem birkaç dakika sürebilir.')) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/optimize/full`, {
+            method: 'POST'
+        });
+        const data = await response.json();
+        
+        alert('✅ Tam optimizasyon tamamlandı!');
+        
+        // Tüm verileri yenile
+        checkHealth();
+        checkIndexes();
+        loadPoolStats();
+    } catch (error) {
+        console.error('Full optimization hatası:', error);
+        alert('Tam optimizasyon sırasında hata oluştu');
+    }
+}
+
+// Pool Stats Yükle
+async function loadPoolStats() {
+    try {
+        const response = await fetch(`${API_BASE}/pool/stats`);
+        const data = await response.json();
+        
+        const container = document.getElementById('pool-stats-container');
+        
+        let html = '<table class="table table-bordered"><tbody>';
+        html += `<tr><td><strong>Pool Size</strong></td><td>${data.pool_size}</td></tr>`;
+        html += `<tr><td><strong>Checked In</strong></td><td>${data.checked_in}</td></tr>`;
+        html += `<tr><td><strong>Checked Out</strong></td><td>${data.checked_out}</td></tr>`;
+        html += `<tr><td><strong>Overflow</strong></td><td>${data.overflow}</td></tr>`;
+        html += `<tr><td><strong>Total Connections</strong></td><td>${data.total_connections}</td></tr>`;
+        html += `<tr><td><strong>Max Overflow</strong></td><td>${data.max_overflow}</td></tr>`;
+        html += `<tr><td><strong>Pool Timeout</strong></td><td>${data.pool_timeout}s</td></tr>`;
+        html += `<tr><td><strong>Pool Recycle</strong></td><td>${data.pool_recycle}s</td></tr>`;
+        html += '</tbody></table>';
+        
+        container.innerHTML = html;
+    } catch (error) {
+        console.error('Pool stats hatası:', error);
+    }
+}
+
+// Tab değiştiğinde veri yükle
+document.querySelectorAll('#optimizationTabs a[data-toggle="tab"]').forEach(tab => {
+    tab.addEventListener('shown.bs.tab', function (e) {
+        const target = e.target.getAttribute('href');
+        
+        if (target === '#performance') {
+            loadPerformanceData();
+        } else if (target === '#tables') {
+            loadTableSizes();
+        }
+    });
+});
+
+// Performans Verilerini Yükle
+async function loadPerformanceData() {
+    try {
+        const response = await fetch(`${API_BASE}/performance/analyze`);
+        const data = await response.json();
+        
+        // Yavaş Query'ler
+        const slowContainer = document.getElementById('slow-queries-container');
+        if (data.slow_queries && data.slow_queries.length > 0) {
+            let html = '<table class="table table-sm"><thead><tr><th>Endpoint</th><th>Ort. Süre</th><th>Max Süre</th><th>Çağrı Sayısı</th></tr></thead><tbody>';
+            data.slow_queries.forEach(q => {
+                html += `<tr>
+                    <td>${q.endpoint}</td>
+                    <td>${q.avg_time.toFixed(2)}s</td>
+                    <td>${q.max_time.toFixed(2)}s</td>
+                    <td>${q.call_count}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            slowContainer.innerHTML = html;
+        } else {
+            slowContainer.innerHTML = '<div class="alert alert-success">✅ Yavaş query tespit edilmedi</div>';
+        }
+        
+        // Kullanılmayan Index'ler
+        const unusedContainer = document.getElementById('unused-indexes-container');
+        if (data.unused_indexes && data.unused_indexes.length > 0) {
+            let html = '<table class="table table-sm"><thead><tr><th>Tablo</th><th>Index</th><th>Boyut</th></tr></thead><tbody>';
+            data.unused_indexes.forEach(idx => {
+                html += `<tr>
+                    <td>${idx.table}</td>
+                    <td><code>${idx.index}</code></td>
+                    <td>${idx.size}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            unusedContainer.innerHTML = html;
+        } else {
+            unusedContainer.innerHTML = '<div class="alert alert-success">✅ Kullanılmayan index yok</div>';
+        }
+    } catch (error) {
+        console.error('Performance data hatası:', error);
+    }
+}
+
+// Tablo Boyutlarını Yükle
+async function loadTableSizes() {
+    try {
+        const response = await fetch(`${API_BASE}/performance/analyze`);
+        const data = await response.json();
+        
+        const container = document.getElementById('table-sizes-container');
+        
+        if (data.table_sizes && data.table_sizes.length > 0) {
+            let html = '<table class="table table-sm"><thead><tr><th>Tablo</th><th>Boyut</th></tr></thead><tbody>';
+            data.table_sizes.forEach(t => {
+                html += `<tr>
+                    <td>${t.table}</td>
+                    <td>${t.size}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+    } catch (error) {
+        console.error('Table sizes hatası:', error);
+    }
+}
+</script>
+{% endblock %}

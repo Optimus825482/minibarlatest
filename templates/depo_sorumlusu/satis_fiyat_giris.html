@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Satış Fiyatı Girişi{% endblock %}
+{% block page_title %}Satış Fiyatı Girişi{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Uyarı Mesajı -->
+    <div class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 rounded-lg">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-yellow-400 text-xl"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    Satış Fiyatı Belirleme Gerekli
+                </h3>
+                <div class="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                    <p>Aşağıdaki ürünler için sistemde satış fiyatı bulunmamaktadır. Lütfen satış fiyatlarını belirleyin.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Satın Alma Bilgileri -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-6">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+            <i class="fas fa-info-circle mr-2"></i>
+            Satın Alma Bilgileri
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <p class="text-sm text-slate-600 dark:text-slate-400">İşlem No</p>
+                <p class="text-lg font-semibold text-slate-900 dark:text-white">{{ satin_alma.islem_no }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-slate-600 dark:text-slate-400">Tedarikçi</p>
+                <p class="text-lg font-semibold text-slate-900 dark:text-white">{{ satin_alma.tedarikci.tedarikci_adi }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-slate-600 dark:text-slate-400">İşlem Tarihi</p>
+                <p class="text-lg font-semibold text-slate-900 dark:text-white">{{ satin_alma.islem_tarihi.strftime('%d.%m.%Y') }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Satış Fiyatı Formu -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-6">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-6">
+            <i class="fas fa-tags mr-2"></i>
+            Satış Fiyatları ({{ fiyatsiz_urunler|length }} Ürün)
+        </h3>
+
+        <form method="POST" action="{{ url_for('satis_fiyat_giris', satin_alma_id=satin_alma.id) }}" id="fiyatForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                    <thead class="bg-slate-50 dark:bg-slate-900">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                                Ürün
+                            </th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                                Alış Fiyatı (₺)
+                            </th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                                Satış Fiyatı (₺) <span class="text-red-500">*</span>
+                            </th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                                Kar Marjı (%)
+                            </th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                                Kar (₺)
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                        {% for urun in fiyatsiz_urunler %}
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                            <td class="px-4 py-4">
+                                <div class="text-sm font-medium text-slate-900 dark:text-white">
+                                    {{ urun.urun_adi }}
+                                </div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400">
+                                    {{ urun.birim }}
+                                </div>
+                                <input type="hidden" name="urun_ids[]" value="{{ urun.urun_id }}"/>
+                            </td>
+                            <td class="px-4 py-4 text-right">
+                                <span class="text-sm font-semibold text-slate-900 dark:text-white alis-fiyat" data-row="{{ loop.index0 }}">
+                                    {{ "%.2f"|format(urun.alis_fiyati) }} ₺
+                                </span>
+                            </td>
+                            <td class="px-4 py-4">
+                                <input type="number" 
+                                       name="satis_fiyatlari[]" 
+                                       step="0.01" 
+                                       min="0"
+                                       value="{{ "%.2f"|format(urun.alis_fiyati * 1.3) }}"
+                                       required
+                                       class="w-full px-3 py-2 text-right border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 satis-fiyat-input"
+                                       data-row="{{ loop.index0 }}"
+                                       data-alis="{{ urun.alis_fiyati }}">
+                            </td>
+                            <td class="px-4 py-4 text-right">
+                                <span class="text-sm font-bold text-green-600 dark:text-green-400 kar-marji" data-row="{{ loop.index0 }}">
+                                    30.00%
+                                </span>
+                                <input type="hidden" name="kar_marjlari[]" class="kar-marji-input" data-row="{{ loop.index0 }}" value="30.00"/>
+                            </td>
+                            <td class="px-4 py-4 text-right">
+                                <span class="text-sm font-bold text-green-600 dark:text-green-400 kar-tutar" data-row="{{ loop.index0 }}">
+                                    0.00 ₺
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Bilgilendirme -->
+            <div class="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-400 text-lg"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200">
+                            Satış Fiyatı Belirleme İpuçları
+                        </h4>
+                        <div class="mt-2 text-sm text-blue-700 dark:text-blue-300">
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>Önerilen satış fiyatı, alış fiyatının %30 üzerinde hesaplanmıştır</li>
+                                <li>Kar marjı otomatik olarak hesaplanır</li>
+                                <li>Satış fiyatını değiştirdiğinizde kar marjı ve kar tutarı güncellenir</li>
+                                <li>Bu fiyatlar daha sonra sistem yöneticisi tarafından güncellenebilir</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Butonlar -->
+            <div class="mt-6 flex justify-end gap-3">
+                {% if satin_alma.siparis_id %}
+                <a href="{{ url_for('siparis_detay', siparis_id=satin_alma.siparis_id) }}"
+                   class="px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-semibold transition-colors">
+                    <i class="fas fa-times mr-2"></i>
+                    Şimdi Değil
+                </a>
+                {% endif %}
+                <button type="submit"
+                        class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors">
+                    <i class="fas fa-check mr-2"></i>
+                    Satış Fiyatlarını Kaydet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const satisFiyatInputs = document.querySelectorAll('.satis-fiyat-input');
+    
+    function hesaplaKar(row) {
+        const alisFiyat = parseFloat(document.querySelector(`.satis-fiyat-input[data-row="${row}"]`).dataset.alis) || 0;
+        const satisFiyat = parseFloat(document.querySelector(`.satis-fiyat-input[data-row="${row}"]`).value) || 0;
+        
+        if (alisFiyat > 0 && satisFiyat > 0) {
+            const kar = satisFiyat - alisFiyat;
+            const karMarji = (kar / alisFiyat) * 100;
+            
+            // Kar marjını göster
+            const karMarjiElement = document.querySelector(`.kar-marji[data-row="${row}"]`);
+            if (karMarjiElement) {
+                karMarjiElement.textContent = karMarji.toFixed(2) + '%';
+                
+                // Renk ayarla
+                if (karMarji < 20) {
+                    karMarjiElement.className = 'text-sm font-bold text-red-600 dark:text-red-400 kar-marji';
+                } else if (karMarji < 30) {
+                    karMarjiElement.className = 'text-sm font-bold text-yellow-600 dark:text-yellow-400 kar-marji';
+                } else {
+                    karMarjiElement.className = 'text-sm font-bold text-green-600 dark:text-green-400 kar-marji';
+                }
+            }
+            
+            // Hidden input'a kaydet
+            const karMarjiInput = document.querySelector(`.kar-marji-input[data-row="${row}"]`);
+            if (karMarjiInput) {
+                karMarjiInput.value = karMarji.toFixed(2);
+            }
+            
+            // Kar tutarını göster
+            const karTutarElement = document.querySelector(`.kar-tutar[data-row="${row}"]`);
+            if (karTutarElement) {
+                karTutarElement.textContent = kar.toFixed(2) + ' ₺';
+            }
+        }
+    }
+    
+    satisFiyatInputs.forEach(input => {
+        const row = input.dataset.row;
+        
+        // İlk yüklemede hesapla
+        hesaplaKar(row);
+        
+        // Input değiştiğinde hesapla
+        input.addEventListener('input', function() {
+            hesaplaKar(row);
+        });
+    });
+});
+</script>
+{% endblock %}

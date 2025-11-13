@@ -22,8 +22,15 @@ from dotenv import load_dotenv
 from sqlalchemy.exc import OperationalError, TimeoutError
 from sqlalchemy import inspect
 
-# Logging ayarla
-logging.basicConfig(level=logging.INFO)
+# Logging ayarla - Hem console hem de dosyaya yaz
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('app.log', encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
 
 # .env dosyasını yükle
@@ -57,7 +64,23 @@ def inject_csrf_token():
 
 # Veritabanı başlat
 from models import db
+from flask_migrate import Migrate
+
 db.init_app(app)
+migrate = Migrate(app, db)
+
+# Redis Cache başlat
+from flask_caching import Cache
+cache = Cache(app)
+
+logger.info(f"✅ Cache initialized: {app.config['CACHE_TYPE']}")
+
+# Query Logging - SQLAlchemy Event Listener
+try:
+    from utils.monitoring.query_analyzer import setup_query_logging
+    setup_query_logging()
+except Exception as e:
+    logger.warning(f"Query logging setup hatası: {e}")
 
 # SQLAlchemy Engine ve Session Refresh - ML Metrics entity_type fix
 # ÇÖZÜM: Engine'i dispose ederek tüm connection pool'u ve metadata cache'i temizle
@@ -71,12 +94,7 @@ with app.app_context():
             result.close()
         logger.info("✅ Database engine yenilendi ve test edildi")
         
-        # Startup ML Fix - entity_type kolonunu kaldır
-        try:
-            from startup_fix_ml import fix_ml_metrics_on_startup
-            fix_ml_metrics_on_startup()
-        except Exception as fix_error:
-            logger.warning(f"⚠️ ML startup fix hatası (devam ediliyor): {str(fix_error)[:200]}")
+       
             
     except Exception as e:
         logger.warning(f"⚠️ Engine refresh hatası: {str(e)[:200]}")
@@ -206,6 +224,20 @@ def inject_otel_info():
             logger.error(f"Otel bilgisi alınırken hata: {str(e)}")
     
     return dict(kullanici_otel=otel_bilgi)
+
+# ============================================
+# PWA SUPPORT - Service Worker
+# ============================================
+@app.route('/sw.js')
+def service_worker():
+    """Service Worker dosyasını root'tan serve et"""
+    return send_file('static/sw.js', mimetype='application/javascript')
+
+# ============================================
+# METRICS MIDDLEWARE
+# ============================================
+from middleware.metrics_middleware import init_metrics_middleware
+init_metrics_middleware(app)
 
 # ============================================
 # ROUTE REGISTRATION - Merkezi Route Yönetimi
@@ -1367,55 +1399,68 @@ def api_son_aktiviteler():
 
         data = []
         for log in aktiviteler:
-            # Kullanıcı bilgisi
-            kullanici_adi = 'Sistem'
-            if log.kullanici:
-                kullanici_adi = f"{log.kullanici.ad} {log.kullanici.soyad}"
+            try:
+                # Kullanıcı bilgisi
+                kullanici_adi = 'Sistem'
+                if log.kullanici:
+                    kullanici_adi = f"{log.kullanici.ad} {log.kullanici.soyad}"
 
-            # İşlem detayını parse et
-            import json
-            detay = {}
-            if log.islem_detay:
-                try:
-                    detay = json.loads(log.islem_detay) if isinstance(log.islem_detay, str) else log.islem_detay
-                except Exception:
-                    detay = {'aciklama': log.islem_detay}
+                # İşlem detayını parse et
+                import json
+                detay = {}
+                if log.islem_detay:
+                    try:
+                        detay = json.loads(log.islem_detay) if isinstance(log.islem_detay, str) else log.islem_detay
+                    except Exception:
+                        detay = {'aciklama': str(log.islem_detay)}
 
-            # Zaman farkı hesapla
-            # islem_tarihi timezone-aware mi kontrol et
-            if log.islem_tarihi.tzinfo is None:
-                # Naive datetime ise, UTC olarak kabul et
-                islem_tarihi = log.islem_tarihi.replace(tzinfo=timezone.utc)
-            else:
-                islem_tarihi = log.islem_tarihi
-            
-            zaman_farki = datetime.now(timezone.utc) - islem_tarihi
+                # Zaman farkı hesapla
+                # islem_tarihi'ni datetime'a çevir
+                if isinstance(log.islem_tarihi, datetime):
+                    # Datetime objesi
+                    if log.islem_tarihi.tzinfo is None:
+                        # Naive datetime ise, UTC olarak kabul et
+                        islem_tarihi = log.islem_tarihi.replace(tzinfo=timezone.utc)
+                    else:
+                        islem_tarihi = log.islem_tarihi
+                else:
+                    # Date objesi ise datetime'a çevir
+                    islem_tarihi = datetime.combine(log.islem_tarihi, datetime.min.time()).replace(tzinfo=timezone.utc)
+                
+                zaman_farki = datetime.now(timezone.utc) - islem_tarihi
 
-            if zaman_farki < timedelta(minutes=1):
-                zaman_str = "Az önce"
-            elif zaman_farki < timedelta(hours=1):
-                dakika = int(zaman_farki.total_seconds() / 60)
-                zaman_str = f"{dakika} dakika önce"
-            elif zaman_farki < timedelta(days=1):
-                saat = int(zaman_farki.total_seconds() / 3600)
-                zaman_str = f"{saat} saat önce"
-            else:
-                gun = zaman_farki.days
-                zaman_str = f"{gun} gün önce"
+                if zaman_farki < timedelta(minutes=1):
+                    zaman_str = "Az önce"
+                elif zaman_farki < timedelta(hours=1):
+                    dakika = int(zaman_farki.total_seconds() / 60)
+                    zaman_str = f"{dakika} dakika önce"
+                elif zaman_farki < timedelta(days=1):
+                    saat = int(zaman_farki.total_seconds() / 3600)
+                    zaman_str = f"{saat} saat önce"
+                else:
+                    gun = zaman_farki.days
+                    zaman_str = f"{gun} gün önce"
 
-            data.append({
-                'id': log.id,
-                'kullanici': kullanici_adi,
-                'islem_tipi': log.islem_tipi,
-                'modul': log.modul,
-                'detay': detay,
-                'zaman': zaman_str,
-                'tam_tarih': log.islem_tarihi.strftime('%d.%m.%Y %H:%M')
-            })
+                data.append({
+                    'id': log.id,
+                    'kullanici': kullanici_adi,
+                    'islem_tipi': log.islem_tipi,
+                    'modul': log.modul,
+                    'detay': detay,
+                    'zaman': zaman_str,
+                    'tam_tarih': islem_tarihi.strftime('%d.%m.%Y %H:%M')
+                })
+            except Exception as log_error:
+                # Tek bir log hatası tüm endpoint'i bozmasın
+                print(f"Log parse hatası (ID: {log.id}): {log_error}")
+                continue
 
         return jsonify({'success': True, 'aktiviteler': data})
 
     except Exception as e:
+        print(f"Son aktiviteler hatası: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -2935,8 +2980,8 @@ def start_scheduler():
             replace_existing=True
         )
         
-        # Her 5 dakikada anomali tespiti
-        anomaly_check_interval = int(os.getenv('ML_ANOMALY_CHECK_INTERVAL', 300))  # 300 saniye = 5 dakika
+        # Her 1 saatte anomali tespiti (5 dakikadan optimize edildi)
+        anomaly_check_interval = int(os.getenv('ML_ANOMALY_CHECK_INTERVAL', 3600))  # 3600 saniye = 1 saat
         scheduler.add_job(
             func=lambda: detect_anomalies(),
             trigger='interval',
@@ -2977,12 +3022,24 @@ def start_scheduler():
             replace_existing=True
         )
         
+        # Her gece 04:00'te eski model versiyonlarını temizle
+        scheduler.add_job(
+            func=lambda: cleanup_old_models(),
+            trigger='cron',
+            hour=4,
+            minute=0,
+            id='ml_model_cleanup',
+            name='ML Model Cleanup',
+            replace_existing=True
+        )
+        
         print("✅ ML Scheduler başlatıldı")
         print(f"   - Veri toplama: Her {data_collection_interval//60} dakika")
         print(f"   - Anomali tespiti: Her {anomaly_check_interval//60} dakika")
         print(f"   - Model eğitimi: {ml_training_schedule}")
         print(f"   - Stok bitiş kontrolü: Günde 2 kez (09:00, 18:00)")
         print(f"   - Alert temizleme: Her gece 03:00")
+        print(f"   - Model cleanup: Her gece 04:00")
     
     scheduler.start()
     print("✅ Scheduler başlatıldı (Günlük dosya temizleme: 02:00)")
@@ -3038,6 +3095,53 @@ def cleanup_old_alerts():
             alert_manager.cleanup_old_alerts(days=90)
     except Exception as e:
         logger.error(f"❌ Alert temizleme hatası: {str(e)}")
+
+def cleanup_old_models():
+    """Eski model versiyonlarını temizle job'u"""
+    try:
+        from utils.ml.model_manager import ModelManager
+        with app.app_context():
+            model_manager = ModelManager(db)
+            
+            # Eski model versiyonlarını temizle (son 3 versiyon sakla)
+            result = model_manager.cleanup_old_models(keep_versions=3)
+            
+            # Disk kullanımını kontrol et
+            disk_info = model_manager._check_disk_space()
+            
+            # Disk kullanımı %90'ı geçtiyse alert oluştur
+            if disk_info['percent'] > 90:
+                logger.warning(
+                    f"⚠️  DISK KULLANIMI YÜKSEK: {disk_info['percent']:.1f}% "
+                    f"({disk_info['used_gb']:.2f}GB / {disk_info['total_gb']:.2f}GB)"
+                )
+                
+                # ML Alert oluştur
+                from models import MLAlert
+                from datetime import datetime, timezone
+                
+                alert = MLAlert(
+                    alert_type='stok_anomali',  # En yakın tip
+                    severity='kritik',
+                    entity_id=0,  # Sistem seviyesi
+                    metric_value=disk_info['percent'],
+                    expected_value=80.0,
+                    deviation_percent=(disk_info['percent'] - 80.0) / 80.0 * 100,
+                    message=f"ML model dizini disk kullanımı kritik seviyede: {disk_info['percent']:.1f}%",
+                    suggested_action="Eski model dosyalarını manuel olarak temizleyin veya disk alanını artırın",
+                    created_at=datetime.now(timezone.utc)
+                )
+                db.session.add(alert)
+                db.session.commit()
+            
+            logger.info(
+                f"✅ Model cleanup tamamlandı: "
+                f"{result['deleted_count']} model silindi, "
+                f"{result['freed_space_mb']:.2f}MB alan boşaltıldı"
+            )
+            
+    except Exception as e:
+        logger.error(f"❌ Model cleanup hatası: {str(e)}")
 
 # Scheduler'ı başlat
 try:
