@@ -65,9 +65,13 @@
                             Tüm QR'ları İndir
                         </button>
                     </div>
-                    <div class="flex items-center gap-2 text-sm text-slate-600">
-                        <span class="font-medium" data-stats-for="odalar-table" data-stat="total">{{ odalar|length }}</span>
-                        <span>Toplam Oda</span>
+                    <div class="flex items-center gap-3 text-sm text-slate-600">
+                        <div class="flex items-center gap-2">
+                            <span class="font-medium" data-stats-for="odalar-table" data-stat="filtered">{{ odalar|length }}</span>
+                            <span>/</span>
+                            <span class="font-medium" data-stats-for="odalar-table" data-stat="total">{{ odalar|length }}</span>
+                            <span>Oda</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -84,6 +88,9 @@
                             <th
                                 class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                 Oda No</th>
+                            <th
+                                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Oda Tipi</th>
                             <th
                                 class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                 Otel Adı</th>
@@ -116,6 +123,26 @@
                             </td>
                             <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium text-slate-900">
                                 {{ oda.oda_no }}
+                            </td>
+                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-600">
+                                {% if oda.oda_tipi %}
+                                {% set oda_tipi_colors = {
+                                    'Standart': 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+                                    'Deluxe': 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200',
+                                    'Suite': 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200',
+                                    'King': 'bg-rose-100 dark:bg-rose-900 text-rose-800 dark:text-rose-200',
+                                    'Twin': 'bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200',
+                                    'Family': 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+                                    'Executive': 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200',
+                                    'Presidential': 'bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200'
+                                } %}
+                                {% set color_class = oda_tipi_colors.get(oda.oda_tipi, 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200') %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ color_class }}">
+                                    {{ oda.oda_tipi }}
+                                </span>
+                                {% else %}
+                                <span class="text-slate-400 text-xs">-</span>
+                                {% endif %}
                             </td>
                             <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-600">
                                 {% if oda.kat and oda.kat.otel %}
@@ -179,7 +206,7 @@
                             </td>
                             <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm">
                                 <div class="flex gap-2">
-                                    <button onclick="odaDuzenle({{ oda.id }}, '{{ oda.oda_no }}', {{ oda.kat_id }}, {{ 'true' if oda.qr_kod_token else 'false' }})"
+                                    <button onclick="odaDuzenle({{ oda.id }}, '{{ oda.oda_no }}', {{ oda.kat_id }}, {{ 'true' if oda.qr_kod_token else 'false' }}, '{{ oda.oda_tipi or '' }}')"
                                         class="inline-flex items-center px-3 py-1.5 border border-slate-300 shadow-sm text-xs font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                                         title="Oda Bilgilerini Düzenle">
                                         <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -690,10 +717,24 @@
 
 <script>
     document.addEventListener( 'DOMContentLoaded', function () {
-        // Kat seçeneklerini dinamik olarak oluştur
-        const katOptions = [
+        // Tüm oda verilerini hazırla (otel-kat ilişkisi için)
+        const odaVerileri = [
+            {% for oda in odalar %}
+            {
+                otelAdi: '{{ oda.kat.otel.ad if oda.kat and oda.kat.otel else "" }}',
+                katAdi: '{{ oda.kat.kat_adi if oda.kat else "" }}'
+            },
+            {% endfor %}
+        ];
+        
+        // Tüm kat seçeneklerini oluştur (otel bilgisi ile)
+        const tumKatlar = [
             {% for kat in katlar %}
-            { value: '{{ kat.kat_adi }}', label: '{{ kat.kat_adi }}' },
+            { 
+                value: '{{ kat.kat_adi }}', 
+                label: '{{ kat.kat_adi }}',
+                otelAdi: '{{ kat.otel.ad if kat.otel else "" }}'
+            },
             {% endfor %}
         ];
         
@@ -710,28 +751,72 @@
             const filterConfig = {
                 searchPlaceholder: 'Oda numarası ara...',
                 defaultItemsPerPage: 50,
+                searchInputId: 'odalar-search',
                 filters: []
             };
             
-            // Kat filtresi ekle (columnIndex: 0 - ilk sütun)
-            if (katOptions.length > 0) {
-                filterConfig.filters.push({
-                    columnIndex: 0,
-                    label: 'Kat',
-                    options: katOptions
-                });
-            }
-            
-            // Otel Adı filtresi ekle (columnIndex: 2 - üçüncü sütun)
+            // Otel Adı filtresi ekle (columnIndex: 3 - dördüncü sütun - Oda Tipi eklediğimiz için kaydı)
             if (otelOptions.length > 0) {
                 filterConfig.filters.push({
-                    columnIndex: 2,
+                    columnIndex: 3,
                     label: 'Otel Adı',
                     options: otelOptions
                 });
             }
             
+            // Kat filtresi ekle (columnIndex: 0 - ilk sütun)
+            if (tumKatlar.length > 0) {
+                filterConfig.filters.push({
+                    columnIndex: 0,
+                    label: 'Kat',
+                    options: tumKatlar
+                });
+            }
+            
             window.tableSearchFilter_odalar = new TableSearchFilter( 'odalar-table', filterConfig );
+            
+            // Otel filtresine özel event listener ekle
+            const otelFilter = document.getElementById('odalar-table-filter-3');
+            const katFilter = document.getElementById('odalar-table-filter-0');
+            
+            if (otelFilter && katFilter) {
+                otelFilter.addEventListener('change', function() {
+                    const secilenOtel = this.value;
+                    
+                    // Kat filtresini temizle
+                    katFilter.value = '';
+                    delete window.tableSearchFilter_odalar.activeFilters[0];
+                    
+                    // Kat filtresini güncelle
+                    if (secilenOtel) {
+                        // Sadece seçilen otele ait katları göster
+                        const filtreliKatlar = tumKatlar.filter(kat => kat.otelAdi === secilenOtel);
+                        
+                        katFilter.innerHTML = '<option value="">Kat Seçin</option>';
+                        filtreliKatlar.forEach(kat => {
+                            const option = document.createElement('option');
+                            option.value = kat.value;
+                            option.textContent = kat.label;
+                            katFilter.appendChild(option);
+                        });
+                        katFilter.disabled = filtreliKatlar.length === 0;
+                    } else {
+                        // Tüm katları göster
+                        katFilter.innerHTML = '<option value="">Kat</option>';
+                        tumKatlar.forEach(kat => {
+                            const option = document.createElement('option');
+                            option.value = kat.value;
+                            option.textContent = kat.label;
+                            katFilter.appendChild(option);
+                        });
+                        katFilter.disabled = false;
+                    }
+                    
+                    // Filtreleri yeniden uygula
+                    window.tableSearchFilter_odalar.updateActiveFilterBadges();
+                    window.tableSearchFilter_odalar.applyFiltersAndSearch();
+                });
+            }
         }
     });
     

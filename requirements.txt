@@ -13,6 +13,9 @@ WTForms==3.1.1
 email-validator==2.1.0
 gunicorn==21.2.0
 
+# Error Tracking & Monitoring
+sentry-sdk[flask]==2.18.0
+
 # PostgreSQL Support
 psycopg2-binary==2.9.9
 alembic==1.12.1

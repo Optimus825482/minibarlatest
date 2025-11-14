@@ -3,8 +3,8 @@
  * Yeni oda ekleme, düzenleme ve QR kod işlemleri
  */
 
-// Global değişkenler
-var yeniEklenenOdaId = yeniEklenenOdaId || null;
+// Global değişkenler (window objesine ekle - çakışmayı önle)
+window.yeniEklenenOdaId = window.yeniEklenenOdaId || null;
 
 /**
  * Yeni oda modal'ını aç
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    yeniEklenenOdaId = data.oda.id;
+                    window.yeniEklenenOdaId = data.oda.id;
                     
                     // QR kod oluştur
                     return fetch(`/admin/oda-qr-olustur/${data.oda.id}`, {
@@ -147,8 +147,8 @@ function yeniOdaTamamla() {
  * Yeni eklenen odanın QR kodunu indir
  */
 function qrIndirYeni() {
-    if (yeniEklenenOdaId) {
-        window.location.href = `/admin/oda-qr-indir/${yeniEklenenOdaId}`;
+    if (window.yeniEklenenOdaId) {
+        window.location.href = `/admin/oda-qr-indir/${window.yeniEklenenOdaId}`;
     }
 }
 
@@ -156,9 +156,9 @@ function qrIndirYeni() {
  * Yeni eklenen odanın misafir mesajını düzenle
  */
 function misafirMesajiDuzenleYeni() {
-    if (yeniEklenenOdaId) {
+    if (window.yeniEklenenOdaId) {
         $('#yeniOdaModal').modal('hide');
-        misafirMesajiDuzenle(yeniEklenenOdaId);
+        misafirMesajiDuzenle(window.yeniEklenenOdaId);
     }
 }
 
@@ -188,7 +188,7 @@ function showAlert(alertId, message, type) {
 /**
  * Oda düzenleme modal'ını aç
  */
-function odaDuzenle(odaId, odaNo, katId, qrVarMi) {
+function odaDuzenle(odaId, odaNo, katId, qrVarMi, odaTipi) {
     // Form alanlarını doldur
     document.getElementById('duzenleOdaId').value = odaId;
     document.getElementById('duzenleOdaNo').textContent = odaNo;

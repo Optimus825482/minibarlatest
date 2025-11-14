@@ -4,6 +4,9 @@ from flask_wtf.csrf import CSRFProtect, CSRFError
 # from flask_limiter import Limiter
 # from flask_limiter.util import get_remote_address
 from datetime import datetime, timedelta, timezone
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
+# SqlAlchemy integration artık otomatik yükleniyor (Sentry 2.0+)
 import os
 import io
 import time
@@ -1916,261 +1919,6 @@ def reset_system():
     return redirect(url_for('reset_system'))
 
 
-# ============================================================================
-# RAILWAY DATABASE SYNC - SUPER ADMIN ENDPOINT (GİZLİ, GITHUB'A PUSH EDİLMEYECEK)
-# ============================================================================
-
-@app.route('/railwaysync', methods=['GET'])
-def railway_sync_page():
-    """Railway → Localhost MySQL senkronizasyon arayüzü - LOGLANMAZ"""
-    # Super admin kontrolü
-    if not session.get('super_admin_logged_in'):
-        return redirect(url_for('system_backup_login'))
-    
-    return render_template('railway_sync.html')
-
-
-@app.route('/railwaysync/check', methods=['POST'])
-@csrf.exempt  # CSRF korumasını kaldır (session kontrolü yeterli)
-def railway_sync_check():
-    """Railway ve localhost veritabanları arasındaki farklılıkları kontrol et"""
-    # Super admin kontrolü
-    if not session.get('super_admin_logged_in'):
-        return jsonify({'success': False, 'error': 'Oturum süresi doldu. Lütfen tekrar giriş yapın.'}), 401
-    
-    try:
-        from sqlalchemy import create_engine, text, inspect
-        import os
-        
-        # Railway MySQL bağlantısı (PUBLIC URL)
-        railway_url = os.getenv('RAILWAY_DATABASE_URL')
-        if not railway_url:
-            return jsonify({'success': False, 'error': 'RAILWAY_DATABASE_URL bulunamadı. .env dosyasını kontrol edin.'}), 400
-        
-        if railway_url.startswith('mysql://'):
-            railway_url = railway_url.replace('mysql://', 'mysql+pymysql://')
-        
-        # Localhost MySQL bağlantısı
-        local_host = os.getenv('MYSQL_HOST', 'localhost')
-        local_user = os.getenv('MYSQL_USER', 'root')
-        local_pass = os.getenv('MYSQL_PASSWORD', '')
-        local_db = os.getenv('MYSQL_DB', 'minibar_takip')
-        local_port = os.getenv('MYSQL_PORT', '3306')
-        local_url = f'mysql+pymysql://{local_user}:{local_pass}@{local_host}:{local_port}/{local_db}?charset=utf8mb4'
-            
-        # Bağlantıları oluştur
-        railway_engine = create_engine(railway_url, pool_pre_ping=True)
-        local_engine = create_engine(local_url, pool_pre_ping=True)
-        
-        differences = {}
-        total_new_records = 0
-        tables_checked = 0
-        tables_with_differences = 0
-        tables_in_sync = 0
-        
-        # Tabloları listele
-        inspector = inspect(railway_engine)
-        tables = inspector.get_table_names()
-        
-        with railway_engine.connect() as railway_conn, local_engine.connect() as local_conn:
-            for table in tables:
-                tables_checked += 1
-                
-                # Railway'deki kayıt sayısı
-                railway_count_result = railway_conn.execute(text(f"SELECT COUNT(*) as cnt FROM `{table}`"))
-                railway_count = railway_count_result.fetchone()[0]
-                
-                # Localhost'taki kayıt sayısı
-                local_count_result = local_conn.execute(text(f"SELECT COUNT(*) as cnt FROM `{table}`"))
-                local_count = local_count_result.fetchone()[0]
-                
-                new_records = railway_count - local_count
-                
-                differences[table] = {
-                    'railway_count': railway_count,
-                    'localhost_count': local_count,
-                    'new_records': new_records if new_records > 0 else 0
-                }
-                
-                if new_records > 0:
-                    total_new_records += new_records
-                    tables_with_differences += 1
-                else:
-                    tables_in_sync += 1
-        
-        railway_engine.dispose()
-        local_engine.dispose()
-        
-        return jsonify({
-            'success': True,
-            'differences': differences,
-            'total_new_records': total_new_records,
-            'tables_checked': tables_checked,
-            'tables_with_differences': tables_with_differences,
-            'tables_in_sync': tables_in_sync
-        })
-        
-    except Exception as e:
-        app.logger.error(f"Railway sync check error: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@app.route('/railwaysync/sync', methods=['POST'])
-@csrf.exempt  # CSRF korumasını kaldır (session kontrolü yeterli)
-def railway_sync_execute():
-    """Railway'deki yeni verileri localhost MySQL'e senkronize et"""
-    # Super admin kontrolü
-    if not session.get('super_admin_logged_in'):
-        return jsonify({'success': False, 'error': 'Oturum süresi doldu. Lütfen tekrar giriş yapın.'}), 401
-    
-    try:
-        from sqlalchemy import create_engine, text, inspect
-        import os
-        import time
-        
-        start_time = time.time()
-        
-        # Railway MySQL bağlantısı (PUBLIC URL)
-        railway_url = os.getenv('RAILWAY_DATABASE_URL')
-        if not railway_url:
-            return jsonify({'success': False, 'error': 'RAILWAY_DATABASE_URL bulunamadı. .env dosyasını kontrol edin.'}), 400
-        
-        if railway_url.startswith('mysql://'):
-            railway_url = railway_url.replace('mysql://', 'mysql+pymysql://')
-        
-        # Localhost MySQL bağlantısı
-        local_host = os.getenv('MYSQL_HOST', 'localhost')
-        local_user = os.getenv('MYSQL_USER', 'root')
-        local_pass = os.getenv('MYSQL_PASSWORD', '')
-        local_db = os.getenv('MYSQL_DB', 'minibar_takip')
-        local_port = os.getenv('MYSQL_PORT', '3306')
-        local_url = f'mysql+pymysql://{local_user}:{local_pass}@{local_host}:{local_port}/{local_db}?charset=utf8mb4'
-        
-        # Bağlantıları oluştur
-        railway_engine = create_engine(railway_url, pool_pre_ping=True)
-        local_engine = create_engine(local_url, pool_pre_ping=True)
-        
-        details = {}
-        total_synced = 0
-        tables_synced = 0
-        
-        # Tabloları listele
-        inspector = inspect(railway_engine)
-        tables = inspector.get_table_names()
-        
-        # Tablo dependency sırası (foreign key'ler için)
-        table_order = [
-            'otel', 'kat', 'oda', 'urun_grup', 'urun', 'kullanicilar',
-            'stok_hareket', 'personel_zimmet', 'personel_zimmet_detay',
-            'minibar_islem', 'minibar_islem_detay', 'sistem_log',
-            'log_islem', 'log_hata', 'log_giris'
-        ]
-        
-        # Sıralanmış tabloları kullan, sırada olmayanları sona ekle
-        ordered_tables = [t for t in table_order if t in tables]
-        ordered_tables.extend([t for t in tables if t not in table_order])
-        
-        with railway_engine.connect() as railway_conn, local_engine.connect() as local_conn:
-            for table in ordered_tables:
-                try:
-                    # Railway'deki kayıt sayısı
-                    railway_count_result = railway_conn.execute(text(f"SELECT COUNT(*) as cnt FROM `{table}`"))
-                    railway_count = railway_count_result.fetchone()[0]
-                    
-                    # Localhost'taki kayıt sayısı
-                    local_count_result = local_conn.execute(text(f"SELECT COUNT(*) as cnt FROM `{table}`"))
-                    local_count = local_count_result.fetchone()[0]
-                    
-                    new_records = railway_count - local_count
-                    
-                    if new_records > 0:
-                        # Tablo yapısını al
-                        columns_result = railway_conn.execute(text(f"SHOW COLUMNS FROM `{table}`"))
-                        columns = [row[0] for row in columns_result.fetchall()]
-                        
-                        # Primary key'i bul
-                        pk_result = railway_conn.execute(text(f"SHOW KEYS FROM `{table}` WHERE Key_name = 'PRIMARY'"))
-                        pk_column = pk_result.fetchone()
-                        pk_name = pk_column[4] if pk_column else 'id'
-                        
-                        # Railway'den TÜM kayıtları çek ve localhost'ta olmayanları bul
-                        if pk_name in columns:
-                            # Localhost'taki tüm ID'leri al
-                            local_ids_result = local_conn.execute(text(f"SELECT `{pk_name}` FROM `{table}`"))
-                            local_ids = {row[0] for row in local_ids_result.fetchall()}
-                            
-                            # Railway'den TÜM kayıtları çek
-                            railway_data_all = railway_conn.execute(
-                                text(f"SELECT * FROM `{table}` ORDER BY `{pk_name}` ASC")
-                            ).fetchall()
-                            
-                            # Sadece localhost'ta OLMAYAN kayıtları filtrele
-                            railway_data = []
-                            for row in railway_data_all:
-                                row_id = row[columns.index(pk_name)]
-                                if row_id not in local_ids:
-                                    railway_data.append(row)
-                        else:
-                            # PK yoksa tüm kayıtları al (nadiren olur)
-                            railway_data = railway_conn.execute(
-                                text(f"SELECT * FROM `{table}`")
-                            ).fetchall()
-                        
-                        synced_count = 0
-                        
-                        # Kayıtları localhost'a insert et
-                        for row in railway_data:
-                            try:
-                                # Kolonları ve değerleri hazırla
-                                cols = ', '.join([f'`{col}`' for col in columns])
-                                placeholders = ', '.join([f':{col}' for col in columns])
-                                
-                                # Değerleri dict'e çevir
-                                row_dict = {col: row[i] for i, col in enumerate(columns)}
-                                
-                                insert_sql = f"INSERT INTO `{table}` ({cols}) VALUES ({placeholders})"
-                                local_conn.execute(text(insert_sql), row_dict)
-                                local_conn.commit()
-                                synced_count += 1
-                                
-                            except Exception as insert_error:
-                                # Duplicate key hatalarını atla
-                                if 'Duplicate entry' not in str(insert_error):
-                                    app.logger.warning(f"Insert error in {table}: {str(insert_error)}")
-                                continue
-                        
-                        if synced_count > 0:
-                            details[table] = {
-                                'synced_count': synced_count,
-                                'message': f'{synced_count} yeni kayıt aktarıldı'
-                            }
-                            total_synced += synced_count
-                            tables_synced += 1
-                    
-                except Exception as table_error:
-                    app.logger.error(f"Error syncing table {table}: {str(table_error)}")
-                    details[table] = {
-                        'synced_count': 0,
-                        'message': f'Hata: {str(table_error)}'
-                    }
-        
-        railway_engine.dispose()
-        local_engine.dispose()
-        
-        duration = round(time.time() - start_time, 2)
-        
-        return jsonify({
-            'success': True,
-            'total_synced': total_synced,
-            'tables_synced': tables_synced,
-            'details': details,
-            'duration_seconds': duration
-        })
-        
-    except Exception as e:
-        app.logger.error(f"Railway sync execute error: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
 
 # ============================================================================
 # SYSTEM BACKUP - SUPER ADMIN ENDPOINT (GİZLİ)
@@ -3151,6 +2899,40 @@ except Exception as e:
 
 # ============================================
 
+
+# ============================================================================
+# SENTRY ERROR TRACKING INITIALIZATION
+# ============================================================================
+# Sentry başlatma - ENVİRONMENT ÖNCESİ
+sentry_sdk.init(
+    dsn=os.getenv('SENTRY_DSN', "https://a2e61a366121b24275faaf3ba8e529db@o4508861093642240.ingest.us.sentry.io/4510364568780800"),
+    environment=os.getenv('FLASK_ENV', 'development'),
+    release=os.getenv('APP_VERSION', '1.0.0'),
+    send_default_pii=True,
+    integrations=[
+        FlaskIntegration(),
+    ],
+    traces_sample_rate=0.1,  # %10 request'leri izle
+    max_breadcrumbs=50,
+    # Performance monitoring
+    enable_tracing=True,
+)
+
+logger.info("✅ Sentry initialized successfully")
+@app.errorhandler(Exception)
+def handle_error(error):
+    """Tüm unhandled exception'ları Sentry'ye gönder"""
+    sentry_sdk.capture_exception(error)
+    # ... error response
+    
+    
+
+
+@app.route('/debug-sentry')
+def trigger_error():
+    # Test için hata oluştur
+    division_by_zero = 1 / 0
+    return "Bu satıra asla ulaşmayacak"
 
 if __name__ == '__main__':
     print()

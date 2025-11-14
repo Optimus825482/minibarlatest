@@ -111,6 +111,14 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end space-x-2">
+                                    <!-- Oda Tipleri -->
+                                    <button onclick="otelOdaTipleriModal({{ item.otel.id }}, '{{ item.otel.ad }}')"
+                                            class="text-blue-600 hover:text-blue-900" title="Oda Tipleri Dağılımı">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                                        </svg>
+                                    </button>
+                                    
                                     <!-- Düzenle -->
                                     <a href="{{ url_for('otel_duzenle', id=item.otel.id) }}" 
                                        class="text-slate-600 hover:text-slate-900" title="Düzenle">
@@ -227,4 +235,201 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Otel Oda Tipleri Modal -->
+<div class="modal fade" id="otelOdaTipleriModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
+            <div class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+                <h5 class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    <svg class="inline-block h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                    </svg>
+                    <span id="otelOdaTipleriBaslik">Otel Oda Tipleri Dağılımı</span>
+                </h5>
+                <button type="button" class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" data-dismiss="modal">
+                    <span class="text-2xl">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-6">
+                <!-- Yükleniyor göstergesi -->
+                <div id="otelOdaTipleriYukleniyor" class="text-center py-8">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                    <p class="mt-4 text-slate-600 dark:text-slate-400">Oda tipleri yükleniyor...</p>
+                </div>
+                
+                <!-- İçerik -->
+                <div id="otelOdaTipleriIcerik" style="display:none;">
+                    <!-- Özet Bilgi -->
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                        <div class="flex items-start">
+                            <svg class="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-blue-800 dark:text-blue-200">
+                                    <span id="otelOdaTipleriOtelAdi"></span>
+                                </p>
+                                <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                                    Toplam <span id="otelOdaTipleriToplamOda" class="font-semibold">0</span> oda
+                                    <span class="mx-2">•</span>
+                                    <span id="otelOdaTipleriToplamKat" class="font-semibold">0</span> kat
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Kat Bazlı Tablo -->
+                    <div id="otelKatBazliTablolar"></div>
+                    
+                    <!-- Oda tipi yok mesajı -->
+                    <div id="otelOdaTipleriYokMesaji" style="display:none;" class="text-center py-8">
+                        <svg class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                        </svg>
+                        <p class="mt-4 text-slate-600 dark:text-slate-400 font-medium">Bu otelde henüz oda bulunmuyor</p>
+                        <p class="mt-2 text-sm text-slate-500 dark:text-slate-500">Oda Tanımla sayfasından oda ekleyebilirsiniz</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4">
+                <button type="button" class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700" data-dismiss="modal">
+                    Kapat
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Otel oda tipleri modal
+    function otelOdaTipleriModal(otelId, otelAdi) {
+        // Modal başlığını güncelle
+        document.getElementById('otelOdaTipleriBaslik').textContent = `${otelAdi} - Oda Tipleri Dağılımı`;
+        document.getElementById('otelOdaTipleriOtelAdi').textContent = otelAdi;
+        
+        // Yükleniyor göster
+        document.getElementById('otelOdaTipleriYukleniyor').style.display = 'block';
+        document.getElementById('otelOdaTipleriIcerik').style.display = 'none';
+        
+        // Modal'ı aç
+        $('#otelOdaTipleriModal').modal('show');
+        
+        // AJAX ile oda tiplerini getir
+        fetch(`/api/oteller/${otelId}/oda-tipleri`)
+            .then(response => response.json())
+            .then(data => {
+                // Yükleniyor gizle, içerik göster
+                document.getElementById('otelOdaTipleriYukleniyor').style.display = 'none';
+                document.getElementById('otelOdaTipleriIcerik').style.display = 'block';
+                
+                if (data.success && data.kat_bazli && Object.keys(data.kat_bazli).length > 0) {
+                    // Toplam istatistikler
+                    document.getElementById('otelOdaTipleriToplamOda').textContent = data.toplam_oda;
+                    document.getElementById('otelOdaTipleriToplamKat').textContent = Object.keys(data.kat_bazli).length;
+                    
+                    // Oda tipi renkleri
+                    const odaTipiRenkler = {
+                        'Standart': 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+                        'Deluxe': 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200',
+                        'Suite': 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200',
+                        'King': 'bg-rose-100 dark:bg-rose-900 text-rose-800 dark:text-rose-200',
+                        'Twin': 'bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200',
+                        'Family': 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+                        'Executive': 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200',
+                        'Presidential': 'bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200'
+                    };
+                    
+                    // Kat bazlı tabloları oluştur
+                    const container = document.getElementById('otelKatBazliTablolar');
+                    container.innerHTML = '';
+                    
+                    Object.entries(data.kat_bazli).forEach(([katAdi, katData]) => {
+                        const katDiv = document.createElement('div');
+                        katDiv.className = 'mb-6 last:mb-0';
+                        
+                        let tableHTML = `
+                            <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-3 mb-3">
+                                <h4 class="font-semibold text-slate-900 dark:text-white">${katAdi}</h4>
+                                <p class="text-sm text-slate-600 dark:text-slate-400">Toplam ${katData.toplam_oda} oda</p>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                                    <thead class="bg-slate-50 dark:bg-slate-900">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                                Oda Tipi
+                                            </th>
+                                            <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                                Oda Sayısı
+                                            </th>
+                                            <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                                Yüzde
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                        `;
+                        
+                        katData.oda_tipleri.forEach(tip => {
+                            const yuzde = ((tip.sayi / katData.toplam_oda) * 100).toFixed(1);
+                            const renkClass = odaTipiRenkler[tip.oda_tipi] || 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200';
+                            
+                            tableHTML += `
+                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${renkClass}">
+                                            ${tip.oda_tipi || 'Belirtilmemiş'}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
+                                            ${tip.sayi}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div class="flex-1 max-w-xs bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                                <div class="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all" style="width: ${yuzde}%"></div>
+                                            </div>
+                                            <span class="text-sm font-medium text-slate-700 dark:text-slate-300 min-w-[3rem]">
+                                                %${yuzde}
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        
+                        tableHTML += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                        
+                        katDiv.innerHTML = tableHTML;
+                        container.appendChild(katDiv);
+                    });
+                    
+                    document.getElementById('otelOdaTipleriYokMesaji').style.display = 'none';
+                } else {
+                    // Oda yok mesajı göster
+                    document.getElementById('otelOdaTipleriToplamOda').textContent = '0';
+                    document.getElementById('otelOdaTipleriToplamKat').textContent = '0';
+                    document.getElementById('otelOdaTipleriYokMesaji').style.display = 'block';
+                    document.getElementById('otelKatBazliTablolar').innerHTML = '';
+                }
+            })
+            .catch(error => {
+                console.error('Hata:', error);
+                document.getElementById('otelOdaTipleriYukleniyor').style.display = 'none';
+                document.getElementById('otelOdaTipleriIcerik').style.display = 'block';
+                document.getElementById('otelOdaTipleriYokMesaji').style.display = 'block';
+                document.getElementById('otelKatBazliTablolar').innerHTML = '';
+            });
+    }
+</script>
 {% endblock %}

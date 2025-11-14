@@ -1491,3 +1491,56 @@ def register_sistem_yoneticisi_routes(app):
             flash(f'Sipariş iptal edilirken hata oluştu: {str(e)}', 'danger')
         
         return redirect(url_for('yonetici_siparis_detay', siparis_id=siparis_id))
+
+    # ============================================================================
+    # API ENDPOINTS - Kat Oda Tipleri
+    # ============================================================================
+    
+    @app.route('/api/katlar/<int:kat_id>/oda-tipleri', methods=['GET'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_kat_oda_tipleri(kat_id):
+        """Bir kattaki oda tiplerini ve sayılarını getir"""
+        try:
+            from sqlalchemy import func
+            
+            # Kat kontrolü
+            kat = Kat.query.get_or_404(kat_id)
+            
+            # Oda tiplerini grupla ve say
+            oda_tipleri = db.session.query(
+                Oda.oda_tipi,
+                func.count(Oda.id).label('sayi')
+            ).filter(
+                Oda.kat_id == kat_id,
+                Oda.aktif == True
+            ).group_by(
+                Oda.oda_tipi
+            ).order_by(
+                func.count(Oda.id).desc()
+            ).all()
+            
+            # Sonuçları formatla
+            sonuc = []
+            for oda_tipi, sayi in oda_tipleri:
+                sonuc.append({
+                    'oda_tipi': oda_tipi if oda_tipi else 'Belirtilmemiş',
+                    'sayi': sayi
+                })
+            
+            return {
+                'success': True,
+                'oda_tipleri': sonuc,
+                'kat': {
+                    'id': kat.id,
+                    'kat_adi': kat.kat_adi,
+                    'otel_adi': kat.otel.ad if kat.otel else None
+                }
+            }
+            
+        except Exception as e:
+            log_hata(e, 'api_kat_oda_tipleri')
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
