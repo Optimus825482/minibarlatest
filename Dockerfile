@@ -47,4 +47,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 # Entrypoint ve CMD (optimize edilmiş worker/thread sayısı)
 ENTRYPOINT ["./docker-entrypoint.sh"]
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "app:app"]
+# Son satırdaki CMD'yi şununla değiştir:
+CMD ["sh", "-c", "python safe_deploy.py && gunicorn -c gunicorn.conf.py app:app"]

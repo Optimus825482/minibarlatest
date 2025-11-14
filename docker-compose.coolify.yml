@@ -97,3 +97,5 @@ volumes:
 networks:
   minibar_network:
     driver: bridge
+
+

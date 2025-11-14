@@ -44,12 +44,15 @@ class Config:
     
     # PostgreSQL Optimized Engine Options - Coolify Production
     SQLALCHEMY_ENGINE_OPTIONS = {
-        # Connection Pool Configuration
-        'pool_size': 5,                     # 5 connection pool
-        'max_overflow': 10,                 # Max 15 connection total
+        # Connection Pool Configuration - REDUCED FOR MEMORY
+        'pool_size': 2,                     # 2 connection pool (was 5)
+        'max_overflow': 3,                  # Max 5 connection total (was 15)
         'pool_timeout': 30,                 # 30 saniye wait timeout
-        'pool_recycle': 3600,               # 1 saatte bir recycle
+        'pool_recycle': 1800,               # 30 dakikada bir recycle (was 3600)
         'pool_pre_ping': True,              # Health check before use
+        
+        # MEMORY OPTIMIZATION: Close idle connections faster
+        'pool_reset_on_return': 'rollback',  # Reset connections on return
         
         # PostgreSQL Specific Options
         'connect_args': {
@@ -69,7 +72,6 @@ class Config:
             'isolation_level': 'READ COMMITTED'
         }
     }
-    
     # Flask ayarları - GÜVENLİK İYİLEŞTİRMELERİ
     SECRET_KEY = os.getenv('SECRET_KEY')
 
