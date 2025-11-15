@@ -20,7 +20,7 @@ Roller:
 
 from flask import render_template, request, redirect, url_for, flash, session
 from datetime import datetime, date
-from models import db, Otel, Kat, Oda, Kullanici, SistemLog
+from models import db, Otel, Kat, Oda, OdaTipi, Kullanici, SistemLog
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem, log_hata
 from utils.audit import audit_create, audit_update, audit_delete, serialize_model
@@ -156,60 +156,70 @@ def register_sistem_yoneticisi_routes(app):
     @role_required('sistem_yoneticisi', 'admin')
     def kat_tanimla():
         """Kat tanımlama"""
-        from forms import KatForm
-        from models import Otel
-        
-        form = KatForm()
-        
-        # Otel listesini form'a yükle
-        form.otel_id.choices = [(0, 'Otel Seçin...')] + [(o.id, o.ad) for o in Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()]
-        
-        if form.validate_on_submit():
-            try:
-                # Otel seçimi kontrolü
-                if not form.otel_id.data or form.otel_id.data == 0:
-                    flash('Lütfen bir otel seçin!', 'danger')
-                    return render_template('sistem_yoneticisi/kat_tanimla.html', katlar=[], form=form)
-                
-                kat = Kat(
-                    otel_id=form.otel_id.data,
-                    kat_adi=form.kat_adi.data,
-                    kat_no=form.kat_no.data,
-                    aciklama=form.aciklama.data,
-                    aktif=form.aktif.data
-                )
-                db.session.add(kat)
-                db.session.flush()
-                
-                # Audit log
-                audit_create(
-                    tablo_adi='katlar',
-                    kayit_id=kat.id,
-                    yeni_deger=serialize_model(kat),
-                    aciklama=f'Kat oluşturuldu - {kat.kat_adi}'
-                )
-                
-                db.session.commit()
-                
-                # Log kaydı
-                log_islem('ekleme', 'kat', {
-                    'kat_id': kat.id,
-                    'otel_id': kat.otel_id,
-                    'kat_adi': kat.kat_adi,
-                    'kat_no': kat.kat_no
-                })
-                
-                flash(f'{kat.kat_adi} başarıyla eklendi.', 'success')
-                return redirect(url_for('kat_tanimla'))
-            except Exception as e:
-                db.session.rollback()
-                log_hata(e, modul='kat_tanimla')
-                flash('Kat eklenirken hata oluştu.', 'danger')
-        
-        # Mevcut katları listele (otel bilgisi ile)
-        katlar = Kat.query.filter_by(aktif=True).order_by(Kat.kat_no).all()
-        
-        return render_template('sistem_yoneticisi/kat_tanimla.html', katlar=katlar, form=form)
+        try:
+            from forms import KatForm
+            from models import Otel
+            
+            form = KatForm()
+            
+            # Otel listesini form'a yükle
+            form.otel_id.choices = [(0, 'Otel Seçin...')] + [(o.id, o.ad) for o in Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()]
+            
+            if form.validate_on_submit():
+                try:
+                    # Otel seçimi kontrolü
+                    if not form.otel_id.data or form.otel_id.data == 0:
+                        flash('Lütfen bir otel seçin!', 'danger')
+                        return render_template('sistem_yoneticisi/kat_tanimla.html', katlar=[], form=form)
+                    
+                    kat = Kat(
+                        otel_id=form.otel_id.data,
+                        kat_adi=form.kat_adi.data,
+                        kat_no=form.kat_no.data,
+                        aciklama=form.aciklama.data,
+                        aktif=form.aktif.data
+                    )
+                    db.session.add(kat)
+                    db.session.flush()
+                    
+                    # Audit log
+                    audit_create(
+                        tablo_adi='katlar',
+                        kayit_id=kat.id,
+                        yeni_deger=serialize_model(kat),
+                        aciklama=f'Kat oluşturuldu - {kat.kat_adi}'
+                    )
+                    
+                    db.session.commit()
+                    
+                    # Log kaydı
+                    log_islem('ekleme', 'kat', {
+                        'kat_id': kat.id,
+                        'otel_id': kat.otel_id,
+                        'kat_adi': kat.kat_adi,
+                        'kat_no': kat.kat_no
+                    })
+                    
+                    flash(f'{kat.kat_adi} başarıyla eklendi.', 'success')
+                    return redirect(url_for('kat_tanimla'))
+                except Exception as e:
+                    db.session.rollback()
+                    log_hata(e, modul='kat_tanimla')
+                    flash('Kat eklenirken hata oluştu.', 'danger')
+                    # Exception durumunda da katları listele
+                    katlar = Kat.query.filter_by(aktif=True).order_by(Kat.kat_no).all()
+                    return render_template('sistem_yoneticisi/kat_tanimla.html', katlar=katlar, form=form)
+            
+            # Mevcut katları listele (otel bilgisi ile)
+            katlar = Kat.query.filter_by(aktif=True).order_by(Kat.kat_no).all()
+            
+            return render_template('sistem_yoneticisi/kat_tanimla.html', katlar=katlar, form=form)
+        except Exception as e:
+            import traceback
+            print(f"❌ KAT TANIMLA HATASI: {e}")
+            print(traceback.format_exc())
+            flash('Sayfa yüklenirken hata oluştu.', 'danger')
+            return redirect(url_for('dashboard'))
     
     
     @app.route('/kat-duzenle/<int:kat_id>', methods=['GET', 'POST'])
@@ -338,7 +348,7 @@ def register_sistem_yoneticisi_routes(app):
                 ws.title = "Odalar"
                 
                 # Başlık satırı
-                headers = ['Otel Adı', 'Kat No', 'Oda No']
+                headers = ['Otel Adı', 'Kat No', 'Oda No', 'Oda Tipi']
                 ws.append(headers)
                 
                 # Başlık stilini ayarla
@@ -354,17 +364,32 @@ def register_sistem_yoneticisi_routes(app):
                 for oda in odalar:
                     otel_adi = oda.kat.otel.ad if oda.kat and oda.kat.otel else '-'
                     kat_no = oda.kat.kat_no if oda.kat else '-'
+                    oda_tipi = oda.oda_tipi_adi if oda.oda_tipi_adi else '-'
+                    
+                    # Oda numarasını sayıya çevir (mümkünse)
+                    try:
+                        oda_no_sayi = int(oda.oda_no)
+                    except (ValueError, TypeError):
+                        oda_no_sayi = oda.oda_no
                     
                     ws.append([
                         otel_adi,
                         kat_no,
-                        oda.oda_no
+                        oda_no_sayi,
+                        oda_tipi
                     ])
                 
                 # Sütun genişliklerini ayarla
-                ws.column_dimensions['A'].width = 30
-                ws.column_dimensions['B'].width = 15
-                ws.column_dimensions['C'].width = 15
+                ws.column_dimensions['A'].width = 30  # Otel Adı
+                ws.column_dimensions['B'].width = 15  # Kat No
+                ws.column_dimensions['C'].width = 15  # Oda No
+                ws.column_dimensions['D'].width = 20  # Oda Tipi
+                
+                # Oda No sütununu sayı formatına çevir (C sütunu, 2. satırdan itibaren)
+                for row in range(2, ws.max_row + 1):
+                    cell = ws.cell(row=row, column=3)  # C sütunu (Oda No)
+                    if isinstance(cell.value, int):
+                        cell.number_format = '0'  # Sayı formatı (ondalık yok)
                 
                 # Excel dosyasını memory'ye kaydet
                 excel_buffer = io.BytesIO()
@@ -398,6 +423,11 @@ def register_sistem_yoneticisi_routes(app):
         form.otel_id.choices = [(0, 'Otel Seçin...')] + [(o.id, o.ad) for o in oteller]
         form.kat_id.choices = [(0, 'Önce otel seçin...')]
         
+        # Oda tipi listesini form'a yükle
+        from models import OdaTipi
+        oda_tipleri = OdaTipi.query.filter_by(aktif=True).order_by(OdaTipi.ad).all()
+        form.oda_tipi_id.choices = [(0, 'Oda Tipi Seçin...')] + [(t.id, t.ad) for t in oda_tipleri]
+        
         if form.validate_on_submit():
             try:
                 # Otel ve kat seçimi kontrolü
@@ -418,7 +448,7 @@ def register_sistem_yoneticisi_routes(app):
                 oda = Oda(
                     oda_no=form.oda_no.data,
                     kat_id=form.kat_id.data,
-                    oda_tipi=form.oda_tipi.data,
+                    oda_tipi_id=form.oda_tipi_id.data if form.oda_tipi_id.data else None,
                     kapasite=form.kapasite.data,
                     aktif=form.aktif.data
                 )
@@ -489,6 +519,11 @@ def register_sistem_yoneticisi_routes(app):
             katlar = Kat.query.filter_by(otel_id=oda.kat.otel_id, aktif=True).order_by(Kat.kat_no).all()
             form.kat_id.choices = [(k.id, k.kat_adi) for k in katlar]
         
+        # Oda tipi listesini yükle
+        from models import OdaTipi
+        oda_tipleri = OdaTipi.query.filter_by(aktif=True).order_by(OdaTipi.ad).all()
+        form.oda_tipi_id.choices = [(0, 'Oda Tipi Seçin...')] + [(t.id, t.ad) for t in oda_tipleri]
+        
         if form.validate_on_submit():
             try:
                 # Kat'ın seçilen otele ait olduğunu kontrol et
@@ -499,7 +534,7 @@ def register_sistem_yoneticisi_routes(app):
                 
                 oda.oda_no = form.oda_no.data
                 oda.kat_id = form.kat_id.data
-                oda.oda_tipi = form.oda_tipi.data
+                oda.oda_tipi_id = form.oda_tipi_id.data if form.oda_tipi_id.data else None
                 oda.kapasite = form.kapasite.data
                 oda.aktif = form.aktif.data
                 
@@ -1509,13 +1544,15 @@ def register_sistem_yoneticisi_routes(app):
             
             # Oda tiplerini grupla ve say
             oda_tipleri = db.session.query(
-                Oda.oda_tipi,
+                OdaTipi.ad,
                 func.count(Oda.id).label('sayi')
+            ).join(
+                Oda, Oda.oda_tipi_id == OdaTipi.id
             ).filter(
                 Oda.kat_id == kat_id,
                 Oda.aktif == True
             ).group_by(
-                Oda.oda_tipi
+                OdaTipi.ad
             ).order_by(
                 func.count(Oda.id).desc()
             ).all()
@@ -1540,6 +1577,594 @@ def register_sistem_yoneticisi_routes(app):
             
         except Exception as e:
             log_hata(e, 'api_kat_oda_tipleri')
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+
+    # ============================================================================
+    # API ENDPOINTS - Oda Tipi Yönetimi
+    # ============================================================================
+    
+    @app.route('/api/oda-tipleri', methods=['GET'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_oda_tipleri_listele():
+        """Tüm oda tiplerini listele"""
+        try:
+            from models import OdaTipi
+            
+            oda_tipleri = OdaTipi.query.filter_by(aktif=True).order_by(OdaTipi.ad).all()
+            
+            return {
+                'success': True,
+                'oda_tipleri': [{
+                    'id': tip.id,
+                    'ad': tip.ad,
+                    'dolap_sayisi': tip.dolap_sayisi,
+                    'setup': tip.setup,
+                    'olusturma_tarihi': tip.olusturma_tarihi.isoformat() if tip.olusturma_tarihi else None
+                } for tip in oda_tipleri]
+            }
+            
+        except Exception as e:
+            log_hata(e, 'api_oda_tipleri_listele')
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+    
+    @app.route('/api/oda-tipleri', methods=['POST'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_oda_tipi_ekle():
+        """Yeni oda tipi ekle"""
+        try:
+            from models import OdaTipi
+            
+            data = request.get_json()
+            ad = data.get('ad', '').strip()
+            dolap_sayisi = data.get('dolap_sayisi', 0)
+            setup = data.get('setup', '').strip()
+            
+            if not ad:
+                return {
+                    'success': False,
+                    'error': 'Oda tipi adı boş olamaz'
+                }, 400
+            
+            if not setup:
+                return {
+                    'success': False,
+                    'error': 'Setup seçimi zorunludur'
+                }, 400
+            
+            # Aynı isimde oda tipi var mı kontrol et
+            mevcut = OdaTipi.query.filter_by(ad=ad).first()
+            if mevcut:
+                if mevcut.aktif:
+                    return {
+                        'success': False,
+                        'error': 'Bu oda tipi zaten mevcut'
+                    }, 400
+                else:
+                    # Pasif oda tipini aktif et ve güncelle
+                    mevcut.aktif = True
+                    mevcut.dolap_sayisi = dolap_sayisi
+                    mevcut.setup = setup
+                    db.session.commit()
+                    
+                    audit_update(
+                        'OdaTipi',
+                        mevcut.id,
+                        {'aktif': False},
+                        {'aktif': True, 'dolap_sayisi': dolap_sayisi, 'setup': setup},
+                        session.get('kullanici_id')
+                    )
+                    
+                    log_islem('oda_tipi_aktif', f'Oda tipi aktif edildi: {ad}')
+                    
+                    return {
+                        'success': True,
+                        'oda_tipi': {
+                            'id': mevcut.id,
+                            'ad': mevcut.ad,
+                            'dolap_sayisi': mevcut.dolap_sayisi,
+                            'setup': mevcut.setup
+                        }
+                    }
+            
+            # Yeni oda tipi oluştur
+            yeni_tip = OdaTipi(ad=ad, dolap_sayisi=dolap_sayisi, setup=setup)
+            db.session.add(yeni_tip)
+            db.session.commit()
+            
+            audit_create('OdaTipi', yeni_tip.id, serialize_model(yeni_tip), session.get('kullanici_id'))
+            log_islem('oda_tipi_ekle', f'Yeni oda tipi eklendi: {ad}')
+            
+            return {
+                'success': True,
+                'oda_tipi': {
+                    'id': yeni_tip.id,
+                    'ad': yeni_tip.ad,
+                    'dolap_sayisi': yeni_tip.dolap_sayisi,
+                    'setup': yeni_tip.setup
+                }
+            }
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, 'api_oda_tipi_ekle')
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+    
+    @app.route('/api/oda-tipleri/<int:tip_id>', methods=['PUT'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_oda_tipi_guncelle(tip_id):
+        """Oda tipi güncelle"""
+        try:
+            from models import OdaTipi
+            
+            oda_tipi = OdaTipi.query.get_or_404(tip_id)
+            data = request.get_json()
+            ad = data.get('ad', '').strip()
+            dolap_sayisi = data.get('dolap_sayisi', 0)
+            setup = data.get('setup', '').strip()
+            
+            if not ad:
+                return {
+                    'success': False,
+                    'error': 'Oda tipi adı boş olamaz'
+                }, 400
+            
+            if not setup:
+                return {
+                    'success': False,
+                    'error': 'Setup seçimi zorunludur'
+                }, 400
+            
+            # Aynı isimde başka oda tipi var mı kontrol et
+            mevcut = OdaTipi.query.filter(
+                OdaTipi.ad == ad,
+                OdaTipi.id != tip_id
+            ).first()
+            
+            if mevcut:
+                return {
+                    'success': False,
+                    'error': 'Bu isimde başka bir oda tipi mevcut'
+                }, 400
+            
+            eski_deger = serialize_model(oda_tipi)
+            oda_tipi.ad = ad
+            oda_tipi.dolap_sayisi = dolap_sayisi
+            oda_tipi.setup = setup
+            db.session.commit()
+            
+            audit_update('OdaTipi', tip_id, eski_deger, serialize_model(oda_tipi), session.get('kullanici_id'))
+            log_islem('oda_tipi_guncelle', f'Oda tipi güncellendi: {ad}')
+            
+            return {
+                'success': True,
+                'oda_tipi': {
+                    'id': oda_tipi.id,
+                    'ad': oda_tipi.ad,
+                    'dolap_sayisi': oda_tipi.dolap_sayisi,
+                    'setup': oda_tipi.setup
+                }
+            }
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, 'api_oda_tipi_guncelle')
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+    
+    @app.route('/api/oda-tipleri/<int:tip_id>', methods=['DELETE'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_oda_tipi_sil(tip_id):
+        """Oda tipi sil (soft delete)"""
+        try:
+            from models import OdaTipi
+            
+            oda_tipi = OdaTipi.query.get_or_404(tip_id)
+            
+            # Bu oda tipini kullanan oda var mı kontrol et
+            kullanan_oda_sayisi = Oda.query.filter_by(oda_tipi_id=oda_tipi.id, aktif=True).count()
+            
+            if kullanan_oda_sayisi > 0:
+                return {
+                    'success': False,
+                    'error': f'Bu oda tipi {kullanan_oda_sayisi} oda tarafından kullanılıyor. Önce odaların tipini değiştirin.'
+                }, 400
+            
+            eski_deger = serialize_model(oda_tipi)
+            oda_tipi.aktif = False
+            db.session.commit()
+            
+            audit_delete('OdaTipi', tip_id, eski_deger, session.get('kullanici_id'))
+            log_islem('oda_tipi_sil', f'Oda tipi silindi: {oda_tipi.ad}')
+            
+            return {
+                'success': True,
+                'message': 'Oda tipi başarıyla silindi'
+            }
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, 'api_oda_tipi_sil')
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+
+    # ============================================================================
+    # SETUP YÖNETİMİ
+    # ============================================================================
+    
+    @app.route('/setup-yonetimi', methods=['GET'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def setup_yonetimi():
+        """Setup yönetim sayfası"""
+        return render_template('sistem_yoneticisi/setup_yonetimi.html')
+    
+    # ============================================================================
+    # API ENDPOINTS - Setup Yönetimi
+    # ============================================================================
+    
+    @app.route('/api/setuplar', methods=['GET'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_setuplar_listele():
+        """Tüm setup'ları listele"""
+        try:
+            from models import Setup, SetupIcerik, OdaTipi
+            from sqlalchemy import func
+            
+            setuplar = Setup.query.filter_by(aktif=True).all()
+            
+            sonuc = []
+            for setup in setuplar:
+                # Ürün sayısını hesapla
+                urun_sayisi = SetupIcerik.query.filter_by(setup_id=setup.id).count()
+                
+                # Bu setup'ı kullanan oda tiplerini bul
+                oda_tipleri = OdaTipi.query.filter_by(setup=setup.ad, aktif=True).all()
+                oda_tipi_adlari = [tip.ad for tip in oda_tipleri]
+                
+                # Toplam maliyeti hesapla (ürün alış fiyatı * adet)
+                toplam_maliyet = 0
+                setup_icerikler = SetupIcerik.query.filter_by(setup_id=setup.id).all()
+                for icerik in setup_icerikler:
+                    if icerik.urun and icerik.urun.alis_fiyati:
+                        toplam_maliyet += icerik.urun.alis_fiyati * icerik.adet
+                
+                sonuc.append({
+                    'id': setup.id,
+                    'ad': setup.ad,
+                    'aciklama': setup.aciklama,
+                    'urun_sayisi': urun_sayisi,
+                    'oda_tipleri': oda_tipi_adlari,
+                    'toplam_maliyet': round(toplam_maliyet, 2)
+                })
+            
+            return {
+                'success': True,
+                'setuplar': sonuc
+            }
+            
+        except Exception as e:
+            log_hata(e, 'api_setuplar_listele')
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+    
+    @app.route('/api/setuplar', methods=['POST'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_setup_ekle():
+        """Yeni setup ekle"""
+        try:
+            from models import Setup
+            
+            data = request.get_json()
+            ad = data.get('ad', '').strip()
+            aciklama = data.get('aciklama', '').strip()
+            
+            if not ad:
+                return {
+                    'success': False,
+                    'error': 'Setup adı boş olamaz'
+                }, 400
+            
+            # Aynı isimde setup var mı kontrol et
+            mevcut = Setup.query.filter_by(ad=ad).first()
+            if mevcut:
+                return {
+                    'success': False,
+                    'error': 'Bu isimde setup zaten mevcut'
+                }, 400
+            
+            yeni_setup = Setup(ad=ad, aciklama=aciklama)
+            db.session.add(yeni_setup)
+            db.session.commit()
+            
+            audit_create('Setup', yeni_setup.id, serialize_model(yeni_setup), session.get('kullanici_id'))
+            log_islem('setup_ekle', f'Yeni setup eklendi: {ad}')
+            
+            return {
+                'success': True,
+                'setup': {
+                    'id': yeni_setup.id,
+                    'ad': yeni_setup.ad
+                }
+            }
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, 'api_setup_ekle')
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+
+    @app.route('/api/setuplar/<int:setup_id>', methods=['DELETE'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_setup_sil(setup_id):
+        """Setup sil"""
+        try:
+            from models import Setup
+            
+            setup = Setup.query.get_or_404(setup_id)
+            
+            eski_deger = serialize_model(setup)
+            setup.aktif = False
+            db.session.commit()
+            
+            audit_delete('Setup', setup_id, eski_deger, session.get('kullanici_id'))
+            log_islem('setup_sil', f'Setup silindi: {setup.ad}')
+            
+            return {
+                'success': True,
+                'message': 'Setup başarıyla silindi'
+            }
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, 'api_setup_sil')
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+    
+    @app.route('/api/setuplar/<int:setup_id>/icerik', methods=['GET'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_setup_icerik_listele(setup_id):
+        """Setup içeriğini listele"""
+        try:
+            from models import SetupIcerik
+            
+            icerikler = SetupIcerik.query.filter_by(setup_id=setup_id).all()
+            
+            sonuc = []
+            toplam_maliyet = 0
+            
+            for icerik in icerikler:
+                # Ürün alış fiyatını fiyat geçmişinden çek
+                alis_fiyati = 0
+                try:
+                    from models import UrunFiyatGecmisi, FiyatDegisiklikTipi
+                    fiyat_kaydi = UrunFiyatGecmisi.query.filter_by(
+                        urun_id=icerik.urun_id,
+                        degisiklik_tipi=FiyatDegisiklikTipi.ALIS_FIYATI
+                    ).order_by(UrunFiyatGecmisi.degisiklik_tarihi.desc()).first()
+                    
+                    if fiyat_kaydi:
+                        alis_fiyati = float(fiyat_kaydi.yeni_fiyat)
+                except Exception as fiyat_hata:
+                    print(f"Fiyat çekme hatası: {fiyat_hata}")
+                
+                tutar = alis_fiyati * icerik.adet
+                toplam_maliyet += tutar
+                
+                sonuc.append({
+                    'id': icerik.id,
+                    'urun_id': icerik.urun_id,
+                    'urun_ad': icerik.urun.urun_adi if icerik.urun else 'Bilinmeyen',
+                    'adet': icerik.adet,
+                    'alis_fiyati': float(alis_fiyati),
+                    'tutar': float(tutar)
+                })
+            
+            return {
+                'success': True,
+                'icerikler': sonuc,
+                'toplam_maliyet': float(toplam_maliyet)
+            }
+            
+        except Exception as e:
+            log_hata(e, 'api_setup_icerik_listele')
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+    
+    @app.route('/api/setuplar/<int:setup_id>/icerik', methods=['POST'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_setup_icerik_ekle(setup_id):
+        """Setup'a ürün ekle"""
+        try:
+            from models import SetupIcerik
+            
+            data = request.get_json()
+            urun_id = data.get('urun_id')
+            adet = data.get('adet', 1)
+            
+            if not urun_id:
+                return {
+                    'success': False,
+                    'error': 'Ürün seçimi zorunludur'
+                }, 400
+            
+            # Aynı ürün zaten ekli mi kontrol et
+            mevcut = SetupIcerik.query.filter_by(setup_id=setup_id, urun_id=urun_id).first()
+            if mevcut:
+                return {
+                    'success': False,
+                    'error': 'Bu ürün zaten ekli'
+                }, 400
+            
+            yeni_icerik = SetupIcerik(setup_id=setup_id, urun_id=urun_id, adet=adet)
+            db.session.add(yeni_icerik)
+            db.session.commit()
+            
+            log_islem('setup_icerik_ekle', f'Setup içeriğine ürün eklendi: Setup ID {setup_id}, Ürün ID {urun_id}')
+            
+            return {
+                'success': True,
+                'icerik': {
+                    'id': yeni_icerik.id
+                }
+            }
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, 'api_setup_icerik_ekle')
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+
+    @app.route('/api/setup-icerik/<int:icerik_id>', methods=['DELETE'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_setup_icerik_sil(icerik_id):
+        """Setup içeriğinden ürün sil"""
+        try:
+            from models import SetupIcerik
+            
+            icerik = SetupIcerik.query.get_or_404(icerik_id)
+            
+            db.session.delete(icerik)
+            db.session.commit()
+            
+            log_islem('setup_icerik_sil', f'Setup içeriğinden ürün silindi: İçerik ID {icerik_id}')
+            
+            return {
+                'success': True,
+                'message': 'Ürün başarıyla silindi'
+            }
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, 'api_setup_icerik_sil')
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+    
+    @app.route('/api/setup-atama', methods=['POST'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_setup_atama():
+        """Setup'ı oda tiplerine ata"""
+        try:
+            from models import OdaTipi
+            
+            data = request.get_json()
+            setup_ad = data.get('setup_ad', '').strip()
+            oda_tip_ids = data.get('oda_tip_ids', [])
+            
+            if not setup_ad:
+                return {
+                    'success': False,
+                    'error': 'Setup adı boş olamaz'
+                }, 400
+            
+            # Önce bu setup'ı kullanan tüm oda tiplerini temizle
+            OdaTipi.query.filter_by(setup=setup_ad).update({'setup': None})
+            
+            # Seçilen oda tiplerine setup'ı ata
+            for tip_id in oda_tip_ids:
+                oda_tipi = OdaTipi.query.get(tip_id)
+                if oda_tipi:
+                    oda_tipi.setup = setup_ad
+            
+            db.session.commit()
+            
+            log_islem('setup_atama', f'Setup atandı: {setup_ad} -> {len(oda_tip_ids)} oda tipi')
+            
+            return {
+                'success': True,
+                'message': 'Atama başarıyla kaydedildi'
+            }
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, 'api_setup_atama')
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+    
+    @app.route('/api/urunler-liste', methods=['GET'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_urunler_liste():
+        """Tüm ürünleri listele"""
+        try:
+            from models import Urun
+            
+            urunler = Urun.query.filter_by(aktif=True).order_by(Urun.urun_adi).all()
+            
+            return {
+                'success': True,
+                'urunler': [{
+                    'id': urun.id,
+                    'ad': urun.urun_adi,
+                    'grup_id': urun.grup_id,
+                    'alis_fiyati': float(urun.alis_fiyati) if urun.alis_fiyati else 0
+                } for urun in urunler]
+            }
+            
+        except Exception as e:
+            log_hata(e, 'api_urunler_liste')
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+    
+    @app.route('/api/urun-gruplari-liste', methods=['GET'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_urun_gruplari_liste():
+        """Tüm ürün gruplarını listele"""
+        try:
+            from models import UrunGrup
+            
+            gruplar = UrunGrup.query.filter_by(aktif=True).order_by(UrunGrup.grup_adi).all()
+            
+            return {
+                'success': True,
+                'gruplar': [{
+                    'id': grup.id,
+                    'ad': grup.grup_adi
+                } for grup in gruplar]
+            }
+            
+        except Exception as e:
+            log_hata(e, 'api_urun_gruplari_liste')
             return {
                 'success': False,
                 'error': str(e)

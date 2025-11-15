@@ -125,7 +125,7 @@ def create_sample_data():
     
     try:
         from app import app, db
-        from models import UrunGrup, Urun, Otel, Kat, Oda
+        from models import UrunGrup, Urun, Otel, Kat, Oda, OdaTipi
         
         with app.app_context():
             print("\n⏳ Örnek veriler oluşturuluyor...")
@@ -176,11 +176,23 @@ def create_sample_data():
                 db.session.flush()
                 
                 # Örnek odalar
+                # Önce Standard oda tipini al veya oluştur
+                standard_oda_tipi = OdaTipi.query.filter_by(ad='STANDARD').first()
+                if not standard_oda_tipi:
+                    standard_oda_tipi = OdaTipi(
+                        ad='STANDARD',
+                        dolap_sayisi=1,
+                        setup='STANDARD',
+                        aktif=True
+                    )
+                    db.session.add(standard_oda_tipi)
+                    db.session.flush()
+                
                 for oda_no in range(101, 106):
                     oda = Oda(
                         kat_id=kat1.id,
                         oda_no=str(oda_no),
-                        oda_tipi='Standart',
+                        oda_tipi_id=standard_oda_tipi.id,
                         kapasite=2,
                         aktif=True,
                         olusturma_tarihi=datetime.now(timezone.utc)

@@ -77,6 +77,10 @@ def get_kritik_stok_urunler():
     kritik_urunler = []
     
     for urun in urunler:
+        # Kritik stok seviyesi None ise atla
+        if urun.kritik_stok_seviyesi is None:
+            continue
+            
         mevcut_stok = stok_map.get(urun.id, 0)
         if mevcut_stok <= urun.kritik_stok_seviyesi:
             kritik_urunler.append({
@@ -112,6 +116,10 @@ def get_stok_durumu(urun_id, stok_cache=None):
     else:
         mevcut_stok = stok_cache.get(urun_id, 0)
     kritik_seviye = urun.kritik_stok_seviyesi
+    
+    # Kritik seviye None ise normal kabul et
+    if kritik_seviye is None:
+        kritik_seviye = 0
     
     # Kritik seviyenin %150'si dikkat eşiği
     dikkat_esigi = kritik_seviye * 1.5
@@ -1217,6 +1225,10 @@ def get_kat_sorumlusu_kritik_stoklar(personel_id):
             for urun in zimmet['urunler']:
                 kalan = urun['kalan']
                 kritik_seviye = urun['kritik_seviye']
+                
+                # Kritik seviye None ise atla
+                if kritik_seviye is None:
+                    continue
                 
                 # Ürün bilgilerini zenginleştir
                 urun_bilgi = {

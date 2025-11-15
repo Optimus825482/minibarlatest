@@ -275,7 +275,7 @@ class FeatureEngineer:
                 'z_score': self._calculate_z_score(values[-1], values),
                 
                 # Oda özellikleri
-                'oda_tipi': oda.oda_tipi if oda else 'unknown',
+                'oda_tipi': oda.oda_tipi_adi if oda else 'unknown',
                 'kat_id': oda.kat_id if oda else 0,
             }
             

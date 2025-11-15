@@ -615,8 +615,9 @@ class OdaForm(BaseForm):
         ]
     )
 
-    oda_tipi = SelectField(
+    oda_tipi_id = SelectField(
         'Oda Tipi',
+        coerce=int,
         choices=[],
         validators=[
             Optional()

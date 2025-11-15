@@ -25,7 +25,7 @@ class FiyatYonetimServisi:
     def dinamik_fiyat_hesapla(
         urun_id: int,
         oda_id: int,
-        oda_tipi: str,
+        oda_tipi_id: int,
         miktar: int = 1,
         tarih: Optional[datetime] = None
     ) -> Dict:
@@ -42,7 +42,7 @@ class FiyatYonetimServisi:
         Args:
             urun_id: Ürün ID
             oda_id: Oda ID
-            oda_tipi: Oda tipi (Standard, Deluxe, Suite)
+            oda_tipi_id: Oda tipi ID (integer)
             miktar: Tüketim miktarı
             tarih: İşlem tarihi (None ise şimdi)
             
@@ -79,7 +79,7 @@ class FiyatYonetimServisi:
             
             # 2. Oda tipi bazlı satış fiyatını getir
             satis_fiyati = FiyatYonetimServisi.oda_tipi_fiyati_getir(
-                urun_id, oda_tipi, tarih
+                urun_id, oda_tipi_id, tarih
             )
             if satis_fiyati is None:
                 # Varsayılan kar marjı %50
@@ -277,6 +277,14 @@ class FiyatYonetimServisi:
             )
             
             db.session.add(gecmis)
+            
+            # ✅ URUNLER TABLOSUNU GUNCELLE
+            if degisiklik_tipi == 'alis_fiyati':
+                urun = Urun.query.get(urun_id)
+                if urun:
+                    urun.alis_fiyati = yeni_fiyat
+                    logger.info(f"✅ Ürün {urun_id} alış fiyatı güncellendi: {yeni_fiyat}")
+            
             db.session.commit()
             
             # Cache invalidation - Fiyat değiştiğinde cache'i temizle
@@ -292,7 +300,7 @@ class FiyatYonetimServisi:
     @staticmethod
     def oda_tipi_fiyati_getir(
         urun_id: int,
-        oda_tipi: str,
+        oda_tipi_id: int,
         tarih: Optional[datetime] = None
     ) -> Optional[Decimal]:
         """
@@ -300,7 +308,7 @@ class FiyatYonetimServisi:
         
         Args:
             urun_id: Ürün ID
-            oda_tipi: Oda tipi
+            oda_tipi_id: Oda tipi ID (integer)
             tarih: Tarih (None ise şimdi)
             
         Returns:
@@ -312,7 +320,7 @@ class FiyatYonetimServisi:
             
             fiyat_kaydi = OdaTipiSatisFiyati.query.filter(
                 OdaTipiSatisFiyati.urun_id == urun_id,
-                OdaTipiSatisFiyati.oda_tipi == oda_tipi,
+                OdaTipiSatisFiyati.oda_tipi_id == oda_tipi_id,
                 OdaTipiSatisFiyati.aktif == True,
                 OdaTipiSatisFiyati.baslangic_tarihi <= tarih
             ).filter(

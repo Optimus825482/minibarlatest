@@ -437,6 +437,10 @@ def log_fiyat_degisiklik(
         
         db.session.add(fiyat_gecmisi)
         
+        # ✅ URUNLER TABLOSUNU GUNCELLE
+        if degisiklik_tipi_value == 'alis_fiyati':
+            urun.alis_fiyati = yeni_fiyat
+        
         # 2. AuditLog kaydı oluştur
         eski_deger_dict = {
             'urun_id': urun_id,

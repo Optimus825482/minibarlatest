@@ -7,12 +7,19 @@
 function yukleOdaTipleri(otelId, odaTipiSelectId, callback) {
     const odaTipiSelect = document.getElementById(odaTipiSelectId);
     
-    if (!odaTipiSelect) return;
+    if (!odaTipiSelect) {
+        console.error('Oda tipi select elementi bulunamadı:', odaTipiSelectId);
+        return;
+    }
     
     // Choices.js instance'ını yok et
     if (window.choicesInstances && window.choicesInstances[odaTipiSelectId]) {
-        window.choicesInstances[odaTipiSelectId].destroy();
-        delete window.choicesInstances[odaTipiSelectId];
+        try {
+            window.choicesInstances[odaTipiSelectId].destroy();
+            delete window.choicesInstances[odaTipiSelectId];
+        } catch (e) {
+            console.warn('Choices.js destroy hatası:', e);
+        }
     }
     
     // Oda tipi dropdown'unu temizle
@@ -39,39 +46,46 @@ function yukleOdaTipleri(otelId, odaTipiSelectId, callback) {
             if (data.oda_tipleri && data.oda_tipleri.length > 0) {
                 data.oda_tipleri.forEach(tip => {
                     const option = document.createElement('option');
-                    option.value = tip;
-                    option.textContent = tip;
+                    option.value = tip.ad || tip;
+                    option.textContent = tip.ad || tip;
                     odaTipiSelect.appendChild(option);
                 });
                 odaTipiSelect.disabled = false;
             } else {
                 odaTipiSelect.innerHTML = '<option value="">Bu otel için oda tipi tanımlı değil</option>';
+                odaTipiSelect.disabled = false;
             }
             
             // Choices.js'i yeniden başlat
             setTimeout(function() {
-                if (typeof Choices !== 'undefined') {
-                    const choices = new Choices(odaTipiSelect, {
-                        searchEnabled: true,
-                        searchPlaceholderValue: 'Ara...',
-                        noResultsText: 'Sonuç bulunamadı',
-                        itemSelectText: 'Seçmek için tıklayın',
-                        placeholder: true,
-                        placeholderValue: 'Oda Tipi Seçin (Opsiyonel)',
-                        shouldSort: false
-                    });
-                    if (window.choicesInstances) {
-                        window.choicesInstances[odaTipiSelectId] = choices;
+                if (typeof Choices !== 'undefined' && !odaTipiSelect.disabled) {
+                    try {
+                        const choices = new Choices(odaTipiSelect, {
+                            searchEnabled: true,
+                            searchPlaceholderValue: 'Ara...',
+                            noResultsText: 'Sonuç bulunamadı',
+                            itemSelectText: 'Seçmek için tıklayın',
+                            placeholder: true,
+                            placeholderValue: 'Oda Tipi Seçin (Opsiyonel)',
+                            shouldSort: false,
+                            allowHTML: false
+                        });
+                        if (window.choicesInstances) {
+                            window.choicesInstances[odaTipiSelectId] = choices;
+                        }
+                    } catch (e) {
+                        console.error('Choices.js başlatma hatası:', e);
                     }
                 }
-            }, 100);
+            }, 150);
             
             // Callback varsa çalıştır
             if (callback) callback(data.oda_tipleri);
         })
         .catch(error => {
-            console.error('Hata:', error);
+            console.error('Oda tipleri yükleme hatası:', error);
             odaTipiSelect.innerHTML = '<option value="">Hata oluştu, tekrar deneyin</option>';
+            odaTipiSelect.disabled = false;
         });
 }
 
@@ -79,12 +93,19 @@ function yukleOdaTipleri(otelId, odaTipiSelectId, callback) {
 function yukleKatlar(otelId, katSelectId, callback) {
     const katSelect = document.getElementById(katSelectId);
     
-    if (!katSelect) return;
+    if (!katSelect) {
+        console.error('Kat select elementi bulunamadı:', katSelectId);
+        return;
+    }
     
     // Choices.js instance'ını yok et
     if (window.choicesInstances && window.choicesInstances[katSelectId]) {
-        window.choicesInstances[katSelectId].destroy();
-        delete window.choicesInstances[katSelectId];
+        try {
+            window.choicesInstances[katSelectId].destroy();
+            delete window.choicesInstances[katSelectId];
+        } catch (e) {
+            console.warn('Choices.js destroy hatası:', e);
+        }
     }
     
     // Kat dropdown'unu temizle
@@ -110,6 +131,7 @@ function yukleKatlar(otelId, katSelectId, callback) {
             
             if (katlar.length === 0) {
                 katSelect.innerHTML = '<option value="">Bu otelde kat bulunamadı</option>';
+                katSelect.disabled = false;
             } else {
                 katlar.forEach(kat => {
                     const option = document.createElement('option');
@@ -122,32 +144,40 @@ function yukleKatlar(otelId, katSelectId, callback) {
             
             // Choices.js'i yeniden başlat
             setTimeout(function() {
-                if (typeof Choices !== 'undefined') {
-                    const choices = new Choices(katSelect, {
-                        searchEnabled: true,
-                        searchPlaceholderValue: 'Ara...',
-                        noResultsText: 'Sonuç bulunamadı',
-                        itemSelectText: 'Seçmek için tıklayın',
-                        placeholder: true,
-                        placeholderValue: 'Kat Seçin...',
-                        shouldSort: false
-                    });
-                    if (window.choicesInstances) {
-                        window.choicesInstances[katSelectId] = choices;
+                if (typeof Choices !== 'undefined' && !katSelect.disabled) {
+                    try {
+                        const choices = new Choices(katSelect, {
+                            searchEnabled: true,
+                            searchPlaceholderValue: 'Ara...',
+                            noResultsText: 'Sonuç bulunamadı',
+                            itemSelectText: 'Seçmek için tıklayın',
+                            placeholder: true,
+                            placeholderValue: 'Kat Seçin...',
+                            shouldSort: false,
+                            allowHTML: false
+                        });
+                        if (window.choicesInstances) {
+                            window.choicesInstances[katSelectId] = choices;
+                        }
+                    } catch (e) {
+                        console.error('Choices.js başlatma hatası:', e);
                     }
                 }
-            }, 100);
+            }, 150);
             
             // Callback varsa çalıştır
             if (callback) callback(katlar);
         })
         .catch(error => {
-            console.error('Hata:', error);
+            console.error('Katlar yükleme hatası:', error);
             katSelect.innerHTML = '<option value="">Hata oluştu, tekrar deneyin</option>';
+            katSelect.disabled = false;
         });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Oda Form JS yüklendi');
+    
     // Form sayfası için (otel_id ve kat_id)
     const otelSelect = document.getElementById('otel_id');
     const katSelect = document.getElementById('kat_id');
@@ -155,6 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (otelSelect && katSelect) {
         otelSelect.addEventListener('change', function() {
+            console.log('Otel seçildi (form):', this.value);
             yukleKatlar(this.value, 'kat_id');
             if (odaTipiSelect) {
                 yukleOdaTipleri(this.value, 'oda_tipi');
@@ -166,6 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const yeniOtelSelect = document.getElementById('yeniOtelId');
     if (yeniOtelSelect) {
         yeniOtelSelect.addEventListener('change', function() {
+            console.log('Otel seçildi (yeni oda):', this.value);
             yukleKatlar(this.value, 'yeniKatId');
             const yeniOdaTipiSelect = document.getElementById('yeniOdaTipi');
             if (yeniOdaTipiSelect) {
@@ -178,6 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const duzenleOtelSelect = document.getElementById('duzenleOtelId');
     if (duzenleOtelSelect) {
         duzenleOtelSelect.addEventListener('change', function() {
+            console.log('Otel seçildi (düzenle):', this.value);
             yukleKatlar(this.value, 'duzenleKatId');
             const duzenleOdaTipiSelect = document.getElementById('duzenleOdaTipi');
             if (duzenleOdaTipiSelect) {

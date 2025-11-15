@@ -242,7 +242,7 @@
                                     {{ oda_info.oda.oda_no }}
                                 </div>
                                 <div class="text-xs text-slate-600 dark:text-slate-400 mb-1">
-                                    <i class="fas fa-bed mr-1"></i>{{ oda_info.oda.oda_tipi if oda_info.oda.oda_tipi else '---' }}
+                                    <i class="fas fa-bed mr-1"></i>{{ oda_info.oda.oda_tipi_adi if oda_info.oda.oda_tipi_adi else '---' }}
                                 </div>
                                 <div class="text-xs text-slate-600 dark:text-slate-400">
                                     <i class="fas fa-users mr-1"></i>{{ oda_info.misafir.misafir_sayisi }}
@@ -293,7 +293,7 @@
                     {% for oda_info in kat_info.odalar %}
                     <tr>
                         <td style="border: 1px solid #ccc; padding: 6px 8px; font-weight: bold; font-size: 11pt;">{{ oda_info.oda.oda_no }}</td>
-                        <td style="border: 1px solid #ccc; padding: 6px 8px;">{{ oda_info.oda.oda_tipi if oda_info.oda.oda_tipi else '---' }}</td>
+                        <td style="border: 1px solid #ccc; padding: 6px 8px;">{{ oda_info.oda.oda_tipi_adi if oda_info.oda.oda_tipi_adi else '---' }}</td>
                         <td style="border: 1px solid #ccc; padding: 6px 8px; text-align: center;">{{ oda_info.misafir.misafir_sayisi }}</td>
                         <td style="border: 1px solid #ccc; padding: 6px 8px;">{{ oda_info.misafir.giris_tarihi.strftime('%d.%m.%Y') }}</td>
                         <td style="border: 1px solid #ccc; padding: 6px 8px;">{{ oda_info.misafir.cikis_tarihi.strftime('%d.%m.%Y') }}</td>

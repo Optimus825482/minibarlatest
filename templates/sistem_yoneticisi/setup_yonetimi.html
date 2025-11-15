@@ -1,0 +1,560 @@
+{% extends "base.html" %}
+{% from "_form_helpers.html" import flash_messages %}
+
+{% block title %}Setup Yönetimi - Minibar Takip Sistemi{% endblock %}
+{% block page_title %}Setup Yönetimi{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    {{ flash_messages() }}
+
+    <!-- Başlık ve Yeni Ekle Butonu -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100">Setup Tanımları</h3>
+                <button onclick="yeniSetupModal()" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Yeni Setup Ekle
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Setup Listesi -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <div id="setupListesiYukleniyor" class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                <p class="mt-4 text-slate-600 dark:text-slate-400">Setup'lar yükleniyor...</p>
+            </div>
+            
+            <div id="setupListesiIcerik" style="display:none;">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                    <thead class="bg-slate-50 dark:bg-slate-900">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Setup Adı</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Açıklama</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Ürün Sayısı</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Maliyet</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Atanan Oda Tipleri</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody id="setupListesiTablo" class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Yeni Setup Modal -->
+<div class="modal fade" id="yeniSetupModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content bg-white dark:bg-slate-800">
+            <div class="modal-header border-b border-slate-200 dark:border-slate-700">
+                <h5 class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100">Yeni Setup Ekle</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <form id="yeniSetupForm" onsubmit="setupKaydet(event)">
+                <div class="modal-body p-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Setup Adı <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="yeni_setup_ad" name="ad" 
+                                   class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100" 
+                                   placeholder="Örn: MINI, MAXI" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Açıklama
+                            </label>
+                            <textarea id="yeni_setup_aciklama" name="aciklama" rows="3"
+                                      class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100" 
+                                      placeholder="Setup hakkında açıklama..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-t border-slate-200 dark:border-slate-700">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Setup İçerik Düzenleme Modal -->
+<div class="modal fade" id="setupIcerikModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content bg-white dark:bg-slate-800">
+            <div class="modal-header border-b border-slate-200 dark:border-slate-700">
+                <h5 class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    <span id="setupIcerikBaslik"></span> - İçerik Düzenleme
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body p-6">
+                <input type="hidden" id="icerik_setup_id">
+                
+                <!-- Ürün Ekleme Formu -->
+                <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg mb-4">
+                    <h6 class="text-sm font-medium text-slate-900 dark:text-slate-100 mb-3">Yeni Ürün Ekle</h6>
+                    
+                    <!-- Ürün Grubu Seçimi -->
+                    <div class="mb-3">
+                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Ürün Grubu</label>
+                        <select id="icerik_urun_grup_id" onchange="urunGrubuDegisti()" 
+                                class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100">
+                            <option value="">Ürün Grubu Seçin...</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Ürün Seçimi ve Ekleme -->
+                    <div class="flex gap-3">
+                        <div class="flex-1">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Ürün</label>
+                            <select id="icerik_urun_id" class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100">
+                                <option value="">Önce ürün grubu seçin...</option>
+                            </select>
+                        </div>
+                        <div class="w-24">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Adet</label>
+                            <input type="number" id="icerik_adet" min="1" value="1" 
+                                   class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100" 
+                                   placeholder="Adet">
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="urunEkle()" class="btn btn-success px-4 py-2">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mevcut Ürünler Listesi -->
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <h6 class="text-sm font-medium text-slate-900 dark:text-slate-100">Mevcut Ürünler</h6>
+                        <div class="text-right">
+                            <div class="text-xs text-slate-500 dark:text-slate-400">Toplam Maliyet</div>
+                            <div id="toplamMaliyet" class="text-lg font-bold text-green-600 dark:text-green-400">₺0.00</div>
+                        </div>
+                    </div>
+                    <div id="setupIcerikListesi" class="space-y-2"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-t border-slate-200 dark:border-slate-700">
+                <button type="button" class="btn btn-primary" onclick="setupIcerikModalKapat()">Tamam</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Setup Atama Modal -->
+<div class="modal fade" id="setupAtamaModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content bg-white dark:bg-slate-800">
+            <div class="modal-header border-b border-slate-200 dark:border-slate-700">
+                <h5 class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    <span id="setupAtamaBaslik"></span> - Oda Tipi Atama
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body p-6">
+                <input type="hidden" id="atama_setup_ad">
+                <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                    Bu setup'ı kullanacak oda tiplerini seçin:
+                </p>
+                <div id="odaTipiListesi" class="space-y-2"></div>
+            </div>
+            <div class="modal-footer border-t border-slate-200 dark:border-slate-700">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                <button onclick="setupAtamaKaydet()" class="btn btn-primary">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let mevcutSetuplar = [];
+    let mevcutUrunler = [];
+    let mevcutUrunGruplari = [];
+    
+    // CSRF token'ı al
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    // Sayfa yüklendiğinde
+    document.addEventListener('DOMContentLoaded', function() {
+        setupListesiYukle();
+        urunListesiYukle();
+        urunGruplariYukle();
+    });
+    
+    // Setup listesini yükle
+    function setupListesiYukle() {
+        fetch('/api/setuplar')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('setupListesiYukleniyor').style.display = 'none';
+                document.getElementById('setupListesiIcerik').style.display = 'block';
+                
+                if (data.success && data.setuplar) {
+                    mevcutSetuplar = data.setuplar;
+                    const tbody = document.getElementById('setupListesiTablo');
+                    tbody.innerHTML = '';
+                    
+                    data.setuplar.forEach(setup => {
+                        const row = document.createElement('tr');
+                        row.className = 'hover:bg-slate-50 dark:hover:bg-slate-700';
+                        
+                        const odaTipleri = setup.oda_tipleri && setup.oda_tipleri.length > 0
+                            ? setup.oda_tipleri.map(t => `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 mr-1">${t}</span>`).join('')
+                            : '<span class="text-slate-400">-</span>';
+                        
+                        row.innerHTML = `
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">
+                                    ${setup.ad}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">${setup.aciklama || '-'}</td>
+                            <td class="px-4 py-3 text-center">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
+                                    ${setup.urun_sayisi || 0}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <span class="text-lg font-bold text-green-600 dark:text-green-400">
+                                    ₺${parseFloat(setup.toplam_maliyet || 0).toFixed(2)}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-center">${odaTipleri}</td>
+                            <td class="px-4 py-3 text-right">
+                                <div class="flex justify-end gap-2">
+                                    <button onclick="setupIcerikModal(${setup.id}, '${setup.ad}')" class="btn btn-sm btn-info">İçerik</button>
+                                    <button onclick="setupAtamaModal(${setup.id}, '${setup.ad}')" class="btn btn-sm btn-warning">Atama</button>
+                                    <button onclick="setupSil(${setup.id}, '${setup.ad}')" class="btn btn-sm btn-danger">Sil</button>
+                                </div>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            });
+    }
+    
+    // Ürün listesini yükle
+    function urunListesiYukle() {
+        fetch('/api/urunler-liste')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.urunler) {
+                    mevcutUrunler = data.urunler;
+                }
+            });
+    }
+    
+    // Ürün gruplarını yükle
+    function urunGruplariYukle() {
+        fetch('/api/urun-gruplari-liste')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.gruplar) {
+                    mevcutUrunGruplari = data.gruplar;
+                }
+            });
+    }
+    
+    // Yeni setup modal
+    function yeniSetupModal() {
+        document.getElementById('yeni_setup_ad').value = '';
+        document.getElementById('yeni_setup_aciklama').value = '';
+        $('#yeniSetupModal').modal('show');
+    }
+    
+    // Setup kaydet
+    function setupKaydet(event) {
+        event.preventDefault();
+        
+        const ad = document.getElementById('yeni_setup_ad').value.trim();
+        const aciklama = document.getElementById('yeni_setup_aciklama').value.trim();
+        
+        fetch('/api/setuplar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ ad, aciklama })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                $('#yeniSetupModal').modal('hide');
+                setupListesiYukle();
+                alert('Setup başarıyla eklendi');
+            } else {
+                alert('Hata: ' + data.error);
+            }
+        });
+    }
+    
+    // Setup içerik modal
+    function setupIcerikModal(setupId, setupAd) {
+        console.log('setupIcerikModal çağrıldı:', setupId, setupAd);
+        
+        document.getElementById('icerik_setup_id').value = setupId;
+        document.getElementById('setupIcerikBaslik').textContent = setupAd;
+        
+        // Modal'ı aç
+        $('#setupIcerikModal').modal('show');
+        
+        // Ürün gruplarını yükle
+        fetch('/api/urun-gruplari-liste')
+            .then(response => response.json())
+            .then(gruplarData => {
+                console.log('Ürün grupları geldi:', gruplarData);
+                
+                if (gruplarData.success && gruplarData.gruplar) {
+                    mevcutUrunGruplari = gruplarData.gruplar;
+                    
+                    // Ürün grubu listesini doldur
+                    const grupSelect = document.getElementById('icerik_urun_grup_id');
+                    grupSelect.innerHTML = '<option value="">Ürün Grubu Seçin...</option>';
+                    gruplarData.gruplar.forEach(grup => {
+                        grupSelect.innerHTML += `<option value="${grup.id}">${grup.ad}</option>`;
+                    });
+                    console.log('Ürün grupları dropdown dolduruldu');
+                }
+                
+                // Ürünleri yükle
+                return fetch('/api/urunler-liste');
+            })
+            .then(response => response.json())
+            .then(urunlerData => {
+                console.log('Ürünler geldi:', urunlerData);
+                
+                if (urunlerData.success && urunlerData.urunler) {
+                    mevcutUrunler = urunlerData.urunler;
+                    console.log('Ürünler kaydedildi, toplam:', mevcutUrunler.length);
+                }
+                
+                // Mevcut içeriği yükle
+                setupIcerikYukle(setupId);
+            })
+            .catch(error => {
+                console.error('Hata:', error);
+            });
+    }
+    
+    // Ürün grubu değiştiğinde
+    function urunGrubuDegisti() {
+        const grupId = document.getElementById('icerik_urun_grup_id').value;
+        const urunSelect = document.getElementById('icerik_urun_id');
+        
+        if (!grupId) {
+            urunSelect.innerHTML = '<option value="">Önce ürün grubu seçin...</option>';
+            return;
+        }
+        
+        // Seçilen gruba ait ürünleri filtrele
+        const filtreliUrunler = mevcutUrunler.filter(urun => urun.grup_id == grupId);
+        
+        urunSelect.innerHTML = '<option value="">Ürün Seçin...</option>';
+        filtreliUrunler.forEach(urun => {
+            urunSelect.innerHTML += `<option value="${urun.id}">${urun.ad}</option>`;
+        });
+    }
+    
+    // Setup içeriğini yükle
+    function setupIcerikYukle(setupId) {
+        fetch(`/api/setuplar/${setupId}/icerik`)
+            .then(response => response.json())
+            .then(data => {
+                const liste = document.getElementById('setupIcerikListesi');
+                liste.innerHTML = '';
+                
+                if (data.success && data.icerikler && data.icerikler.length > 0) {
+                    data.icerikler.forEach(icerik => {
+                        const div = document.createElement('div');
+                        div.className = 'flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-lg';
+                        div.innerHTML = `
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium text-slate-900 dark:text-slate-100">${icerik.urun_ad}</span>
+                                    <span class="text-sm text-slate-500 dark:text-slate-400">x${icerik.adet}</span>
+                                </div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    ₺${icerik.alis_fiyati.toFixed(2)} × ${icerik.adet} = ₺${icerik.tutar.toFixed(2)}
+                                </div>
+                            </div>
+                            <button onclick="urunSil(${icerik.id})" class="text-red-600 hover:text-red-800">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        `;
+                        liste.appendChild(div);
+                    });
+                    
+                    // Toplam maliyeti güncelle
+                    document.getElementById('toplamMaliyet').textContent = `₺${data.toplam_maliyet.toFixed(2)}`;
+                } else {
+                    liste.innerHTML = '<p class="text-center text-slate-400 py-4">Henüz ürün eklenmemiş</p>';
+                    document.getElementById('toplamMaliyet').textContent = '₺0.00';
+                }
+            });
+    }
+
+    // Ürün ekle
+    function urunEkle() {
+        const setupId = document.getElementById('icerik_setup_id').value;
+        const urunId = document.getElementById('icerik_urun_id').value;
+        const adet = document.getElementById('icerik_adet').value;
+        
+        if (!urunId) {
+            alert('Lütfen ürün seçin');
+            return;
+        }
+        
+        fetch(`/api/setuplar/${setupId}/icerik`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ urun_id: parseInt(urunId), adet: parseInt(adet) })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                setupIcerikYukle(setupId);
+                document.getElementById('icerik_urun_id').value = '';
+                document.getElementById('icerik_adet').value = '1';
+            } else {
+                alert('Hata: ' + data.error);
+            }
+        });
+    }
+    
+    // Ürün sil
+    function urunSil(icerikId) {
+        if (!confirm('Bu ürünü silmek istediğinizden emin misiniz?')) return;
+        
+        const setupId = document.getElementById('icerik_setup_id').value;
+        
+        fetch(`/api/setup-icerik/${icerikId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                setupIcerikYukle(setupId);
+            } else {
+                alert('Hata: ' + data.error);
+            }
+        });
+    }
+    
+    // Setup içerik modal kapat
+    function setupIcerikModalKapat() {
+        $('#setupIcerikModal').modal('hide');
+        // Setup listesini yenile (ürün sayısını güncellemek için)
+        setupListesiYukle();
+    }
+    
+    // Setup atama modal
+    function setupAtamaModal(setupId, setupAd) {
+        document.getElementById('atama_setup_ad').value = setupAd;
+        document.getElementById('setupAtamaBaslik').textContent = setupAd;
+        
+        // Oda tiplerini yükle
+        fetch('/api/oda-tipleri')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.oda_tipleri) {
+                    const liste = document.getElementById('odaTipiListesi');
+                    liste.innerHTML = '';
+                    
+                    data.oda_tipleri.forEach(tip => {
+                        const checked = tip.setup === setupAd ? 'checked' : '';
+                        const div = document.createElement('div');
+                        div.className = 'flex items-center p-3 bg-slate-50 dark:bg-slate-900 rounded-lg';
+                        div.innerHTML = `
+                            <input type="checkbox" id="oda_tip_${tip.id}" value="${tip.id}" ${checked}
+                                   class="h-4 w-4 text-indigo-600 border-slate-300 rounded">
+                            <label for="oda_tip_${tip.id}" class="ml-3 text-sm font-medium text-slate-900 dark:text-slate-100">
+                                ${tip.ad}
+                            </label>
+                        `;
+                        liste.appendChild(div);
+                    });
+                }
+            });
+        
+        $('#setupAtamaModal').modal('show');
+    }
+    
+    // Setup atama kaydet
+    function setupAtamaKaydet() {
+        const setupAd = document.getElementById('atama_setup_ad').value;
+        const checkboxes = document.querySelectorAll('#odaTipiListesi input[type="checkbox"]:checked');
+        const odaTipIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+        
+        fetch('/api/setup-atama', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ setup_ad: setupAd, oda_tip_ids: odaTipIds })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                $('#setupAtamaModal').modal('hide');
+                setupListesiYukle();
+                alert('Atama başarıyla kaydedildi');
+            } else {
+                alert('Hata: ' + data.error);
+            }
+        });
+    }
+    
+    // Setup sil
+    function setupSil(setupId, setupAd) {
+        if (!confirm(`"${setupAd}" setup'ını silmek istediğinizden emin misiniz?`)) return;
+        
+        fetch(`/api/setuplar/${setupId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                setupListesiYukle();
+                alert('Setup başarıyla silindi');
+            } else {
+                alert('Hata: ' + data.error);
+            }
+        });
+    }
+</script>
+{% endblock %}

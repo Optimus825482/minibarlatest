@@ -125,20 +125,16 @@
                                 {{ oda.oda_no }}
                             </td>
                             <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-600">
-                                {% if oda.oda_tipi %}
+                                {% if oda.oda_tipi_adi %}
                                 {% set oda_tipi_colors = {
-                                    'Standart': 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
-                                    'Deluxe': 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200',
-                                    'Suite': 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200',
-                                    'King': 'bg-rose-100 dark:bg-rose-900 text-rose-800 dark:text-rose-200',
-                                    'Twin': 'bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200',
-                                    'Family': 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
-                                    'Executive': 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200',
-                                    'Presidential': 'bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200'
+                                    'STANDARD': 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+                                    'JUNIOR SUITE': 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200',
+                                    'QUEEN SUITE': 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+                                    'KING SUITE': 'bg-rose-100 dark:bg-rose-900 text-rose-800 dark:text-rose-200'
                                 } %}
-                                {% set color_class = oda_tipi_colors.get(oda.oda_tipi, 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200') %}
+                                {% set color_class = oda_tipi_colors.get(oda.oda_tipi_adi, 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200') %}
                                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ color_class }}">
-                                    {{ oda.oda_tipi }}
+                                    {{ oda.oda_tipi_adi }}
                                 </span>
                                 {% else %}
                                 <span class="text-slate-400 text-xs">-</span>
@@ -206,7 +202,7 @@
                             </td>
                             <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm">
                                 <div class="flex gap-2">
-                                    <button onclick="odaDuzenle({{ oda.id }}, '{{ oda.oda_no }}', {{ oda.kat_id }}, {{ 'true' if oda.qr_kod_token else 'false' }}, '{{ oda.oda_tipi or '' }}')"
+                                    <button onclick="odaDuzenle({{ oda.id }}, '{{ oda.oda_no }}', {{ oda.kat_id }}, {{ 'true' if oda.qr_kod_token else 'false' }}, '{{ oda.oda_tipi_adi or '' }}')"
                                         class="inline-flex items-center px-3 py-1.5 border border-slate-300 shadow-sm text-xs font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                                         title="Oda Bilgilerini Düzenle">
                                         <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -382,11 +378,12 @@
                                 Otel <span class="text-red-500">*</span>
                             </label>
                             <select id="yeniOtelId" 
-                                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                                    name="otel_id"
+                                    class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
                                     required>
-                                <option value="" class="bg-white dark:bg-slate-800">Otel seçiniz...</option>
+                                <option value="">Otel seçiniz...</option>
                                 {% for otel in oteller %}
-                                <option value="{{ otel.id }}" class="bg-white dark:bg-slate-800">{{ otel.ad }}</option>
+                                <option value="{{ otel.id }}">{{ otel.ad }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -395,7 +392,8 @@
                                 Kat <span class="text-red-500">*</span>
                             </label>
                             <select id="yeniKatId" 
-                                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                                    name="kat_id"
+                                    class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
                                     required
                                     disabled>
                                 <option value="">Önce otel seçin...</option>
@@ -416,7 +414,8 @@
                                 Oda Tipi
                             </label>
                             <select id="yeniOdaTipi" 
-                                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                                    name="oda_tipi_id"
+                                    class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
                                     disabled>
                                 <option value="">Önce otel seçin...</option>
                             </select>
@@ -717,12 +716,13 @@
 
 <script>
     document.addEventListener( 'DOMContentLoaded', function () {
-        // Tüm oda verilerini hazırla (otel-kat ilişkisi için)
+        // Tüm oda verilerini hazırla (otel-kat-oda tipi ilişkisi için)
         const odaVerileri = [
             {% for oda in odalar %}
             {
                 otelAdi: '{{ oda.kat.otel.ad if oda.kat and oda.kat.otel else "" }}',
-                katAdi: '{{ oda.kat.kat_adi if oda.kat else "" }}'
+                katAdi: '{{ oda.kat.kat_adi if oda.kat else "" }}',
+                odaTipi: '{{ oda.oda_tipi_adi if oda.oda_tipi_adi else "" }}'
             },
             {% endfor %}
         ];
@@ -737,6 +737,30 @@
             },
             {% endfor %}
         ];
+        
+        // Tüm oda tiplerini oluştur (otel ve kat bilgisi ile)
+        const tumOdaTipleri = [
+            {% for oda in odalar %}
+            {% if oda.oda_tipi_adi %}
+            { 
+                value: '{{ oda.oda_tipi_adi }}', 
+                label: '{{ oda.oda_tipi_adi }}',
+                otelAdi: '{{ oda.kat.otel.ad if oda.kat and oda.kat.otel else "" }}',
+                katAdi: '{{ oda.kat.kat_adi if oda.kat else "" }}'
+            },
+            {% endif %}
+            {% endfor %}
+        ];
+        
+        // Benzersiz oda tiplerini al
+        const benzersizOdaTipleri = [];
+        const gorulenTipler = new Set();
+        tumOdaTipleri.forEach(tip => {
+            if (!gorulenTipler.has(tip.value)) {
+                gorulenTipler.add(tip.value);
+                benzersizOdaTipleri.push(tip);
+            }
+        });
         
         // Otel seçeneklerini dinamik olarak oluştur
         const otelOptions = [
@@ -755,7 +779,7 @@
                 filters: []
             };
             
-            // Otel Adı filtresi ekle (columnIndex: 3 - dördüncü sütun - Oda Tipi eklediğimiz için kaydı)
+            // Otel Adı filtresi ekle (columnIndex: 3 - dördüncü sütun)
             if (otelOptions.length > 0) {
                 filterConfig.filters.push({
                     columnIndex: 3,
@@ -773,19 +797,34 @@
                 });
             }
             
+            // Oda Tipi filtresi ekle (columnIndex: 2 - üçüncü sütun)
+            if (benzersizOdaTipleri.length > 0) {
+                filterConfig.filters.push({
+                    columnIndex: 2,
+                    label: 'Oda Tipi',
+                    options: benzersizOdaTipleri
+                });
+            }
+            
             window.tableSearchFilter_odalar = new TableSearchFilter( 'odalar-table', filterConfig );
             
-            // Otel filtresine özel event listener ekle
+            // Filtreler arası bağımlılık yönetimi
             const otelFilter = document.getElementById('odalar-table-filter-3');
             const katFilter = document.getElementById('odalar-table-filter-0');
+            const odaTipiFilter = document.getElementById('odalar-table-filter-2');
             
-            if (otelFilter && katFilter) {
+            // Otel filtresi değiştiğinde
+            if (otelFilter && katFilter && odaTipiFilter) {
                 otelFilter.addEventListener('change', function() {
                     const secilenOtel = this.value;
                     
                     // Kat filtresini temizle
                     katFilter.value = '';
                     delete window.tableSearchFilter_odalar.activeFilters[0];
+                    
+                    // Oda tipi filtresini temizle
+                    odaTipiFilter.value = '';
+                    delete window.tableSearchFilter_odalar.activeFilters[2];
                     
                     // Kat filtresini güncelle
                     if (secilenOtel) {
@@ -800,6 +839,18 @@
                             katFilter.appendChild(option);
                         });
                         katFilter.disabled = filtreliKatlar.length === 0;
+                        
+                        // Sadece seçilen otele ait oda tiplerini göster
+                        const filtreliOdaTipleri = benzersizOdaTipleri.filter(tip => tip.otelAdi === secilenOtel);
+                        
+                        odaTipiFilter.innerHTML = '<option value="">Oda Tipi Seçin</option>';
+                        filtreliOdaTipleri.forEach(tip => {
+                            const option = document.createElement('option');
+                            option.value = tip.value;
+                            option.textContent = tip.label;
+                            odaTipiFilter.appendChild(option);
+                        });
+                        odaTipiFilter.disabled = filtreliOdaTipleri.length === 0;
                     } else {
                         // Tüm katları göster
                         katFilter.innerHTML = '<option value="">Kat</option>';
@@ -810,6 +861,72 @@
                             katFilter.appendChild(option);
                         });
                         katFilter.disabled = false;
+                        
+                        // Tüm oda tiplerini göster
+                        odaTipiFilter.innerHTML = '<option value="">Oda Tipi</option>';
+                        benzersizOdaTipleri.forEach(tip => {
+                            const option = document.createElement('option');
+                            option.value = tip.value;
+                            option.textContent = tip.label;
+                            odaTipiFilter.appendChild(option);
+                        });
+                        odaTipiFilter.disabled = false;
+                    }
+                    
+                    // Filtreleri yeniden uygula
+                    window.tableSearchFilter_odalar.updateActiveFilterBadges();
+                    window.tableSearchFilter_odalar.applyFiltersAndSearch();
+                });
+                
+                // Kat filtresi değiştiğinde
+                katFilter.addEventListener('change', function() {
+                    const secilenOtel = otelFilter.value;
+                    const secilenKat = this.value;
+                    
+                    // Oda tipi filtresini temizle
+                    odaTipiFilter.value = '';
+                    delete window.tableSearchFilter_odalar.activeFilters[2];
+                    
+                    // Oda tipi filtresini güncelle
+                    if (secilenKat) {
+                        // Sadece seçilen kata ait oda tiplerini göster
+                        let filtreliOdaTipleri = benzersizOdaTipleri.filter(tip => tip.katAdi === secilenKat);
+                        
+                        // Eğer otel de seçiliyse, hem otel hem kat filtresi uygula
+                        if (secilenOtel) {
+                            filtreliOdaTipleri = filtreliOdaTipleri.filter(tip => tip.otelAdi === secilenOtel);
+                        }
+                        
+                        odaTipiFilter.innerHTML = '<option value="">Oda Tipi Seçin</option>';
+                        filtreliOdaTipleri.forEach(tip => {
+                            const option = document.createElement('option');
+                            option.value = tip.value;
+                            option.textContent = tip.label;
+                            odaTipiFilter.appendChild(option);
+                        });
+                        odaTipiFilter.disabled = filtreliOdaTipleri.length === 0;
+                    } else if (secilenOtel) {
+                        // Sadece otel seçiliyse, otele ait oda tiplerini göster
+                        const filtreliOdaTipleri = benzersizOdaTipleri.filter(tip => tip.otelAdi === secilenOtel);
+                        
+                        odaTipiFilter.innerHTML = '<option value="">Oda Tipi Seçin</option>';
+                        filtreliOdaTipleri.forEach(tip => {
+                            const option = document.createElement('option');
+                            option.value = tip.value;
+                            option.textContent = tip.label;
+                            odaTipiFilter.appendChild(option);
+                        });
+                        odaTipiFilter.disabled = filtreliOdaTipleri.length === 0;
+                    } else {
+                        // Hiçbir şey seçili değilse, tüm oda tiplerini göster
+                        odaTipiFilter.innerHTML = '<option value="">Oda Tipi</option>';
+                        benzersizOdaTipleri.forEach(tip => {
+                            const option = document.createElement('option');
+                            option.value = tip.value;
+                            option.textContent = tip.label;
+                            odaTipiFilter.appendChild(option);
+                        });
+                        odaTipiFilter.disabled = false;
                     }
                     
                     // Filtreleri yeniden uygula

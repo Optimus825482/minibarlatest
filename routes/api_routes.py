@@ -37,7 +37,7 @@ Roller:
 from flask import jsonify, request, session
 from datetime import datetime, timedelta
 from models import (
-    db, Oda, Kat, UrunGrup, Urun, StokHareket, 
+    db, Oda, Kat, OdaTipi, UrunGrup, Urun, StokHareket, 
     PersonelZimmet, PersonelZimmetDetay, MinibarIslem, MinibarIslemDetay,
     Kullanici
 )
@@ -1162,7 +1162,7 @@ def register_api_routes(app):
             return jsonify([{
                 'id': oda.id,
                 'oda_no': oda.oda_no,
-                'oda_tipi': oda.oda_tipi,
+                'oda_tipi': oda.oda_tipi_adi,
                 'kapasite': oda.kapasite
             } for oda in odalar])
             
@@ -1233,67 +1233,45 @@ def register_api_routes(app):
     @login_required
     @role_required('sistem_yoneticisi', 'admin')
     def api_otel_oda_tipleri(otel_id):
-        """Bir oteldeki oda tiplerini kat bazında getir"""
+        """Bir oteldeki oda tiplerini getir"""
         try:
-            from sqlalchemy import func
-            from models import Otel, Kat, Oda
+            from sqlalchemy import func, distinct
+            from models import Otel, Kat, Oda, OdaTipi
             
             # Otel kontrolü
             otel = Otel.query.get_or_404(otel_id)
             
-            # Kat bazlı oda tiplerini grupla
-            kat_bazli = {}
-            toplam_oda = 0
+            # Otele ait tüm oda tiplerini getir (OdaTipi tablosundan)
+            oda_tipleri_query = db.session.query(OdaTipi).join(
+                Oda, Oda.oda_tipi_id == OdaTipi.id
+            ).join(
+                Kat, Oda.kat_id == Kat.id
+            ).filter(
+                Kat.otel_id == otel_id,
+                Oda.aktif == True
+            ).distinct().order_by(OdaTipi.ad).all()
             
-            # Otele ait katları al
-            katlar = Kat.query.filter_by(otel_id=otel_id, aktif=True).order_by(Kat.kat_no).all()
-            
-            for kat in katlar:
-                # Bu kattaki oda tiplerini grupla ve say
-                oda_tipleri = db.session.query(
-                    Oda.oda_tipi,
-                    func.count(Oda.id).label('sayi')
-                ).filter(
-                    Oda.kat_id == kat.id,
-                    Oda.aktif == True
-                ).group_by(
-                    Oda.oda_tipi
-                ).order_by(
-                    func.count(Oda.id).desc()
-                ).all()
-                
-                if oda_tipleri:
-                    kat_oda_sayisi = sum([sayi for _, sayi in oda_tipleri])
-                    toplam_oda += kat_oda_sayisi
-                    
-                    kat_bazli[kat.kat_adi] = {
-                        'kat_id': kat.id,
-                        'kat_no': kat.kat_no,
-                        'toplam_oda': kat_oda_sayisi,
-                        'oda_tipleri': [
-                            {
-                                'oda_tipi': oda_tipi if oda_tipi else 'Belirtilmemiş',
-                                'sayi': sayi
-                            }
-                            for oda_tipi, sayi in oda_tipleri
-                        ]
-                    }
+            # Oda tiplerini liste olarak döndür
+            oda_tipleri_list = []
+            for oda_tipi in oda_tipleri_query:
+                oda_tipleri_list.append({
+                    'id': oda_tipi.id,
+                    'ad': oda_tipi.ad,
+                    'dolap_sayisi': oda_tipi.dolap_sayisi,
+                    'setup': oda_tipi.setup
+                })
             
             return jsonify({
                 'success': True,
-                'kat_bazli': kat_bazli,
-                'toplam_oda': toplam_oda,
-                'otel': {
-                    'id': otel.id,
-                    'ad': otel.ad
-                }
+                'oda_tipleri': oda_tipleri_list
             })
             
         except Exception as e:
             log_hata(e, modul='api_otel_oda_tipleri')
             return jsonify({
                 'success': False,
-                'error': str(e)
+                'error': str(e),
+                'oda_tipleri': []
             }), 500
 
     # AJAX endpoint - Yeni oda ekle
@@ -1386,7 +1364,7 @@ def register_api_routes(app):
                     'id': oda.id,
                     'oda_no': oda.oda_no,
                     'kat_id': oda.kat_id,
-                    'oda_tipi': oda.oda_tipi,
+                    'oda_tipi': oda.oda_tipi_adi,
                     'kapasite': oda.kapasite
                 }
             })
@@ -1418,7 +1396,7 @@ def register_api_routes(app):
                     'oda_no': oda.oda_no,
                     'kat_id': oda.kat_id,
                     'otel_id': kat.otel_id if kat else None,
-                    'oda_tipi': oda.oda_tipi,
+                    'oda_tipi': oda.oda_tipi_adi,
                     'kapasite': oda.kapasite,
                     'aktif': oda.aktif
                 }
@@ -1526,7 +1504,7 @@ def register_api_routes(app):
                     'id': oda.id,
                     'oda_no': oda.oda_no,
                     'kat_id': oda.kat_id,
-                    'oda_tipi': oda.oda_tipi,
+                    'oda_tipi': oda.oda_tipi_adi,
                     'kapasite': oda.kapasite
                 }
             })

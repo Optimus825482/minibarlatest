@@ -197,6 +197,55 @@ class Kat(db.Model):
         return f'<Kat {self.kat_adi}>'
 
 
+class Setup(db.Model):
+    """Setup tanımları tablosu"""
+    __tablename__ = 'setuplar'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    ad = db.Column(db.String(100), nullable=False, unique=True)  # MINI, MAXI
+    aciklama = db.Column(db.String(500))
+    aktif = db.Column(db.Boolean, default=True)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    
+    # İlişkiler
+    icerikler = db.relationship('SetupIcerik', backref='setup', lazy=True, cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<Setup {self.ad}>'
+
+
+class SetupIcerik(db.Model):
+    """Setup içerik tablosu - Setup'a atanan ürünler"""
+    __tablename__ = 'setup_icerik'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    setup_id = db.Column(db.Integer, db.ForeignKey('setuplar.id'), nullable=False)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id'), nullable=False)
+    adet = db.Column(db.Integer, nullable=False, default=1)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    
+    # İlişkiler
+    urun = db.relationship('Urun', backref='setup_icerikler')
+    
+    def __repr__(self):
+        return f'<SetupIcerik Setup:{self.setup_id} Urun:{self.urun_id}>'
+
+
+class OdaTipi(db.Model):
+    """Oda tipleri tablosu"""
+    __tablename__ = 'oda_tipleri'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    ad = db.Column(db.String(100), nullable=False, unique=True)
+    dolap_sayisi = db.Column(db.Integer, default=0)
+    setup = db.Column(db.String(50))  # MINI, MAXI
+    aktif = db.Column(db.Boolean, default=True)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    
+    def __repr__(self):
+        return f'<OdaTipi {self.ad}>'
+
+
 class Oda(db.Model):
     """Odalar tablosu"""
     __tablename__ = 'odalar'
@@ -207,7 +256,7 @@ class Oda(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     kat_id = db.Column(db.Integer, db.ForeignKey('katlar.id'), nullable=False)
     oda_no = db.Column(db.String(20), nullable=False, unique=True)
-    oda_tipi = db.Column(db.String(100))  # Artık 100 karakter (uzun oda tipi isimleri için)
+    oda_tipi_id = db.Column(db.Integer, db.ForeignKey('oda_tipleri.id'), nullable=True)  # Oda tipi referansı
     kapasite = db.Column(db.Integer)
     aktif = db.Column(db.Boolean, default=True)
     olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
@@ -219,9 +268,17 @@ class Oda(db.Model):
     misafir_mesaji = db.Column(db.String(500), nullable=True)
     
     # İlişkiler
+    oda_tipi_rel = db.relationship('OdaTipi', foreign_keys=[oda_tipi_id], backref='odalar')
     minibar_islemleri = db.relationship('MinibarIslem', backref='oda', lazy=True)
     dolum_talepleri = db.relationship('MinibarDolumTalebi', backref='oda', lazy=True)
     qr_okutma_loglari = db.relationship('QRKodOkutmaLog', backref='oda', lazy=True)
+    
+    @property
+    def oda_tipi_adi(self):
+        """Oda tipi adını döndür (önce ID'den, yoksa string'den)"""
+        if self.oda_tipi_rel:
+            return self.oda_tipi_rel.ad
+        return self.oda_tipi  # Fallback eski string değer
     
     def __repr__(self):
         return f'<Oda {self.oda_no}>'
@@ -257,6 +314,12 @@ class Urun(db.Model):
     kritik_stok_seviyesi = db.Column(db.Integer, default=10)
     aktif = db.Column(db.Boolean, default=True)
     olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    
+    # Fiyatlandırma Kolonları
+    satis_fiyati = db.Column(Numeric(10, 2), nullable=True)
+    alis_fiyati = db.Column(Numeric(10, 2), nullable=True)
+    kar_tutari = db.Column(Numeric(10, 2), nullable=True)
+    kar_orani = db.Column(Numeric(5, 2), nullable=True)
     
     # İlişkiler
     stok_hareketleri = db.relationship('StokHareket', backref='urun', lazy=True)
@@ -1334,7 +1397,7 @@ class OdaTipiSatisFiyati(db.Model):
     __tablename__ = 'oda_tipi_satis_fiyatlari'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    oda_tipi = db.Column(db.String(100), nullable=False)  # Standard, Deluxe, Suite
+    oda_tipi_id = db.Column(db.Integer, db.ForeignKey('oda_tipleri.id', ondelete='CASCADE'), nullable=False)  # Oda tipi ID
     urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=False)
     satis_fiyati = db.Column(Numeric(10, 2), nullable=False)
     baslangic_tarihi = db.Column(db.DateTime(timezone=True), nullable=False)
@@ -1343,14 +1406,15 @@ class OdaTipiSatisFiyati(db.Model):
     olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # İlişkiler
+    oda_tipi_rel = db.relationship('OdaTipi', foreign_keys=[oda_tipi_id], backref='satis_fiyatlari')
     urun = db.relationship('Urun', backref='oda_tipi_fiyatlari')
 
     __table_args__ = (
-        db.Index('idx_oda_tipi_urun_aktif', 'oda_tipi', 'urun_id', 'aktif'),
+        db.Index('idx_oda_tipi_urun_aktif', 'oda_tipi_id', 'urun_id', 'aktif'),
     )
 
     def __repr__(self):
-        return f'<OdaTipiSatisFiyati oda_tipi={self.oda_tipi} urun_id={self.urun_id}>'
+        return f'<OdaTipiSatisFiyati oda_tipi_id={self.oda_tipi_id} urun_id={self.urun_id}>'
 
 
 class SezonFiyatlandirma(db.Model):

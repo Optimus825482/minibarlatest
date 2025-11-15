@@ -1960,7 +1960,7 @@ def register_depo_routes(app):
                                             setattr(urun, 'kar_tutari', satis_fiyati - alis_fiyati_deger)
                                             break
                                     
-                                    # Fiyat geçmişi kaydı oluştur
+                                    # Fiyat geçmişi kaydı oluştur (Satış fiyatı için)
                                     from models import UrunFiyatGecmisi
                                     fiyat_gecmis = UrunFiyatGecmisi(
                                         urun_id=urun_id,
@@ -1971,6 +1971,25 @@ def register_depo_routes(app):
                                         olusturan_id=session['kullanici_id']
                                     )
                                     db.session.add(fiyat_gecmis)
+                                    
+                                    # ✅ Alış fiyatı geçmişi de kaydet
+                                    for fiyatsiz in fiyatsiz_urunler:
+                                        if fiyatsiz['urun_id'] == urun_id:
+                                            alis_fiyati_deger = Decimal(str(fiyatsiz['alis_fiyati']))
+                                            eski_alis_fiyati = urun.alis_fiyati or Decimal('0')
+                                            
+                                            # Alış fiyatı değiştiyse geçmişe kaydet
+                                            if eski_alis_fiyati != alis_fiyati_deger:
+                                                alis_fiyat_gecmis = UrunFiyatGecmisi(
+                                                    urun_id=urun_id,
+                                                    eski_fiyat=eski_alis_fiyati,
+                                                    yeni_fiyat=alis_fiyati_deger,
+                                                    degisiklik_tipi='alis_fiyati',
+                                                    degisiklik_sebebi=f'Satın alma işlemi - İşlem No: {satin_alma.islem_no}',
+                                                    olusturan_id=session['kullanici_id']
+                                                )
+                                                db.session.add(alis_fiyat_gecmis)
+                                            break
                                     
                                     kayit_sayisi += 1
                         except (ValueError, IndexError) as e:

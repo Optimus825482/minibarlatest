@@ -58,196 +58,230 @@ def register_dashboard_routes(app):
     @role_required('sistem_yoneticisi', 'admin')
     def sistem_yoneticisi_dashboard():
         """Sistem yöneticisi dashboard"""
-        from utils.occupancy_service import OccupancyService
-        from utils.authorization import get_kullanici_otelleri
-        from datetime import date
-        import os
+        try:
+            from utils.occupancy_service import OccupancyService
+            from utils.authorization import get_kullanici_otelleri
+            from datetime import date
+            import os
+            
+            # ML Alertleri (ML_ENABLED ise)
+            ml_alerts = []
+            ml_alert_count = 0
+            ml_enabled = os.getenv('ML_ENABLED', 'false').lower() == 'true'
+            
+            if ml_enabled:
+                try:
+                    from models import MLAlert
+                    from utils.ml.alert_manager import AlertManager
+                
+                    alert_manager = AlertManager(db)
+                    # Son 5 kritik/yüksek alert
+                    ml_alerts = alert_manager.get_active_alerts(limit=5)
+                    ml_alert_count = len(alert_manager.get_active_alerts())
+                except Exception as e:
+                    print(f"ML alert hatası: {str(e)}")
         
-        # ML Alertleri (ML_ENABLED ise)
-        ml_alerts = []
-        ml_alert_count = 0
-        ml_enabled = os.getenv('ML_ENABLED', 'false').lower() == 'true'
-        
-        if ml_enabled:
+            # Tüm oteller için doluluk raporları
+            otel_doluluk_raporlari = []
             try:
-                from models import MLAlert
-                from utils.ml.alert_manager import AlertManager
+                kullanici_otelleri = get_kullanici_otelleri()
+                for otel in kullanici_otelleri:
+                    doluluk = OccupancyService.get_gunluk_doluluk_raporu(date.today(), otel.id)
+                    # Doluluk oranı hesapla
+                    if doluluk['toplam_oda'] > 0:
+                        doluluk['doluluk_orani'] = round((doluluk['dolu_oda'] / doluluk['toplam_oda']) * 100)
+                    else:
+                        doluluk['doluluk_orani'] = 0
                 
-                alert_manager = AlertManager(db)
-                # Son 5 kritik/yüksek alert
-                ml_alerts = alert_manager.get_active_alerts(limit=5)
-                ml_alert_count = len(alert_manager.get_active_alerts())
+                    # Otel bilgilerini ekle
+                    doluluk['otel'] = otel
+                    otel_doluluk_raporlari.append(doluluk)
             except Exception as e:
-                print(f"ML alert hatası: {str(e)}")
+                print(f"Doluluk raporları hatası: {str(e)}")
         
-        # Tüm oteller için doluluk raporları
-        otel_doluluk_raporlari = []
-        try:
-            kullanici_otelleri = get_kullanici_otelleri()
-            for otel in kullanici_otelleri:
-                doluluk = OccupancyService.get_gunluk_doluluk_raporu(date.today(), otel.id)
-                # Doluluk oranı hesapla
-                if doluluk['toplam_oda'] > 0:
-                    doluluk['doluluk_orani'] = round((doluluk['dolu_oda'] / doluluk['toplam_oda']) * 100)
-                else:
-                    doluluk['doluluk_orani'] = 0
-                
-                # Otel bilgilerini ekle
-                doluluk['otel'] = otel
-                otel_doluluk_raporlari.append(doluluk)
-        except Exception as e:
-            print(f"Doluluk raporları hatası: {str(e)}")
+            # İstatistikler
+            toplam_kat = Kat.query.count()
+            toplam_oda = Oda.query.count()
+            toplam_kullanici = Kullanici.query.filter(
+                Kullanici.rol.in_(['admin', 'depo_sorumlusu', 'kat_sorumlusu']),
+                Kullanici.aktif.is_(True)
+            ).count()
+            toplam_personel = Kullanici.query.filter(
+                Kullanici.rol.in_(['depo_sorumlusu', 'kat_sorumlusu']),
+                Kullanici.aktif.is_(True)
+            ).count()
         
-        # İstatistikler
-        toplam_kat = Kat.query.count()
-        toplam_oda = Oda.query.count()
-        toplam_kullanici = Kullanici.query.filter(
-            Kullanici.rol.in_(['admin', 'depo_sorumlusu', 'kat_sorumlusu']),
-            Kullanici.aktif.is_(True)
-        ).count()
-        toplam_personel = Kullanici.query.filter(
-            Kullanici.rol.in_(['depo_sorumlusu', 'kat_sorumlusu']),
-            Kullanici.aktif.is_(True)
-        ).count()
+            # Son eklenen katlar
+            son_katlar = Kat.query.order_by(Kat.olusturma_tarihi.desc()).limit(5).all()
         
-        # Son eklenen katlar
-        son_katlar = Kat.query.order_by(Kat.olusturma_tarihi.desc()).limit(5).all()
+            # Son eklenen odalar
+            son_odalar = Oda.query.order_by(Oda.olusturma_tarihi.desc()).limit(5).all()
         
-        # Son eklenen odalar
-        son_odalar = Oda.query.order_by(Oda.olusturma_tarihi.desc()).limit(5).all()
+            # Grafik verileri
+            # Kullanıcı rol dağılımı
+            admin_count = Kullanici.query.filter_by(rol='admin', aktif=True).count()
+            depo_count = Kullanici.query.filter_by(rol='depo_sorumlusu', aktif=True).count()
+            kat_count = Kullanici.query.filter_by(rol='kat_sorumlusu', aktif=True).count()
         
-        # Grafik verileri
-        # Kullanıcı rol dağılımı
-        admin_count = Kullanici.query.filter_by(rol='admin', aktif=True).count()
-        depo_count = Kullanici.query.filter_by(rol='depo_sorumlusu', aktif=True).count()
-        kat_count = Kullanici.query.filter_by(rol='kat_sorumlusu', aktif=True).count()
+            # Kat bazlı oda sayıları
+            katlar = Kat.query.filter_by(aktif=True).all()
+            kat_labels = [kat.kat_adi for kat in katlar]
+            kat_oda_sayilari = [len(kat.odalar) for kat in katlar]
         
-        # Kat bazlı oda sayıları
-        katlar = Kat.query.filter_by(aktif=True).all()
-        kat_labels = [kat.kat_adi for kat in katlar]
-        kat_oda_sayilari = [len(kat.odalar) for kat in katlar]
+            # Ürün grup sayıları (admin için)
+            toplam_urun_grup = UrunGrup.query.filter_by(aktif=True).count()
+            toplam_urun = Urun.query.filter_by(aktif=True).count()
+            kritik_urunler = get_kritik_stok_urunler()
         
-        # Ürün grup sayıları (admin için)
-        toplam_urun_grup = UrunGrup.query.filter_by(aktif=True).count()
-        toplam_urun = Urun.query.filter_by(aktif=True).count()
-        kritik_urunler = get_kritik_stok_urunler()
-        
-        # Gelişmiş stok durumları
-        try:
-            stok_durumlari = get_tum_urunler_stok_durumlari()
-        except Exception as e:
-            print(f"Stok durumları hatası: {str(e)}")
-            flash(f'Stok durumları yüklenirken hata oluştu: {str(e)}', 'warning')
-            stok_durumlari = {
-                'kritik': [],
-                'dikkat': [],
-                'normal': [],
-                'istatistik': {
-                    'toplam': 0,
-                    'kritik_sayi': 0,
-                    'dikkat_sayi': 0,
-                    'normal_sayi': 0
+            # Gelişmiş stok durumları
+            try:
+                stok_durumlari = get_tum_urunler_stok_durumlari()
+            except Exception as e:
+                print(f"Stok durumları hatası: {str(e)}")
+                flash(f'Stok durumları yüklenirken hata oluştu: {str(e)}', 'warning')
+                stok_durumlari = {
+                    'kritik': [],
+                    'dikkat': [],
+                    'normal': [],
+                    'istatistik': {
+                        'toplam': 0,
+                        'kritik_sayi': 0,
+                        'dikkat_sayi': 0,
+                        'normal_sayi': 0
+                    }
                 }
+        
+            # Son eklenen personeller (admin için)
+            son_personeller = Kullanici.query.filter(
+                Kullanici.rol.in_(['depo_sorumlusu', 'kat_sorumlusu']),
+                Kullanici.aktif.is_(True)
+            ).order_by(Kullanici.olusturma_tarihi.desc()).limit(5).all()
+        
+            # Son eklenen ürünler (admin için)
+            son_urunler = Urun.query.filter_by(aktif=True).order_by(Urun.olusturma_tarihi.desc()).limit(5).all()
+        
+            # Dashboard bildirimleri (Satın Alma Modülü)
+            dashboard_bildirimleri = []
+            bildirim_sayilari = {
+                'kritik_stok': 0,
+                'geciken_siparis': 0,
+                'onay_bekleyen': 0,
+                'toplam': 0
             }
+            if DashboardBildirimServisi:
+                try:
+                    kullanici_id = session.get('kullanici_id')
+                    dashboard_bildirimleri = DashboardBildirimServisi.get_dashboard_bildirimleri(
+                        kullanici_id, 'sistem_yoneticisi'
+                    )
+                    bildirim_sayilari = DashboardBildirimServisi.get_bildirim_sayilari(
+                        kullanici_id, 'sistem_yoneticisi'
+                    )
+                except Exception as e:
+                    print(f"Dashboard bildirimleri hatası: {str(e)}")
+                    db.session.rollback()  # Transaction'ı temizle
         
-        # Son eklenen personeller (admin için)
-        son_personeller = Kullanici.query.filter(
-            Kullanici.rol.in_(['depo_sorumlusu', 'kat_sorumlusu']),
-            Kullanici.aktif.is_(True)
-        ).order_by(Kullanici.olusturma_tarihi.desc()).limit(5).all()
-        
-        # Son eklenen ürünler (admin için)
-        son_urunler = Urun.query.filter_by(aktif=True).order_by(Urun.olusturma_tarihi.desc()).limit(5).all()
-        
-        # Dashboard bildirimleri (Satın Alma Modülü)
-        dashboard_bildirimleri = []
-        bildirim_sayilari = {
-            'kritik_stok': 0,
-            'geciken_siparis': 0,
-            'onay_bekleyen': 0,
-            'toplam': 0
-        }
-        if DashboardBildirimServisi:
+            # Sipariş istatistikleri
+            from models import SatinAlmaSiparisi
+            istatistikler = {
+                'onaylandi': 0
+            }
             try:
-                kullanici_id = session.get('kullanici_id')
-                dashboard_bildirimleri = DashboardBildirimServisi.get_dashboard_bildirimleri(
-                    kullanici_id, 'sistem_yoneticisi'
-                )
-                bildirim_sayilari = DashboardBildirimServisi.get_bildirim_sayilari(
-                    kullanici_id, 'sistem_yoneticisi'
-                )
+                istatistikler['onaylandi'] = SatinAlmaSiparisi.query.filter_by(durum='onaylandi').count()
             except Exception as e:
-                print(f"Dashboard bildirimleri hatası: {str(e)}")
+                print(f"Sipariş istatistikleri hatası: {str(e)}")
+                db.session.rollback()
+        
+            # Ürün bazlı tüketim verileri (Son 30 günün en çok tüketilen ürünleri)
+            urun_labels = []
+            urun_tuketim_miktarlari = []
+            try:
+                bugun = datetime.now().date()
+                otuz_gun_once = bugun - timedelta(days=30)
+            
+                # Minibar işlemlerinden en çok tüketilen ürünleri al
+                urun_tuketim = db.session.query(
+                    Urun.urun_adi,
+                    db.func.sum(MinibarIslemDetay.tuketim).label('toplam_tuketim')
+                ).join(
+                    MinibarIslemDetay, MinibarIslemDetay.urun_id == Urun.id
+                ).join(
+                    MinibarIslem, MinibarIslem.id == MinibarIslemDetay.islem_id
+                ).filter(
+                    db.func.date(MinibarIslem.islem_tarihi) >= otuz_gun_once,
+                    MinibarIslemDetay.tuketim > 0
+                ).group_by(
+                    Urun.id, Urun.urun_adi
+                ).order_by(
+                    db.desc('toplam_tuketim')
+                ).limit(10).all()
+            
+                urun_labels = [u[0] for u in urun_tuketim]
+                urun_tuketim_miktarlari = [float(u[1] or 0) for u in urun_tuketim]
+            except Exception as e:
+                print(f"Ürün tüketim verileri hatası: {str(e)}")
                 db.session.rollback()  # Transaction'ı temizle
         
-        # Sipariş istatistikleri
-        from models import SatinAlmaSiparisi
-        istatistikler = {
-            'onaylandi': 0
-        }
-        try:
-            istatistikler['onaylandi'] = SatinAlmaSiparisi.query.filter_by(durum='onaylandi').count()
+            return render_template('sistem_yoneticisi/dashboard.html',
+                                 otel_doluluk_raporlari=otel_doluluk_raporlari,
+                                 toplam_kat=toplam_kat,
+                                 toplam_oda=toplam_oda,
+                                 toplam_kullanici=toplam_kullanici,
+                                 toplam_personel=toplam_personel,
+                                 son_katlar=son_katlar,
+                                 son_odalar=son_odalar,
+                                 admin_count=admin_count,
+                                 depo_count=depo_count,
+                                 kat_count=kat_count,
+                                 kat_labels=kat_labels,
+                                 kat_oda_sayilari=kat_oda_sayilari,
+                                 toplam_urun_grup=toplam_urun_grup,
+                                 toplam_urun=toplam_urun,
+                                 kritik_urunler=kritik_urunler,
+                                 stok_durumlari=stok_durumlari,
+                                 son_personeller=son_personeller,
+                                 son_urunler=son_urunler,
+                                 urun_labels=urun_labels,
+                                 urun_tuketim_miktarlari=urun_tuketim_miktarlari,
+                                 ml_enabled=ml_enabled,
+                                 ml_alerts=ml_alerts,
+                                 ml_alert_count=ml_alert_count,
+                                 dashboard_bildirimleri=dashboard_bildirimleri,
+                                 bildirim_sayilari=bildirim_sayilari,
+                                 istatistikler=istatistikler)
         except Exception as e:
-            print(f"Sipariş istatistikleri hatası: {str(e)}")
-            db.session.rollback()
-        
-        # Ürün bazlı tüketim verileri (Son 30 günün en çok tüketilen ürünleri)
-        urun_labels = []
-        urun_tuketim_miktarlari = []
-        try:
-            bugun = datetime.now().date()
-            otuz_gun_once = bugun - timedelta(days=30)
-            
-            # Minibar işlemlerinden en çok tüketilen ürünleri al
-            urun_tuketim = db.session.query(
-                Urun.urun_adi,
-                db.func.sum(MinibarIslemDetay.tuketim).label('toplam_tuketim')
-            ).join(
-                MinibarIslemDetay, MinibarIslemDetay.urun_id == Urun.id
-            ).join(
-                MinibarIslem, MinibarIslem.id == MinibarIslemDetay.islem_id
-            ).filter(
-                db.func.date(MinibarIslem.islem_tarihi) >= otuz_gun_once,
-                MinibarIslemDetay.tuketim > 0
-            ).group_by(
-                Urun.id, Urun.urun_adi
-            ).order_by(
-                db.desc('toplam_tuketim')
-            ).limit(10).all()
-            
-            urun_labels = [u[0] for u in urun_tuketim]
-            urun_tuketim_miktarlari = [float(u[1] or 0) for u in urun_tuketim]
-        except Exception as e:
-            print(f"Ürün tüketim verileri hatası: {str(e)}")
-            db.session.rollback()  # Transaction'ı temizle
-        
-        return render_template('sistem_yoneticisi/dashboard.html',
-                             otel_doluluk_raporlari=otel_doluluk_raporlari,
-                             toplam_kat=toplam_kat,
-                             toplam_oda=toplam_oda,
-                             toplam_kullanici=toplam_kullanici,
-                             toplam_personel=toplam_personel,
-                             son_katlar=son_katlar,
-                             son_odalar=son_odalar,
-                             admin_count=admin_count,
-                             depo_count=depo_count,
-                             kat_count=kat_count,
-                             kat_labels=kat_labels,
-                             kat_oda_sayilari=kat_oda_sayilari,
-                             toplam_urun_grup=toplam_urun_grup,
-                             toplam_urun=toplam_urun,
-                             kritik_urunler=kritik_urunler,
-                             stok_durumlari=stok_durumlari,
-                             son_personeller=son_personeller,
-                             son_urunler=son_urunler,
-                             urun_labels=urun_labels,
-                             urun_tuketim_miktarlari=urun_tuketim_miktarlari,
-                             ml_enabled=ml_enabled,
-                             ml_alerts=ml_alerts,
-                             ml_alert_count=ml_alert_count,
-                             dashboard_bildirimleri=dashboard_bildirimleri,
-                             bildirim_sayilari=bildirim_sayilari,
-                             istatistikler=istatistikler)
+            print(f"Sistem yöneticisi dashboard hatası: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            flash(f'Dashboard yüklenirken hata oluştu: {str(e)}', 'danger')
+            # Minimal dashboard göster
+            return render_template('sistem_yoneticisi/dashboard.html',
+                                 otel_doluluk_raporlari=[],
+                                 toplam_kat=0,
+                                 toplam_oda=0,
+                                 toplam_kullanici=0,
+                                 toplam_personel=0,
+                                 son_katlar=[],
+                                 son_odalar=[],
+                                 admin_count=0,
+                                 depo_count=0,
+                                 kat_count=0,
+                                 kat_labels=[],
+                                 kat_oda_sayilari=[],
+                                 toplam_urun_grup=0,
+                                 toplam_urun=0,
+                                 kritik_urunler=[],
+                                 stok_durumlari={'kritik': [], 'dikkat': [], 'normal': [], 'istatistik': {'toplam': 0, 'kritik_sayi': 0, 'dikkat_sayi': 0, 'normal_sayi': 0}},
+                                 son_personeller=[],
+                                 son_urunler=[],
+                                 urun_labels=[],
+                                 urun_tuketim_miktarlari=[],
+                                 ml_enabled=False,
+                                 ml_alerts=[],
+                                 ml_alert_count=0,
+                                 dashboard_bildirimleri=[],
+                                 bildirim_sayilari={'kritik_stok': 0, 'geciken_siparis': 0, 'onay_bekleyen': 0, 'toplam': 0},
+                                 istatistikler={'onaylandi': 0})
 
     
     @app.route('/depo')

@@ -10,6 +10,8 @@ window.yeniEklenenOdaId = window.yeniEklenenOdaId || null;
  * Yeni oda modal'ını aç
  */
 function yeniOdaModal() {
+    console.log('Yeni oda modal açılıyor...');
+    
     // Formu temizle
     document.getElementById('yeniOdaForm').reset();
     document.getElementById('yeniOdaAlert').style.display = 'none';

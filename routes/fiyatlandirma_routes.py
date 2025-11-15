@@ -52,11 +52,11 @@ def urun_fiyat_bilgileri(urun_id):
     Ürün fiyat bilgilerini getir
     
     Query Parameters:
-        - oda_tipi: Oda tipi (opsiyonel)
+        - oda_tipi_id: Oda tipi ID (opsiyonel, varsayılan: 1)
         - tarih: Tarih (YYYY-MM-DD, opsiyonel)
     """
     try:
-        oda_tipi = request.args.get('oda_tipi', 'Standard')
+        oda_tipi_id = request.args.get('oda_tipi_id', type=int, default=1)
         tarih_str = request.args.get('tarih')
         
         # Tarih parse
@@ -70,7 +70,7 @@ def urun_fiyat_bilgileri(urun_id):
         
         # Satış fiyatı
         satis_fiyati = FiyatYonetimServisi.oda_tipi_fiyati_getir(
-            urun_id, oda_tipi, tarih
+            urun_id, oda_tipi_id, tarih
         )
         
         # En uygun tedarikçi
@@ -92,7 +92,7 @@ def urun_fiyat_bilgileri(urun_id):
             'urun_id': urun_id,
             'alis_fiyati': float(alis_fiyati) if alis_fiyati else None,
             'satis_fiyati': float(satis_fiyati) if satis_fiyati else None,
-            'oda_tipi': oda_tipi,
+            'oda_tipi_id': oda_tipi_id,
             'tedarikci': tedarikci,
             'aktif_kampanyalar': kampanyalar
         }), 200
@@ -244,7 +244,7 @@ def dinamik_fiyat_hesapla():
     Body:
         - urun_id: Ürün ID (required)
         - oda_id: Oda ID (required)
-        - oda_tipi: Oda tipi (required)
+        - oda_tipi_id: Oda tipi ID (required)
         - miktar: Miktar (varsayılan: 1)
         - tarih: Tarih (YYYY-MM-DD, opsiyonel)
     """
@@ -252,15 +252,15 @@ def dinamik_fiyat_hesapla():
         data = request.get_json()
         
         # Validasyon
-        if not all(k in data for k in ['urun_id', 'oda_id', 'oda_tipi']):
+        if not all(k in data for k in ['urun_id', 'oda_id', 'oda_tipi_id']):
             return jsonify({
                 'success': False,
-                'error': 'urun_id, oda_id ve oda_tipi zorunludur'
+                'error': 'urun_id, oda_id ve oda_tipi_id zorunludur'
             }), 400
         
         urun_id = data['urun_id']
         oda_id = data['oda_id']
-        oda_tipi = data['oda_tipi']
+        oda_tipi_id = data['oda_tipi_id']
         miktar = data.get('miktar', 1)
         
         # Tarih parse
@@ -274,7 +274,7 @@ def dinamik_fiyat_hesapla():
         sonuc = FiyatYonetimServisi.dinamik_fiyat_hesapla(
             urun_id=urun_id,
             oda_id=oda_id,
-            oda_tipi=oda_tipi,
+            oda_tipi_id=oda_tipi_id,
             miktar=miktar,
             tarih=tarih
         )
@@ -572,10 +572,10 @@ def guncel_fiyatlar_listesi():
         
         sonuc = []
         for fiyat, urun, tedarikci in fiyatlar_data:
-            # Satış fiyatını getir (Standard oda tipi için)
+            # Satış fiyatını getir (Standard oda tipi için - ID: 1)
             satis_fiyati_obj = OdaTipiSatisFiyati.query.filter_by(
                 urun_id=urun.id,
-                oda_tipi='Standard',
+                oda_tipi_id=1,  # Standard oda tipi
                 aktif=True
             ).filter(
                 OdaTipiSatisFiyati.baslangic_tarihi <= simdi

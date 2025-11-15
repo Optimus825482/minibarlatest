@@ -110,7 +110,7 @@ class DataCollector:
                         timestamp=timestamp,
                         extra_data={
                             'oda_no': oda.oda_no,
-                            'oda_tipi': oda.oda_tipi,
+                            'oda_tipi': oda.oda_tipi_adi,
                             'kat': oda.kat.kat_adi if oda.kat else None
                         }
                     )
