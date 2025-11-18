@@ -63,10 +63,10 @@
             <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 Stok Hareketleri ({{ hareketler.total }} kayıt)
             </h3>
-            <button onclick="openStokGirisModal()"
-                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                + Yeni Stok Girişi
-            </button>
+            <div class="text-sm text-slate-500 dark:text-slate-400 bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-200 dark:border-blue-800">
+                <i class="fas fa-info-circle mr-1"></i>
+                Stok girişleri <a href="{{ url_for('satin_alma_siparis') }}" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">Satın Alma</a> modülünden otomatik yapılır
+            </div>
         </div>
         
         {% if hareketler.items %}
@@ -148,82 +148,25 @@
         </div>
         {% endif %}
         {% else %}
-        <div class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
-            Stok hareketi bulunamadı.
+        <div class="px-6 py-12 text-center">
+            <i class="fas fa-boxes text-slate-300 dark:text-slate-600 text-5xl mb-4"></i>
+            <p class="text-slate-500 dark:text-slate-400 text-lg mb-2">
+                Henüz stok hareketi bulunmuyor
+            </p>
+            <p class="text-sm text-slate-400 dark:text-slate-500 mb-4">
+                Stok hareketleri satın alma işlemleri sırasında otomatik olarak kaydedilir
+            </p>
+            <a href="{{ url_for('satin_alma_siparis') }}"
+                class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                <i class="fas fa-shopping-cart mr-2"></i>
+                Satın Alma Yap
+            </a>
         </div>
         {% endif %}
     </div>
 </div>
 
-<!-- Stok Giriş Modal -->
-<div id="stokGirisModal" class="hidden fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 z-50 flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Yeni Stok Girişi</h3>
-            <button onclick="closeStokGirisModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-        
-        <form id="stokGirisForm" class="p-6 space-y-6">
-            <!-- Ürün Grubu -->
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Ürün Grubu <span class="text-red-500">*</span>
-                </label>
-                <select id="grupSelect" required
-                    class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200">
-                    <option value="">Ürün Grubu Seçin</option>
-                </select>
-            </div>
-            
-            <!-- Ürün -->
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Ürün <span class="text-red-500">*</span>
-                </label>
-                <select id="urunSelect" required disabled
-                    class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 dark:disabled:bg-slate-900 dark:bg-slate-700 dark:text-slate-200">
-                    <option value="">Önce ürün grubu seçin</option>
-                </select>
-            </div>
-            
-            <!-- Miktar -->
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Miktar <span class="text-red-500">*</span>
-                </label>
-                <input type="number" id="miktarInput" min="1" required
-                    class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
-                    placeholder="Giriş miktarını girin">
-            </div>
-            
-            <!-- Açıklama -->
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Açıklama
-                </label>
-                <textarea id="aciklamaInput" rows="3"
-                    class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
-                    placeholder="İsteğe bağlı açıklama"></textarea>
-            </div>
-            
-            <!-- Butonlar -->
-            <div class="flex justify-end space-x-4 pt-4">
-                <button type="button" onclick="closeStokGirisModal()"
-                    class="px-6 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                    İptal
-                </button>
-                <button type="submit"
-                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    Stok Girişi Yap
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+<!-- Modal kaldırıldı - Stok girişleri Satın Alma modülünden yapılır -->
 
 <!-- jQuery (Select2 için gerekli) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -273,153 +216,6 @@
 </style>
 
 <script>
-let gruplar = [];
-let urunler = [];
-
-// Modal açma
-function openStokGirisModal() {
-    document.getElementById('stokGirisModal').classList.remove('hidden');
-    loadGruplar();
-}
-
-// Modal kapatma
-function closeStokGirisModal() {
-    document.getElementById('stokGirisModal').classList.add('hidden');
-    document.getElementById('stokGirisForm').reset();
-    $('#urunSelect').val(null).trigger('change').prop('disabled', true);
-}
-
-// Grupları yükle
-async function loadGruplar() {
-    try {
-        const response = await fetch('/api/urun-gruplari');
-        gruplar = await response.json();
-        
-        const grupSelect = document.getElementById('grupSelect');
-        grupSelect.innerHTML = '<option value="">Ürün Grubu Seçin</option>';
-        
-        gruplar.forEach(grup => {
-            const option = document.createElement('option');
-            option.value = grup.id;
-            option.textContent = grup.grup_adi;
-            grupSelect.appendChild(option);
-        });
-        
-        // Select2 başlat
-        $('#grupSelect').select2({
-            placeholder: 'Ürün grubu ara...',
-            allowClear: true,
-            dropdownParent: $('#stokGirisModal'),
-            theme: 'default'
-        });
-        
-        // Select2 change event'i
-        $('#grupSelect').on('change', loadUrunlerByGrup);
-        
-    } catch (error) {
-        console.error('Gruplar yüklenemedi:', error);
-        showError('Ürün grupları yüklenirken hata oluştu');
-    }
-}
-
-// Grup seçildiğinde ürünleri yükle
-async function loadUrunlerByGrup() {
-    const grupId = $('#grupSelect').val();
-    const urunSelect = document.getElementById('urunSelect');
-    
-    if (!grupId) {
-        urunSelect.innerHTML = '<option value="">Önce ürün grubu seçin</option>';
-        urunSelect.disabled = true;
-        $('#urunSelect').select2('destroy');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/urunler-by-grup/${grupId}`);
-        urunler = await response.json();
-        
-        urunSelect.innerHTML = '<option value="">Ürün Seçin</option>';
-        urunler.forEach(urun => {
-            const option = document.createElement('option');
-            option.value = urun.id;
-            option.textContent = `${urun.urun_adi} (Stok: ${urun.stok_miktari} ${urun.birim})`;
-            urunSelect.appendChild(option);
-        });
-        
-        urunSelect.disabled = false;
-        
-        // Select2 başlat
-        $('#urunSelect').select2({
-            placeholder: 'Ürün ara...',
-            allowClear: true,
-            dropdownParent: $('#stokGirisModal'),
-            theme: 'default'
-        });
-        
-    } catch (error) {
-        console.error('Ürünler yüklenemedi:', error);
-        showError('Ürünler yüklenirken hata oluştu');
-    }
-}
-
-// Form submit
-document.getElementById('stokGirisForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const urunId = document.getElementById('urunSelect').value;
-    const miktar = document.getElementById('miktarInput').value;
-    const aciklama = document.getElementById('aciklamaInput').value;
-    
-    if (!urunId || !miktar) {
-        showWarning('Lütfen tüm zorunlu alanları doldurun');
-        return;
-    }
-    
-    // CSRF token'ı meta tag'den al
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    
-    if (!csrfToken) {
-        showError('CSRF token bulunamadı', 'Güvenlik Hatası');
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/stok-giris', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({
-                urun_id: parseInt(urunId),
-                miktar: parseInt(miktar),
-                aciklama: aciklama
-            })
-        });
-        
-        // Response kontrolü
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('API Hatası:', response.status, errorText);
-            throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            closeStokGirisModal();
-            showSuccess('Stok girişi başarıyla kaydedildi');
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showError(data.message || 'Bilinmeyen hata');
-        }
-        
-    } catch (error) {
-        console.error('Stok girişi hatası:', error);
-        showError(error.message, 'Stok Girişi Hatası');
-    }
-});
-
 // Stok hareketi silme fonksiyonu
 async function silHareket(hareketId) {
     // Onay iste

@@ -59,9 +59,6 @@ def register_all_routes(app):
     from routes.kat_sorumlusu_qr_routes import register_kat_sorumlusu_qr_routes
     register_kat_sorumlusu_qr_routes(app)
     
-    from routes.kat_sorumlusu_ilk_dolum_routes import register_kat_sorumlusu_ilk_dolum_routes
-    register_kat_sorumlusu_ilk_dolum_routes(app)
-    
     from routes.misafir_qr_routes import register_misafir_qr_routes
     register_misafir_qr_routes(app)
     

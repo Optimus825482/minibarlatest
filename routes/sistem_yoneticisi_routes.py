@@ -1602,7 +1602,8 @@ def register_sistem_yoneticisi_routes(app):
                     'id': tip.id,
                     'ad': tip.ad,
                     'dolap_sayisi': tip.dolap_sayisi,
-                    'setup': tip.setup,
+                    'setup_ids': [s.id for s in tip.setuplar],  # Many-to-Many ilişkiden setup ID'leri
+                    'setup_adlari': [s.ad for s in tip.setuplar],  # Setup isimleri
                     'olusturma_tarihi': tip.olusturma_tarihi.isoformat() if tip.olusturma_tarihi else None
                 } for tip in oda_tipleri]
             }
@@ -1620,12 +1621,12 @@ def register_sistem_yoneticisi_routes(app):
     def api_oda_tipi_ekle():
         """Yeni oda tipi ekle"""
         try:
-            from models import OdaTipi
+            from models import OdaTipi, Setup
             
             data = request.get_json()
             ad = data.get('ad', '').strip()
             dolap_sayisi = data.get('dolap_sayisi', 0)
-            setup = data.get('setup', '').strip()
+            setup_ids = data.get('setup_ids', [])
             
             if not ad:
                 return {
@@ -1633,10 +1634,10 @@ def register_sistem_yoneticisi_routes(app):
                     'error': 'Oda tipi adı boş olamaz'
                 }, 400
             
-            if not setup:
+            if not setup_ids or len(setup_ids) == 0:
                 return {
                     'success': False,
-                    'error': 'Setup seçimi zorunludur'
+                    'error': 'En az bir setup seçimi zorunludur'
                 }, 400
             
             # Aynı isimde oda tipi var mı kontrol et
@@ -1651,14 +1652,21 @@ def register_sistem_yoneticisi_routes(app):
                     # Pasif oda tipini aktif et ve güncelle
                     mevcut.aktif = True
                     mevcut.dolap_sayisi = dolap_sayisi
-                    mevcut.setup = setup
+                    
+                    # Setup'ları güncelle (many-to-many)
+                    mevcut.setuplar.clear()
+                    for setup_id in setup_ids:
+                        setup = Setup.query.get(setup_id)
+                        if setup:
+                            mevcut.setuplar.append(setup)
+                    
                     db.session.commit()
                     
                     audit_update(
                         'OdaTipi',
                         mevcut.id,
                         {'aktif': False},
-                        {'aktif': True, 'dolap_sayisi': dolap_sayisi, 'setup': setup},
+                        {'aktif': True, 'dolap_sayisi': dolap_sayisi, 'setup_ids': setup_ids},
                         session.get('kullanici_id')
                     )
                     
@@ -1670,12 +1678,20 @@ def register_sistem_yoneticisi_routes(app):
                             'id': mevcut.id,
                             'ad': mevcut.ad,
                             'dolap_sayisi': mevcut.dolap_sayisi,
-                            'setup': mevcut.setup
+                            'setup_ids': [s.id for s in mevcut.setuplar],
+                            'setup_adlari': [s.ad for s in mevcut.setuplar]
                         }
                     }
             
             # Yeni oda tipi oluştur
-            yeni_tip = OdaTipi(ad=ad, dolap_sayisi=dolap_sayisi, setup=setup)
+            yeni_tip = OdaTipi(ad=ad, dolap_sayisi=dolap_sayisi)
+            
+            # Setup'ları ekle (many-to-many)
+            for setup_id in setup_ids:
+                setup = Setup.query.get(setup_id)
+                if setup:
+                    yeni_tip.setuplar.append(setup)
+            
             db.session.add(yeni_tip)
             db.session.commit()
             
@@ -1688,7 +1704,8 @@ def register_sistem_yoneticisi_routes(app):
                     'id': yeni_tip.id,
                     'ad': yeni_tip.ad,
                     'dolap_sayisi': yeni_tip.dolap_sayisi,
-                    'setup': yeni_tip.setup
+                    'setup_ids': [s.id for s in yeni_tip.setuplar],
+                    'setup_adlari': [s.ad for s in yeni_tip.setuplar]
                 }
             }
             
@@ -1706,13 +1723,13 @@ def register_sistem_yoneticisi_routes(app):
     def api_oda_tipi_guncelle(tip_id):
         """Oda tipi güncelle"""
         try:
-            from models import OdaTipi
+            from models import OdaTipi, Setup
             
             oda_tipi = OdaTipi.query.get_or_404(tip_id)
             data = request.get_json()
             ad = data.get('ad', '').strip()
             dolap_sayisi = data.get('dolap_sayisi', 0)
-            setup = data.get('setup', '').strip()
+            setup_ids = data.get('setup_ids', [])
             
             if not ad:
                 return {
@@ -1720,10 +1737,10 @@ def register_sistem_yoneticisi_routes(app):
                     'error': 'Oda tipi adı boş olamaz'
                 }, 400
             
-            if not setup:
+            if not setup_ids or len(setup_ids) == 0:
                 return {
                     'success': False,
-                    'error': 'Setup seçimi zorunludur'
+                    'error': 'En az bir setup seçimi zorunludur'
                 }, 400
             
             # Aynı isimde başka oda tipi var mı kontrol et
@@ -1741,7 +1758,14 @@ def register_sistem_yoneticisi_routes(app):
             eski_deger = serialize_model(oda_tipi)
             oda_tipi.ad = ad
             oda_tipi.dolap_sayisi = dolap_sayisi
-            oda_tipi.setup = setup
+            
+            # Setup'ları güncelle (many-to-many)
+            oda_tipi.setuplar.clear()
+            for setup_id in setup_ids:
+                setup = Setup.query.get(setup_id)
+                if setup:
+                    oda_tipi.setuplar.append(setup)
+            
             db.session.commit()
             
             audit_update('OdaTipi', tip_id, eski_deger, serialize_model(oda_tipi), session.get('kullanici_id'))
@@ -1753,7 +1777,8 @@ def register_sistem_yoneticisi_routes(app):
                     'id': oda_tipi.id,
                     'ad': oda_tipi.ad,
                     'dolap_sayisi': oda_tipi.dolap_sayisi,
-                    'setup': oda_tipi.setup
+                    'setup_ids': [s.id for s in oda_tipi.setuplar],
+                    'setup_adlari': [s.ad for s in oda_tipi.setuplar]
                 }
             }
             
@@ -1825,19 +1850,18 @@ def register_sistem_yoneticisi_routes(app):
     def api_setuplar_listele():
         """Tüm setup'ları listele"""
         try:
-            from models import Setup, SetupIcerik, OdaTipi
-            from sqlalchemy import func
+            from models import Setup, SetupIcerik
             
-            setuplar = Setup.query.filter_by(aktif=True).all()
+            # Tüm setup'ları getir (aktif/pasif fark etmez)
+            setuplar = Setup.query.all()
             
             sonuc = []
             for setup in setuplar:
                 # Ürün sayısını hesapla
                 urun_sayisi = SetupIcerik.query.filter_by(setup_id=setup.id).count()
                 
-                # Bu setup'ı kullanan oda tiplerini bul
-                oda_tipleri = OdaTipi.query.filter_by(setup=setup.ad, aktif=True).all()
-                oda_tipi_adlari = [tip.ad for tip in oda_tipleri]
+                # Bu setup'a atanmış oda tiplerini al (Many-to-Many)
+                oda_tipi_adlari = [ot.ad for ot in setup.oda_tipleri]
                 
                 # Toplam maliyeti hesapla (ürün alış fiyatı * adet)
                 toplam_maliyet = 0
@@ -1850,6 +1874,7 @@ def register_sistem_yoneticisi_routes(app):
                     'id': setup.id,
                     'ad': setup.ad,
                     'aciklama': setup.aciklama,
+                    'dolap_ici': setup.dolap_ici if hasattr(setup, 'dolap_ici') else True,
                     'urun_sayisi': urun_sayisi,
                     'oda_tipleri': oda_tipi_adlari,
                     'toplam_maliyet': round(toplam_maliyet, 2)
@@ -1878,6 +1903,7 @@ def register_sistem_yoneticisi_routes(app):
             data = request.get_json()
             ad = data.get('ad', '').strip()
             aciklama = data.get('aciklama', '').strip()
+            dolap_ici = data.get('dolap_ici', True)  # Varsayılan: Dolap İçi
             
             if not ad:
                 return {
@@ -1893,7 +1919,7 @@ def register_sistem_yoneticisi_routes(app):
                     'error': 'Bu isimde setup zaten mevcut'
                 }, 400
             
-            yeni_setup = Setup(ad=ad, aciklama=aciklama)
+            yeni_setup = Setup(ad=ad, aciklama=aciklama, dolap_ici=dolap_ici)
             db.session.add(yeni_setup)
             db.session.commit()
             
@@ -1911,6 +1937,70 @@ def register_sistem_yoneticisi_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, 'api_setup_ekle')
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+
+    @app.route('/api/setuplar/<int:setup_id>', methods=['PUT', 'PATCH', 'POST'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_setup_guncelle(setup_id):
+        """Setup güncelle"""
+        try:
+            from models import Setup, Oda
+            
+            data = request.get_json()
+            ad = data.get('ad', '').strip()
+            aciklama = data.get('aciklama', '').strip()
+            dolap_ici = data.get('dolap_ici', True)
+            
+            # Validasyon
+            if not ad:
+                return {
+                    'success': False,
+                    'error': 'Setup adı boş olamaz'
+                }, 400
+            
+            # Setup bul
+            setup = Setup.query.get_or_404(setup_id)
+            eski_ad = setup.ad
+            eski_deger = serialize_model(setup)
+            
+            # Aynı isimde başka setup var mı kontrol et
+            existing = Setup.query.filter(
+                Setup.ad == ad,
+                Setup.id != setup_id
+            ).first()
+            
+            if existing:
+                return {
+                    'success': False,
+                    'error': 'Bu isimde bir setup zaten var'
+                }, 400
+            
+            # Güncelle
+            setup.ad = ad
+            setup.aciklama = aciklama
+            setup.dolap_ici = dolap_ici
+            db.session.commit()
+            
+            # NOT: Oda tipi atamaları artık Many-to-Many ilişki ile yönetiliyor
+            # oda_tipi_setup ara tablosu kullanılıyor, Oda tablosunda setup kolonu yok
+            
+            # Audit log
+            yeni_deger = serialize_model(setup)
+            audit_update('Setup', setup_id, eski_deger, yeni_deger, session.get('kullanici_id'))
+            log_islem('setup_guncelle', f'Setup güncellendi: {eski_ad} → {ad}')
+            
+            return {
+                'success': True,
+                'message': 'Setup başarıyla güncellendi'
+            }
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, 'api_setup_guncelle')
             return {
                 'success': False,
                 'error': str(e)
@@ -2078,32 +2168,48 @@ def register_sistem_yoneticisi_routes(app):
     @login_required
     @role_required('sistem_yoneticisi', 'admin')
     def api_setup_atama():
-        """Setup'ı oda tiplerine ata"""
+        """Setup'ları oda tiplerine ata (Many-to-Many)"""
         try:
-            from models import OdaTipi
+            from models import OdaTipi, Setup
             
             data = request.get_json()
-            setup_ad = data.get('setup_ad', '').strip()
-            oda_tip_ids = data.get('oda_tip_ids', [])
             
-            if not setup_ad:
+            if not data:
                 return {
                     'success': False,
-                    'error': 'Setup adı boş olamaz'
+                    'error': 'Veri gönderilmedi'
                 }, 400
             
-            # Önce bu setup'ı kullanan tüm oda tiplerini temizle
-            OdaTipi.query.filter_by(setup=setup_ad).update({'setup': None})
+            oda_tipi_id = data.get('oda_tipi_id')
+            setup_ids = data.get('setup_ids', [])
             
-            # Seçilen oda tiplerine setup'ı ata
-            for tip_id in oda_tip_ids:
-                oda_tipi = OdaTipi.query.get(tip_id)
-                if oda_tipi:
-                    oda_tipi.setup = setup_ad
+            if not oda_tipi_id:
+                return {
+                    'success': False,
+                    'error': 'Oda tipi ID belirtilmedi'
+                }, 400
+            
+            # Oda tipini bul
+            oda_tipi = OdaTipi.query.get(oda_tipi_id)
+            if not oda_tipi:
+                return {
+                    'success': False,
+                    'error': f'Oda tipi bulunamadı: {oda_tipi_id}'
+                }, 404
+            
+            # Mevcut setup'ları temizle
+            oda_tipi.setuplar.clear()
+            
+            # Yeni setup'ları ekle
+            if setup_ids:
+                for setup_id in setup_ids:
+                    setup = Setup.query.get(setup_id)
+                    if setup:
+                        oda_tipi.setuplar.append(setup)
             
             db.session.commit()
             
-            log_islem('setup_atama', f'Setup atandı: {setup_ad} -> {len(oda_tip_ids)} oda tipi')
+            log_islem('setup_atama', f'Oda tipi setup ataması güncellendi: {oda_tipi.ad} -> {len(setup_ids)} setup')
             
             return {
                 'success': True,

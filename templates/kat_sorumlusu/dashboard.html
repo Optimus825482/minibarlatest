@@ -1,572 +1,733 @@
-{% extends "base.html" %}
-
-{% block title %}Kat Sorumlusu Panel - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Kat Sorumlusu Panel{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Kat Sorumlusu Panel - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}Kat Sorumlusu Panel{% endblock %} {%
+block content %}
 <div class="space-y-6">
-    <!-- Günlük Doluluk Özeti -->
-    {% if doluluk_raporu %}
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-medium text-slate-900 dark:text-white">
-                <i class="fas fa-calendar-check mr-2 text-slate-600 dark:text-slate-400"></i>
-                {% set gun_adlari = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'] %}
-                {{ now().strftime('%d.%m.%y') }} - {{ gun_adlari[now().weekday()] }} - Doluluk Durumu
-            </h3>
-            <a href="{{ url_for('doluluk.gunluk_doluluk') }}"
-                class="text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
-                Detaylı Rapor →
-            </a>
+  <!-- Günlük Doluluk Özeti -->
+  {% if doluluk_raporu %}
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-medium text-slate-900 dark:text-white">
+        <i
+          class="fas fa-calendar-check mr-2 text-slate-600 dark:text-slate-400"
+        ></i>
+        {% set gun_adlari = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe',
+        'Cuma', 'Cumartesi', 'Pazar'] %} {{ now().strftime('%d.%m.%y') }} - {{
+        gun_adlari[now().weekday()] }} - Doluluk Durumu
+      </h3>
+      <a
+        href="{{ url_for('doluluk.gunluk_doluluk') }}"
+        class="text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+      >
+        Detaylı Rapor →
+      </a>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <!-- Toplam Oda -->
+      <div
+        class="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 border border-slate-200 dark:border-slate-700"
+      >
+        <div class="text-slate-500 dark:text-slate-400 text-sm mb-1">
+          Toplam Oda
         </div>
-
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <!-- Toplam Oda -->
-            <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-                <div class="text-slate-500 dark:text-slate-400 text-sm mb-1">Toplam Oda</div>
-                <div class="text-3xl font-bold text-slate-900 dark:text-white">{{ doluluk_raporu.toplam_oda }}</div>
-            </div>
-
-            <!-- Dolu Oda -->
-            <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
-                <div class="text-red-600 dark:text-red-400 text-sm mb-1">Dolu Oda</div>
-                <div class="text-3xl font-bold text-red-700 dark:text-red-300">{{ doluluk_raporu.dolu_oda }}</div>
-                <div class="text-xs text-red-600 dark:text-red-400 mt-1">Doluluk: {{ doluluk_raporu.doluluk_orani }}%
-                </div>
-            </div>
-
-            <!-- Bugün Giriş -->
-            <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
-                <div class="text-green-600 dark:text-green-400 text-sm mb-1">Bugün Giriş</div>
-                <div class="text-3xl font-bold text-green-700 dark:text-green-300">{{ doluluk_raporu.giris_sayisi }}
-                </div>
-                <div class="text-xs text-green-600 dark:text-green-400 mt-1">Misafir</div>
-            </div>
-
-            <!-- Bugün Çıkış -->
-            <div
-                class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
-                <div class="text-orange-600 dark:text-orange-400 text-sm mb-1">Bugün Çıkış</div>
-                <div class="text-3xl font-bold text-orange-700 dark:text-orange-300">{{ doluluk_raporu.cikis_sayisi }}
-                </div>
-                <div class="text-xs text-orange-600 dark:text-orange-400 mt-1">Misafir</div>
-            </div>
+        <div class="text-3xl font-bold text-slate-900 dark:text-white">
+          {{ doluluk_raporu.toplam_oda }}
         </div>
+      </div>
 
-        <!-- Kat Bazlı Özet -->
-        {% if doluluk_raporu.kat_bazli %}
-        <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-            <div class="text-sm text-slate-600 dark:text-slate-400 mb-2">Kat Bazlı Doluluk (Detay için tıklayın):</div>
-            <div class="flex flex-wrap gap-2">
-                {% for kat_id, kat_info in doluluk_raporu.kat_bazli.items() %}
-                <a href="{{ url_for('doluluk.kat_doluluk_detay', kat_id=kat_info.kat.id) }}"
-                    class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded px-3 py-1 text-sm border border-slate-200 dark:border-slate-600 transition-colors cursor-pointer">
-                    <span class="font-semibold text-slate-900 dark:text-white">{{ kat_info.kat.kat_adi }}:</span>
-                    <span class="text-red-600 dark:text-red-400">{{ kat_info.dolu_oda_sayisi }} dolu</span>
-                </a>
-                {% endfor %}
-            </div>
+      <!-- Dolu Oda -->
+      <div
+        class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800"
+      >
+        <div class="text-red-600 dark:text-red-400 text-sm mb-1">Dolu Oda</div>
+        <div class="text-3xl font-bold text-red-700 dark:text-red-300">
+          {{ doluluk_raporu.dolu_oda }}
         </div>
-        {% endif %}
+        <div class="text-xs text-red-600 dark:text-red-400 mt-1">
+          Doluluk: {{ doluluk_raporu.doluluk_orani }}%
+        </div>
+      </div>
+
+      <!-- Bugün Giriş -->
+      <div
+        class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800"
+      >
+        <div class="text-green-600 dark:text-green-400 text-sm mb-1">
+          Bugün Giriş
+        </div>
+        <div class="text-3xl font-bold text-green-700 dark:text-green-300">
+          {{ doluluk_raporu.giris_sayisi }}
+        </div>
+        <div class="text-xs text-green-600 dark:text-green-400 mt-1">
+          Misafir
+        </div>
+      </div>
+
+      <!-- Bugün Çıkış -->
+      <div
+        class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800"
+      >
+        <div class="text-orange-600 dark:text-orange-400 text-sm mb-1">
+          Bugün Çıkış
+        </div>
+        <div class="text-3xl font-bold text-orange-700 dark:text-orange-300">
+          {{ doluluk_raporu.cikis_sayisi }}
+        </div>
+        <div class="text-xs text-orange-600 dark:text-orange-400 mt-1">
+          Misafir
+        </div>
+      </div>
+    </div>
+
+    <!-- Kat Bazlı Özet -->
+    {% if doluluk_raporu.kat_bazli %}
+    <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+      <div class="text-sm text-slate-600 dark:text-slate-400 mb-2">
+        Kat Bazlı Doluluk (Detay için tıklayın):
+      </div>
+      <div class="flex flex-wrap gap-2">
+        {% for kat_id, kat_info in doluluk_raporu.kat_bazli.items() %}
+        <a
+          href="{{ url_for('doluluk.kat_doluluk_detay', kat_id=kat_info.kat.id) }}"
+          class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded px-3 py-1 text-sm border border-slate-200 dark:border-slate-600 transition-colors cursor-pointer"
+        >
+          <span class="font-semibold text-slate-900 dark:text-white"
+            >{{ kat_info.kat.kat_adi }}:</span
+          >
+          <span class="text-red-600 dark:text-red-400"
+            >{{ kat_info.dolu_oda_sayisi }} dolu</span
+          >
+        </a>
+        {% endfor %}
+      </div>
     </div>
     {% endif %}
+  </div>
+  {% endif %}
 
-    <!-- Hızlı İşlemler - Modern & Optimized -->
-    <div
-        class="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 shadow-lg rounded-xl border border-slate-200 dark:border-slate-700">
-        <div class="px-6 py-5">
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center space-x-3">
-                    <div
-                        class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
-                        <i class="fas fa-bolt text-white text-lg"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">Hızlı İşlemler</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">En sık kullanılan işlemler</p>
-                    </div>
-                </div>
+  <!-- Hızlı İşlemler - Modern & Optimized -->
+  <div
+    class="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 shadow-lg rounded-xl border border-slate-200 dark:border-slate-700"
+  >
+    <div class="px-6 py-5">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center space-x-3">
+          <div
+            class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg"
+          >
+            <i class="fas fa-bolt text-white text-lg"></i>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+              Hızlı İşlemler
+            </h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400">
+              En sık kullanılan işlemler
+            </p>
+          </div>
+        </div>
+        {% if kritik_stok_sayisi > 0 %}
+        <span
+          class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 animate-pulse"
+        >
+          <i class="fas fa-exclamation-triangle mr-1.5"></i>
+          {{ kritik_stok_sayisi }} Kritik Ürün
+        </span>
+        {% endif %}
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+        <!-- Oda Kontrol -->
+        <a
+          href="{{ url_for('oda_kontrol') }}"
+          class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 border-indigo-100 dark:border-indigo-900 hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+        >
+          <div class="flex flex-col items-center text-center space-y-3">
+            <div
+              class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300"
+            >
+              <i class="fas fa-clipboard-check text-white text-2xl"></i>
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">
+                Oda Kontrol
+              </h4>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                Minibar kontrolü yap
+              </p>
+            </div>
+          </div>
+          <div
+            class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <i class="fas fa-arrow-right text-indigo-500 text-sm"></i>
+          </div>
+        </a>
+
+        <!-- Zimmet Stoklarım -->
+        <a
+          href="{{ url_for('kat_sorumlusu_zimmet_stoklarim') }}"
+          class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 border-green-100 dark:border-green-900 hover:border-green-400 dark:hover:border-green-600 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+        >
+          <div class="flex flex-col items-center text-center space-y-3">
+            <div
+              class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 relative"
+            >
+              <i class="fas fa-boxes text-white text-2xl"></i>
+              {% if zimmet_toplam > 0 %}
+              <span
+                class="absolute -top-1 -right-1 w-6 h-6 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-md"
+              >
+                {{ zimmet_toplam }}
+              </span>
+              {% endif %}
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">
+                Stoklarım
+              </h4>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                Stoklarımı görüntüle
+              </p>
+            </div>
+          </div>
+          <div
+            class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <i class="fas fa-arrow-right text-green-500 text-sm"></i>
+          </div>
+        </a>
+
+        <!-- Kritik Stoklar -->
+        <a
+          href="{{ url_for('kat_sorumlusu_kritik_stoklar') }}"
+          class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 {% if kritik_stok_sayisi > 0 %}border-red-400 dark:border-red-600 ring-2 ring-red-200 dark:ring-red-800{% else %}border-red-100 dark:border-red-900{% endif %} hover:border-red-400 dark:hover:border-red-600 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+        >
+          <div class="flex flex-col items-center text-center space-y-3">
+            <div
+              class="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 relative {% if kritik_stok_sayisi > 0 %}animate-pulse{% endif %}"
+            >
+              <i class="fas fa-exclamation-triangle text-white text-2xl"></i>
+              {% if kritik_stok_sayisi > 0 %}
+              <span
+                class="absolute -top-1 -right-1 w-6 h-6 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-md"
+              >
+                {{ kritik_stok_sayisi }}
+              </span>
+              {% endif %}
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">
+                Kritik Stoklar
+              </h4>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
                 {% if kritik_stok_sayisi > 0 %}
+                <span class="text-red-600 dark:text-red-400 font-semibold"
+                  >Dikkat gerekli!</span
+                >
+                {% else %} Tüm stoklar normal {% endif %}
+              </p>
+            </div>
+          </div>
+          <div
+            class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <i class="fas fa-arrow-right text-red-500 text-sm"></i>
+          </div>
+        </a>
+
+        <!-- Sipariş Hazırla -->
+        <a
+          href="{{ url_for('kat_sorumlusu_siparis_hazirla') }}"
+          class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 border-purple-100 dark:border-purple-900 hover:border-purple-400 dark:hover:border-purple-600 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+        >
+          <div class="flex flex-col items-center text-center space-y-3">
+            <div
+              class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300"
+            >
+              <i class="fas fa-shopping-cart text-white text-2xl"></i>
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">
+                Sipariş Ver
+              </h4>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                Otomatik sipariş hazırla
+              </p>
+            </div>
+          </div>
+          <div
+            class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <i class="fas fa-arrow-right text-purple-500 text-sm"></i>
+          </div>
+        </a>
+      </div>
+
+      <!-- Ek Bilgi ve İpuçları -->
+      <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0">
+              <div
+                class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center"
+              >
+                <i
+                  class="fas fa-lightbulb text-blue-600 dark:text-blue-400"
+                ></i>
+              </div>
+            </div>
+            <div>
+              <p
+                class="text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >
+                Hızlı Erişim
+              </p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Sık kullanılan işlemlere tek tıkla ulaşın
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0">
+              <div
+                class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center"
+              >
+                <i class="fas fa-clock text-green-600 dark:text-green-400"></i>
+              </div>
+            </div>
+            <div>
+              <p
+                class="text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >
+                Zaman Tasarrufu
+              </p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                İşlemlerinizi daha hızlı tamamlayın
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0">
+              <div
+                class="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center"
+              >
+                <i class="fas fa-bell text-purple-600 dark:text-purple-400"></i>
+              </div>
+            </div>
+            <div>
+              <p
+                class="text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >
+                Otomatik Bildirimler
+              </p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Kritik durumlar için anlık uyarılar
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- İstatistik Kartları - Tablet Optimized -->
+  <div class="grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-5">
+    <!-- Toplam Zimmet Ürün Sayısı -->
+    <a
+      href="{{ url_for('kat_sorumlusu_zimmet_stoklarim') }}"
+      class="bg-white overflow-hidden shadow rounded-lg cursor-pointer"
+    >
+      <div class="p-4 md:p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div
+              class="w-10 h-10 md:w-12 md:h-12 bg-blue-500 rounded-md flex items-center justify-center"
+            >
+              <svg
+                class="w-6 h-6 md:w-7 md:h-7 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                ></path>
+              </svg>
+            </div>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-slate-500 truncate">
+                Toplam Zimmet Ürün
+              </dt>
+              <dd class="text-lg font-medium text-slate-900">
+                {{ zimmet_toplam }}
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Kritik Stok Sayısı -->
+    <a
+      href="{{ url_for('kat_sorumlusu_kritik_stoklar') }}"
+      class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow cursor-pointer {% if kritik_stok_sayisi > 0 %}ring-2 ring-red-500{% endif %}"
+    >
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div
+              class="w-8 h-8 {% if kritik_stok_sayisi > 0 %}bg-red-500{% else %}bg-yellow-500{% endif %} rounded-md flex items-center justify-center"
+            >
+              <svg
+                class="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-slate-500 truncate">
+                Kritik Stok
+              </dt>
+              <dd
+                class="text-lg font-medium {% if kritik_stok_sayisi > 0 %}text-red-600{% else %}text-slate-900{% endif %}"
+              >
+                {{ kritik_stok_sayisi }}
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Stokout Ürün Sayısı -->
+    <a
+      href="{{ url_for('kat_sorumlusu_kritik_stoklar') }}"
+      class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow cursor-pointer {% if stokout_sayisi > 0 %}ring-2 ring-red-600{% endif %}"
+    >
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div
+              class="w-8 h-8 {% if stokout_sayisi > 0 %}bg-red-600{% else %}bg-green-500{% endif %} rounded-md flex items-center justify-center"
+            >
+              <svg
+                class="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </div>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-slate-500 truncate">
+                Stokout Ürün
+              </dt>
+              <dd
+                class="text-lg font-medium {% if stokout_sayisi > 0 %}text-red-600{% else %}text-slate-900{% endif %}"
+              >
+                {{ stokout_sayisi }}
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Bugünkü Kullanım -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div
+              class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center"
+            >
+              <svg
+                class="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-slate-500 truncate">
+                Bugünkü Kullanım
+              </dt>
+              <dd class="text-lg font-medium text-slate-900">
+                {{ bugunun_kullanimi }}
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grafikler - Tablet Optimized -->
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+    <!-- En Çok Kullanılan Ürünler -->
+    <div class="bg-white shadow rounded-lg p-6">
+      <h3 class="text-lg font-medium text-slate-900 mb-4">
+        En Çok Kullanılan Ürünler (Son 7 Gün)
+      </h3>
+      <div style="height: 300px">
+        <canvas id="enCokUrunChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Zimmet Kullanım Durumu -->
+    <div class="bg-white shadow rounded-lg p-6">
+      <h3 class="text-lg font-medium text-slate-900 mb-4">
+        Zimmet Kullanım Durumu
+      </h3>
+      <div style="height: 300px">
+        <canvas id="zimmetDurumChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Günlük Tüketim Trendi -->
+    <div class="bg-white shadow rounded-lg p-6">
+      <h3 class="text-lg font-medium text-slate-900 mb-4">
+        Günlük Tüketim Trendi
+      </h3>
+      <div style="height: 300px">
+        <canvas id="gunlukTuketimChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Son Minibar İşlemleri -->
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3 class="text-lg leading-6 font-medium text-slate-900 mb-4">
+        Son Minibar İşlemleri
+      </h3>
+      {% if son_islemler %}
+      <div class="overflow-hidden">
+        <table
+          id="son-minibar-islemler-table"
+          class="min-w-full divide-y divide-slate-200"
+        >
+          <thead class="bg-slate-50">
+            <tr>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
+                Oda
                 <span
-                    class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 animate-pulse">
-                    <i class="fas fa-exclamation-triangle mr-1.5"></i>
-                    {{ kritik_stok_sayisi }} Kritik Ürün
+                  class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                >
+                  {{ son_islemler|length }} işlem
                 </span>
-                {% endif %}
-            </div>
-
-            <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-                <!-- Oda Kontrol -->
-                <a href="{{ url_for('oda_kontrol') }}"
-                    class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 border-indigo-100 dark:border-indigo-900 hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <div class="flex flex-col items-center text-center space-y-3">
-                        <div
-                            class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <i class="fas fa-clipboard-check text-white text-2xl"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">Oda Kontrol</h4>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Minibar kontrolü yap</p>
-                        </div>
-                    </div>
-                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <i class="fas fa-arrow-right text-indigo-500 text-sm"></i>
-                    </div>
-                </a>
-                <!-- İlk Dolum -->
-                <a href="{{ url_for('ilk_dolum') }}"
-                    class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 border-blue-100 dark:border-blue-900 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <div class="flex flex-col items-center text-center space-y-3">
-                        <div
-                            class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <i class="fas fa-plus-circle text-white text-2xl"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">İlk Dolum</h4>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Yeni minibar hazırla</p>
-                        </div>
-                    </div>
-                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <i class="fas fa-arrow-right text-blue-500 text-sm"></i>
-                    </div>
-                </a>
-
-
-
-                <!-- Zimmet Stoklarım -->
-                <a href="{{ url_for('kat_sorumlusu_zimmet_stoklarim') }}"
-                    class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 border-green-100 dark:border-green-900 hover:border-green-400 dark:hover:border-green-600 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <div class="flex flex-col items-center text-center space-y-3">
-                        <div
-                            class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 relative">
-                            <i class="fas fa-boxes text-white text-2xl"></i>
-                            {% if zimmet_toplam > 0 %}
-                            <span
-                                class="absolute -top-1 -right-1 w-6 h-6 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-md">
-                                {{ zimmet_toplam }}
-                            </span>
-                            {% endif %}
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">Stoklarım</h4>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Stoklarımı görüntüle</p>
-                        </div>
-                    </div>
-                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <i class="fas fa-arrow-right text-green-500 text-sm"></i>
-                    </div>
-                </a>
-
-                <!-- Kritik Stoklar -->
-                <a href="{{ url_for('kat_sorumlusu_kritik_stoklar') }}"
-                    class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 {% if kritik_stok_sayisi > 0 %}border-red-400 dark:border-red-600 ring-2 ring-red-200 dark:ring-red-800{% else %}border-red-100 dark:border-red-900{% endif %} hover:border-red-400 dark:hover:border-red-600 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <div class="flex flex-col items-center text-center space-y-3">
-                        <div
-                            class="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 relative {% if kritik_stok_sayisi > 0 %}animate-pulse{% endif %}">
-                            <i class="fas fa-exclamation-triangle text-white text-2xl"></i>
-                            {% if kritik_stok_sayisi > 0 %}
-                            <span
-                                class="absolute -top-1 -right-1 w-6 h-6 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-md">
-                                {{ kritik_stok_sayisi }}
-                            </span>
-                            {% endif %}
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">Kritik Stoklar</h4>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">
-                                {% if kritik_stok_sayisi > 0 %}
-                                <span class="text-red-600 dark:text-red-400 font-semibold">Dikkat gerekli!</span>
-                                {% else %}
-                                Tüm stoklar normal
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
-                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <i class="fas fa-arrow-right text-red-500 text-sm"></i>
-                    </div>
-                </a>
-
-                <!-- Sipariş Hazırla -->
-                <a href="{{ url_for('kat_sorumlusu_siparis_hazirla') }}"
-                    class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 border-purple-100 dark:border-purple-900 hover:border-purple-400 dark:hover:border-purple-600 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <div class="flex flex-col items-center text-center space-y-3">
-                        <div
-                            class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <i class="fas fa-shopping-cart text-white text-2xl"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">Sipariş Ver</h4>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Otomatik sipariş hazırla</p>
-                        </div>
-                    </div>
-                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <i class="fas fa-arrow-right text-purple-500 text-sm"></i>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Ek Bilgi ve İpuçları -->
-            <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="flex items-start space-x-3">
-                        <div class="flex-shrink-0">
-                            <div
-                                class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-lightbulb text-blue-600 dark:text-blue-400"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Hızlı Erişim</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Sık kullanılan işlemlere tek
-                                tıkla ulaşın</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start space-x-3">
-                        <div class="flex-shrink-0">
-                            <div
-                                class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-clock text-green-600 dark:text-green-400"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Zaman Tasarrufu</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">İşlemlerinizi daha hızlı
-                                tamamlayın</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start space-x-3">
-                        <div class="flex-shrink-0">
-                            <div
-                                class="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-bell text-purple-600 dark:text-purple-400"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Otomatik Bildirimler</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Kritik durumlar için anlık
-                                uyarılar</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
+                İşlem Tipi
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell"
+              >
+                Açıklama
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell"
+              >
+                Tarih
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-slate-200">
+            {% for islem in son_islemler %}
+            <tr class="hover:bg-slate-50 transition-colors duration-150">
+              <td
+                class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900"
+              >
+                🚪 {{ islem.oda.oda_no }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span
+                  class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full {% if islem.islem_tipi == 'ilk_dolum' %}bg-blue-100 text-blue-800 {% elif islem.islem_tipi == 'kontrol' %}bg-yellow-100 text-yellow-800 {% else %}bg-green-100 text-green-800{% endif %}"
+                >
+                  {% if islem.islem_tipi == 'ilk_dolum' %}🔵{% elif
+                  islem.islem_tipi == 'kontrol' %}🟡{% else %}🟢{% endif %} {{
+                  islem.islem_tipi.replace('_', ' ').title() }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm text-slate-500 hidden md:table-cell">
+                📝 {{ islem.aciklama or '-' }}
+              </td>
+              <td
+                class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden lg:table-cell"
+              >
+                📅 {{ islem.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="text-slate-500 text-center py-4">
+        Henüz minibar işlemi bulunmuyor.
+      </p>
+      {% endif %}
     </div>
-
-    <!-- İstatistik Kartları - Tablet Optimized -->
-    <div class="grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-5">
-        <!-- Toplam Zimmet Ürün Sayısı -->
-        <a href="{{ url_for('kat_sorumlusu_zimmet_stoklarim') }}"
-            class="bg-white overflow-hidden shadow rounded-lg cursor-pointer">
-            <div class="p-4 md:p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-500 rounded-md flex items-center justify-center">
-                            <svg class="w-6 h-6 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-slate-500 truncate">Toplam Zimmet Ürün</dt>
-                            <dd class="text-lg font-medium text-slate-900">{{ zimmet_toplam }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </a>
-
-        <!-- Kritik Stok Sayısı -->
-        <a href="{{ url_for('kat_sorumlusu_kritik_stoklar') }}"
-            class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow cursor-pointer {% if kritik_stok_sayisi > 0 %}ring-2 ring-red-500{% endif %}">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div
-                            class="w-8 h-8 {% if kritik_stok_sayisi > 0 %}bg-red-500{% else %}bg-yellow-500{% endif %} rounded-md flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
-                                </path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-slate-500 truncate">Kritik Stok</dt>
-                            <dd
-                                class="text-lg font-medium {% if kritik_stok_sayisi > 0 %}text-red-600{% else %}text-slate-900{% endif %}">
-                                {{ kritik_stok_sayisi }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </a>
-
-        <!-- Stokout Ürün Sayısı -->
-        <a href="{{ url_for('kat_sorumlusu_kritik_stoklar') }}"
-            class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow cursor-pointer {% if stokout_sayisi > 0 %}ring-2 ring-red-600{% endif %}">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div
-                            class="w-8 h-8 {% if stokout_sayisi > 0 %}bg-red-600{% else %}bg-green-500{% endif %} rounded-md flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-slate-500 truncate">Stokout Ürün</dt>
-                            <dd
-                                class="text-lg font-medium {% if stokout_sayisi > 0 %}text-red-600{% else %}text-slate-900{% endif %}">
-                                {{ stokout_sayisi }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </a>
-
-        <!-- Bugünkü Kullanım -->
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                                </path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-slate-500 truncate">Bugünkü Kullanım</dt>
-                            <dd class="text-lg font-medium text-slate-900">{{ bugunun_kullanimi }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-
-    <!-- Grafikler - Tablet Optimized -->
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">
-        <!-- En Çok Kullanılan Ürünler -->
-        <div class="bg-white shadow rounded-lg p-6">
-            <h3 class="text-lg font-medium text-slate-900 mb-4">En Çok Kullanılan Ürünler (Son 7 Gün)</h3>
-            <div style="height: 300px;">
-                <canvas id="enCokUrunChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Zimmet Kullanım Durumu -->
-        <div class="bg-white shadow rounded-lg p-6">
-            <h3 class="text-lg font-medium text-slate-900 mb-4">Zimmet Kullanım Durumu</h3>
-            <div style="height: 300px;">
-                <canvas id="zimmetDurumChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Günlük Tüketim Trendi -->
-        <div class="bg-white shadow rounded-lg p-6">
-            <h3 class="text-lg font-medium text-slate-900 mb-4">Günlük Tüketim Trendi</h3>
-            <div style="height: 300px;">
-                <canvas id="gunlukTuketimChart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- Son Minibar İşlemleri -->
-    <div class="bg-white shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 mb-4">Son Minibar İşlemleri</h3>
-            {% if son_islemler %}
-            <div class="overflow-hidden">
-                <table id="son-minibar-islemler-table" class="min-w-full divide-y divide-slate-200">
-                    <thead class="bg-slate-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                Oda
-                                <span
-                                    class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                    {{ son_islemler|length }} işlem
-                                </span>
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                İşlem Tipi</th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">
-                                Açıklama</th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell">
-                                Tarih</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-slate-200">
-                        {% for islem in son_islemler %}
-                        <tr class="hover:bg-slate-50 transition-colors duration-150">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
-                                🚪 {{ islem.oda.oda_no }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full
-                                        {% if islem.islem_tipi == 'ilk_dolum' %}bg-blue-100 text-blue-800
-                                        {% elif islem.islem_tipi == 'kontrol' %}bg-yellow-100 text-yellow-800
-                                        {% else %}bg-green-100 text-green-800{% endif %}">
-                                    {% if islem.islem_tipi == 'ilk_dolum' %}🔵{% elif islem.islem_tipi == 'kontrol'
-                                    %}🟡{% else %}🟢{% endif %}
-                                    {{ islem.islem_tipi.replace('_', ' ').title() }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-slate-500 hidden md:table-cell">
-                                📝 {{ islem.aciklama or '-' }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden lg:table-cell">
-                                📅 {{ islem.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <p class="text-slate-500 text-center py-4">Henüz minibar işlemi bulunmuyor.</p>
-            {% endif %}
-        </div>
-    </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block extra_scripts %}
+{% endblock %} {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-    // TableSearchFilter - Son Minibar İşlemleri
-    {% if son_islemler %}
-    const minibarIslemlerTable = document.getElementById( 'son-minibar-islemler-table' );
-    if ( minibarIslemlerTable ) {
-        new TableSearchFilter( 'son-minibar-islemler-table', {
-            searchPlaceholder: 'Minibar işlemlerinde ara (oda, açıklama)...',
-            filters: [],
-            defaultItemsPerPage: 10
-        } );
-    }
-    {% endif %}
+  // TableSearchFilter - Son Minibar İşlemleri
+  {% if son_islemler %}
+  const minibarIslemlerTable = document.getElementById( 'son-minibar-islemler-table' );
+  if ( minibarIslemlerTable ) {
+      new TableSearchFilter( 'son-minibar-islemler-table', {
+          searchPlaceholder: 'Minibar işlemlerinde ara (oda, açıklama)...',
+          filters: [],
+          defaultItemsPerPage: 10
+      } );
+  }
+  {% endif %}
 
-    // Grafik: En Çok Kullanılan Ürünler
-    {% if en_cok_urun_labels %}
-    const enCokUrunCtx = document.getElementById( 'enCokUrunChart' );
-    if ( enCokUrunCtx ) {
-        new Chart( enCokUrunCtx, {
-            type: 'bar',
-            data: {
-                labels: {{ en_cok_urun_labels| tojson }},
-    datasets: [{
-        label: 'Kullanım Miktarı',
-        data: {{ en_cok_urun_miktarlar| tojson }},
-        backgroundColor: 'rgba(59, 130, 246, 0.5)',
-        borderColor: 'rgb(59, 130, 246)',
-        borderWidth: 1
-                }]
-            },
-    options: {
-        responsive: true,
-            maintainAspectRatio: false,
-                plugins: {
-            legend: {
-                display: false
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        }
-    }
-        });
-    }
-    {% endif %}
+  // Grafik: En Çok Kullanılan Ürünler
+  {% if en_cok_urun_labels %}
+  const enCokUrunCtx = document.getElementById( 'enCokUrunChart' );
+  if ( enCokUrunCtx ) {
+      new Chart( enCokUrunCtx, {
+          type: 'bar',
+          data: {
+              labels: {{ en_cok_urun_labels| tojson }},
+  datasets: [{
+      label: 'Kullanım Miktarı',
+      data: {{ en_cok_urun_miktarlar| tojson }},
+      backgroundColor: 'rgba(59, 130, 246, 0.5)',
+      borderColor: 'rgb(59, 130, 246)',
+      borderWidth: 1
+              }]
+          },
+  options: {
+      responsive: true,
+          maintainAspectRatio: false,
+              plugins: {
+          legend: {
+              display: false
+          }
+      },
+      scales: {
+          y: {
+              beginAtZero: true
+          }
+      }
+  }
+      });
+  }
+  {% endif %}
 
-    // Grafik: Zimmet Kullanım Durumu
-    {% if zimmet_urun_labels %}
-    const zimmetDurumCtx = document.getElementById( 'zimmetDurumChart' );
-    if ( zimmetDurumCtx ) {
-        new Chart( zimmetDurumCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Kullanılan', 'Kalan'],
-                datasets: [{
-                    data: [
-                        {{ zimmet_kullanilan| sum }},
-                        {{ zimmet_kalan| sum }}
-                    ],
-    backgroundColor: [
-        'rgba(239, 68, 68, 0.5)',
-        'rgba(34, 197, 94, 0.5)'
-    ],
-        borderColor: [
-            'rgb(239, 68, 68)',
-            'rgb(34, 197, 94)'
-        ],
-            borderWidth: 1
-                }]
-            },
-    options: {
-        responsive: true,
-            maintainAspectRatio: false,
-                plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        }
-    }
-        });
-    }
-    {% endif %}
+  // Grafik: Zimmet Kullanım Durumu
+  {% if zimmet_urun_labels %}
+  const zimmetDurumCtx = document.getElementById( 'zimmetDurumChart' );
+  if ( zimmetDurumCtx ) {
+      new Chart( zimmetDurumCtx, {
+          type: 'doughnut',
+          data: {
+              labels: ['Kullanılan', 'Kalan'],
+              datasets: [{
+                  data: [
+                      {{ zimmet_kullanilan| sum }},
+                      {{ zimmet_kalan| sum }}
+                  ],
+  backgroundColor: [
+      'rgba(239, 68, 68, 0.5)',
+      'rgba(34, 197, 94, 0.5)'
+  ],
+      borderColor: [
+          'rgb(239, 68, 68)',
+          'rgb(34, 197, 94)'
+      ],
+          borderWidth: 1
+              }]
+          },
+  options: {
+      responsive: true,
+          maintainAspectRatio: false,
+              plugins: {
+          legend: {
+              position: 'bottom'
+          }
+      }
+  }
+      });
+  }
+  {% endif %}
 
-    // Grafik: Günlük Tüketim Trendi
-    {% if gunluk_labels %}
-    const gunlukTuketimCtx = document.getElementById( 'gunlukTuketimChart' );
-    if ( gunlukTuketimCtx ) {
-        new Chart( gunlukTuketimCtx, {
-            type: 'line',
-            data: {
-                labels: {{ gunluk_labels| tojson }},
-    datasets: [{
-        label: 'Günlük Tüketim',
-        data: {{ gunluk_tuketim| tojson }},
-        fill: true,
-        backgroundColor: 'rgba(168, 85, 247, 0.1)',
-        borderColor: 'rgb(168, 85, 247)',
-        tension: 0.4
-                }]
-            },
-    options: {
-        responsive: true,
-            maintainAspectRatio: false,
-                plugins: {
-            legend: {
-                display: false
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        }
-    }
-        });
-    }
-    {% endif %}
+  // Grafik: Günlük Tüketim Trendi
+  {% if gunluk_labels %}
+  const gunlukTuketimCtx = document.getElementById( 'gunlukTuketimChart' );
+  if ( gunlukTuketimCtx ) {
+      new Chart( gunlukTuketimCtx, {
+          type: 'line',
+          data: {
+              labels: {{ gunluk_labels| tojson }},
+  datasets: [{
+      label: 'Günlük Tüketim',
+      data: {{ gunluk_tuketim| tojson }},
+      fill: true,
+      backgroundColor: 'rgba(168, 85, 247, 0.1)',
+      borderColor: 'rgb(168, 85, 247)',
+      tension: 0.4
+              }]
+          },
+  options: {
+      responsive: true,
+          maintainAspectRatio: false,
+              plugins: {
+          legend: {
+              display: false
+          }
+      },
+      scales: {
+          y: {
+              beginAtZero: true
+          }
+      }
+  }
+      });
+  }
+  {% endif %}
 </script>
 {% endblock %}

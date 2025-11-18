@@ -5,12 +5,82 @@ Karlılık Analizi ve ROI API Route'ları
 from flask import Blueprint, request, jsonify, render_template, session
 from datetime import datetime, date, timedelta
 from models import db, Otel
-from utils.fiyatlandirma_servisler import KarHesaplamaServisi, MLEntegrasyonServisi
 from utils.decorators import login_required, role_required
 from utils.audit_logger import get_audit_logger
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================
+# MOCK SERVİSLER (Geçici - Gerçek servisler eklenecek)
+# ============================================
+
+class KarHesaplamaServisi:
+    """Karlılık hesaplama servisi - Mock implementation"""
+    
+    @staticmethod
+    def urun_karliligi_analizi(urun_id, baslangic=None, bitis=None):
+        """Ürün karlılık analizi"""
+        return {
+            'urun_id': urun_id,
+            'toplam_satis': 0,
+            'toplam_maliyet': 0,
+            'kar': 0,
+            'kar_orani': 0
+        }
+    
+    @staticmethod
+    def oda_karliligi_analizi(oda_id, baslangic=None, bitis=None):
+        """Oda karlılık analizi"""
+        return {
+            'oda_id': oda_id,
+            'toplam_satis': 0,
+            'toplam_maliyet': 0,
+            'kar': 0,
+            'kar_orani': 0
+        }
+    
+    @staticmethod
+    def donemsel_kar_analizi(otel_id, baslangic, bitis, donem_tipi='gunluk'):
+        """Dönemsel kar analizi"""
+        return {
+            'donemler': [],
+            'toplam_satis': 0,
+            'toplam_maliyet': 0,
+            'toplam_kar': 0,
+            'ortalama_kar_orani': 0
+        }
+    
+    @staticmethod
+    def kar_trend_analizi(otel_id, baslangic, bitis):
+        """Kar trend analizi"""
+        return {
+            'trend_data': [],
+            'trend_yonu': 'sabit',
+            'degisim_orani': 0
+        }
+    
+    @staticmethod
+    def urun_bazli_kar_analizi(otel_id, baslangic, bitis):
+        """Ürün bazlı kar analizi"""
+        return {
+            'urunler': [],
+            'en_karli_urun': None,
+            'en_dusuk_karli_urun': None
+        }
+
+
+class MLEntegrasyonServisi:
+    """ML entegrasyon servisi - Mock implementation"""
+    
+    @staticmethod
+    def kar_tahmini(otel_id, gelecek_gun_sayisi=7):
+        """Kar tahmini"""
+        return {
+            'tahminler': [],
+            'guven_araligi': 0.95
+        }
 
 # Audit logger instance
 audit_logger = get_audit_logger()
@@ -653,7 +723,7 @@ def fiyat_optimizasyon():
 @karlilik_bp.route('/trend-data', methods=['GET'])
 @login_required
 @role_required(['sistem_yoneticisi', 'admin'])
-def kar_trend():
+def kar_trend_data():
     """
     Kar trend verisi (Dashboard için)
     
@@ -807,3 +877,6 @@ def en_karli_urunler():
             'success': False,
             'error': str(e)
         }), 500
+
+
+

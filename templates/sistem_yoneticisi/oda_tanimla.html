@@ -104,7 +104,10 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-slate-200">
                         {% for oda in odalar %}
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="oda-row hover:bg-slate-50 transition-colors"
+                            data-otel-id="{{ oda.kat.otel.id if oda.kat and oda.kat.otel else '' }}"
+                            data-kat-id="{{ oda.kat.id if oda.kat else '' }}"
+                            data-oda-tipi="{{ oda.oda_tipi_adi if oda.oda_tipi_adi else '' }}">
                             <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500">
                                 {% set kat_colors = [
                                     'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200',
@@ -752,15 +755,34 @@
             {% endfor %}
         ];
         
-        // Benzersiz oda tiplerini al
+        // Benzersiz oda tiplerini al - otel ve kat bilgisi ile
         const benzersizOdaTipleri = [];
-        const gorulenTipler = new Set();
+        const gorulenTipler = new Map(); // value -> {otelAdi, katAdi} map
+        
         tumOdaTipleri.forEach(tip => {
-            if (!gorulenTipler.has(tip.value)) {
-                gorulenTipler.add(tip.value);
+            const key = `${tip.value}|${tip.otelAdi}|${tip.katAdi}`;
+            if (!gorulenTipler.has(key)) {
+                gorulenTipler.set(key, true);
                 benzersizOdaTipleri.push(tip);
             }
         });
+        
+        // Filtre için sadece oda tipi adlarını benzersiz yap (dropdown için)
+        const benzersizOdaTipiAdlari = [];
+        const gorulenAdlar = new Set();
+        tumOdaTipleri.forEach(tip => {
+            if (!gorulenAdlar.has(tip.value)) {
+                gorulenAdlar.add(tip.value);
+                benzersizOdaTipiAdlari.push({
+                    value: tip.value,
+                    label: tip.label
+                });
+            }
+        });
+        
+        console.log('Tüm Oda Tipleri:', tumOdaTipleri);
+        console.log('Benzersiz Oda Tipleri (otel/kat ile):', benzersizOdaTipleri);
+        console.log('Benzersiz Oda Tipi Adları:', benzersizOdaTipiAdlari);
         
         // Otel seçeneklerini dinamik olarak oluştur
         const otelOptions = [
@@ -798,11 +820,11 @@
             }
             
             // Oda Tipi filtresi ekle (columnIndex: 2 - üçüncü sütun)
-            if (benzersizOdaTipleri.length > 0) {
+            if (benzersizOdaTipiAdlari.length > 0) {
                 filterConfig.filters.push({
                     columnIndex: 2,
                     label: 'Oda Tipi',
-                    options: benzersizOdaTipleri
+                    options: benzersizOdaTipiAdlari
                 });
             }
             
@@ -864,7 +886,7 @@
                         
                         // Tüm oda tiplerini göster
                         odaTipiFilter.innerHTML = '<option value="">Oda Tipi</option>';
-                        benzersizOdaTipleri.forEach(tip => {
+                        benzersizOdaTipiAdlari.forEach(tip => {
                             const option = document.createElement('option');
                             option.value = tip.value;
                             option.textContent = tip.label;
@@ -889,8 +911,13 @@
                     
                     // Oda tipi filtresini güncelle
                     if (secilenKat) {
-                        // Sadece seçilen kata ait oda tiplerini göster
+                        // Seçilen kata ait oda tiplerini göster
                         let filtreliOdaTipleri = benzersizOdaTipleri.filter(tip => tip.katAdi === secilenKat);
+                        
+                        // Eğer otel de seçiliyse, hem otel hem kat filtresi uygula
+                        if (secilenOtel) {
+                            filtreliOdaTipleri = filtreliOdaTipleri.filter(tip => tip.otelAdi === secilenOtel);
+                        }
                         
                         // Eğer otel de seçiliyse, hem otel hem kat filtresi uygula
                         if (secilenOtel) {
@@ -920,7 +947,7 @@
                     } else {
                         // Hiçbir şey seçili değilse, tüm oda tiplerini göster
                         odaTipiFilter.innerHTML = '<option value="">Oda Tipi</option>';
-                        benzersizOdaTipleri.forEach(tip => {
+                        benzersizOdaTipiAdlari.forEach(tip => {
                             const option = document.createElement('option');
                             option.value = tip.value;
                             option.textContent = tip.label;

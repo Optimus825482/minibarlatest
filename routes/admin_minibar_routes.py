@@ -258,11 +258,11 @@ def register_admin_minibar_routes(app):
             sayfa = request.args.get('sayfa', 1, type=int)
             per_page = 50
             
-            # Sorgu oluştur
+            # Sorgu oluştur - Eager loading kaldırıldı (DB kolon hatası için geçici çözüm)
             query = MinibarIslem.query.options(
                 db.joinedload(MinibarIslem.oda).joinedload(Oda.kat),
-                db.joinedload(MinibarIslem.personel),
-                db.joinedload(MinibarIslem.detaylar).joinedload(MinibarIslemDetay.urun)
+                db.joinedload(MinibarIslem.personel)
+                # detaylar eager loading kaldırıldı - satis_fiyati kolonu DB'de yok
             )
             
             if oda_id:

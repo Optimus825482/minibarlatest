@@ -32,7 +32,7 @@ function yukleOdaTipleri(otelId, odaTipiSelectId, callback) {
     }
     
     // AJAX ile oda tiplerini yükle
-    fetch(`/api/oteller/${otelId}/oda-tipleri`)
+    fetch(`/api/oteller/${otelId}/oda-tipleri-liste`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Oda tipleri yüklenemedi');

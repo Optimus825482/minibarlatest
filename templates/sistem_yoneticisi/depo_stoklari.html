@@ -119,10 +119,10 @@
         <div class="px-4 py-5 sm:p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100">Stok Listesi</h3>
-                <button onclick="openStokGirisModal()"
-                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                    + Yeni Stok Girişi
-                </button>
+                <div class="text-sm text-slate-600 dark:text-slate-400">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Yeni stok girişi için <a href="{{ url_for('satin_alma_siparis') }}" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">Satın Alma</a> modülünü kullanın
+                </div>
             </div>
             
             {% if not secili_otel_id %}
@@ -321,7 +321,9 @@ async function loadDepoSorumluları(otelId, seciliDepoId = null) {
 }
 </script>
 
-<!-- Stok Giriş Modal -->
+<!-- Stok Giriş Modal - KALDIRILDI -->
+<!-- Yeni stok girişi artık Satın Alma modülü üzerinden yapılıyor -->
+<!--
 <div id="stokGirisModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
     <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
@@ -415,59 +417,17 @@ async function loadDepoSorumluları(otelId, seciliDepoId = null) {
         </form>
     </div>
 </div>
+-->
+<!-- Modal SONU -->
 
-<!-- jQuery (Select2 için gerekli) -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Select2 kütüphaneleri kaldırıldı - Modal ile birlikte gereksiz hale geldi -->
 
-<!-- Select2 CSS & JS -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-<!-- Select2 Dark Mode CSS -->
-<style>
-.dark .select2-container--default .select2-selection--single {
-    background-color: rgb(51 65 85);
-    border-color: rgb(71 85 105);
-    color: rgb(226 232 240);
-}
-
-.dark .select2-container--default .select2-selection--single .select2-selection__rendered {
-    color: rgb(226 232 240);
-}
-
-.dark .select2-container--default .select2-selection--single .select2-selection__arrow b {
-    border-color: rgb(148 163 184) transparent transparent transparent;
-}
-
-.dark .select2-dropdown {
-    background-color: rgb(51 65 85);
-    border-color: rgb(71 85 105);
-}
-
-.dark .select2-container--default .select2-results__option {
-    color: rgb(226 232 240);
-}
-
-.dark .select2-container--default .select2-results__option--highlighted[aria-selected] {
-    background-color: rgb(30 41 59);
-}
-
-.dark .select2-container--default .select2-search--dropdown .select2-search__field {
-    background-color: rgb(30 41 59);
-    border-color: rgb(71 85 105);
-    color: rgb(226 232 240);
-}
-
-.dark .select2-container--default.select2-container--disabled .select2-selection--single {
-    background-color: rgb(15 23 42);
-}
-</style>
-
+<!--
 <script>
 let gruplar = [];
 let urunler = [];
 
-// Modal açma
+// Modal açma - KALDIRILDI
 function openStokGirisModal() {
     document.getElementById('stokGirisModal').classList.remove('hidden');
     loadGruplar();
@@ -665,4 +625,7 @@ document.getElementById('stokGirisForm').addEventListener('submit', async functi
     }
 });
 </script>
+-->
+<!-- Modal JavaScript SONU -->
+
 {% endblock %}

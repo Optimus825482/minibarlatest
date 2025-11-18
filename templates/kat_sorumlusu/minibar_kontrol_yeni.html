@@ -1,0 +1,463 @@
+{% extends "base.html" %} {% block title %}Minibar Kontrol - Setup Bazlı{%
+endblock %} {% block page_title %}Minibar Kontrol{% endblock %} {% block content
+%}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <!-- Oda Seçimi Section -->
+  <div
+    id="oda_secimi_section"
+    class="bg-white rounded-lg shadow-sm border border-slate-200 mb-6"
+  >
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-slate-900">Oda Seçimi</h3>
+        <button
+          onclick="qrIleBaslat()"
+          class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+        >
+          <svg
+            class="h-5 w-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+            ></path>
+          </svg>
+          QR Kod İle
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label
+            for="kat_id"
+            class="block text-sm font-medium text-slate-700 mb-2"
+          >
+            Kat <span class="text-red-500">*</span>
+          </label>
+          <select
+            id="kat_id"
+            required
+            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          >
+            <option value="">Kat seçiniz...</option>
+            {% for kat in katlar %}
+            <option value="{{ kat.id }}">{{ kat.kat_adi }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label
+            for="oda_id"
+            class="block text-sm font-medium text-slate-700 mb-2"
+          >
+            Oda <span class="text-red-500">*</span>
+          </label>
+          <select
+            id="oda_id"
+            required
+            disabled
+            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
+          >
+            <option value="">Önce kat seçiniz...</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Oda Detayları ve Setup Section (Başlangıçta Gizli) -->
+  <div id="oda_detaylari_section" class="hidden">
+    <!-- Oda Bilgileri Header -->
+    <div
+      class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg shadow-lg mb-6 p-6 text-white"
+    >
+      <div class="flex items-center justify-between">
+        <div class="flex-1">
+          <h2 class="text-2xl font-bold mb-2">
+            Oda: <span id="oda_no_display">-</span>
+          </h2>
+          <p class="text-indigo-100">
+            Oda Tipi: <span id="oda_tipi_display" class="font-semibold">-</span>
+          </p>
+        </div>
+        <div class="text-right">
+          <div class="bg-white/20 backdrop-blur-sm rounded-lg px-6 py-4">
+            <p class="text-sm text-indigo-100 mb-1">Toplam Setup</p>
+            <p class="text-4xl font-bold" id="toplam_setup_display">0</p>
+          </div>
+        </div>
+      </div>
+      <button
+        onclick="geriDon()"
+        class="mt-4 inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-colors"
+      >
+        <svg
+          class="h-5 w-5 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 19l-7-7m0 0l7-7m-7 7h18"
+          ></path>
+        </svg>
+        Geri Dön
+      </button>
+    </div>
+
+    <!-- Setup Accordion Container -->
+    <div id="setup_accordion_container" class="space-y-4">
+      <!-- Dinamik olarak doldurulacak -->
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" class="hidden flex justify-center items-center py-12">
+    <div
+      class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"
+    ></div>
+  </div>
+</div>
+
+<script>
+  let secilenOdaId = null;
+  let odaBilgileri = null;
+  let setuplar = [];
+
+  // CSRF Token
+  const csrfToken = "{{ csrf_token() }}";
+
+  // Kat değiştiğinde
+  document
+    .getElementById("kat_id")
+    .addEventListener("change", async function () {
+      const katId = this.value;
+      const odaSelect = document.getElementById("oda_id");
+
+      odaSelect.innerHTML = '<option value="">Oda seçiniz...</option>';
+      odaSelect.disabled = true;
+      geriDon();
+
+      if (!katId) return;
+
+      try {
+        const response = await fetch(`/kat-odalari?kat_id=${katId}`);
+        const data = await response.json();
+
+        if (data.success && data.odalar.length > 0) {
+          data.odalar.forEach((oda) => {
+            const option = document.createElement("option");
+            option.value = oda.id;
+            option.textContent = oda.oda_no;
+            odaSelect.appendChild(option);
+          });
+          odaSelect.disabled = false;
+        } else {
+          odaSelect.innerHTML = '<option value="">Bu katta oda yok</option>';
+        }
+      } catch (error) {
+        console.error("Hata:", error);
+        toastGoster("Odalar yüklenirken hata oluştu", "error");
+      }
+    });
+
+  // Oda değiştiğinde
+  document
+    .getElementById("oda_id")
+    .addEventListener("change", async function () {
+      const odaId = this.value;
+
+      if (!odaId) {
+        geriDon();
+        return;
+      }
+
+      secilenOdaId = odaId;
+      await odaSetupDurumuYukle(odaId);
+    });
+
+  // Oda setup durumunu yükle
+  async function odaSetupDurumuYukle(odaId) {
+    const loading = document.getElementById("loading");
+    const odaSecimiSection = document.getElementById("oda_secimi_section");
+    const odaDetaylariSection = document.getElementById(
+      "oda_detaylari_section"
+    );
+
+    try {
+      loading.classList.remove("hidden");
+
+      const response = await fetch(`/api/kat-sorumlusu/oda-setup/${odaId}`);
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Setup durumu yüklenemedi");
+      }
+
+      odaBilgileri = data.oda;
+      setuplar = data.setuplar;
+
+      // UI güncelle
+      document.getElementById("oda_no_display").textContent =
+        odaBilgileri.oda_no;
+      document.getElementById("oda_tipi_display").textContent =
+        odaBilgileri.oda_tipi;
+      document.getElementById("toplam_setup_display").textContent =
+        setuplar.length;
+
+      // Accordion oluştur
+      setupAccordionOlustur();
+
+      // Section'ları değiştir
+      odaSecimiSection.classList.add("hidden");
+      odaDetaylariSection.classList.remove("hidden");
+    } catch (error) {
+      console.error("❌ Setup durumu yükleme hatası:", error);
+      toastGoster(error.message, "error");
+    } finally {
+      loading.classList.add("hidden");
+    }
+  }
+
+  // Setup accordion oluştur
+  function setupAccordionOlustur() {
+    const container = document.getElementById("setup_accordion_container");
+    container.innerHTML = "";
+
+    // Dolap içi setupları ayır
+    const dolapIciSetuplar = setuplar.filter((s) => s.dolap_ici);
+    const ilaveSetuplar = setuplar.filter((s) => !s.dolap_ici);
+
+    // Dolap içi setupları işle
+    dolapIciSetuplar.forEach((setup) => {
+      if (odaBilgileri.dolap_sayisi && odaBilgileri.dolap_sayisi > 0) {
+        // Her dolap için ayrı accordion
+        for (let dolapNo = 1; dolapNo <= odaBilgileri.dolap_sayisi; dolapNo++) {
+          const accordionHtml = createAccordionItem(
+            `dolap_${setup.setup_id}_${dolapNo}`,
+            `Dolap ${dolapNo} - ${setup.setup_adi}`,
+            setup.urunler,
+            "from-pink-500 to-rose-500"
+          );
+          container.insertAdjacentHTML("beforeend", accordionHtml);
+        }
+      }
+    });
+
+    // İlave setupları işle
+    ilaveSetuplar.forEach((setup) => {
+      const accordionHtml = createAccordionItem(
+        `ilave_${setup.setup_id}`,
+        setup.setup_adi,
+        setup.urunler,
+        "from-blue-500 to-indigo-500"
+      );
+      container.insertAdjacentHTML("beforeend", accordionHtml);
+    });
+
+    // Event listener'ları ekle
+    attachAccordionListeners();
+  }
+
+  // Accordion item oluştur
+  function createAccordionItem(id, baslik, urunler, gradientClass) {
+    const toplamUrun = urunler.length;
+    const eksikUrunler = urunler.filter((u) => u.durum === "eksik").length;
+
+    let urunlerHtml = "";
+    urunler.forEach((urun) => {
+      const durumBadge = getDurumBadge(
+        urun.durum,
+        urun.eksik_miktar,
+        urun.fazla_miktar
+      );
+
+      urunlerHtml += `
+            <tr class="hover:bg-slate-50 transition-colors">
+                <td class="px-4 py-3 text-sm text-slate-900">${
+                  urun.urun_adi
+                }</td>
+                <td class="px-4 py-3 text-sm text-center text-slate-600">${
+                  urun.setup_miktari
+                }</td>
+                <td class="px-4 py-3 text-sm text-center text-slate-900 font-medium">${
+                  urun.mevcut_miktar
+                }</td>
+                <td class="px-4 py-3 text-sm text-center text-blue-600 font-medium">${
+                  urun.ekstra_miktar
+                }</td>
+                <td class="px-4 py-3 text-center">${durumBadge}</td>
+                <td class="px-4 py-3 text-center">
+                    ${
+                      urun.durum === "eksik"
+                        ? `
+                        <button onclick="urunEkleModal(${urun.urun_id}, '${urun.urun_adi}', ${urun.setup_miktari}, ${urun.mevcut_miktar}, ${urun.eksik_miktar}, '${urun.birim}')"
+                                class="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Ekle
+                        </button>
+                    `
+                        : '<span class="text-xs text-slate-400">-</span>'
+                    }
+                </td>
+            </tr>
+        `;
+    });
+
+    return `
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+            <button type="button" 
+                    class="accordion-header w-full px-6 py-4 flex items-center justify-between bg-gradient-to-r ${gradientClass} text-white hover:opacity-90 transition-opacity"
+                    data-target="${id}">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    <span class="font-semibold text-lg">${baslik}</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    ${
+                      eksikUrunler > 0
+                        ? `
+                        <span class="bg-red-500/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium">
+                            ${eksikUrunler} Eksik
+                        </span>
+                    `
+                        : ""
+                    }
+                    <span class="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium">
+                        ${toplamUrun} Ürün
+                    </span>
+                    <svg class="accordion-icon w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+            </button>
+            
+            <div id="${id}" class="accordion-content hidden">
+                <div class="p-6">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Ürün</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Setup Miktar</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Mevcut</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Ekstra</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Durum</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-slate-200">
+                                ${urunlerHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+  }
+
+  // Durum badge oluştur
+  function getDurumBadge(durum, eksikMiktar, fazlaMiktar) {
+    if (durum === "eksik") {
+      return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            Eksik (${eksikMiktar})
+        </span>`;
+    } else if (durum === "ekstra_var") {
+      return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            Ekstra (+${fazlaMiktar})
+        </span>`;
+    } else {
+      return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            Tam
+        </span>`;
+    }
+  }
+
+  // Accordion event listener'ları
+  function attachAccordionListeners() {
+    document.querySelectorAll(".accordion-header").forEach((header) => {
+      header.addEventListener("click", function () {
+        const targetId = this.getAttribute("data-target");
+        const content = document.getElementById(targetId);
+        const icon = this.querySelector(".accordion-icon");
+
+        // Toggle
+        if (content.classList.contains("hidden")) {
+          content.classList.remove("hidden");
+          icon.style.transform = "rotate(180deg)";
+        } else {
+          content.classList.add("hidden");
+          icon.style.transform = "rotate(0deg)";
+        }
+      });
+    });
+  }
+
+  // Geri dön
+  function geriDon() {
+    document.getElementById("oda_secimi_section").classList.remove("hidden");
+    document.getElementById("oda_detaylari_section").classList.add("hidden");
+    secilenOdaId = null;
+    odaBilgileri = null;
+    setuplar = [];
+  }
+
+  // Ürün ekle modal (placeholder)
+  function urunEkleModal(
+    urunId,
+    urunAdi,
+    setupMiktar,
+    mevcutMiktar,
+    eksikMiktar,
+    birim
+  ) {
+    alert(
+      `Ürün Ekle Modal\n\nÜrün: ${urunAdi}\nSetup: ${setupMiktar}\nMevcut: ${mevcutMiktar}\nEksik: ${eksikMiktar}\nBirim: ${birim}`
+    );
+    // TODO: Modal implementasyonu
+  }
+
+  // QR ile başlat (placeholder)
+  function qrIleBaslat() {
+    alert("QR Kod okuyucu açılacak");
+    // TODO: QR implementasyonu
+  }
+
+  // Toast mesajı
+  function toastGoster(mesaj, tip = "info") {
+    const toast = document.createElement("div");
+    toast.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg text-white transform transition-all duration-300 ${
+      tip === "success"
+        ? "bg-green-500"
+        : tip === "error"
+        ? "bg-red-500"
+        : tip === "warning"
+        ? "bg-orange-500"
+        : "bg-blue-500"
+    }`;
+    toast.textContent = mesaj;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      setTimeout(() => document.body.removeChild(toast), 300);
+    }, 3000);
+  }
+</script>
+
+{% endblock %}

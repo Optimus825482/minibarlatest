@@ -35,6 +35,12 @@ class MinibarIslemTipi(str, enum.Enum):
     EKSIK_TAMAMLAMA = 'eksik_tamamlama'
     SAYIM = 'sayim'
     DUZELTME = 'duzeltme'
+    KONTROL = 'kontrol'
+    DOLDURMA = 'doldurma'
+    EK_DOLUM = 'ek_dolum'
+    SETUP_KONTROL = 'setup_kontrol'
+    EKSTRA_EKLEME = 'ekstra_ekleme'
+    EKSTRA_TUKETIM = 'ekstra_tuketim'
 
 class AuditIslemTipi(str, enum.Enum):
     CREATE = 'create'
@@ -204,6 +210,7 @@ class Setup(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     ad = db.Column(db.String(100), nullable=False, unique=True)  # MINI, MAXI
     aciklama = db.Column(db.String(500))
+    dolap_ici = db.Column(db.Boolean, default=True)  # True: Dolap İçi, False: Dolap Dışı
     aktif = db.Column(db.Boolean, default=True)
     olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     
@@ -231,6 +238,14 @@ class SetupIcerik(db.Model):
         return f'<SetupIcerik Setup:{self.setup_id} Urun:{self.urun_id}>'
 
 
+# Many-to-Many ara tablo: OdaTipi <-> Setup
+oda_tipi_setup = db.Table('oda_tipi_setup',
+    db.Column('oda_tipi_id', db.Integer, db.ForeignKey('oda_tipleri.id'), primary_key=True),
+    db.Column('setup_id', db.Integer, db.ForeignKey('setuplar.id'), primary_key=True),
+    db.Column('olusturma_tarihi', db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+)
+
+
 class OdaTipi(db.Model):
     """Oda tipleri tablosu"""
     __tablename__ = 'oda_tipleri'
@@ -238,9 +253,11 @@ class OdaTipi(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     ad = db.Column(db.String(100), nullable=False, unique=True)
     dolap_sayisi = db.Column(db.Integer, default=0)
-    setup = db.Column(db.String(50))  # MINI, MAXI
     aktif = db.Column(db.Boolean, default=True)
     olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    
+    # Many-to-Many ilişki
+    setuplar = db.relationship('Setup', secondary=oda_tipi_setup, backref=db.backref('oda_tipleri', lazy='dynamic'))
     
     def __repr__(self):
         return f'<OdaTipi {self.ad}>'
@@ -275,10 +292,10 @@ class Oda(db.Model):
     
     @property
     def oda_tipi_adi(self):
-        """Oda tipi adını döndür (önce ID'den, yoksa string'den)"""
+        """Oda tipi adını döndür"""
         if self.oda_tipi_rel:
             return self.oda_tipi_rel.ad
-        return self.oda_tipi  # Fallback eski string değer
+        return None
     
     def __repr__(self):
         return f'<Oda {self.oda_no}>'
@@ -399,7 +416,7 @@ class MinibarIslem(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     oda_id = db.Column(db.Integer, db.ForeignKey('odalar.id'), nullable=False)
     personel_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'), nullable=False)
-    islem_tipi = db.Column(db.Enum('ilk_dolum', 'yeniden_dolum', 'eksik_tamamlama', 'sayim', 'duzeltme', 'kontrol', 'doldurma', 'ek_dolum', name='minibar_islem_tipi'), nullable=False)
+    islem_tipi = db.Column(db.Enum('ilk_dolum', 'yeniden_dolum', 'eksik_tamamlama', 'sayim', 'duzeltme', 'kontrol', 'doldurma', 'ek_dolum', 'setup_kontrol', 'ekstra_ekleme', 'ekstra_tuketim', name='minibar_islem_tipi'), nullable=False)
     islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     aciklama = db.Column(db.Text)
     
@@ -421,6 +438,8 @@ class MinibarIslemDetay(db.Model):
     bitis_stok = db.Column(db.Integer, default=0)
     tuketim = db.Column(db.Integer, default=0)
     eklenen_miktar = db.Column(db.Integer, default=0)
+    ekstra_miktar = db.Column(db.Integer, default=0)  # Setup üstü eklenen miktar
+    setup_miktari = db.Column(db.Integer, default=0)  # Setup'ta olması gereken miktar
     zimmet_detay_id = db.Column(db.Integer, db.ForeignKey('personel_zimmet_detay.id'), nullable=True)  # Hangi zimmetten kullanıldığı
     
     # Fiyatlandırma ve Karlılık Kolonları

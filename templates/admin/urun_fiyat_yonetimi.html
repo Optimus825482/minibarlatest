@@ -1,585 +1,842 @@
-{% extends "base.html" %}
-
-{% block title %}Fiyat Yönetimi - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Fiyat Yönetimi{% endblock %}
-
-{% block extra_head %}
+{% extends "base.html" %} {% block title %}Fiyat Yönetimi - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}Fiyat Yönetimi{% endblock %} {%
+block extra_head %}
 <!-- DataTables CSS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+<link
+  rel="stylesheet"
+  href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css"
+/>
+<link
+  rel="stylesheet"
+  href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css"
+/>
 
 <style>
-    /* Fiyat Kartları */
-    .price-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+  /* Fiyat Kartları */
+  .price-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .price-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Fiyat Badge */
+  .price-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .price-badge.current {
+    background-color: #dbeafe;
+    color: #1e40af;
+  }
+
+  .dark .price-badge.current {
+    background-color: #1e3a8a;
+    color: #93c5fd;
+  }
+
+  .price-badge.old {
+    background-color: #fee2e2;
+    color: #991b1b;
+  }
+
+  .dark .price-badge.old {
+    background-color: #7f1d1d;
+    color: #fca5a5;
+  }
+
+  /* DataTables Dark Mode */
+  .dark .dataTables_wrapper {
+    color: #e2e8f0;
+  }
+
+  .dark .dataTables_wrapper .dataTables_filter input,
+  .dark .dataTables_wrapper .dataTables_length select {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+  }
+
+  .dark table.dataTable tbody tr {
+    background-color: #1e293b;
+  }
+
+  .dark table.dataTable tbody tr:hover {
+    background-color: #334155 !important;
+  }
+
+  /* Form Styling */
+  .form-section {
+    background: linear-gradient(to right, #f8fafc, #ffffff);
+    border-left: 4px solid #3b82f6;
+  }
+
+  .dark .form-section {
+    background: linear-gradient(to right, #0f172a, #1e293b);
+    border-left-color: #60a5fa;
+  }
+
+  /* ===================================== */
+  /* RESPONSIVE TABLE STYLES */
+  /* ===================================== */
+
+  .table-wrapper {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    border-radius: 0.5rem;
+  }
+
+  /* Scrollbar Stilleri */
+  .table-wrapper::-webkit-scrollbar {
+    height: 8px;
+    background-color: rgba(203, 213, 225, 0.3);
+    border-radius: 4px;
+  }
+
+  .table-wrapper::-webkit-scrollbar-thumb {
+    background-color: rgba(71, 85, 105, 0.5);
+    border-radius: 4px;
+  }
+
+  .table-wrapper::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(71, 85, 105, 0.7);
+  }
+
+  /* Firefox scrollbar */
+  .table-wrapper {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(71, 85, 105, 0.5) rgba(203, 213, 225, 0.3);
+  }
+
+  /* Mobilde scroll göstergesi */
+  @media (max-width: 768px) {
+    .table-wrapper::after {
+      content: "→";
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      background: linear-gradient(to right, transparent, white 30%);
+      padding: 0.5rem 1rem;
+      font-size: 1.5rem;
+      color: rgba(71, 85, 105, 0.5);
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 0.3s;
     }
-    
-    .price-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+
+    .table-wrapper.scrolled-end::after {
+      opacity: 0;
     }
-    
-    /* Fiyat Badge */
-    .price-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.875rem;
-        font-weight: 600;
+
+    /* Dark mode için */
+    .dark .table-wrapper::after {
+      background: linear-gradient(to right, transparent, #1e293b 30%);
     }
-    
-    .price-badge.current {
-        background-color: #dbeafe;
-        color: #1e40af;
+
+    /* Tablo minimum genişliği */
+    .table-wrapper table {
+      min-width: 800px;
     }
-    
-    .dark .price-badge.current {
-        background-color: #1e3a8a;
-        color: #93c5fd;
+
+    /* Touch-friendly hücreler */
+    .table-wrapper td,
+    .table-wrapper th {
+      white-space: nowrap;
+      padding: 0.75rem 0.5rem !important;
     }
-    
-    .price-badge.old {
-        background-color: #fee2e2;
-        color: #991b1b;
-    }
-    
-    .dark .price-badge.old {
-        background-color: #7f1d1d;
-        color: #fca5a5;
-    }
-    
-    /* DataTables Dark Mode */
-    .dark .dataTables_wrapper {
-        color: #e2e8f0;
-    }
-    
-    .dark .dataTables_wrapper .dataTables_filter input,
-    .dark .dataTables_wrapper .dataTables_length select {
-        background-color: #1e293b;
-        border-color: #334155;
-        color: #e2e8f0;
-    }
-    
-    .dark table.dataTable tbody tr {
-        background-color: #1e293b;
-    }
-    
-    .dark table.dataTable tbody tr:hover {
-        background-color: #334155 !important;
-    }
-    
-    /* Form Styling */
-    .form-section {
-        background: linear-gradient(to right, #f8fafc, #ffffff);
-        border-left: 4px solid #3b82f6;
-    }
-    
-    .dark .form-section {
-        background: linear-gradient(to right, #0f172a, #1e293b);
-        border-left-color: #60a5fa;
-    }
+  }
 </style>
-{% endblock %}
-
-{% block content %}
+{% endblock %} {% block content %}
 <div class="space-y-6">
-    <!-- Fiyat Güncelleme Formu -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
-        <div class="form-section px-6 py-4">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                Fiyat Güncelleme
-            </h3>
-        </div>
-        
-        <form id="fiyat-guncelle-form" class="p-6">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Ürün Seçimi -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Ürün <span class="text-red-500">*</span>
-                    </label>
-                    <select id="urun-select" name="urun_id" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200" required>
-                        <option value="">Ürün seçiniz...</option>
-                        {% for urun in urunler %}
-                        <option value="{{ urun.id }}" data-grup="{{ urun.grup.grup_adi }}">
-                            {{ urun.urun_adi }} ({{ urun.grup.grup_adi }})
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <!-- Tedarikçi Seçimi -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Tedarikçi <span class="text-red-500">*</span>
-                    </label>
-                    <select id="tedarikci-select" name="tedarikci_id" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200" required>
-                        <option value="">Tedarikçi seçiniz...</option>
-                        {% for tedarikci in tedarikciler %}
-                        <option value="{{ tedarikci.id }}">{{ tedarikci.tedarikci_adi }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <!-- Alış Fiyatı -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Alış Fiyatı (₺) <span class="text-red-500">*</span>
-                    </label>
-                    <input type="number" id="alis-fiyati" name="alis_fiyati" step="0.01" min="0" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200" placeholder="0.00" required>
-                </div>
-                
-                <!-- Satış Fiyatı -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Satış Fiyatı (₺) <span class="text-red-500">*</span>
-                    </label>
-                    <input type="number" id="satis-fiyati" name="satis_fiyati" step="0.01" min="0" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200" placeholder="0.00" required>
-                </div>
-                
-                <!-- Minimum Miktar -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Minimum Miktar
-                    </label>
-                    <input type="number" name="minimum_miktar" value="1" min="1" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200">
-                </div>
-                
-                <!-- Değişiklik Sebebi -->
-                <div class="md:col-span-2 lg:col-span-3">
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Değişiklik Sebebi
-                    </label>
-                    <textarea name="degisiklik_sebebi" rows="2" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200" placeholder="Fiyat değişikliği sebebini açıklayın..."></textarea>
-                </div>
-            </div>
-            
-            <!-- Kar Marjı Önizleme -->
-            <div id="kar-marji-preview" class="hidden mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Kar Marjı Önizleme</p>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Satış fiyatı - Alış fiyatı</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-2xl font-bold text-blue-600 dark:text-blue-400" id="kar-tutari">₺0.00</p>
-                        <p class="text-sm text-slate-600 dark:text-slate-400" id="kar-orani">%0</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Butonlar -->
-            <div class="mt-6 flex gap-3">
-                <button type="submit" class="flex-1 md:flex-none px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                    <i class="fas fa-save mr-2"></i>
-                    Fiyatı Güncelle
-                </button>
-                <button type="button" id="form-temizle" class="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
-                    <i class="fas fa-eraser mr-2"></i>
-                    Temizle
-                </button>
-            </div>
-        </form>
+  <!-- Fiyat Güncelleme Formu -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+    <div class="form-section px-6 py-4">
+      <h3
+        class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
+      >
+        <svg
+          class="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          ></path>
+        </svg>
+        Fiyat Güncelleme
+      </h3>
     </div>
 
-    <!-- Güncel Fiyatlar Tablosu -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                Güncel Fiyatlar
-            </h3>
-            <button id="fiyat-yenile" class="px-4 py-2 text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
-                <i class="fas fa-sync-alt mr-2"></i>
-                Yenile
-            </button>
+    <form id="fiyat-guncelle-form" class="p-6">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Ürün Seçimi -->
+        <div>
+          <label
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >
+            Ürün <span class="text-red-500">*</span>
+          </label>
+          <select
+            id="urun-select"
+            name="urun_id"
+            class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
+            required
+          >
+            <option value="">Ürün seçiniz...</option>
+            {% for urun in urunler %}
+            <option value="{{ urun.id }}" data-grup="{{ urun.grup.grup_adi }}">
+              {{ urun.urun_adi }} ({{ urun.grup.grup_adi }})
+            </option>
+            {% endfor %}
+          </select>
         </div>
-        
-        <div class="overflow-x-auto">
-            <table id="guncel-fiyatlar-table" class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                <thead class="bg-slate-50 dark:bg-slate-700">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Ürün Adı
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Tedarikçi
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Alış Fiyatı
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Satış Fiyatı
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Kar Marjı
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Geçerlilik
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            İşlemler
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                    <!-- DataTables ile doldurulacak -->
-                </tbody>
-            </table>
+
+        <!-- Tedarikçi Seçimi -->
+        <div>
+          <label
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >
+            Tedarikçi <span class="text-red-500">*</span>
+          </label>
+          <select
+            id="tedarikci-select"
+            name="tedarikci_id"
+            class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
+            required
+          >
+            <option value="">Tedarikçi seçiniz...</option>
+            {% for tedarikci in tedarikciler %}
+            <option value="{{ tedarikci.id }}">
+              {{ tedarikci.tedarikci_adi }}
+            </option>
+            {% endfor %}
+          </select>
         </div>
+
+        <!-- Alış Fiyatı -->
+        <div>
+          <label
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >
+            Alış Fiyatı (₺) <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            id="alis-fiyati"
+            name="alis_fiyati"
+            step="0.01"
+            min="0"
+            class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
+            placeholder="0.00"
+            required
+          />
+        </div>
+
+        <!-- Satış Fiyatı -->
+        <div>
+          <label
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >
+            Satış Fiyatı (₺) <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            id="satis-fiyati"
+            name="satis_fiyati"
+            step="0.01"
+            min="0"
+            class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
+            placeholder="0.00"
+            required
+          />
+        </div>
+
+        <!-- Minimum Miktar -->
+        <div>
+          <label
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >
+            Minimum Miktar
+          </label>
+          <input
+            type="number"
+            name="minimum_miktar"
+            value="1"
+            min="1"
+            class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
+          />
+        </div>
+
+        <!-- Değişiklik Sebebi -->
+        <div class="md:col-span-2 lg:col-span-3">
+          <label
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >
+            Değişiklik Sebebi
+          </label>
+          <textarea
+            name="degisiklik_sebebi"
+            rows="2"
+            class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
+            placeholder="Fiyat değişikliği sebebini açıklayın..."
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Kar Marjı Önizleme -->
+      <div
+        id="kar-marji-preview"
+        class="hidden mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
+      >
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Kar Marjı Önizleme
+            </p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Satış fiyatı - Alış fiyatı
+            </p>
+          </div>
+          <div class="text-right">
+            <p
+              class="text-2xl font-bold text-blue-600 dark:text-blue-400"
+              id="kar-tutari"
+            >
+              ₺0.00
+            </p>
+            <p
+              class="text-sm text-slate-600 dark:text-slate-400"
+              id="kar-orani"
+            >
+              %0
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Butonlar -->
+      <div class="mt-6 flex gap-3">
+        <button
+          type="submit"
+          class="flex-1 md:flex-none px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+        >
+          <i class="fas fa-save mr-2"></i>
+          Fiyatı Güncelle
+        </button>
+        <button
+          type="button"
+          id="form-temizle"
+          class="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+        >
+          <i class="fas fa-eraser mr-2"></i>
+          Temizle
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Güncel Fiyatlar Tablosu -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3
+        class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
+      >
+        <svg
+          class="w-5 h-5 mr-2 text-green-600 dark:text-green-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          ></path>
+        </svg>
+        Güncel Fiyatlar
+      </h3>
+      <button
+        id="fiyat-yenile"
+        class="px-4 py-2 text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+      >
+        <i class="fas fa-sync-alt mr-2"></i>
+        Yenile
+      </button>
     </div>
 
-    <!-- Fiyat Geçmişi Tablosu -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                Fiyat Geçmişi
-            </h3>
-            <div class="flex gap-2">
-                <select id="gecmis-urun-filter" class="px-4 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200">
-                    <option value="">Tüm Ürünler</option>
-                    {% for urun in urunler %}
-                    <option value="{{ urun.id }}">{{ urun.urun_adi }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        
-        <div class="overflow-x-auto">
-            <table id="fiyat-gecmis-table" class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                <thead class="bg-slate-50 dark:bg-slate-700">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Tarih
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Ürün
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Değişiklik Tipi
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Eski Fiyat
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Yeni Fiyat
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Değişiklik Sebebi
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Yapan
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                    <!-- DataTables ile doldurulacak -->
-                </tbody>
-            </table>
-        </div>
+    <div class="table-wrapper overflow-x-auto">
+      <table
+        id="guncel-fiyatlar-table"
+        class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
+      >
+        <thead class="bg-slate-50 dark:bg-slate-700">
+          <tr>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Ürün Adı
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Tedarikçi
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Alış Fiyatı
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Satış Fiyatı
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Kar Marjı
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Geçerlilik
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              İşlemler
+            </th>
+          </tr>
+        </thead>
+        <tbody
+          class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+        >
+          <!-- DataTables ile doldurulacak -->
+        </tbody>
+      </table>
     </div>
+  </div>
+
+  <!-- Fiyat Geçmişi Tablosu -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3
+        class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
+      >
+        <svg
+          class="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+          ></path>
+        </svg>
+        Fiyat Geçmişi
+      </h3>
+      <div class="flex gap-2">
+        <select
+          id="gecmis-urun-filter"
+          class="px-4 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
+        >
+          <option value="">Tüm Ürünler</option>
+          {% for urun in urunler %}
+          <option value="{{ urun.id }}">{{ urun.urun_adi }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="table-wrapper overflow-x-auto">
+      <table
+        id="fiyat-gecmis-table"
+        class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
+      >
+        <thead class="bg-slate-50 dark:bg-slate-700">
+          <tr>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Tarih
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Ürün
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Değişiklik Tipi
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Eski Fiyat
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Yeni Fiyat
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Değişiklik Sebebi
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Yapan
+            </th>
+          </tr>
+        </thead>
+        <tbody
+          class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+        >
+          <!-- DataTables ile doldurulacak -->
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block extra_scripts %}
+{% endblock %} {% block extra_scripts %}
 <!-- DataTables JS -->
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 
 <script>
-// Fiyat Yönetimi Manager
-class FiyatYonetimiManager {
+  // Fiyat Yönetimi Manager
+  class FiyatYonetimiManager {
     constructor() {
-        this.guncelFiyatlarTable = null;
-        this.fiyatGecmisTable = null;
-        this.init();
+      this.guncelFiyatlarTable = null;
+      this.fiyatGecmisTable = null;
+      this.init();
     }
 
     init() {
-        this.initEventListeners();
-        this.loadGuncelFiyatlar();
-        this.loadFiyatGecmisi();
+      this.initEventListeners();
+      this.loadGuncelFiyatlar();
+      this.loadFiyatGecmisi();
     }
 
     initEventListeners() {
-        // Form submit
-        $('#fiyat-guncelle-form').on('submit', (e) => {
-            e.preventDefault();
-            this.fiyatGuncelle();
-        });
+      // Form submit
+      $("#fiyat-guncelle-form").on("submit", (e) => {
+        e.preventDefault();
+        this.fiyatGuncelle();
+      });
 
-        // Kar marjı hesaplama
-        $('#alis-fiyati, #satis-fiyati').on('input', () => {
-            this.karMarjiHesapla();
-        });
+      // Kar marjı hesaplama
+      $("#alis-fiyati, #satis-fiyati").on("input", () => {
+        this.karMarjiHesapla();
+      });
 
-        // Form temizle
-        $('#form-temizle').on('click', () => {
-            this.formTemizle();
-        });
+      // Form temizle
+      $("#form-temizle").on("click", () => {
+        this.formTemizle();
+      });
 
-        // Fiyat yenile
-        $('#fiyat-yenile').on('click', () => {
-            this.loadGuncelFiyatlar();
-        });
+      // Fiyat yenile
+      $("#fiyat-yenile").on("click", () => {
+        this.loadGuncelFiyatlar();
+      });
 
-        // Geçmiş filtre
-        $('#gecmis-urun-filter').on('change', () => {
-            this.loadFiyatGecmisi();
-        });
+      // Geçmiş filtre
+      $("#gecmis-urun-filter").on("change", () => {
+        this.loadFiyatGecmisi();
+      });
     }
 
     karMarjiHesapla() {
-        try {
-            const alisFiyati = parseFloat($('#alis-fiyati').val()) || 0;
-            const satisFiyati = parseFloat($('#satis-fiyati').val()) || 0;
+      try {
+        const alisFiyati = parseFloat($("#alis-fiyati").val()) || 0;
+        const satisFiyati = parseFloat($("#satis-fiyati").val()) || 0;
 
-            if (alisFiyati > 0 && satisFiyati > 0) {
-                const karTutari = satisFiyati - alisFiyati;
-                const karOrani = (karTutari / alisFiyati) * 100;
+        if (alisFiyati > 0 && satisFiyati > 0) {
+          const karTutari = satisFiyati - alisFiyati;
+          const karOrani = (karTutari / alisFiyati) * 100;
 
-                $('#kar-tutari').text(this.formatCurrency(karTutari));
-                $('#kar-orani').text(`%${karOrani.toFixed(2)}`);
-                
-                // Renk kodlama
-                if (karOrani < 0) {
-                    $('#kar-tutari, #kar-orani').removeClass('text-blue-600 text-green-600').addClass('text-red-600');
-                } else if (karOrani < 20) {
-                    $('#kar-tutari, #kar-orani').removeClass('text-red-600 text-green-600').addClass('text-blue-600');
-                } else {
-                    $('#kar-tutari, #kar-orani').removeClass('text-red-600 text-blue-600').addClass('text-green-600');
-                }
+          $("#kar-tutari").text(this.formatCurrency(karTutari));
+          $("#kar-orani").text(`%${karOrani.toFixed(2)}`);
 
-                $('#kar-marji-preview').removeClass('hidden');
-            } else {
-                $('#kar-marji-preview').addClass('hidden');
-            }
-        } catch (error) {
-            console.error('Kar marjı hesaplama hatası:', error);
+          // Renk kodlama
+          if (karOrani < 0) {
+            $("#kar-tutari, #kar-orani")
+              .removeClass("text-blue-600 text-green-600")
+              .addClass("text-red-600");
+          } else if (karOrani < 20) {
+            $("#kar-tutari, #kar-orani")
+              .removeClass("text-red-600 text-green-600")
+              .addClass("text-blue-600");
+          } else {
+            $("#kar-tutari, #kar-orani")
+              .removeClass("text-red-600 text-blue-600")
+              .addClass("text-green-600");
+          }
+
+          $("#kar-marji-preview").removeClass("hidden");
+        } else {
+          $("#kar-marji-preview").addClass("hidden");
         }
+      } catch (error) {
+        console.error("Kar marjı hesaplama hatası:", error);
+      }
     }
 
     async fiyatGuncelle() {
-        try {
-            const formData = new FormData($('#fiyat-guncelle-form')[0]);
-            const data = Object.fromEntries(formData.entries());
+      try {
+        const formData = new FormData($("#fiyat-guncelle-form")[0]);
+        const data = Object.fromEntries(formData.entries());
 
-            // Validasyon
-            if (!data.urun_id || !data.tedarikci_id || !data.alis_fiyati || !data.satis_fiyati) {
-                this.showError('Lütfen tüm zorunlu alanları doldurun');
-                return;
-            }
-
-            if (parseFloat(data.alis_fiyati) < 0 || parseFloat(data.satis_fiyati) < 0) {
-                this.showError('Fiyatlar negatif olamaz');
-                return;
-            }
-
-            const response = await fetch(`/api/v1/fiyat/urun/${data.urun_id}/guncelle`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': data.csrf_token
-                },
-                body: JSON.stringify(data)
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                this.showSuccess('Fiyat başarıyla güncellendi');
-                this.formTemizle();
-                this.loadGuncelFiyatlar();
-                this.loadFiyatGecmisi();
-            } else {
-                this.showError(result.message || 'Fiyat güncellenirken hata oluştu');
-            }
-        } catch (error) {
-            console.error('Fiyat güncelleme hatası:', error);
-            this.showError('Fiyat güncellenirken hata oluştu');
+        // Validasyon
+        if (
+          !data.urun_id ||
+          !data.tedarikci_id ||
+          !data.alis_fiyati ||
+          !data.satis_fiyati
+        ) {
+          this.showError("Lütfen tüm zorunlu alanları doldurun");
+          return;
         }
+
+        if (
+          parseFloat(data.alis_fiyati) < 0 ||
+          parseFloat(data.satis_fiyati) < 0
+        ) {
+          this.showError("Fiyatlar negatif olamaz");
+          return;
+        }
+
+        const response = await fetch(
+          `/api/v1/fiyat/urun/${data.urun_id}/guncelle`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": data.csrf_token,
+            },
+            body: JSON.stringify(data),
+          }
+        );
+
+        const result = await response.json();
+
+        if (result.success) {
+          this.showSuccess("Fiyat başarıyla güncellendi");
+          this.formTemizle();
+          this.loadGuncelFiyatlar();
+          this.loadFiyatGecmisi();
+        } else {
+          this.showError(result.message || "Fiyat güncellenirken hata oluştu");
+        }
+      } catch (error) {
+        console.error("Fiyat güncelleme hatası:", error);
+        this.showError("Fiyat güncellenirken hata oluştu");
+      }
     }
 
     async loadGuncelFiyatlar() {
-        try {
-            const response = await fetch('/api/v1/fiyat/guncel-fiyatlar');
-            const data = await response.json();
+      try {
+        const response = await fetch("/api/v1/fiyat/guncel-fiyatlar");
+        const data = await response.json();
 
-            if (this.guncelFiyatlarTable) {
-                this.guncelFiyatlarTable.destroy();
-            }
+        if (this.guncelFiyatlarTable) {
+          this.guncelFiyatlarTable.destroy();
+        }
 
-            this.guncelFiyatlarTable = $('#guncel-fiyatlar-table').DataTable({
-                data: data.fiyatlar || [],
-                columns: [
-                    { data: 'urun_adi' },
-                    { data: 'tedarikci_adi' },
-                    { 
-                        data: 'alis_fiyati',
-                        render: (data) => this.formatCurrency(data)
-                    },
-                    { 
-                        data: 'satis_fiyati',
-                        render: (data) => this.formatCurrency(data)
-                    },
-                    { 
-                        data: null,
-                        render: (row) => {
-                            const kar = row.satis_fiyati - row.alis_fiyati;
-                            const oran = (kar / row.alis_fiyati) * 100;
-                            const color = oran < 0 ? 'red' : oran < 20 ? 'blue' : 'green';
-                            return `<span class="text-${color}-600 dark:text-${color}-400 font-semibold">
-                                ${this.formatCurrency(kar)} (%${oran.toFixed(2)})
+        this.guncelFiyatlarTable = $("#guncel-fiyatlar-table").DataTable({
+          data: data.fiyatlar || [],
+          columns: [
+            { data: "urun_adi" },
+            { data: "tedarikci_adi" },
+            {
+              data: "alis_fiyati",
+              render: (data) => this.formatCurrency(data),
+            },
+            {
+              data: "satis_fiyati",
+              render: (data) => this.formatCurrency(data),
+            },
+            {
+              data: null,
+              render: (row) => {
+                const kar = row.satis_fiyati - row.alis_fiyati;
+                const oran = (kar / row.alis_fiyati) * 100;
+                const color = oran < 0 ? "red" : oran < 20 ? "blue" : "green";
+                return `<span class="text-${color}-600 dark:text-${color}-400 font-semibold">
+                                ${this.formatCurrency(kar)} (%${oran.toFixed(
+                  2
+                )})
                             </span>`;
-                        }
-                    },
-                    { 
-                        data: null,
-                        render: (row) => {
-                            const baslangic = new Date(row.baslangic_tarihi).toLocaleDateString('tr-TR');
-                            const bitis = row.bitis_tarihi ? new Date(row.bitis_tarihi).toLocaleDateString('tr-TR') : 'Süresiz';
-                            return `${baslangic} - ${bitis}`;
-                        }
-                    },
-                    {
-                        data: null,
-                        render: (row) => {
-                            return `
+              },
+            },
+            {
+              data: null,
+              render: (row) => {
+                const baslangic = new Date(
+                  row.baslangic_tarihi
+                ).toLocaleDateString("tr-TR");
+                const bitis = row.bitis_tarihi
+                  ? new Date(row.bitis_tarihi).toLocaleDateString("tr-TR")
+                  : "Süresiz";
+                return `${baslangic} - ${bitis}`;
+              },
+            },
+            {
+              data: null,
+              render: (row) => {
+                return `
                                 <button onclick="fiyatYonetimiManager.fiyatDuzenle(${row.id})" 
                                         class="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50">
                                     <i class="fas fa-edit mr-1"></i>Düzenle
                                 </button>
                             `;
-                        }
-                    }
-                ],
-                order: [[0, 'asc']],
-                pageLength: 10,
-                responsive: true,
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
-                }
-            });
-        } catch (error) {
-            console.error('Güncel fiyatlar yükleme hatası:', error);
-        }
+              },
+            },
+          ],
+          order: [[0, "asc"]],
+          pageLength: 10,
+          responsive: true,
+          language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json",
+          },
+        });
+      } catch (error) {
+        console.error("Güncel fiyatlar yükleme hatası:", error);
+      }
     }
 
     async loadFiyatGecmisi() {
-        try {
-            const urunId = $('#gecmis-urun-filter').val();
-            const url = urunId ? `/api/v1/fiyat/gecmis?urun_id=${urunId}` : '/api/v1/fiyat/gecmis';
-            
-            const response = await fetch(url);
-            const data = await response.json();
+      try {
+        const urunId = $("#gecmis-urun-filter").val();
+        const url = urunId
+          ? `/api/v1/fiyat/gecmis?urun_id=${urunId}`
+          : "/api/v1/fiyat/gecmis";
 
-            if (this.fiyatGecmisTable) {
-                this.fiyatGecmisTable.destroy();
-            }
+        const response = await fetch(url);
+        const data = await response.json();
 
-            this.fiyatGecmisTable = $('#fiyat-gecmis-table').DataTable({
-                data: data.gecmis || [],
-                columns: [
-                    { 
-                        data: 'degisiklik_tarihi',
-                        render: (data) => new Date(data).toLocaleString('tr-TR')
-                    },
-                    { data: 'urun_adi' },
-                    { 
-                        data: 'degisiklik_tipi',
-                        render: (data) => {
-                            const badges = {
-                                'alis_fiyati': '<span class="price-badge" style="background-color: #dbeafe; color: #1e40af;">Alış Fiyatı</span>',
-                                'satis_fiyati': '<span class="price-badge" style="background-color: #dcfce7; color: #166534;">Satış Fiyatı</span>',
-                                'kampanya': '<span class="price-badge" style="background-color: #fef3c7; color: #92400e;">Kampanya</span>'
-                            };
-                            return badges[data] || data;
-                        }
-                    },
-                    { 
-                        data: 'eski_fiyat',
-                        render: (data) => data ? this.formatCurrency(data) : '-'
-                    },
-                    { 
-                        data: 'yeni_fiyat',
-                        render: (data) => this.formatCurrency(data)
-                    },
-                    { 
-                        data: 'degisiklik_sebebi',
-                        render: (data) => data || '-'
-                    },
-                    { data: 'olusturan_adi' }
-                ],
-                order: [[0, 'desc']],
-                pageLength: 10,
-                responsive: true,
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
-                }
-            });
-        } catch (error) {
-            console.error('Fiyat geçmişi yükleme hatası:', error);
+        if (this.fiyatGecmisTable) {
+          this.fiyatGecmisTable.destroy();
         }
+
+        this.fiyatGecmisTable = $("#fiyat-gecmis-table").DataTable({
+          data: data.gecmis || [],
+          columns: [
+            {
+              data: "degisiklik_tarihi",
+              render: (data) => new Date(data).toLocaleString("tr-TR"),
+            },
+            { data: "urun_adi" },
+            {
+              data: "degisiklik_tipi",
+              render: (data) => {
+                const badges = {
+                  alis_fiyati:
+                    '<span class="price-badge" style="background-color: #dbeafe; color: #1e40af;">Alış Fiyatı</span>',
+                  satis_fiyati:
+                    '<span class="price-badge" style="background-color: #dcfce7; color: #166534;">Satış Fiyatı</span>',
+                  kampanya:
+                    '<span class="price-badge" style="background-color: #fef3c7; color: #92400e;">Kampanya</span>',
+                };
+                return badges[data] || data;
+              },
+            },
+            {
+              data: "eski_fiyat",
+              render: (data) => (data ? this.formatCurrency(data) : "-"),
+            },
+            {
+              data: "yeni_fiyat",
+              render: (data) => this.formatCurrency(data),
+            },
+            {
+              data: "degisiklik_sebebi",
+              render: (data) => data || "-",
+            },
+            { data: "olusturan_adi" },
+          ],
+          order: [[0, "desc"]],
+          pageLength: 10,
+          responsive: true,
+          language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json",
+          },
+        });
+      } catch (error) {
+        console.error("Fiyat geçmişi yükleme hatası:", error);
+      }
     }
 
     fiyatDuzenle(fiyatId) {
-        // Fiyat düzenleme modalı veya formu doldurma
-        Swal.fire({
-            title: 'Fiyat Düzenleme',
-            text: 'Bu özellik yakında eklenecek',
-            icon: 'info'
-        });
+      // Fiyat düzenleme modalı veya formu doldurma
+      Swal.fire({
+        title: "Fiyat Düzenleme",
+        text: "Bu özellik yakında eklenecek",
+        icon: "info",
+      });
     }
 
     formTemizle() {
-        $('#fiyat-guncelle-form')[0].reset();
-        $('#kar-marji-preview').addClass('hidden');
+      $("#fiyat-guncelle-form")[0].reset();
+      $("#kar-marji-preview").addClass("hidden");
     }
 
     formatCurrency(value) {
-        return new Intl.NumberFormat('tr-TR', {
-            style: 'currency',
-            currency: 'TRY'
-        }).format(value);
+      return new Intl.NumberFormat("tr-TR", {
+        style: "currency",
+        currency: "TRY",
+      }).format(value);
     }
 
     showSuccess(message) {
-        Swal.fire({
-            icon: 'success',
-            title: 'Başarılı',
-            text: message,
-            timer: 2000,
-            showConfirmButton: false
-        });
+      Swal.fire({
+        icon: "success",
+        title: "Başarılı",
+        text: message,
+        timer: 2000,
+        showConfirmButton: false,
+      });
     }
 
     showError(message) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Hata',
-            text: message,
-            confirmButtonText: 'Tamam'
-        });
+      Swal.fire({
+        icon: "error",
+        title: "Hata",
+        text: message,
+        confirmButtonText: "Tamam",
+      });
     }
-}
+  }
 
-// Global instance
-let fiyatYonetimiManager;
+  // Global instance
+  let fiyatYonetimiManager;
 
-// Sayfa yüklendiğinde başlat
-$(document).ready(function() {
+  // Sayfa yüklendiğinde başlat
+  $(document).ready(function () {
     fiyatYonetimiManager = new FiyatYonetimiManager();
-});
+  });
 </script>
 {% endblock %}

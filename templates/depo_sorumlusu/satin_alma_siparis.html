@@ -1,331 +1,452 @@
-{% extends "base.html" %}
-
-{% block title %}Satın Alma Siparişi - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Satın Alma Siparişi Oluştur{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Satın Alma Siparişi - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}Satın Alma Siparişi Oluştur{%
+endblock %} {% block content %}
 <div class="space-y-6">
-    <!-- Otomatik Sipariş Önerileri -->
-    {% if siparis_onerileri %}
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg shadow-md border border-blue-200 dark:border-blue-800">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center">
-                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100">💡 Otomatik Sipariş Önerileri</h3>
-                </div>
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                    {{ siparis_onerileri|length }} Ürün
-                </span>
+  <!-- Otomatik Sipariş Önerileri -->
+  {% if siparis_onerileri %}
+  <div
+    class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg shadow-md border border-blue-200 dark:border-blue-800"
+  >
+    <div class="px-4 py-5 sm:p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center">
+          <svg
+            class="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            ></path>
+          </svg>
+          <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100">
+            💡 Otomatik Sipariş Önerileri
+          </h3>
+        </div>
+        <span
+          class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+        >
+          {{ siparis_onerileri|length }} Ürün
+        </span>
+      </div>
+
+      <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
+        Kritik stok seviyesindeki ürünler için otomatik sipariş önerileri. Hızlı
+        sipariş oluşturmak için aşağıdaki ürünleri seçebilirsiniz.
+      </p>
+
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {% for oneri in siparis_onerileri %}
+        <div
+          class="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow"
+        >
+          <div class="flex items-start justify-between mb-2">
+            <h4
+              class="text-sm font-semibold text-slate-900 dark:text-slate-100"
+            >
+              {{ oneri.urun_adi }}
+            </h4>
+            <span
+              class="inline-flex px-2 py-1 text-xs font-bold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+            >
+              Kritik
+            </span>
+          </div>
+          <div class="space-y-1 text-xs text-slate-600 dark:text-slate-400">
+            <div class="flex justify-between">
+              <span>Mevcut Stok:</span>
+              <span class="font-semibold text-red-600 dark:text-red-400"
+                >{{ oneri.mevcut_stok }}</span
+              >
             </div>
-            
-            <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                Kritik stok seviyesindeki ürünler için otomatik sipariş önerileri. Hızlı sipariş oluşturmak için aşağıdaki ürünleri seçebilirsiniz.
-            </p>
-            
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {% for oneri in siparis_onerileri %}
-                <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
-                    <div class="flex items-start justify-between mb-2">
-                        <h4 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ oneri.urun_adi }}</h4>
-                        <span class="inline-flex px-2 py-1 text-xs font-bold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                            Kritik
-                        </span>
-                    </div>
-                    <div class="space-y-1 text-xs text-slate-600 dark:text-slate-400">
-                        <div class="flex justify-between">
-                            <span>Mevcut Stok:</span>
-                            <span class="font-semibold text-red-600 dark:text-red-400">{{ oneri.mevcut_stok }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Kritik Seviye:</span>
-                            <span class="font-medium">{{ oneri.kritik_seviye }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Önerilen Miktar:</span>
-                            <span class="font-bold text-green-600 dark:text-green-400">{{ oneri.onerilen_miktar }}</span>
-                        </div>
-                        {% if oneri.en_uygun_tedarikci %}
-                        <div class="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700">
-                            <div class="flex justify-between">
-                                <span>Tedarikçi:</span>
-                                <span class="font-medium">{{ oneri.en_uygun_tedarikci.tedarikci_adi }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Birim Fiyat:</span>
-                                <span class="font-semibold">{{ "%.2f"|format(oneri.en_uygun_tedarikci.birim_fiyat) }} ₺</span>
-                            </div>
-                        </div>
-                        {% endif %}
-                    </div>
-                    <button type="button" 
-                            class="mt-3 w-full inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
-                            onclick="addProductToOrder({{ oneri.urun_id }}, '{{ oneri.urun_adi }}', {{ oneri.onerilen_miktar }}, {{ oneri.en_uygun_tedarikci.tedarikci_id if oneri.en_uygun_tedarikci else 'null' }}, {{ oneri.en_uygun_tedarikci.birim_fiyat if oneri.en_uygun_tedarikci else 0 }})">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                        Siparişe Ekle
-                    </button>
-                </div>
+            <div class="flex justify-between">
+              <span>Kritik Seviye:</span>
+              <span class="font-medium">{{ oneri.kritik_seviye }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Önerilen Miktar:</span>
+              <span class="font-bold text-green-600 dark:text-green-400"
+                >{{ oneri.onerilen_miktar }}</span
+              >
+            </div>
+            {% if oneri.en_uygun_tedarikci %}
+            <div
+              class="pt-2 mt-2 border-t border-slate-200 dark:border-slate-700"
+            >
+              <div class="flex justify-between">
+                <span>Tedarikçi:</span>
+                <span class="font-medium"
+                  >{{ oneri.en_uygun_tedarikci.tedarikci_adi }}</span
+                >
+              </div>
+              <div class="flex justify-between">
+                <span>Birim Fiyat:</span>
+                <span class="font-semibold"
+                  >{{ "%.2f"|format(oneri.en_uygun_tedarikci.birim_fiyat) }}
+                  ₺</span
+                >
+              </div>
+            </div>
+            {% endif %}
+          </div>
+          <button
+            type="button"
+            class="mt-3 w-full inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
+            onclick="addProductToOrder({{ oneri.urun_id }}, '{{ oneri.urun_adi }}', {{ oneri.onerilen_miktar }}, {{ oneri.en_uygun_tedarikci.tedarikci_id if oneri.en_uygun_tedarikci else 'null' }}, {{ oneri.en_uygun_tedarikci.birim_fiyat if oneri.en_uygun_tedarikci else 0 }})"
+          >
+            <svg
+              class="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+              ></path>
+            </svg>
+            Siparişe Ekle
+          </button>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Sipariş Formu -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3
+        class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-6"
+      >
+        Sipariş Bilgileri
+      </h3>
+
+      <form method="POST" id="siparis-form" class="space-y-6">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div>
+            <label
+              for="tedarikci_id"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              Tedarikçi <span class="text-slate-400">(Opsiyonel)</span>
+            </label>
+            <div class="mt-1">
+              <select
+                id="tedarikci_id"
+                name="tedarikci_id"
+                class="appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-slate-700 dark:text-slate-200"
+              >
+                <option value="">Tedarikçi seçiniz...</option>
+                {% for tedarikci in tedarikciler %}
+                <option value="{{ tedarikci.id }}">
+                  {{ tedarikci.tedarikci_adi }}
+                </option>
                 {% endfor %}
+              </select>
             </div>
+          </div>
+
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              Sipariş Tarihi
+            </label>
+            <div class="mt-1">
+              <!-- Bugünün tarihi otomatik olarak gösteriliyor -->
+              <div
+                class="appearance-none block w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 sm:text-sm"
+              >
+                <span id="siparis-tarihi-display"></span>
+              </div>
+              <!-- Hidden input - bugünün tarihi otomatik -->
+              <input
+                type="hidden"
+                id="tahmini_teslimat_tarihi"
+                name="tahmini_teslimat_tarihi"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="sm:col-span-2">
+            <label
+              for="aciklama"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              Açıklama
+            </label>
+            <div class="mt-1">
+              <textarea
+                id="aciklama"
+                name="aciklama"
+                rows="3"
+                class="appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-slate-700 dark:text-slate-200"
+                placeholder="Sipariş hakkında ek bilgiler..."
+              ></textarea>
+            </div>
+          </div>
         </div>
-    </div>
-    {% endif %}
 
-    <!-- Sipariş Formu -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-6">Sipariş Bilgileri</h3>
+        <!-- Ürün Satırları -->
+        <div class="border-t border-slate-200 dark:border-slate-700 pt-6">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-md font-medium text-slate-900 dark:text-slate-100">
+              Sipariş Ürünleri
+            </h4>
+            <button
+              type="button"
+              id="add-product-btn"
+              class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 transition-colors"
+            >
+              <svg
+                class="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                ></path>
+              </svg>
+              Ürün Ekle
+            </button>
+          </div>
 
-            <form method="POST" id="siparis-form" class="space-y-6">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                
-                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <div>
-                        <label for="tedarikci_id" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                            Tedarikçi <span class="text-slate-400">(Opsiyonel)</span>
-                        </label>
-                        <div class="mt-1">
-                            <select id="tedarikci_id" name="tedarikci_id"
-                                class="appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-slate-700 dark:text-slate-200">
-                                <option value="">Tedarikçi seçiniz...</option>
-                                {% for tedarikci in tedarikciler %}
-                                <option value="{{ tedarikci.id }}">{{ tedarikci.tedarikci_adi }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
+          <div id="product-rows" class="space-y-3">
+            <!-- Ürün satırları buraya dinamik olarak eklenecek -->
+          </div>
 
-                    <div>
-                        <label for="tahmini_teslimat_tarihi" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                            Tahmini Teslimat Tarihi <span class="text-red-500">*</span>
-                        </label>
-                        <div class="mt-1">
-                            <input id="tahmini_teslimat_tarihi" name="tahmini_teslimat_tarihi" type="date" required
-                                class="appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-slate-700 dark:text-slate-200">
-                        </div>
-                    </div>
-
-                    <div class="sm:col-span-2">
-                        <label for="aciklama" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                            Açıklama
-                        </label>
-                        <div class="mt-1">
-                            <textarea id="aciklama" name="aciklama" rows="3"
-                                class="appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-slate-700 dark:text-slate-200"
-                                placeholder="Sipariş hakkında ek bilgiler..."></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Ürün Satırları -->
-                <div class="border-t border-slate-200 dark:border-slate-700 pt-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h4 class="text-md font-medium text-slate-900 dark:text-slate-100">Sipariş Ürünleri</h4>
-                        <button type="button" id="add-product-btn"
-                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 transition-colors">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                            </svg>
-                            Ürün Ekle
-                        </button>
-                    </div>
-
-                    <div id="product-rows" class="space-y-3">
-                        <!-- Ürün satırları buraya dinamik olarak eklenecek -->
-                    </div>
-
-                    <div id="no-products-message" class="text-center py-8 text-slate-500 dark:text-slate-400">
-                        <svg class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                        </svg>
-                        <p class="mt-2 text-sm">Henüz ürün eklenmedi. "Ürün Ekle" butonuna tıklayarak ürün ekleyin.</p>
-                    </div>
-                </div>
-
-                <!-- Toplam Tutar -->
-                <div class="border-t border-slate-200 dark:border-slate-700 pt-4">
-                    <div class="flex justify-end">
-                        <div class="w-full sm:w-1/2 lg:w-1/3 space-y-2">
-                            <div class="flex justify-between text-sm text-slate-600 dark:text-slate-400">
-                                <span>Toplam Ürün:</span>
-                                <span id="total-products" class="font-medium">0</span>
-                            </div>
-                            <div class="flex justify-between text-lg font-bold text-slate-900 dark:text-slate-100">
-                                <span>Toplam Tutar:</span>
-                                <span id="total-amount">0.00 ₺</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex justify-end space-x-3">
-                    <a href="{{ url_for('siparis_listesi') }}"
-                        class="inline-flex justify-center py-2 px-4 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        İptal
-                    </a>
-                    <button type="submit"
-                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        Siparişi Oluştur
-                    </button>
-                </div>
-            </form>
+          <div
+            id="no-products-message"
+            class="text-center py-8 text-slate-500 dark:text-slate-400"
+          >
+            <svg
+              class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+              ></path>
+            </svg>
+            <p class="mt-2 text-sm">
+              Henüz ürün eklenmedi. "Ürün Ekle" butonuna tıklayarak ürün
+              ekleyin.
+            </p>
+          </div>
         </div>
+
+        <!-- Toplam Tutar -->
+        <div class="border-t border-slate-200 dark:border-slate-700 pt-4">
+          <div class="flex justify-end">
+            <div class="w-full sm:w-1/2 lg:w-1/3 space-y-2">
+              <div
+                class="flex justify-between text-sm text-slate-600 dark:text-slate-400"
+              >
+                <span>Toplam Ürün:</span>
+                <span id="total-products" class="font-medium">0</span>
+              </div>
+              <div
+                class="flex justify-between text-lg font-bold text-slate-900 dark:text-slate-100"
+              >
+                <span>Toplam Tutar:</span>
+                <span id="total-amount">0.00 ₺</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-3">
+          <a
+            href="{{ url_for('siparis_listesi') }}"
+            class="inline-flex justify-center py-2 px-4 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            İptal
+          </a>
+          <button
+            type="submit"
+            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Siparişi Oluştur
+          </button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block extra_scripts %}
+{% endblock %} {% block extra_scripts %}
 <script>
-let productRowCounter = 0;
-const urunler = {{ urunler|tojson }};
-const tedarikciFiyatlar = {{ tedarikci_fiyatlar|tojson }};
+  let productRowCounter = 0;
+  const urunler = {{ urunler|tojson }};
+  const tedarikciFiyatlar = {{ tedarikci_fiyatlar|tojson }};
 
-// Ürün satırı ekle
-document.getElementById('add-product-btn').addEventListener('click', function() {
-    addProductRow();
-});
+  // Ürün satırı ekle
+  document.getElementById('add-product-btn').addEventListener('click', function() {
+      addProductRow();
+  });
 
-function addProductRow(urunId = null, miktar = null, birimFiyat = null) {
-    productRowCounter++;
-    const rowId = `product-row-${productRowCounter}`;
-    
-    const productRow = document.createElement('div');
-    productRow.id = rowId;
-    productRow.className = 'bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 border border-slate-200 dark:border-slate-600';
-    
-    productRow.innerHTML = `
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-12">
-            <div class="sm:col-span-5">
-                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Ürün</label>
-                <select name="urun_id[]" required onchange="updatePrice(this, '${rowId}')"
-                    class="appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:text-slate-200">
-                    <option value="">Ürün seçiniz...</option>
-                    ${urunler.map(u => `<option value="${u.id}" ${urunId == u.id ? 'selected' : ''}>${u.urun_adi}</option>`).join('')}
-                </select>
-            </div>
-            <div class="sm:col-span-2">
-                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Miktar</label>
-                <input type="number" name="miktar[]" min="1" required value="${miktar || ''}" oninput="calculateRowTotal('${rowId}')"
-                    class="appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:text-slate-200">
-            </div>
-            <div class="sm:col-span-2">
-                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Birim Fiyat (₺)</label>
-                <input type="number" name="birim_fiyat[]" step="0.01" min="0" required value="${birimFiyat || ''}" oninput="calculateRowTotal('${rowId}')"
-                    class="appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:text-slate-200">
-            </div>
-            <div class="sm:col-span-2">
-                <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Toplam</label>
-                <div class="flex items-center h-10 px-3 py-2 bg-slate-100 dark:bg-slate-600 border border-slate-300 dark:border-slate-500 rounded-md text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    <span class="row-total">0.00 ₺</span>
-                </div>
-            </div>
-            <div class="sm:col-span-1 flex items-end">
-                <button type="button" onclick="removeProductRow('${rowId}')"
-                    class="w-full inline-flex justify-center items-center px-3 py-2 border border-red-300 dark:border-red-700 text-sm font-medium rounded-md text-red-700 dark:text-red-400 bg-white dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-    `;
-    
-    document.getElementById('product-rows').appendChild(productRow);
-    document.getElementById('no-products-message').style.display = 'none';
-    
-    calculateGrandTotal();
-}
+  function addProductRow(urunId = null, miktar = null, birimFiyat = null) {
+      productRowCounter++;
+      const rowId = `product-row-${productRowCounter}`;
 
-function removeProductRow(rowId) {
-    document.getElementById(rowId).remove();
-    
-    const remainingRows = document.querySelectorAll('#product-rows > div');
-    if (remainingRows.length === 0) {
-        document.getElementById('no-products-message').style.display = 'block';
-    }
-    
-    calculateGrandTotal();
-}
+      const productRow = document.createElement('div');
+      productRow.id = rowId;
+      productRow.className = 'bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 border border-slate-200 dark:border-slate-600';
 
-function updatePrice(selectElement, rowId) {
-    const urunId = selectElement.value;
-    const tedarikciId = document.getElementById('tedarikci_id').value;
-    const row = document.getElementById(rowId);
-    const birimFiyatInput = row.querySelector('input[name="birim_fiyat[]"]');
-    
-    if (urunId && tedarikciId) {
-        const fiyat = tedarikciFiyatlar.find(f => 
-            f.urun_id == urunId && f.tedarikci_id == tedarikciId
-        );
-        
-        if (fiyat) {
-            birimFiyatInput.value = fiyat.alis_fiyati.toFixed(2);
-            calculateRowTotal(rowId);
-        }
-    }
-}
+      productRow.innerHTML = `
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-12">
+              <div class="sm:col-span-5">
+                  <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Ürün</label>
+                  <select name="urun_id[]" required onchange="updatePrice(this, '${rowId}')"
+                      class="appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:text-slate-200">
+                      <option value="">Ürün seçiniz...</option>
+                      ${urunler.map(u => `<option value="${u.id}" ${urunId == u.id ? 'selected' : ''}>${u.urun_adi}</option>`).join('')}
+                  </select>
+              </div>
+              <div class="sm:col-span-2">
+                  <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Miktar</label>
+                  <input type="number" name="miktar[]" min="1" required value="${miktar || ''}" oninput="calculateRowTotal('${rowId}')"
+                      class="appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:text-slate-200">
+              </div>
+              <div class="sm:col-span-2">
+                  <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Birim Fiyat (₺)</label>
+                  <input type="number" name="birim_fiyat[]" step="0.01" min="0" required value="${birimFiyat || ''}" oninput="calculateRowTotal('${rowId}')"
+                      class="appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:text-slate-200">
+              </div>
+              <div class="sm:col-span-2">
+                  <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Toplam</label>
+                  <div class="flex items-center h-10 px-3 py-2 bg-slate-100 dark:bg-slate-600 border border-slate-300 dark:border-slate-500 rounded-md text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      <span class="row-total">0.00 ₺</span>
+                  </div>
+              </div>
+              <div class="sm:col-span-1 flex items-end">
+                  <button type="button" onclick="removeProductRow('${rowId}')"
+                      class="w-full inline-flex justify-center items-center px-3 py-2 border border-red-300 dark:border-red-700 text-sm font-medium rounded-md text-red-700 dark:text-red-400 bg-white dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                  </button>
+              </div>
+          </div>
+      `;
 
-function calculateRowTotal(rowId) {
-    const row = document.getElementById(rowId);
-    const miktar = parseFloat(row.querySelector('input[name="miktar[]"]').value) || 0;
-    const birimFiyat = parseFloat(row.querySelector('input[name="birim_fiyat[]"]').value) || 0;
-    const total = miktar * birimFiyat;
-    
-    row.querySelector('.row-total').textContent = total.toFixed(2) + ' ₺';
-    calculateGrandTotal();
-}
+      document.getElementById('product-rows').appendChild(productRow);
+      document.getElementById('no-products-message').style.display = 'none';
 
-function calculateGrandTotal() {
-    const rows = document.querySelectorAll('#product-rows > div');
-    let grandTotal = 0;
-    
-    rows.forEach(row => {
-        const miktar = parseFloat(row.querySelector('input[name="miktar[]"]').value) || 0;
-        const birimFiyat = parseFloat(row.querySelector('input[name="birim_fiyat[]"]').value) || 0;
-        grandTotal += miktar * birimFiyat;
-    });
-    
-    document.getElementById('total-products').textContent = rows.length;
-    document.getElementById('total-amount').textContent = grandTotal.toFixed(2) + ' ₺';
-}
+      calculateGrandTotal();
+  }
 
-// Öneriden ürün ekle
-function addProductToOrder(urunId, urunAdi, miktar, tedarikciId, birimFiyat) {
-    // Tedarikçi seçili değilse seç
-    if (tedarikciId) {
-        document.getElementById('tedarikci_id').value = tedarikciId;
-    }
-    
-    // Ürün satırı ekle
-    addProductRow(urunId, miktar, birimFiyat);
-}
+  function removeProductRow(rowId) {
+      document.getElementById(rowId).remove();
 
-// Tedarikçi değiştiğinde fiyatları güncelle
-document.getElementById('tedarikci_id').addEventListener('change', function() {
-    const rows = document.querySelectorAll('#product-rows > div');
-    rows.forEach(row => {
-        const urunSelect = row.querySelector('select[name="urun_id[]"]');
-        if (urunSelect.value) {
-            updatePrice(urunSelect, row.id);
-        }
-    });
-});
+      const remainingRows = document.querySelectorAll('#product-rows > div');
+      if (remainingRows.length === 0) {
+          document.getElementById('no-products-message').style.display = 'block';
+      }
 
-// Form submit kontrolü
-document.getElementById('siparis-form').addEventListener('submit', function(e) {
-    const rows = document.querySelectorAll('#product-rows > div');
-    if (rows.length === 0) {
-        e.preventDefault();
-        alert('Lütfen en az bir ürün ekleyin!');
-        return false;
-    }
-});
+      calculateGrandTotal();
+  }
 
-// Bugünün tarihini minimum olarak ayarla
-document.getElementById('tahmini_teslimat_tarihi').min = new Date().toISOString().split('T')[0];
+  function updatePrice(selectElement, rowId) {
+      const urunId = selectElement.value;
+      const tedarikciId = document.getElementById('tedarikci_id').value;
+      const row = document.getElementById(rowId);
+      const birimFiyatInput = row.querySelector('input[name="birim_fiyat[]"]');
+
+      if (urunId && tedarikciId) {
+          const fiyat = tedarikciFiyatlar.find(f =>
+              f.urun_id == urunId && f.tedarikci_id == tedarikciId
+          );
+
+          if (fiyat) {
+              birimFiyatInput.value = fiyat.alis_fiyati.toFixed(2);
+              calculateRowTotal(rowId);
+          }
+      }
+  }
+
+  function calculateRowTotal(rowId) {
+      const row = document.getElementById(rowId);
+      const miktar = parseFloat(row.querySelector('input[name="miktar[]"]').value) || 0;
+      const birimFiyat = parseFloat(row.querySelector('input[name="birim_fiyat[]"]').value) || 0;
+      const total = miktar * birimFiyat;
+
+      row.querySelector('.row-total').textContent = total.toFixed(2) + ' ₺';
+      calculateGrandTotal();
+  }
+
+  function calculateGrandTotal() {
+      const rows = document.querySelectorAll('#product-rows > div');
+      let grandTotal = 0;
+
+      rows.forEach(row => {
+          const miktar = parseFloat(row.querySelector('input[name="miktar[]"]').value) || 0;
+          const birimFiyat = parseFloat(row.querySelector('input[name="birim_fiyat[]"]').value) || 0;
+          grandTotal += miktar * birimFiyat;
+      });
+
+      document.getElementById('total-products').textContent = rows.length;
+      document.getElementById('total-amount').textContent = grandTotal.toFixed(2) + ' ₺';
+  }
+
+  // Öneriden ürün ekle
+  function addProductToOrder(urunId, urunAdi, miktar, tedarikciId, birimFiyat) {
+      // Tedarikçi seçili değilse seç
+      if (tedarikciId) {
+          document.getElementById('tedarikci_id').value = tedarikciId;
+      }
+
+      // Ürün satırı ekle
+      addProductRow(urunId, miktar, birimFiyat);
+  }
+
+  // Tedarikçi değiştiğinde fiyatları güncelle
+  document.getElementById('tedarikci_id').addEventListener('change', function() {
+      const rows = document.querySelectorAll('#product-rows > div');
+      rows.forEach(row => {
+          const urunSelect = row.querySelector('select[name="urun_id[]"]');
+          if (urunSelect.value) {
+              updatePrice(urunSelect, row.id);
+          }
+      });
+  });
+
+  // Form submit kontrolü
+  document.getElementById('siparis-form').addEventListener('submit', function(e) {
+      const rows = document.querySelectorAll('#product-rows > div');
+      if (rows.length === 0) {
+          e.preventDefault();
+          alert('Lütfen en az bir ürün ekleyin!');
+          return false;
+      }
+  });
+
+  // Bugünün tarihini otomatik olarak ayarla
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  document.getElementById('tahmini_teslimat_tarihi').value = todayStr;
+
+  // Tarihi Türkçe formatında göster
+  const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+  const todayFormatted = today.toLocaleDateString('tr-TR', options);
+  document.getElementById('siparis-tarihi-display').textContent = todayFormatted;
 </script>
 {% endblock %}

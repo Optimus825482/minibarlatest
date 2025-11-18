@@ -13,10 +13,10 @@ from utils.decorators import login_required, role_required
 def register_kat_sorumlusu_qr_routes(app):
     """Kat sorumlusu QR route'larını kaydet"""
     
-    @app.route('/kat-sorumlusu/qr-okut')
+    @app.route('/kat-sorumlusu/qr-okuyucu')
     @login_required
     @role_required('kat_sorumlusu')
-    def kat_sorumlusu_qr_okut():
+    def kat_sorumlusu_qr_okuyucu():
         """QR okuyucu sayfası"""
         try:
             return render_template('kat_sorumlusu/qr_okuyucu.html')

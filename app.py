@@ -161,7 +161,8 @@ from utils.audit import (
 from models import (
     Otel, Kullanici, Kat, Oda, UrunGrup, Urun, StokHareket, 
     PersonelZimmet, PersonelZimmetDetay, MinibarIslem, MinibarIslemDetay, 
-    MinibarIslemTipi, SistemAyar, SistemLog, HataLog, OtomatikRapor
+    MinibarIslemTipi, SistemAyar, SistemLog, HataLog, OtomatikRapor,
+    MinibarDolumTalebi, Kampanya, Setup, SetupIcerik
 )
 
 # Context processor - tüm template'lere kullanıcı bilgisini gönder
@@ -1467,6 +1468,164 @@ def api_son_aktiviteler():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/bekleyen-dolum-sayisi')
+@login_required
+@role_required(['sistem_yoneticisi', 'admin', 'depo_sorumlusu', 'kat_sorumlusu'])
+def api_bekleyen_dolum_sayisi():
+    """Bekleyen dolum talepleri sayısını döndür"""
+    try:
+        # Bekleyen dolum taleplerini say
+        count = MinibarDolumTalebi.query.filter_by(durum='beklemede').count()
+        
+        return jsonify({
+            'success': True,
+            'count': count
+        })
+    except Exception as e:
+        logger.error(f"Bekleyen dolum sayısı hatası: {e}")
+        return jsonify({
+            'success': False,
+            'count': 0,
+            'error': str(e)
+        }), 500
+
+
+# ============================================================================
+# KAMPANYA YÖNETİMİ API'LERİ
+# ============================================================================
+
+@app.route('/api/v1/fiyat/kampanya/istatistikler')
+@login_required
+@role_required(['sistem_yoneticisi', 'admin'])
+def api_kampanya_istatistikler():
+    """Kampanya istatistiklerini döndür"""
+    try:
+        from sqlalchemy import func
+        
+        # Aktif kampanya sayısı
+        aktif_kampanyalar = Kampanya.query.filter_by(aktif=True).filter(
+            Kampanya.baslangic_tarihi <= datetime.now(timezone.utc),
+            Kampanya.bitis_tarihi >= datetime.now(timezone.utc)
+        ).count()
+        
+        # Toplam kampanya sayısı
+        toplam_kampanyalar = Kampanya.query.count()
+        
+        # Süresi dolan kampanyalar
+        suresi_dolan = Kampanya.query.filter(
+            Kampanya.bitis_tarihi < datetime.now(timezone.utc)
+        ).count()
+        
+        # Yaklaşan kampanyalar (7 gün içinde başlayacak)
+        yaklasan = Kampanya.query.filter(
+            Kampanya.baslangic_tarihi > datetime.now(timezone.utc),
+            Kampanya.baslangic_tarihi <= datetime.now(timezone.utc) + timedelta(days=7)
+        ).count()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'aktif': aktif_kampanyalar,
+                'toplam': toplam_kampanyalar,
+                'suresi_dolan': suresi_dolan,
+                'yaklasan': yaklasan
+            }
+        })
+    except Exception as e:
+        logger.error(f"Kampanya istatistikleri hatası: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/v1/fiyat/kampanya/performans')
+@login_required
+@role_required(['sistem_yoneticisi', 'admin'])
+def api_kampanya_performans():
+    """Kampanya performans metriklerini döndür"""
+    try:
+        # Aktif kampanyaları al
+        kampanyalar = Kampanya.query.filter_by(aktif=True).filter(
+            Kampanya.baslangic_tarihi <= datetime.now(timezone.utc),
+            Kampanya.bitis_tarihi >= datetime.now(timezone.utc)
+        ).all()
+        
+        performans_data = []
+        for kampanya in kampanyalar:
+            kullanim_orani = 0
+            if kampanya.max_kullanim_sayisi:
+                kullanim_orani = (kampanya.kullanilan_sayisi / kampanya.max_kullanim_sayisi) * 100
+            
+            performans_data.append({
+                'id': kampanya.id,
+                'kampanya_adi': kampanya.kampanya_adi,
+                'kullanilan': kampanya.kullanilan_sayisi,
+                'max_kullanim': kampanya.max_kullanim_sayisi,
+                'kullanim_orani': round(kullanim_orani, 2),
+                'indirim_tipi': kampanya.indirim_tipi.value if kampanya.indirim_tipi else None,
+                'indirim_degeri': float(kampanya.indirim_degeri) if kampanya.indirim_degeri else 0
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': performans_data
+        })
+    except Exception as e:
+        logger.error(f"Kampanya performans hatası: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/v1/fiyat/kampanya/tumu')
+@login_required
+@role_required(['sistem_yoneticisi', 'admin'])
+def api_kampanya_tumu():
+    """Tüm kampanyaları listele"""
+    try:
+        kampanyalar = Kampanya.query.order_by(Kampanya.olusturma_tarihi.desc()).all()
+        
+        kampanya_listesi = []
+        for kampanya in kampanyalar:
+            # Durum kontrolü
+            simdi = datetime.now(timezone.utc)
+            if kampanya.bitis_tarihi < simdi:
+                durum = 'Süresi Doldu'
+            elif kampanya.baslangic_tarihi > simdi:
+                durum = 'Beklemede'
+            elif kampanya.aktif:
+                durum = 'Aktif'
+            else:
+                durum = 'Pasif'
+            
+            kampanya_listesi.append({
+                'id': kampanya.id,
+                'kampanya_adi': kampanya.kampanya_adi,
+                'baslangic_tarihi': kampanya.baslangic_tarihi.isoformat() if kampanya.baslangic_tarihi else None,
+                'bitis_tarihi': kampanya.bitis_tarihi.isoformat() if kampanya.bitis_tarihi else None,
+                'urun_adi': kampanya.urun.urun_adi if kampanya.urun else 'Tüm Ürünler',
+                'indirim_tipi': kampanya.indirim_tipi.value if kampanya.indirim_tipi else None,
+                'indirim_degeri': float(kampanya.indirim_degeri) if kampanya.indirim_degeri else 0,
+                'kullanilan': kampanya.kullanilan_sayisi,
+                'max_kullanim': kampanya.max_kullanim_sayisi,
+                'aktif': kampanya.aktif,
+                'durum': durum
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': kampanya_listesi
+        })
+    except Exception as e:
+        logger.error(f"Kampanya listesi hatası: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @app.route('/api/tuketim-trendleri')
 @login_required
 @role_required(['sistem_yoneticisi', 'admin', 'depo_sorumlusu'])
@@ -2375,54 +2534,8 @@ def api_kat_sorumlusu_siparis_kaydet():
 # ODA KONTROL VE YENİDEN DOLUM ROTALARI
 # ============================================
 
-@app.route('/kat-sorumlusu/ilk-dolum', methods=['GET', 'POST'])
-@login_required
-@role_required('kat_sorumlusu')
-def ilk_dolum():
-    """İlk dolum sayfası - boş minibar'lara ilk ürün ekleme"""
-    try:
-        # Kat sorumlusunun atandığı otele ait katları getir
-        kullanici = get_current_user()
-        if not kullanici or not kullanici.otel_id:
-            flash('Henüz bir otele atanmadınız. Lütfen yöneticinizle iletişime geçin.', 'warning')
-            return redirect(url_for('kat_sorumlusu_dashboard'))
-        
-        katlar = Kat.query.filter_by(
-            otel_id=kullanici.otel_id,
-            aktif=True
-        ).order_by(Kat.kat_no).all()
-        
-        urun_gruplari = UrunGrup.query.filter_by(aktif=True).order_by(UrunGrup.grup_adi).all()
-        return render_template('kat_sorumlusu/ilk_dolum.html', katlar=katlar, urun_gruplari=urun_gruplari)
-    except Exception as e:
-        log_hata(e, modul='ilk_dolum')
-        flash('Sayfa yüklenirken bir hata oluştu.', 'danger')
-        return redirect(url_for('kat_sorumlusu_dashboard'))
-
-
-@app.route('/kat-sorumlusu/oda-kontrol')
-@login_required
-@role_required('kat_sorumlusu')
-def oda_kontrol():
-    """Oda kontrol sayfası - sadece görüntüleme ve yeniden dolum"""
-    try:
-        # Kat sorumlusunun atandığı otele ait katları getir
-        kullanici = get_current_user()
-        if not kullanici or not kullanici.otel_id:
-            flash('Henüz bir otele atanmadınız. Lütfen yöneticinizle iletişime geçin.', 'warning')
-            return redirect(url_for('kat_sorumlusu_dashboard'))
-        
-        katlar = Kat.query.filter_by(
-            otel_id=kullanici.otel_id,
-            aktif=True
-        ).order_by(Kat.kat_no).all()
-        
-        return render_template('kat_sorumlusu/oda_kontrol.html', katlar=katlar)
-    except Exception as e:
-        log_hata(e, modul='oda_kontrol')
-        flash('Sayfa yüklenirken bir hata oluştu.', 'danger')
-        return redirect(url_for('kat_sorumlusu_dashboard'))
-
+# İlk dolum route'u kaldırıldı - Setup bazlı sistem kullanılıyor
+# Yeni route: /minibar-kontrol-setup
 
 @app.route('/api/kat-sorumlusu/minibar-urunler', methods=['POST'])
 @login_required
@@ -2900,39 +3013,6 @@ except Exception as e:
 # ============================================
 
 
-# ============================================================================
-# SENTRY ERROR TRACKING INITIALIZATION
-# ============================================================================
-# Sentry başlatma - ENVİRONMENT ÖNCESİ
-sentry_sdk.init(
-    dsn=os.getenv('SENTRY_DSN', "https://a2e61a366121b24275faaf3ba8e529db@o4508861093642240.ingest.us.sentry.io/4510364568780800"),
-    environment=os.getenv('FLASK_ENV', 'development'),
-    release=os.getenv('APP_VERSION', '1.0.0'),
-    send_default_pii=True,
-    integrations=[
-        FlaskIntegration(),
-    ],
-    traces_sample_rate=0.1,  # %10 request'leri izle
-    max_breadcrumbs=50,
-    # Performance monitoring
-    enable_tracing=True,
-)
-
-logger.info("✅ Sentry initialized successfully")
-@app.errorhandler(Exception)
-def handle_error(error):
-    """Tüm unhandled exception'ları Sentry'ye gönder"""
-    sentry_sdk.capture_exception(error)
-    # ... error response
-    
-    
-
-
-@app.route('/debug-sentry')
-def trigger_error():
-    # Test için hata oluştur
-    division_by_zero = 1 / 0
-    return "Bu satıra asla ulaşmayacak"
 
 if __name__ == '__main__':
     print()
@@ -2996,6 +3076,20 @@ if __name__ == '__main__':
         print("❌ Uygulama başlatılamadı. Lütfen veritabanı ayarlarını kontrol edin.")
         print()
         exit(1)
+
+
+# ============================================================================
+# API: SETUP YÖNETİMİ
+# ============================================================================
+
+@app.route('/api/setuplar', methods=['GET'])
+# Setup CRUD API'leri routes/sistem_yoneticisi_routes.py'de tanımlı
+# - GET /api/setuplar - Liste
+# - POST /api/setuplar - Yeni ekle
+# - PUT /api/setuplar/<id> - Güncelle
+# - DELETE /api/setuplar/<id> - Sil
+# NOT: Setup içerik, ürün grupları ve ürün listesi API'leri routes/sistem_yoneticisi_routes.py'de tanımlı
+# NOT: Oda tipleri ve Setup atama API'leri routes/sistem_yoneticisi_routes.py'de tanımlı
 
 
 # ============================================================================

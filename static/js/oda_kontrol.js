@@ -1,639 +1,510 @@
 /**
- * Oda Kontrol ve Yeniden Dolum JavaScript Modülü
+ * Oda Kontrol - Setup Bazlı Sistem
+ * YENİ MANTIK: Minibar her zaman dolu kabul edilir
+ * - EKLE = Tüketim ikamesi (tüketim kaydedilir)
+ * - EKSTRA = Setup üstü ekleme (tüketim kaydedilmez)
  */
-
-console.log('=== ODA KONTROL JS BAŞLADI ===');
 
 // Global değişkenler
-let secilenOdaId = null;
-let secilenOdaNo = null;
-let secilenKatAdi = null;
-let aktifUrun = null;
-let qrScanner = null;
+let mevcutOdaId = null;
+let mevcutSetuplar = [];
+let zimmetStoklar = {};
+let modalData = {};
 
-// CSRF Token
-const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-console.log('CSRF Token:', csrfToken);
+// Sayfa yüklendiğinde
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("✅ Oda Kontrol sistemi yüklendi");
 
-/**
- * Sayfa yüklendiğinde
- */
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Oda kontrol JS yüklendi');
-    
-    // Kat seçimi event listener
-    const katSelect = document.getElementById('kat_id');
-    if (katSelect) {
-        katSelect.addEventListener('change', katSecildi);
-        console.log('Kat select event listener eklendi');
-    } else {
-        console.error('kat_id elementi bulunamadı!');
-    }
-    
-    // Oda seçimi event listener
-    const odaSelect = document.getElementById('oda_id');
-    if (odaSelect) {
-        odaSelect.addEventListener('change', odaSecildi);
-        console.log('Oda select event listener eklendi');
-    } else {
-        console.error('oda_id elementi bulunamadı!');
-    }
+  const katSelect = document.getElementById("kat_id");
+  const odaSelect = document.getElementById("oda_id");
+
+  if (katSelect) {
+    katSelect.addEventListener("change", katSecildi);
+  }
+
+  if (odaSelect) {
+    odaSelect.addEventListener("change", odaSecildi);
+  }
 });
 
-/**
- * Kat seçildiğinde odaları yükle
- */
+// Kat seçildiğinde
 async function katSecildi() {
-    const katId = document.getElementById('kat_id').value;
-    const odaSelect = document.getElementById('oda_id');
-    
-    console.log('Kat seçildi:', katId);
-    
-    // Reset
-    odaSelect.innerHTML = '<option value="">Oda seçiniz...</option>';
+  const katId = document.getElementById("kat_id").value;
+  const odaSelect = document.getElementById("oda_id");
+
+  if (!katId) {
     odaSelect.disabled = true;
-    urunListesiniGizle();
-    
-    if (!katId) {
-        console.log('Kat ID boş, işlem iptal');
-        return;
+    odaSelect.innerHTML = '<option value="">Önce kat seçiniz...</option>';
+    setupListesiniTemizle();
+    return;
+  }
+
+  try {
+    odaSelect.innerHTML = '<option value="">Yükleniyor...</option>';
+    odaSelect.disabled = true;
+
+    const response = await fetch(`/kat-odalari?kat_id=${katId}`);
+    const data = await response.json();
+
+    if (data.success && data.odalar) {
+      odaSelect.innerHTML = '<option value="">Oda seçiniz...</option>';
+
+      data.odalar.forEach((oda) => {
+        const option = document.createElement("option");
+        option.value = oda.id;
+        option.textContent = oda.oda_no;
+        odaSelect.appendChild(option);
+      });
+
+      odaSelect.disabled = false;
+    } else {
+      throw new Error(data.error || "Odalar yüklenemedi");
     }
-    
-    try {
-        console.log('Odalar getiriliyor...');
-        const response = await fetch(`/kat-odalari?kat_id=${katId}`);
-        const data = await response.json();
-        
-        console.log('API yanıtı:', data);
-        
-        if (data.success && data.odalar && data.odalar.length > 0) {
-            console.log(`${data.odalar.length} oda bulundu`);
-            data.odalar.forEach(oda => {
-                const option = document.createElement('option');
-                option.value = oda.id;
-                option.textContent = oda.oda_no;
-                odaSelect.appendChild(option);
-            });
-            odaSelect.disabled = false;
-        } else {
-            console.log('Oda bulunamadı');
-            odaSelect.innerHTML = '<option value="">Bu katta oda yok</option>';
-        }
-    } catch (error) {
-        console.error('Hata:', error);
-        hataGoster('Odalar yüklenirken bir hata oluştu');
-    }
+  } catch (error) {
+    console.error("❌ Oda yükleme hatası:", error);
+    odaSelect.innerHTML = '<option value="">Hata oluştu</option>';
+    toastGoster(error.message, "error");
+  }
+
+  setupListesiniTemizle();
 }
 
-/**
- * Oda seçildiğinde ürünleri getir
- */
+// Oda seçildiğinde
 async function odaSecildi() {
-    const odaId = document.getElementById('oda_id').value;
-    
-    if (!odaId) {
-        urunListesiniGizle();
-        return;
-    }
-    
-    secilenOdaId = odaId;
-    await minibarUrunleriniGetir(odaId);
+  const odaId = document.getElementById("oda_id").value;
+
+  if (!odaId) {
+    setupListesiniTemizle();
+    return;
+  }
+
+  mevcutOdaId = odaId;
+  await setupListesiYukle(odaId);
 }
 
-/**
- * Minibar ürünlerini API'den getir
- */
-async function minibarUrunleriniGetir(odaId) {
-    loadingGoster();
-    
-    try {
-        const response = await fetch('/api/kat-sorumlusu/minibar-urunler', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({ oda_id: odaId })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            secilenOdaNo = data.data.oda_no;
-            secilenKatAdi = data.data.kat_adi;
-            
-            if (data.data.urunler.length === 0) {
-                bosDurumGoster();
-            } else {
-                urunListesiGoster(data.data.urunler);
-            }
-        } else {
-            hataGoster(data.message || 'Ürünler yüklenirken hata oluştu');
-        }
-    } catch (error) {
-        console.error('Hata:', error);
-        hataGoster('Ürünler yüklenirken bir hata oluştu');
-    } finally {
-        loadingGizle();
+// Setup listesini yükle
+async function setupListesiYukle(odaId) {
+  const loadingDiv = document.getElementById("loading");
+  const setupListesiDiv = document.getElementById("setup_listesi");
+  const odaBilgileriDiv = document.getElementById("oda_bilgileri");
+
+  try {
+    loadingDiv.classList.remove("hidden");
+    setupListesiDiv.classList.add("hidden");
+    odaBilgileriDiv.classList.add("hidden");
+
+    const response = await fetch(`/api/kat-sorumlusu/oda-setup/${odaId}`);
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "Setup listesi yüklenemedi");
     }
+
+    mevcutSetuplar = data.setuplar;
+    zimmetStoklar = data.kat_sorumlusu_stok;
+
+    document.getElementById("oda_no_text").textContent = data.oda.oda_no;
+    document.getElementById("oda_tipi_text").textContent = data.oda.oda_tipi;
+    document.getElementById("toplam_setup").textContent = data.setuplar.length;
+    odaBilgileriDiv.classList.remove("hidden");
+
+    renderSetupListesi(data.setuplar);
+
+    setupListesiDiv.classList.remove("hidden");
+    console.log(`✅ ${data.setuplar.length} setup yüklendi`);
+  } catch (error) {
+    console.error("❌ Setup yükleme hatası:", error);
+    toastGoster(error.message, "error");
+  } finally {
+    loadingDiv.classList.add("hidden");
+  }
 }
 
-/**
- * Ürün listesini göster
- */
-function urunListesiGoster(urunler) {
-    // Container'ı göster
-    document.getElementById('urun_listesi_container').classList.remove('hidden');
-    document.getElementById('bos_durum_mesaji').classList.add('hidden');
-    document.getElementById('urun_tablosu').classList.remove('hidden');
-    
-    // Oda bilgilerini güncelle
-    document.getElementById('secili_oda_no').textContent = secilenOdaNo;
-    document.getElementById('secili_kat_adi').textContent = secilenKatAdi;
-    
-    // Tablo body'sini temizle
-    const tbody = document.getElementById('urun_tbody');
-    tbody.innerHTML = '';
-    
-    // Ürünleri ekle
-    urunler.forEach(urun => {
-        const tr = document.createElement('tr');
-        tr.className = 'cursor-pointer transition-colors';
-        tr.onclick = () => uruneTiklandi(urun);
-        
-        tr.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
-                ${urun.urun_adi}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                ${urun.mevcut_miktar}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                ${urun.birim}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                <button onclick="event.stopPropagation(); uruneTiklandi(${JSON.stringify(urun).replace(/"/g, '&quot;')})"
-                    class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Dolum Yap
-                </button>
-            </td>
-        `;
-        
-        tbody.appendChild(tr);
+// Setup listesini render et
+function renderSetupListesi(setuplar) {
+  const container = document.getElementById("setup_listesi");
+  container.innerHTML = "";
+
+  setuplar.forEach((setup, index) => {
+    const accordionItem = createAccordionItem(setup, index);
+    container.appendChild(accordionItem);
+  });
+}
+
+// Accordion item oluştur
+function createAccordionItem(setup, index) {
+  const item = document.createElement("div");
+  item.className =
+    "bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden";
+
+  const headerClass = setup.dolap_ici
+    ? "bg-gradient-to-r from-indigo-500 to-purple-600"
+    : "bg-gradient-to-r from-pink-500 to-rose-600";
+
+  item.innerHTML = `
+    <div class="${headerClass} text-white p-4 cursor-pointer hover:opacity-90 transition-opacity" onclick="accordionToggle(${index})">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-semibold">${setup.setup_adi}</h3>
+          <p class="text-sm opacity-90 mt-1">
+            ${
+              setup.dolap_ici
+                ? `Dolap İçi (${setup.dolap_sayisi} dolap)`
+                : "Dolap Dışı"
+            } • ${setup.urunler.length} ürün
+          </p>
+        </div>
+        <svg id="icon-${index}" class="w-6 h-6 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </div>
+    </div>
+    <div id="content-${index}" class="hidden">
+      <div class="p-4">
+        ${createUrunTablosu(setup)}
+      </div>
+    </div>
+  `;
+
+  return item;
+}
+
+// Ürün tablosu oluştur
+function createUrunTablosu(setup) {
+  let html = `
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-200">
+        <thead class="bg-slate-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Ürün</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Setup Miktarı</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Ekstra</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">İşlem</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-slate-200">
+  `;
+
+  setup.urunler.forEach((urun) => {
+    const islemButonlari = getIslemButonlari(urun, setup);
+
+    html += `
+      <tr class="hover:bg-slate-50 transition-colors">
+        <td class="px-4 py-3 text-sm font-medium text-slate-900">${
+          urun.urun_adi
+        }</td>
+        <td class="px-4 py-3 text-sm text-center font-semibold text-slate-900">${
+          urun.setup_miktari
+        }</td>
+        <td class="px-4 py-3 text-sm text-center ${
+          urun.ekstra_miktar > 0
+            ? "text-orange-600 font-bold"
+            : "text-slate-400"
+        }">${urun.ekstra_miktar || "-"}</td>
+        <td class="px-4 py-3 text-center">${islemButonlari}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  return html;
+}
+
+// İşlem butonlarını oluştur
+function getIslemButonlari(urun, setup) {
+  let butonlar = "";
+
+  // HER ZAMAN "Ekle" butonu göster (tüketim ikamesi için)
+  butonlar += `
+    <button onclick='urunEkleModalAc(${JSON.stringify(urun)}, ${
+    setup.setup_id
+  })' 
+            class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors">
+      Ekle
+    </button>
+  `;
+
+  // HER ZAMAN "Ekstra" butonu göster (setup üstü ekleme için)
+  butonlar += `
+    <button onclick='ekstraEkleModalAc(${JSON.stringify(urun)}, ${
+    setup.setup_id
+  })' 
+            class="inline-flex items-center px-3 py-1.5 bg-orange-500 text-white text-xs font-medium rounded-lg hover:bg-orange-600 transition-colors ml-2">
+      Ekstra
+    </button>
+  `;
+
+  // Eğer ekstra varsa "Sıfırla" butonu göster
+  if (urun.ekstra_miktar > 0) {
+    butonlar += `
+      <button onclick='ekstraSifirlaModalAc(${JSON.stringify(urun)}, ${
+      setup.setup_id
+    })' 
+              class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition-colors ml-2">
+        Sıfırla
+      </button>
+    `;
+  }
+
+  return butonlar;
+}
+
+// Accordion toggle
+function accordionToggle(index) {
+  const content = document.getElementById(`content-${index}`);
+  const icon = document.getElementById(`icon-${index}`);
+
+  content.classList.toggle("hidden");
+  icon.classList.toggle("rotate-180");
+}
+
+// Setup listesini temizle
+function setupListesiniTemizle() {
+  document.getElementById("setup_listesi").innerHTML = "";
+  document.getElementById("setup_listesi").classList.add("hidden");
+  document.getElementById("oda_bilgileri").classList.add("hidden");
+  mevcutOdaId = null;
+  mevcutSetuplar = [];
+  zimmetStoklar = {};
+}
+
+// Modal fonksiyonları
+function urunEkleModalAc(urun, setupId) {
+  modalData = {
+    oda_id: mevcutOdaId,
+    urun_id: urun.urun_id,
+    setup_id: setupId,
+    urun_adi: urun.urun_adi,
+    setup_miktari: urun.setup_miktari,
+  };
+
+  document.getElementById("modal_urun_adi").textContent = urun.urun_adi;
+  document.getElementById("modal_setup_miktari").textContent =
+    urun.setup_miktari;
+  document.getElementById("modal_max_miktar").textContent = urun.setup_miktari;
+
+  const inputEklenen = document.getElementById("modal_eklenen_miktar");
+  inputEklenen.value = 1; // Varsayılan 1
+  inputEklenen.max = urun.setup_miktari; // Maksimum setup miktarı
+
+  const zimmetStok = zimmetStoklar[urun.urun_id];
+  if (zimmetStok) {
+    document.getElementById("modal_zimmet_stok").textContent =
+      zimmetStok.miktar;
+    modalData.zimmet_detay_id = zimmetStok.zimmet_detay_id;
+  } else {
+    document.getElementById("modal_zimmet_stok").textContent = "0 (Yetersiz!)";
+  }
+
+  document.getElementById("urunEkleModal").classList.remove("hidden");
+}
+
+function urunEkleModalKapat() {
+  document.getElementById("urunEkleModal").classList.add("hidden");
+  modalData = {};
+}
+
+function ekstraEkleModalAc(urun, setupId) {
+  modalData = {
+    oda_id: mevcutOdaId,
+    urun_id: urun.urun_id,
+    setup_id: setupId,
+    urun_adi: urun.urun_adi,
+    setup_miktari: urun.setup_miktari,
+  };
+
+  document.getElementById("ekstra_modal_urun_adi").textContent = urun.urun_adi;
+  document.getElementById("ekstra_modal_setup_miktari").textContent =
+    urun.setup_miktari;
+  document.getElementById("ekstra_modal_miktar").value = 1;
+
+  const zimmetStok = zimmetStoklar[urun.urun_id];
+  if (zimmetStok) {
+    document.getElementById("ekstra_modal_zimmet_stok").textContent =
+      zimmetStok.miktar;
+    modalData.zimmet_detay_id = zimmetStok.zimmet_detay_id;
+  } else {
+    document.getElementById("ekstra_modal_zimmet_stok").textContent =
+      "0 (Yetersiz!)";
+  }
+
+  document.getElementById("ekstraEkleModal").classList.remove("hidden");
+}
+
+function ekstraEkleModalKapat() {
+  document.getElementById("ekstraEkleModal").classList.add("hidden");
+  modalData = {};
+}
+
+function ekstraSifirlaModalAc(urun, setupId) {
+  modalData = {
+    oda_id: mevcutOdaId,
+    urun_id: urun.urun_id,
+    setup_id: setupId,
+    urun_adi: urun.urun_adi,
+    ekstra_miktar: urun.ekstra_miktar,
+  };
+
+  document.getElementById("sifirla_modal_urun_adi").textContent = urun.urun_adi;
+  document.getElementById("sifirla_modal_ekstra_miktar").textContent =
+    urun.ekstra_miktar;
+
+  document.getElementById("ekstraSifirlaModal").classList.remove("hidden");
+}
+
+function ekstraSifirlaModalKapat() {
+  document.getElementById("ekstraSifirlaModal").classList.add("hidden");
+  modalData = {};
+}
+
+// CSRF token al
+function getCsrfToken() {
+  const token = document.querySelector('meta[name="csrf-token"]');
+  return token ? token.getAttribute("content") : "";
+}
+
+// API çağrıları
+async function urunEkle() {
+  const eklenenMiktar = parseInt(
+    document.getElementById("modal_eklenen_miktar").value
+  );
+
+  if (!eklenenMiktar || eklenenMiktar <= 0) {
+    toastGoster("Lütfen geçerli bir miktar giriniz", "warning");
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/kat-sorumlusu/urun-ekle", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
+      body: JSON.stringify({
+        oda_id: modalData.oda_id,
+        urun_id: modalData.urun_id,
+        setup_id: modalData.setup_id,
+        eklenen_miktar: eklenenMiktar,
+        zimmet_detay_id: modalData.zimmet_detay_id,
+      }),
     });
-}
 
-/**
- * Boş durum mesajını göster
- */
-function bosDurumGoster() {
-    document.getElementById('urun_listesi_container').classList.remove('hidden');
-    document.getElementById('bos_durum_mesaji').classList.remove('hidden');
-    document.getElementById('urun_tablosu').classList.add('hidden');
-    
-    // Oda bilgilerini güncelle
-    document.getElementById('secili_oda_no').textContent = secilenOdaNo;
-    document.getElementById('secili_kat_adi').textContent = secilenKatAdi;
-}
+    const data = await response.json();
 
-/**
- * Ürün listesini gizle
- */
-function urunListesiniGizle() {
-    document.getElementById('urun_listesi_container').classList.add('hidden');
-    secilenOdaId = null;
-    secilenOdaNo = null;
-    secilenKatAdi = null;
-}
-
-/**
- * Ürüne tıklandığında yeniden dolum modalını aç
- */
-function uruneTiklandi(urun) {
-    aktifUrun = urun;
-    yenidenDolumModalAc(urun);
-}
-
-/**
- * Yeniden dolum modalını aç
- */
-function yenidenDolumModalAc(urun) {
-    document.getElementById('modal_urun_adi').textContent = urun.urun_adi;
-    document.getElementById('modal_mevcut_miktar').textContent = urun.mevcut_miktar;
-    document.getElementById('modal_birim').textContent = urun.birim;
-    document.getElementById('eklenecek_miktar').value = '';
-    
-    document.getElementById('yeniden_dolum_modal').classList.remove('hidden');
-    document.getElementById('eklenecek_miktar').focus();
-}
-
-/**
- * Yeniden dolum modalını kapat
- */
-function yenidenDolumModalKapat() {
-    document.getElementById('yeniden_dolum_modal').classList.add('hidden');
-    // NOT: aktifUrun'u burada null yapma, onay modalı için gerekli!
-}
-
-/**
- * Dolum yap butonuna tıklandığında
- */
-function dolumYap() {
-    const eklenecekMiktar = parseFloat(document.getElementById('eklenecek_miktar').value);
-    
-    // Validasyon
-    if (!eklenecekMiktar || eklenecekMiktar <= 0) {
-        hataGoster('Lütfen geçerli bir miktar giriniz');
-        return;
-    }
-    
-    // Onay modalını aç
-    onayModalAc(eklenecekMiktar);
-}
-
-/**
- * Onay modalını aç
- */
-function onayModalAc(eklenecekMiktar) {
-    const mevcutMiktar = aktifUrun.mevcut_miktar;
-    const yeniMiktar = mevcutMiktar + eklenecekMiktar;
-    
-    document.getElementById('onay_urun_adi').textContent = aktifUrun.urun_adi;
-    document.getElementById('onay_mevcut_miktar').textContent = `${mevcutMiktar} ${aktifUrun.birim}`;
-    document.getElementById('onay_eklenecek_value').textContent = eklenecekMiktar;
-    document.getElementById('onay_yeni_miktar').textContent = `${yeniMiktar} ${aktifUrun.birim}`;
-    document.getElementById('onay_zimmet_dusum').textContent = `${eklenecekMiktar} ${aktifUrun.birim} ${aktifUrun.urun_adi}`;
-    
-    // Yeniden dolum modalını kapat
-    yenidenDolumModalKapat();
-    
-    // Onay modalını göster
-    document.getElementById('onay_modal').classList.remove('hidden');
-}
-
-/**
- * Onay modalını kapat
- */
-function onayModalKapat() {
-    document.getElementById('onay_modal').classList.add('hidden');
-    aktifUrun = null;  // Onay modalı kapanınca temizle
-}
-
-/**
- * İşlemi onayla ve API'ye gönder
- */
-async function islemOnayla() {
-    const eklenecekMiktar = parseFloat(document.getElementById('eklenecek_miktar').value);
-    
-    // Butonları disable et
-    document.getElementById('onay_btn').disabled = true;
-    
-    try {
-        const response = await fetch('/api/kat-sorumlusu/yeniden-dolum', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({
-                oda_id: secilenOdaId,
-                urun_id: aktifUrun.urun_id,
-                eklenecek_miktar: eklenecekMiktar
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            basariGoster(data.message || 'Dolum işlemi başarıyla tamamlandı');
-            onayModalKapat();
-            aktifUrun = null;  // İşlem başarılı, temizle
-
-            // Ürün listesini yenile
-            await minibarUrunleriniGetir(secilenOdaId);
-        } else {
-            hataGoster(data.message || 'İşlem sırasında bir hata oluştu');
-        }
-    } catch (error) {
-        console.error('Hata:', error);
-        hataGoster('İşlem sırasında bir hata oluştu. Lütfen tekrar deneyiniz');
-    } finally {
-        document.getElementById('onay_btn').disabled = false;
-    }
-}
-
-/**
- * HTTPS kontrolü yap
- */
-function checkHttps() {
-    return window.location.protocol === 'https:';
-}
-
-/**
- * Kamera izni kontrol et
- */
-async function checkCameraPermission() {
-    try {
-        // Permissions API destekleniyor mu?
-        if (navigator.permissions && navigator.permissions.query) {
-            const permission = await navigator.permissions.query({ name: 'camera' });
-            console.log('Kamera izni durumu:', permission.state);
-            return permission.state;
-        }
-        return 'prompt'; // Varsayılan olarak sor
-    } catch (err) {
-        console.log('Permission API desteklenmiyor:', err);
-        return 'prompt';
-    }
-}
-
-/**
- * Manuel oda seçimi
- */
-function manuelOdaSecimi() {
-    qrModalKapat();
-    // Kullanıcıyı manuel seçim alanına yönlendir
-    document.getElementById('kat_id').focus();
-}
-
-/**
- * QR kod okutmayı başlat
- */
-async function qrIleBaslat() {
-    document.getElementById('qr_modal').classList.remove('hidden');
-
-    // HTTPS kontrolü
-    if (!checkHttps()) {
-        console.warn('HTTPS bağlantısı yok, kamera erişimi engellenebilir');
-        document.getElementById('https_uyari').classList.remove('hidden');
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "Ürün eklenemedi");
     }
 
-    if (!qrScanner) {
-        qrScanner = new Html5Qrcode("qr_reader");
-        console.log('Yeni QR scanner oluşturuldu');
+    toastGoster(data.message, "success");
+    urunEkleModalKapat();
+    await setupListesiYukle(mevcutOdaId);
+  } catch (error) {
+    console.error("❌ Ürün ekleme hatası:", error);
+    toastGoster(error.message, "error");
+  }
+}
+
+async function ekstraEkle() {
+  const ekstraMiktar = parseInt(
+    document.getElementById("ekstra_modal_miktar").value
+  );
+
+  if (!ekstraMiktar || ekstraMiktar <= 0) {
+    toastGoster("Lütfen geçerli bir miktar giriniz", "warning");
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/kat-sorumlusu/ekstra-ekle", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
+      body: JSON.stringify({
+        oda_id: modalData.oda_id,
+        urun_id: modalData.urun_id,
+        setup_id: modalData.setup_id,
+        ekstra_miktar: ekstraMiktar,
+        zimmet_detay_id: modalData.zimmet_detay_id,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "Ekstra ürün eklenemedi");
     }
 
-    // Eğer scanner zaten çalışıyorsa önce durdur
-    if (qrScanner) {
-        try {
-            // isScanning metodu varsa kontrol et
-            const state = qrScanner.getState();
-            console.log('QR Scanner state:', state);
+    toastGoster(data.message, "success");
+    ekstraEkleModalKapat();
+    await setupListesiYukle(mevcutOdaId);
+  } catch (error) {
+    console.error("❌ Ekstra ekleme hatası:", error);
+    toastGoster(error.message, "error");
+  }
+}
 
-            // State 2 = SCANNING
-            if (state === 2) {
-                console.log('Scanner zaten çalışıyor, önce durduruluyor...');
-                await qrScanner.stop();
-                console.log('Scanner durduruldu');
-                // Durdurulduktan sonra kısa bir bekleme
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
-        } catch (err) {
-            console.log('Scanner state kontrolü yapılamadı veya zaten durdurulmuş:', err.message);
-        }
+async function ekstraSifirla() {
+  try {
+    const response = await fetch("/api/kat-sorumlusu/ekstra-sifirla", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
+      body: JSON.stringify({
+        oda_id: modalData.oda_id,
+        urun_id: modalData.urun_id,
+        setup_id: modalData.setup_id,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "Ekstra sıfırlanamadı");
     }
 
-    // Optimize edilmiş QR okuma ayarları
-    const config = {
-        fps: 5,  // Daha yavaş tara (daha iyi algılama)
-        qrbox: { width: 300, height: 300 },  // Daha büyük tarama alanı
-        aspectRatio: 1.0,
-        disableFlip: false,
-        // Daha agresif tarama
-        experimentalFeatures: {
-            useBarCodeDetectorIfSupported: true
-        }
-    };
-
-    // Kamera ayarları - SADECE facingMode kullan (tek key)
-    const cameraConfig = { facingMode: "environment" };
-
-    try {
-        await qrScanner.start(
-            cameraConfig,
-            config,
-            onQrCodeScanned,
-            onQrCodeError
-        );
-        console.log('QR scanner başarıyla başlatıldı');
-    } catch (err) {
-        console.error('QR okuyucu başlatılamadı:', err);
-
-        // Hata tipine göre mesaj göster
-        if (err.name === 'NotAllowedError' || err.message.includes('Permission')) {
-            // Kamera izni reddedildi
-            document.getElementById('kamera_izin_uyari').classList.remove('hidden');
-            hataGoster('Kamera iznini lütfen verin veya manuel oda seçimi yapın');
-        } else if (err.name === 'NotFoundError') {
-            // Kamera bulunamadı
-            hataGoster('Kamera bulunamadı. Manuel oda seçimi yapabilirsiniz');
-        } else if (err.name === 'NotSupportedError' || !checkHttps()) {
-            // HTTPS gerekli
-            document.getElementById('https_uyari').classList.remove('hidden');
-            hataGoster('HTTPS bağlantısı gerekli. Manuel oda seçimi yapabilirsiniz');
-        } else {
-            // Diğer hatalar
-            hataGoster('Kamera erişimi sağlanamadı. Manuel oda seçimi yapabilirsiniz');
-        }
-
-        console.log('Manuel oda seçimi için kullanıcı yönlendiriliyor...');
-        // Modal'ı kapatma, kullanıcı kendisi kapatabilir veya manuel seçim yapabilir
-    }
+    toastGoster(data.message, "success");
+    ekstraSifirlaModalKapat();
+    await setupListesiYukle(mevcutOdaId);
+  } catch (error) {
+    console.error("❌ Ekstra sıfırlama hatası:", error);
+    toastGoster(error.message, "error");
+  }
 }
 
-/**
- * QR kod okunduğunda
- */
-async function onQrCodeScanned(decodedText) {
-    console.log('✅ QR kod başarıyla okundu:', decodedText);
-    console.log('QR kod uzunluğu:', decodedText.length);
-    console.log('QR kod tipi:', typeof decodedText);
-
-    // QR scanner'ı durdur
-    if (qrScanner) {
-        try {
-            const state = qrScanner.getState();
-            console.log('QR okunduktan sonra scanner state:', state);
-
-            // State 2 = SCANNING, sadece çalışıyorsa durdur
-            if (state === 2) {
-                await qrScanner.stop();
-                console.log('QR scanner durduruldu');
-            } else {
-                console.log('Scanner zaten durdurulmuş, state:', state);
-            }
-        } catch (err) {
-            console.log('QR scanner durdurma kontrolü hatası:', err.message);
-        }
-    }
-
-    // Modalı kapat
-    document.getElementById('qr_modal').classList.add('hidden');
-    console.log('QR modal kapatıldı');
-
-    try {
-        const response = await fetch('/api/kat-sorumlusu/qr-parse', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({ token: decodedText })
-        });
-
-        const data = await response.json();
-        console.log('QR parse yanıtı:', data);
-
-        if (data.success) {
-            // Önce kat seç
-            const katSelect = document.getElementById('kat_id');
-            katSelect.value = data.data.kat_id;
-            console.log('Kat dropdown değeri set edildi:', data.data.kat_id);
-
-            // Kat seçilince odaları yükle
-            await katSecildi();
-            console.log('Odalar yüklendi');
-
-            // Odaların yüklenmesi için kısa bir bekleme
-            await new Promise(resolve => setTimeout(resolve, 300));
-
-            // Sonra oda seç
-            const odaSelect = document.getElementById('oda_id');
-            odaSelect.value = data.data.oda_id;
-            console.log('Oda dropdown değeri set edildi:', data.data.oda_id);
-
-            // Oda seçilince ürünleri yükle
-            await odaSecildi();
-            console.log('Ürünler yüklendi');
-
-            basariGoster(`Oda ${data.data.oda_no} seçildi`);
-        } else {
-            hataGoster(data.message || 'QR kod okunamadı');
-        }
-    } catch (error) {
-        console.error('QR kod hatası:', error);
-        hataGoster('QR kod işlenirken hata oluştu');
-    }
+// QR ile başlat
+function qrIleBaslat() {
+  toastGoster("QR okuyucu özelliği yakında eklenecek", "info");
+  // window.location.href = "/qr-okuyucu?redirect=oda-kontrol";
 }
 
-/**
- * QR kod okuma hatası
- */
-function onQrCodeError(errorMessage, error) {
-    // Sadece gerçek hataları logla (sürekli scan hataları değil)
-    if (errorMessage && !errorMessage.includes('NotFoundException')) {
-        console.warn('QR okuma hatası:', errorMessage, error);
-    }
+// Toast mesajı göster
+function toastGoster(mesaj, tip = "info") {
+  const toast = document.createElement("div");
+  toast.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg text-white transform transition-all duration-300 ${
+    tip === "success"
+      ? "bg-green-500"
+      : tip === "error"
+      ? "bg-red-500"
+      : tip === "warning"
+      ? "bg-orange-500"
+      : "bg-blue-500"
+  }`;
+  toast.textContent = mesaj;
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    setTimeout(() => document.body.removeChild(toast), 300);
+  }, 3000);
 }
-
-/**
- * QR modalını kapat
- */
-async function qrModalKapat() {
-    if (qrScanner) {
-        try {
-            const state = qrScanner.getState();
-            console.log('QR Modal kapatılırken scanner state:', state);
-
-            // State 2 = SCANNING, sadece çalışıyorsa durdur
-            if (state === 2) {
-                await qrScanner.stop();
-                console.log('QR scanner durduruldu (manuel)');
-            } else {
-                console.log('Scanner zaten durdurulmuş, state:', state);
-            }
-        } catch (err) {
-            console.log('QR durdurma kontrolü hatası:', err.message);
-        }
-    }
-    document.getElementById('qr_modal').classList.add('hidden');
-    console.log('QR modal kapatıldı (manuel)');
-}
-
-/**
- * Test QR kodu (Debug amaçlı)
- */
-function testQrCode() {
-    // İlk odanın test token'ını oluştur
-    const testToken = 'MINIBAR_ODA_1_KAT_1';
-    console.log('Test QR kodu simüle ediliyor:', testToken);
-
-    // QR okuma fonksiyonunu çağır
-    onQrCodeScanned(testToken);
-}
-
-/**
- * Loading spinner göster
- */
-function loadingGoster() {
-    document.getElementById('loading_spinner').classList.remove('hidden');
-}
-
-/**
- * Loading spinner gizle
- */
-function loadingGizle() {
-    document.getElementById('loading_spinner').classList.add('hidden');
-}
-
-/**
- * Başarı mesajı göster (Toast)
- */
-function basariGoster(mesaj) {
-    // Basit toast notification
-    const toast = document.createElement('div');
-    toast.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in';
-    toast.innerHTML = `
-        <div class="flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-            <span>${mesaj}</span>
-        </div>
-    `;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.remove();
-    }, 3000);
-}
-
-/**
- * Hata mesajı göster (Toast)
- */
-function hataGoster(mesaj) {
-    // Basit toast notification
-    const toast = document.createElement('div');
-    toast.className = 'fixed top-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in';
-    toast.innerHTML = `
-        <div class="flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-            <span>${mesaj}</span>
-        </div>
-    `;
-    document.body.appendChild(toast);
-
-    setTimeout(() => {
-        toast.remove();
-    }, 3000);
-}
-
-// ESC tuşu ile modal kapatma (accessibility)
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        if (!document.getElementById('yeniden_dolum_modal').classList.contains('hidden')) {
-            yenidenDolumModalKapat();
-        }
-        if (!document.getElementById('onay_modal').classList.contains('hidden')) {
-            onayModalKapat();
-        }
-        if (!document.getElementById('qr_modal').classList.contains('hidden')) {
-            qrModalKapat();
-        }
-    }
-});

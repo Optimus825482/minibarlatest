@@ -1159,16 +1159,19 @@ def register_api_routes(app):
                 aktif=True
             ).order_by(Oda.oda_no).all()
             
-            return jsonify([{
-                'id': oda.id,
-                'oda_no': oda.oda_no,
-                'oda_tipi': oda.oda_tipi_adi,
-                'kapasite': oda.kapasite
-            } for oda in odalar])
+            return jsonify({
+                'success': True,
+                'odalar': [{
+                    'id': oda.id,
+                    'oda_no': oda.oda_no,
+                    'oda_tipi': oda.oda_tipi_adi,
+                    'kapasite': oda.kapasite
+                } for oda in odalar]
+            })
             
         except Exception as e:
             log_hata(e, modul='api_kat_odalar')
-            return jsonify({'error': str(e)}), 500
+            return jsonify({'success': False, 'error': str(e)}), 500
     
 
     # AJAX endpoint - Kat bilgisini getir (otel_id dahil)
@@ -1233,9 +1236,79 @@ def register_api_routes(app):
     @login_required
     @role_required('sistem_yoneticisi', 'admin')
     def api_otel_oda_tipleri(otel_id):
-        """Bir oteldeki oda tiplerini getir"""
+        """Bir oteldeki oda tiplerini kat bazında getir"""
         try:
-            from sqlalchemy import func, distinct
+            from sqlalchemy import func
+            from models import Otel, Kat, Oda, OdaTipi
+            
+            # Otel kontrolü
+            otel = Otel.query.get_or_404(otel_id)
+            
+            # Kat bazlı oda tiplerini grupla
+            kat_bazli = {}
+            toplam_oda = 0
+            
+            # Otele ait katları al
+            katlar = Kat.query.filter_by(otel_id=otel_id, aktif=True).order_by(Kat.kat_no).all()
+            
+            for kat in katlar:
+                # Bu kattaki oda tiplerini grupla ve say
+                oda_tipleri = db.session.query(
+                    OdaTipi.ad,
+                    func.count(Oda.id).label('sayi')
+                ).join(
+                    Oda, Oda.oda_tipi_id == OdaTipi.id
+                ).filter(
+                    Oda.kat_id == kat.id,
+                    Oda.aktif == True
+                ).group_by(
+                    OdaTipi.ad
+                ).order_by(
+                    func.count(Oda.id).desc()
+                ).all()
+                
+                if oda_tipleri:
+                    kat_oda_sayisi = sum([sayi for _, sayi in oda_tipleri])
+                    toplam_oda += kat_oda_sayisi
+                    
+                    kat_bazli[kat.kat_adi] = {
+                        'kat_id': kat.id,
+                        'kat_no': kat.kat_no,
+                        'toplam_oda': kat_oda_sayisi,
+                        'oda_tipleri': [
+                            {
+                                'oda_tipi': oda_tipi if oda_tipi else 'Belirtilmemiş',
+                                'sayi': sayi
+                            }
+                            for oda_tipi, sayi in oda_tipleri
+                        ]
+                    }
+            
+            return jsonify({
+                'success': True,
+                'kat_bazli': kat_bazli,
+                'toplam_oda': toplam_oda,
+                'otel': {
+                    'id': otel.id,
+                    'ad': otel.ad
+                }
+            })
+            
+        except Exception as e:
+            log_hata(e, modul='api_otel_oda_tipleri')
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'kat_bazli': {},
+                'toplam_oda': 0
+            }), 500
+    
+    @app.route('/api/oteller/<int:otel_id>/oda-tipleri-liste', methods=['GET'])
+    @login_required
+    def api_otel_oda_tipleri_liste(otel_id):
+        """Bir oteldeki oda tiplerini basit liste olarak getir (oda formu için)"""
+        try:
+            from sqlalchemy import distinct
             from models import Otel, Kat, Oda, OdaTipi
             
             # Otel kontrolü
@@ -1267,7 +1340,7 @@ def register_api_routes(app):
             })
             
         except Exception as e:
-            log_hata(e, modul='api_otel_oda_tipleri')
+            log_hata(e, modul='api_otel_oda_tipleri_liste')
             return jsonify({
                 'success': False,
                 'error': str(e),

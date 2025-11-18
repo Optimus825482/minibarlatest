@@ -1,593 +1,770 @@
-{% extends "base.html" %}
-
-{% block title %}Karlılık Dashboard - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Karlılık Dashboard{% endblock %}
-
-{% block extra_head %}
+{% extends "base.html" %} {% block title %}Karlılık Dashboard - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}Karlılık Dashboard{% endblock %} {%
+block extra_head %}
 <!-- DataTables CSS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+<link
+  rel="stylesheet"
+  href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css"
+/>
+<link
+  rel="stylesheet"
+  href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css"
+/>
 
 <!-- Date Range Picker -->
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<link
+  rel="stylesheet"
+  type="text/css"
+  href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"
+/>
 
 <style>
-    /* Özet Kartlar */
-    .stat-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+  /* Özet Kartlar */
+  .stat-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Chart Container */
+  .chart-container {
+    position: relative;
+    height: 350px;
+    width: 100%;
+  }
+
+  /* DataTables Dark Mode */
+  .dark .dataTables_wrapper {
+    color: #e2e8f0;
+  }
+
+  .dark .dataTables_wrapper .dataTables_filter input,
+  .dark .dataTables_wrapper .dataTables_length select {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+  }
+
+  .dark table.dataTable tbody tr {
+    background-color: #1e293b;
+  }
+
+  .dark table.dataTable tbody tr:hover {
+    background-color: #334155 !important;
+  }
+
+  /* Loading Spinner */
+  .spinner {
+    border: 3px solid rgba(59, 130, 246, 0.1);
+    border-radius: 50%;
+    border-top: 3px solid #3b82f6;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
     }
-    
-    .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    100% {
+      transform: rotate(360deg);
     }
-    
-    .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+  }
+
+  /* ===================================== */
+  /* RESPONSIVE TABLE STYLES */
+  /* ===================================== */
+
+  .table-wrapper {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    border-radius: 0.5rem;
+  }
+
+  .table-wrapper::-webkit-scrollbar {
+    height: 8px;
+    background-color: rgba(203, 213, 225, 0.3);
+    border-radius: 4px;
+  }
+
+  .table-wrapper::-webkit-scrollbar-thumb {
+    background-color: rgba(71, 85, 105, 0.5);
+    border-radius: 4px;
+  }
+
+  @media (max-width: 768px) {
+    .table-wrapper::after {
+      content: "→";
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      background: linear-gradient(to right, transparent, white 30%);
+      padding: 0.5rem 1rem;
+      font-size: 1.5rem;
+      color: rgba(71, 85, 105, 0.5);
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 0.3s;
     }
-    
-    /* Chart Container */
-    .chart-container {
-        position: relative;
-        height: 350px;
-        width: 100%;
+
+    .dark .table-wrapper::after {
+      background: linear-gradient(to right, transparent, #1e293b 30%);
     }
-    
-    /* DataTables Dark Mode */
-    .dark .dataTables_wrapper {
-        color: #e2e8f0;
+
+    .table-wrapper table {
+      min-width: 800px;
     }
-    
-    .dark .dataTables_wrapper .dataTables_filter input,
-    .dark .dataTables_wrapper .dataTables_length select {
-        background-color: #1e293b;
-        border-color: #334155;
-        color: #e2e8f0;
+
+    .table-wrapper td,
+    .table-wrapper th {
+      white-space: nowrap;
+      padding: 0.75rem 0.5rem !important;
     }
-    
-    .dark table.dataTable tbody tr {
-        background-color: #1e293b;
+  }
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
     }
-    
-    .dark table.dataTable tbody tr:hover {
-        background-color: #334155 !important;
+    100% {
+      transform: rotate(360deg);
     }
-    
-    /* Loading Spinner */
-    .spinner {
-        border: 3px solid rgba(59, 130, 246, 0.1);
-        border-radius: 50%;
-        border-top: 3px solid #3b82f6;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
+  }
 </style>
-{% endblock %}
-
-{% block content %}
+{% endblock %} {% block content %}
 <div class="space-y-6">
-    <!-- Filtre Bölümü -->
+  <!-- Filtre Bölümü -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          Otel Seçimi
+        </label>
+        <select
+          id="otel-filter"
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
+        >
+          <option value="">Tüm Oteller</option>
+          {% for otel in oteller %}
+          <option value="{{ otel.id }}">{{ otel.otel_adi }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          Tarih Aralığı
+        </label>
+        <input
+          type="text"
+          id="tarih-araligi"
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
+          readonly
+        />
+      </div>
+
+      <div class="flex items-end">
+        <button
+          id="filtre-uygula"
+          class="w-full px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <i class="fas fa-filter mr-2"></i>
+          Filtrele
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Özet Kartlar -->
+  <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <!-- Günlük Kar -->
+    <div
+      class="stat-card bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg"
+    >
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="stat-icon bg-green-100 dark:bg-green-900/30">
+            <i
+              class="fas fa-chart-line text-2xl text-green-600 dark:text-green-400"
+            ></i>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt
+                class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate"
+              >
+                Günlük Kar
+              </dt>
+              <dd class="flex items-baseline">
+                <div
+                  class="text-2xl font-semibold text-slate-900 dark:text-slate-100"
+                  id="gunluk-kar"
+                >
+                  <div class="spinner"></div>
+                </div>
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aylık Kar -->
+    <div
+      class="stat-card bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg"
+    >
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="stat-icon bg-blue-100 dark:bg-blue-900/30">
+            <i
+              class="fas fa-calendar-alt text-2xl text-blue-600 dark:text-blue-400"
+            ></i>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt
+                class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate"
+              >
+                Aylık Kar
+              </dt>
+              <dd class="flex items-baseline">
+                <div
+                  class="text-2xl font-semibold text-slate-900 dark:text-slate-100"
+                  id="aylik-kar"
+                >
+                  <div class="spinner"></div>
+                </div>
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kar Marjı -->
+    <div
+      class="stat-card bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg"
+    >
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="stat-icon bg-purple-100 dark:bg-purple-900/30">
+            <i
+              class="fas fa-percentage text-2xl text-purple-600 dark:text-purple-400"
+            ></i>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt
+                class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate"
+              >
+                Kar Marjı
+              </dt>
+              <dd class="flex items-baseline">
+                <div
+                  class="text-2xl font-semibold text-slate-900 dark:text-slate-100"
+                  id="kar-marji"
+                >
+                  <div class="spinner"></div>
+                </div>
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROI -->
+    <div
+      class="stat-card bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg"
+    >
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="stat-icon bg-yellow-100 dark:bg-yellow-900/30">
+            <i
+              class="fas fa-chart-pie text-2xl text-yellow-600 dark:text-yellow-400"
+            ></i>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt
+                class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate"
+              >
+                ROI
+              </dt>
+              <dd class="flex items-baseline">
+                <div
+                  class="text-2xl font-semibold text-slate-900 dark:text-slate-100"
+                  id="roi"
+                >
+                  <div class="spinner"></div>
+                </div>
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trend Grafikleri -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Kar Trend Grafiği -->
     <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Otel Seçimi
-                </label>
-                <select id="otel-filter" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200">
-                    <option value="">Tüm Oteller</option>
-                    {% for otel in oteller %}
-                    <option value="{{ otel.id }}">{{ otel.otel_adi }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Tarih Aralığı
-                </label>
-                <input type="text" id="tarih-araligi" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200" readonly>
-            </div>
-            
-            <div class="flex items-end">
-                <button id="filtre-uygula" class="w-full px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    <i class="fas fa-filter mr-2"></i>
-                    Filtrele
-                </button>
-            </div>
-        </div>
+      <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">
+        <i class="fas fa-chart-area mr-2 text-blue-600"></i>
+        Kar Trendi (Son 30 Gün)
+      </h3>
+      <div class="chart-container">
+        <canvas id="kar-trend-chart"></canvas>
+      </div>
     </div>
 
-    <!-- Özet Kartlar -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <!-- Günlük Kar -->
-        <div class="stat-card bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="stat-icon bg-green-100 dark:bg-green-900/30">
-                        <i class="fas fa-chart-line text-2xl text-green-600 dark:text-green-400"></i>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Günlük Kar</dt>
-                            <dd class="flex items-baseline">
-                                <div class="text-2xl font-semibold text-slate-900 dark:text-slate-100" id="gunluk-kar">
-                                    <div class="spinner"></div>
-                                </div>
-                            </dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Aylık Kar -->
-        <div class="stat-card bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="stat-icon bg-blue-100 dark:bg-blue-900/30">
-                        <i class="fas fa-calendar-alt text-2xl text-blue-600 dark:text-blue-400"></i>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Aylık Kar</dt>
-                            <dd class="flex items-baseline">
-                                <div class="text-2xl font-semibold text-slate-900 dark:text-slate-100" id="aylik-kar">
-                                    <div class="spinner"></div>
-                                </div>
-                            </dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Kar Marjı -->
-        <div class="stat-card bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="stat-icon bg-purple-100 dark:bg-purple-900/30">
-                        <i class="fas fa-percentage text-2xl text-purple-600 dark:text-purple-400"></i>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Kar Marjı</dt>
-                            <dd class="flex items-baseline">
-                                <div class="text-2xl font-semibold text-slate-900 dark:text-slate-100" id="kar-marji">
-                                    <div class="spinner"></div>
-                                </div>
-                            </dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ROI -->
-        <div class="stat-card bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="stat-icon bg-yellow-100 dark:bg-yellow-900/30">
-                        <i class="fas fa-chart-pie text-2xl text-yellow-600 dark:text-yellow-400"></i>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">ROI</dt>
-                            <dd class="flex items-baseline">
-                                <div class="text-2xl font-semibold text-slate-900 dark:text-slate-100" id="roi">
-                                    <div class="spinner"></div>
-                                </div>
-                            </dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Trend Grafikleri -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Kar Trend Grafiği -->
-        <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
-            <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">
-                <i class="fas fa-chart-area mr-2 text-blue-600"></i>
-                Kar Trendi (Son 30 Gün)
-            </h3>
-            <div class="chart-container">
-                <canvas id="kar-trend-chart"></canvas>
-            </div>
-        </div>
-
-        <!-- Gelir vs Maliyet Grafiği -->
-        <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
-            <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">
-                <i class="fas fa-balance-scale mr-2 text-green-600"></i>
-                Gelir vs Maliyet
-            </h3>
-            <div class="chart-container">
-                <canvas id="gelir-maliyet-chart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- En Karlı Ürünler Tablosu -->
+    <!-- Gelir vs Maliyet Grafiği -->
     <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
-        <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">
-            <i class="fas fa-trophy mr-2 text-yellow-600"></i>
-            En Karlı Ürünler
-        </h3>
-        <div class="overflow-x-auto">
-            <table id="karli-urunler-table" class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                <thead class="bg-slate-50 dark:bg-slate-700">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Ürün Adı
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Satış Adedi
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Toplam Gelir
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Toplam Maliyet
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Net Kar
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                            Kar Marjı
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                    <!-- DataTables ile doldurulacak -->
-                </tbody>
-            </table>
-        </div>
+      <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">
+        <i class="fas fa-balance-scale mr-2 text-green-600"></i>
+        Gelir vs Maliyet
+      </h3>
+      <div class="chart-container">
+        <canvas id="gelir-maliyet-chart"></canvas>
+      </div>
     </div>
+  </div>
+
+  <!-- En Karlı Ürünler Tablosu -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
+    <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">
+      <i class="fas fa-trophy mr-2 text-yellow-600"></i>
+      En Karlı Ürünler
+    </h3>
+    <div class="table-wrapper overflow-x-auto">
+      <table
+        id="karli-urunler-table"
+        class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
+      >
+        <thead class="bg-slate-50 dark:bg-slate-700">
+          <tr>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Ürün Adı
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Satış Adedi
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Toplam Gelir
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Toplam Maliyet
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Net Kar
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider"
+            >
+              Kar Marjı
+            </th>
+          </tr>
+        </thead>
+        <tbody
+          class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+        >
+          <!-- DataTables ile doldurulacak -->
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block extra_scripts %}
+{% endblock %} {% block extra_scripts %}
 <!-- DataTables JS -->
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 
 <!-- Date Range Picker -->
-<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script
+  type="text/javascript"
+  src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"
+></script>
+<script
+  type="text/javascript"
+  src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"
+></script>
 
 <script>
-// Karlılık Dashboard Manager
-class KarlilikDashboard {
+  // Karlılık Dashboard Manager
+  class KarlilikDashboard {
     constructor() {
-        this.karTrendChart = null;
-        this.gelirMaliyetChart = null;
-        this.dataTable = null;
-        this.init();
+      this.karTrendChart = null;
+      this.gelirMaliyetChart = null;
+      this.dataTable = null;
+      this.init();
     }
 
     init() {
-        this.initDateRangePicker();
-        this.initEventListeners();
-        this.loadDashboardData();
+      this.initDateRangePicker();
+      this.initEventListeners();
+      this.loadDashboardData();
     }
 
     initDateRangePicker() {
-        const today = moment();
-        const startDate = moment().subtract(29, 'days');
-        
-        $('#tarih-araligi').daterangepicker({
-            startDate: startDate,
-            endDate: today,
-            locale: {
-                format: 'DD/MM/YYYY',
-                separator: ' - ',
-                applyLabel: 'Uygula',
-                cancelLabel: 'İptal',
-                fromLabel: 'Başlangıç',
-                toLabel: 'Bitiş',
-                customRangeLabel: 'Özel',
-                weekLabel: 'H',
-                daysOfWeek: ['Pz', 'Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct'],
-                monthNames: ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
-                            'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'],
-                firstDay: 1
-            },
-            ranges: {
-                'Bugün': [moment(), moment()],
-                'Dün': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-                'Son 7 Gün': [moment().subtract(6, 'days'), moment()],
-                'Son 30 Gün': [moment().subtract(29, 'days'), moment()],
-                'Bu Ay': [moment().startOf('month'), moment().endOf('month')],
-                'Geçen Ay': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
-            }
-        });
+      const today = moment();
+      const startDate = moment().subtract(29, "days");
+
+      $("#tarih-araligi").daterangepicker({
+        startDate: startDate,
+        endDate: today,
+        locale: {
+          format: "DD/MM/YYYY",
+          separator: " - ",
+          applyLabel: "Uygula",
+          cancelLabel: "İptal",
+          fromLabel: "Başlangıç",
+          toLabel: "Bitiş",
+          customRangeLabel: "Özel",
+          weekLabel: "H",
+          daysOfWeek: ["Pz", "Pt", "Sa", "Ça", "Pe", "Cu", "Ct"],
+          monthNames: [
+            "Ocak",
+            "Şubat",
+            "Mart",
+            "Nisan",
+            "Mayıs",
+            "Haziran",
+            "Temmuz",
+            "Ağustos",
+            "Eylül",
+            "Ekim",
+            "Kasım",
+            "Aralık",
+          ],
+          firstDay: 1,
+        },
+        ranges: {
+          Bugün: [moment(), moment()],
+          Dün: [moment().subtract(1, "days"), moment().subtract(1, "days")],
+          "Son 7 Gün": [moment().subtract(6, "days"), moment()],
+          "Son 30 Gün": [moment().subtract(29, "days"), moment()],
+          "Bu Ay": [moment().startOf("month"), moment().endOf("month")],
+          "Geçen Ay": [
+            moment().subtract(1, "month").startOf("month"),
+            moment().subtract(1, "month").endOf("month"),
+          ],
+        },
+      });
     }
 
     initEventListeners() {
-        $('#filtre-uygula').on('click', () => this.loadDashboardData());
+      $("#filtre-uygula").on("click", () => this.loadDashboardData());
     }
 
     async loadDashboardData() {
-        try {
-            const otelId = $('#otel-filter').val();
-            const dateRange = $('#tarih-araligi').data('daterangepicker');
-            const baslangic = dateRange.startDate.format('YYYY-MM-DD');
-            const bitis = dateRange.endDate.format('YYYY-MM-DD');
+      try {
+        const otelId = $("#otel-filter").val();
+        const dateRange = $("#tarih-araligi").data("daterangepicker");
+        const baslangic = dateRange.startDate.format("YYYY-MM-DD");
+        const bitis = dateRange.endDate.format("YYYY-MM-DD");
 
-            // Özet kartları yükle
-            await this.loadSummaryCards(otelId, baslangic, bitis);
-            
-            // Grafikleri yükle
-            await this.loadCharts(otelId, baslangic, bitis);
-            
-            // Tabloyu yükle
-            await this.loadProductsTable(otelId, baslangic, bitis);
-            
-        } catch (error) {
-            console.error('Dashboard yükleme hatası:', error);
-            this.showError('Dashboard verileri yüklenirken hata oluştu');
-        }
+        // Özet kartları yükle
+        await this.loadSummaryCards(otelId, baslangic, bitis);
+
+        // Grafikleri yükle
+        await this.loadCharts(otelId, baslangic, bitis);
+
+        // Tabloyu yükle
+        await this.loadProductsTable(otelId, baslangic, bitis);
+      } catch (error) {
+        console.error("Dashboard yükleme hatası:", error);
+        this.showError("Dashboard verileri yüklenirken hata oluştu");
+      }
     }
 
     async loadSummaryCards(otelId, baslangic, bitis) {
-        try {
-            const params = new URLSearchParams({
-                otel_id: otelId || '',
-                baslangic: baslangic,
-                bitis: bitis,
-                donem: 'gunluk'
-            });
+      try {
+        const params = new URLSearchParams({
+          otel_id: otelId || "",
+          baslangic: baslangic,
+          bitis: bitis,
+          donem: "gunluk",
+        });
 
-            const response = await fetch(`/api/v1/kar/donemsel?${params}`);
-            const data = await response.json();
+        const response = await fetch(`/api/v1/kar/donemsel?${params}`);
+        const data = await response.json();
 
-            if (data.success) {
-                // Günlük kar
-                const gunlukKar = data.net_kar || 0;
-                $('#gunluk-kar').html(this.formatCurrency(gunlukKar));
-                
-                // Aylık kar (30 günlük toplam)
-                const aylikParams = new URLSearchParams({
-                    otel_id: otelId || '',
-                    baslangic: moment().subtract(29, 'days').format('YYYY-MM-DD'),
-                    bitis: moment().format('YYYY-MM-DD'),
-                    donem: 'aylik'
-                });
-                
-                const aylikResponse = await fetch(`/api/v1/kar/donemsel?${aylikParams}`);
-                const aylikData = await aylikResponse.json();
-                
-                if (aylikData.success) {
-                    $('#aylik-kar').html(this.formatCurrency(aylikData.net_kar || 0));
-                }
-                
-                // Kar marjı
-                const karMarji = data.kar_marji || 0;
-                $('#kar-marji').html(`%${karMarji.toFixed(2)}`);
-                
-                // ROI hesapla
-                const roi = data.toplam_gelir > 0 ? 
-                    ((data.net_kar / data.toplam_maliyet) * 100) : 0;
-                $('#roi').html(`%${roi.toFixed(2)}`);
-            }
-        } catch (error) {
-            console.error('Özet kartlar yükleme hatası:', error);
-            $('#gunluk-kar, #aylik-kar, #kar-marji, #roi').html('₺0');
+        if (data.success) {
+          // Günlük kar
+          const gunlukKar = data.net_kar || 0;
+          $("#gunluk-kar").html(this.formatCurrency(gunlukKar));
+
+          // Aylık kar (30 günlük toplam)
+          const aylikParams = new URLSearchParams({
+            otel_id: otelId || "",
+            baslangic: moment().subtract(29, "days").format("YYYY-MM-DD"),
+            bitis: moment().format("YYYY-MM-DD"),
+            donem: "aylik",
+          });
+
+          const aylikResponse = await fetch(
+            `/api/v1/kar/donemsel?${aylikParams}`
+          );
+          const aylikData = await aylikResponse.json();
+
+          if (aylikData.success) {
+            $("#aylik-kar").html(this.formatCurrency(aylikData.net_kar || 0));
+          }
+
+          // Kar marjı
+          const karMarji = data.kar_marji || 0;
+          $("#kar-marji").html(`%${karMarji.toFixed(2)}`);
+
+          // ROI hesapla
+          const roi =
+            data.toplam_gelir > 0
+              ? (data.net_kar / data.toplam_maliyet) * 100
+              : 0;
+          $("#roi").html(`%${roi.toFixed(2)}`);
         }
+      } catch (error) {
+        console.error("Özet kartlar yükleme hatası:", error);
+        $("#gunluk-kar, #aylik-kar, #kar-marji, #roi").html("₺0");
+      }
     }
 
     async loadCharts(otelId, baslangic, bitis) {
-        try {
-            // Trend verilerini al
-            const params = new URLSearchParams({
-                otel_id: otelId || '',
-                baslangic: moment().subtract(29, 'days').format('YYYY-MM-DD'),
-                bitis: moment().format('YYYY-MM-DD')
-            });
+      try {
+        // Trend verilerini al
+        const params = new URLSearchParams({
+          otel_id: otelId || "",
+          baslangic: moment().subtract(29, "days").format("YYYY-MM-DD"),
+          bitis: moment().format("YYYY-MM-DD"),
+        });
 
-            const response = await fetch(`/api/v1/kar/trend?${params}`);
-            const data = await response.json();
+        const response = await fetch(`/api/v1/kar/trend?${params}`);
+        const data = await response.json();
 
-            if (data.success && data.trend_data) {
-                this.renderKarTrendChart(data.trend_data);
-                this.renderGelirMaliyetChart(data.trend_data);
-            }
-        } catch (error) {
-            console.error('Grafik yükleme hatası:', error);
+        if (data.success && data.trend_data) {
+          this.renderKarTrendChart(data.trend_data);
+          this.renderGelirMaliyetChart(data.trend_data);
         }
+      } catch (error) {
+        console.error("Grafik yükleme hatası:", error);
+      }
     }
 
     renderKarTrendChart(trendData) {
-        const ctx = document.getElementById('kar-trend-chart');
-        
-        if (this.karTrendChart) {
-            this.karTrendChart.destroy();
-        }
+      const ctx = document.getElementById("kar-trend-chart");
 
-        const labels = trendData.map(d => moment(d.tarih).format('DD MMM'));
-        const karData = trendData.map(d => d.net_kar || 0);
+      if (this.karTrendChart) {
+        this.karTrendChart.destroy();
+      }
 
-        this.karTrendChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Net Kar',
-                    data: karData,
-                    borderColor: 'rgb(59, 130, 246)',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
+      const labels = trendData.map((d) => moment(d.tarih).format("DD MMM"));
+      const karData = trendData.map((d) => d.net_kar || 0);
+
+      this.karTrendChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: "Net Kar",
+              data: karData,
+              borderColor: "rgb(59, 130, 246)",
+              backgroundColor: "rgba(59, 130, 246, 0.1)",
+              tension: 0.4,
+              fill: true,
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: (context) => {
-                                return 'Kar: ' + this.formatCurrency(context.parsed.y);
-                            }
-                        }
-                    }
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false,
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  return "Kar: " + this.formatCurrency(context.parsed.y);
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: (value) => this.formatCurrency(value)
-                        }
-                    }
-                }
-            }
-        });
+              },
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value) => this.formatCurrency(value),
+              },
+            },
+          },
+        },
+      });
     }
 
     renderGelirMaliyetChart(trendData) {
-        const ctx = document.getElementById('gelir-maliyet-chart');
-        
-        if (this.gelirMaliyetChart) {
-            this.gelirMaliyetChart.destroy();
-        }
+      const ctx = document.getElementById("gelir-maliyet-chart");
 
-        const labels = trendData.map(d => moment(d.tarih).format('DD MMM'));
-        const gelirData = trendData.map(d => d.toplam_gelir || 0);
-        const maliyetData = trendData.map(d => d.toplam_maliyet || 0);
+      if (this.gelirMaliyetChart) {
+        this.gelirMaliyetChart.destroy();
+      }
 
-        this.gelirMaliyetChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Gelir',
-                        data: gelirData,
-                        backgroundColor: 'rgba(34, 197, 94, 0.8)',
-                        borderColor: 'rgb(34, 197, 94)',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Maliyet',
-                        data: maliyetData,
-                        backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                        borderColor: 'rgb(239, 68, 68)',
-                        borderWidth: 1
-                    }
-                ]
+      const labels = trendData.map((d) => moment(d.tarih).format("DD MMM"));
+      const gelirData = trendData.map((d) => d.toplam_gelir || 0);
+      const maliyetData = trendData.map((d) => d.toplam_maliyet || 0);
+
+      this.gelirMaliyetChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: "Gelir",
+              data: gelirData,
+              backgroundColor: "rgba(34, 197, 94, 0.8)",
+              borderColor: "rgb(34, 197, 94)",
+              borderWidth: 1,
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: (context) => {
-                                return context.dataset.label + ': ' + this.formatCurrency(context.parsed.y);
-                            }
-                        }
-                    }
+            {
+              label: "Maliyet",
+              data: maliyetData,
+              backgroundColor: "rgba(239, 68, 68, 0.8)",
+              borderColor: "rgb(239, 68, 68)",
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "top",
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  return (
+                    context.dataset.label +
+                    ": " +
+                    this.formatCurrency(context.parsed.y)
+                  );
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: (value) => this.formatCurrency(value)
-                        }
-                    }
-                }
-            }
-        });
+              },
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value) => this.formatCurrency(value),
+              },
+            },
+          },
+        },
+      });
     }
 
     async loadProductsTable(otelId, baslangic, bitis) {
-        try {
-            const params = new URLSearchParams({
-                otel_id: otelId || '',
-                baslangic: baslangic,
-                bitis: bitis
-            });
+      try {
+        const params = new URLSearchParams({
+          otel_id: otelId || "",
+          baslangic: baslangic,
+          bitis: bitis,
+        });
 
-            const response = await fetch(`/api/v1/kar/urunler?${params}`);
-            const data = await response.json();
+        const response = await fetch(`/api/v1/kar/urunler?${params}`);
+        const data = await response.json();
 
-            if (this.dataTable) {
-                this.dataTable.destroy();
-            }
-
-            this.dataTable = $('#karli-urunler-table').DataTable({
-                data: data.urunler || [],
-                columns: [
-                    { data: 'urun_adi' },
-                    { data: 'satis_adedi' },
-                    { 
-                        data: 'toplam_gelir',
-                        render: (data) => this.formatCurrency(data)
-                    },
-                    { 
-                        data: 'toplam_maliyet',
-                        render: (data) => this.formatCurrency(data)
-                    },
-                    { 
-                        data: 'net_kar',
-                        render: (data) => this.formatCurrency(data)
-                    },
-                    { 
-                        data: 'kar_marji',
-                        render: (data) => `%${data.toFixed(2)}`
-                    }
-                ],
-                order: [[4, 'desc']], // Net kara göre sırala
-                pageLength: 10,
-                responsive: true,
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
-                }
-            });
-        } catch (error) {
-            console.error('Tablo yükleme hatası:', error);
+        if (this.dataTable) {
+          this.dataTable.destroy();
         }
+
+        this.dataTable = $("#karli-urunler-table").DataTable({
+          data: data.urunler || [],
+          columns: [
+            { data: "urun_adi" },
+            { data: "satis_adedi" },
+            {
+              data: "toplam_gelir",
+              render: (data) => this.formatCurrency(data),
+            },
+            {
+              data: "toplam_maliyet",
+              render: (data) => this.formatCurrency(data),
+            },
+            {
+              data: "net_kar",
+              render: (data) => this.formatCurrency(data),
+            },
+            {
+              data: "kar_marji",
+              render: (data) => `%${data.toFixed(2)}`,
+            },
+          ],
+          order: [[4, "desc"]], // Net kara göre sırala
+          pageLength: 10,
+          responsive: true,
+          language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json",
+          },
+        });
+      } catch (error) {
+        console.error("Tablo yükleme hatası:", error);
+      }
     }
 
     formatCurrency(value) {
-        return new Intl.NumberFormat('tr-TR', {
-            style: 'currency',
-            currency: 'TRY'
-        }).format(value);
+      return new Intl.NumberFormat("tr-TR", {
+        style: "currency",
+        currency: "TRY",
+      }).format(value);
     }
 
     showError(message) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Hata',
-            text: message,
-            confirmButtonText: 'Tamam'
-        });
+      Swal.fire({
+        icon: "error",
+        title: "Hata",
+        text: message,
+        confirmButtonText: "Tamam",
+      });
     }
-}
+  }
 
-// Sayfa yüklendiğinde başlat
-$(document).ready(function() {
+  // Sayfa yüklendiğinde başlat
+  $(document).ready(function () {
     new KarlilikDashboard();
-});
+  });
 </script>
 {% endblock %}
