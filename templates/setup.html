@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="tr" class="h-full">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>İlk Kurulum - Minibar Takip Sistemi</title>
 
     <!-- Tailwind CSS CDN -->
@@ -11,324 +10,380 @@
 
     <!-- Form Validation Module -->
     <script src="/static/js/form-validation.js"></script>
+  </head>
 
-    <!-- Tailwind Config -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        slate: {
-                            50: '#f8fafc',
-                            100: '#f1f5f9',
-                            200: '#e2e8f0',
-                            300: '#cbd5e1',
-                            400: '#94a3b8',
-                            500: '#64748b',
-                            600: '#475569',
-                            700: '#334155',
-                            800: '#1e293b',
-                            900: '#0f172a',
-                            950: '#020617'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-
-<body class="h-full bg-slate-50">
+  <body class="h-full bg-slate-50">
     <div class="min-h-full flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-        <div class="sm:mx-auto sm:w-full sm:max-w-md">
-            <div class="text-center">
-                <h1 class="text-3xl font-bold text-slate-900">Minibar Takip Sistemi</h1>
-                <p class="mt-2 text-sm text-slate-600">İlk kurulum</p>
-            </div>
+      <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="text-center">
+          <h1 class="text-3xl font-bold text-slate-900">
+            Minibar Takip Sistemi
+          </h1>
+          <p class="mt-2 text-sm text-slate-600">İlk kurulum</p>
         </div>
+      </div>
 
-        <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl">
-            <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-                <!-- Flash Messages -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                <div class="mb-6">
-                    {% for category, message in messages %}
-                    <div
-                        class="p-4 rounded-md mb-2 {% if category == 'success' %}bg-green-50 border border-green-200 text-green-800{% elif category == 'danger' %}bg-red-50 border border-red-200 text-red-800{% elif category == 'warning' %}bg-yellow-50 border border-yellow-200 text-yellow-800{% else %}bg-blue-50 border border-blue-200 text-blue-800{% endif %}">
-                        {{ message }}
-                    </div>
-                    {% endfor %}
+      <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl">
+        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <!-- Flash Messages -->
+          {% with messages = get_flashed_messages(with_categories=true) %} {% if
+          messages %}
+          <div class="mb-6">
+            {% for category, message in messages %}
+            <div
+              class="p-4 rounded-md mb-2 {% if category == 'success' %}bg-green-50 border border-green-200 text-green-800{% elif category == 'danger' %}bg-red-50 border border-red-200 text-red-800{% elif category == 'warning' %}bg-yellow-50 border border-yellow-200 text-yellow-800{% else %}bg-blue-50 border border-blue-200 text-blue-800{% endif %}"
+            >
+              {{ message }}
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %} {% endwith %}
+
+          <form id="setupForm" class="space-y-6" method="POST" novalidate>
+            {{ form.csrf_token }}
+
+            <!-- Otel Bilgileri -->
+            <div class="border-b border-slate-200 pb-6">
+              <h2 class="text-lg font-medium text-slate-900 mb-4">
+                Otel Bilgileri
+              </h2>
+
+              <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <!-- Otel Adı -->
+                <div>
+                  {{ form.otel_adi.label(class="block text-sm font-medium
+                  text-slate-700") }}
+                  <div class="mt-1">
+                    {{ form.otel_adi(class="appearance-none block w-full px-3
+                    py-2 border border-slate-300 rounded-md
+                    placeholder-slate-400 focus:outline-none
+                    focus:ring-slate-500 focus:border-slate-500 sm:text-sm",
+                    placeholder="Otel adını girin") }}
+                  </div>
+                  {% if form.otel_adi.errors %} {% for error in
+                  form.otel_adi.errors %}
+                  <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                  {% endfor %} {% endif %}
                 </div>
-                {% endif %}
-                {% endwith %}
 
-                <form id="setupForm" class="space-y-6" method="POST" novalidate>
-                    {{ form.csrf_token }}
+                <!-- Telefon -->
+                <div>
+                  {{ form.telefon.label(class="block text-sm font-medium
+                  text-slate-700") }}
+                  <div class="mt-1">
+                    {{ form.telefon(class="appearance-none block w-full px-3
+                    py-2 border border-slate-300 rounded-md
+                    placeholder-slate-400 focus:outline-none
+                    focus:ring-slate-500 focus:border-slate-500 sm:text-sm",
+                    placeholder="Telefon numarası") }}
+                  </div>
+                  {% if form.telefon.errors %} {% for error in
+                  form.telefon.errors %}
+                  <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
 
-                    <!-- Otel Bilgileri -->
-                    <div class="border-b border-slate-200 pb-6">
-                        <h2 class="text-lg font-medium text-slate-900 mb-4">Otel Bilgileri</h2>
+                <!-- Adres -->
+                <div class="sm:col-span-2">
+                  {{ form.adres.label(class="block text-sm font-medium
+                  text-slate-700") }}
+                  <div class="mt-1">
+                    {{ form.adres(class="appearance-none block w-full px-3 py-2
+                    border border-slate-300 rounded-md placeholder-slate-400
+                    focus:outline-none focus:ring-slate-500
+                    focus:border-slate-500 sm:text-sm", placeholder="Otel adresi
+                    (opsiyonel)") }}
+                  </div>
+                  {% if form.adres.errors %} {% for error in form.adres.errors
+                  %}
+                  <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
 
-                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                            <!-- Otel Adı -->
-                            <div>
-                                {{ form.otel_adi.label(class="block text-sm font-medium text-slate-700") }}
-                                <div class="mt-1">
-                                    {{ form.otel_adi(class="appearance-none block w-full px-3 py-2 border
-                                    border-slate-300 rounded-md placeholder-slate-400 focus:outline-none
-                                    focus:ring-slate-500 focus:border-slate-500 sm:text-sm", placeholder="Otel adını
-                                    girin") }}
-                                </div>
-                                {% if form.otel_adi.errors %}
-                                {% for error in form.otel_adi.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ error }}</p>
-                                {% endfor %}
-                                {% endif %}
-                            </div>
-
-                            <!-- Telefon -->
-                            <div>
-                                {{ form.telefon.label(class="block text-sm font-medium text-slate-700") }}
-                                <div class="mt-1">
-                                    {{ form.telefon(class="appearance-none block w-full px-3 py-2 border
-                                    border-slate-300 rounded-md placeholder-slate-400 focus:outline-none
-                                    focus:ring-slate-500 focus:border-slate-500 sm:text-sm", placeholder="Telefon
-                                    numarası") }}
-                                </div>
-                                {% if form.telefon.errors %}
-                                {% for error in form.telefon.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ error }}</p>
-                                {% endfor %}
-                                {% endif %}
-                            </div>
-
-                            <!-- Adres -->
-                            <div class="sm:col-span-2">
-                                {{ form.adres.label(class="block text-sm font-medium text-slate-700") }}
-                                <div class="mt-1">
-                                    {{ form.adres(class="appearance-none block w-full px-3 py-2 border border-slate-300
-                                    rounded-md placeholder-slate-400 focus:outline-none focus:ring-slate-500
-                                    focus:border-slate-500 sm:text-sm", placeholder="Otel adresi (opsiyonel)") }}
-                                </div>
-                                {% if form.adres.errors %}
-                                {% for error in form.adres.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ error }}</p>
-                                {% endfor %}
-                                {% endif %}
-                            </div>
-
-                            <!-- Email -->
-                            <div class="sm:col-span-2">
-                                {{ form.email.label(class="block text-sm font-medium text-slate-700") }}
-                                <div class="mt-1">
-                                    {{ form.email(class="appearance-none block w-full px-3 py-2 border border-slate-300
-                                    rounded-md placeholder-slate-400 focus:outline-none focus:ring-slate-500
-                                    focus:border-slate-500 sm:text-sm", placeholder="Email adresi") }}
-                                </div>
-                                {% if form.email.errors %}
-                                {% for error in form.email.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ error }}</p>
-                                {% endfor %}
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sistem Yöneticisi Bilgileri -->
-                    <div>
-                        <h2 class="text-lg font-medium text-slate-900 mb-4">Sistem Yöneticisi Bilgileri</h2>
-
-                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                            <!-- Kullanıcı Adı (Full width) -->
-                            <div class="sm:col-span-2">
-                                {{ form.kullanici_adi.label(class="block text-sm font-medium text-slate-700") }}
-                                <div class="mt-1">
-                                    {{ form.kullanici_adi(class="appearance-none block w-full px-3 py-2 border
-                                    border-slate-300 rounded-md placeholder-slate-400 focus:outline-none
-                                    focus:ring-slate-500 focus:border-slate-500 sm:text-sm", placeholder="Kullanıcı
-                                    adı") }}
-                                </div>
-                                {% if form.kullanici_adi.errors %}
-                                {% for error in form.kullanici_adi.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ error }}</p>
-                                {% endfor %}
-                                {% endif %}
-                            </div>
-
-                            <!-- Şifre -->
-                            <div>
-                                {{ form.sifre.label(class="block text-sm font-medium text-slate-700") }}
-                                <div class="mt-1 relative">
-                                    {{ form.sifre(class="appearance-none block w-full px-3 py-2 pr-10 border
-                                    border-slate-300
-                                    rounded-md placeholder-slate-400 focus:outline-none focus:ring-slate-500
-                                    focus:border-slate-500 sm:text-sm", placeholder="Güçlü şifre") }}
-                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                        <button type="button" id="togglePassword"
-                                            class="text-slate-400 hover:text-slate-600 focus:outline-none">
-                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                                {% if form.sifre.errors %}
-                                {% for error in form.sifre.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ error }}</p>
-                                {% endfor %}
-                                {% endif %}
-                            </div>
-
-                            <!-- Şifre Onayı -->
-                            <div>
-                                {{ form.sifre_onay.label(class="block text-sm font-medium text-slate-700") }}
-                                <div class="mt-1 relative">
-                                    {{ form.sifre_onay(class="appearance-none block w-full px-3 py-2 pr-10 border
-                                    border-slate-300 rounded-md placeholder-slate-400 focus:outline-none
-                                    focus:ring-slate-500 focus:border-slate-500 sm:text-sm", placeholder="Şifreyi tekrar
-                                    girin") }}
-                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                        <button type="button" id="togglePasswordConfirm"
-                                            class="text-slate-400 hover:text-slate-600 focus:outline-none">
-                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                                {% if form.sifre_onay.errors %}
-                                {% for error in form.sifre_onay.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ error }}</p>
-                                {% endfor %}
-                                {% endif %}
-                            </div>
-
-                            <!-- Şifre gereksinimleri açıklaması (Full width) -->
-                            <div class="sm:col-span-2">
-                                <p class="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-md p-3">
-                                    <span class="font-medium text-slate-700">Şifre gereksinimleri:</span>
-                                    En az 8 karakter, bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter
-                                    (!@#$%^&*) içermelidir.
-                                </p>
-                            </div>
-
-                            <!-- Ad -->
-                            <div>
-                                {{ form.ad.label(class="block text-sm font-medium text-slate-700") }}
-                                <div class="mt-1">
-                                    {{ form.ad(class="appearance-none block w-full px-3 py-2 border border-slate-300
-                                    rounded-md placeholder-slate-400 focus:outline-none focus:ring-slate-500
-                                    focus:border-slate-500 sm:text-sm", placeholder="Ad") }}
-                                </div>
-                                {% if form.ad.errors %}
-                                {% for error in form.ad.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ error }}</p>
-                                {% endfor %}
-                                {% endif %}
-                            </div>
-
-                            <!-- Soyad -->
-                            <div>
-                                {{ form.soyad.label(class="block text-sm font-medium text-slate-700") }}
-                                <div class="mt-1">
-                                    {{ form.soyad(class="appearance-none block w-full px-3 py-2 border border-slate-300
-                                    rounded-md placeholder-slate-400 focus:outline-none focus:ring-slate-500
-                                    focus:border-slate-500 sm:text-sm", placeholder="Soyad") }}
-                                </div>
-                                {% if form.soyad.errors %}
-                                {% for error in form.soyad.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ error }}</p>
-                                {% endfor %}
-                                {% endif %}
-                            </div>
-
-                            <!-- Admin Email -->
-                            <div>
-                                {{ form.admin_email.label(class="block text-sm font-medium text-slate-700") }}
-                                <div class="mt-1">
-                                    {{ form.admin_email(class="appearance-none block w-full px-3 py-2 border
-                                    border-slate-300 rounded-md placeholder-slate-400 focus:outline-none
-                                    focus:ring-slate-500 focus:border-slate-500 sm:text-sm", placeholder="Admin email")
-                                    }}
-                                </div>
-                                {% if form.admin_email.errors %}
-                                {% for error in form.admin_email.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ error }}</p>
-                                {% endfor %}
-                                {% endif %}
-                            </div>
-
-                            <!-- Admin Telefon -->
-                            <div>
-                                {{ form.admin_telefon.label(class="block text-sm font-medium text-slate-700") }}
-                                <div class="mt-1">
-                                    {{ form.admin_telefon(class="appearance-none block w-full px-3 py-2 border
-                                    border-slate-300 rounded-md placeholder-slate-400 focus:outline-none
-                                    focus:ring-slate-500 focus:border-slate-500 sm:text-sm", placeholder="Admin
-                                    telefon") }}
-                                </div>
-                                {% if form.admin_telefon.errors %}
-                                {% for error in form.admin_telefon.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ error }}</p>
-                                {% endfor %}
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Submit Button with Loading State -->
-                    <div>
-                        <button type="submit" id="submitBtn"
-                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
-                            <span id="submitText">Kurulumu Tamamla</span>
-                            <svg id="loadingSpinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden"
-                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                </path>
-                            </svg>
-                        </button>
-                    </div>
-                </form>
+                <!-- Email -->
+                <div class="sm:col-span-2">
+                  {{ form.email.label(class="block text-sm font-medium
+                  text-slate-700") }}
+                  <div class="mt-1">
+                    {{ form.email(class="appearance-none block w-full px-3 py-2
+                    border border-slate-300 rounded-md placeholder-slate-400
+                    focus:outline-none focus:ring-slate-500
+                    focus:border-slate-500 sm:text-sm", placeholder="Email
+                    adresi") }}
+                  </div>
+                  {% if form.email.errors %} {% for error in form.email.errors
+                  %}
+                  <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
+              </div>
             </div>
+
+            <!-- Sistem Yöneticisi Bilgileri -->
+            <div>
+              <h2 class="text-lg font-medium text-slate-900 mb-4">
+                Sistem Yöneticisi Bilgileri
+              </h2>
+
+              <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <!-- Kullanıcı Adı (Full width) -->
+                <div class="sm:col-span-2">
+                  {{ form.kullanici_adi.label(class="block text-sm font-medium
+                  text-slate-700") }}
+                  <div class="mt-1">
+                    {{ form.kullanici_adi(class="appearance-none block w-full
+                    px-3 py-2 border border-slate-300 rounded-md
+                    placeholder-slate-400 focus:outline-none
+                    focus:ring-slate-500 focus:border-slate-500 sm:text-sm",
+                    placeholder="Kullanıcı adı") }}
+                  </div>
+                  {% if form.kullanici_adi.errors %} {% for error in
+                  form.kullanici_adi.errors %}
+                  <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
+
+                <!-- Şifre -->
+                <div>
+                  {{ form.sifre.label(class="block text-sm font-medium
+                  text-slate-700") }}
+                  <div class="mt-1 relative">
+                    {{ form.sifre(class="appearance-none block w-full px-3 py-2
+                    pr-10 border border-slate-300 rounded-md
+                    placeholder-slate-400 focus:outline-none
+                    focus:ring-slate-500 focus:border-slate-500 sm:text-sm",
+                    placeholder="Güçlü şifre") }}
+                    <div
+                      class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    >
+                      <button
+                        type="button"
+                        id="togglePassword"
+                        class="text-slate-400 hover:text-slate-600 focus:outline-none"
+                      >
+                        <svg
+                          class="h-5 w-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  {% if form.sifre.errors %} {% for error in form.sifre.errors
+                  %}
+                  <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
+
+                <!-- Şifre Onayı -->
+                <div>
+                  {{ form.sifre_onay.label(class="block text-sm font-medium
+                  text-slate-700") }}
+                  <div class="mt-1 relative">
+                    {{ form.sifre_onay(class="appearance-none block w-full px-3
+                    py-2 pr-10 border border-slate-300 rounded-md
+                    placeholder-slate-400 focus:outline-none
+                    focus:ring-slate-500 focus:border-slate-500 sm:text-sm",
+                    placeholder="Şifreyi tekrar girin") }}
+                    <div
+                      class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    >
+                      <button
+                        type="button"
+                        id="togglePasswordConfirm"
+                        class="text-slate-400 hover:text-slate-600 focus:outline-none"
+                      >
+                        <svg
+                          class="h-5 w-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  {% if form.sifre_onay.errors %} {% for error in
+                  form.sifre_onay.errors %}
+                  <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
+
+                <!-- Şifre gereksinimleri açıklaması (Full width) -->
+                <div class="sm:col-span-2">
+                  <p
+                    class="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-md p-3"
+                  >
+                    <span class="font-medium text-slate-700"
+                      >Şifre gereksinimleri:</span
+                    >
+                    En az 8 karakter, bir büyük harf, bir küçük harf, bir rakam
+                    ve bir özel karakter (!@#$%^&*) içermelidir.
+                  </p>
+                </div>
+
+                <!-- Ad -->
+                <div>
+                  {{ form.ad.label(class="block text-sm font-medium
+                  text-slate-700") }}
+                  <div class="mt-1">
+                    {{ form.ad(class="appearance-none block w-full px-3 py-2
+                    border border-slate-300 rounded-md placeholder-slate-400
+                    focus:outline-none focus:ring-slate-500
+                    focus:border-slate-500 sm:text-sm", placeholder="Ad") }}
+                  </div>
+                  {% if form.ad.errors %} {% for error in form.ad.errors %}
+                  <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
+
+                <!-- Soyad -->
+                <div>
+                  {{ form.soyad.label(class="block text-sm font-medium
+                  text-slate-700") }}
+                  <div class="mt-1">
+                    {{ form.soyad(class="appearance-none block w-full px-3 py-2
+                    border border-slate-300 rounded-md placeholder-slate-400
+                    focus:outline-none focus:ring-slate-500
+                    focus:border-slate-500 sm:text-sm", placeholder="Soyad") }}
+                  </div>
+                  {% if form.soyad.errors %} {% for error in form.soyad.errors
+                  %}
+                  <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
+
+                <!-- Admin Email -->
+                <div>
+                  {{ form.admin_email.label(class="block text-sm font-medium
+                  text-slate-700") }}
+                  <div class="mt-1">
+                    {{ form.admin_email(class="appearance-none block w-full px-3
+                    py-2 border border-slate-300 rounded-md
+                    placeholder-slate-400 focus:outline-none
+                    focus:ring-slate-500 focus:border-slate-500 sm:text-sm",
+                    placeholder="Admin email") }}
+                  </div>
+                  {% if form.admin_email.errors %} {% for error in
+                  form.admin_email.errors %}
+                  <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
+
+                <!-- Admin Telefon -->
+                <div>
+                  {{ form.admin_telefon.label(class="block text-sm font-medium
+                  text-slate-700") }}
+                  <div class="mt-1">
+                    {{ form.admin_telefon(class="appearance-none block w-full
+                    px-3 py-2 border border-slate-300 rounded-md
+                    placeholder-slate-400 focus:outline-none
+                    focus:ring-slate-500 focus:border-slate-500 sm:text-sm",
+                    placeholder="Admin telefon") }}
+                  </div>
+                  {% if form.admin_telefon.errors %} {% for error in
+                  form.admin_telefon.errors %}
+                  <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                  {% endfor %} {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit Button with Loading State -->
+            <div>
+              <button
+                type="submit"
+                id="submitBtn"
+                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                <span id="submitText">Kurulumu Tamamla</span>
+                <svg
+                  id="loadingSpinner"
+                  class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+          </form>
         </div>
+      </div>
     </div>
 
     <!-- JavaScript for Setup Form Validation -->
     <script>
-        document.addEventListener( 'DOMContentLoaded', function () {
-            // Initialize password toggle
-            const togglePassword = document.getElementById( 'togglePassword' );
-            const sifreInput = document.getElementById( 'sifre' );
+      document.addEventListener("DOMContentLoaded", function () {
+        // Initialize password toggle
+        const togglePassword = document.getElementById("togglePassword");
+        const sifreInput = document.getElementById("sifre");
 
-            if ( togglePassword && sifreInput ) {
-                togglePassword.addEventListener( 'click', function () {
-                    const type = sifreInput.getAttribute( 'type' ) === 'password' ? 'text' : 'password';
-                    sifreInput.setAttribute( 'type', type );
-                } );
-            }
+        if (togglePassword && sifreInput) {
+          togglePassword.addEventListener("click", function () {
+            const type =
+              sifreInput.getAttribute("type") === "password"
+                ? "text"
+                : "password";
+            sifreInput.setAttribute("type", type);
+          });
+        }
 
-            // Initialize password confirm toggle
-            const togglePasswordConfirm = document.getElementById( 'togglePasswordConfirm' );
-            const sifreOnayInput = document.getElementById( 'sifre_onay' );
+        // Initialize password confirm toggle
+        const togglePasswordConfirm = document.getElementById(
+          "togglePasswordConfirm"
+        );
+        const sifreOnayInput = document.getElementById("sifre_onay");
 
-            if ( togglePasswordConfirm && sifreOnayInput ) {
-                togglePasswordConfirm.addEventListener( 'click', function () {
-                    const type = sifreOnayInput.getAttribute( 'type' ) === 'password' ? 'text' : 'password';
-                    sifreOnayInput.setAttribute( 'type', type );
-                } );
-            }
-        } );
+        if (togglePasswordConfirm && sifreOnayInput) {
+          togglePasswordConfirm.addEventListener("click", function () {
+            const type =
+              sifreOnayInput.getAttribute("type") === "password"
+                ? "text"
+                : "password";
+            sifreOnayInput.setAttribute("type", type);
+          });
+        }
+      });
     </script>
-</body>
-
+  </body>
 </html>
