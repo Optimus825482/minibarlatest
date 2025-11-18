@@ -9,27 +9,161 @@
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍷</text></svg>"
     />
 
+    <!-- Dark Mode Script - FOUC önleme -->
+    <script>
+      (function () {
+        const savedTheme = localStorage.getItem("minibar-theme");
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+          .matches
+          ? "dark"
+          : "light";
+        const theme = savedTheme || systemTheme;
+
+        if (theme === "dark") {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/tailwind.min.css') }}"
     />
     <!-- Form Validation Module -->
     <script src="/static/js/form-validation.js"></script>
+
+    <style>
+      /* Dark Mode Styles */
+      .dark body {
+        background-color: #0f172a;
+        color: #e2e8f0;
+      }
+
+      .dark .bg-white {
+        background-color: #1e293b !important;
+      }
+
+      .dark .bg-slate-50 {
+        background-color: #0f172a !important;
+      }
+
+      .dark .text-slate-900 {
+        color: #f1f5f9 !important;
+      }
+
+      .dark .text-slate-700 {
+        color: #cbd5e1 !important;
+      }
+
+      .dark .text-slate-600 {
+        color: #94a3b8 !important;
+      }
+
+      .dark .border-slate-300 {
+        border-color: #475569 !important;
+      }
+
+      .dark input,
+      .dark textarea {
+        background-color: #1e293b;
+        border-color: #334155;
+        color: #e2e8f0;
+      }
+
+      .dark input:focus,
+      .dark textarea:focus {
+        border-color: #3b82f6;
+        background-color: #0f172a;
+      }
+
+      .dark input::placeholder {
+        color: #64748b;
+      }
+
+      .dark .shadow {
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5),
+          0 1px 2px -1px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Dark mode flash messages */
+      .dark .bg-green-50 {
+        background-color: #064e3b !important;
+      }
+
+      .dark .text-green-800 {
+        color: #86efac !important;
+      }
+
+      .dark .border-green-200 {
+        border-color: #166534 !important;
+      }
+
+      .dark .bg-red-50 {
+        background-color: #7f1d1d !important;
+      }
+
+      .dark .text-red-800 {
+        color: #fca5a5 !important;
+      }
+
+      .dark .border-red-200 {
+        border-color: #991b1b !important;
+      }
+
+      .dark .bg-yellow-50 {
+        background-color: #713f12 !important;
+      }
+
+      .dark .text-yellow-800 {
+        color: #fde047 !important;
+      }
+
+      .dark .border-yellow-200 {
+        border-color: #a16207 !important;
+      }
+
+      .dark .bg-blue-50 {
+        background-color: #1e3a8a !important;
+      }
+
+      .dark .text-blue-800 {
+        color: #93c5fd !important;
+      }
+
+      .dark .border-blue-200 {
+        border-color: #1e40af !important;
+      }
+
+      /* Smooth transitions */
+      @media (prefers-reduced-motion: no-preference) {
+        body,
+        .bg-white,
+        input,
+        textarea {
+          transition: background-color 0.2s ease, color 0.2s ease,
+            border-color 0.2s ease;
+        }
+      }
+    </style>
   </head>
 
-  <body class="h-full bg-slate-50">
+  <body class="h-full bg-slate-50 dark:bg-slate-900">
     <div class="min-h-full flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div class="sm:mx-auto sm:w-full sm:max-w-md">
         <div class="text-center">
-          <h1 class="text-3xl font-bold text-slate-900">
+          <h1 class="text-3xl font-bold text-slate-900 dark:text-slate-100">
             Minibar Takip Sistemi
           </h1>
-          <p class="mt-2 text-sm text-slate-600">Hesabınıza giriş yapın</p>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            Hesabınıza giriş yapın
+          </p>
         </div>
       </div>
 
       <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div
+          class="bg-white dark:bg-slate-800 py-8 px-4 shadow sm:rounded-lg sm:px-10"
+        >
           <!-- Flash Messages -->
           {% with messages = get_flashed_messages(with_categories=true) %} {% if
           messages %}
@@ -56,36 +190,41 @@
             <!-- Kullanıcı Adı -->
             <div>
               {{ form.kullanici_adi.label(class="block text-sm font-medium
-              text-slate-700") }}
+              text-slate-700 dark:text-slate-300") }}
               <div class="mt-1">
                 {{ form.kullanici_adi(class="appearance-none block w-full px-3
-                py-2 border border-slate-300 rounded-md placeholder-slate-400
+                py-2 border border-slate-300 dark:border-slate-600 rounded-md
+                placeholder-slate-400 dark:placeholder-slate-500
                 focus:outline-none focus:ring-slate-500 focus:border-slate-500
-                sm:text-sm", placeholder="Kullanıcı adınızı girin",
+                sm:text-sm dark:bg-slate-700 dark:text-slate-100",
+                placeholder="Kullanıcı adınızı girin",
                 autocomplete="new-username", autocorrect="off",
                 autocapitalize="off", spellcheck="false") }}
               </div>
               {% if form.kullanici_adi.errors %} {% for error in
               form.kullanici_adi.errors %}
-              <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+              <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+                {{ error }}
+              </p>
               {% endfor %} {% endif %}
             </div>
 
             <!-- Şifre -->
             <div>
               {{ form.sifre.label(class="block text-sm font-medium
-              text-slate-700") }}
+              text-slate-700 dark:text-slate-300") }}
               <div class="mt-1 relative">
                 {{ form.sifre(class="appearance-none block w-full px-3 py-2
-                border border-slate-300 rounded-md placeholder-slate-400
+                border border-slate-300 dark:border-slate-600 rounded-md
+                placeholder-slate-400 dark:placeholder-slate-500
                 focus:outline-none focus:ring-slate-500 focus:border-slate-500
-                sm:text-sm", placeholder="Şifrenizi girin",
-                autocomplete="new-password") }}
+                sm:text-sm dark:bg-slate-700 dark:text-slate-100",
+                placeholder="Şifrenizi girin", autocomplete="new-password") }}
                 <div class="absolute inset-y-0 right-10 flex items-center">
                   <button
                     type="button"
                     id="togglePassword"
-                    class="text-slate-400 hover:text-slate-600"
+                    class="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
                   >
                     <svg
                       class="h-5 w-5"
@@ -110,7 +249,9 @@
                 </div>
               </div>
               {% if form.sifre.errors %} {% for error in form.sifre.errors %}
-              <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+              <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+                {{ error }}
+              </p>
               {% endfor %} {% endif %}
             </div>
 
@@ -120,11 +261,11 @@
                   id="remember_me"
                   name="remember_me"
                   type="checkbox"
-                  class="h-4 w-4 text-slate-600 focus:ring-slate-500 border-slate-300 rounded"
+                  class="h-4 w-4 text-slate-600 focus:ring-slate-500 border-slate-300 dark:border-slate-600 rounded dark:bg-slate-700"
                 />
                 <label
                   for="remember_me"
-                  class="ml-2 block text-sm text-slate-900"
+                  class="ml-2 block text-sm text-slate-900 dark:text-slate-300"
                 >
                   Beni hatırla
                 </label>
