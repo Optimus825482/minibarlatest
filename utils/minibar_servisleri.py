@@ -84,6 +84,8 @@ def oda_setup_durumu_getir(oda_id):
         
         # Her setup için ürün durumlarını hesapla
         setup_listesi = []
+        dolap_ici_setuplar = []
+        dolap_disi_setuplar = []
         
         for setup in setuplar:
             if not setup.aktif:
@@ -141,13 +143,31 @@ def oda_setup_durumu_getir(oda_id):
                     'fazla_miktar': fazla_miktar
                 })
             
-            setup_listesi.append({
-                'setup_id': setup.id,
-                'setup_adi': setup.ad,
-                'dolap_ici': setup.dolap_ici,
-                'dolap_sayisi': oda_tipi.dolap_sayisi if setup.dolap_ici else 0,
-                'urunler': urun_listesi
-            })
+            # Dolap içi ise dolap sayısı kadar ayrı ayrı ekle
+            if setup.dolap_ici:
+                dolap_sayisi = oda_tipi.dolap_sayisi or 1
+                for dolap_no in range(1, dolap_sayisi + 1):
+                    dolap_ici_setuplar.append({
+                        'setup_id': setup.id,
+                        'setup_adi': f"{setup.ad} - Dolap {dolap_no}",
+                        'dolap_ici': True,
+                        'dolap_no': dolap_no,
+                        'dolap_sayisi': dolap_sayisi,
+                        'urunler': urun_listesi
+                    })
+            else:
+                # Dolap dışı tek sefer ekle
+                dolap_disi_setuplar.append({
+                    'setup_id': setup.id,
+                    'setup_adi': setup.ad,
+                    'dolap_ici': False,
+                    'dolap_no': 0,
+                    'dolap_sayisi': 0,
+                    'urunler': urun_listesi
+                })
+        
+        # Önce dolap içi, sonra dolap dışı
+        setup_listesi = dolap_ici_setuplar + dolap_disi_setuplar
         
         return {
             'oda': {
@@ -223,13 +243,13 @@ def zimmet_stok_kontrol(personel_id, urun_id, miktar):
         ZimmetStokYetersizError: Stok yetersizse
     """
     try:
-        # Aktif zimmeti bul
-        aktif_zimmet = PersonelZimmet.query.filter_by(
+        # Tüm aktif zimmetleri bul
+        aktif_zimmetler = PersonelZimmet.query.filter_by(
             personel_id=personel_id,
             durum='aktif'
-        ).first()
+        ).all()
         
-        if not aktif_zimmet:
+        if not aktif_zimmetler:
             urun = Urun.query.get(urun_id)
             raise ZimmetStokYetersizError(
                 urun.urun_adi if urun else 'Ürün',
@@ -237,32 +257,41 @@ def zimmet_stok_kontrol(personel_id, urun_id, miktar):
                 miktar
             )
         
-        # Zimmet detayını bul
-        zimmet_detay = PersonelZimmetDetay.query.filter_by(
-            zimmet_id=aktif_zimmet.id,
-            urun_id=urun_id
-        ).first()
+        # Tüm zimmetlerdeki bu ürünün toplam kalan miktarını hesapla
+        toplam_kalan = 0
+        zimmet_detaylar = []
         
-        if not zimmet_detay:
+        for aktif_zimmet in aktif_zimmetler:
+            zimmet_detay = PersonelZimmetDetay.query.filter_by(
+                zimmet_id=aktif_zimmet.id,
+                urun_id=urun_id
+            ).first()
+            
+            if zimmet_detay:
+                kalan = zimmet_detay.kalan_miktar if zimmet_detay.kalan_miktar is not None else (zimmet_detay.miktar - zimmet_detay.kullanilan_miktar)
+                toplam_kalan += kalan
+                zimmet_detaylar.append((zimmet_detay, kalan))
+        
+        if toplam_kalan < miktar:
             urun = Urun.query.get(urun_id)
             raise ZimmetStokYetersizError(
                 urun.urun_adi if urun else 'Ürün',
-                0,
+                toplam_kalan,
                 miktar
             )
         
-        # Kalan miktarı hesapla
-        kalan_miktar = zimmet_detay.miktar - zimmet_detay.kullanilan_miktar
+        # En fazla stoku olan zimmet detayını döndür
+        if zimmet_detaylar:
+            zimmet_detaylar.sort(key=lambda x: x[1], reverse=True)
+            return True, toplam_kalan, zimmet_detaylar[0][0]
         
-        if kalan_miktar < miktar:
-            urun = Urun.query.get(urun_id)
-            raise ZimmetStokYetersizError(
-                urun.urun_adi if urun else 'Ürün',
-                kalan_miktar,
-                miktar
-            )
-        
-        return True, kalan_miktar, zimmet_detay
+        # Hiç zimmet detayı yoksa hata
+        urun = Urun.query.get(urun_id)
+        raise ZimmetStokYetersizError(
+            urun.urun_adi if urun else 'Ürün',
+            0,
+            miktar
+        )
         
     except ZimmetStokYetersizError:
         raise

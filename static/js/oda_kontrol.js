@@ -10,6 +10,7 @@ let mevcutOdaId = null;
 let mevcutSetuplar = [];
 let zimmetStoklar = {};
 let modalData = {};
+let acikAkordiyonlar = new Set(); // Açık akordiyonları takip et
 
 // Sayfa yüklendiğinde
 document.addEventListener("DOMContentLoaded", function () {
@@ -128,6 +129,18 @@ function renderSetupListesi(setuplar) {
   setuplar.forEach((setup, index) => {
     const accordionItem = createAccordionItem(setup, index);
     container.appendChild(accordionItem);
+
+    // Eğer bu akordion daha önce açıktıysa, tekrar aç
+    if (acikAkordiyonlar.has(index)) {
+      setTimeout(() => {
+        const content = document.getElementById(`content-${index}`);
+        const icon = document.getElementById(`icon-${index}`);
+        if (content && icon) {
+          content.classList.remove("hidden");
+          icon.classList.add("rotate-180");
+        }
+      }, 100);
+    }
   });
 }
 
@@ -141,17 +154,21 @@ function createAccordionItem(setup, index) {
     ? "bg-gradient-to-r from-indigo-500 to-purple-600"
     : "bg-gradient-to-r from-pink-500 to-rose-600";
 
+  // Dolap bilgisi
+  let dolapBilgisi = "";
+  if (setup.dolap_ici) {
+    dolapBilgisi = `Dolap İçi - Dolap ${setup.dolap_no}`;
+  } else {
+    dolapBilgisi = "Dolap Dışı";
+  }
+
   item.innerHTML = `
     <div class="${headerClass} text-white p-4 cursor-pointer hover:opacity-90 transition-opacity" onclick="accordionToggle(${index})">
       <div class="flex items-center justify-between">
         <div>
           <h3 class="text-lg font-semibold">${setup.setup_adi}</h3>
           <p class="text-sm opacity-90 mt-1">
-            ${
-              setup.dolap_ici
-                ? `Dolap İçi (${setup.dolap_sayisi} dolap)`
-                : "Dolap Dışı"
-            } • ${setup.urunler.length} ürün
+            ${dolapBilgisi} • ${setup.urunler.length} ürün
           </p>
         </div>
         <svg id="icon-${index}" class="w-6 h-6 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,9 +238,10 @@ function getIslemButonlari(urun, setup) {
 
   // HER ZAMAN "Ekle" butonu göster (tüketim ikamesi için)
   butonlar += `
-    <button onclick='urunEkleModalAc(${JSON.stringify(urun)}, ${
-    setup.setup_id
-  })' 
+    <button onclick="urunEkleModalAc(${urun.urun_id}, '${urun.urun_adi.replace(
+    /'/g,
+    "\\'"
+  )}', ${urun.setup_miktari}, ${urun.ekstra_miktar || 0}, ${setup.setup_id})" 
             class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors">
       Ekle
     </button>
@@ -231,9 +249,11 @@ function getIslemButonlari(urun, setup) {
 
   // HER ZAMAN "Ekstra" butonu göster (setup üstü ekleme için)
   butonlar += `
-    <button onclick='ekstraEkleModalAc(${JSON.stringify(urun)}, ${
-    setup.setup_id
-  })' 
+    <button onclick="ekstraEkleModalAc(${
+      urun.urun_id
+    }, '${urun.urun_adi.replace(/'/g, "\\'")}', ${urun.setup_miktari}, ${
+    urun.ekstra_miktar || 0
+  }, ${setup.setup_id})" 
             class="inline-flex items-center px-3 py-1.5 bg-orange-500 text-white text-xs font-medium rounded-lg hover:bg-orange-600 transition-colors ml-2">
       Ekstra
     </button>
@@ -242,9 +262,11 @@ function getIslemButonlari(urun, setup) {
   // Eğer ekstra varsa "Sıfırla" butonu göster
   if (urun.ekstra_miktar > 0) {
     butonlar += `
-      <button onclick='ekstraSifirlaModalAc(${JSON.stringify(urun)}, ${
+      <button onclick="ekstraSifirlaModalAc(${
+        urun.urun_id
+      }, '${urun.urun_adi.replace(/'/g, "\\'")}', ${urun.ekstra_miktar}, ${
       setup.setup_id
-    })' 
+    })" 
               class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition-colors ml-2">
         Sıfırla
       </button>
@@ -259,8 +281,17 @@ function accordionToggle(index) {
   const content = document.getElementById(`content-${index}`);
   const icon = document.getElementById(`icon-${index}`);
 
+  const isOpen = !content.classList.contains("hidden");
+
   content.classList.toggle("hidden");
   icon.classList.toggle("rotate-180");
+
+  // Açık/kapalı durumu kaydet
+  if (isOpen) {
+    acikAkordiyonlar.delete(index);
+  } else {
+    acikAkordiyonlar.add(index);
+  }
 }
 
 // Setup listesini temizle
@@ -271,34 +302,43 @@ function setupListesiniTemizle() {
   mevcutOdaId = null;
   mevcutSetuplar = [];
   zimmetStoklar = {};
+  acikAkordiyonlar.clear(); // Açık akordiyonları temizle
 }
 
 // Modal fonksiyonları
-function urunEkleModalAc(urun, setupId) {
+function urunEkleModalAc(urunId, urunAdi, setupMiktari, ekstraMiktar, setupId) {
   modalData = {
     oda_id: mevcutOdaId,
-    urun_id: urun.urun_id,
+    urun_id: urunId,
     setup_id: setupId,
-    urun_adi: urun.urun_adi,
-    setup_miktari: urun.setup_miktari,
+    urun_adi: urunAdi,
+    setup_miktari: setupMiktari,
   };
 
-  document.getElementById("modal_urun_adi").textContent = urun.urun_adi;
-  document.getElementById("modal_setup_miktari").textContent =
-    urun.setup_miktari;
-  document.getElementById("modal_max_miktar").textContent = urun.setup_miktari;
+  // Güvenli element güncellemesi
+  const setTextIfExists = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
+
+  setTextIfExists("modal_urun_adi", urunAdi);
+  setTextIfExists("modal_setup_miktari", setupMiktari);
+  setTextIfExists("modal_mevcut_miktar", setupMiktari + (ekstraMiktar || 0));
+  setTextIfExists("modal_eksik_miktar", "0");
+  setTextIfExists("modal_max_miktar", setupMiktari);
 
   const inputEklenen = document.getElementById("modal_eklenen_miktar");
-  inputEklenen.value = 1; // Varsayılan 1
-  inputEklenen.max = urun.setup_miktari; // Maksimum setup miktarı
+  if (inputEklenen) {
+    inputEklenen.value = 1;
+    inputEklenen.max = setupMiktari;
+  }
 
-  const zimmetStok = zimmetStoklar[urun.urun_id];
+  const zimmetStok = zimmetStoklar[urunId];
   if (zimmetStok) {
-    document.getElementById("modal_zimmet_stok").textContent =
-      zimmetStok.miktar;
+    setTextIfExists("modal_zimmet_stok", zimmetStok.miktar);
     modalData.zimmet_detay_id = zimmetStok.zimmet_detay_id;
   } else {
-    document.getElementById("modal_zimmet_stok").textContent = "0 (Yetersiz!)";
+    setTextIfExists("modal_zimmet_stok", "0");
   }
 
   document.getElementById("urunEkleModal").classList.remove("hidden");
@@ -309,28 +349,43 @@ function urunEkleModalKapat() {
   modalData = {};
 }
 
-function ekstraEkleModalAc(urun, setupId) {
+function ekstraEkleModalAc(
+  urunId,
+  urunAdi,
+  setupMiktari,
+  ekstraMiktar,
+  setupId
+) {
   modalData = {
     oda_id: mevcutOdaId,
-    urun_id: urun.urun_id,
+    urun_id: urunId,
     setup_id: setupId,
-    urun_adi: urun.urun_adi,
-    setup_miktari: urun.setup_miktari,
+    urun_adi: urunAdi,
+    setup_miktari: setupMiktari,
   };
 
-  document.getElementById("ekstra_modal_urun_adi").textContent = urun.urun_adi;
-  document.getElementById("ekstra_modal_setup_miktari").textContent =
-    urun.setup_miktari;
-  document.getElementById("ekstra_modal_miktar").value = 1;
+  // Güvenli element güncellemesi
+  const setTextIfExists = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
 
-  const zimmetStok = zimmetStoklar[urun.urun_id];
+  setTextIfExists("ekstra_modal_urun_adi", urunAdi);
+  setTextIfExists("ekstra_modal_setup_miktari", setupMiktari);
+  setTextIfExists(
+    "ekstra_modal_mevcut_miktar",
+    setupMiktari + (ekstraMiktar || 0)
+  );
+
+  const inputMiktar = document.getElementById("ekstra_modal_miktar");
+  if (inputMiktar) inputMiktar.value = 1;
+
+  const zimmetStok = zimmetStoklar[urunId];
   if (zimmetStok) {
-    document.getElementById("ekstra_modal_zimmet_stok").textContent =
-      zimmetStok.miktar;
+    setTextIfExists("ekstra_modal_zimmet_stok", zimmetStok.miktar);
     modalData.zimmet_detay_id = zimmetStok.zimmet_detay_id;
   } else {
-    document.getElementById("ekstra_modal_zimmet_stok").textContent =
-      "0 (Yetersiz!)";
+    setTextIfExists("ekstra_modal_zimmet_stok", "0");
   }
 
   document.getElementById("ekstraEkleModal").classList.remove("hidden");
@@ -341,18 +396,18 @@ function ekstraEkleModalKapat() {
   modalData = {};
 }
 
-function ekstraSifirlaModalAc(urun, setupId) {
+function ekstraSifirlaModalAc(urunId, urunAdi, ekstraMiktar, setupId) {
   modalData = {
     oda_id: mevcutOdaId,
-    urun_id: urun.urun_id,
+    urun_id: urunId,
     setup_id: setupId,
-    urun_adi: urun.urun_adi,
-    ekstra_miktar: urun.ekstra_miktar,
+    urun_adi: urunAdi,
+    ekstra_miktar: ekstraMiktar,
   };
 
-  document.getElementById("sifirla_modal_urun_adi").textContent = urun.urun_adi;
+  document.getElementById("sifirla_modal_urun_adi").textContent = urunAdi;
   document.getElementById("sifirla_modal_ekstra_miktar").textContent =
-    urun.ekstra_miktar;
+    ekstraMiktar;
 
   document.getElementById("ekstraSifirlaModal").classList.remove("hidden");
 }
@@ -483,8 +538,7 @@ async function ekstraSifirla() {
 
 // QR ile başlat
 function qrIleBaslat() {
-  toastGoster("QR okuyucu özelliği yakında eklenecek", "info");
-  // window.location.href = "/qr-okuyucu?redirect=oda-kontrol";
+  window.location.href = "/kat-sorumlusu/qr-okuyucu?redirect=oda-kontrol";
 }
 
 // Toast mesajı göster
