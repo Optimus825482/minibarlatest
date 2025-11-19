@@ -2012,8 +2012,8 @@ def register_sistem_yoneticisi_routes(app):
         try:
             from models import Setup, SetupIcerik
             
-            # Tüm setup'ları getir (aktif/pasif fark etmez)
-            setuplar = Setup.query.all()
+            # Sadece aktif setup'ları getir
+            setuplar = Setup.query.filter_by(aktif=True).all()
             
             sonuc = []
             for setup in setuplar:

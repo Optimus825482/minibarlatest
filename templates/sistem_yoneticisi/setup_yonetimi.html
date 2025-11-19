@@ -909,7 +909,7 @@ page_title %}Setup Yönetimi{% endblock %} {% block content %}
 
               setupCheckboxes += `
               <label class="flex items-center p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded cursor-pointer">
-                <input type="checkbox" 
+                <input type="checkbox"
                        class="h-4 w-4 text-indigo-600 border-slate-300 rounded"
                        data-oda-tipi="${odaTipi.id}"
                        data-setup="${setup.id}"
@@ -1090,16 +1090,26 @@ page_title %}Setup Yönetimi{% endblock %} {% block content %}
       method: "DELETE",
       headers: {
         "X-CSRFToken": csrfToken,
+        "Content-Type": "application/json",
       },
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then((data) => {
         if (data.success) {
           setupListesiYukle();
           alert("Setup başarıyla silindi");
         } else {
-          alert("Hata: " + data.error);
+          alert("Hata: " + (data.error || "Bilinmeyen hata"));
         }
+      })
+      .catch((error) => {
+        console.error("Silme hatası:", error);
+        alert("Setup silinirken bir hata oluştu: " + error.message);
       });
   }
 </script>
