@@ -26,6 +26,16 @@ document.addEventListener("DOMContentLoaded", function () {
   if (odaSelect) {
     odaSelect.addEventListener("change", odaSecildi);
   }
+
+  // URL parametrelerinden QR kod ile gelen kat ve oda bilgilerini al
+  const urlParams = new URLSearchParams(window.location.search);
+  const qrKatId = urlParams.get("kat_id");
+  const qrOdaId = urlParams.get("oda_id");
+
+  if (qrKatId && qrOdaId) {
+    console.log(`🔍 QR parametreleri bulundu: Kat=${qrKatId}, Oda=${qrOdaId}`);
+    qrParametreleriIsle(qrKatId, qrOdaId);
+  }
 });
 
 // Kat seçildiğinde
@@ -539,6 +549,50 @@ async function ekstraSifirla() {
 // QR ile başlat
 function qrIleBaslat() {
   window.location.href = "/kat-sorumlusu/qr-okuyucu?redirect=oda-kontrol";
+}
+
+// QR parametrelerini işle ve oda seçimini otomatik yap
+async function qrParametreleriIsle(katId, odaId) {
+  try {
+    const katSelect = document.getElementById("kat_id");
+    const odaSelect = document.getElementById("oda_id");
+
+    // Kat seçimini yap
+    if (katSelect) {
+      katSelect.value = katId;
+      console.log(`✅ Kat seçildi: ${katId}`);
+
+      // Odaları yükle
+      await katSecildi();
+
+      // Oda seçimini yap
+      if (odaSelect) {
+        // Odalar yüklenene kadar bekle
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        odaSelect.value = odaId;
+        console.log(`✅ Oda seçildi: ${odaId}`);
+
+        // Setup listesini yükle
+        await odaSetupDurumuYukle(odaId);
+
+        toastGoster("✅ QR kod başarıyla okundu!", "success");
+
+        // URL'den parametreleri temizle (temiz görünüm için)
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    }
+  } catch (error) {
+    console.error("❌ QR parametreleri işlenirken hata:", error);
+    toastGoster("QR kod işlenirken hata: " + error.message, "error");
+  }
+}
+
+// Oda setup durumunu yükle (QR için özel fonksiyon)
+async function odaSetupDurumuYukle(odaId) {
+  mevcutOdaId = odaId;
+  await setupListesiYukle(odaId);
 }
 
 // Toast mesajı göster
