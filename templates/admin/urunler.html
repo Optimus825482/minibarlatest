@@ -1,375 +1,647 @@
-{% extends "base.html" %}
-
-{% block title %}Ürünler - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Ürünler{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Ürünler - Minibar Takip Sistemi{%
+endblock %} {% block page_title %}Ürünler{% endblock %} {% block content %}
 <div class="space-y-6">
-    <!-- Yeni Ürün Ekle Butonu -->
-    <div class="bg-white shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg leading-6 font-medium text-slate-900">Ürün Yönetimi</h3>
-                <button onclick="yeniUrunModal()" 
-                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+  <!-- Yeni Ürün Ekle Butonu -->
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg leading-6 font-medium text-slate-900">
+          Ürün Yönetimi
+        </h3>
+        <button
+          onclick="yeniUrunModal()"
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          <svg
+            class="h-5 w-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            ></path>
+          </svg>
+          Yeni Ürün Ekle
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mevcut Ürünler Listesi -->
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg leading-6 font-medium text-slate-900">
+          Mevcut Ürünler
+        </h3>
+        <div class="flex items-center gap-2 text-sm text-slate-600">
+          <span
+            class="font-medium"
+            data-stats-for="urunler-table"
+            data-stat="total"
+            >{{ urunler|length }}</span
+          >
+          <span>Toplam Ürün</span>
+        </div>
+      </div>
+
+      {% if urunler %}
+      <div class="table-wrapper">
+        <table id="urunler-table" class="min-w-full divide-y divide-slate-200">
+          <thead class="bg-slate-50">
+            <tr>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
+                Ürün Adı
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
+                Grup
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell"
+              >
+                Birim
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell"
+              >
+                Kritik Seviye
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
+                Durum
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider no-sort"
+              >
+                İşlemler
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-slate-200">
+            {% for urun in urunler %}
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium text-slate-900"
+              >
+                {{ urun.urun_adi }}
+              </td>
+              <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm text-slate-500">
+                {{ urun.grup.grup_adi }}
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 text-sm text-slate-500 hidden md:table-cell"
+              >
+                {{ urun.birim }}
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 text-sm text-slate-500 hidden lg:table-cell"
+              >
+                {{ urun.kritik_stok_seviyesi }}
+              </td>
+              <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                <span
+                  class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {% if urun.aktif %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}"
+                >
+                  {% if urun.aktif %}Aktif{% else %}Pasif{% endif %}
+                </span>
+              </td>
+              <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium">
+                <div class="flex flex-wrap gap-2">
+                  <!-- Düzenle Butonu -->
+                  <button
+                    onclick="urunDuzenleModal({{ urun.id }}, {{ urun.grup_id }}, '{{ urun.urun_adi }}', '{{ urun.barkod if urun.barkod else '' }}', '{{ urun.birim }}', {{ urun.kritik_stok_seviyesi if urun.kritik_stok_seviyesi is not none else 0 }})"
+                    class="inline-flex items-center px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                  >
+                    <svg
+                      class="h-3.5 w-3.5 mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      ></path>
                     </svg>
-                    Yeni Ürün Ekle
-                </button>
-            </div>
-        </div>
-    </div>
+                    Düzenle
+                  </button>
 
-    <!-- Mevcut Ürünler Listesi -->
-    <div class="bg-white shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg leading-6 font-medium text-slate-900">Mevcut Ürünler</h3>
-                <div class="flex items-center gap-2 text-sm text-slate-600">
-                    <span class="font-medium" data-stats-for="urunler-table" data-stat="total">{{ urunler|length
-                        }}</span>
-                    <span>Toplam Ürün</span>
+                  <!-- Aktif/Pasif Butonu -->
+                  {% if urun.aktif %}
+                  <form
+                    method="POST"
+                    action="{{ url_for('urun_pasif_yap', urun_id=urun.id) }}"
+                    class="inline"
+                  >
+                    <input
+                      type="hidden"
+                      name="csrf_token"
+                      value="{{ csrf_token() }}"
+                    />
+                    <button
+                      type="submit"
+                      class="inline-flex items-center px-3 py-1.5 border border-red-300 dark:border-red-600 rounded-md text-xs font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                      onclick="return confirm('Bu ürünü pasif yapmak istediğinizden emin misiniz?')"
+                    >
+                      <svg
+                        class="h-3.5 w-3.5 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                        ></path>
+                      </svg>
+                      Pasif Yap
+                    </button>
+                  </form>
+                  {% else %}
+                  <form
+                    method="POST"
+                    action="{{ url_for('urun_aktif_yap', urun_id=urun.id) }}"
+                    class="inline"
+                  >
+                    <input
+                      type="hidden"
+                      name="csrf_token"
+                      value="{{ csrf_token() }}"
+                    />
+                    <button
+                      type="submit"
+                      class="inline-flex items-center px-3 py-1.5 border border-green-300 dark:border-green-600 rounded-md text-xs font-medium text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                    >
+                      <svg
+                        class="h-3.5 w-3.5 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        ></path>
+                      </svg>
+                      Aktif Yap
+                    </button>
+                  </form>
+                  {% endif %}
                 </div>
-            </div>
-
-            {% if urunler %}
-            <div class="table-wrapper">
-                <table id="urunler-table" class="min-w-full divide-y divide-slate-200">
-                    <thead class="bg-slate-50">
-                        <tr>
-                            <th
-                                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                Ürün Adı</th>
-                            <th
-                                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                Grup</th>
-                            <th
-                                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden sm:table-cell">
-                                Barkod</th>
-                            <th
-                                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">
-                                Birim</th>
-                            <th
-                                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell">
-                                Kritik Seviye</th>
-                            <th
-                                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                Durum</th>
-                            <th
-                                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider no-sort">
-                                İşlemler</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-slate-200">
-                        {% for urun in urunler %}
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium text-slate-900">
-                                {{ urun.urun_adi }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm text-slate-500">
-                                {{ urun.grup.grup_adi }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm text-slate-500 hidden sm:table-cell">
-                                {{ urun.barkod or '-' }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm text-slate-500 hidden md:table-cell">
-                                {{ urun.birim }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm text-slate-500 hidden lg:table-cell">
-                                {{ urun.kritik_stok_seviyesi }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                                <span
-                                    class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                        {% if urun.aktif %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
-                                    {% if urun.aktif %}Aktif{% else %}Pasif{% endif %}
-                                </span>
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium">
-                                <div class="flex flex-wrap gap-2">
-                                    <!-- Düzenle Butonu -->
-                                    <button onclick="urunDuzenleModal({{ urun.id }}, {{ urun.grup_id }}, '{{ urun.urun_adi }}', '{{ urun.barkod or '' }}', '{{ urun.birim }}', {{ urun.kritik_stok_seviyesi }})"
-                                        class="inline-flex items-center px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                                        <svg class="h-3.5 w-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                        </svg>
-                                        Düzenle
-                                    </button>
-                                    
-                                    <!-- Aktif/Pasif Butonu -->
-                                    {% if urun.aktif %}
-                                    <form method="POST" action="{{ url_for('urun_pasif_yap', urun_id=urun.id) }}"
-                                        class="inline">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                                        <button type="submit"
-                                            class="inline-flex items-center px-3 py-1.5 border border-red-300 dark:border-red-600 rounded-md text-xs font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-                                            onclick="return confirm('Bu ürünü pasif yapmak istediğinizden emin misiniz?')">
-                                            <svg class="h-3.5 w-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
-                                            </svg>
-                                            Pasif Yap
-                                        </button>
-                                    </form>
-                                    {% else %}
-                                    <form method="POST" action="{{ url_for('urun_aktif_yap', urun_id=urun.id) }}"
-                                        class="inline">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                                        <button type="submit"
-                                            class="inline-flex items-center px-3 py-1.5 border border-green-300 dark:border-green-600 rounded-md text-xs font-medium text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
-                                            <svg class="h-3.5 w-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                            Aktif Yap
-                                        </button>
-                                    </form>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="text-center py-8">
-                <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-slate-900">Henüz ürün eklenmemiş</h3>
-                <p class="mt-1 text-sm text-slate-500">Yukarıdaki formu kullanarak ilk ürününüzü ekleyin.</p>
-            </div>
-            {% endif %}
-        </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-8">
+        <svg
+          class="mx-auto h-12 w-12 text-slate-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+          ></path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-slate-900">
+          Henüz ürün eklenmemiş
+        </h3>
+        <p class="mt-1 text-sm text-slate-500">
+          Yukarıdaki formu kullanarak ilk ürününüzü ekleyin.
+        </p>
+      </div>
+      {% endif %}
     </div>
+  </div>
 </div>
 
 <!-- Yeni Ürün Ekle Modal -->
-<div class="modal fade" id="yeniUrunModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-            <div class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
-                <h5 class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    <svg class="inline-block h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    Yeni Ürün Ekle
-                </h5>
-                <button type="button" class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" data-dismiss="modal">
-                    <span class="text-2xl">&times;</span>
-                </button>
-            </div>
-            <form method="POST" action="{{ url_for('urunler') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <div class="modal-body p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Ürün Grubu <span class="text-red-500">*</span>
-                            </label>
-                            <select name="grup_id" class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100" required>
-                                <option value="">Grup seçiniz...</option>
-                                {% for grup in gruplar %}
-                                <option value="{{ grup.id }}">{{ grup.grup_adi }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Ürün Adı <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" name="urun_adi" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100" required placeholder="Ürün adı">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Barkod
-                            </label>
-                            <input type="text" name="barkod" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100" placeholder="Barkod numarası">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Birim
-                            </label>
-                            <select name="birim" class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
-                                <option value="Adet">Adet</option>
-                                <option value="Kutu">Kutu</option>
-                                <option value="Şişe">Şişe</option>
-                                <option value="Gram">Gram</option>
-                                <option value="Kilogram">Kilogram</option>
-                                <option value="Litre">Litre</option>
-                                <option value="Mililitre">Mililitre</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Kritik Stok Seviyesi
-                            </label>
-                            <input type="number" name="kritik_stok_seviyesi" value="10" min="0" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100">
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4">
-                    <button type="button" class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700" data-dismiss="modal">
-                        İptal
-                    </button>
-                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                        Ürün Ekle
-                    </button>
-                </div>
-            </form>
-        </div>
+<div id="yeniUrunModal" class="modal p-4 sm:p-6 md:p-8">
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full mx-auto max-h-[90vh] overflow-y-auto"
+  >
+    <div
+      class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between sticky top-0"
+    >
+      <h5
+        class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
+      >
+        <svg
+          class="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v16m8-8H4"
+          ></path>
+        </svg>
+        Yeni Ürün Ekle
+      </h5>
+      <a
+        href="#"
+        rel="modal:close"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </a>
     </div>
+    <form method="POST" action="{{ url_for('urunler') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Ürün Grubu <span class="text-red-500">*</span>
+            </label>
+            <select
+              name="grup_id"
+              class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+              required
+            >
+              <option value="">Grup seçiniz...</option>
+              {% for grup in gruplar %}
+              <option value="{{ grup.id }}">{{ grup.grup_adi }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Ürün Adı <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="urun_adi"
+              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+              required
+              placeholder="Ürün adı"
+            />
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Barkod
+            </label>
+            <input
+              type="text"
+              name="barkod"
+              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+              placeholder="Barkod numarası"
+            />
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Birim
+            </label>
+            <select
+              name="birim"
+              class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+            >
+              <option value="Adet">Adet</option>
+              <option value="Kutu">Kutu</option>
+              <option value="Şişe">Şişe</option>
+              <option value="Gram">Gram</option>
+              <option value="Kilogram">Kilogram</option>
+              <option value="Litre">Litre</option>
+              <option value="Mililitre">Mililitre</option>
+            </select>
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Kritik Stok Seviyesi
+            </label>
+            <input
+              type="number"
+              name="kritik_stok_seviyesi"
+              value="10"
+              min="0"
+              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3 sticky bottom-0"
+      >
+        <a
+          href="#"
+          rel="modal:close"
+          class="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-600"
+        >
+          İptal
+        </a>
+        <button
+          type="submit"
+          class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+        >
+          Ürün Ekle
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- Ürün Düzenle Modal -->
-<div class="modal fade" id="urunDuzenleModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-            <div class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
-                <h5 class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    <svg class="inline-block h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                    </svg>
-                    Ürün Düzenle
-                </h5>
-                <button type="button" class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" data-dismiss="modal">
-                    <span class="text-2xl">&times;</span>
-                </button>
-            </div>
-            <form id="urunDuzenleForm" method="POST">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <div class="modal-body p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Ürün Grubu <span class="text-red-500">*</span>
-                            </label>
-                            <select id="duzenle_grup_id" name="grup_id" class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100" required>
-                                <option value="">Grup seçiniz...</option>
-                                {% for grup in gruplar %}
-                                <option value="{{ grup.id }}">{{ grup.grup_adi }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Ürün Adı <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" id="duzenle_urun_adi" name="urun_adi" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100" required>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Barkod
-                            </label>
-                            <input type="text" id="duzenle_barkod" name="barkod" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Birim
-                            </label>
-                            <select id="duzenle_birim" name="birim" class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
-                                <option value="Adet">Adet</option>
-                                <option value="Kutu">Kutu</option>
-                                <option value="Şişe">Şişe</option>
-                                <option value="Gram">Gram</option>
-                                <option value="Kilogram">Kilogram</option>
-                                <option value="Litre">Litre</option>
-                                <option value="Mililitre">Mililitre</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Kritik Stok Seviyesi
-                            </label>
-                            <input type="number" id="duzenle_kritik_stok" name="kritik_stok_seviyesi" min="0" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100">
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4">
-                    <button type="button" class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700" data-dismiss="modal">
-                        İptal
-                    </button>
-                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                        Güncelle
-                    </button>
-                </div>
-            </form>
-        </div>
+<div id="urunDuzenleModal" class="modal p-4 sm:p-6 md:p-8">
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full mx-auto max-h-[90vh] overflow-y-auto"
+  >
+    <div
+      class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between sticky top-0"
+    >
+      <h5
+        class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
+      >
+        <svg
+          class="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+          ></path>
+        </svg>
+        Ürün Düzenle
+      </h5>
+      <a
+        href="#"
+        rel="modal:close"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </a>
     </div>
+    <form id="urunDuzenleForm" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2">
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Ürün Grubu <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="duzenle_grup_id"
+              name="grup_id"
+              class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+              required
+            >
+              <option value="">Grup seçiniz...</option>
+              {% for grup in gruplar %}
+              <option value="{{ grup.id }}">{{ grup.grup_adi }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Ürün Adı <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="duzenle_urun_adi"
+              name="urun_adi"
+              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+              required
+            />
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Barkod
+            </label>
+            <input
+              type="text"
+              id="duzenle_barkod"
+              name="barkod"
+              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+            />
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Birim
+            </label>
+            <select
+              id="duzenle_birim"
+              name="birim"
+              class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+            >
+              <option value="Adet">Adet</option>
+              <option value="Kutu">Kutu</option>
+              <option value="Şişe">Şişe</option>
+              <option value="Gram">Gram</option>
+              <option value="Kilogram">Kilogram</option>
+              <option value="Litre">Litre</option>
+              <option value="Mililitre">Mililitre</option>
+            </select>
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Kritik Stok Seviyesi
+            </label>
+            <input
+              type="number"
+              id="duzenle_kritik_stok"
+              name="kritik_stok_seviyesi"
+              min="0"
+              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3 sticky bottom-0"
+      >
+        <a
+          href="#"
+          rel="modal:close"
+          class="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-600"
+        >
+          İptal
+        </a>
+        <button
+          type="submit"
+          class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+        >
+          Güncelle
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
-{% endblock %}
-
-{% block extra_scripts %}
+{% endblock %} {% block extra_scripts %}
 <script>
-    // Modal açma fonksiyonları
-    function yeniUrunModal() {
-        $('#yeniUrunModal').modal('show');
-    }
-    
-    function urunDuzenleModal(urunId, grupId, urunAdi, barkod, birim, kritikStok) {
-        document.getElementById('duzenle_grup_id').value = grupId;
-        document.getElementById('duzenle_urun_adi').value = urunAdi;
-        document.getElementById('duzenle_barkod').value = barkod || '';
-        document.getElementById('duzenle_birim').value = birim;
-        document.getElementById('duzenle_kritik_stok').value = kritikStok;
-        
-        // Form action'ı güncelle
-        document.getElementById('urunDuzenleForm').action = `/urun-duzenle/${urunId}`;
-        
-        $('#urunDuzenleModal').modal('show');
-    }
+  // Modal açma fonksiyonları
+  function yeniUrunModal() {
+    $("#yeniUrunModal").modal({
+      fadeDuration: 200,
+      fadeDelay: 0.1,
+    });
+  }
+
+  function urunDuzenleModal(
+    urunId,
+    grupId,
+    urunAdi,
+    barkod,
+    birim,
+    kritikStok
+  ) {
+    document.getElementById("duzenle_grup_id").value = grupId;
+    document.getElementById("duzenle_urun_adi").value = urunAdi;
+    document.getElementById("duzenle_barkod").value = barkod || "";
+    document.getElementById("duzenle_birim").value = birim;
+    document.getElementById("duzenle_kritik_stok").value = kritikStok;
+
+    // Form action'ı güncelle
+    const form = document.getElementById("urunDuzenleForm");
+    form.action = `/urun-duzenle/${urunId}`;
+
+    // Form submit event'ini override et
+    form.onsubmit = function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+
+      fetch(form.action, {
+        method: "POST",
+        body: formData,
+        redirect: "follow",
+      })
+        .then((response) => {
+          console.log("Response status:", response.status);
+          if (response.ok || response.redirected) {
+            $.modal.close();
+            location.reload();
+          } else {
+            return response.text().then((text) => {
+              console.error("Server response:", text);
+              alert("Güncelleme başarısız oldu");
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Hata:", error);
+          alert("Güncelleme sırasında bir hata oluştu");
+        });
+    };
+
+    $("#urunDuzenleModal").modal({
+      fadeDuration: 200,
+      fadeDelay: 0.1,
+    });
+  }
 </script>
 <script id="gruplar-data" type="application/json">
-{{ gruplar|map(attribute='grup_adi')|list|tojson|safe }}
+  {{ gruplar|map(attribute='grup_adi')|list|tojson|safe }}
 </script>
 <script>
-    // Ürünler tablosu için gelişmiş arama ve filtreleme
-    document.addEventListener('DOMContentLoaded', function() {
-        const urunlerTable = document.getElementById('urunler-table');
-        if (urunlerTable) {
-            // Grup seçeneklerini dinamik olarak oluştur
-            const gruplarData = JSON.parse(document.getElementById('gruplar-data').textContent);
-            const grupOptions = gruplarData.map(function(grup) {
-                return { value: grup, label: grup };
-            });
+  // Ürünler tablosu için gelişmiş arama ve filtreleme
+  document.addEventListener("DOMContentLoaded", function () {
+    const urunlerTable = document.getElementById("urunler-table");
+    if (urunlerTable) {
+      // Grup seçeneklerini dinamik olarak oluştur
+      const gruplarData = JSON.parse(
+        document.getElementById("gruplar-data").textContent
+      );
+      const grupOptions = gruplarData.map(function (grup) {
+        return { value: grup, label: grup };
+      });
 
-            // Birim seçenekleri
-            const birimOptions = [
-                { value: 'Adet', label: 'Adet' },
-                { value: 'Kutu', label: 'Kutu' },
-                { value: 'Şişe', label: 'Şişe' },
-                { value: 'Gram', label: 'Gram' },
-                { value: 'Kilogram', label: 'Kilogram' },
-                { value: 'Litre', label: 'Litre' },
-                { value: 'Mililitre', label: 'Mililitre' }
-            ];
+      // Birim seçenekleri
+      const birimOptions = [
+        { value: "Adet", label: "Adet" },
+        { value: "Kutu", label: "Kutu" },
+        { value: "Şişe", label: "Şişe" },
+        { value: "Gram", label: "Gram" },
+        { value: "Kilogram", label: "Kilogram" },
+        { value: "Litre", label: "Litre" },
+        { value: "Mililitre", label: "Mililitre" },
+      ];
 
-            window.tableSearchFilter_urunler = new TableSearchFilter('urunler-table', {
-                searchPlaceholder: 'Ürün adı, barkod veya grup ara...',
-                filters: [
-                    {
-                        columnIndex: 1,
-                        label: 'Grup',
-                        options: grupOptions
-                    },
-                    {
-                        columnIndex: 3,
-                        label: 'Birim',
-                        options: birimOptions
-                    },
-                    {
-                        columnIndex: 5,
-                        label: 'Durum',
-                        options: [
-                            { value: 'Aktif', label: 'Aktif' },
-                            { value: 'Pasif', label: 'Pasif' }
-                        ]
-                    }
-                ]
-            });
+      window.tableSearchFilter_urunler = new TableSearchFilter(
+        "urunler-table",
+        {
+          searchPlaceholder: "Ürün adı veya grup ara...",
+          filters: [
+            {
+              columnIndex: 1,
+              label: "Grup",
+              options: grupOptions,
+            },
+          ],
         }
-    });
+      );
+    }
+  });
 </script>
 {% endblock %}

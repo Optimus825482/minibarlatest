@@ -75,7 +75,7 @@ def register_kat_sorumlusu_routes(app):
             ).order_by(Kat.kat_no).all()
             
             return render_template(
-                'kat_sorumlusu/minibar_kontrol.html',
+                'kat_sorumlusu/oda_kontrol.html',
                 katlar=katlar
             )
             
@@ -450,6 +450,37 @@ def register_kat_sorumlusu_routes(app):
                              rapor_verisi=rapor_verisi, 
                              rapor_baslik=rapor_baslik,
                              rapor_tipi=rapor_tipi)
+    
+    @app.route('/kat-sorumlusu/siparis-listesi')
+    @login_required
+    @role_required('kat_sorumlusu')
+    def kat_sorumlusu_siparis_listesi():
+        """Kat sorumlusu sipariş talepleri listesi"""
+        try:
+            from models import KatSorumlusuSiparisTalebi, KatSorumlusuSiparisTalepDetay
+            
+            kullanici_id = session['kullanici_id']
+            
+            # Kat sorumlusunun tüm sipariş taleplerini getir
+            siparisler = KatSorumlusuSiparisTalebi.query.filter_by(
+                kat_sorumlusu_id=kullanici_id
+            ).order_by(
+                KatSorumlusuSiparisTalebi.talep_tarihi.desc()
+            ).all()
+            
+            # Her sipariş için detayları yükle
+            for siparis in siparisler:
+                siparis.detaylar_list = KatSorumlusuSiparisTalepDetay.query.filter_by(
+                    talep_id=siparis.id
+                ).all()
+            
+            return render_template('kat_sorumlusu/siparis_listesi.html', 
+                                 siparisler=siparisler)
+                                 
+        except Exception as e:
+            log_hata(e, modul='kat_sorumlusu_siparis_listesi')
+            flash(f'Sipariş listesi yüklenirken hata oluştu: {str(e)}', 'danger')
+            return redirect(url_for('dashboard'))
 
 
     # ============================================================================
@@ -482,24 +513,30 @@ def register_kat_sorumlusu_routes(app):
             # Kat sorumlusunun zimmet stoklarını getir
             kullanici_id = session.get('kullanici_id')
             
-            # Aktif zimmeti bul
-            aktif_zimmet = PersonelZimmet.query.filter_by(
+            # Tüm aktif zimmetleri bul (birden fazla olabilir)
+            aktif_zimmetler = PersonelZimmet.query.filter_by(
                 personel_id=kullanici_id,
                 durum='aktif'
-            ).first()
+            ).all()
             
             zimmet_stoklar = {}
-            if aktif_zimmet:
+            for aktif_zimmet in aktif_zimmetler:
                 zimmet_detaylar = PersonelZimmetDetay.query.filter_by(
                     zimmet_id=aktif_zimmet.id
                 ).all()
                 
                 for detay in zimmet_detaylar:
-                    kalan = detay.miktar - detay.kullanilan_miktar
-                    zimmet_stoklar[str(detay.urun_id)] = {
-                        'miktar': kalan,
-                        'zimmet_detay_id': detay.id
-                    }
+                    kalan = detay.kalan_miktar if detay.kalan_miktar is not None else (detay.miktar - detay.kullanilan_miktar)
+                    urun_key = str(detay.urun_id)
+                    
+                    # Aynı üründen birden fazla zimmet varsa topla
+                    if urun_key in zimmet_stoklar:
+                        zimmet_stoklar[urun_key]['miktar'] += kalan
+                    else:
+                        zimmet_stoklar[urun_key] = {
+                            'miktar': kalan,
+                            'zimmet_detay_id': detay.id
+                        }
             
             sonuc['kat_sorumlusu_stok'] = zimmet_stoklar
             
@@ -776,10 +813,9 @@ def register_kat_sorumlusu_routes(app):
                 
                 # Audit log
                 audit_create(
-                    kullanici_id=kullanici_id,
-                    islem_tipi='create',
                     tablo_adi='minibar_islem',
                     kayit_id=oda_id,
+                    yeni_deger={'oda_id': oda_id, 'urun_id': urun_id, 'ekstra_miktar': ekstra_miktar},
                     aciklama=f"Oda {oda.oda_no} - {urun.urun_adi} ekstra eklendi (Miktar: {ekstra_miktar})"
                 )
                 
@@ -808,11 +844,13 @@ def register_kat_sorumlusu_routes(app):
             
         except Exception as e:
             log_hata(
-                kullanici_id=session.get('kullanici_id'),
-                hata_tipi='EkstraEklemeHatasi',
-                hata_mesaji=str(e),
-                modul='kat_sorumlusu_routes',
-                url=request.url
+                e,
+                modul='api_ekstra_ekle',
+                extra_info={
+                    'oda_id': data.get('oda_id'),
+                    'urun_id': data.get('urun_id'),
+                    'ekstra_miktar': data.get('ekstra_miktar')
+                }
             )
             return jsonify({
                 'success': False,
@@ -900,10 +938,9 @@ def register_kat_sorumlusu_routes(app):
                 
                 # Audit log
                 audit_create(
-                    kullanici_id=kullanici_id,
-                    islem_tipi='update',
                     tablo_adi='minibar_islem',
                     kayit_id=oda_id,
+                    yeni_deger={'oda_id': oda_id, 'urun_id': urun_id, 'ekstra_tuketim': ekstra_miktar},
                     aciklama=f"Oda {oda.oda_no} - {urun.urun_adi} ekstra tüketimi kaydedildi (Miktar: {ekstra_miktar})"
                 )
                 
@@ -923,11 +960,12 @@ def register_kat_sorumlusu_routes(app):
             
         except Exception as e:
             log_hata(
-                kullanici_id=session.get('kullanici_id'),
-                hata_tipi='EkstraSifirlamaHatasi',
-                hata_mesaji=str(e),
-                modul='kat_sorumlusu_routes',
-                url=request.url
+                e,
+                modul='api_ekstra_sifirla',
+                extra_info={
+                    'oda_id': data.get('oda_id'),
+                    'urun_id': data.get('urun_id')
+                }
             )
             return jsonify({
                 'success': False,

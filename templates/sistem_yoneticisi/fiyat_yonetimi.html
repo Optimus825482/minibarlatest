@@ -1,0 +1,520 @@
+{% extends "base.html" %} {% block title %}Fiyat Yönetimi{% endblock %} {% block
+page_title %}Fiyat Yönetimi{% endblock %} {% block content %}
+<div class="space-y-6">
+  <!-- Başlık ve Arama -->
+  <div
+    class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+  >
+    <div>
+      <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
+        <i class="fas fa-tags text-blue-600"></i> Fiyat Yönetimi
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+        Ürün alış ve satış fiyatlarını yönetin
+      </p>
+    </div>
+    <div class="w-full sm:w-80">
+      <input
+        type="text"
+        id="searchInput"
+        class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
+        placeholder="Ürün ara..."
+      />
+    </div>
+  </div>
+
+  <!-- İstatistikler -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div
+      class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-sm p-6 text-white"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm opacity-90">Toplam Ürün</p>
+          <p class="text-3xl font-bold mt-2">{{ urunler|length }}</p>
+        </div>
+        <i class="fas fa-box text-3xl opacity-80"></i>
+      </div>
+    </div>
+
+    <div
+      class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-sm p-6 text-white"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm opacity-90">Fiyatlandırılmış</p>
+          <p class="text-3xl font-bold mt-2">
+            {{ urunler|selectattr('satis_fiyati')|list|length }}
+          </p>
+        </div>
+        <i class="fas fa-check-circle text-3xl opacity-80"></i>
+      </div>
+    </div>
+
+    <div
+      class="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg shadow-sm p-6 text-white"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm opacity-90">Fiyat Bekleyen</p>
+          <p class="text-3xl font-bold mt-2">
+            {{ urunler|rejectattr('satis_fiyati')|list|length }}
+          </p>
+        </div>
+        <i class="fas fa-clock text-3xl opacity-80"></i>
+      </div>
+    </div>
+
+    <div
+      class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-sm p-6 text-white"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm opacity-90">Ort. Kar Oranı</p>
+          <p class="text-3xl font-bold mt-2">
+            {% set kar_oranlari =
+            urunler|selectattr('kar_orani')|map(attribute='kar_orani')|list %}
+            {% if kar_oranlari %} {{ "%.1f"|format(kar_oranlari|sum /
+            kar_oranlari|length) }}% {% else %} 0% {% endif %}
+          </p>
+        </div>
+        <i class="fas fa-chart-line text-3xl opacity-80"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ürün Listesi -->
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700"
+  >
+    <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+        Ürün Fiyat Listesi
+      </h3>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full" id="fiyatTable">
+        <thead
+          class="bg-slate-50 dark:bg-slate-700 border-b border-slate-200 dark:border-slate-600"
+        >
+          <tr>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Ürün Kodu
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Ürün Adı
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Grup
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Birim
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Son Alım
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Alış Fiyatı
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Satış Fiyatı
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Kar
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              İşlemler
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+          {% for urun in urunler %}
+          <tr
+            data-urun-id="{{ urun.id }}"
+            class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+          >
+            <td class="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
+              {{ urun.urun_kodu or '-' }}
+            </td>
+            <td class="px-6 py-4">
+              <div class="text-sm font-medium text-slate-900 dark:text-white">
+                {{ urun.urun_adi }}
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200"
+              >
+                {{ urun.grup_adi }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+              {{ urun.birim }}
+            </td>
+            <td class="px-6 py-4">
+              {% if urun.son_alim_fiyati %}
+              <div class="text-sm">
+                <div class="font-medium text-blue-600 dark:text-blue-400">
+                  {{ "%.2f"|format(urun.son_alim_fiyati) }} ₺
+                </div>
+                <div class="text-xs text-slate-500 dark:text-slate-400">
+                  {{ urun.son_alim_tarihi }}
+                </div>
+              </div>
+              {% else %}
+              <span class="text-sm text-slate-400">-</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 alis-fiyat">
+              <span class="text-sm font-medium text-slate-900 dark:text-white"
+                >{{ "%.2f"|format(urun.alis_fiyati) }} ₺</span
+              >
+            </td>
+            <td class="px-6 py-4 satis-fiyat">
+              <span class="text-sm font-medium text-slate-900 dark:text-white"
+                >{{ "%.2f"|format(urun.satis_fiyati) }} ₺</span
+              >
+            </td>
+            <td class="px-6 py-4 kar-bilgi">
+              {% if urun.kar_tutari %}
+              <div class="text-sm">
+                <div
+                  class="font-medium {% if urun.kar_tutari > 0 %}text-green-600 dark:text-green-400{% elif urun.kar_tutari < 0 %}text-red-600 dark:text-red-400{% else %}text-slate-600 dark:text-slate-400{% endif %}"
+                >
+                  {{ "%.2f"|format(urun.kar_tutari) }} ₺
+                </div>
+                <div
+                  class="text-xs {% if urun.kar_orani > 0 %}text-green-600 dark:text-green-400{% elif urun.kar_orani < 0 %}text-red-600 dark:text-red-400{% else %}text-slate-600 dark:text-slate-400{% endif %}"
+                >
+                  ({{ "%.1f"|format(urun.kar_orani) }}%)
+                </div>
+              </div>
+              {% else %}
+              <span class="text-sm text-slate-400">-</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4">
+              <button
+                class="btn-duzenle inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+                data-urun-id="{{ urun.id }}"
+                data-urun-adi="{{ urun.urun_adi }}"
+                data-alis="{{ urun.alis_fiyati }}"
+                data-satis="{{ urun.satis_fiyati }}"
+              >
+                <i class="fas fa-edit mr-1"></i> Düzenle
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Fiyat Düzenleme Modal -->
+<div
+  id="fiyatDuzenleModal"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+>
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full">
+    <div
+      class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700"
+    >
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+        Fiyat Düzenle
+      </h3>
+      <button
+        onclick="closeFiyatModal()"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+      >
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+
+    <div class="px-6 py-4 space-y-4">
+      <input type="hidden" id="duzenleUrunId" />
+
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >Ürün</label
+        >
+        <p
+          id="duzenleUrunAdi"
+          class="text-base font-semibold text-slate-900 dark:text-white"
+        ></p>
+      </div>
+
+      <div>
+        <label
+          for="duzenleAlisFiyati"
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          Alış Fiyatı (₺)
+        </label>
+        <input
+          type="number"
+          id="duzenleAlisFiyati"
+          step="0.01"
+          min="0"
+          required
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
+        />
+      </div>
+
+      <div>
+        <label
+          for="duzenleSatisFiyati"
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          Satış Fiyatı (₺)
+        </label>
+        <input
+          type="number"
+          id="duzenleSatisFiyati"
+          step="0.01"
+          min="0"
+          required
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
+        />
+      </div>
+
+      <div>
+        <label
+          for="duzenleSebep"
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          Değişiklik Sebebi (Opsiyonel)
+        </label>
+        <textarea
+          id="duzenleSebep"
+          rows="2"
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
+          placeholder="Fiyat değişiklik sebebi..."
+        ></textarea>
+      </div>
+
+      <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+        <div
+          class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          Kar Hesaplaması
+        </div>
+        <div class="space-y-1">
+          <div class="flex justify-between text-sm">
+            <span class="text-slate-600 dark:text-slate-400">Kar Tutarı:</span>
+            <span id="hesapKarTutar" class="font-semibold">-</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-slate-600 dark:text-slate-400">Kar Oranı:</span>
+            <span id="hesapKarOran" class="font-semibold">-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700"
+    >
+      <button
+        onclick="closeFiyatModal()"
+        class="px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+      >
+        İptal
+      </button>
+      <button
+        onclick="kaydetFiyat()"
+        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+      >
+        <i class="fas fa-save mr-2"></i>Kaydet
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Arama fonksiyonu
+  document.getElementById("searchInput").addEventListener("input", function () {
+    const searchTerm = this.value.toLowerCase();
+    const rows = document.querySelectorAll("#fiyatTable tbody tr");
+
+    rows.forEach((row) => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(searchTerm) ? "" : "none";
+    });
+  });
+
+  // Düzenle butonları
+  document.querySelectorAll(".btn-duzenle").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      const urunId = this.dataset.urunId;
+      const urunAdi = this.dataset.urunAdi;
+      const alis = this.dataset.alis;
+      const satis = this.dataset.satis;
+
+      document.getElementById("duzenleUrunId").value = urunId;
+      document.getElementById("duzenleUrunAdi").textContent = urunAdi;
+      document.getElementById("duzenleAlisFiyati").value = alis;
+      document.getElementById("duzenleSatisFiyati").value = satis;
+      document.getElementById("duzenleSebep").value = "";
+
+      hesaplaKar();
+      document.getElementById("fiyatDuzenleModal").classList.remove("hidden");
+    });
+  });
+
+  // Modal kapatma
+  function closeFiyatModal() {
+    document.getElementById("fiyatDuzenleModal").classList.add("hidden");
+  }
+
+  // Kar hesaplama
+  function hesaplaKar() {
+    const alis =
+      parseFloat(document.getElementById("duzenleAlisFiyati").value) || 0;
+    const satis =
+      parseFloat(document.getElementById("duzenleSatisFiyati").value) || 0;
+
+    const karTutar = satis - alis;
+    const karOran = alis > 0 ? (karTutar / alis) * 100 : 0;
+
+    const karTutarEl = document.getElementById("hesapKarTutar");
+    const karOranEl = document.getElementById("hesapKarOran");
+
+    karTutarEl.textContent = karTutar.toFixed(2) + " ₺";
+    karOranEl.textContent = karOran.toFixed(1) + "%";
+
+    // Renk değiştir
+    const colorClass =
+      karTutar > 0
+        ? "text-green-600 dark:text-green-400"
+        : karTutar < 0
+        ? "text-red-600 dark:text-red-400"
+        : "text-slate-600 dark:text-slate-400";
+
+    karTutarEl.className = "font-semibold " + colorClass;
+    karOranEl.className = "font-semibold " + colorClass;
+  }
+
+  document
+    .getElementById("duzenleAlisFiyati")
+    .addEventListener("input", hesaplaKar);
+  document
+    .getElementById("duzenleSatisFiyati")
+    .addEventListener("input", hesaplaKar);
+
+  // Kaydet
+  async function kaydetFiyat() {
+    const urunId = document.getElementById("duzenleUrunId").value;
+    const alis = parseFloat(document.getElementById("duzenleAlisFiyati").value);
+    const satis = parseFloat(
+      document.getElementById("duzenleSatisFiyati").value
+    );
+    const sebep = document.getElementById("duzenleSebep").value;
+
+    if (isNaN(alis) || isNaN(satis)) {
+      alert("Lütfen geçerli fiyat değerleri girin");
+      return;
+    }
+
+    if (alis < 0 || satis < 0) {
+      alert("Fiyatlar negatif olamaz");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/fiyat-guncelle/${urunId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          alis_fiyati: alis,
+          satis_fiyati: satis,
+          sebep: sebep,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Tabloyu güncelle
+        const row = document.querySelector(`tr[data-urun-id="${urunId}"]`);
+        if (row) {
+          row.querySelector(".alis-fiyat span").textContent =
+            alis.toFixed(2) + " ₺";
+          row.querySelector(".satis-fiyat span").textContent =
+            satis.toFixed(2) + " ₺";
+
+          const karTutar = data.kar_tutari;
+          const karOran = data.kar_orani;
+
+          const colorClass =
+            karTutar > 0
+              ? "text-green-600 dark:text-green-400"
+              : karTutar < 0
+              ? "text-red-600 dark:text-red-400"
+              : "text-slate-600 dark:text-slate-400";
+
+          row.querySelector(".kar-bilgi").innerHTML = `
+                    <div class="text-sm">
+                        <div class="font-medium ${colorClass}">${karTutar.toFixed(
+            2
+          )} ₺</div>
+                        <div class="text-xs ${colorClass}">(${karOran.toFixed(
+            1
+          )}%)</div>
+                    </div>
+                `;
+        }
+
+        closeFiyatModal();
+        showToast("Başarılı! " + data.message, "success");
+      } else {
+        alert("Hata: " + data.error);
+      }
+    } catch (error) {
+      console.error("Hata:", error);
+      alert("Fiyat güncellenirken hata oluştu");
+    }
+  }
+
+  // Toast bildirimi
+  function showToast(message, type) {
+    const toast = document.createElement("div");
+    toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 ${
+      type === "success" ? "bg-green-500" : "bg-red-500"
+    }`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  // ESC tuşu ile modal kapatma
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      closeFiyatModal();
+    }
+  });
+</script>
+{% endblock %}

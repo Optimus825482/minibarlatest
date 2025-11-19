@@ -1,269 +1,282 @@
-{% extends "base.html" %}
-
-{% block title %}Tedarikçi Düzenle - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Tedarikçi Düzenle{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Tedarikçi Düzenle - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}Tedarikçi Düzenle{% endblock %} {%
+block content %}
 <div class="max-w-4xl mx-auto space-y-6">
-    <!-- Başlık ve Geri Butonu -->
-    <div class="flex items-center justify-between">
+  <!-- Başlık ve Geri Butonu -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
+        Tedarikçi Düzenle
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+        {{ tedarikci.tedarikci_adi }} bilgilerini güncelleyin
+      </p>
+    </div>
+    <a
+      href="{{ url_for('tedarikci_yonetimi') }}"
+      class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+    >
+      <i class="fas fa-arrow-left mr-2"></i>Geri
+    </a>
+  </div>
+
+  <!-- Tedarikçi Bilgileri Formu -->
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700"
+  >
+    <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+        <i class="fas fa-info-circle mr-2 text-blue-600 dark:text-blue-400"></i>
+        Temel Bilgiler
+      </h3>
+    </div>
+
+    <form method="POST" class="p-6 space-y-6">
+      {{ form.hidden_tag() }}
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Tedarikçi Adı -->
+        <div class="md:col-span-2">
+          <label
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >
+            Tedarikçi Adı <span class="text-red-500">*</span>
+          </label>
+          {{ form.tedarikci_adi(class="w-full px-4 py-2 border border-slate-300
+          dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500
+          dark:bg-slate-700 dark:text-white") }} {% if form.tedarikci_adi.errors
+          %}
+          <p class="mt-1 text-sm text-red-600">
+            {{ form.tedarikci_adi.errors[0] }}
+          </p>
+          {% endif %}
+        </div>
+
+        <!-- Telefon -->
         <div>
-            <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Tedarikçi Düzenle</h2>
-            <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">{{ tedarikci.tedarikci_adi }} bilgilerini güncelleyin</p>
+          <label
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >
+            <i class="fas fa-phone mr-1 text-slate-500"></i>
+            Telefon
+          </label>
+          {{ form.telefon(class="w-full px-4 py-2 border border-slate-300
+          dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500
+          dark:bg-slate-700 dark:text-white") }} {% if form.telefon.errors %}
+          <p class="mt-1 text-sm text-red-600">{{ form.telefon.errors[0] }}</p>
+          {% endif %}
         </div>
-        <a href="{{ url_for('tedarikci_yonetimi') }}" 
-           class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-            <i class="fas fa-arrow-left mr-2"></i>Geri
+
+        <!-- E-posta -->
+        <div>
+          <label
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >
+            <i class="fas fa-envelope mr-1 text-slate-500"></i>
+            E-posta
+          </label>
+          {{ form.email(class="w-full px-4 py-2 border border-slate-300
+          dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500
+          dark:bg-slate-700 dark:text-white") }} {% if form.email.errors %}
+          <p class="mt-1 text-sm text-red-600">{{ form.email.errors[0] }}</p>
+          {% endif %}
+        </div>
+
+        <!-- Durum -->
+        <div class="md:col-span-2">
+          <label
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >
+            Durum
+          </label>
+          <div class="flex items-center h-10">
+            <label class="flex items-center cursor-pointer">
+              {{ form.aktif(class="rounded border-slate-300
+              dark:border-slate-600 text-blue-600 focus:ring-blue-500 w-5 h-5")
+              }}
+              <span class="ml-3 text-sm text-slate-700 dark:text-slate-300"
+                >Aktif</span
+              >
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Butonları -->
+      <div
+        class="flex justify-end gap-3 pt-6 border-t border-slate-200 dark:border-slate-700"
+      >
+        <a
+          href="{{ url_for('tedarikci_yonetimi') }}"
+          class="px-6 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+        >
+          İptal
         </a>
+        <button
+          type="submit"
+          class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
+        >
+          <i class="fas fa-save mr-2"></i>Değişiklikleri Kaydet
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- İletişim Bilgileri -->
+  {% if iletisim_kayitlari %}
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700"
+  >
+    <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+        <i class="fas fa-comments mr-2 text-green-600 dark:text-green-400"></i>
+        Son İletişim Kayıtları
+      </h3>
     </div>
 
-    <!-- Tedarikçi Bilgileri Formu -->
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-                <i class="fas fa-info-circle mr-2 text-blue-600 dark:text-blue-400"></i>
-                Temel Bilgiler
-            </h3>
+    <div class="p-6">
+      <div class="space-y-4">
+        {% for iletisim in iletisim_kayitlari[:5] %}
+        <div class="flex gap-4 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+          <div class="flex-shrink-0">
+            <div
+              class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center"
+            >
+              <i class="fas fa-comment text-blue-600 dark:text-blue-400"></i>
+            </div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-1">
+              <h4 class="text-sm font-medium text-slate-900 dark:text-white">
+                {{ iletisim.konu }}
+              </h4>
+              <span class="text-xs text-slate-500 dark:text-slate-400">
+                {{ iletisim.iletisim_tarihi.strftime('%d.%m.%Y %H:%M') }}
+              </span>
+            </div>
+            <p class="text-sm text-slate-600 dark:text-slate-400">
+              {{ iletisim.aciklama }}
+            </p>
+            {% if iletisim.kullanici %}
+            <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">
+              <i class="fas fa-user mr-1"></i>{{ iletisim.kullanici.ad_soyad }}
+            </p>
+            {% endif %}
+          </div>
         </div>
-        
-        <form method="POST" class="p-6 space-y-6">
-            {{ form.hidden_tag() }}
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Tedarikçi Adı -->
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Tedarikçi Adı <span class="text-red-500">*</span>
-                    </label>
-                    {{ form.tedarikci_adi(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white") }}
-                    {% if form.tedarikci_adi.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.tedarikci_adi.errors[0] }}</p>
-                    {% endif %}
-                </div>
-                
-                <!-- Telefon -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        <i class="fas fa-phone mr-1 text-slate-500"></i>
-                        Telefon <span class="text-red-500">*</span>
-                    </label>
-                    {{ form.telefon(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white") }}
-                    {% if form.telefon.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.telefon.errors[0] }}</p>
-                    {% endif %}
-                </div>
-                
-                <!-- E-posta -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        <i class="fas fa-envelope mr-1 text-slate-500"></i>
-                        E-posta
-                    </label>
-                    {{ form.email(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white") }}
-                    {% if form.email.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.email.errors[0] }}</p>
-                    {% endif %}
-                </div>
-                
-                <!-- Vergi No -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        <i class="fas fa-file-invoice mr-1 text-slate-500"></i>
-                        Vergi No
-                    </label>
-                    {{ form.vergi_no(class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white") }}
-                </div>
-                
-                <!-- Durum -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Durum
-                    </label>
-                    <div class="flex items-center h-10">
-                        <label class="flex items-center cursor-pointer">
-                            {{ form.aktif(class="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 w-5 h-5") }}
-                            <span class="ml-3 text-sm text-slate-700 dark:text-slate-300">Aktif</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <!-- Adres -->
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        <i class="fas fa-map-marker-alt mr-1 text-slate-500"></i>
-                        Adres
-                    </label>
-                    {{ form.adres(rows=3, class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white") }}
-                </div>
-                
-                <!-- Ödeme Koşulları -->
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        <i class="fas fa-credit-card mr-1 text-slate-500"></i>
-                        Ödeme Koşulları
-                    </label>
-                    {{ form.odeme_kosullari(rows=2, class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white", placeholder="Örn: 30 gün vadeli, Peşin ödeme %5 indirim") }}
-                </div>
-            </div>
-            
-            <!-- Form Butonları -->
-            <div class="flex justify-end gap-3 pt-6 border-t border-slate-200 dark:border-slate-700">
-                <a href="{{ url_for('tedarikci_yonetimi') }}" 
-                   class="px-6 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                    İptal
-                </a>
-                <button type="submit" 
-                        class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm">
-                    <i class="fas fa-save mr-2"></i>Değişiklikleri Kaydet
-                </button>
-            </div>
-        </form>
+        {% endfor %}
+      </div>
+
+      <div class="mt-4 text-center">
+        <a
+          href="{{ url_for('tedarikci_iletisim', tedarikci_id=tedarikci.id) }}"
+          class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
+        >
+          Tüm İletişim Kayıtlarını Görüntüle
+          <i class="fas fa-arrow-right ml-1"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Ürün Fiyatları -->
+  {% if urun_fiyatlari %}
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700"
+  >
+    <div
+      class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center"
+    >
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+        <i class="fas fa-tags mr-2 text-purple-600 dark:text-purple-400"></i>
+        Ürün Fiyatları
+      </h3>
+      <a
+        href="{{ url_for('urun_tedarikci_fiyat') }}?tedarikci_id={{ tedarikci.id }}"
+        class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+      >
+        Yeni Fiyat Ekle <i class="fas fa-plus ml-1"></i>
+      </a>
     </div>
 
-    <!-- İletişim Bilgileri -->
-    {% if iletisim_kayitlari %}
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-                <i class="fas fa-comments mr-2 text-green-600 dark:text-green-400"></i>
-                Son İletişim Kayıtları
-            </h3>
-        </div>
-        
-        <div class="p-6">
-            <div class="space-y-4">
-                {% for iletisim in iletisim_kayitlari[:5] %}
-                <div class="flex gap-4 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                            <i class="fas fa-comment text-blue-600 dark:text-blue-400"></i>
-                        </div>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center justify-between mb-1">
-                            <h4 class="text-sm font-medium text-slate-900 dark:text-white">{{ iletisim.konu }}</h4>
-                            <span class="text-xs text-slate-500 dark:text-slate-400">
-                                {{ iletisim.iletisim_tarihi.strftime('%d.%m.%Y %H:%M') }}
-                            </span>
-                        </div>
-                        <p class="text-sm text-slate-600 dark:text-slate-400">{{ iletisim.aciklama }}</p>
-                        {% if iletisim.kullanici %}
-                        <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                            <i class="fas fa-user mr-1"></i>{{ iletisim.kullanici.ad_soyad }}
-                        </p>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            
-            <div class="mt-4 text-center">
-                <a href="{{ url_for('tedarikci_iletisim', tedarikci_id=tedarikci.id) }}" 
-                   class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">
-                    Tüm İletişim Kayıtlarını Görüntüle <i class="fas fa-arrow-right ml-1"></i>
-                </a>
-            </div>
-        </div>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead
+          class="bg-slate-50 dark:bg-slate-700 border-b border-slate-200 dark:border-slate-600"
+        >
+          <tr>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Ürün
+            </th>
+            <th
+              class="px-6 py-3 text-right text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Alış Fiyatı
+            </th>
+            <th
+              class="px-6 py-3 text-right text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Min. Miktar
+            </th>
+            <th
+              class="px-6 py-3 text-center text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Geçerlilik
+            </th>
+            <th
+              class="px-6 py-3 text-center text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Durum
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+          {% for fiyat in urun_fiyatlari[:10] %}
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+            <td class="px-6 py-4 text-sm text-slate-900 dark:text-white">
+              {{ fiyat.urun.urun_adi }}
+            </td>
+            <td
+              class="px-6 py-4 text-sm text-right font-medium text-slate-900 dark:text-white"
+            >
+              {{ "%.2f"|format(fiyat.alis_fiyati) }} ₺
+            </td>
+            <td
+              class="px-6 py-4 text-sm text-right text-slate-600 dark:text-slate-400"
+            >
+              {{ fiyat.minimum_miktar }}
+            </td>
+            <td
+              class="px-6 py-4 text-sm text-center text-slate-600 dark:text-slate-400"
+            >
+              {{ fiyat.baslangic_tarihi.strftime('%d.%m.%Y') }} {% if
+              fiyat.bitis_tarihi %} - {{ fiyat.bitis_tarihi.strftime('%d.%m.%Y')
+              }}{% endif %}
+            </td>
+            <td class="px-6 py-4 text-center">
+              {% if fiyat.aktif %}
+              <span
+                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+              >
+                Aktif
+              </span>
+              {% else %}
+              <span
+                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-400"
+              >
+                Pasif
+              </span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    {% endif %}
-
-    <!-- Ürün Fiyatları -->
-    {% if urun_fiyatlari %}
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-                <i class="fas fa-tags mr-2 text-purple-600 dark:text-purple-400"></i>
-                Ürün Fiyatları
-            </h3>
-            <a href="{{ url_for('urun_tedarikci_fiyat') }}?tedarikci_id={{ tedarikci.id }}" 
-               class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
-                Yeni Fiyat Ekle <i class="fas fa-plus ml-1"></i>
-            </a>
-        </div>
-        
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-slate-50 dark:bg-slate-700 border-b border-slate-200 dark:border-slate-600">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">Ürün</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">Alış Fiyatı</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">Min. Miktar</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">Geçerlilik</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">Durum</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                    {% for fiyat in urun_fiyatlari[:10] %}
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                        <td class="px-6 py-4 text-sm text-slate-900 dark:text-white">{{ fiyat.urun.urun_adi }}</td>
-                        <td class="px-6 py-4 text-sm text-right font-medium text-slate-900 dark:text-white">
-                            {{ "%.2f"|format(fiyat.alis_fiyati) }} ₺
-                        </td>
-                        <td class="px-6 py-4 text-sm text-right text-slate-600 dark:text-slate-400">
-                            {{ fiyat.minimum_miktar }}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-center text-slate-600 dark:text-slate-400">
-                            {{ fiyat.baslangic_tarihi.strftime('%d.%m.%Y') }}
-                            {% if fiyat.bitis_tarihi %} - {{ fiyat.bitis_tarihi.strftime('%d.%m.%Y') }}{% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            {% if fiyat.aktif %}
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                                Aktif
-                            </span>
-                            {% else %}
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-400">
-                                Pasif
-                            </span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Performans Özeti -->
-    {% if performans %}
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-                <i class="fas fa-chart-line mr-2 text-orange-600 dark:text-orange-400"></i>
-                Performans Özeti
-            </h3>
-            <a href="{{ url_for('tedarikci_performans', tedarikci_id=tedarikci.id) }}" 
-               class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
-                Detaylı Rapor <i class="fas fa-arrow-right ml-1"></i>
-            </a>
-        </div>
-        
-        <div class="p-6">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ performans.toplam_siparis_sayisi }}</div>
-                    <div class="text-xs text-slate-600 dark:text-slate-400 mt-1">Toplam Sipariş</div>
-                </div>
-                <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-                        {{ "%.0f"|format((performans.zamaninda_teslimat_sayisi / performans.toplam_siparis_sayisi * 100) if performans.toplam_siparis_sayisi > 0 else 0) }}%
-                    </div>
-                    <div class="text-xs text-slate-600 dark:text-slate-400 mt-1">Zamanında Teslimat</div>
-                </div>
-                <div class="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                    <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ performans.ortalama_teslimat_suresi or 0 }}</div>
-                    <div class="text-xs text-slate-600 dark:text-slate-400 mt-1">Ort. Teslimat (Gün)</div>
-                </div>
-                <div class="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                    <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                        {{ "%.1f"|format(performans.performans_skoru or 0) }}
-                    </div>
-                    <div class="text-xs text-slate-600 dark:text-slate-400 mt-1">Performans Skoru</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

@@ -321,21 +321,21 @@ async function loadDepoSorumluları(otelId, seciliDepoId = null) {
 }
 </script>
 
-<!-- Stok Giriş Modal - KALDIRILDI -->
-<!-- Yeni stok girişi artık Satın Alma modülü üzerinden yapılıyor -->
-<!--
-<div id="stokGirisModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Yeni Stok Girişi</h3>
-            <button onclick="closeStokGirisModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-        
-        <form id="stokGirisForm" class="p-6 space-y-6">
+<!-- Stok Giriş Modal - jQuery Modal -->
+<div id="stokGirisModal" class="modal bg-white dark:bg-slate-800 shadow-2xl">
+    <!-- Header -->
+    <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800">
+        <h5 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
+            <svg class="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span class="truncate">Yeni Stok Girişi</span>
+        </h5>
+    </div>
+    
+    <!-- Body -->
+    <div class="p-4 sm:p-6 md:p-8 overflow-y-auto" style="max-height: calc(90vh - 180px);">
+        <form id="stokGirisForm" class="space-y-4 sm:space-y-6">
             <!-- Otel -->
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">

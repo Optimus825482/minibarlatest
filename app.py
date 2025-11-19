@@ -175,6 +175,13 @@ def inject_user():
 def inject_builtins():
     return dict(min=min, max=max)
 
+# Context processor - Cache version
+@app.context_processor
+def inject_cache_version():
+    """Cache busting için version numarası"""
+    from config import Config
+    return dict(cache_version=Config.CACHE_VERSION)
+
 # Context processor - Datetime ve tarih fonksiyonları
 @app.context_processor
 def inject_datetime():
@@ -706,8 +713,8 @@ def depo_raporlar():
             ).join(
                 Kullanici, MinibarIslem.personel_id == Kullanici.id
             ).filter(
-                # Kontrol ve doldurma işlemlerini al (ilk_dolum hariç - çünkü ilk dolumda tüketim yok)
-                MinibarIslem.islem_tipi.in_(['kontrol', 'doldurma']),
+                # Setup kontrol ve ekstra tüketim işlemlerini al
+                MinibarIslem.islem_tipi.in_(['setup_kontrol', 'ekstra_tuketim']),
                 MinibarIslemDetay.tuketim > 0  # Sadece tüketim olan kayıtlar
             )
             
@@ -729,6 +736,54 @@ def depo_raporlar():
             
             rapor_verisi = query.order_by(MinibarIslem.islem_tarihi.desc()).all()
         
+        elif rapor_tipi == 'minibar_kontrol_odalar':
+            # Günlük Minibar Kontrolü Yapılan Odalar Raporu
+            rapor_baslik = "Günlük Minibar Kontrolü Yapılan Odalar"
+            
+            from sqlalchemy import func, distinct
+            
+            # Oda bazında son kontrol işlemini al
+            query = db.session.query(
+                func.max(MinibarIslem.islem_tarihi).label('son_kontrol'),
+                Oda.oda_no,
+                Kat.kat_adi,
+                Kullanici.ad,
+                Kullanici.soyad,
+                func.count(distinct(MinibarIslemDetay.urun_id)).label('urun_sayisi'),
+                func.sum(MinibarIslemDetay.tuketim).label('toplam_tuketim')
+            ).select_from(MinibarIslem).join(
+                Oda, MinibarIslem.oda_id == Oda.id
+            ).join(
+                Kat, Oda.kat_id == Kat.id
+            ).join(
+                Kullanici, MinibarIslem.personel_id == Kullanici.id
+            ).join(
+                MinibarIslemDetay, MinibarIslem.id == MinibarIslemDetay.islem_id
+            ).filter(
+                MinibarIslem.islem_tipi.in_(['setup_kontrol', 'ekstra_ekleme', 'ekstra_tuketim'])
+            )
+            
+            if baslangic_tarihi:
+                baslangic = datetime.strptime(baslangic_tarihi, '%Y-%m-%d')
+                query = query.filter(MinibarIslem.islem_tarihi >= baslangic)
+            
+            if bitis_tarihi:
+                bitis = datetime.strptime(bitis_tarihi, '%Y-%m-%d') + timedelta(days=1)
+                query = query.filter(MinibarIslem.islem_tarihi < bitis)
+            
+            if personel_id:
+                query = query.filter(MinibarIslem.personel_id == personel_id)
+            
+            # Oda bazında grupla
+            query = query.group_by(
+                Oda.oda_no,
+                Kat.kat_adi,
+                Kullanici.ad,
+                Kullanici.soyad
+            )
+            
+            rapor_verisi = query.order_by(db.desc('son_kontrol'), Oda.oda_no).all()
+        
         elif rapor_tipi == 'urun_grup':
             # Ürün Grubu Bazlı Rapor
             rapor_baslik = "Ürün Grubu Bazlı Stok Raporu"
@@ -748,7 +803,8 @@ def depo_raporlar():
                 
                 for urun in grup_urunleri:
                     mevcut_stok = stok_map.get(urun.id, 0)
-                    if mevcut_stok <= urun.kritik_stok_seviyesi:
+                    kritik_seviye = urun.kritik_stok_seviyesi or 0
+                    if mevcut_stok <= kritik_seviye:
                         kritik_urun_sayisi += 1
                 
                 rapor_verisi.append({
@@ -872,7 +928,8 @@ def excel_export(rapor_tipi):
             for urun in urunler_liste:
                 row_num += 1
                 mevcut_stok = stok_map.get(urun.id, 0)
-                durum = 'KRİTİK' if mevcut_stok <= urun.kritik_stok_seviyesi else 'NORMAL'
+                kritik_seviye = urun.kritik_stok_seviyesi or 0
+                durum = 'KRİTİK' if mevcut_stok <= kritik_seviye else 'NORMAL'
                 
                 ws.cell(row=row_num, column=1, value=urun.urun_adi)
                 ws.cell(row=row_num, column=2, value=urun.grup.grup_adi)
@@ -1043,7 +1100,8 @@ def excel_export(rapor_tipi):
                 
                 for urun in grup_urunleri:
                     mevcut_stok = stok_map.get(urun.id, 0)
-                    if mevcut_stok <= urun.kritik_stok_seviyesi:
+                    kritik_seviye = urun.kritik_stok_seviyesi or 0
+                    if mevcut_stok <= kritik_seviye:
                         kritik_urun_sayisi += 1
                 
                 ws.cell(row=row_num, column=1, value=grup.grup_adi)
@@ -1153,7 +1211,8 @@ def pdf_export(rapor_tipi):
             
             for urun in urunler_liste:
                 mevcut_stok = stok_map.get(urun.id, 0)
-                durum = 'KRITIK' if mevcut_stok <= urun.kritik_stok_seviyesi else 'NORMAL'
+                kritik_seviye = urun.kritik_stok_seviyesi or 0
+                durum = 'KRITIK' if mevcut_stok <= kritik_seviye else 'NORMAL'
                 
                 data.append([
                     turkce_ascii(urun.urun_adi),
@@ -1303,7 +1362,8 @@ def pdf_export(rapor_tipi):
                 
                 for urun in grup_urunleri:
                     mevcut_stok = stok_map.get(urun.id, 0)
-                    if mevcut_stok <= urun.kritik_stok_seviyesi:
+                    kritik_seviye = urun.kritik_stok_seviyesi or 0
+                    if mevcut_stok <= kritik_seviye:
                         kritik_urun_sayisi += 1
                 
                 data.append([

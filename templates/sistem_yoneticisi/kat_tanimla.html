@@ -286,17 +286,332 @@ content %}
 </div>
 
 <!-- Yeni Kat Ekle Modal -->
-<div class="modal fade" id="yeniKatModal" tabindex="-1" role="dialog">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-      <div
-        class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
+<div id="yeniKatModal" class="modal p-4 sm:p-6 md:p-8">
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full mx-auto"
+  >
+    <div
+      class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between"
+    >
+      <h5
+        class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
       >
-        <h5
-          class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100"
+        <svg
+          class="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v16m8-8H4"
+          ></path>
+        </svg>
+        Yeni Kat Ekle
+      </h5>
+      <a
+        href="#"
+        rel="modal:close"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </a>
+    </div>
+    <form method="POST" action="{{ url_for('kat_tanimla') }}">
+      {{ form.csrf_token }}
+      <div class="p-6">
+        <div class="space-y-4">
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Otel <span class="text-red-500">*</span>
+            </label>
+            {{ form.otel_id(class="no-choices w-full px-3 py-2 border
+            border-slate-300 dark:border-slate-600 rounded-md bg-slate-50
+            dark:bg-slate-800 text-slate-900 dark:text-slate-100") }}
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Kat Adı <span class="text-red-500">*</span>
+            </label>
+            {{ form.kat_adi(class="w-full px-3 py-2 border border-slate-300
+            dark:border-slate-600 rounded-md bg-white dark:bg-slate-700
+            text-slate-900 dark:text-slate-100", placeholder="Örn: 1. Kat, Zemin
+            Kat") }}
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Kat No <span class="text-red-500">*</span>
+            </label>
+            {{ form.kat_no(class="w-full px-3 py-2 border border-slate-300
+            dark:border-slate-600 rounded-md bg-white dark:bg-slate-700
+            text-slate-900 dark:text-slate-100", placeholder="Örn: 0 (Zemin), 1,
+            2, 3") }}
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Açıklama
+            </label>
+            {{ form.aciklama(class="w-full px-3 py-2 border border-slate-300
+            dark:border-slate-600 rounded-md bg-white dark:bg-slate-700
+            text-slate-900 dark:text-slate-100", rows="3", placeholder="Kat
+            hakkında ek bilgiler...") }}
+          </div>
+          <div class="flex items-center">
+            {{ form.aktif(class="h-4 w-4 text-indigo-600 focus:ring-indigo-500
+            border-slate-300 dark:border-slate-600 rounded", checked="checked")
+            }}
+            <label
+              class="ml-2 block text-sm text-slate-700 dark:text-slate-300"
+            >
+              Aktif
+            </label>
+          </div>
+        </div>
+      </div>
+      <div
+        class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3"
+      >
+        <a
+          href="#"
+          rel="modal:close"
+          class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
+        >
+          İptal
+        </a>
+        <button
+          type="submit"
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+        >
+          Kat Ekle
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Kat Düzenle Modal -->
+<div id="katDuzenleModal" class="modal p-4 sm:p-6 md:p-8">
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full mx-auto"
+  >
+    <div
+      class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between"
+    >
+      <h5
+        class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
+      >
+        <svg
+          class="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+          ></path>
+        </svg>
+        Kat Düzenle
+      </h5>
+      <a
+        href="#"
+        rel="modal:close"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </a>
+    </div>
+    <form id="katDuzenleForm" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <div class="p-6">
+        <div class="space-y-4">
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Otel <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="duzenle_otel_id"
+              name="otel_id"
+              class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+              required
+            >
+              {% for otel in form.otel_id.choices %}
+              <option value="{{ otel[0] }}">{{ otel[1] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Kat Adı <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="duzenle_kat_adi"
+              name="kat_adi"
+              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+              required
+            />
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Kat No <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="duzenle_kat_no"
+              name="kat_no"
+              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+              required
+            />
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Açıklama
+            </label>
+            <textarea
+              id="duzenle_aciklama"
+              name="aciklama"
+              rows="3"
+              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+            ></textarea>
+          </div>
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="duzenle_aktif"
+              name="aktif"
+              class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-600 rounded"
+              checked
+            />
+            <label
+              for="duzenle_aktif"
+              class="ml-2 block text-sm text-slate-700 dark:text-slate-300"
+            >
+              Aktif
+            </label>
+          </div>
+        </div>
+      </div>
+      <div
+        class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3"
+      >
+        <a
+          href="#"
+          rel="modal:close"
+          class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
+        >
+          İptal
+        </a>
+        <button
+          type="submit"
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+        >
+          Güncelle
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Oda Tipleri Yönetim Modal -->
+<div id="odaTipleriYonetimModal" class="modal p-4 sm:p-6 md:p-8">
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-3xl w-full mx-auto"
+  >
+    <div
+      class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between"
+    >
+      <h5
+        class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
+      >
+        <svg
+          class="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+          ></path>
+        </svg>
+        Oda Tipleri Yönetimi
+      </h5>
+      <a
+        href="#"
+        rel="modal:close"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </a>
+    </div>
+    <div class="p-6">
+      <!-- Yeni Ekle Butonu -->
+      <div class="flex justify-end mb-4">
+        <button
+          onclick="yeniOdaTipiModal()"
+          class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
         >
           <svg
-            class="inline-block h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400"
+            class="h-4 w-4 mr-1.5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -308,440 +623,605 @@ content %}
               d="M12 4v16m8-8H4"
             ></path>
           </svg>
-          Yeni Kat Ekle
-        </h5>
-        <button
-          type="button"
-          class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-          data-dismiss="modal"
-        >
-          <span class="text-2xl">&times;</span>
+          Yeni Ekle
         </button>
       </div>
-      <form method="POST" action="{{ url_for('kat_tanimla') }}">
-        {{ form.csrf_token }}
-        <div class="modal-body p-6">
-          <div class="space-y-4">
-            <div>
-              <label
-                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Otel <span class="text-red-500">*</span>
-              </label>
-              {{ form.otel_id(class="no-choices w-full px-3 py-2 border
-              border-slate-300 dark:border-slate-600 rounded-md bg-slate-50
-              dark:bg-slate-800 text-slate-900 dark:text-slate-100") }}
-            </div>
-            <div>
-              <label
-                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Kat Adı <span class="text-red-500">*</span>
-              </label>
-              {{ form.kat_adi(class="w-full px-3 py-2 border border-slate-300
-              dark:border-slate-600 rounded-md bg-white dark:bg-slate-700
-              text-slate-900 dark:text-slate-100", placeholder="Örn: 1. Kat,
-              Zemin Kat") }}
-            </div>
-            <div>
-              <label
-                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Kat No <span class="text-red-500">*</span>
-              </label>
-              {{ form.kat_no(class="w-full px-3 py-2 border border-slate-300
-              dark:border-slate-600 rounded-md bg-white dark:bg-slate-700
-              text-slate-900 dark:text-slate-100", placeholder="Örn: 0 (Zemin),
-              1, 2, 3") }}
-            </div>
-            <div>
-              <label
-                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Açıklama
-              </label>
-              {{ form.aciklama(class="w-full px-3 py-2 border border-slate-300
-              dark:border-slate-600 rounded-md bg-white dark:bg-slate-700
-              text-slate-900 dark:text-slate-100", rows="3", placeholder="Kat
-              hakkında ek bilgiler...") }}
-            </div>
-          </div>
-        </div>
-        <div
-          class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4"
-        >
-          <button
-            type="button"
-            class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
-            data-dismiss="modal"
-          >
-            İptal
-          </button>
-          <button
-            type="submit"
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            Kat Ekle
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
 
-<!-- Kat Düzenle Modal -->
-<div class="modal fade" id="katDuzenleModal" tabindex="-1" role="dialog">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-      <div
-        class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
-      >
-        <h5
-          class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100"
-        >
-          <svg
-            class="inline-block h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-            ></path>
-          </svg>
-          Kat Düzenle
-        </h5>
-        <button
-          type="button"
-          class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-          data-dismiss="modal"
-        >
-          <span class="text-2xl">&times;</span>
-        </button>
-      </div>
-      <form id="katDuzenleForm" method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <div class="modal-body p-6">
-          <div class="space-y-4">
-            <div>
-              <label
-                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Otel <span class="text-red-500">*</span>
-              </label>
-              <select
-                id="duzenle_otel_id"
-                name="otel_id"
-                class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100"
-                required
-              >
-                {% for otel in form.otel_id.choices %}
-                <option value="{{ otel[0] }}">{{ otel[1] }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div>
-              <label
-                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Kat Adı <span class="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="duzenle_kat_adi"
-                name="kat_adi"
-                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                required
-              />
-            </div>
-            <div>
-              <label
-                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Kat No <span class="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                id="duzenle_kat_no"
-                name="kat_no"
-                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                required
-              />
-            </div>
-            <div>
-              <label
-                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Açıklama
-              </label>
-              <textarea
-                id="duzenle_aciklama"
-                name="aciklama"
-                rows="3"
-                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-              ></textarea>
-            </div>
-          </div>
-        </div>
+      <!-- Yükleniyor göstergesi -->
+      <div id="odaTipleriYonetimYukleniyor" class="text-center py-8">
         <div
-          class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4"
-        >
-          <button
-            type="button"
-            class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
-            data-dismiss="modal"
-          >
-            İptal
-          </button>
-          <button
-            type="submit"
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            Güncelle
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Oda Tipleri Yönetim Modal -->
-<div class="modal fade" id="odaTipleriYonetimModal" tabindex="-1" role="dialog">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-      <div
-        class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
-      >
-        <h5
-          class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100"
-        >
-          <svg
-            class="inline-block h-5 w-5 mr-2 text-blue-600 dark:text-blue-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-            ></path>
-          </svg>
-          Oda Tipleri Yönetimi
-        </h5>
-        <button
-          type="button"
-          class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-          data-dismiss="modal"
-        >
-          <span class="text-2xl">&times;</span>
-        </button>
+          class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"
+        ></div>
+        <p class="mt-4 text-slate-600 dark:text-slate-400">
+          Oda tipleri yükleniyor...
+        </p>
       </div>
-      <div class="modal-body p-6">
-        <!-- Yeni Ekle Butonu -->
-        <div class="flex justify-end mb-4">
-          <button
-            onclick="yeniOdaTipiModal()"
-            class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+
+      <!-- İçerik -->
+      <div id="odaTipleriYonetimIcerik" style="display: none">
+        <!-- Tablo -->
+        <div class="overflow-x-auto">
+          <table
+            class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
           >
-            <svg
-              class="h-4 w-4 mr-1.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            <thead class="bg-slate-50 dark:bg-slate-900">
+              <tr>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                >
+                  Oda Tipi Adı
+                </th>
+                <th
+                  class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                >
+                  Dolap Sayısı
+                </th>
+                <th
+                  class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                >
+                  Setup
+                </th>
+                <th
+                  class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                >
+                  İşlemler
+                </th>
+              </tr>
+            </thead>
+            <tbody
+              id="odaTipleriYonetimTablo"
+              class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 4v16m8-8H4"
-              ></path>
-            </svg>
-            Yeni Ekle
-          </button>
+              <!-- JavaScript ile doldurulacak -->
+            </tbody>
+          </table>
         </div>
 
-        <!-- Yükleniyor göstergesi -->
-        <div id="odaTipleriYonetimYukleniyor" class="text-center py-8">
-          <div
-            class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"
-          ></div>
-          <p class="mt-4 text-slate-600 dark:text-slate-400">
-            Oda tipleri yükleniyor...
+        <!-- Oda tipi yok mesajı -->
+        <div
+          id="odaTipleriYonetimYokMesaji"
+          style="display: none"
+          class="text-center py-8"
+        >
+          <svg
+            class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+            ></path>
+          </svg>
+          <p class="mt-4 text-slate-600 dark:text-slate-400 font-medium">
+            Henüz oda tipi eklenmemiş
+          </p>
+          <p class="mt-2 text-sm text-slate-500 dark:text-slate-500">
+            Yukarıdaki "Yeni Ekle" butonunu kullanarak oda tipi ekleyebilirsiniz
           </p>
         </div>
-
-        <!-- İçerik -->
-        <div id="odaTipleriYonetimIcerik" style="display: none">
-          <!-- Tablo -->
-          <div class="overflow-x-auto">
-            <table
-              class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
-            >
-              <thead class="bg-slate-50 dark:bg-slate-900">
-                <tr>
-                  <th
-                    class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                  >
-                    Oda Tipi Adı
-                  </th>
-                  <th
-                    class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                  >
-                    Dolap Sayısı
-                  </th>
-                  <th
-                    class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                  >
-                    Setup
-                  </th>
-                  <th
-                    class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                  >
-                    İşlemler
-                  </th>
-                </tr>
-              </thead>
-              <tbody
-                id="odaTipleriYonetimTablo"
-                class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
-              >
-                <!-- JavaScript ile doldurulacak -->
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Oda tipi yok mesajı -->
-          <div
-            id="odaTipleriYonetimYokMesaji"
-            style="display: none"
-            class="text-center py-8"
-          >
-            <svg
-              class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-              ></path>
-            </svg>
-            <p class="mt-4 text-slate-600 dark:text-slate-400 font-medium">
-              Henüz oda tipi eklenmemiş
-            </p>
-            <p class="mt-2 text-sm text-slate-500 dark:text-slate-500">
-              Yukarıdaki "Yeni Ekle" butonunu kullanarak oda tipi
-              ekleyebilirsiniz
-            </p>
-          </div>
-        </div>
       </div>
-      <div
-        class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4"
+    </div>
+    <div
+      class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end"
+    >
+      <a
+        href="#"
+        rel="modal:close"
+        class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
       >
-        <button
-          type="button"
-          class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
-          data-dismiss="modal"
-        >
-          Kapat
-        </button>
-      </div>
+        Kapat
+      </a>
     </div>
   </div>
 </div>
 
 <!-- Kat Oda Tipleri Modal - Bu kattaki odaların oda tiplerini göster -->
-<div class="modal fade" id="katOdaTipleriModal" tabindex="-1" role="dialog">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-      <div
-        class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
+<div id="katOdaTipleriModal" class="modal p-4 sm:p-6 md:p-8">
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-3xl w-full mx-auto"
+  >
+    <div
+      class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between"
+    >
+      <h5
+        class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
       >
-        <h5
-          class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100"
+        <svg
+          class="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
         >
-          <svg
-            class="inline-block h-5 w-5 mr-2 text-blue-600 dark:text-blue-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-            ></path>
-          </svg>
-          <span id="katOdaTipleriBaslik"></span> - Oda Tipleri
-        </h5>
-        <button
-          type="button"
-          class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-          data-dismiss="modal"
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+          ></path>
+        </svg>
+        <span id="katOdaTipleriBaslik"></span> - Oda Tipleri
+      </h5>
+      <a
+        href="#"
+        rel="modal:close"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
         >
-          <span class="text-2xl">&times;</span>
-        </button>
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </a>
+    </div>
+    <div class="p-6">
+      <!-- Yükleniyor göstergesi -->
+      <div id="katOdaTipleriYukleniyor" class="text-center py-8">
+        <div
+          class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"
+        ></div>
+        <p class="mt-4 text-slate-600 dark:text-slate-400">
+          Oda tipleri yükleniyor...
+        </p>
       </div>
-      <div class="modal-body p-6">
-        <!-- Yükleniyor göstergesi -->
-        <div id="katOdaTipleriYukleniyor" class="text-center py-8">
-          <div
-            class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"
-          ></div>
-          <p class="mt-4 text-slate-600 dark:text-slate-400">
-            Oda tipleri yükleniyor...
-          </p>
-        </div>
 
-        <!-- İçerik -->
-        <div id="katOdaTipleriIcerik" style="display: none">
-          <!-- Özet Bilgi -->
-          <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-slate-600 dark:text-slate-400">
-                  Toplam Oda Sayısı
-                </p>
-                <p
-                  id="katToplamOda"
-                  class="text-2xl font-bold text-blue-600 dark:text-blue-400"
-                >
-                  0
-                </p>
-              </div>
-              <div>
-                <p class="text-sm text-slate-600 dark:text-slate-400">
-                  Farklı Oda Tipi
-                </p>
-                <p
-                  id="katFarkliTip"
-                  class="text-2xl font-bold text-indigo-600 dark:text-indigo-400"
-                >
-                  0
-                </p>
-              </div>
+      <!-- İçerik -->
+      <div id="katOdaTipleriIcerik" style="display: none">
+        <!-- Özet Bilgi -->
+        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-slate-600 dark:text-slate-400">
+                Toplam Oda Sayısı
+              </p>
+              <p
+                id="katToplamOda"
+                class="text-2xl font-bold text-blue-600 dark:text-blue-400"
+              >
+                0
+              </p>
+            </div>
+            <div>
+              <p class="text-sm text-slate-600 dark:text-slate-400">
+                Farklı Oda Tipi
+              </p>
+              <p
+                id="katFarkliTip"
+                class="text-2xl font-bold text-indigo-600 dark:text-indigo-400"
+              >
+                0
+              </p>
             </div>
           </div>
+        </div>
 
-          <!-- Oda Tipi Listesi -->
-          <div class="space-y-3" id="katOdaTipleriListe">
-            <!-- JavaScript ile doldurulacak -->
+        <!-- Oda Tipi Listesi -->
+        <div class="space-y-3" id="katOdaTipleriListe">
+          <!-- JavaScript ile doldurulacak -->
+        </div>
+      </div>
+
+      <!-- Oda yok mesajı -->
+      <div
+        id="katOdaTipleriYokMesaji"
+        style="display: none"
+        class="text-center py-8"
+      >
+        <svg
+          class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+          ></path>
+        </svg>
+        <p class="mt-4 text-slate-600 dark:text-slate-400 font-medium">
+          Bu katta henüz oda bulunmuyor
+        </p>
+      </div>
+    </div>
+    <div
+      class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end"
+    >
+      <a
+        href="#"
+        rel="modal:close"
+        class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
+      >
+        Kapat
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Yeni Oda Tipi Ekle Modal -->
+<div id="yeniOdaTipiModal" class="modal p-4 sm:p-6 md:p-8">
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full mx-auto"
+  >
+    <div
+      class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between"
+    >
+      <h5
+        class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
+      >
+        <svg
+          class="h-5 w-5 mr-2 text-green-600 dark:text-green-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v16m8-8H4"
+          ></path>
+        </svg>
+        Yeni Oda Tipi
+      </h5>
+      <a
+        href="#"
+        rel="modal:close"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </a>
+    </div>
+    <form id="yeniOdaTipiForm" onsubmit="odaTipiKaydet(event)">
+      <div class="p-6">
+        <div class="space-y-4">
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Oda Tipi Adı <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="yeni_oda_tipi_ad"
+              name="ad"
+              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+              placeholder="Örn: STANDARD, JUNIOR SUITE"
+              required
+            />
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Dolap Sayısı <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="yeni_oda_tipi_dolap"
+              name="dolap_sayisi"
+              min="0"
+              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+              placeholder="Örn: 1, 2"
+              required
+            />
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Setup'lar <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="yeni_oda_tipi_setup"
+              name="setup_ids"
+              multiple
+              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+              style="min-height: 100px"
+              required
+            >
+              <!-- JavaScript ile doldurulacak -->
+            </select>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Ctrl/Cmd tuşu ile birden fazla setup seçebilirsiniz
+            </p>
+          </div>
+        </div>
+      </div>
+      <div
+        class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3"
+      >
+        <a
+          href="#"
+          rel="modal:close"
+          class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
+        >
+          İptal
+        </a>
+        <button
+          type="submit"
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+        >
+          Kaydet
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Oda Tipi Düzenle Modal -->
+<div id="odaTipiDuzenleModal" class="modal p-4 sm:p-6 md:p-8">
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full mx-auto"
+  >
+    <div
+      class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between"
+    >
+      <h5
+        class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
+      >
+        <svg
+          class="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+          ></path>
+        </svg>
+        Oda Tipi Düzenle
+      </h5>
+      <a
+        href="#"
+        rel="modal:close"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </a>
+    </div>
+    <form id="odaTipiDuzenleForm" onsubmit="odaTipiGuncelle(event)">
+      <input type="hidden" id="duzenle_oda_tipi_id" name="id" />
+      <div class="p-6">
+        <div class="space-y-4">
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Oda Tipi Adı <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="duzenle_oda_tipi_ad"
+              name="ad"
+              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+              required
+            />
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Dolap Sayısı <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="duzenle_oda_tipi_dolap"
+              name="dolap_sayisi"
+              min="0"
+              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+              required
+            />
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Setup'lar <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="duzenle_oda_tipi_setup"
+              name="setup_ids"
+              multiple
+              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+              style="min-height: 100px"
+              required
+            >
+              <!-- JavaScript ile doldurulacak -->
+            </select>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Ctrl/Cmd tuşu ile birden fazla setup seçebilirsiniz
+            </p>
+          </div>
+        </div>
+      </div>
+      <div
+        class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3"
+      >
+        <a
+          href="#"
+          rel="modal:close"
+          class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
+        >
+          İptal
+        </a>
+        <button
+          type="submit"
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+        >
+          Güncelle
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Oda Tipleri Modal -->
+<div id="odaTipleriModal" class="modal p-4 sm:p-6 md:p-8">
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-3xl w-full mx-auto"
+  >
+    <div
+      class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between"
+    >
+      <h5
+        class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
+      >
+        <svg
+          class="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+          ></path>
+        </svg>
+        <span id="odaTipleriBaslik">Oda Tipleri Dağılımı</span>
+      </h5>
+      <a
+        href="#"
+        rel="modal:close"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </a>
+    </div>
+    <div class="p-6">
+      <!-- Yükleniyor göstergesi -->
+      <div id="odaTipleriYukleniyor" class="text-center py-8">
+        <div
+          class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"
+        ></div>
+        <p class="mt-4 text-slate-600 dark:text-slate-400">
+          Oda tipleri yükleniyor...
+        </p>
+      </div>
+
+      <!-- İçerik -->
+      <div id="odaTipleriIcerik" style="display: none">
+        <!-- Özet Bilgi -->
+        <div
+          class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6"
+        >
+          <div class="flex items-start">
+            <svg
+              class="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2 mt-0.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-blue-800 dark:text-blue-200">
+                <span id="odaTipleriOtelAdi"></span> -
+                <span id="odaTipleriKatAdi"></span>
+              </p>
+              <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                Toplam
+                <span id="odaTipleriToplamOda" class="font-semibold">0</span>
+                oda
+              </p>
+            </div>
           </div>
         </div>
 
-        <!-- Oda yok mesajı -->
+        <!-- Tablo -->
+        <div class="overflow-x-auto">
+          <table
+            class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
+          >
+            <thead class="bg-slate-50 dark:bg-slate-900">
+              <tr>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                >
+                  Oda Tipi
+                </th>
+                <th
+                  class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                >
+                  Oda Sayısı
+                </th>
+                <th
+                  class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                >
+                  Yüzde
+                </th>
+              </tr>
+            </thead>
+            <tbody
+              id="odaTipleriTablo"
+              class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+            >
+              <!-- JavaScript ile doldurulacak -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Oda tipi yok mesajı -->
         <div
-          id="katOdaTipleriYokMesaji"
+          id="odaTipleriYokMesaji"
           style="display: none"
           class="text-center py-8"
         >
@@ -761,394 +1241,22 @@ content %}
           <p class="mt-4 text-slate-600 dark:text-slate-400 font-medium">
             Bu katta henüz oda bulunmuyor
           </p>
-        </div>
-      </div>
-      <div
-        class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4"
-      >
-        <button
-          type="button"
-          class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
-          data-dismiss="modal"
-        >
-          Kapat
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Yeni Oda Tipi Ekle Modal -->
-<div class="modal fade" id="yeniOdaTipiModal" tabindex="-1" role="dialog">
-  <div class="modal-dialog modal-sm" role="document">
-    <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-      <div
-        class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
-      >
-        <h5
-          class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100"
-        >
-          <svg
-            class="inline-block h-5 w-5 mr-2 text-green-600 dark:text-green-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 4v16m8-8H4"
-            ></path>
-          </svg>
-          Yeni Oda Tipi
-        </h5>
-        <button
-          type="button"
-          class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-          data-dismiss="modal"
-        >
-          <span class="text-2xl">&times;</span>
-        </button>
-      </div>
-      <form id="yeniOdaTipiForm" onsubmit="odaTipiKaydet(event)">
-        <div class="modal-body p-6">
-          <div class="space-y-4">
-            <div>
-              <label
-                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Oda Tipi Adı <span class="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="yeni_oda_tipi_ad"
-                name="ad"
-                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                placeholder="Örn: STANDARD, JUNIOR SUITE"
-                required
-              />
-            </div>
-            <div>
-              <label
-                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Dolap Sayısı <span class="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                id="yeni_oda_tipi_dolap"
-                name="dolap_sayisi"
-                min="0"
-                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                placeholder="Örn: 1, 2"
-                required
-              />
-            </div>
-            <div>
-              <label
-                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Setup'lar <span class="text-red-500">*</span>
-              </label>
-              <select
-                id="yeni_oda_tipi_setup"
-                name="setup_ids"
-                multiple
-                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                style="min-height: 100px"
-                required
-              >
-                <!-- JavaScript ile doldurulacak -->
-              </select>
-              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Ctrl/Cmd tuşu ile birden fazla setup seçebilirsiniz
-              </p>
-            </div>
-          </div>
-        </div>
-        <div
-          class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4"
-        >
-          <button
-            type="button"
-            class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
-            data-dismiss="modal"
-          >
-            İptal
-          </button>
-          <button
-            type="submit"
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
-          >
-            Kaydet
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Oda Tipi Düzenle Modal -->
-<div class="modal fade" id="odaTipiDuzenleModal" tabindex="-1" role="dialog">
-  <div class="modal-dialog modal-sm" role="document">
-    <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-      <div
-        class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
-      >
-        <h5
-          class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100"
-        >
-          <svg
-            class="inline-block h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-            ></path>
-          </svg>
-          Oda Tipi Düzenle
-        </h5>
-        <button
-          type="button"
-          class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-          data-dismiss="modal"
-        >
-          <span class="text-2xl">&times;</span>
-        </button>
-      </div>
-      <form id="odaTipiDuzenleForm" onsubmit="odaTipiGuncelle(event)">
-        <input type="hidden" id="duzenle_oda_tipi_id" name="id" />
-        <div class="modal-body p-6">
-          <div class="space-y-4">
-            <div>
-              <label
-                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Oda Tipi Adı <span class="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="duzenle_oda_tipi_ad"
-                name="ad"
-                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                required
-              />
-            </div>
-            <div>
-              <label
-                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Dolap Sayısı <span class="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                id="duzenle_oda_tipi_dolap"
-                name="dolap_sayisi"
-                min="0"
-                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                required
-              />
-            </div>
-            <div>
-              <label
-                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-              >
-                Setup'lar <span class="text-red-500">*</span>
-              </label>
-              <select
-                id="duzenle_oda_tipi_setup"
-                name="setup_ids"
-                multiple
-                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                style="min-height: 100px"
-                required
-              >
-                <!-- JavaScript ile doldurulacak -->
-              </select>
-              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Ctrl/Cmd tuşu ile birden fazla setup seçebilirsiniz
-              </p>
-            </div>
-          </div>
-        </div>
-        <div
-          class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4"
-        >
-          <button
-            type="button"
-            class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
-            data-dismiss="modal"
-          >
-            İptal
-          </button>
-          <button
-            type="submit"
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            Güncelle
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Oda Tipleri Modal -->
-<div class="modal fade" id="odaTipleriModal" tabindex="-1" role="dialog">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-      <div
-        class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
-      >
-        <h5
-          class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100"
-        >
-          <svg
-            class="inline-block h-5 w-5 mr-2 text-blue-600 dark:text-blue-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-            ></path>
-          </svg>
-          <span id="odaTipleriBaslik">Oda Tipleri Dağılımı</span>
-        </h5>
-        <button
-          type="button"
-          class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-          data-dismiss="modal"
-        >
-          <span class="text-2xl">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body p-6">
-        <!-- Yükleniyor göstergesi -->
-        <div id="odaTipleriYukleniyor" class="text-center py-8">
-          <div
-            class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"
-          ></div>
-          <p class="mt-4 text-slate-600 dark:text-slate-400">
-            Oda tipleri yükleniyor...
+          <p class="mt-2 text-sm text-slate-500 dark:text-slate-500">
+            Oda Tanımla sayfasından oda ekleyebilirsiniz
           </p>
         </div>
-
-        <!-- İçerik -->
-        <div id="odaTipleriIcerik" style="display: none">
-          <!-- Özet Bilgi -->
-          <div
-            class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6"
-          >
-            <div class="flex items-start">
-              <svg
-                class="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2 mt-0.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                ></path>
-              </svg>
-              <div class="flex-1">
-                <p class="text-sm font-medium text-blue-800 dark:text-blue-200">
-                  <span id="odaTipleriOtelAdi"></span> -
-                  <span id="odaTipleriKatAdi"></span>
-                </p>
-                <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                  Toplam
-                  <span id="odaTipleriToplamOda" class="font-semibold">0</span>
-                  oda
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tablo -->
-          <div class="overflow-x-auto">
-            <table
-              class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
-            >
-              <thead class="bg-slate-50 dark:bg-slate-900">
-                <tr>
-                  <th
-                    class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                  >
-                    Oda Tipi
-                  </th>
-                  <th
-                    class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                  >
-                    Oda Sayısı
-                  </th>
-                  <th
-                    class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                  >
-                    Yüzde
-                  </th>
-                </tr>
-              </thead>
-              <tbody
-                id="odaTipleriTablo"
-                class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
-              >
-                <!-- JavaScript ile doldurulacak -->
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Oda tipi yok mesajı -->
-          <div
-            id="odaTipleriYokMesaji"
-            style="display: none"
-            class="text-center py-8"
-          >
-            <svg
-              class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-              ></path>
-            </svg>
-            <p class="mt-4 text-slate-600 dark:text-slate-400 font-medium">
-              Bu katta henüz oda bulunmuyor
-            </p>
-            <p class="mt-2 text-sm text-slate-500 dark:text-slate-500">
-              Oda Tanımla sayfasından oda ekleyebilirsiniz
-            </p>
-          </div>
-        </div>
       </div>
-      <div
-        class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4"
+    </div>
+    <div
+      class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end"
+    >
+      <a
+        href="#"
+        rel="modal:close"
+        class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
       >
-        <button
-          type="button"
-          class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
-          data-dismiss="modal"
-        >
-          Kapat
-        </button>
-      </div>
+        Kapat
+      </a>
     </div>
   </div>
 </div>
@@ -1157,7 +1265,10 @@ content %}
 <script>
   // Modal açma fonksiyonları
   function yeniKatModal() {
-    $("#yeniKatModal").modal("show");
+    $("#yeniKatModal").modal({
+      fadeDuration: 200,
+      fadeDelay: 0.1,
+    });
   }
 
   function katDuzenleModal(katId, otelId, katAdi, katNo, aciklama) {
@@ -1169,7 +1280,10 @@ content %}
     // Form action'ı güncelle
     document.getElementById("katDuzenleForm").action = `/kat-duzenle/${katId}`;
 
-    $("#katDuzenleModal").modal("show");
+    $("#katDuzenleModal").modal({
+      fadeDuration: 200,
+      fadeDelay: 0.1,
+    });
   }
 
   // Oda tipleri modal
@@ -1186,7 +1300,10 @@ content %}
     document.getElementById("odaTipleriIcerik").style.display = "none";
 
     // Modal'ı aç
-    $("#odaTipleriModal").modal("show");
+    $("#odaTipleriModal").modal({
+      fadeDuration: 200,
+      fadeDelay: 0.1,
+    });
 
     // AJAX ile oda tiplerini getir
     fetch(`/api/katlar/${katId}/oda-tipleri`)
@@ -1295,7 +1412,10 @@ content %}
     document.getElementById("odaTipleriYonetimIcerik").style.display = "none";
 
     // Modal'ı aç
-    $("#odaTipleriYonetimModal").modal("show");
+    $("#odaTipleriYonetimModal").modal({
+      fadeDuration: 200,
+      fadeDelay: 0.1,
+    });
 
     // Oda tiplerini yükle
     odaTipleriYukle();
@@ -1438,7 +1558,7 @@ content %}
     const setupSelect = document.getElementById("yeni_oda_tipi_setup");
     setupSelect.innerHTML = '<option value="">Yükleniyor...</option>';
 
-    fetch("/api/setup")
+    fetch("/api/setuplar")
       .then((response) => response.json())
       .then((data) => {
         if (data.success && data.setuplar) {
@@ -1458,7 +1578,10 @@ content %}
         setupSelect.innerHTML = '<option value="">Hata oluştu</option>';
       });
 
-    $("#yeniOdaTipiModal").modal("show");
+    $("#yeniOdaTipiModal").modal({
+      fadeDuration: 200,
+      fadeDelay: 0.1,
+    });
   }
 
   // Oda tipi kaydet
@@ -1500,7 +1623,7 @@ content %}
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          $("#yeniOdaTipiModal").modal("hide");
+          yeniOdaTipiModalKapat();
           odaTipleriYukle();
 
           // Başarı mesajı
@@ -1543,7 +1666,7 @@ content %}
       ? setup_ids_str.split(",").map((id) => parseInt(id))
       : [];
 
-    fetch("/api/setup")
+    fetch("/api/setuplar")
       .then((response) => response.json())
       .then((data) => {
         if (data.success && data.setuplar) {
@@ -1567,7 +1690,10 @@ content %}
         setupSelect.innerHTML = '<option value="">Hata oluştu</option>';
       });
 
-    $("#odaTipiDuzenleModal").modal("show");
+    $("#odaTipiDuzenleModal").modal({
+      fadeDuration: 200,
+      fadeDelay: 0.1,
+    });
   }
 
   // Oda tipi güncelle
@@ -1610,7 +1736,7 @@ content %}
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          $("#odaTipiDuzenleModal").modal("hide");
+          odaTipiDuzenleModalKapat();
           odaTipleriYukle();
 
           // Başarı mesajı
@@ -1736,7 +1862,10 @@ content %}
     document.getElementById("katOdaTipleriYokMesaji").style.display = "none";
 
     // Modal'ı aç
-    $("#katOdaTipleriModal").modal("show");
+    $("#katOdaTipleriModal").modal({
+      fadeDuration: 200,
+      fadeDelay: 0.1,
+    });
 
     // Bu kattaki odaları getir
     fetch(`/api/katlar/${katId}/odalar`)

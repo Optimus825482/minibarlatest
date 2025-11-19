@@ -1131,16 +1131,19 @@ def get_kat_sorumlusu_zimmet_stoklari(personel_id):
                 # Kullanım yüzdesi
                 kullanim_yuzdesi = (detay.kullanilan_miktar / detay.miktar * 100) if detay.miktar > 0 else 0
                 
+                # Kritik seviye kontrolü (None ise varsayılan 10)
+                kritik_seviye_safe = kritik_seviye if kritik_seviye is not None else 10
+                
                 # Stok durumu belirleme
                 if kalan == 0:
                     durum = 'stokout'
                     badge_class = 'bg-red-100 text-red-800 border border-red-300 dark:bg-red-900/20 dark:text-red-400'
                     badge_text = 'Stokout'
-                elif kalan <= kritik_seviye:
+                elif kalan <= kritik_seviye_safe:
                     durum = 'kritik'
                     badge_class = 'bg-red-100 text-red-800 border border-red-300 dark:bg-red-900/20 dark:text-red-400'
                     badge_text = 'Kritik'
-                elif kalan <= kritik_seviye * 1.5:
+                elif kalan <= kritik_seviye_safe * 1.5:
                     durum = 'dikkat'
                     badge_class = 'bg-yellow-100 text-yellow-800 border border-yellow-300 dark:bg-yellow-900/20 dark:text-yellow-400'
                     badge_text = 'Dikkat'
@@ -1395,63 +1398,91 @@ def olustur_otomatik_siparis(personel_id, guvenlik_marji=1.5):
 
 def kaydet_siparis_talebi(personel_id, siparis_listesi, aciklama=None):
     """
-    Sipariş talebini kaydeder ve sistem loguna ekler
+    Kat sorumlusu sipariş talebini veritabanına kaydeder
     
     Args:
         personel_id (int): Kat sorumlusu kullanıcı ID
-        siparis_listesi (list): Sipariş edilecek ürünler
+        siparis_listesi (list): Sipariş edilecek ürünler [{'detay_id': urun_id, 'onerilen_miktar': miktar, 'aciliyet': 'normal/acil'}]
         aciklama (str, optional): Ek açıklama
     
     Returns:
-        dict: {
-            'success': bool,
-            'siparis_id': int or None,
-            'message': str
-        }
+        dict: {'success': bool, 'talep_id': int or None, 'talep_no': str, 'message': str}
     """
     try:
+        from models import db, KatSorumlusuSiparisTalebi, KatSorumlusuSiparisTalepDetay
         from utils.audit import audit_create
         
         if not siparis_listesi or len(siparis_listesi) == 0:
             return {
                 'success': False,
-                'siparis_id': None,
+                'talep_id': None,
+                'talep_no': None,
                 'message': 'Sipariş listesi boş olamaz'
             }
         
-        # Sipariş bilgilerini JSON formatında hazırla
-        siparis_detay = {
-            'personel_id': personel_id,
-            'tarih': datetime.now().isoformat(),
-            'aciklama': aciklama,
-            'urunler': siparis_listesi,
-            'toplam_urun': len(siparis_listesi),
-            'toplam_miktar': sum(u['onerilen_miktar'] for u in siparis_listesi),
-            'acil_urun_sayisi': sum(1 for u in siparis_listesi if u['aciliyet'] == 'acil')
-        }
+        # Talep numarası oluştur: KST-YYYYMMDD-XXXX
+        tarih_str = datetime.now().strftime('%Y%m%d')
+        son_talep = KatSorumlusuSiparisTalebi.query.filter(
+            KatSorumlusuSiparisTalebi.talep_no.like(f'KST-{tarih_str}-%')
+        ).order_by(KatSorumlusuSiparisTalebi.id.desc()).first()
         
-        # Sistem loguna kaydet
-        log_islem(
-            islem_tipi='ekleme',
-            modul='siparis_talebi',
-            islem_detay=siparis_detay
+        if son_talep:
+            son_sira = int(son_talep.talep_no.split('-')[-1])
+            yeni_sira = son_sira + 1
+        else:
+            yeni_sira = 1
+        
+        talep_no = f'KST-{tarih_str}-{yeni_sira:04d}'
+        
+        # Kat sorumlusunun bağlı olduğu depo sorumlusunu bul
+        from models import Kullanici
+        kat_sorumlusu = db.session.get(Kullanici, personel_id)
+        depo_sorumlusu_id = kat_sorumlusu.depo_sorumlusu_id if kat_sorumlusu else None
+        
+        # Ana talep kaydı oluştur
+        yeni_talep = KatSorumlusuSiparisTalebi(
+            talep_no=talep_no,
+            kat_sorumlusu_id=personel_id,
+            depo_sorumlusu_id=depo_sorumlusu_id,  # Bağlı depo sorumlusu
+            durum='beklemede',
+            aciklama=aciklama
         )
+        db.session.add(yeni_talep)
+        db.session.flush()  # ID'yi al
         
-        # Audit trail
+        # Detay kayıtlarını oluştur
+        for urun in siparis_listesi:
+            detay = KatSorumlusuSiparisTalepDetay(
+                talep_id=yeni_talep.id,
+                urun_id=urun['detay_id'],
+                talep_miktari=urun['onerilen_miktar'],
+                aciliyet=urun.get('aciliyet', 'normal')
+            )
+            db.session.add(detay)
+        
+        db.session.commit()
+        
+        # Audit log
         audit_create(
-            tablo_adi='siparis_talep',
-            kayit_id=None,
-            yeni_deger=siparis_detay,
-            aciklama=f'Kat sorumlusu sipariş talebi oluşturdu: {len(siparis_listesi)} ürün'
+            tablo_adi='kat_sorumlusu_siparis_talepleri',
+            kayit_id=yeni_talep.id,
+            yeni_deger={
+                'talep_no': talep_no,
+                'urun_sayisi': len(siparis_listesi),
+                'toplam_miktar': sum(u['onerilen_miktar'] for u in siparis_listesi)
+            },
+            aciklama=f'Kat sorumlusu sipariş talebi oluşturdu: {talep_no}'
         )
         
         return {
             'success': True,
-            'siparis_id': None,  # Şimdilik sadece log kaydı, ileride SiparisIstek tablosu eklenebilir
-            'message': f'Sipariş talebi başarıyla kaydedildi. {len(siparis_listesi)} ürün için talep oluşturuldu.'
+            'talep_id': yeni_talep.id,
+            'talep_no': talep_no,
+            'message': f'Sipariş talebi başarıyla oluşturuldu. Talep No: {talep_no}'
         }
         
     except Exception as e:
+        db.session.rollback()
         log_hata(e, modul='kat_sorumlusu_stok', extra_info={
             'function': 'kaydet_siparis_talebi',
             'personel_id': personel_id,
@@ -1459,7 +1490,8 @@ def kaydet_siparis_talebi(personel_id, siparis_listesi, aciklama=None):
         })
         return {
             'success': False,
-            'siparis_id': None,
+            'talep_id': None,
+            'talep_no': None,
             'message': f'Sipariş kaydedilemedi: {str(e)}'
         }
 

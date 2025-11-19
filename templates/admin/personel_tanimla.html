@@ -159,22 +159,26 @@
 </div>
 
 <!-- Yeni Kullanıcı Ekle Modal -->
-<div class="modal fade" id="yeniKullaniciModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-            <div class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
-                <h5 class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    <svg class="inline-block h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
-                    </svg>
-                    Yeni Kullanıcı Ekle
-                </h5>
-                <button type="button" class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" data-dismiss="modal">
-                    <span class="text-2xl">&times;</span>
-                </button>
-            </div>
-            <form id="yeniKullaniciForm">
-                <div class="modal-body p-6">
+<div id="yeniKullaniciModal" class="modal p-4 sm:p-6 md:p-8">
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full mx-auto max-h-[90vh] overflow-y-auto">
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between sticky top-0">
+            <h5 class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center">
+                <svg class="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                </svg>
+                Yeni Kullanıcı Ekle
+            </h5>
+            <a href="#" rel="modal:close" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </a>
+        </div>
+        <form id="yeniKullaniciForm">
+            <div class="p-6">
+                    <!-- CSRF Token -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    
                     <!-- Alert Mesajları -->
                     <div id="yeniKullaniciAlert" style="display:none;"></div>
                     
@@ -301,14 +305,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4">
-                    <button type="button" 
-                            class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700" 
-                            data-dismiss="modal">
+                <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3 sticky bottom-0">
+                    <a href="#" rel="modal:close" class="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-600">
                         İptal
-                    </button>
+                    </a>
                     <button type="submit" 
-                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
                         <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
                         </svg>
@@ -348,7 +350,10 @@
         }
         
         // Modal'ı göster
-        $('#yeniKullaniciModal').modal('show');
+        $('#yeniKullaniciModal').modal({
+            fadeDuration: 200,
+            fadeDelay: 0.1
+        });
     }
     
     // Modal alert gösterme fonksiyonu - Global scope'ta tanımla
@@ -432,7 +437,7 @@
             
             const rol = $('#yeniRol').val();
             const formData = {
-                csrf_token: $('meta[name="csrf-token"]').attr('content'),
+                csrf_token: $('input[name="csrf_token"]').val(),
                 kullanici_adi: $('#yeniKullaniciAdi').val().trim(),
                 sifre: $('#yeniSifre').val(),
                 ad: $('#yeniAd').val().trim(),
@@ -478,10 +483,12 @@
                 url: '/personel-tanimla',
                 method: 'POST',
                 contentType: 'application/json',
+                headers: {
+                    'X-CSRFToken': formData.csrf_token
+                },
                 data: JSON.stringify(formData),
                 success: function(response) {
                     showModalAlert('yeniKullaniciAlert', 'success', 'Kullanıcı başarıyla eklendi');
-                    toastr.success('Kullanıcı başarıyla eklendi');
                     setTimeout(() => {
                         $('#yeniKullaniciModal').modal('hide');
                         location.reload();

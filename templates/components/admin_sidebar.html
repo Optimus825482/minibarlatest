@@ -128,13 +128,6 @@
   </button>
   <div class="sidebar-section-content" id="section-minibar">
     <a
-      href="{{ url_for('admin_oda_minibar_stoklari') }}"
-      class="sidebar-item {% if request.endpoint == 'admin_oda_minibar_stoklari' %}active{% endif %}"
-    >
-      <i class="fas fa-door-closed sidebar-icon"></i>
-      <span class="sidebar-text">Oda Minibarları</span>
-    </a>
-    <a
       href="{{ url_for('admin_minibar_islemleri') }}"
       class="sidebar-item {% if request.endpoint == 'admin_minibar_islemleri' %}active{% endif %}"
     >
@@ -187,28 +180,22 @@
       class="sidebar-item {% if request.endpoint == 'yonetici_siparis_listesi' %}active{% endif %}"
     >
       <i class="fas fa-list sidebar-icon"></i>
-      <span class="sidebar-text">Sipariş Yönetimi</span>
+      <span class="sidebar-text">Sipariş Listesi</span>
     </a>
     <a
-      href="{{ url_for('satin_alma_siparis') }}"
-      class="sidebar-item {% if request.endpoint == 'satin_alma_siparis' %}active{% endif %}"
+      href="{{ url_for('yonetici_satin_alma_islemleri') }}"
+      class="sidebar-item {% if request.endpoint == 'yonetici_satin_alma_islemleri' or request.endpoint == 'yonetici_satin_alma_detay' %}active{% endif %}"
     >
-      <i class="fas fa-plus-circle sidebar-icon"></i>
-      <span class="sidebar-text">Yeni Sipariş</span>
+      <i class="fas fa-shopping-bag sidebar-icon"></i>
+      <span class="sidebar-text">Satın Alma İşlemleri</span>
     </a>
+
     <a
       href="{{ url_for('tedarikci_yonetimi') }}"
       class="sidebar-item {% if request.endpoint == 'tedarikci_yonetimi' %}active{% endif %}"
     >
       <i class="fas fa-truck sidebar-icon"></i>
       <span class="sidebar-text">Tedarikçiler</span>
-    </a>
-    <a
-      href="{{ url_for('urun_tedarikci_fiyat') }}"
-      class="sidebar-item {% if request.endpoint == 'urun_tedarikci_fiyat' %}active{% endif %}"
-    >
-      <i class="fas fa-money-bill-wave sidebar-icon"></i>
-      <span class="sidebar-text">Tedarikçi Fiyatları</span>
     </a>
   </div>
 </div>
@@ -224,19 +211,13 @@
   </button>
   <div class="sidebar-section-content" id="section-fiyat">
     <a
-      href="{{ url_for('urun_fiyat_yonetimi') }}"
-      class="sidebar-item {% if request.endpoint == 'urun_fiyat_yonetimi' %}active{% endif %}"
+      href="{{ url_for('fiyat_yonetimi') }}"
+      class="sidebar-item {% if request.endpoint == 'fiyat_yonetimi' %}active{% endif %}"
     >
       <i class="fas fa-tags sidebar-icon text-blue-500"></i>
       <span class="sidebar-text font-medium">Fiyat Yönetimi</span>
     </a>
-    <a
-      href="{{ url_for('kampanya_yonetimi') }}"
-      class="sidebar-item {% if request.endpoint == 'kampanya_yonetimi' %}active{% endif %}"
-    >
-      <i class="fas fa-percent sidebar-icon text-purple-500"></i>
-      <span class="sidebar-text font-medium">Kampanya Yönetimi</span>
-    </a>
+
     <a
       href="{{ url_for('karlilik_dashboard') }}"
       class="sidebar-item {% if request.endpoint == 'karlilik_dashboard' %}active{% endif %}"
@@ -271,13 +252,7 @@
       <i class="fas fa-boxes sidebar-icon"></i>
       <span class="sidebar-text">Stok Raporları</span>
     </a>
-    <a
-      href="{{ url_for('raporlar.minibar_raporlari') }}"
-      class="sidebar-item {% if request.endpoint == 'raporlar.minibar_raporlari' %}active{% endif %}"
-    >
-      <i class="fas fa-wine-bottle sidebar-icon"></i>
-      <span class="sidebar-text">Minibar Raporları</span>
-    </a>
+
     <a
       href="{{ url_for('raporlar.zimmet_raporlari') }}"
       class="sidebar-item {% if request.endpoint == 'raporlar.zimmet_raporlari' %}active{% endif %}"

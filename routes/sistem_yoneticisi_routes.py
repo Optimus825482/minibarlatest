@@ -18,7 +18,7 @@ Roller:
 - admin
 """
 
-from flask import render_template, request, redirect, url_for, flash, session
+from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from datetime import datetime, date
 from models import db, Otel, Kat, Oda, OdaTipi, Kullanici, SistemLog
 from utils.decorators import login_required, role_required
@@ -28,6 +28,9 @@ from utils.audit import audit_create, audit_update, audit_delete, serialize_mode
 
 def register_sistem_yoneticisi_routes(app):
     """Sistem yöneticisi route'larını kaydet"""
+    
+    # CSRF protection instance'ını al
+    csrf = app.extensions.get('csrf')
     
     @app.route('/sistem-loglari')
     @login_required
@@ -443,6 +446,12 @@ def register_sistem_yoneticisi_routes(app):
                 kat = Kat.query.get(form.kat_id.data)
                 if not kat or kat.otel_id != form.otel_id.data:
                     flash('Seçilen kat, seçilen otele ait değil!', 'danger')
+                    return render_template('sistem_yoneticisi/oda_tanimla.html', katlar=[], odalar=[], form=form)
+                
+                # Oda numarası duplikasyon kontrolü
+                mevcut_oda = Oda.query.filter_by(oda_no=form.oda_no.data, aktif=True).first()
+                if mevcut_oda:
+                    flash(f'Oda numarası "{form.oda_no.data}" zaten kullanılıyor! Lütfen farklı bir oda numarası girin.', 'warning')
                     return render_template('sistem_yoneticisi/oda_tanimla.html', katlar=[], odalar=[], form=form)
                 
                 oda = Oda(
@@ -1004,10 +1013,9 @@ def register_sistem_yoneticisi_routes(app):
     @login_required
     @role_required('sistem_yoneticisi', 'admin')
     def fiyat_karsilastirma(urun_id):
-        """Ürün için tedarikçi fiyat karşılaştırması"""
-        from models import Urun, UrunTedarikciFiyat
-        from datetime import date
-        from utils.tedarikci_servisleri import TedarikciServisi
+        """Ürün için satın alma geçmişi"""
+        from models import Urun, SatinAlmaSiparisi, SatinAlmaSiparisDetay
+        from datetime import date, timedelta
         
         try:
             # Ürün bilgisini getir
@@ -1016,49 +1024,37 @@ def register_sistem_yoneticisi_routes(app):
                 flash('Ürün bulunamadı.', 'danger')
                 return redirect(url_for('urun_tedarikci_fiyat'))
             
-            # Aktif fiyatları getir (performans bilgileri ile)
-            fiyatlar = UrunTedarikciFiyat.query.options(
-                db.joinedload(UrunTedarikciFiyat.tedarikci)
+            # Toplam stok hesapla
+            toplam_stok = 0
+            if urun.depo_stoklari:
+                toplam_stok = sum(stok.miktar for stok in urun.depo_stoklari)
+            
+            # Bu ürün için yapılan satın almaları getir (son 1 yıl)
+            bir_yil_once = date.today() - timedelta(days=365)
+            
+            satin_almalar = db.session.query(
+                SatinAlmaSiparisDetay
+            ).join(
+                SatinAlmaSiparisi
+            ).options(
+                db.joinedload(SatinAlmaSiparisDetay.siparis).joinedload(SatinAlmaSiparisi.tedarikci),
+                db.joinedload(SatinAlmaSiparisDetay.siparis).joinedload(SatinAlmaSiparisi.otel)
             ).filter(
-                UrunTedarikciFiyat.urun_id == urun_id,
-                UrunTedarikciFiyat.aktif.is_(True),
-                db.or_(
-                    UrunTedarikciFiyat.bitis_tarihi.is_(None),
-                    UrunTedarikciFiyat.bitis_tarihi >= date.today()
-                )
-            ).order_by(UrunTedarikciFiyat.alis_fiyati).all()
-            
-            # Her tedarikçi için performans bilgilerini ekle
-            fiyat_listesi = []
-            for fiyat in fiyatlar:
-                # Son 6 ay performans bilgisi
-                from datetime import datetime, timedelta
-                donem_bitis = date.today()
-                donem_baslangic = donem_bitis - timedelta(days=180)
-                
-                performans = TedarikciServisi.tedarikci_performans_hesapla(
-                    tedarikci_id=fiyat.tedarikci_id,
-                    donem_baslangic=donem_baslangic,
-                    donem_bitis=donem_bitis
-                )
-                
-                fiyat_listesi.append({
-                    'fiyat': fiyat,
-                    'performans': performans
-                })
-            
-            # En düşük fiyatı bul
-            en_dusuk_fiyat = min([f['fiyat'].alis_fiyati for f in fiyat_listesi]) if fiyat_listesi else None
+                SatinAlmaSiparisDetay.urun_id == urun_id,
+                SatinAlmaSiparisi.siparis_tarihi >= bir_yil_once
+            ).order_by(
+                SatinAlmaSiparisi.siparis_tarihi.desc()
+            ).all()
             
         except Exception as e:
             log_hata(e, modul='fiyat_karsilastirma')
-            flash('Fiyat karşılaştırması yüklenirken hata oluştu.', 'danger')
+            flash('Satın alma geçmişi yüklenirken hata oluştu.', 'danger')
             return redirect(url_for('urun_tedarikci_fiyat'))
         
         return render_template('sistem_yoneticisi/fiyat_karsilastirma.html',
                              urun=urun,
-                             fiyat_listesi=fiyat_listesi,
-                             en_dusuk_fiyat=en_dusuk_fiyat)
+                             satin_almalar=satin_almalar,
+                             toplam_stok=toplam_stok)
     
     
     @app.route('/fiyat-guncelle/<int:fiyat_id>', methods=['POST'])
@@ -1195,6 +1191,10 @@ def register_sistem_yoneticisi_routes(app):
                     'toplam_siparis': ay_performans.get('toplam_siparis', 0)
                 })
             
+            # Grafik için veri hazırla
+            aylar = [ap['ay'] for ap in aylik_performans]
+            siparis_sayilari = [ap['toplam_siparis'] for ap in aylik_performans]
+            
         except Exception as e:
             log_hata(e, modul='tedarikci_performans')
             flash('Performans raporu yüklenirken hata oluştu.', 'danger')
@@ -1205,6 +1205,8 @@ def register_sistem_yoneticisi_routes(app):
                              performans=performans,
                              siparisler=siparisler,
                              aylik_performans=aylik_performans,
+                             aylar=aylar,
+                             siparis_sayilari=siparis_sayilari,
                              donem_ay=donem_ay,
                              donem_baslangic=donem_baslangic,
                              donem_bitis=donem_bitis)
@@ -1347,7 +1349,7 @@ def register_sistem_yoneticisi_routes(app):
     @role_required('sistem_yoneticisi', 'admin')
     def yonetici_siparis_detay(siparis_id):
         """Sistem yöneticisi için sipariş detayı"""
-        from models import SatinAlmaSiparisi, SatinAlmaSiparisDetay
+        from models import SatinAlmaSiparisi, SatinAlmaSiparisDetay, SatinAlmaIslem
         
         try:
             siparis = SatinAlmaSiparisi.query.get_or_404(siparis_id)
@@ -1355,9 +1357,16 @@ def register_sistem_yoneticisi_routes(app):
             # Sipariş detaylarını getir
             detaylar = SatinAlmaSiparisDetay.query.filter_by(siparis_id=siparis_id).all()
             
+            # Satın alma işlemi var mı kontrol et
+            satin_alma_var = SatinAlmaIslem.query.filter_by(
+                siparis_id=siparis_id,
+                durum='aktif'
+            ).first() is not None
+            
             return render_template('sistem_yoneticisi/siparis_detay.html',
                                  siparis=siparis,
-                                 detaylar=detaylar)
+                                 detaylar=detaylar,
+                                 satin_alma_var=satin_alma_var)
                                  
         except Exception as e:
             log_hata(e, 'yonetici_siparis_detay')
@@ -1528,6 +1537,154 @@ def register_sistem_yoneticisi_routes(app):
         return redirect(url_for('yonetici_siparis_detay', siparis_id=siparis_id))
 
     # ============================================================================
+    # SATIN ALMA İŞLEMLERİ ROUTE'LARI
+    # ============================================================================
+    
+    @app.route('/yonetici-satin-alma-islemleri')
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def yonetici_satin_alma_islemleri():
+        """Satın alma işlemleri listesi"""
+        from models import SatinAlmaIslem, SatinAlmaSiparisi
+        from sqlalchemy import desc
+        
+        try:
+            # Filtre parametreleri
+            durum_filtre = request.args.get('durum')
+            
+            # Satın alma işlemlerini getir
+            query = SatinAlmaIslem.query.options(
+                db.joinedload(SatinAlmaIslem.siparis).joinedload(SatinAlmaSiparisi.tedarikci),
+                db.joinedload(SatinAlmaIslem.siparis).joinedload(SatinAlmaSiparisi.otel),
+                db.joinedload(SatinAlmaIslem.olusturan)
+            )
+            
+            if durum_filtre:
+                query = query.filter_by(durum=durum_filtre)
+            
+            islemler = query.order_by(desc(SatinAlmaIslem.islem_tarihi)).all()
+            
+            # İstatistikler
+            istatistikler = {
+                'toplam': len(islemler),
+                'aktif': sum(1 for i in islemler if i.durum == 'aktif'),
+                'iptal': sum(1 for i in islemler if i.durum == 'iptal'),
+                'toplam_tutar': sum(i.toplam_tutar for i in islemler if i.durum == 'aktif')
+            }
+            
+            return render_template('sistem_yoneticisi/satin_alma_islemleri.html',
+                                 islemler=islemler,
+                                 istatistikler=istatistikler,
+                                 durum_filtre=durum_filtre)
+                                 
+        except Exception as e:
+            log_hata(e, 'satin_alma_islemleri')
+            flash(f'Satın alma işlemleri yüklenirken hata oluştu: {str(e)}', 'danger')
+            return redirect(url_for('dashboard'))
+    
+    
+    @app.route('/yonetici-satin-alma-detay/<int:islem_id>')
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def yonetici_satin_alma_detay(islem_id):
+        """Satın alma işlemi detayı"""
+        from models import SatinAlmaIslem, SatinAlmaIslemDetay, SatinAlmaSiparisi
+        
+        try:
+            islem = SatinAlmaIslem.query.options(
+                db.joinedload(SatinAlmaIslem.siparis).joinedload(SatinAlmaSiparisi.tedarikci),
+                db.joinedload(SatinAlmaIslem.siparis).joinedload(SatinAlmaSiparisi.otel),
+                db.joinedload(SatinAlmaIslem.olusturan)
+            ).get_or_404(islem_id)
+            
+            # İşlem detaylarını getir
+            detaylar = SatinAlmaIslemDetay.query.options(
+                db.joinedload(SatinAlmaIslemDetay.urun)
+            ).filter_by(islem_id=islem_id).all()
+            
+            return render_template('sistem_yoneticisi/satin_alma_detay.html',
+                                 islem=islem,
+                                 detaylar=detaylar)
+                                 
+        except Exception as e:
+            log_hata(e, 'satin_alma_detay')
+            flash(f'Satın alma detayı yüklenirken hata oluştu: {str(e)}', 'danger')
+            return redirect(url_for('yonetici_satin_alma_islemleri'))
+    
+    
+    @app.route('/satin-alma-iptal/<int:islem_id>', methods=['POST'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def satin_alma_iptal(islem_id):
+        """Satın alma işlemini iptal et ve stoktan düş"""
+        from models import SatinAlmaIslem, SatinAlmaIslemDetay, DepoStok, StokHareket, SatinAlmaSiparisi
+        
+        try:
+            islem = SatinAlmaIslem.query.get_or_404(islem_id)
+            
+            # Sadece aktif işlemler iptal edilebilir
+            if islem.durum != 'aktif':
+                flash('Sadece aktif satın alma işlemleri iptal edilebilir.', 'warning')
+                return redirect(url_for('satin_alma_detay', islem_id=islem_id))
+            
+            # İşlem detaylarını getir
+            detaylar = SatinAlmaIslemDetay.query.filter_by(islem_id=islem_id).all()
+            
+            # Her ürün için stoktan düş
+            for detay in detaylar:
+                # Depo stoğunu bul
+                depo_stok = DepoStok.query.filter_by(
+                    urun_id=detay.urun_id,
+                    otel_id=islem.siparis.otel_id
+                ).first()
+                
+                if depo_stok and depo_stok.miktar >= detay.miktar:
+                    # Stoktan düş
+                    depo_stok.miktar -= detay.miktar
+                    
+                    # Stok hareketi kaydet
+                    stok_hareket = StokHareket(
+                        urun_id=detay.urun_id,
+                        otel_id=islem.siparis.otel_id,
+                        hareket_tipi='cikis',
+                        miktar=detay.miktar,
+                        aciklama=f'Satın alma işlemi iptal edildi: {islem.islem_no}',
+                        kullanici_id=current_user.id
+                    )
+                    db.session.add(stok_hareket)
+                else:
+                    flash(f'{detay.urun.urun_adi} için yeterli stok yok. İptal işlemi tamamlanamadı.', 'danger')
+                    db.session.rollback()
+                    return redirect(url_for('satin_alma_detay', islem_id=islem_id))
+            
+            # İşlemi iptal et
+            islem.durum = 'iptal'
+            islem.iptal_tarihi = datetime.now(timezone.utc)
+            islem.iptal_eden_id = current_user.id
+            islem.iptal_aciklama = request.form.get('iptal_aciklama', 'Sistem yöneticisi tarafından iptal edildi')
+            
+            # İlgili siparişi de iptal edilebilir duruma getir
+            if islem.siparis:
+                islem.siparis.durum = 'onaylandi'  # Sipariş tekrar iptal edilebilir hale gelir
+            
+            db.session.commit()
+            
+            log_islem('iptal', 'satin_alma_islem', {
+                'islem_id': islem.id,
+                'islem_no': islem.islem_no,
+                'iptal_eden': current_user.ad_soyad
+            })
+            
+            flash('Satın alma işlemi başarıyla iptal edildi ve stoktan düşüldü.', 'success')
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, 'satin_alma_iptal')
+            flash(f'Satın alma işlemi iptal edilirken hata oluştu: {str(e)}', 'danger')
+        
+        return redirect(url_for('satin_alma_detay', islem_id=islem_id))
+
+    # ============================================================================
     # API ENDPOINTS - Kat Oda Tipleri
     # ============================================================================
     
@@ -1596,7 +1753,7 @@ def register_sistem_yoneticisi_routes(app):
             
             oda_tipleri = OdaTipi.query.filter_by(aktif=True).order_by(OdaTipi.ad).all()
             
-            return {
+            return jsonify({
                 'success': True,
                 'oda_tipleri': [{
                     'id': tip.id,
@@ -1606,16 +1763,17 @@ def register_sistem_yoneticisi_routes(app):
                     'setup_adlari': [s.ad for s in tip.setuplar],  # Setup isimleri
                     'olusturma_tarihi': tip.olusturma_tarihi.isoformat() if tip.olusturma_tarihi else None
                 } for tip in oda_tipleri]
-            }
+            })
             
         except Exception as e:
             log_hata(e, 'api_oda_tipleri_listele')
-            return {
+            return jsonify({
                 'success': False,
                 'error': str(e)
-            }, 500
+            }), 500
     
     @app.route('/api/oda-tipleri', methods=['POST'])
+    @csrf.exempt
     @login_required
     @role_required('sistem_yoneticisi', 'admin')
     def api_oda_tipi_ekle():
@@ -1718,6 +1876,7 @@ def register_sistem_yoneticisi_routes(app):
             }, 500
     
     @app.route('/api/oda-tipleri/<int:tip_id>', methods=['PUT'])
+    @csrf.exempt
     @login_required
     @role_required('sistem_yoneticisi', 'admin')
     def api_oda_tipi_guncelle(tip_id):
@@ -1791,6 +1950,7 @@ def register_sistem_yoneticisi_routes(app):
             }, 500
     
     @app.route('/api/oda-tipleri/<int:tip_id>', methods=['DELETE'])
+    @csrf.exempt
     @login_required
     @role_required('sistem_yoneticisi', 'admin')
     def api_oda_tipi_sil(tip_id):
@@ -2275,3 +2435,182 @@ def register_sistem_yoneticisi_routes(app):
                 'success': False,
                 'error': str(e)
             }, 500
+
+    # ============================================
+    # FİYAT YÖNETİMİ
+    # ============================================
+    
+    @app.route('/fiyat-yonetimi')
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def fiyat_yonetimi():
+        """Ürün fiyat yönetimi sayfası"""
+        try:
+            from models import Urun, UrunGrup, SatinAlmaIslemDetay
+            from sqlalchemy import func, desc
+            
+            # Tüm ürünleri gruplarıyla birlikte getir
+            urunler = db.session.query(
+                Urun.id,
+                Urun.urun_adi,
+                Urun.urun_kodu,
+                Urun.barkod,
+                Urun.birim,
+                Urun.satis_fiyati,
+                Urun.alis_fiyati,
+                Urun.kar_tutari,
+                Urun.kar_orani,
+                UrunGrup.grup_adi
+            ).join(
+                UrunGrup, Urun.grup_id == UrunGrup.id
+            ).filter(
+                Urun.aktif == True
+            ).order_by(
+                UrunGrup.grup_adi, Urun.urun_adi
+            ).all()
+            
+            # Her ürün için son alım fiyatını bul
+            urun_listesi = []
+            for urun in urunler:
+                # Son alım fiyatını bul
+                son_alim = db.session.query(
+                    SatinAlmaIslemDetay.birim_fiyat,
+                    SatinAlmaIslemDetay.olusturma_tarihi
+                ).filter(
+                    SatinAlmaIslemDetay.urun_id == urun.id
+                ).order_by(
+                    desc(SatinAlmaIslemDetay.olusturma_tarihi)
+                ).first()
+                
+                son_alim_fiyati = float(son_alim.birim_fiyat) if son_alim else None
+                son_alim_tarihi = son_alim.olusturma_tarihi if son_alim else None
+                
+                urun_listesi.append({
+                    'id': urun.id,
+                    'urun_adi': urun.urun_adi,
+                    'urun_kodu': urun.urun_kodu,
+                    'barkod': urun.barkod,
+                    'birim': urun.birim,
+                    'grup_adi': urun.grup_adi,
+                    'satis_fiyati': float(urun.satis_fiyati) if urun.satis_fiyati else 0,
+                    'alis_fiyati': float(urun.alis_fiyati) if urun.alis_fiyati else 0,
+                    'kar_tutari': float(urun.kar_tutari) if urun.kar_tutari else 0,
+                    'kar_orani': float(urun.kar_orani) if urun.kar_orani else 0,
+                    'son_alim_fiyati': son_alim_fiyati,
+                    'son_alim_tarihi': son_alim_tarihi.strftime('%d.%m.%Y %H:%M') if son_alim_tarihi else None
+                })
+            
+            return render_template(
+                'sistem_yoneticisi/fiyat_yonetimi.html',
+                urunler=urun_listesi
+            )
+            
+        except Exception as e:
+            log_hata(e, 'fiyat_yonetimi')
+            flash('Fiyat yönetimi sayfası yüklenirken hata oluştu', 'danger')
+            return redirect(url_for('sistem_yoneticisi_dashboard'))
+    
+    @app.route('/api/fiyat-guncelle/<int:urun_id>', methods=['POST'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_fiyat_guncelle(urun_id):
+        """Ürün fiyatlarını güncelle"""
+        try:
+            from models import Urun, UrunFiyatGecmisi, FiyatDegisiklikTipi
+            
+            data = request.get_json()
+            
+            # Validasyon
+            if not data:
+                return jsonify({'success': False, 'error': 'Veri gönderilmedi'}), 400
+            
+            urun = Urun.query.get_or_404(urun_id)
+            
+            # Eski değerleri sakla
+            eski_alis = urun.alis_fiyati
+            eski_satis = urun.satis_fiyati
+            
+            # Yeni değerleri al
+            yeni_alis = data.get('alis_fiyati')
+            yeni_satis = data.get('satis_fiyati')
+            degisiklik_sebebi = data.get('sebep', 'Manuel güncelleme')
+            
+            degisiklikler = []
+            
+            # Alış fiyatı güncelleme
+            if yeni_alis is not None:
+                yeni_alis = float(yeni_alis)
+                if yeni_alis < 0:
+                    return jsonify({'success': False, 'error': 'Alış fiyatı negatif olamaz'}), 400
+                
+                if eski_alis != yeni_alis:
+                    urun.alis_fiyati = yeni_alis
+                    
+                    # Geçmişe kaydet
+                    gecmis = UrunFiyatGecmisi(
+                        urun_id=urun_id,
+                        eski_fiyat=eski_alis,
+                        yeni_fiyat=yeni_alis,
+                        degisiklik_tipi=FiyatDegisiklikTipi.ALIS_FIYATI,
+                        degisiklik_sebebi=degisiklik_sebebi,
+                        olusturan_id=session['kullanici_id']
+                    )
+                    db.session.add(gecmis)
+                    degisiklikler.append('alış fiyatı')
+            
+            # Satış fiyatı güncelleme
+            if yeni_satis is not None:
+                yeni_satis = float(yeni_satis)
+                if yeni_satis < 0:
+                    return jsonify({'success': False, 'error': 'Satış fiyatı negatif olamaz'}), 400
+                
+                if eski_satis != yeni_satis:
+                    urun.satis_fiyati = yeni_satis
+                    
+                    # Geçmişe kaydet
+                    gecmis = UrunFiyatGecmisi(
+                        urun_id=urun_id,
+                        eski_fiyat=eski_satis,
+                        yeni_fiyat=yeni_satis,
+                        degisiklik_tipi=FiyatDegisiklikTipi.SATIS_FIYATI,
+                        degisiklik_sebebi=degisiklik_sebebi,
+                        olusturan_id=session['kullanici_id']
+                    )
+                    db.session.add(gecmis)
+                    degisiklikler.append('satış fiyatı')
+            
+            # Kar hesaplama
+            if urun.alis_fiyati and urun.satis_fiyati:
+                urun.kar_tutari = urun.satis_fiyati - urun.alis_fiyati
+                if urun.alis_fiyati > 0:
+                    urun.kar_orani = (urun.kar_tutari / urun.alis_fiyati) * 100
+                else:
+                    urun.kar_orani = 0
+            
+            if degisiklikler:
+                db.session.commit()
+                
+                log_islem(
+                    'fiyat_guncelleme',
+                    f"{urun.urun_adi} ürününün {', '.join(degisiklikler)} güncellendi",
+                    session['kullanici_id']
+                )
+                
+                return jsonify({
+                    'success': True,
+                    'message': f"{', '.join(degisiklikler).capitalize()} başarıyla güncellendi",
+                    'kar_tutari': float(urun.kar_tutari) if urun.kar_tutari else 0,
+                    'kar_orani': float(urun.kar_orani) if urun.kar_orani else 0
+                })
+            else:
+                return jsonify({
+                    'success': True,
+                    'message': 'Değişiklik yapılmadı'
+                })
+            
+        except ValueError as e:
+            return jsonify({'success': False, 'error': 'Geçersiz fiyat formatı'}), 400
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, 'api_fiyat_guncelle')
+            return jsonify({'success': False, 'error': str(e)}), 500

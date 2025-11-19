@@ -48,6 +48,9 @@ from utils.audit import audit_create, serialize_model
 def register_api_routes(app):
     """API route'larını kaydet"""
     
+    # CSRF protection instance'ını al
+    csrf = app.extensions.get('csrf')
+    
     # AJAX endpoint - Tüm odaları getir
     @app.route('/api/odalar')
     @login_required
@@ -522,13 +525,24 @@ def register_api_routes(app):
             
             mevcut_stok = giris_toplam - cikis_toplam
             
+            # Kritik seviye kontrolü (None ise varsayılan 10)
+            kritik_seviye = urun.kritik_stok_seviyesi if urun.kritik_stok_seviyesi is not None else 10
+            
+            # Stok durumu
+            if mevcut_stok > kritik_seviye:
+                stok_durumu = 'Yeterli'
+            elif mevcut_stok > 0:
+                stok_durumu = 'Kritik'
+            else:
+                stok_durumu = 'Tükendi'
+            
             return jsonify({
                 'urun_adi': urun.urun_adi,
                 'birim': urun.birim,
                 'grup_adi': urun.grup.grup_adi,
-                'kritik_stok_seviyesi': urun.kritik_stok_seviyesi,
+                'kritik_stok_seviyesi': kritik_seviye,
                 'mevcut_stok': mevcut_stok,
-                'stok_durumu': 'Yeterli' if mevcut_stok > urun.kritik_stok_seviyesi else ('Kritik' if mevcut_stok > 0 else 'Tükendi')
+                'stok_durumu': stok_durumu
             })
         except Exception as e:
             log_hata(e, modul='urun_stok')
@@ -1025,11 +1039,16 @@ def register_api_routes(app):
             urun_toplam_tuketim = {}
 
             for oda in odalar:
-                # Son işlem
-                son_islem_query = MinibarIslem.query.filter_by(oda_id=oda.id)
+                # Tarih aralığındaki tüm işlemleri al
+                islemler_query = MinibarIslem.query.filter_by(oda_id=oda.id).filter(
+                    MinibarIslem.islem_tipi.in_(['setup_kontrol', 'ekstra_tuketim'])
+                )
                 if query_filter:
-                    son_islem_query = son_islem_query.filter(*query_filter)
-                son_islem = son_islem_query.order_by(MinibarIslem.id.desc()).first()
+                    islemler_query = islemler_query.filter(*query_filter)
+                islemler = islemler_query.order_by(MinibarIslem.islem_tarihi.desc()).all()
+
+                # Son işlem tarihi
+                son_islem = islemler[0] if islemler else None
 
                 oda_veri = {
                     'oda_no': oda.oda_no,
@@ -1039,25 +1058,43 @@ def register_api_routes(app):
                     'toplam_tuketim_adedi': 0
                 }
 
-                if son_islem:
-                    for detay in son_islem.detaylar:
-                        urun = detay.urun
-                        oda_veri['urunler'].append({
-                            'urun_adi': urun.urun_adi,
-                            'mevcut_stok': detay.bitis_stok or 0,
-                            'tuketim': detay.tuketim or 0,
-                            'birim': urun.birim
-                        })
-                        oda_veri['toplam_tuketim_adedi'] += (detay.tuketim or 0)
+                # Ürün bazında toplam tüketim hesapla
+                urun_tuketim_map = {}
+                
+                for islem in islemler:
+                    for detay in islem.detaylar:
+                        if detay.tuketim and detay.tuketim > 0:
+                            urun = detay.urun
+                            if urun.id not in urun_tuketim_map:
+                                urun_tuketim_map[urun.id] = {
+                                    'urun_adi': urun.urun_adi,
+                                    'birim': urun.birim,
+                                    'tuketim': 0,
+                                    'son_stok': detay.bitis_stok or 0
+                                }
+                            urun_tuketim_map[urun.id]['tuketim'] += detay.tuketim
+                            # En son stok bilgisini güncelle
+                            if islem == son_islem:
+                                urun_tuketim_map[urun.id]['son_stok'] = detay.bitis_stok or 0
 
-                        # Ürün toplam tüketim
-                        if urun.id not in urun_toplam_tuketim:
-                            urun_toplam_tuketim[urun.id] = {
-                                'urun_adi': urun.urun_adi,
-                                'birim': urun.birim,
-                                'toplam': 0
-                            }
-                        urun_toplam_tuketim[urun.id]['toplam'] += (detay.tuketim or 0)
+                # Oda verilerine ekle
+                for urun_id, urun_data in urun_tuketim_map.items():
+                    oda_veri['urunler'].append({
+                        'urun_adi': urun_data['urun_adi'],
+                        'mevcut_stok': urun_data['son_stok'],
+                        'tuketim': urun_data['tuketim'],
+                        'birim': urun_data['birim']
+                    })
+                    oda_veri['toplam_tuketim_adedi'] += urun_data['tuketim']
+
+                    # Kat geneli ürün toplam tüketim
+                    if urun_id not in urun_toplam_tuketim:
+                        urun_toplam_tuketim[urun_id] = {
+                            'urun_adi': urun_data['urun_adi'],
+                            'birim': urun_data['birim'],
+                            'toplam': 0
+                        }
+                    urun_toplam_tuketim[urun_id]['toplam'] += urun_data['tuketim']
 
                 oda_raporlari.append(oda_veri)
 
@@ -1330,8 +1367,7 @@ def register_api_routes(app):
                 oda_tipleri_list.append({
                     'id': oda_tipi.id,
                     'ad': oda_tipi.ad,
-                    'dolap_sayisi': oda_tipi.dolap_sayisi,
-                    'setup': oda_tipi.setup
+                    'dolap_sayisi': oda_tipi.dolap_sayisi
                 })
             
             return jsonify({
@@ -1349,6 +1385,7 @@ def register_api_routes(app):
 
     # AJAX endpoint - Yeni oda ekle
     @app.route('/api/oda-ekle', methods=['POST'])
+    @csrf.exempt
     @login_required
     @role_required('sistem_yoneticisi', 'admin')
     def api_oda_ekle():
@@ -1404,7 +1441,7 @@ def register_api_routes(app):
             oda = Oda(
                 oda_no=data['oda_no'],
                 kat_id=data['kat_id'],
-                oda_tipi=data.get('oda_tipi', ''),
+                oda_tipi_id=data.get('oda_tipi') if data.get('oda_tipi') else None,
                 kapasite=data.get('kapasite'),
                 aktif=True
             )
@@ -1427,7 +1464,7 @@ def register_api_routes(app):
                 'oda_id': oda.id,
                 'oda_no': oda.oda_no,
                 'kat_id': oda.kat_id,
-                'oda_tipi': oda.oda_tipi
+                'oda_tipi_id': oda.oda_tipi_id
             })
             
             return jsonify({
@@ -1588,4 +1625,37 @@ def register_api_routes(app):
             return jsonify({
                 'success': False,
                 'error': f'Oda güncellenirken hata oluştu: {str(e)}'
+            }), 500
+    
+    # AJAX endpoint - Oda numarası kontrol et (duplikasyon)
+    @app.route('/api/oda-no-kontrol', methods=['GET'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_oda_no_kontrol():
+        """Oda numarasının kullanılıp kullanılmadığını kontrol et"""
+        try:
+            from models import Oda
+            
+            oda_no = request.args.get('oda_no', '').strip()
+            
+            if not oda_no:
+                return jsonify({
+                    'success': False,
+                    'error': 'Oda numarası gerekli'
+                }), 400
+            
+            # Aktif odalarda bu numara var mı?
+            mevcut_oda = Oda.query.filter_by(oda_no=oda_no, aktif=True).first()
+            
+            return jsonify({
+                'success': True,
+                'mevcut': mevcut_oda is not None,
+                'oda_no': oda_no
+            })
+            
+        except Exception as e:
+            log_hata(e, modul='api_oda_no_kontrol')
+            return jsonify({
+                'success': False,
+                'error': str(e)
             }), 500

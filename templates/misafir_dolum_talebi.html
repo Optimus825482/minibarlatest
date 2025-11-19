@@ -1,379 +1,449 @@
 <!DOCTYPE html>
 <html lang="tr">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
     <title>Minibar Dolum Talebi - Oda {{ oda.oda_no }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <style>
-        :root {
-            --navy-blue: #0a2351;
-            --royal-blue: #1e3a8a;
-            --gold: #d4af37;
-            --light-gold: #f4e4b7;
-            --dark-gold: #b8941f;
+      :root {
+        --navy-blue: #0a2351;
+        --royal-blue: #1e3a8a;
+        --gold: #d4af37;
+        --light-gold: #f4e4b7;
+        --dark-gold: #b8941f;
+      }
+
+      body {
+        background: linear-gradient(
+          135deg,
+          var(--royal-blue) 0%,
+          var(--navy-blue) 100%
+        );
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        padding: 20px 10px;
+      }
+
+      .card {
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        border: none;
+        overflow: hidden;
+        max-width: 500px;
+        width: 100%;
+      }
+
+      .card-header {
+        background: linear-gradient(
+          135deg,
+          var(--navy-blue) 0%,
+          var(--royal-blue) 100%
+        );
+        padding: 0;
+        border: none;
+      }
+
+      .card-body {
+        padding: 2rem 2rem 2.5rem;
+        background: #ffffff;
+      }
+
+      .otel-logo-container {
+        background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+        padding: 30px 20px;
+        border-radius: 0;
+        margin: 0;
+        border-bottom: 3px solid var(--gold);
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.15);
+      }
+
+      .otel-logo-container img {
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+        transition: transform 0.3s ease;
+      }
+
+      .otel-logo-container img:hover {
+        transform: scale(1.05);
+      }
+
+      .page-title {
+        color: var(--navy-blue);
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 1.5rem 0 0.5rem;
+        letter-spacing: -0.5px;
+      }
+
+      .room-badge {
+        display: inline-flex;
+        align-items: center;
+        background: linear-gradient(
+          135deg,
+          var(--gold) 0%,
+          var(--dark-gold) 100%
+        );
+        color: #ffffff;
+        padding: 8px 20px;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        margin-bottom: 1.5rem;
+      }
+
+      .room-badge i {
+        margin-right: 8px;
+        font-size: 1.2rem;
+      }
+
+      .alert-info {
+        background: linear-gradient(135deg, #e8f4f8 0%, #d1ecf1 100%);
+        border: 2px solid var(--gold);
+        color: var(--navy-blue);
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 1.5rem;
+      }
+
+      .alert-info i {
+        color: var(--gold);
+        font-size: 1.3rem;
+        margin-right: 8px;
+      }
+
+      .form-group label {
+        color: var(--navy-blue);
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+      }
+
+      .form-group label i {
+        color: var(--gold);
+        margin-right: 6px;
+      }
+
+      .form-control {
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 12px;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+      }
+
+      .form-control:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25);
+      }
+
+      .form-text {
+        color: #6c757d;
+        font-size: 0.85rem;
+        margin-top: 5px;
+      }
+
+      #karakterSayaci {
+        color: var(--navy-blue);
+        font-weight: 600;
+      }
+
+      .btn-primary {
+        background: linear-gradient(
+          135deg,
+          var(--gold) 0%,
+          var(--dark-gold) 100%
+        );
+        border: none;
+        padding: 14px 24px;
+        font-size: 1.15rem;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        color: #ffffff;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(212, 175, 55, 0.5);
+        background: linear-gradient(
+          135deg,
+          var(--dark-gold) 0%,
+          var(--gold) 100%
+        );
+      }
+
+      .btn-primary:active {
+        transform: translateY(-1px);
+      }
+
+      .btn-primary i {
+        margin-right: 10px;
+        font-size: 1.2rem;
+      }
+
+      #successMessage {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border: 2px solid var(--gold);
+        color: var(--navy-blue);
+        border-radius: 12px;
+        animation: slideIn 0.5s ease-out;
+      }
+
+      #successMessage i {
+        color: #28a745;
+        font-size: 1.5rem;
+        margin-right: 10px;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
         }
 
-        body {
-            background: linear-gradient(135deg, var(--royal-blue) 0%, var(--navy-blue) 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 20px 10px;
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
+      }
 
-        .card {
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-            border: none;
-            overflow: hidden;
-            max-width: 500px;
-            width: 100%;
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, var(--navy-blue) 0%, var(--royal-blue) 100%);
-            padding: 0;
-            border: none;
-        }
-
+      /* Responsive iyileştirmeler */
+      @media (max-width: 576px) {
         .card-body {
-            padding: 2rem 2rem 2.5rem;
-            background: #ffffff;
-        }
-
-        .otel-logo-container {
-            background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
-            padding: 30px 20px;
-            border-radius: 0;
-            margin: 0;
-            border-bottom: 3px solid var(--gold);
-            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.15);
-        }
-
-        .otel-logo-container img {
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
-            transition: transform 0.3s ease;
-        }
-
-        .otel-logo-container img:hover {
-            transform: scale(1.05);
+          padding: 1.5rem;
         }
 
         .page-title {
-            color: var(--navy-blue);
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin: 1.5rem 0 0.5rem;
-            letter-spacing: -0.5px;
+          font-size: 1.5rem;
         }
 
         .room-badge {
-            display: inline-flex;
-            align-items: center;
-            background: linear-gradient(135deg, var(--gold) 0%, var(--dark-gold) 100%);
-            color: #ffffff;
-            padding: 8px 20px;
-            border-radius: 25px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
-            margin-bottom: 1.5rem;
-        }
-
-        .room-badge i {
-            margin-right: 8px;
-            font-size: 1.2rem;
-        }
-
-        .alert-info {
-            background: linear-gradient(135deg, #e8f4f8 0%, #d1ecf1 100%);
-            border: 2px solid var(--gold);
-            color: var(--navy-blue);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 1.5rem;
-        }
-
-        .alert-info i {
-            color: var(--gold);
-            font-size: 1.3rem;
-            margin-right: 8px;
-        }
-
-        .form-group label {
-            color: var(--navy-blue);
-            font-weight: 600;
-            margin-bottom: 10px;
-            font-size: 0.95rem;
-        }
-
-        .form-group label i {
-            color: var(--gold);
-            margin-right: 6px;
-        }
-
-        .form-control {
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 12px;
-            transition: all 0.3s ease;
-            font-size: 0.95rem;
-        }
-
-        .form-control:focus {
-            border-color: var(--gold);
-            box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25);
-        }
-
-        .form-text {
-            color: #6c757d;
-            font-size: 0.85rem;
-            margin-top: 5px;
-        }
-
-        #karakterSayaci {
-            color: var(--navy-blue);
-            font-weight: 600;
+          font-size: 1rem;
+          padding: 6px 16px;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--gold) 0%, var(--dark-gold) 100%);
-            border: none;
-            padding: 14px 24px;
-            font-size: 1.15rem;
-            font-weight: 600;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
-            color: #ffffff;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+          padding: 12px 20px;
+          font-size: 1rem;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.5);
-            background: linear-gradient(135deg, var(--dark-gold) 0%, var(--gold) 100%);
+        .otel-logo-container {
+          padding: 20px 15px;
+        }
+      }
+
+      /* Loading spinner animasyonu */
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
         }
 
-        .btn-primary:active {
-            transform: translateY(-1px);
+        100% {
+          transform: rotate(360deg);
         }
-
-        .btn-primary i {
-            margin-right: 10px;
-            font-size: 1.2rem;
-        }
-
-        #successMessage {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            border: 2px solid var(--gold);
-            color: var(--navy-blue);
-            border-radius: 12px;
-            animation: slideIn 0.5s ease-out;
-        }
-
-        #successMessage i {
-            color: #28a745;
-            font-size: 1.5rem;
-            margin-right: 10px;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Responsive iyileştirmeler */
-        @media (max-width: 576px) {
-            .card-body {
-                padding: 1.5rem;
-            }
-
-            .page-title {
-                font-size: 1.5rem;
-            }
-
-            .room-badge {
-                font-size: 1rem;
-                padding: 6px 16px;
-            }
-
-            .btn-primary {
-                padding: 12px 20px;
-                font-size: 1rem;
-            }
-
-            .otel-logo-container {
-                padding: 20px 15px;
-            }
-        }
-
-        /* Loading spinner animasyonu */
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-12 col-sm-10 col-md-8 col-lg-6">
-                <div class="card">
-                    {% if otel_logo %}
-                    <!-- Otel Logosu Header -->
-                    <div class="card-header">
-                        <div class="otel-logo-container text-center">
-                            <img src="data:image/png;base64,{{ otel_logo }}" alt="{{ otel_adi }}" class="img-fluid"
-                                style="max-width: 420px; max-height: 180px; object-fit: contain;"
-                                onerror="this.onerror=null; this.parentElement.innerHTML='<h4 class=text-primary>{{ otel_adi }}</h4>';">
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <div class="card-body">
-                        {% if not otel_logo %}
-                        <!-- Varsayılan Başlık (Logo yoksa) -->
-                        <h4 class="text-center text-primary mb-4">{{ otel_adi or 'Otel Minibar Servisi' }}</h4>
-                        {% endif %}
-
-                        <h3 class="page-title text-center">Minibar Dolum Talebi</h3>
-
-                        <div class="text-center mb-4">
-                            <div class="room-badge">
-                                <i class="fas fa-door-open"></i>
-                                <span>Oda {{ oda.oda_no }}</span>
-                            </div>
-                        </div>
-
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i>
-                            <strong>{{ oda.misafir_mesaji or 'Minibar dolum talebiniz en kısa sürede yerine
-                                getirilecektir.' }}</strong>
-                        </div>
-
-                        <form id="dolumTalebiForm">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-                            <div class="form-group">
-                                <label><i class="fas fa-comment-dots"></i> Ek Not (Opsiyonel)</label>
-                                <textarea name="notlar" id="notlar" class="form-control" rows="4"
-                                    placeholder="Özel bir talebiniz varsa buraya yazabilirsiniz (örn: Ekstra su, diet içecekler, vs.)..."
-                                    maxlength="500"></textarea>
-                                <small class="form-text text-muted">
-                                    <i class="fas fa-keyboard"></i> <span id="karakterSayaci">0/500</span> karakter
-                                </small>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary btn-block btn-lg mt-4">
-                                <i class="fas fa-paper-plane"></i> Dolum Talebi Gönder
-                            </button>
-                        </form>
-
-                        <div id="successMessage" class="alert alert-success mt-4" style="display:none;">
-                            <div class="text-center">
-                                <i class="fas fa-check-circle"></i>
-                                <strong class="d-block mb-2">Talebiniz Başarıyla Gönderildi!</strong>
-                                <p class="mb-0">En kısa sürede minibarınız doldurulacaktır. Teşekkür ederiz.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+      <div class="row justify-content-center">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+          <div class="card">
+            {% if otel_logo %}
+            <!-- Otel Logosu Header -->
+            <div class="card-header">
+              <div class="otel-logo-container text-center">
+                <img
+                  src="data:image/png;base64,{{ otel_logo }}"
+                  alt="{{ otel_adi }}"
+                  class="img-fluid"
+                  style="
+                    max-width: 420px;
+                    max-height: 180px;
+                    object-fit: contain;
+                  "
+                  onerror="this.onerror=null; this.parentElement.innerHTML='<h4 class=text-primary>{{ otel_adi }}</h4>';"
+                />
+              </div>
             </div>
+            {% endif %}
+
+            <div class="card-body">
+              {% if not otel_logo %}
+              <!-- Varsayılan Başlık (Logo yoksa) -->
+              <h4 class="text-center text-primary mb-4">
+                {{ otel_adi or 'Otel Minibar Servisi' }}
+              </h4>
+              {% endif %}
+
+              <h3 class="page-title text-center">Minibar Dolum Talebi</h3>
+
+              <div class="text-center mb-4">
+                <div class="room-badge">
+                  <i class="fas fa-door-open"></i>
+                  <span>Oda {{ oda.oda_no }}</span>
+                </div>
+              </div>
+
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong
+                  >{{ oda.misafir_mesaji or 'Minibar dolum talebiniz en kısa
+                  sürede yerine getirilecektir.' }}</strong
+                >
+              </div>
+
+              <form id="dolumTalebiForm">
+                <input
+                  type="hidden"
+                  name="csrf_token"
+                  value="{{ csrf_token() }}"
+                />
+
+                <div class="form-group">
+                  <label
+                    ><i class="fas fa-comment-dots"></i> Ek Not
+                    (Opsiyonel)</label
+                  >
+                  <textarea
+                    name="notlar"
+                    id="notlar"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Özel bir talebiniz varsa buraya yazabilirsiniz (örn: Ekstra su, diet içecekler, vs.)..."
+                    maxlength="500"
+                  ></textarea>
+                  <small class="form-text text-muted">
+                    <i class="fas fa-keyboard"></i>
+                    <span id="karakterSayaci">0/500</span> karakter
+                  </small>
+                </div>
+
+                <button
+                  type="submit"
+                  class="btn btn-primary btn-block btn-lg mt-4"
+                >
+                  <i class="fas fa-paper-plane"></i> Dolum Talebi Gönder
+                </button>
+              </form>
+
+              <div
+                id="successMessage"
+                class="alert alert-success mt-4"
+                style="display: none"
+              >
+                <div class="text-center">
+                  <i class="fas fa-check-circle"></i>
+                  <strong class="d-block mb-2"
+                    >Talebiniz Başarıyla Gönderildi!</strong
+                  >
+                  <p class="mb-0">
+                    En kısa sürede minibarınız doldurulacaktır. Teşekkür ederiz.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Karakter sayacı - daha smooth animasyon
-        $( '#notlar' ).on( 'input', function () {
-            const len = $( this ).val().length;
-            const counter = $( '#karakterSayaci' );
-            counter.text( len + '/500' );
+      // Karakter sayacı - daha smooth animasyon
+      $("#notlar").on("input", function () {
+        const len = $(this).val().length;
+        const counter = $("#karakterSayaci");
+        counter.text(len + "/500");
 
-            // Renk değişimi - limite yaklaşınca uyarı
-            if ( len > 450 ) {
-                counter.css( 'color', '#dc3545' ); // Kırmızı
-            } else if ( len > 400 ) {
-                counter.css( 'color', '#ffc107' ); // Sarı
+        // Renk değişimi - limite yaklaşınca uyarı
+        if (len > 450) {
+          counter.css("color", "#dc3545"); // Kırmızı
+        } else if (len > 400) {
+          counter.css("color", "#ffc107"); // Sarı
+        } else {
+          counter.css("color", "var(--navy-blue)"); // Normal
+        }
+      });
+
+      // Form submit - geliştirilmiş
+      $("#dolumTalebiForm").on("submit", function (e) {
+        e.preventDefault();
+
+        const submitBtn = $(this).find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        const notlar = $("#notlar").val().trim();
+
+        console.log("📝 Form gönderiliyor...", { notlar: notlar });
+
+        // Button disable ve loading
+        submitBtn
+          .prop("disabled", true)
+          .html('<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...');
+
+        $.ajax({
+          url: "/misafir/dolum-talebi/{{ token }}",
+          method: "POST",
+          data: $(this).serialize(),
+          headers: {
+            "X-CSRFToken": $('meta[name="csrf-token"]').attr("content"),
+          },
+          success: function (response) {
+            console.log("✅ Başarılı yanıt:", response);
+            if (response.success) {
+              // Form'u gizle
+              $("#dolumTalebiForm").slideUp(400, function () {
+                // Başarı mesajını göster
+                $("#successMessage").slideDown(400);
+              });
             } else {
-                counter.css( 'color', 'var(--navy-blue)' ); // Normal
+              console.error("❌ Başarısız:", response.message);
+              alert(
+                response.message || "Bir hata oluştu. Lütfen tekrar deneyin."
+              );
+              submitBtn.prop("disabled", false).html(originalText);
             }
-        } );
+          },
+          error: function (xhr) {
+            console.error("❌ AJAX hatası:", xhr);
+            let errorMsg = "Bir hata oluştu. Lütfen tekrar deneyin.";
 
-        // Form submit - geliştirilmiş
-        $( '#dolumTalebiForm' ).on( 'submit', function ( e ) {
-            e.preventDefault();
+            if (xhr.status === 429) {
+              errorMsg =
+                "⚠️ Çok fazla deneme yaptınız. Lütfen 1 dakika bekleyin.";
+            } else if (xhr.status === 404) {
+              errorMsg = "❌ Geçersiz QR kod. Lütfen yeni bir QR kod okutun.";
+            } else if (xhr.status === 500) {
+              errorMsg = "⚠️ Sunucu hatası. Lütfen daha sonra tekrar deneyin.";
+            }
 
-            const submitBtn = $( this ).find( 'button[type="submit"]' );
-            const originalText = submitBtn.html();
+            alert(errorMsg);
+            submitBtn.prop("disabled", false).html(originalText);
+          },
+        });
+      });
 
-            // Button disable ve loading
-            submitBtn.prop( 'disabled', true )
-                .html( '<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...' );
-
-            $.ajax( {
-                url: '/misafir/dolum-talebi/{{ token }}',
-                method: 'POST',
-                data: $( this ).serialize(),
-                headers: {
-                    'X-CSRFToken': $( 'meta[name="csrf-token"]' ).attr( 'content' )
-                },
-                success: function ( response ) {
-                    if ( response.success ) {
-                        // Form'u gizle
-                        $( '#dolumTalebiForm' ).slideUp( 400, function () {
-                            // Başarı mesajını göster
-                            $( '#successMessage' ).slideDown( 400 );
-                        } );
-                    } else {
-                        alert( response.message || 'Bir hata oluştu. Lütfen tekrar deneyin.' );
-                        submitBtn.prop( 'disabled', false ).html( originalText );
-                    }
-                },
-                error: function ( xhr ) {
-                    let errorMsg = 'Bir hata oluştu. Lütfen tekrar deneyin.';
-
-                    if ( xhr.status === 429 ) {
-                        errorMsg = '⚠️ Çok fazla deneme yaptınız. Lütfen 1 dakika bekleyin.';
-                    } else if ( xhr.status === 404 ) {
-                        errorMsg = '❌ Geçersiz QR kod. Lütfen yeni bir QR kod okutun.';
-                    } else if ( xhr.status === 500 ) {
-                        errorMsg = '⚠️ Sunucu hatası. Lütfen daha sonra tekrar deneyin.';
-                    }
-
-                    alert( errorMsg );
-                    submitBtn.prop( 'disabled', false ).html( originalText );
-                }
-            } );
-        } );
-
-        // Sayfa yüklendiğinde smooth fade-in efekti
-        $( document ).ready( function () {
-            $( '.card' ).css( 'opacity', '0' ).animate( { opacity: 1 }, 600 );
-        } );
+      // Sayfa yüklendiğinde smooth fade-in efekti
+      $(document).ready(function () {
+        $(".card").css("opacity", "0").animate({ opacity: 1 }, 600);
+      });
     </script>
-</body>
-
+  </body>
 </html>

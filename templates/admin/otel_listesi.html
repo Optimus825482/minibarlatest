@@ -23,34 +23,28 @@
     <!-- Otel Tablosu -->
     <div class="bg-white shadow rounded-lg overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200">
+            <table class="min-w-full divide-y divide-slate-200" style="table-layout: auto; width: 100%;">
                 <thead class="bg-slate-50">
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">
                             ID
                         </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">
                             Otel Adı
                         </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                            Telefon
+                        <th scope="col" class="px-3 sm:px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                            Kat
                         </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                            Email
+                        <th scope="col" class="px-3 sm:px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                            Oda
                         </th>
-                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
-                            Kat Sayısı
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
-                            Oda Sayısı
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        <th scope="col" class="px-3 sm:px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">
                             Personel
                         </th>
-                        <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        <th scope="col" class="px-3 sm:px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">
                             Durum
                         </th>
-                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        <th scope="col" class="px-3 sm:px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider whitespace-nowrap">
                             İşlemler
                         </th>
                     </tr>
@@ -59,61 +53,55 @@
                     {% if oteller_data %}
                         {% for item in oteller_data %}
                         <tr class="hover:bg-slate-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                            <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                                 {{ item.otel.id }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center space-x-3">
+                            <td class="px-3 sm:px-6 py-4">
+                                <div class="flex items-center space-x-2 sm:space-x-3">
                                     {% if item.otel.logo %}
                                     <img src="data:image/png;base64,{{ item.otel.logo }}" 
                                          alt="{{ item.otel.ad }}" 
-                                         class="h-10 w-auto object-contain">
+                                         class="h-8 sm:h-10 w-auto object-contain flex-shrink-0">
                                     {% endif %}
-                                    <div>
-                                        <div class="text-sm font-medium text-slate-900">{{ item.otel.ad }}</div>
+                                    <div class="min-w-0">
+                                        <div class="text-sm font-medium text-slate-900 truncate">{{ item.otel.ad }}</div>
                                         {% if item.otel.vergi_no %}
-                                        <div class="text-sm text-slate-500">VN: {{ item.otel.vergi_no }}</div>
+                                        <div class="text-xs sm:text-sm text-slate-500 hidden sm:block">VN: {{ item.otel.vergi_no }}</div>
                                         {% endif %}
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                {{ item.otel.telefon or '-' }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                {{ item.otel.email or '-' }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-center">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                     {{ item.kat_sayisi }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-center">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     {{ item.oda_sayisi }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-center hidden sm:table-cell">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                     {{ item.personel_sayisi }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-center hidden md:table-cell">
                                 {% if item.otel.aktif %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     Aktif
                                 </span>
                                 {% else %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                     Pasif
                                 </span>
                                 {% endif %}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex justify-end space-x-2">
+                            <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex justify-end space-x-1 sm:space-x-2">
                                     <!-- Oda Tipleri -->
                                     <button onclick="otelOdaTipleriModal({{ item.otel.id }}, '{{ item.otel.ad }}')"
-                                            class="text-blue-600 hover:text-blue-900" title="Oda Tipleri Dağılımı">
+                                            class="text-blue-600 hover:text-blue-900 p-1" title="Oda Tipleri">
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                                         </svg>
@@ -121,7 +109,7 @@
                                     
                                     <!-- Düzenle -->
                                     <a href="{{ url_for('otel_duzenle', id=item.otel.id) }}" 
-                                       class="text-slate-600 hover:text-slate-900" title="Düzenle">
+                                       class="text-slate-600 hover:text-slate-900 p-1" title="Düzenle">
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                         </svg>
@@ -131,7 +119,7 @@
                                     <form method="POST" action="{{ url_for('otel_aktif_pasif', id=item.otel.id) }}" class="inline">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                         <button type="submit" 
-                                                class="{% if item.otel.aktif %}text-red-600 hover:text-red-900{% else %}text-green-600 hover:text-green-900{% endif %}" 
+                                                class="{% if item.otel.aktif %}text-red-600 hover:text-red-900{% else %}text-green-600 hover:text-green-900{% endif %} p-1" 
                                                 title="{% if item.otel.aktif %}Pasif Yap{% else %}Aktif Yap{% endif %}"
                                                 onclick="return confirm('{% if item.otel.aktif %}Bu oteli pasif yapmak istediğinizden emin misiniz?{% else %}Bu oteli aktif yapmak istediğinizden emin misiniz?{% endif %}')">
                                             {% if item.otel.aktif %}
@@ -237,21 +225,16 @@
 </div>
 
 <!-- Otel Oda Tipleri Modal -->
-<div class="modal fade" id="otelOdaTipleriModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-            <div class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
-                <h5 class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    <svg class="inline-block h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-                    </svg>
-                    <span id="otelOdaTipleriBaslik">Otel Oda Tipleri Dağılımı</span>
-                </h5>
-                <button type="button" class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" data-dismiss="modal">
-                    <span class="text-2xl">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body p-6">
+<div id="otelOdaTipleriModal" class="modal bg-white dark:bg-slate-800 shadow-2xl">
+    <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800">
+        <h5 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
+            <svg class="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+            </svg>
+            <span id="otelOdaTipleriBaslik" >Otel Oda Tipleri Dağılımı</span>
+        </h5>
+    </div>
+    <div class="p-4 sm:p-6 md:p-8 overflow-y-auto" style="max-height: calc(90vh - 180px);">
                 <!-- Yükleniyor göstergesi -->
                 <div id="otelOdaTipleriYukleniyor" class="text-center py-8">
                     <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -292,15 +275,146 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4">
-                <button type="button" class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700" data-dismiss="modal">
-                    Kapat
-                </button>
-            </div>
-        </div>
+    </div>
+    <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-5 border-t border-slate-200 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex justify-end gap-2 sm:gap-3">
+        <a href="#" rel="modal:close" class="inline-flex items-center px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200">
+            <svg class="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <span class="hidden sm:inline">Kapat</span>
+            <span class="sm:hidden">×</span>
+        </a>
     </div>
 </div>
 
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* jQuery Modal - Temaya Uygun Özelleştirme */
+    .modal {
+        display: none;
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        padding: 0;
+        max-width: 90%;
+        width: auto!important;
+        max-height: 90vh;
+        margin: 5vh auto;
+        overflow: hidden;
+        position: relative !important;
+        z-index: 10000 !important;
+    }
+    
+    /* Dark mode için modal */
+    .dark .modal {
+        background: #1e293b;
+        border-color: rgba(71, 85, 105, 0.3);
+    }
+    
+    /* Modal overlay - CDN CSS Override - Inline style'ı da override et */
+    .jquery-modal.blocker,
+    .jquery-modal.blocker.current,
+    div.jquery-modal.blocker,
+    div.jquery-modal.blocker.current {
+        background: rgba(15, 23, 42, 0.75) !important;
+        backdrop-filter: blur(4px) !important;
+        z-index: 999999 !important;
+        padding: 5vh 2vw !important;
+        overflow-y: auto !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Responsive - Mobil */
+    @media (max-width: 768px) {
+        .modal {
+            max-width: 95vw;
+            max-height: 85vh;
+            margin: 2vh auto;
+            border-radius: 12px;
+        }
+        
+        .jquery-modal.blocker {
+            padding: 2vh 1vw;
+        }
+    }
+    
+    /* Responsive - Tablet */
+    @media (min-width: 769px) and (max-width: 1024px) {
+        .modal {
+            max-width: 85vw;
+            max-height: 88vh;
+        }
+    }
+    
+    /* Kapatma butonu */
+    .modal a.close-modal {
+        top: 12px !important;
+        right: 12px !important;
+        width: 32px !important;
+        height: 32px !important;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+        border-radius: 8px !important;
+        color: white !important;
+        font-size: 20px !important;
+        line-height: 32px !important;
+        text-align: center !important;
+        text-decoration: none !important;
+        box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3) !important;
+        transition: all 0.2s ease !important;
+        position: absolute !important;
+        z-index: 10001 !important;
+    }
+    
+    .modal a.close-modal:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        transform: scale(1.05);
+        box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4);
+    }
+    
+    /* Modal animasyonu */
+    @keyframes modalFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    .modal {
+        animation: modalFadeIn 0.3s ease-out;
+    }
+    
+    /* Scrollbar özelleştirme */
+    .modal::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .modal::-webkit-scrollbar-track {
+        background: rgba(148, 163, 184, 0.1);
+        border-radius: 4px;
+    }
+    
+    .modal::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+        border-radius: 4px;
+    }
+    
+    .modal::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+    }
+</style>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -315,8 +429,19 @@
         document.getElementById('otelOdaTipleriYukleniyor').style.display = 'block';
         document.getElementById('otelOdaTipleriIcerik').style.display = 'none';
         
-        // Modal'ı aç
-        $('#otelOdaTipleriModal').modal('show');
+        // jQuery Modal ile aç
+        $('#otelOdaTipleriModal').modal({
+            fadeDuration: 250,
+            fadeDelay: 0.5,
+            escapeClose: true,
+            clickClose: true,
+            showClose: true
+        });
+        
+        // Z-index'i force et (CDN inline style override)
+        setTimeout(function() {
+            $('.jquery-modal.blocker').css('z-index', '999999');
+        }, 10);
         
         // AJAX ile oda tiplerini getir
         fetch(`/api/oteller/${otelId}/oda-tipleri`)

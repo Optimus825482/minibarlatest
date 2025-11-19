@@ -233,7 +233,7 @@ class PersonelForm(BaseForm):
     rol = SelectField(
         'Rol',
         choices=[
-            ('admin', 'Admin'),
+            ('sistem_yoneticisi', 'Sistem Yöneticisi'),
             ('depo_sorumlusu', 'Depo Sorumlusu'),
             ('kat_sorumlusu', 'Kat Sorumlusu')
         ],
@@ -299,7 +299,7 @@ class PersonelForm(BaseForm):
     rol = SelectField(
         'Rol',
         choices=[
-            ('admin', 'Admin'),
+            ('sistem_yoneticisi', 'Sistem Yöneticisi'),
             ('depo_sorumlusu', 'Depo Sorumlusu'),
             ('kat_sorumlusu', 'Kat Sorumlusu')
         ],
@@ -365,7 +365,7 @@ class PersonelDuzenleForm(BaseForm):
     rol = SelectField(
         'Rol',
         choices=[
-            ('admin', 'Admin'),
+            ('sistem_yoneticisi', 'Sistem Yöneticisi'),
             ('depo_sorumlusu', 'Depo Sorumlusu'),
             ('kat_sorumlusu', 'Kat Sorumlusu')
         ],
@@ -993,7 +993,7 @@ class TedarikciForm(BaseForm):
     telefon = StringField(
         'Telefon',
         validators=[
-            DataRequired(message='Telefon numarası zorunludur.'),
+            Optional(),
             Length(min=10, max=20, message='Telefon numarası 10-20 karakter arasında olmalıdır.'),
             pattern_validator(r'^[\d\s\-\+\(\)\.]+$', 'Geçerli bir telefon numarası giriniz.')
         ]

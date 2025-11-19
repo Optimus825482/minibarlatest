@@ -4,9 +4,9 @@ Oda QR kodlarının oluşturulması, doğrulanması ve yönetimi
 """
 
 import qrcode
+import qrcode.image.svg
 import secrets
-import base64
-from io import BytesIO
+import random
 from flask import request
 from datetime import datetime
 from models import db, Oda, QRKodOkutmaLog
@@ -18,11 +18,11 @@ class QRKodService:
     @staticmethod
     def generate_token():
         """
-        Güvenli, benzersiz token oluştur
+        Güvenli, benzersiz 6 haneli token oluştur
         Returns:
-            str: 43 karakterlik URL-safe token
+            str: 6 haneli sayısal token
         """
-        return secrets.token_urlsafe(32)
+        return str(random.randint(100000, 999999))
     
     @staticmethod
     def generate_qr_url(token):
@@ -45,33 +45,41 @@ class QRKodService:
     @staticmethod
     def generate_qr_image(url):
         """
-        QR kod görseli oluştur (Base64 encoded PNG)
+        QR kod görseli oluştur (SVG formatında - direkt HTML)
         Args:
             url (str): QR koda encode edilecek URL
         Returns:
-            str: Base64 encoded PNG görsel (data URI formatında)
+            str: SVG HTML string (direkt embed edilebilir)
         """
         try:
-            # QR kod oluştur
+            import re
+            
+            # QR kod oluştur - basit ve büyük (800x800)
             qr = qrcode.QRCode(
-                version=1,  # 1-40 arası, None ise otomatik
-                error_correction=qrcode.constants.ERROR_CORRECT_H,  # Yüksek hata düzeltme
-                box_size=10,  # Her kutu 10 pixel
-                border=4,  # Kenar boşluğu 4 kutu
+                version=1,  # Otomatik boyutlandırma
+                error_correction=qrcode.constants.ERROR_CORRECT_L,  # En düşük hata düzeltme (%7) - daha basit
+                box_size=2,  # Her kutu 2 birim - düşük yoğunluk
+                border=0,  # Kenarsız - maksimum alan kullanımı
             )
             qr.add_data(url)
             qr.make(fit=True)
             
-            # Görsel oluştur
-            img = qr.make_image(fill_color="black", back_color="white")
+            # SVG factory ile görsel oluştur
+            factory = qrcode.image.svg.SvgPathImage
+            img = qr.make_image(image_factory=factory, fill_color="black", back_color="white")
             
-            # Base64'e çevir
-            buffer = BytesIO()
-            img.save(buffer, format='PNG')
-            img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            # SVG string'e çevir
+            svg_str = img.to_string(encoding='unicode')
             
-            # Data URI formatında döndür
-            return f"data:image/png;base64,{img_str}"
+            # SVG tag'ini bul ve width/height ekle (800x800 büyük boyut)
+            if '<svg' in svg_str and 'width=' not in svg_str:
+                svg_str = svg_str.replace('<svg', '<svg width="800" height="800"', 1)
+            elif '<svg' in svg_str:
+                # Mevcut width/height varsa değiştir
+                svg_str = re.sub(r'width="[^"]*"', 'width="800"', svg_str)
+                svg_str = re.sub(r'height="[^"]*"', 'height="800"', svg_str)
+            
+            return svg_str
             
         except Exception as e:
             raise Exception(f"QR görsel oluşturma hatası: {str(e)}")

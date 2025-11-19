@@ -105,6 +105,36 @@ block content %}
   </div>
   {% endif %}
 
+  <!-- Bekleyen Dolum Talepleri Uyarısı -->
+  <div
+    id="dolum_talepleri_widget"
+    class="hidden bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-lg shadow-lg border-2 border-orange-300 dark:border-orange-700 p-4"
+  >
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div
+          class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center animate-pulse"
+        >
+          <i class="fas fa-bell text-white text-xl"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-orange-900 dark:text-orange-100">
+            <span id="bekleyen_talep_sayisi">0</span> Bekleyen Dolum Talebi
+          </h3>
+          <p class="text-sm text-orange-700 dark:text-orange-300">
+            Misafirlerden gelen talepler
+          </p>
+        </div>
+      </div>
+      <a
+        href="{{ url_for('dolum_talepleri') }}"
+        class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors font-medium"
+      >
+        <i class="fas fa-arrow-right mr-2"></i>Talepleri Gör
+      </a>
+    </div>
+  </div>
+
   <!-- Hızlı İşlemler - Modern & Optimized -->
   <div
     class="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 shadow-lg rounded-xl border border-slate-200 dark:border-slate-700"
@@ -612,6 +642,27 @@ block content %}
 {% endblock %} {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+  // Dolum taleplerini yükle
+  async function dolumTalepleriniYukle() {
+    try {
+      const response = await fetch('/api/dolum-talepleri');
+      const data = await response.json();
+
+      if (data.success && data.talepler && data.talepler.length > 0) {
+        document.getElementById('bekleyen_talep_sayisi').textContent = data.talepler.length;
+        document.getElementById('dolum_talepleri_widget').classList.remove('hidden');
+      }
+    } catch (error) {
+      console.error('Dolum talepleri yüklenemedi:', error);
+    }
+  }
+
+  // Sayfa yüklendiğinde ve her 30 saniyede bir kontrol et
+  document.addEventListener('DOMContentLoaded', function() {
+    dolumTalepleriniYukle();
+    setInterval(dolumTalepleriniYukle, 30000); // 30 saniye
+  });
+
   // TableSearchFilter - Son Minibar İşlemleri
   {% if son_islemler %}
   const minibarIslemlerTable = document.getElementById( 'son-minibar-islemler-table' );

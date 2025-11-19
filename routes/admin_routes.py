@@ -67,12 +67,12 @@ def register_admin_routes(app):
                 # Yeni kullanıcı oluştur
                 yeni_kullanici = Kullanici(
                     kullanici_adi=data['kullanici_adi'],
-                    sifre=generate_password_hash(data['sifre']),
                     ad=data['ad'],
                     soyad=data['soyad'],
                     rol=data['rol'],
                     aktif=True
                 )
+                yeni_kullanici.sifre_belirle(data['sifre'])
                 
                 db.session.add(yeni_kullanici)
                 db.session.flush()
@@ -198,10 +198,9 @@ def register_admin_routes(app):
                 flash('Beklenmeyen bir hata oluştu.', 'danger')
                 log_hata(e, modul='personel_tanimla')
 
-        # Personel listesi - otel bilgileri ile
+        # Personel listesi - otel bilgileri ile (tüm roller dahil)
         personeller = Kullanici.query.filter(
-            Kullanici.rol.in_(['admin', 'depo_sorumlusu', 'kat_sorumlusu']),
-            Kullanici.aktif.is_(True)
+            Kullanici.rol.in_(['sistem_yoneticisi', 'admin', 'depo_sorumlusu', 'kat_sorumlusu'])
         ).order_by(Kullanici.olusturma_tarihi.desc()).all()
         
         # Her personel için otel bilgilerini hazırla

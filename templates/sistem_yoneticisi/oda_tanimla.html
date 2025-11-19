@@ -1,975 +1,1689 @@
-{% extends "base.html" %}
-{% from "_form_helpers.html" import render_field, render_select, render_submit, flash_messages %}
-
-{% block title %}Oda Tanımla - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Oda Tanımla{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% from "_form_helpers.html" import render_field,
+render_select, render_submit, flash_messages %} {% block title %}Oda Tanımla -
+Minibar Takip Sistemi{% endblock %} {% block page_title %}Oda Tanımla{% endblock
+%} {% block content %}
 <div class="space-y-6">
-    <!-- Flash Messages -->
-    {{ flash_messages() }}
+  <!-- Flash Messages -->
+  {{ flash_messages() }}
 
-    <!-- Yeni Oda Ekle Butonu -->
-    <div class="bg-white shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg leading-6 font-medium text-slate-900">Oda Yönetimi</h3>
-                <button onclick="yeniOdaModal()" 
-                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+  <!-- Yeni Oda Ekle Butonu -->
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg leading-6 font-medium text-slate-900">
+          Oda Yönetimi
+        </h3>
+        <button
+          onclick="yeniOdaModal()"
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          <svg
+            class="h-5 w-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            ></path>
+          </svg>
+          Yeni Oda Ekle
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mevcut Odalar Listesi -->
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg leading-6 font-medium text-slate-900">
+          Mevcut Odalar
+        </h3>
+        <div class="flex items-center gap-3">
+          <!-- Excel Export -->
+          <button
+            onclick="excelIndir()"
+            class="inline-flex items-center px-3 py-2 border border-green-300 shadow-sm text-sm leading-4 font-medium rounded-md text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          >
+            <svg
+              class="h-4 w-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              ></path>
+            </svg>
+            Excel İndir
+          </button>
+          <!-- QR Kod Toplu İşlemler -->
+          <div class="flex gap-2">
+            <button
+              onclick="topluQrOlustur('tumu')"
+              class="inline-flex items-center px-3 py-2 border border-slate-300 shadow-sm text-sm leading-4 font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <svg
+                class="h-4 w-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 4v16m8-8H4"
+                ></path>
+              </svg>
+              Tüm Odalar İçin QR
+            </button>
+            <button
+              onclick="topluQrOlustur('qrsiz')"
+              class="inline-flex items-center px-3 py-2 border border-slate-300 shadow-sm text-sm leading-4 font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <svg
+                class="h-4 w-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                ></path>
+              </svg>
+              QR'sız Odalar İçin
+            </button>
+            <button
+              onclick="topluQrIndir()"
+              class="inline-flex items-center px-3 py-2 border border-slate-300 shadow-sm text-sm leading-4 font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <svg
+                class="h-4 w-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                ></path>
+              </svg>
+              Tüm QR'ları İndir
+            </button>
+            <button
+              onclick="tumQrTemizle()"
+              class="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              <svg
+                class="h-4 w-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                ></path>
+              </svg>
+              Tüm QR'ları Temizle
+            </button>
+          </div>
+          <div class="flex items-center gap-3 text-sm text-slate-600">
+            <div class="flex items-center gap-2">
+              <span
+                class="font-medium"
+                data-stats-for="odalar-table"
+                data-stat="filtered"
+                >{{ odalar|length }}</span
+              >
+              <span>/</span>
+              <span
+                class="font-medium"
+                data-stats-for="odalar-table"
+                data-stat="total"
+                >{{ odalar|length }}</span
+              >
+              <span>Oda</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if odalar %}
+
+      <div class="table-wrapper">
+        <table id="odalar-table" class="min-w-full divide-y divide-slate-200">
+          <thead class="bg-slate-50">
+            <tr>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
+                Kat
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
+                Oda No
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
+                Oda Tipi
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+              >
+                Otel Adı
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider no-sort"
+              >
+                QR Kod
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider no-sort"
+              >
+                İşlemler
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-slate-200">
+            {% for oda in odalar %}
+            <tr
+              class="oda-row hover:bg-slate-50 transition-colors"
+              data-otel-id="{{ oda.kat.otel.id if oda.kat and oda.kat.otel else '' }}"
+              data-kat-id="{{ oda.kat.id if oda.kat else '' }}"
+              data-oda-tipi="{{ oda.oda_tipi_adi if oda.oda_tipi_adi else '' }}"
+            >
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500"
+              >
+                {% set kat_colors = [ 'bg-indigo-100 dark:bg-indigo-900
+                text-indigo-800 dark:text-indigo-200', 'bg-violet-100
+                dark:bg-violet-900 text-violet-800 dark:text-violet-200',
+                'bg-fuchsia-100 dark:bg-fuchsia-900 text-fuchsia-800
+                dark:text-fuchsia-200', 'bg-rose-100 dark:bg-rose-900
+                text-rose-800 dark:text-rose-200', 'bg-amber-100
+                dark:bg-amber-900 text-amber-800 dark:text-amber-200',
+                'bg-lime-100 dark:bg-lime-900 text-lime-800 dark:text-lime-200',
+                'bg-emerald-100 dark:bg-emerald-900 text-emerald-800
+                dark:text-emerald-200', 'bg-sky-100 dark:bg-sky-900 text-sky-800
+                dark:text-sky-200' ] %} {% set kat_color_index = oda.kat.id %
+                kat_colors|length %}
+                <span
+                  class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ kat_colors[kat_color_index] }}"
+                >
+                  {{ oda.kat.kat_adi }}
+                </span>
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium text-slate-900"
+              >
+                {{ oda.oda_no }}
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-600"
+              >
+                {% if oda.oda_tipi_adi %} {% set oda_tipi_colors = { 'STANDARD':
+                'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+                'JUNIOR SUITE': 'bg-amber-100 dark:bg-amber-900 text-amber-800
+                dark:text-amber-200', 'QUEEN SUITE': 'bg-green-100
+                dark:bg-green-900 text-green-800 dark:text-green-200', 'KING
+                SUITE': 'bg-rose-100 dark:bg-rose-900 text-rose-800
+                dark:text-rose-200' } %} {% set color_class =
+                oda_tipi_colors.get(oda.oda_tipi_adi, 'bg-slate-100
+                dark:bg-slate-800 text-slate-800 dark:text-slate-200') %}
+                <span
+                  class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ color_class }}"
+                >
+                  {{ oda.oda_tipi_adi }}
+                </span>
+                {% else %}
+                <span class="text-slate-400 text-xs">-</span>
+                {% endif %}
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-600"
+              >
+                {% if oda.kat and oda.kat.otel %} {% set otel_colors = [
+                'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+                'bg-green-100 dark:bg-green-900 text-green-800
+                dark:text-green-200', 'bg-purple-100 dark:bg-purple-900
+                text-purple-800 dark:text-purple-200', 'bg-pink-100
+                dark:bg-pink-900 text-pink-800 dark:text-pink-200',
+                'bg-yellow-100 dark:bg-yellow-900 text-yellow-800
+                dark:text-yellow-200', 'bg-indigo-100 dark:bg-indigo-900
+                text-indigo-800 dark:text-indigo-200', 'bg-red-100
+                dark:bg-red-900 text-red-800 dark:text-red-200', 'bg-orange-100
+                dark:bg-orange-900 text-orange-800 dark:text-orange-200',
+                'bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-200',
+                'bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200'
+                ] %} {% set color_index = oda.kat.otel.id % otel_colors|length
+                %}
+                <span
+                  class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ otel_colors[color_index] }}"
+                >
+                  {{ oda.kat.otel.ad }}
+                </span>
+                {% else %}
+                <span
+                  class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200"
+                >
+                  Otel Yok
+                </span>
+                {% endif %}
+              </td>
+              <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm">
+                <div class="flex gap-1.5">
+                  {% if oda.qr_kod_token %}
+                  <button
+                    onclick="qrGoruntule({{ oda.id }})"
+                    class="p-1.5 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-md transition-colors"
+                    title="QR Kodu Görüntüle"
+                  >
+                    <svg
+                      class="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                      ></path>
                     </svg>
-                    Yeni Oda Ekle
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Mevcut Odalar Listesi -->
-    <div class="bg-white shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg leading-6 font-medium text-slate-900">Mevcut Odalar</h3>
-                <div class="flex items-center gap-3">
-                    <!-- Excel Export -->
-                    <button onclick="excelIndir()" 
-                       class="inline-flex items-center px-3 py-2 border border-green-300 shadow-sm text-sm leading-4 font-medium rounded-md text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                            </path>
-                        </svg>
-                        Excel İndir
-                    </button>
-                    <!-- QR Kod Toplu İşlemler -->
-                    <div class="flex gap-2">
-                        <button onclick="topluQrOlustur('tumu')" 
-                                class="inline-flex items-center px-3 py-2 border border-slate-300 shadow-sm text-sm leading-4 font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            Tüm Odalar İçin QR
-                        </button>
-                        <button onclick="topluQrOlustur('qrsiz')" 
-                                class="inline-flex items-center px-3 py-2 border border-slate-300 shadow-sm text-sm leading-4 font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                            </svg>
-                            QR'sız Odalar İçin
-                        </button>
-                        <button onclick="topluQrIndir()" 
-                                class="inline-flex items-center px-3 py-2 border border-slate-300 shadow-sm text-sm leading-4 font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                            </svg>
-                            Tüm QR'ları İndir
-                        </button>
-                    </div>
-                    <div class="flex items-center gap-3 text-sm text-slate-600">
-                        <div class="flex items-center gap-2">
-                            <span class="font-medium" data-stats-for="odalar-table" data-stat="filtered">{{ odalar|length }}</span>
-                            <span>/</span>
-                            <span class="font-medium" data-stats-for="odalar-table" data-stat="total">{{ odalar|length }}</span>
-                            <span>Oda</span>
-                        </div>
-                    </div>
+                  </button>
+                  <button
+                    onclick="qrIndir({{ oda.id }})"
+                    class="p-1.5 text-green-600 hover:text-green-900 hover:bg-green-50 rounded-md transition-colors"
+                    title="QR Kodu İndir"
+                  >
+                    <svg
+                      class="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                      ></path>
+                    </svg>
+                  </button>
+                  <button
+                    onclick="misafirMesajiDuzenle({{ oda.id }})"
+                    class="p-1.5 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-md transition-colors"
+                    title="Misafir Mesajı"
+                  >
+                    <svg
+                      class="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                      ></path>
+                    </svg>
+                  </button>
+                  {% else %}
+                  <button
+                    onclick="qrOlustur({{ oda.id }})"
+                    class="inline-flex items-center px-2.5 py-1.5 border border-indigo-300 shadow-sm text-xs font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                    title="QR Kod Oluştur"
+                  >
+                    <svg
+                      class="h-4 w-4 mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 4v16m8-8H4"
+                      ></path>
+                    </svg>
+                    QR Oluştur
+                  </button>
+                  {% endif %}
                 </div>
-            </div>
-
-            {% if odalar %}
-            
-            <div class="table-wrapper">
-                <table id="odalar-table" class="min-w-full divide-y divide-slate-200">
-                    <thead class="bg-slate-50">
-                        <tr>
-                            <th
-                                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                Kat</th>
-                            <th
-                                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                Oda No</th>
-                            <th
-                                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                Oda Tipi</th>
-                            <th
-                                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                Otel Adı</th>
-                            <th
-                                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider no-sort">
-                                QR Kod</th>
-                            <th
-                                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider no-sort">
-                                İşlemler</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-slate-200">
-                        {% for oda in odalar %}
-                        <tr class="oda-row hover:bg-slate-50 transition-colors"
-                            data-otel-id="{{ oda.kat.otel.id if oda.kat and oda.kat.otel else '' }}"
-                            data-kat-id="{{ oda.kat.id if oda.kat else '' }}"
-                            data-oda-tipi="{{ oda.oda_tipi_adi if oda.oda_tipi_adi else '' }}">
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500">
-                                {% set kat_colors = [
-                                    'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200',
-                                    'bg-violet-100 dark:bg-violet-900 text-violet-800 dark:text-violet-200',
-                                    'bg-fuchsia-100 dark:bg-fuchsia-900 text-fuchsia-800 dark:text-fuchsia-200',
-                                    'bg-rose-100 dark:bg-rose-900 text-rose-800 dark:text-rose-200',
-                                    'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200',
-                                    'bg-lime-100 dark:bg-lime-900 text-lime-800 dark:text-lime-200',
-                                    'bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200',
-                                    'bg-sky-100 dark:bg-sky-900 text-sky-800 dark:text-sky-200'
-                                ] %}
-                                {% set kat_color_index = oda.kat.id % kat_colors|length %}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ kat_colors[kat_color_index] }}">
-                                    {{ oda.kat.kat_adi }}
-                                </span>
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium text-slate-900">
-                                {{ oda.oda_no }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-600">
-                                {% if oda.oda_tipi_adi %}
-                                {% set oda_tipi_colors = {
-                                    'STANDARD': 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
-                                    'JUNIOR SUITE': 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200',
-                                    'QUEEN SUITE': 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
-                                    'KING SUITE': 'bg-rose-100 dark:bg-rose-900 text-rose-800 dark:text-rose-200'
-                                } %}
-                                {% set color_class = oda_tipi_colors.get(oda.oda_tipi_adi, 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200') %}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ color_class }}">
-                                    {{ oda.oda_tipi_adi }}
-                                </span>
-                                {% else %}
-                                <span class="text-slate-400 text-xs">-</span>
-                                {% endif %}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-600">
-                                {% if oda.kat and oda.kat.otel %}
-                                    {% set otel_colors = [
-                                        'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
-                                        'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
-                                        'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200',
-                                        'bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200',
-                                        'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
-                                        'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200',
-                                        'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
-                                        'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200',
-                                        'bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-200',
-                                        'bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200'
-                                    ] %}
-                                    {% set color_index = oda.kat.otel.id % otel_colors|length %}
-                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ otel_colors[color_index] }}">
-                                        {{ oda.kat.otel.ad }}
-                                    </span>
-                                {% else %}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
-                                    Otel Yok
-                                </span>
-                                {% endif %}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm">
-                                <div class="flex gap-1.5">
-                                    {% if oda.qr_kod_token %}
-                                    <button onclick="qrGoruntule({{ oda.id }})" 
-                                            class="p-1.5 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-md transition-colors"
-                                            title="QR Kodu Görüntüle">
-                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
-                                        </svg>
-                                    </button>
-                                    <button onclick="qrIndir({{ oda.id }})" 
-                                            class="p-1.5 text-green-600 hover:text-green-900 hover:bg-green-50 rounded-md transition-colors"
-                                            title="QR Kodu İndir">
-                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                        </svg>
-                                    </button>
-                                    <button onclick="misafirMesajiDuzenle({{ oda.id }})" 
-                                            class="p-1.5 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-md transition-colors"
-                                            title="Misafir Mesajı">
-                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
-                                        </svg>
-                                    </button>
-                                    {% else %}
-                                    <button onclick="qrOlustur({{ oda.id }})" 
-                                            class="inline-flex items-center px-2.5 py-1.5 border border-indigo-300 shadow-sm text-xs font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                                            title="QR Kod Oluştur">
-                                        <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                        </svg>
-                                        QR Oluştur
-                                    </button>
-                                    {% endif %}
-                                </div>
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm">
-                                <div class="flex gap-2">
-                                    <button onclick="odaDuzenle({{ oda.id }}, '{{ oda.oda_no }}', {{ oda.kat_id }}, {{ 'true' if oda.qr_kod_token else 'false' }}, '{{ oda.oda_tipi_adi or '' }}')"
-                                        class="inline-flex items-center px-3 py-1.5 border border-slate-300 shadow-sm text-xs font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                                        title="Oda Bilgilerini Düzenle">
-                                        <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                        </svg>
-                                        Düzenle
-                                    </button>
-                                    <form method="POST" action="{{ url_for('oda_sil', oda_id=oda.id) }}" class="inline">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                                        <button type="submit" 
-                                            class="inline-flex items-center px-3 py-1.5 border border-red-300 shadow-sm text-xs font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-                                            onclick="return confirm('Bu odayı silmek istediğinizden emin misiniz?')"
-                                            title="Odayı Sil">
-                                            <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                            </svg>
-                                            Sil
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="text-center py-8">
-                <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-slate-900">Henüz oda eklenmemiş</h3>
-                <p class="mt-1 text-sm text-slate-500">Yukarıdaki formu kullanarak ilk odanızı ekleyin.</p>
-            </div>
-            {% endif %}
-        </div>
+              </td>
+              <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm">
+                <div class="flex gap-2">
+                  <button
+                    onclick="odaDuzenle({{ oda.id }}, '{{ oda.oda_no }}', {{ oda.kat_id }}, {{ 'true' if oda.qr_kod_token else 'false' }}, '{{ oda.oda_tipi_adi or '' }}')"
+                    class="inline-flex items-center px-3 py-1.5 border border-slate-300 shadow-sm text-xs font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                    title="Oda Bilgilerini Düzenle"
+                  >
+                    <svg
+                      class="h-4 w-4 mr-1.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      ></path>
+                    </svg>
+                    Düzenle
+                  </button>
+                  <form
+                    method="POST"
+                    action="{{ url_for('oda_sil', oda_id=oda.id) }}"
+                    class="inline"
+                  >
+                    <input
+                      type="hidden"
+                      name="csrf_token"
+                      value="{{ csrf_token() }}"
+                    />
+                    <button
+                      type="submit"
+                      class="inline-flex items-center px-3 py-1.5 border border-red-300 shadow-sm text-xs font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                      onclick="return confirm('Bu odayı silmek istediğinizden emin misiniz?')"
+                      title="Odayı Sil"
+                    >
+                      <svg
+                        class="h-4 w-4 mr-1.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        ></path>
+                      </svg>
+                      Sil
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-8">
+        <svg
+          class="mx-auto h-12 w-12 text-slate-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
+          ></path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-slate-900">
+          Henüz oda eklenmemiş
+        </h3>
+        <p class="mt-1 text-sm text-slate-500">
+          Yukarıdaki formu kullanarak ilk odanızı ekleyin.
+        </p>
+      </div>
+      {% endif %}
     </div>
+  </div>
 </div>
 
 <!-- QR Kod Görüntüleme Modal -->
-<div class="modal fade" id="qrModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-            <div class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
-                <h5 class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    <svg class="inline-block h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
-                    </svg>
-                    QR Kod - Oda <span id="qrOdaNo" class="text-indigo-600 dark:text-indigo-400"></span>
-                </h5>
-                <button type="button" class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" data-dismiss="modal">
-                    <span class="text-2xl">&times;</span>
-                </button>
+<div id="qrModal" class="modal p-4 sm:p-6 md:p-8">
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full mx-auto"
+  >
+    <div
+      class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between"
+    >
+      <h5
+        class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
+      >
+        <svg
+          class="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+          ></path>
+        </svg>
+        QR Kod - Oda
+        <span id="qrOdaNo" class="text-indigo-600 dark:text-indigo-400"></span>
+      </h5>
+      <a
+        href="#"
+        rel="modal:close"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </a>
+    </div>
+    <div class="p-6 flex flex-col items-center">
+      <!-- QR Kod - Sadece QR'ın arka planı beyaz -->
+      <div
+        class="p-6 rounded-lg shadow-sm mb-4"
+        style="background-color: white"
+      >
+        <div
+          id="qrImage"
+          style="
+            width: 256px;
+            height: 256px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+        ></div>
+      </div>
+
+      <!-- Oda Bilgileri -->
+      <div class="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 mb-4">
+        <p class="text-sm text-slate-600 dark:text-slate-400">
+          <span class="font-semibold text-slate-700 dark:text-slate-300"
+            >Kat:</span
+          >
+          <span id="qrKat" class="text-slate-900 dark:text-slate-100"></span>
+          <span class="mx-2">•</span>
+          <span class="font-semibold text-slate-700 dark:text-slate-300"
+            >Oda No:</span
+          >
+          <span
+            id="qrOdaNoDetay"
+            class="text-slate-900 dark:text-slate-100"
+          ></span>
+        </p>
+      </div>
+
+      <!-- Butonlar - Alt kısımda -->
+      <div class="flex gap-3 w-full justify-center">
+        <button
+          class="inline-flex items-center px-4 py-2 border border-green-300 dark:border-green-700 shadow-sm text-sm font-medium rounded-md text-green-700 dark:text-green-300 bg-white dark:bg-slate-800 hover:bg-green-50 dark:hover:bg-green-900/20"
+          onclick="qrYazdir()"
+        >
+          <svg
+            class="h-4 w-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+            ></path>
+          </svg>
+          Yazdır
+        </button>
+        <button
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+          onclick="qrIndir()"
+        >
+          <svg
+            class="h-4 w-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            ></path>
+          </svg>
+          İndir
+        </button>
+        <a
+          href="#"
+          rel="modal:close"
+          class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
+        >
+          <svg
+            class="h-4 w-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            ></path>
+          </svg>
+          Kapat
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Misafir Mesajı Modal -->
+  <div id="misafirMesajiModal" class="modal p-4 sm:p-6 md:p-8">
+    <div
+      class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full mx-auto"
+    >
+      <div
+        class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between"
+      >
+        <h5
+          class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
+        >
+          <svg
+            class="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+            ></path>
+          </svg>
+          Misafir Mesajı - Oda
+          <span
+            id="misafirMesajiOdaNo"
+            class="text-blue-600 dark:text-blue-400"
+          ></span>
+        </h5>
+        <a
+          href="#"
+          rel="modal:close"
+          class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+        >
+          <svg
+            class="h-6 w-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            ></path>
+          </svg>
+        </a>
+      </div>
+      <div class="p-6">
+        <div class="mb-4">
+          <label
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >
+            Misafir QR okuttuğunda gösterilecek mesaj:
+          </label>
+          <textarea
+            id="misafirMesajiInput"
+            class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            rows="4"
+            maxlength="500"
+            placeholder="Minibar dolum talebiniz en kısa sürede yerine getirilecektir."
+          ></textarea>
+          <div class="flex justify-between items-center mt-2">
+            <small class="text-xs text-slate-500 dark:text-slate-400">
+              <span id="karakterSayaci" class="font-medium">0/500</span>
+              karakter
+            </small>
+            <div
+              class="flex items-center text-xs text-slate-500 dark:text-slate-400"
+            >
+              <svg
+                class="h-4 w-4 mr-1"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
+              </svg>
+              Boş bırakırsanız varsayılan mesaj gösterilir
             </div>
-            <div class="modal-body p-6 text-center">
-                <div class="bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-700 inline-block mb-4">
-                    <img id="qrImage" src="" alt="QR Kod" class="w-72 h-72 object-contain">
-                </div>
-                <div class="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 inline-block">
-                    <p class="text-sm text-slate-600 dark:text-slate-400">
-                        <span class="font-semibold text-slate-700 dark:text-slate-300">Kat:</span> 
-                        <span id="qrKat" class="text-slate-900 dark:text-slate-100"></span>
-                        <span class="mx-2">•</span>
-                        <span class="font-semibold text-slate-700 dark:text-slate-300">Oda No:</span> 
-                        <span id="qrOdaNoDetay" class="text-slate-900 dark:text-slate-100"></span>
+          </div>
+        </div>
+
+        <!-- Alert Mesajları -->
+        <div id="misafirMesajiAlert" style="display: none"></div>
+      </div>
+      <div
+        class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3"
+      >
+        <a
+          href="#"
+          rel="modal:close"
+          class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
+        >
+          İptal
+        </a>
+        <button
+          type="button"
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          onclick="misafirMesajiKaydet()"
+        >
+          <svg
+            class="h-4 w-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+            ></path>
+          </svg>
+          Kaydet
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Yeni Oda Ekle Modal -->
+  <div id="yeniOdaModal" class="modal p-4 sm:p-6 md:p-8">
+    <div
+      class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full mx-auto max-h-[90vh] overflow-y-auto"
+    >
+      <div
+        class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between sticky top-0"
+      >
+        <h5
+          class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
+        >
+          <svg
+            class="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            ></path>
+          </svg>
+          Yeni Oda Ekle
+        </h5>
+        <a
+          href="#"
+          rel="modal:close"
+          class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+        >
+          <svg
+            class="h-6 w-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            ></path>
+          </svg>
+        </a>
+      </div>
+      <form id="yeniOdaForm">
+        <div class="p-6">
+          <!-- Alert Mesajları -->
+          <div id="yeniOdaAlert" style="display: none"></div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+              <label
+                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+              >
+                Otel <span class="text-red-500">*</span>
+              </label>
+              <select
+                id="yeniOtelId"
+                name="otel_id"
+                class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                required
+              >
+                <option value="">Otel seçiniz...</option>
+                {% for otel in oteller %}
+                <option value="{{ otel.id }}">{{ otel.ad }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label
+                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+              >
+                Kat <span class="text-red-500">*</span>
+              </label>
+              <select
+                id="yeniKatId"
+                name="kat_id"
+                class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                required
+                disabled
+              >
+                <option value="">Önce otel seçin...</option>
+              </select>
+            </div>
+            <div>
+              <label
+                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+              >
+                Oda No <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="yeniOdaNo"
+                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                required
+                placeholder="Örn: 101, 201, A1"
+              />
+            </div>
+            <div>
+              <label
+                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+              >
+                Oda Tipi
+              </label>
+              <select
+                id="yeniOdaTipi"
+                name="oda_tipi_id"
+                class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                disabled
+              >
+                <option value="">Önce otel seçin...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- QR Kod Önizleme (Oda eklendikten sonra gösterilecek) -->
+          <div id="yeniOdaQrBolumu" class="mt-6" style="display: none">
+            <div class="border-t border-slate-200 dark:border-slate-700 pt-6">
+              <div
+                class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4"
+              >
+                <div class="flex items-center">
+                  <svg
+                    class="h-5 w-5 text-green-600 dark:text-green-400 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
+                  </svg>
+                  <div>
+                    <p class="font-semibold text-green-800 dark:text-green-200">
+                      Oda başarıyla eklendi!
                     </p>
+                    <p class="text-sm text-green-700 dark:text-green-300">
+                      QR kod otomatik olarak oluşturuldu.
+                    </p>
+                  </div>
                 </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="text-center">
+                  <h6
+                    class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3"
+                  >
+                    Oda
+                    <span
+                      id="yeniOdaNoGoster"
+                      class="text-indigo-600 dark:text-indigo-400"
+                    ></span>
+                    - QR Kod
+                  </h6>
+                  <div
+                    class="bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-700 inline-block"
+                  >
+                    <img
+                      id="yeniOdaQrImage"
+                      src=""
+                      alt="QR Kod"
+                      class="w-64 h-64 object-contain"
+                    />
+                  </div>
+                  <div class="mt-4 flex gap-2 justify-center">
+                    <button
+                      type="button"
+                      class="inline-flex items-center px-3 py-2 border border-green-300 dark:border-green-700 shadow-sm text-sm font-medium rounded-md text-green-700 dark:text-green-300 bg-white dark:bg-slate-800 hover:bg-green-50 dark:hover:bg-green-900/20"
+                      onclick="qrYazdirYeni()"
+                    >
+                      <svg
+                        class="h-4 w-4 mr-1.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                        ></path>
+                      </svg>
+                      Yazdır
+                    </button>
+                    <button
+                      type="button"
+                      class="inline-flex items-center px-3 py-2 border border-indigo-300 dark:border-indigo-700 shadow-sm text-sm font-medium rounded-md text-indigo-700 dark:text-indigo-300 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                      onclick="qrIndirYeni()"
+                    >
+                      <svg
+                        class="h-4 w-4 mr-1.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                        ></path>
+                      </svg>
+                      İndir
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <div
+                    class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4"
+                  >
+                    <div class="flex items-start">
+                      <svg
+                        class="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2 mt-0.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        ></path>
+                      </svg>
+                      <div>
+                        <p
+                          class="font-semibold text-blue-800 dark:text-blue-200 mb-2"
+                        >
+                          Sonraki Adımlar:
+                        </p>
+                        <ol
+                          class="text-sm text-blue-700 dark:text-blue-300 space-y-1 list-decimal list-inside"
+                        >
+                          <li>QR kodu yazdırın</li>
+                          <li>Odadaki minibara yapıştırın</li>
+                          <li>Misafir mesajını özelleştirin</li>
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="w-full inline-flex items-center justify-center px-4 py-2 border border-blue-300 dark:border-blue-700 shadow-sm text-sm font-medium rounded-md text-blue-700 dark:text-blue-300 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    onclick="misafirMesajiDuzenleYeni()"
+                  >
+                    <svg
+                      class="h-4 w-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                      ></path>
+                    </svg>
+                    Misafir Mesajını Düzenle
+                  </button>
+                </div>
+              </div>
             </div>
-            <div class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4">
-                <button class="inline-flex items-center px-4 py-2 border border-green-300 dark:border-green-700 shadow-sm text-sm font-medium rounded-md text-green-700 dark:text-green-300 bg-white dark:bg-slate-800 hover:bg-green-50 dark:hover:bg-green-900/20" 
-                        onclick="qrYazdir()">
-                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+          </div>
+        </div>
+        <div
+          class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3 sticky bottom-0"
+        >
+          <a
+            href="#"
+            rel="modal:close"
+            id="yeniOdaKapatBtn"
+            class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
+          >
+            Kapat
+          </a>
+          <button
+            type="submit"
+            id="yeniOdaKaydetBtn"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+          >
+            <svg
+              class="h-4 w-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+              ></path>
+            </svg>
+            Kaydet ve QR Oluştur
+          </button>
+          <button
+            type="button"
+            id="yeniOdaTamamBtn"
+            style="display: none"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+            onclick="yeniOdaTamamla()"
+          >
+            <svg
+              class="h-4 w-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            Tamamla
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Oda Düzenle Modal -->
+  <div id="odaDuzenleModal" class="modal p-4 sm:p-6 md:p-8">
+    <div
+      class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full mx-auto max-h-[90vh] overflow-y-auto"
+    >
+      <div
+        class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between sticky top-0"
+      >
+        <h5
+          class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
+        >
+          <svg
+            class="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+            ></path>
+          </svg>
+          Oda Düzenle -
+          <span
+            id="duzenleOdaNo"
+            class="text-indigo-600 dark:text-indigo-400"
+          ></span>
+        </h5>
+        <a
+          href="#"
+          rel="modal:close"
+          class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+        >
+          <svg
+            class="h-6 w-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            ></path>
+          </svg>
+        </a>
+      </div>
+      <form id="odaDuzenleForm">
+        <input type="hidden" id="duzenleOdaId" />
+        <div class="p-6">
+          <!-- Alert Mesajları -->
+          <div id="odaDuzenleAlert" style="display: none"></div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="md:col-span-2">
+              <label
+                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+              >
+                Otel <span class="text-red-500">*</span>
+              </label>
+              <select
+                id="duzenleOtelId"
+                class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                required
+              >
+                <option value="">Otel seçiniz...</option>
+                {% for otel in oteller %}
+                <option value="{{ otel.id }}">{{ otel.ad }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label
+                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+              >
+                Kat <span class="text-red-500">*</span>
+              </label>
+              <select
+                id="duzenleKatId"
+                class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                required
+                disabled
+              >
+                <option value="">Önce otel seçin...</option>
+              </select>
+            </div>
+            <div>
+              <label
+                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+              >
+                Oda No <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="duzenleOdaNoInput"
+                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                required
+                placeholder="Örn: 101, 201, A1"
+              />
+            </div>
+            <div>
+              <label
+                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+              >
+                Oda Tipi
+              </label>
+              <select
+                id="duzenleOdaTipi"
+                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                disabled
+              >
+                <option value="">Önce otel seçin...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- QR Kod Bölümü -->
+          <div
+            id="qrKodBolumu"
+            class="border-t border-slate-200 dark:border-slate-700 pt-6"
+            style="display: none"
+          >
+            <h6
+              class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4"
+            >
+              QR Kod Yönetimi
+            </h6>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="flex flex-col items-center">
+                <!-- QR Kod - Sadece QR'ın arka planı beyaz -->
+                <div class="bg-white p-3 rounded-lg shadow-sm mb-2">
+                  <div
+                    id="duzenleQrImage"
+                    style="
+                      width: 256px;
+                      height: 256px;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                    "
+                  ></div>
+                </div>
+                <!-- Butonlar -->
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    class="inline-flex items-center px-3 py-2 border border-green-300 dark:border-green-700 shadow-sm text-sm font-medium rounded-md text-green-700 dark:text-green-300 bg-white dark:bg-slate-800 hover:bg-green-50 dark:hover:bg-green-900/20"
+                    onclick="qrYazdirDuzenle()"
+                  >
+                    <svg
+                      class="h-4 w-4 mr-1.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                      ></path>
                     </svg>
                     Yazdır
-                </button>
-                <button class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700" 
-                        onclick="qrIndir()">
-                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                  </button>
+                  <button
+                    type="button"
+                    class="inline-flex items-center px-3 py-2 border border-indigo-300 dark:border-indigo-700 shadow-sm text-sm font-medium rounded-md text-indigo-700 dark:text-indigo-300 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                    onclick="qrIndirDuzenle()"
+                  >
+                    <svg
+                      class="h-4 w-4 mr-1.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                      ></path>
                     </svg>
                     İndir
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Misafir Mesajı Modal -->
-<div class="modal fade" id="misafirMesajiModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-            <div class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
-                <h5 class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    <svg class="inline-block h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                  </button>
+                </div>
+              </div>
+              <div>
+                <div
+                  class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-3"
+                >
+                  <div class="flex items-start">
+                    <svg
+                      class="h-5 w-5 text-yellow-600 dark:text-yellow-400 mr-2 mt-0.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      ></path>
                     </svg>
-                    Misafir Mesajı - Oda <span id="misafirMesajiOdaNo" class="text-blue-600 dark:text-blue-400"></span>
-                </h5>
-                <button type="button" class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" data-dismiss="modal">
-                    <span class="text-2xl">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body p-6">
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Misafir QR okuttuğunda gösterilecek mesaj:
-                    </label>
-                    <textarea id="misafirMesajiInput" 
-                              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                              rows="4" 
-                              maxlength="500"
-                              placeholder="Minibar dolum talebiniz en kısa sürede yerine getirilecektir."></textarea>
-                    <div class="flex justify-between items-center mt-2">
-                        <small class="text-xs text-slate-500 dark:text-slate-400">
-                            <span id="karakterSayaci" class="font-medium">0/500</span> karakter
-                        </small>
-                        <div class="flex items-center text-xs text-slate-500 dark:text-slate-400">
-                            <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Boş bırakırsanız varsayılan mesaj gösterilir
-                        </div>
+                    <div>
+                      <p
+                        class="font-semibold text-yellow-800 dark:text-yellow-200 text-sm mb-2"
+                      >
+                        Dikkat!
+                      </p>
+                      <p
+                        class="text-xs text-yellow-700 dark:text-yellow-300 mb-2"
+                      >
+                        QR kod yeniden oluşturulursa:
+                      </p>
+                      <ul
+                        class="text-xs text-yellow-700 dark:text-yellow-300 space-y-1 list-disc list-inside"
+                      >
+                        <li>Eski QR kod geçersiz olur</li>
+                        <li>Yeni QR kod yazdırılmalı</li>
+                        <li>Odadaki QR değiştirilmeli</li>
+                      </ul>
                     </div>
+                  </div>
                 </div>
-                
-                <!-- Alert Mesajları -->
-                <div id="misafirMesajiAlert" style="display:none;"></div>
-            </div>
-            <div class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4">
-                <button type="button" 
-                        class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700" 
-                        data-dismiss="modal">
-                    İptal
+                <button
+                  type="button"
+                  class="w-full inline-flex items-center justify-center px-4 py-2 border border-yellow-300 dark:border-yellow-700 shadow-sm text-sm font-medium rounded-md text-yellow-700 dark:text-yellow-300 bg-white dark:bg-slate-800 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 mb-3"
+                  onclick="qrYenile()"
+                >
+                  <svg
+                    class="h-4 w-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    ></path>
+                  </svg>
+                  QR Kodu Yenile
                 </button>
-                <button type="button" 
-                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700" 
-                        onclick="misafirMesajiKaydet()">
-                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
-                    </svg>
-                    Kaydet
+                <button
+                  type="button"
+                  class="w-full inline-flex items-center justify-center px-4 py-2 border border-blue-300 dark:border-blue-700 shadow-sm text-sm font-medium rounded-md text-blue-700 dark:text-blue-300 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                  onclick="misafirMesajiDuzenleDuzenle()"
+                >
+                  <svg
+                    class="h-4 w-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                    ></path>
+                  </svg>
+                  Misafir Mesajını Düzenle
                 </button>
+              </div>
             </div>
+          </div>
         </div>
-    </div>
-</div>
-
-<!-- Yeni Oda Ekle Modal -->
-<div class="modal fade" id="yeniOdaModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-            <div class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
-                <h5 class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    <svg class="inline-block h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    Yeni Oda Ekle
-                </h5>
-                <button type="button" class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" data-dismiss="modal">
-                    <span class="text-2xl">&times;</span>
-                </button>
-            </div>
-            <form id="yeniOdaForm">
-                <div class="modal-body p-6">
-                    <!-- Alert Mesajları -->
-                    <div id="yeniOdaAlert" style="display:none;"></div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Otel <span class="text-red-500">*</span>
-                            </label>
-                            <select id="yeniOtelId" 
-                                    name="otel_id"
-                                    class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                                    required>
-                                <option value="">Otel seçiniz...</option>
-                                {% for otel in oteller %}
-                                <option value="{{ otel.id }}">{{ otel.ad }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Kat <span class="text-red-500">*</span>
-                            </label>
-                            <select id="yeniKatId" 
-                                    name="kat_id"
-                                    class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                                    required
-                                    disabled>
-                                <option value="">Önce otel seçin...</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Oda No <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" 
-                                   id="yeniOdaNo" 
-                                   class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                                   required 
-                                   placeholder="Örn: 101, 201, A1">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Oda Tipi
-                            </label>
-                            <select id="yeniOdaTipi" 
-                                    name="oda_tipi_id"
-                                    class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                                    disabled>
-                                <option value="">Önce otel seçin...</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <!-- QR Kod Önizleme (Oda eklendikten sonra gösterilecek) -->
-                    <div id="yeniOdaQrBolumu" class="mt-6" style="display:none;">
-                        <div class="border-t border-slate-200 dark:border-slate-700 pt-6">
-                            <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
-                                <div class="flex items-center">
-                                    <svg class="h-5 w-5 text-green-600 dark:text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    <div>
-                                        <p class="font-semibold text-green-800 dark:text-green-200">Oda başarıyla eklendi!</p>
-                                        <p class="text-sm text-green-700 dark:text-green-300">QR kod otomatik olarak oluşturuldu.</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div class="text-center">
-                                    <h6 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
-                                        Oda <span id="yeniOdaNoGoster" class="text-indigo-600 dark:text-indigo-400"></span> - QR Kod
-                                    </h6>
-                                    <div class="bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-700 inline-block">
-                                        <img id="yeniOdaQrImage" src="" alt="QR Kod" class="w-64 h-64 object-contain">
-                                    </div>
-                                    <div class="mt-4 flex gap-2 justify-center">
-                                        <button type="button" 
-                                                class="inline-flex items-center px-3 py-2 border border-green-300 dark:border-green-700 shadow-sm text-sm font-medium rounded-md text-green-700 dark:text-green-300 bg-white dark:bg-slate-800 hover:bg-green-50 dark:hover:bg-green-900/20" 
-                                                onclick="qrYazdirYeni()">
-                                            <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-                                            </svg>
-                                            Yazdır
-                                        </button>
-                                        <button type="button" 
-                                                class="inline-flex items-center px-3 py-2 border border-indigo-300 dark:border-indigo-700 shadow-sm text-sm font-medium rounded-md text-indigo-700 dark:text-indigo-300 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20" 
-                                                onclick="qrIndirYeni()">
-                                            <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                            </svg>
-                                            İndir
-                                        </button>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
-                                        <div class="flex items-start">
-                                            <svg class="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                            <div>
-                                                <p class="font-semibold text-blue-800 dark:text-blue-200 mb-2">Sonraki Adımlar:</p>
-                                                <ol class="text-sm text-blue-700 dark:text-blue-300 space-y-1 list-decimal list-inside">
-                                                    <li>QR kodu yazdırın</li>
-                                                    <li>Odadaki minibara yapıştırın</li>
-                                                    <li>Misafir mesajını özelleştirin</li>
-                                                </ol>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button type="button" 
-                                            class="w-full inline-flex items-center justify-center px-4 py-2 border border-blue-300 dark:border-blue-700 shadow-sm text-sm font-medium rounded-md text-blue-700 dark:text-blue-300 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/20" 
-                                            onclick="misafirMesajiDuzenleYeni()">
-                                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
-                                        </svg>
-                                        Misafir Mesajını Düzenle
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4">
-                    <button type="button" 
-                            id="yeniOdaKapatBtn"
-                            class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700" 
-                            data-dismiss="modal">
-                        Kapat
-                    </button>
-                    <button type="submit" 
-                            id="yeniOdaKaydetBtn"
-                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
-                        </svg>
-                        Kaydet ve QR Oluştur
-                    </button>
-                    <button type="button" 
-                            id="yeniOdaTamamBtn"
-                            style="display:none;"
-                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
-                            onclick="yeniOdaTamamla()">
-                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        Tamamla
-                    </button>
-                </div>
-            </form>
+        <div
+          class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3 sticky bottom-0"
+        >
+          <a
+            href="#"
+            rel="modal:close"
+            class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700"
+          >
+            Kapat
+          </a>
+          <button
+            type="submit"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            id="odaDuzenleKaydetBtn"
+          >
+            <svg
+              class="h-4 w-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+              ></path>
+            </svg>
+            Güncelle
+          </button>
         </div>
+      </form>
     </div>
+  </div>
 </div>
 
-<!-- Oda Düzenle Modal -->
-<div class="modal fade" id="odaDuzenleModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-            <div class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
-                <h5 class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    <svg class="inline-block h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                    </svg>
-                    Oda Düzenle - <span id="duzenleOdaNo" class="text-indigo-600 dark:text-indigo-400"></span>
-                </h5>
-                <button type="button" class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" data-dismiss="modal">
-                    <span class="text-2xl">&times;</span>
-                </button>
-            </div>
-            <form id="odaDuzenleForm">
-                <input type="hidden" id="duzenleOdaId">
-                <div class="modal-body p-6">
-                    <!-- Alert Mesajları -->
-                    <div id="odaDuzenleAlert" style="display:none;"></div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Otel <span class="text-red-500">*</span>
-                            </label>
-                            <select id="duzenleOtelId" 
-                                    class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                                    required>
-                                <option value="">Otel seçiniz...</option>
-                                {% for otel in oteller %}
-                                <option value="{{ otel.id }}">{{ otel.ad }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Kat <span class="text-red-500">*</span>
-                            </label>
-                            <select id="duzenleKatId" 
-                                    class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                                    required
-                                    disabled>
-                                <option value="">Önce otel seçin...</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Oda No <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" 
-                                   id="duzenleOdaNoInput" 
-                                   class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                                   required 
-                                   placeholder="Örn: 101, 201, A1">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Oda Tipi
-                            </label>
-                            <select id="duzenleOdaTipi" 
-                                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                                    disabled>
-                                <option value="">Önce otel seçin...</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <!-- QR Kod Bölümü -->
-                    <div id="qrKodBolumu" class="border-t border-slate-200 dark:border-slate-700 pt-6" style="display:none;">
-                        <h6 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">QR Kod Yönetimi</h6>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="text-center">
-                                <div class="bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-700 inline-block mb-4">
-                                    <img id="duzenleQrImage" src="" alt="QR Kod" class="w-64 h-64 object-contain">
-                                </div>
-                                <div class="flex gap-2 justify-center">
-                                    <button type="button" 
-                                            class="inline-flex items-center px-3 py-2 border border-green-300 dark:border-green-700 shadow-sm text-sm font-medium rounded-md text-green-700 dark:text-green-300 bg-white dark:bg-slate-800 hover:bg-green-50 dark:hover:bg-green-900/20" 
-                                            onclick="qrYazdirDuzenle()">
-                                        <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-                                        </svg>
-                                        Yazdır
-                                    </button>
-                                    <button type="button" 
-                                            class="inline-flex items-center px-3 py-2 border border-indigo-300 dark:border-indigo-700 shadow-sm text-sm font-medium rounded-md text-indigo-700 dark:text-indigo-300 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20" 
-                                            onclick="qrIndirDuzenle()">
-                                        <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                        </svg>
-                                        İndir
-                                    </button>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-3">
-                                    <div class="flex items-start">
-                                        <svg class="h-5 w-5 text-yellow-600 dark:text-yellow-400 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                                        </svg>
-                                        <div>
-                                            <p class="font-semibold text-yellow-800 dark:text-yellow-200 text-sm mb-2">Dikkat!</p>
-                                            <p class="text-xs text-yellow-700 dark:text-yellow-300 mb-2">QR kod yeniden oluşturulursa:</p>
-                                            <ul class="text-xs text-yellow-700 dark:text-yellow-300 space-y-1 list-disc list-inside">
-                                                <li>Eski QR kod geçersiz olur</li>
-                                                <li>Yeni QR kod yazdırılmalı</li>
-                                                <li>Odadaki QR değiştirilmeli</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button type="button" 
-                                        class="w-full inline-flex items-center justify-center px-4 py-2 border border-yellow-300 dark:border-yellow-700 shadow-sm text-sm font-medium rounded-md text-yellow-700 dark:text-yellow-300 bg-white dark:bg-slate-800 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 mb-3" 
-                                        onclick="qrYenile()">
-                                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                    </svg>
-                                    QR Kodu Yenile
-                                </button>
-                                <button type="button" 
-                                        class="w-full inline-flex items-center justify-center px-4 py-2 border border-blue-300 dark:border-blue-700 shadow-sm text-sm font-medium rounded-md text-blue-700 dark:text-blue-300 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/20" 
-                                        onclick="misafirMesajiDuzenleDuzenle()">
-                                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
-                                    </svg>
-                                    Misafir Mesajını Düzenle
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4">
-                    <button type="button" 
-                            class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700" 
-                            data-dismiss="modal" 
-                            id="yeniOdaKapatBtn">
-                        Kapat
-                    </button>
-                    <button type="submit" 
-                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" 
-                            id="yeniOdaKaydetBtn">
-                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
-                        </svg>
-                        Kaydet ve QR Oluştur
-                    </button>
-                    <button type="button" 
-                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" 
-                            onclick="yeniOdaTamamla()" 
-                            id="yeniOdaTamamBtn" 
-                            style="display:none;">
-                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        Tamamla
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-
-</div>
-
-{% endblock %}
-
-{% block extra_scripts %}
+{% endblock %} {% block extra_scripts %}
 <!-- Toastr CSS & JS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
+/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
 <!-- Admin QR JS -->
 <script src="{{ url_for('static', filename='js/admin_qr.js') }}"></script>
 
 <!-- Oda Form Dynamic Loading JS -->
-<script src="{{ url_for('static', filename='js/oda_form.js') }}"></script>
-<script src="{{ url_for('static', filename='js/oda_tanimla.js') }}"></script>
+<script src="{{ url_for('static', filename='js/oda_form.js') }}?v={{ config.get('CACHE_VERSION', '1.0') }}"></script>
+<script src="{{ url_for('static', filename='js/oda_tanimla.js') }}?v=1.2"></script>
 
 <script>
-    // Toastr ayarları
-    toastr.options = {
-        "closeButton": true,
-        "progressBar": true,
-        "positionClass": "toast-top-right",
-        "timeOut": "3000"
-    };
+  // Toastr ayarları
+  toastr.options = {
+    closeButton: true,
+    progressBar: true,
+    positionClass: "toast-top-right",
+    timeOut: "3000",
+  };
 </script>
 
 <script>
-    document.addEventListener( 'DOMContentLoaded', function () {
-        // Tüm oda verilerini hazırla (otel-kat-oda tipi ilişkisi için)
-        const odaVerileri = [
-            {% for oda in odalar %}
-            {
-                otelAdi: '{{ oda.kat.otel.ad if oda.kat and oda.kat.otel else "" }}',
-                katAdi: '{{ oda.kat.kat_adi if oda.kat else "" }}',
-                odaTipi: '{{ oda.oda_tipi_adi if oda.oda_tipi_adi else "" }}'
-            },
-            {% endfor %}
-        ];
-        
-        // Tüm kat seçeneklerini oluştur (otel bilgisi ile)
-        const tumKatlar = [
-            {% for kat in katlar %}
-            { 
-                value: '{{ kat.kat_adi }}', 
-                label: '{{ kat.kat_adi }}',
-                otelAdi: '{{ kat.otel.ad if kat.otel else "" }}'
-            },
-            {% endfor %}
-        ];
-        
-        // Tüm oda tiplerini oluştur (otel ve kat bilgisi ile)
-        const tumOdaTipleri = [
-            {% for oda in odalar %}
-            {% if oda.oda_tipi_adi %}
-            { 
-                value: '{{ oda.oda_tipi_adi }}', 
-                label: '{{ oda.oda_tipi_adi }}',
-                otelAdi: '{{ oda.kat.otel.ad if oda.kat and oda.kat.otel else "" }}',
-                katAdi: '{{ oda.kat.kat_adi if oda.kat else "" }}'
-            },
-            {% endif %}
-            {% endfor %}
-        ];
-        
-        // Benzersiz oda tiplerini al - otel ve kat bilgisi ile
-        const benzersizOdaTipleri = [];
-        const gorulenTipler = new Map(); // value -> {otelAdi, katAdi} map
-        
-        tumOdaTipleri.forEach(tip => {
-            const key = `${tip.value}|${tip.otelAdi}|${tip.katAdi}`;
-            if (!gorulenTipler.has(key)) {
-                gorulenTipler.set(key, true);
-                benzersizOdaTipleri.push(tip);
-            }
-        });
-        
-        // Filtre için sadece oda tipi adlarını benzersiz yap (dropdown için)
-        const benzersizOdaTipiAdlari = [];
-        const gorulenAdlar = new Set();
-        tumOdaTipleri.forEach(tip => {
-            if (!gorulenAdlar.has(tip.value)) {
-                gorulenAdlar.add(tip.value);
-                benzersizOdaTipiAdlari.push({
-                    value: tip.value,
-                    label: tip.label
-                });
-            }
-        });
-        
-        console.log('Tüm Oda Tipleri:', tumOdaTipleri);
-        console.log('Benzersiz Oda Tipleri (otel/kat ile):', benzersizOdaTipleri);
-        console.log('Benzersiz Oda Tipi Adları:', benzersizOdaTipiAdlari);
-        
-        // Otel seçeneklerini dinamik olarak oluştur
-        const otelOptions = [
-            {% for otel in oteller %}
-            { value: '{{ otel.ad }}', label: '{{ otel.ad }}' },
-            {% endfor %}
-        ];
+  document.addEventListener( 'DOMContentLoaded', function () {
+      // Tüm oda verilerini hazırla (otel-kat-oda tipi ilişkisi için)
+      const odaVerileri = [
+          {% for oda in odalar %}
+          {
+              otelAdi: '{{ oda.kat.otel.ad if oda.kat and oda.kat.otel else "" }}',
+              katAdi: '{{ oda.kat.kat_adi if oda.kat else "" }}',
+              odaTipi: '{{ oda.oda_tipi_adi if oda.oda_tipi_adi else "" }}'
+          },
+          {% endfor %}
+      ];
 
-        const odalarTable = document.getElementById( 'odalar-table' );
-        if ( odalarTable ) {
-            // Filtre konfigürasyonu
-            const filterConfig = {
-                searchPlaceholder: 'Oda numarası ara...',
-                defaultItemsPerPage: 50,
-                searchInputId: 'odalar-search',
-                filters: []
-            };
-            
-            // Otel Adı filtresi ekle (columnIndex: 3 - dördüncü sütun)
-            if (otelOptions.length > 0) {
-                filterConfig.filters.push({
-                    columnIndex: 3,
-                    label: 'Otel Adı',
-                    options: otelOptions
-                });
-            }
-            
-            // Kat filtresi ekle (columnIndex: 0 - ilk sütun)
-            if (tumKatlar.length > 0) {
-                filterConfig.filters.push({
-                    columnIndex: 0,
-                    label: 'Kat',
-                    options: tumKatlar
-                });
-            }
-            
-            // Oda Tipi filtresi ekle (columnIndex: 2 - üçüncü sütun)
-            if (benzersizOdaTipiAdlari.length > 0) {
-                filterConfig.filters.push({
-                    columnIndex: 2,
-                    label: 'Oda Tipi',
-                    options: benzersizOdaTipiAdlari
-                });
-            }
-            
-            window.tableSearchFilter_odalar = new TableSearchFilter( 'odalar-table', filterConfig );
-            
-            // Filtreler arası bağımlılık yönetimi
-            const otelFilter = document.getElementById('odalar-table-filter-3');
-            const katFilter = document.getElementById('odalar-table-filter-0');
-            const odaTipiFilter = document.getElementById('odalar-table-filter-2');
-            
-            // Otel filtresi değiştiğinde
-            if (otelFilter && katFilter && odaTipiFilter) {
-                otelFilter.addEventListener('change', function() {
-                    const secilenOtel = this.value;
-                    
-                    // Kat filtresini temizle
-                    katFilter.value = '';
-                    delete window.tableSearchFilter_odalar.activeFilters[0];
-                    
-                    // Oda tipi filtresini temizle
-                    odaTipiFilter.value = '';
-                    delete window.tableSearchFilter_odalar.activeFilters[2];
-                    
-                    // Kat filtresini güncelle
-                    if (secilenOtel) {
-                        // Sadece seçilen otele ait katları göster
-                        const filtreliKatlar = tumKatlar.filter(kat => kat.otelAdi === secilenOtel);
-                        
-                        katFilter.innerHTML = '<option value="">Kat Seçin</option>';
-                        filtreliKatlar.forEach(kat => {
-                            const option = document.createElement('option');
-                            option.value = kat.value;
-                            option.textContent = kat.label;
-                            katFilter.appendChild(option);
-                        });
-                        katFilter.disabled = filtreliKatlar.length === 0;
-                        
-                        // Sadece seçilen otele ait oda tiplerini göster
-                        const filtreliOdaTipleri = benzersizOdaTipleri.filter(tip => tip.otelAdi === secilenOtel);
-                        
-                        odaTipiFilter.innerHTML = '<option value="">Oda Tipi Seçin</option>';
-                        filtreliOdaTipleri.forEach(tip => {
-                            const option = document.createElement('option');
-                            option.value = tip.value;
-                            option.textContent = tip.label;
-                            odaTipiFilter.appendChild(option);
-                        });
-                        odaTipiFilter.disabled = filtreliOdaTipleri.length === 0;
-                    } else {
-                        // Tüm katları göster
-                        katFilter.innerHTML = '<option value="">Kat</option>';
-                        tumKatlar.forEach(kat => {
-                            const option = document.createElement('option');
-                            option.value = kat.value;
-                            option.textContent = kat.label;
-                            katFilter.appendChild(option);
-                        });
-                        katFilter.disabled = false;
-                        
-                        // Tüm oda tiplerini göster
-                        odaTipiFilter.innerHTML = '<option value="">Oda Tipi</option>';
-                        benzersizOdaTipiAdlari.forEach(tip => {
-                            const option = document.createElement('option');
-                            option.value = tip.value;
-                            option.textContent = tip.label;
-                            odaTipiFilter.appendChild(option);
-                        });
-                        odaTipiFilter.disabled = false;
-                    }
-                    
-                    // Filtreleri yeniden uygula
-                    window.tableSearchFilter_odalar.updateActiveFilterBadges();
-                    window.tableSearchFilter_odalar.applyFiltersAndSearch();
-                });
-                
-                // Kat filtresi değiştiğinde
-                katFilter.addEventListener('change', function() {
-                    const secilenOtel = otelFilter.value;
-                    const secilenKat = this.value;
-                    
-                    // Oda tipi filtresini temizle
-                    odaTipiFilter.value = '';
-                    delete window.tableSearchFilter_odalar.activeFilters[2];
-                    
-                    // Oda tipi filtresini güncelle
-                    if (secilenKat) {
-                        // Seçilen kata ait oda tiplerini göster
-                        let filtreliOdaTipleri = benzersizOdaTipleri.filter(tip => tip.katAdi === secilenKat);
-                        
-                        // Eğer otel de seçiliyse, hem otel hem kat filtresi uygula
-                        if (secilenOtel) {
-                            filtreliOdaTipleri = filtreliOdaTipleri.filter(tip => tip.otelAdi === secilenOtel);
-                        }
-                        
-                        // Eğer otel de seçiliyse, hem otel hem kat filtresi uygula
-                        if (secilenOtel) {
-                            filtreliOdaTipleri = filtreliOdaTipleri.filter(tip => tip.otelAdi === secilenOtel);
-                        }
-                        
-                        odaTipiFilter.innerHTML = '<option value="">Oda Tipi Seçin</option>';
-                        filtreliOdaTipleri.forEach(tip => {
-                            const option = document.createElement('option');
-                            option.value = tip.value;
-                            option.textContent = tip.label;
-                            odaTipiFilter.appendChild(option);
-                        });
-                        odaTipiFilter.disabled = filtreliOdaTipleri.length === 0;
-                    } else if (secilenOtel) {
-                        // Sadece otel seçiliyse, otele ait oda tiplerini göster
-                        const filtreliOdaTipleri = benzersizOdaTipleri.filter(tip => tip.otelAdi === secilenOtel);
-                        
-                        odaTipiFilter.innerHTML = '<option value="">Oda Tipi Seçin</option>';
-                        filtreliOdaTipleri.forEach(tip => {
-                            const option = document.createElement('option');
-                            option.value = tip.value;
-                            option.textContent = tip.label;
-                            odaTipiFilter.appendChild(option);
-                        });
-                        odaTipiFilter.disabled = filtreliOdaTipleri.length === 0;
-                    } else {
-                        // Hiçbir şey seçili değilse, tüm oda tiplerini göster
-                        odaTipiFilter.innerHTML = '<option value="">Oda Tipi</option>';
-                        benzersizOdaTipiAdlari.forEach(tip => {
-                            const option = document.createElement('option');
-                            option.value = tip.value;
-                            option.textContent = tip.label;
-                            odaTipiFilter.appendChild(option);
-                        });
-                        odaTipiFilter.disabled = false;
-                    }
-                    
-                    // Filtreleri yeniden uygula
-                    window.tableSearchFilter_odalar.updateActiveFilterBadges();
-                    window.tableSearchFilter_odalar.applyFiltersAndSearch();
-                });
-            }
-        }
-    });
-    
-    // Excel indirme fonksiyonu
-    function excelIndir() {
-        // Yeni pencerede aç (sayfa yenilenmez)
-        window.open('{{ url_for("oda_tanimla", format="excel") }}', '_blank');
-    }
+      // Tüm kat seçeneklerini oluştur (otel bilgisi ile)
+      const tumKatlar = [
+          {% for kat in katlar %}
+          {
+              value: '{{ kat.kat_adi }}',
+              label: '{{ kat.kat_adi }}',
+              otelAdi: '{{ kat.otel.ad if kat.otel else "" }}'
+          },
+          {% endfor %}
+      ];
+
+      // Tüm oda tiplerini oluştur (otel ve kat bilgisi ile)
+      const tumOdaTipleri = [
+          {% for oda in odalar %}
+          {% if oda.oda_tipi_adi %}
+          {
+              value: '{{ oda.oda_tipi_adi }}',
+              label: '{{ oda.oda_tipi_adi }}',
+              otelAdi: '{{ oda.kat.otel.ad if oda.kat and oda.kat.otel else "" }}',
+              katAdi: '{{ oda.kat.kat_adi if oda.kat else "" }}'
+          },
+          {% endif %}
+          {% endfor %}
+      ];
+
+      // Benzersiz oda tiplerini al - otel ve kat bilgisi ile
+      const benzersizOdaTipleri = [];
+      const gorulenTipler = new Map(); // value -> {otelAdi, katAdi} map
+
+      tumOdaTipleri.forEach(tip => {
+          const key = `${tip.value}|${tip.otelAdi}|${tip.katAdi}`;
+          if (!gorulenTipler.has(key)) {
+              gorulenTipler.set(key, true);
+              benzersizOdaTipleri.push(tip);
+          }
+      });
+
+      // Filtre için sadece oda tipi adlarını benzersiz yap (dropdown için)
+      const benzersizOdaTipiAdlari = [];
+      const gorulenAdlar = new Set();
+      tumOdaTipleri.forEach(tip => {
+          if (!gorulenAdlar.has(tip.value)) {
+              gorulenAdlar.add(tip.value);
+              benzersizOdaTipiAdlari.push({
+                  value: tip.value,
+                  label: tip.label
+              });
+          }
+      });
+
+      console.log('Tüm Oda Tipleri:', tumOdaTipleri);
+      console.log('Benzersiz Oda Tipleri (otel/kat ile):', benzersizOdaTipleri);
+      console.log('Benzersiz Oda Tipi Adları:', benzersizOdaTipiAdlari);
+
+      // Otel seçeneklerini dinamik olarak oluştur
+      const otelOptions = [
+          {% for otel in oteller %}
+          { value: '{{ otel.ad }}', label: '{{ otel.ad }}' },
+          {% endfor %}
+      ];
+
+      const odalarTable = document.getElementById( 'odalar-table' );
+      if ( odalarTable ) {
+          // Filtre konfigürasyonu
+          const filterConfig = {
+              searchPlaceholder: 'Oda numarası ara...',
+              defaultItemsPerPage: 50,
+              searchInputId: 'odalar-search',
+              filters: []
+          };
+
+          // Otel Adı filtresi ekle (columnIndex: 3 - dördüncü sütun)
+          if (otelOptions.length > 0) {
+              filterConfig.filters.push({
+                  columnIndex: 3,
+                  label: 'Otel Adı',
+                  options: otelOptions
+              });
+          }
+
+          // Kat filtresi ekle (columnIndex: 0 - ilk sütun)
+          if (tumKatlar.length > 0) {
+              filterConfig.filters.push({
+                  columnIndex: 0,
+                  label: 'Kat',
+                  options: tumKatlar
+              });
+          }
+
+          // Oda Tipi filtresi ekle (columnIndex: 2 - üçüncü sütun)
+          if (benzersizOdaTipiAdlari.length > 0) {
+              filterConfig.filters.push({
+                  columnIndex: 2,
+                  label: 'Oda Tipi',
+                  options: benzersizOdaTipiAdlari
+              });
+          }
+
+          window.tableSearchFilter_odalar = new TableSearchFilter( 'odalar-table', filterConfig );
+
+          // Filtreler arası bağımlılık yönetimi
+          const otelFilter = document.getElementById('odalar-table-filter-3');
+          const katFilter = document.getElementById('odalar-table-filter-0');
+          const odaTipiFilter = document.getElementById('odalar-table-filter-2');
+
+          // Otel filtresi değiştiğinde
+          if (otelFilter && katFilter && odaTipiFilter) {
+              otelFilter.addEventListener('change', function() {
+                  const secilenOtel = this.value;
+
+                  // Kat filtresini temizle
+                  katFilter.value = '';
+                  delete window.tableSearchFilter_odalar.activeFilters[0];
+
+                  // Oda tipi filtresini temizle
+                  odaTipiFilter.value = '';
+                  delete window.tableSearchFilter_odalar.activeFilters[2];
+
+                  // Kat filtresini güncelle
+                  if (secilenOtel) {
+                      // Sadece seçilen otele ait katları göster
+                      const filtreliKatlar = tumKatlar.filter(kat => kat.otelAdi === secilenOtel);
+
+                      katFilter.innerHTML = '<option value="">Kat Seçin</option>';
+                      filtreliKatlar.forEach(kat => {
+                          const option = document.createElement('option');
+                          option.value = kat.value;
+                          option.textContent = kat.label;
+                          katFilter.appendChild(option);
+                      });
+                      katFilter.disabled = filtreliKatlar.length === 0;
+
+                      // Sadece seçilen otele ait oda tiplerini göster
+                      const filtreliOdaTipleri = benzersizOdaTipleri.filter(tip => tip.otelAdi === secilenOtel);
+
+                      odaTipiFilter.innerHTML = '<option value="">Oda Tipi Seçin</option>';
+                      filtreliOdaTipleri.forEach(tip => {
+                          const option = document.createElement('option');
+                          option.value = tip.value;
+                          option.textContent = tip.label;
+                          odaTipiFilter.appendChild(option);
+                      });
+                      odaTipiFilter.disabled = filtreliOdaTipleri.length === 0;
+                  } else {
+                      // Tüm katları göster
+                      katFilter.innerHTML = '<option value="">Kat</option>';
+                      tumKatlar.forEach(kat => {
+                          const option = document.createElement('option');
+                          option.value = kat.value;
+                          option.textContent = kat.label;
+                          katFilter.appendChild(option);
+                      });
+                      katFilter.disabled = false;
+
+                      // Tüm oda tiplerini göster
+                      odaTipiFilter.innerHTML = '<option value="">Oda Tipi</option>';
+                      benzersizOdaTipiAdlari.forEach(tip => {
+                          const option = document.createElement('option');
+                          option.value = tip.value;
+                          option.textContent = tip.label;
+                          odaTipiFilter.appendChild(option);
+                      });
+                      odaTipiFilter.disabled = false;
+                  }
+
+                  // Filtreleri yeniden uygula
+                  window.tableSearchFilter_odalar.updateActiveFilterBadges();
+                  window.tableSearchFilter_odalar.applyFiltersAndSearch();
+              });
+
+              // Kat filtresi değiştiğinde
+              katFilter.addEventListener('change', function() {
+                  const secilenOtel = otelFilter.value;
+                  const secilenKat = this.value;
+
+                  // Oda tipi filtresini temizle
+                  odaTipiFilter.value = '';
+                  delete window.tableSearchFilter_odalar.activeFilters[2];
+
+                  // Oda tipi filtresini güncelle
+                  if (secilenKat) {
+                      // Seçilen kata ait oda tiplerini göster
+                      let filtreliOdaTipleri = benzersizOdaTipleri.filter(tip => tip.katAdi === secilenKat);
+
+                      // Eğer otel de seçiliyse, hem otel hem kat filtresi uygula
+                      if (secilenOtel) {
+                          filtreliOdaTipleri = filtreliOdaTipleri.filter(tip => tip.otelAdi === secilenOtel);
+                      }
+
+                      // Eğer otel de seçiliyse, hem otel hem kat filtresi uygula
+                      if (secilenOtel) {
+                          filtreliOdaTipleri = filtreliOdaTipleri.filter(tip => tip.otelAdi === secilenOtel);
+                      }
+
+                      odaTipiFilter.innerHTML = '<option value="">Oda Tipi Seçin</option>';
+                      filtreliOdaTipleri.forEach(tip => {
+                          const option = document.createElement('option');
+                          option.value = tip.value;
+                          option.textContent = tip.label;
+                          odaTipiFilter.appendChild(option);
+                      });
+                      odaTipiFilter.disabled = filtreliOdaTipleri.length === 0;
+                  } else if (secilenOtel) {
+                      // Sadece otel seçiliyse, otele ait oda tiplerini göster
+                      const filtreliOdaTipleri = benzersizOdaTipleri.filter(tip => tip.otelAdi === secilenOtel);
+
+                      odaTipiFilter.innerHTML = '<option value="">Oda Tipi Seçin</option>';
+                      filtreliOdaTipleri.forEach(tip => {
+                          const option = document.createElement('option');
+                          option.value = tip.value;
+                          option.textContent = tip.label;
+                          odaTipiFilter.appendChild(option);
+                      });
+                      odaTipiFilter.disabled = filtreliOdaTipleri.length === 0;
+                  } else {
+                      // Hiçbir şey seçili değilse, tüm oda tiplerini göster
+                      odaTipiFilter.innerHTML = '<option value="">Oda Tipi</option>';
+                      benzersizOdaTipiAdlari.forEach(tip => {
+                          const option = document.createElement('option');
+                          option.value = tip.value;
+                          option.textContent = tip.label;
+                          odaTipiFilter.appendChild(option);
+                      });
+                      odaTipiFilter.disabled = false;
+                  }
+
+                  // Filtreleri yeniden uygula
+                  window.tableSearchFilter_odalar.updateActiveFilterBadges();
+                  window.tableSearchFilter_odalar.applyFiltersAndSearch();
+              });
+          }
+      }
+  });
+
+  // Excel indirme fonksiyonu
+  function excelIndir() {
+      // Yeni pencerede aç (sayfa yenilenmez)
+      window.open('{{ url_for("oda_tanimla", format="excel") }}', '_blank');
+  }
+
+  // Modal açma fonksiyonları
+  function yeniOdaModal() {
+      $("#yeniOdaModal").modal({
+          fadeDuration: 200,
+          fadeDelay: 0.1
+      });
+  }
+
+  function odaDuzenleModal(odaId) {
+      // Oda bilgilerini yükle ve modal'ı aç
+      $("#odaDuzenleModal").modal({
+          fadeDuration: 200,
+          fadeDelay: 0.1
+      });
+  }
+
+  function qrGoster(odaId, odaNo, katAdi) {
+      document.getElementById('qrOdaNo').textContent = odaNo;
+      document.getElementById('qrKat').textContent = katAdi;
+      document.getElementById('qrOdaNoDetay').textContent = odaNo;
+
+      $("#qrModal").modal({
+          fadeDuration: 200,
+          fadeDelay: 0.1
+      });
+  }
+
+  function misafirMesajiModal(odaId, odaNo) {
+      document.getElementById('misafirMesajiOdaNo').textContent = odaNo;
+
+      $("#misafirMesajiModal").modal({
+          fadeDuration: 200,
+          fadeDelay: 0.1
+      });
+  }
 </script>
 {% endblock %}
-
-

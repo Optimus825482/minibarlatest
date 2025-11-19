@@ -42,7 +42,7 @@
                 </div>
 
                 <div class="flex justify-end space-x-3">
-                    <a href="{{ url_for('gunluk_doluluk') }}"
+                    <a href="{{ url_for('doluluk.gunluk_doluluk') }}"
                         class="bg-white dark:bg-slate-700 py-2 px-4 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500">
                         Temizle
                     </a>
@@ -95,7 +95,7 @@
                     <span class="text-sm text-slate-500 dark:text-slate-400">({{ secili_otel.otel_adi }})</span>
                     {% endif %}
                 </h3>
-                <a href="{{ url_for('gunluk_doluluk_yazdir', tarih=secili_tarih.strftime('%Y-%m-%d') if secili_tarih else '', otel_id=secili_otel_id or '') }}"
+                <a href="{{ url_for('doluluk.gunluk_doluluk_yazdir', tarih=secili_tarih.strftime('%Y-%m-%d') if secili_tarih else '', otel_id=secili_otel_id or '') }}"
                     target="_blank"
                     class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

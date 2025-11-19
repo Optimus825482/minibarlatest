@@ -4,6 +4,9 @@ from datetime import timedelta
 class Config:
     """Flask uygulama yapılandırması - GÜVENLİK İYİLEŞTİRMELERİ"""
 
+    # Cache Busting Version - Her değişiklikte artır
+    CACHE_VERSION = '1.1.60'
+
     ENV = os.getenv('FLASK_ENV', os.getenv('ENV', 'production')).lower()
     IS_DEVELOPMENT = ENV in {'development', 'dev', 'local'}
 

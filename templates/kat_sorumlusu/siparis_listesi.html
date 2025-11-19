@@ -1,0 +1,147 @@
+{% extends "base.html" %} {% block title %}Sipariş Listesi - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}Sipariş Listesi{% endblock %} {%
+block content %}
+<div class="space-y-6">
+  <!-- Başlık -->
+  <div class="flex justify-between items-center">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
+        Sipariş Listesi
+      </h2>
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        Gönderdiğiniz sipariş taleplerini takip edin
+      </p>
+    </div>
+    <a
+      href="{{ url_for('kat_sorumlusu_kritik_stoklar') }}"
+      class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+    >
+      <i class="fas fa-plus mr-2"></i>Yeni Sipariş
+    </a>
+  </div>
+
+  <!-- Sipariş Listesi -->
+  <div class="space-y-4">
+    {% if siparisler %} {% for siparis in siparisler %}
+    <div
+      class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6"
+    >
+      <!-- Başlık -->
+      <div class="flex items-start justify-between mb-4">
+        <div class="flex-1">
+          <div class="flex items-center space-x-3 mb-2">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+              {{ siparis.talep_no }}
+            </h3>
+            <span
+              class="px-3 py-1 rounded-full text-sm font-semibold {% if siparis.durum == 'beklemede' %} bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 {% elif siparis.durum == 'onaylandi' %} bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 {% elif siparis.durum == 'reddedildi' %} bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 {% elif siparis.durum == 'teslim_edildi' %} bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 {% else %} bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 {% endif %}"
+            >
+              <i
+                class="fas {% if siparis.durum == 'beklemede' %}fa-clock {% elif siparis.durum == 'onaylandi' %}fa-check {% elif siparis.durum == 'reddedildi' %}fa-times {% elif siparis.durum == 'teslim_edildi' %}fa-box {% endif %} mr-1"
+              ></i>
+              {{ siparis.durum|replace('_', ' ')|title }}
+            </span>
+          </div>
+          <p class="text-sm text-slate-600 dark:text-slate-400">
+            Talep Tarihi: {{ siparis.talep_tarihi.strftime('%d.%m.%Y %H:%M') }}
+          </p>
+          {% if siparis.onay_tarihi %}
+          <p class="text-sm text-slate-600 dark:text-slate-400">
+            Onay Tarihi: {{ siparis.onay_tarihi.strftime('%d.%m.%Y %H:%M') }}
+          </p>
+          {% endif %} {% if siparis.teslim_tarihi %}
+          <p class="text-sm text-slate-600 dark:text-slate-400">
+            Teslim Tarihi: {{ siparis.teslim_tarihi.strftime('%d.%m.%Y %H:%M')
+            }}
+          </p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Ürün Listesi -->
+      <div class="space-y-2">
+        <h4
+          class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
+        >
+          Sipariş Detayları ({{ siparis.detaylar_list|length }} ürün)
+        </h4>
+        {% for detay in siparis.detaylar_list %}
+        <div
+          class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3"
+        >
+          <div class="flex-1">
+            <p class="text-sm font-medium text-slate-900 dark:text-white">
+              {{ detay.urun.urun_adi }}
+            </p>
+            <p class="text-xs text-slate-600 dark:text-slate-400">
+              Talep:
+              <span class="font-semibold"
+                >{{ detay.talep_miktari }} {{ detay.urun.birim }}</span
+              >
+              {% if detay.onaylanan_miktar > 0 %} | Onaylanan:
+              <span class="font-semibold text-green-600"
+                >{{ detay.onaylanan_miktar }} {{ detay.urun.birim }}</span
+              >
+              {% endif %} {% if detay.teslim_edilen_miktar > 0 %} | Teslim:
+              <span class="font-semibold text-blue-600"
+                >{{ detay.teslim_edilen_miktar }} {{ detay.urun.birim }}</span
+              >
+              {% endif %}
+            </p>
+          </div>
+          <span
+            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {% if detay.aciliyet == 'acil' %} bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 {% elif detay.aciliyet == 'orta' %} bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 {% else %} bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 {% endif %}"
+          >
+            {{ detay.aciliyet|title }}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Açıklama ve Red Nedeni -->
+      {% if siparis.aciklama %}
+      <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+        <p class="text-xs text-slate-600 dark:text-slate-400 mb-1">Açıklama:</p>
+        <p class="text-sm text-slate-900 dark:text-white">
+          {{ siparis.aciklama }}
+        </p>
+      </div>
+      {% endif %} {% if siparis.red_nedeni %}
+      <div class="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+        <p class="text-xs text-red-600 dark:text-red-400 mb-1">Red Nedeni:</p>
+        <p class="text-sm text-red-900 dark:text-red-200">
+          {{ siparis.red_nedeni }}
+        </p>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %} {% else %}
+    <!-- Boş Durum -->
+    <div
+      class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-12 text-center"
+    >
+      <svg
+        class="mx-auto h-16 w-16 text-slate-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+        ></path>
+      </svg>
+      <h3 class="mt-4 text-lg font-medium text-slate-900 dark:text-white">
+        Henüz Sipariş Yok
+      </h3>
+      <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+        Henüz sipariş talebiniz bulunmuyor. Yeni sipariş oluşturmak için
+        yukarıdaki butonu kullanın.
+      </p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

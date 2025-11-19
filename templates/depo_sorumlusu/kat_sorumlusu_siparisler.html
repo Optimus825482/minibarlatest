@@ -1,0 +1,285 @@
+{% extends "base.html" %} {% block title %}Kat Sorumlusu Siparişleri - Minibar
+Takip Sistemi{% endblock %} {% block page_title %}Kat Sorumlusu Siparişleri{%
+endblock %} {% block content %}
+<div class="space-y-6">
+  <!-- Başlık ve Filtreler -->
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6"
+  >
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
+          Kat Sorumlusu Siparişleri
+        </h2>
+        <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+          Kat sorumlularından gelen zimmet talepleri
+        </p>
+      </div>
+      <div class="flex items-center space-x-3">
+        <span
+          id="toplam_siparis"
+          class="px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-lg font-semibold"
+        >
+          <i class="fas fa-shopping-cart mr-2"></i>
+          <span id="siparis_sayisi">0</span> Sipariş
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sipariş Listesi -->
+  <div id="siparis_listesi" class="space-y-4">
+    {% if siparisler %} {% for siparis in siparisler %}
+    <div
+      class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border-2 border-blue-200 dark:border-blue-800"
+    >
+      <div class="p-6">
+        <!-- Başlık -->
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex-1">
+            <div class="flex items-center space-x-3 mb-2">
+              <div
+                class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center"
+              >
+                <i class="fas fa-user text-blue-600 dark:text-blue-400"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+                  {{ siparis.personel.ad }} {{ siparis.personel.soyad }}
+                </h3>
+                <p class="text-sm text-slate-600 dark:text-slate-400">
+                  {{ siparis.personel.otel.ad if siparis.personel.otel else
+                  'Bilinmeyen' }}
+                </p>
+              </div>
+            </div>
+          </div>
+          <span
+            class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-full text-sm font-semibold"
+          >
+            <i class="fas fa-clock mr-1"></i>Bekliyor
+          </span>
+        </div>
+
+        <!-- Tarih Bilgisi -->
+        <div class="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 mb-4">
+          <p class="text-xs text-slate-600 dark:text-slate-400 mb-1">
+            Talep Tarihi
+          </p>
+          <p class="text-sm font-semibold text-slate-900 dark:text-white">
+            {{ siparis.talep_tarihi.strftime('%d.%m.%Y %H:%M') }}
+          </p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Talep No: {{ siparis.talep_no }}
+          </p>
+        </div>
+
+        <!-- Ürün Listesi -->
+        <div class="space-y-2 mb-4">
+          <h4
+            class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
+          >
+            Talep Edilen Ürünler ({{ siparis.detaylar_list|length }})
+          </h4>
+          {% for detay in siparis.detaylar_list %}
+          <div
+            class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3"
+          >
+            <div class="flex-1">
+              <p class="text-sm font-medium text-slate-900 dark:text-white">
+                {{ detay.urun.urun_adi }}
+              </p>
+              <p class="text-xs text-slate-600 dark:text-slate-400">
+                Talep:
+                <span class="font-semibold"
+                  >{{ detay.miktar }} {{ detay.urun.birim }}</span
+                >
+                | Stok:
+                <span
+                  class="font-semibold {% if detay.stok_uygun %}text-green-600{% else %}text-red-600{% endif %}"
+                >
+                  {{ detay.mevcut_stok }} {{ detay.urun.birim }}
+                </span>
+              </p>
+            </div>
+            <div>
+              {% if detay.stok_uygun %}
+              <span
+                class="inline-flex items-center px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full text-xs font-semibold"
+              >
+                <i class="fas fa-check mr-1"></i>Uygun
+              </span>
+              {% else %}
+              <span
+                class="inline-flex items-center px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded-full text-xs font-semibold"
+              >
+                <i class="fas fa-times mr-1"></i>Yetersiz
+              </span>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Butonlar -->
+        <div class="flex gap-3">
+          <button
+            onclick="siparisIptalEt({{ siparis.id }})"
+            class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium"
+          >
+            <i class="fas fa-times mr-2"></i>İptal Et
+          </button>
+          {% set tum_urunler_uygun =
+          siparis.detaylar_list|selectattr('stok_uygun')|list|length ==
+          siparis.detaylar_list|length %} {% if tum_urunler_uygun %}
+          <button
+            onclick="siparisKabulEt({{ siparis.id }})"
+            class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium"
+          >
+            <i class="fas fa-check mr-2"></i>Kabul Et
+          </button>
+          {% else %}
+          <button
+            disabled
+            class="flex-1 px-4 py-2 bg-orange-600 opacity-50 cursor-not-allowed text-white rounded-lg font-medium"
+          >
+            <i class="fas fa-exclamation-triangle mr-2"></i>Stok Uygun Değil
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %} {% else %}
+    <!-- Boş Durum -->
+    <div
+      class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-12 text-center"
+    >
+      <svg
+        class="mx-auto h-16 w-16 text-slate-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+        ></path>
+      </svg>
+      <h3 class="mt-4 text-lg font-medium text-slate-900 dark:text-white">
+        Sipariş Bulunamadı
+      </h3>
+      <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+        Henüz bekleyen kat sorumlusu siparişi yok.
+      </p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  const csrfToken = "{{ csrf_token() }}";
+
+  // Sipariş kabul et
+  async function siparisKabulEt(siparisId) {
+    if (
+      !confirm(
+        "Bu siparişi kabul edip zimmet olarak onaylamak istiyor musunuz?\n\nStok çıkışı yapılacak ve kat sorumlusuna zimmet atanacaktır."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/depo/siparis-kabul/${siparisId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Sipariş kabul edilemedi");
+      }
+
+      toastGoster(data.message, "success");
+
+      // Sayfayı yenile
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (error) {
+      console.error("❌ Sipariş kabul hatası:", error);
+      toastGoster(error.message, "error");
+    }
+  }
+
+  // Sipariş iptal et
+  async function siparisIptalEt(siparisId) {
+    if (
+      !confirm(
+        "Bu siparişi iptal etmek istediğinizden emin misiniz?\n\nBu işlem geri alınamaz!"
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/depo/siparis-iptal/${siparisId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Sipariş iptal edilemedi");
+      }
+
+      toastGoster(data.message, "success");
+
+      // Sayfayı yenile
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error("❌ Sipariş iptal hatası:", error);
+      toastGoster(error.message, "error");
+    }
+  }
+
+  // Toast mesajı
+  function toastGoster(mesaj, tip = "info") {
+    const toast = document.createElement("div");
+    toast.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg text-white transform transition-all duration-300 ${
+      tip === "success"
+        ? "bg-green-500"
+        : tip === "error"
+        ? "bg-red-500"
+        : "bg-blue-500"
+    }`;
+    toast.textContent = mesaj;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      setTimeout(() => document.body.removeChild(toast), 300);
+    }, 3000);
+  }
+
+  // Sipariş sayısını güncelle
+  document.addEventListener("DOMContentLoaded", function () {
+    // Sadece sipariş kartlarını say (boş durum mesajını sayma)
+    const siparisler = document.querySelectorAll(
+      "#siparis_listesi > div.border-blue-200"
+    );
+    document.getElementById("siparis_sayisi").textContent = siparisler.length;
+  });
+</script>
+{% endblock %}

@@ -1,5 +1,5 @@
 // Service Worker - Minibar Takip Sistemi PWA
-const CACHE_VERSION = "minibar-v1.0.1";
+const CACHE_VERSION = "minibar-v1.0.2";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const IMAGE_CACHE = `${CACHE_VERSION}-images`;

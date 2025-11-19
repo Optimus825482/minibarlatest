@@ -27,7 +27,8 @@ from flask import render_template, request, redirect, url_for, flash, session, j
 from werkzeug.utils import secure_filename
 from models import (db, StokHareket, Urun, UrunGrup, Kullanici, PersonelZimmet, PersonelZimmetDetay,
                    SatinAlmaSiparisi, SatinAlmaSiparisDetay, SatinAlmaIslem, SatinAlmaIslemDetay,
-                   Tedarikci, TedarikciIletisim, TedarikciDokuman, UrunStok)
+                   Tedarikci, TedarikciIletisim, TedarikciDokuman, UrunStok,
+                   KatSorumlusuSiparisTalebi, KatSorumlusuSiparisTalepDetay)
 from sqlalchemy import desc
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem, log_hata, get_stok_toplamlari
@@ -300,7 +301,10 @@ def register_depo_routes(app):
             kat_sorumlulari = Kullanici.query.filter_by(rol='kat_sorumlusu', aktif=True).all()
         
         urun_gruplari = UrunGrup.query.filter_by(aktif=True).order_by(UrunGrup.grup_adi).all()
-        aktif_zimmetler = PersonelZimmet.query.filter_by(durum='aktif').order_by(PersonelZimmet.zimmet_tarihi.desc()).all()
+        # Aktif ve iade edilmiş zimmetleri göster (iptal edilenleri gösterme)
+        aktif_zimmetler = PersonelZimmet.query.filter(
+            PersonelZimmet.durum.in_(['aktif', 'iade_edildi'])
+        ).order_by(PersonelZimmet.zimmet_tarihi.desc()).all()
         
         return render_template('depo_sorumlusu/personel_zimmet.html', 
                              kat_sorumlulari=kat_sorumlulari, 
@@ -2032,3 +2036,303 @@ def register_depo_routes(app):
             log_hata(e, 'satis_fiyat_giris')
             flash(f'Sayfa yüklenirken hata oluştu: {str(e)}', 'danger')
             return redirect(url_for('siparis_listesi'))
+
+    
+    @app.route('/api/depo/bekleyen-siparisler')
+    @login_required
+    @role_required('depo_sorumlusu')
+    def api_depo_bekleyen_siparisler():
+        """Depo sorumlusu için bekleyen kat sorumlusu sipariş taleplerini listele"""
+        try:
+            from utils.authorization import get_kullanici_otelleri
+            
+            # Kullanıcının erişebileceği oteller
+            kullanici_otelleri = get_kullanici_otelleri()
+            otel_ids = [otel.id for otel in kullanici_otelleri]
+            
+            # Bekleyen sipariş taleplerini getir
+            query = KatSorumlusuSiparisTalebi.query.join(
+                Kullanici, KatSorumlusuSiparisTalebi.kat_sorumlusu_id == Kullanici.id
+            ).filter(
+                KatSorumlusuSiparisTalebi.durum == 'beklemede'
+            )
+            
+            # Otel filtrelemesi (kat sorumlusunun oteli üzerinden)
+            if otel_ids:
+                query = query.filter(Kullanici.otel_id.in_(otel_ids))
+            
+            siparisler = query.order_by(
+                KatSorumlusuSiparisTalebi.talep_tarihi.desc()
+            ).limit(50).all()
+            
+            siparis_listesi = []
+            for siparis in siparisler:
+                # Sipariş detaylarını al
+                detaylar = KatSorumlusuSiparisTalepDetay.query.filter_by(
+                    talep_id=siparis.id
+                ).all()
+                
+                # Kat sorumlusu bilgisi
+                kat_sorumlusu = db.session.get(Kullanici, siparis.kat_sorumlusu_id)
+                otel_adi = kat_sorumlusu.otel.ad if kat_sorumlusu and kat_sorumlusu.otel else 'Bilinmeyen'
+                
+                siparis_listesi.append({
+                    'id': siparis.id,
+                    'talep_no': siparis.talep_no,
+                    'talep_tarihi': siparis.talep_tarihi.strftime('%d.%m.%Y %H:%M'),
+                    'personel': f"{kat_sorumlusu.ad} {kat_sorumlusu.soyad}" if kat_sorumlusu else 'Bilinmeyen',
+                    'otel': otel_adi,
+                    'toplam_urun': len(detaylar),
+                    'durum': siparis.durum
+                })
+            
+            return jsonify({
+                'success': True,
+                'siparisler': siparis_listesi
+            })
+            
+        except Exception as e:
+            log_hata(e, modul='depo_bekleyen_siparisler_api')
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            }), 500
+
+    
+    @app.route('/depo-stoklarim')
+    @login_required
+    @role_required('depo_sorumlusu')
+    def depo_stoklarim():
+        """Depo sorumlusu stok takip sayfası"""
+        try:
+            from utils.authorization import get_kullanici_otelleri, get_otel_filtreleme_secenekleri
+            
+            # Kullanıcının erişebileceği oteller
+            kullanici_otelleri = get_kullanici_otelleri()
+            otel_secenekleri = get_otel_filtreleme_secenekleri()
+            
+            # Seçili otel
+            secili_otel_id = request.args.get('otel_id', type=int)
+            if not secili_otel_id and kullanici_otelleri:
+                secili_otel_id = kullanici_otelleri[0].id
+            
+            # Tüm ürünleri ve stok durumlarını getir
+            urunler = Urun.query.filter_by(aktif=True).order_by(Urun.urun_adi).all()
+            
+            # Her ürün için stok bilgilerini hesapla
+            stok_bilgileri = []
+            for urun in urunler:
+                stok_toplam = get_stok_toplamlari([urun.id])
+                mevcut_stok = stok_toplam.get(urun.id, 0)
+                
+                # Kritik seviye kontrolü (varsayılan 10)
+                kritik_seviye = 10
+                durum = 'yeterli'
+                if mevcut_stok == 0:
+                    durum = 'tukendi'
+                elif mevcut_stok <= kritik_seviye:
+                    durum = 'kritik'
+                
+                stok_bilgileri.append({
+                    'urun': urun,
+                    'mevcut_stok': mevcut_stok,
+                    'kritik_seviye': kritik_seviye,
+                    'durum': durum
+                })
+            
+            return render_template('depo_sorumlusu/stoklarim.html',
+                                 stok_bilgileri=stok_bilgileri,
+                                 otel_secenekleri=otel_secenekleri,
+                                 secili_otel_id=secili_otel_id)
+                                 
+        except Exception as e:
+            log_hata(e, modul='depo_stoklarim')
+            flash(f'Stoklar yüklenirken hata oluştu: {str(e)}', 'danger')
+            return redirect(url_for('dashboard'))
+    
+    @app.route('/kat-sorumlusu-siparisler')
+    @login_required
+    @role_required('depo_sorumlusu')
+    def kat_sorumlusu_siparisler():
+        """Kat sorumlusu sipariş talepleri sayfası"""
+        try:
+            from utils.authorization import get_kullanici_otelleri
+            
+            # Kullanıcının erişebileceği oteller
+            kullanici_otelleri = get_kullanici_otelleri()
+            otel_ids = [otel.id for otel in kullanici_otelleri]
+            
+            # Bekleyen sipariş taleplerini getir
+            query = KatSorumlusuSiparisTalebi.query.join(
+                Kullanici, KatSorumlusuSiparisTalebi.kat_sorumlusu_id == Kullanici.id
+            ).filter(
+                KatSorumlusuSiparisTalebi.durum == 'beklemede'
+            )
+            
+            # Otel filtrelemesi
+            if otel_ids:
+                query = query.filter(Kullanici.otel_id.in_(otel_ids))
+            
+            siparisler = query.order_by(
+                KatSorumlusuSiparisTalebi.talep_tarihi.desc()
+            ).all()
+            
+            # Her sipariş için stok durumunu kontrol et
+            for siparis in siparisler:
+                # Kat sorumlusu bilgisini yükle
+                siparis.personel = db.session.get(Kullanici, siparis.kat_sorumlusu_id)
+                
+                # Detayları yükle
+                siparis.detaylar_list = KatSorumlusuSiparisTalepDetay.query.filter_by(
+                    talep_id=siparis.id
+                ).all()
+                
+                # Her ürün için stok kontrolü
+                for detay in siparis.detaylar_list:
+                    # Mevcut stok miktarını al
+                    stok_toplam = get_stok_toplamlari([detay.urun_id])
+                    detay.mevcut_stok = stok_toplam.get(detay.urun_id, 0)
+                    detay.stok_uygun = detay.mevcut_stok >= detay.talep_miktari
+                    # Template için miktar alias'ı ekle
+                    detay.miktar = detay.talep_miktari
+            
+            return render_template('depo_sorumlusu/kat_sorumlusu_siparisler.html', 
+                                 siparisler=siparisler)
+                                 
+        except Exception as e:
+            log_hata(e, modul='kat_sorumlusu_siparisler')
+            flash(f'Siparişler yüklenirken hata oluştu: {str(e)}', 'danger')
+            return redirect(url_for('dashboard'))
+    
+    @app.route('/api/depo/siparis-kabul/<int:siparis_id>', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu')
+    def api_depo_siparis_kabul(siparis_id):
+        """Kat sorumlusu siparişini kabul et (zimmet onaylama ve stok çıkışı)"""
+        try:
+            zimmet = db.session.get(PersonelZimmet, siparis_id)
+            
+            if not zimmet:
+                return jsonify({
+                    'success': False,
+                    'error': 'Sipariş bulunamadı'
+                }), 404
+            
+            # Zimmet zaten onaylanmış mı kontrol et
+            if zimmet.durum != 'aktif':
+                return jsonify({
+                    'success': False,
+                    'error': 'Bu sipariş zaten işlenmiş'
+                }), 400
+            
+            # Zimmet detaylarını al
+            detaylar = PersonelZimmetDetay.query.filter_by(zimmet_id=zimmet.id).all()
+            
+            # Stok kontrolü yap
+            for detay in detaylar:
+                stok_toplam = get_stok_toplamlari([detay.urun_id])
+                mevcut_stok = stok_toplam.get(detay.urun_id, 0)
+                
+                if mevcut_stok < detay.miktar:
+                    urun = db.session.get(Urun, detay.urun_id)
+                    return jsonify({
+                        'success': False,
+                        'error': f'{urun.urun_adi} için stok yetersiz! Mevcut: {mevcut_stok}, Talep: {detay.miktar}'
+                    }), 400
+            
+            # Stok çıkışlarını yap
+            for detay in detaylar:
+                stok_hareket = StokHareket(
+                    urun_id=detay.urun_id,
+                    hareket_tipi='cikis',
+                    miktar=detay.miktar,
+                    aciklama=f'Zimmet atama - {zimmet.personel.ad} {zimmet.personel.soyad}',
+                    islem_yapan_id=session['kullanici_id']
+                )
+                db.session.add(stok_hareket)
+                
+                # Audit Trail
+                audit_create('stok_hareket', stok_hareket.id, stok_hareket)
+            
+            # Teslim eden olarak depo sorumlusunu kaydet (durum aktif kalır)
+            zimmet.teslim_eden_id = session['kullanici_id']
+            db.session.commit()
+            
+            # Log kaydı
+            log_islem('guncelleme', 'personel_zimmet', {
+                'zimmet_id': zimmet.id,
+                'personel_id': zimmet.personel_id,
+                'durum': 'onaylandi',
+                'toplam_urun': len(detaylar)
+            })
+            
+            return jsonify({
+                'success': True,
+                'message': f'Zimmet başarıyla onaylandı! {len(detaylar)} ürün için stok çıkışı yapıldı.'
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='depo_siparis_kabul')
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            }), 500
+    
+    @app.route('/api/depo/siparis-iptal/<int:siparis_id>', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu')
+    def api_depo_siparis_iptal(siparis_id):
+        """Kat sorumlusu siparişini iptal et (Sadece bekleyen siparişler)"""
+        try:
+            zimmet = db.session.get(PersonelZimmet, siparis_id)
+            
+            if not zimmet:
+                return jsonify({
+                    'success': False,
+                    'error': 'Sipariş bulunamadı'
+                }), 404
+            
+            # Sadece aktif (bekleyen) siparişler iptal edilebilir
+            if zimmet.durum != 'aktif':
+                return jsonify({
+                    'success': False,
+                    'error': 'Sadece bekleyen siparişler iptal edilebilir'
+                }), 400
+            
+            # Teslim eden yoksa bu bir sipariştir (zimmet değil)
+            if zimmet.teslim_eden_id is not None:
+                return jsonify({
+                    'success': False,
+                    'error': 'Bu bir zimmet kaydıdır, sipariş değil'
+                }), 400
+            
+            # Zimmet detaylarını al
+            detaylar = PersonelZimmetDetay.query.filter_by(zimmet_id=zimmet.id).all()
+            
+            # Sipariş durumunu iptal et
+            zimmet.durum = 'iptal'
+            zimmet.iade_tarihi = datetime.now()
+            
+            db.session.commit()
+            
+            # Log kaydı
+            log_islem('iptal', 'kat_sorumlusu_siparis', {
+                'siparis_id': zimmet.id,
+                'personel_id': zimmet.personel_id,
+                'iptal_eden_id': session['kullanici_id'],
+                'toplam_urun': len(detaylar)
+            })
+            
+            return jsonify({
+                'success': True,
+                'message': 'Sipariş başarıyla iptal edildi.'
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='depo_siparis_iptal')
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            }), 500

@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Satın Alma İşlemleri{% endblock %}
+{% block page_title %}Satın Alma İşlemleri{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Başlık ve İstatistikler -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">Toplam İşlem</p>
+                    <p class="text-3xl font-bold text-slate-900 dark:text-white mt-2">{{ istatistikler.toplam }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-shopping-bag text-blue-600 dark:text-blue-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">Aktif</p>
+                    <p class="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">{{ istatistikler.aktif }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-600 dark:text-green-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">İptal</p>
+                    <p class="text-3xl font-bold text-red-600 dark:text-red-400 mt-2">{{ istatistikler.iptal }}</p>
+                </div>
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-times-circle text-red-600 dark:text-red-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">Toplam Tutar</p>
+                    <p class="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-2">{{ "%.2f"|format(istatistikler.toplam_tutar) }} ₺</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-lira-sign text-purple-600 dark:text-purple-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtreler -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-4">
+        <form method="GET" class="flex gap-4 items-end">
+            <div class="flex-1">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Durum</label>
+                <select name="durum" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white">
+                    <option value="">Tümü</option>
+                    <option value="aktif" {% if durum_filtre == 'aktif' %}selected{% endif %}>Aktif</option>
+                    <option value="iptal" {% if durum_filtre == 'iptal' %}selected{% endif %}>İptal</option>
+                </select>
+            </div>
+            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                <i class="fas fa-filter mr-2"></i>Filtrele
+            </button>
+            <a href="{{ url_for('yonetici_satin_alma_islemleri') }}" class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                <i class="fas fa-redo mr-2"></i>Sıfırla
+            </a>
+        </form>
+    </div>
+
+    <!-- İşlemler Tablosu -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+                <i class="fas fa-list mr-2 text-blue-600 dark:text-blue-400"></i>
+                Satın Alma İşlemleri
+            </h3>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-slate-50 dark:bg-slate-700 border-b border-slate-200 dark:border-slate-600">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">İşlem No</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">Sipariş No</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">Tarih</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">Tedarikçi</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">Tutar</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">Durum</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                    {% if islemler %}
+                        {% for islem in islemler %}
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                            <td class="px-6 py-4 text-sm font-medium text-blue-600 dark:text-blue-400">
+                                <a href="{{ url_for('yonetici_satin_alma_detay', islem_id=islem.id) }}">
+                                    {{ islem.islem_no }}
+                                </a>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-900 dark:text-white">
+                                {% if islem.siparis %}
+                                    <a href="{{ url_for('yonetici_siparis_detay', siparis_id=islem.siparis.id) }}" class="text-blue-600 dark:text-blue-400 hover:underline">
+                                        {{ islem.siparis.siparis_no }}
+                                    </a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-900 dark:text-white">
+                                {{ islem.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-900 dark:text-white">
+                                {% if islem.siparis and islem.siparis.tedarikci %}
+                                    {{ islem.siparis.tedarikci.tedarikci_adi }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-right font-medium text-slate-900 dark:text-white">
+                                {{ "%.2f"|format(islem.toplam_tutar) }} ₺
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                {% if islem.durum == 'aktif' %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                    <i class="fas fa-check-circle mr-1"></i>Aktif
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                    <i class="fas fa-times-circle mr-1"></i>İptal
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <a href="{{ url_for('yonetici_satin_alma_detay', islem_id=islem.id) }}" 
+                                   class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                                   title="Detay">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center justify-center">
+                                <i class="fas fa-inbox text-slate-300 dark:text-slate-600 text-5xl mb-4"></i>
+                                <p class="text-slate-500 dark:text-slate-400 text-lg font-medium">Satın Alma İşlemi Bulunamadı</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -167,15 +167,15 @@ function detayGoster(islem) {
 
       <div>
         <label class="block text-sm font-medium text-slate-700 mb-2">Ürünler</label>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto rounded-lg border border-slate-200">
           <table class="min-w-full divide-y divide-slate-200">
             <thead class="bg-slate-50">
               <tr>
-                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500">Ürün</th>
-                <th class="px-3 py-2 text-center text-xs font-medium text-slate-500">Setup Miktar</th>
-                <th class="px-3 py-2 text-center text-xs font-medium text-slate-500">Eklenen</th>
-                <th class="px-3 py-2 text-center text-xs font-medium text-slate-500">Tüketim</th>
-                <th class="px-3 py-2 text-center text-xs font-medium text-slate-500">Bitiş</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Ürün</th>
+                <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Setup</th>
+                <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Eklenen</th>
+                <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Tüketim</th>
+                <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Bitiş</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-slate-200">
@@ -187,20 +187,30 @@ function detayGoster(islem) {
   // Bitiş: Setup miktar + ekstra eklenenler
   islem.detaylar.forEach((detay) => {
     html += `
-      <tr>
-        <td class="px-3 py-2 text-sm text-slate-900">${detay.urun_adi}</td>
-        <td class="px-3 py-2 text-sm text-center text-slate-600">${
-          detay.setup_miktari || 0
+      <tr class="hover:bg-slate-50 transition-colors">
+        <td class="px-4 py-3 text-sm font-medium text-slate-900">${
+          detay.urun_adi
         }</td>
-        <td class="px-3 py-2 text-sm text-center text-green-600 font-semibold">${
-          detay.eklenen_miktar
-        }</td>
-        <td class="px-3 py-2 text-sm text-center text-red-600 font-semibold">${
-          detay.tuketim
-        }</td>
-        <td class="px-3 py-2 text-sm text-center text-slate-900 font-semibold">${
-          detay.bitis_stok
-        }</td>
+        <td class="px-4 py-3 text-sm text-center">
+          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+            ${detay.setup_miktari || 0}
+          </span>
+        </td>
+        <td class="px-4 py-3 text-sm text-center">
+          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+            +${detay.eklenen_miktar}
+          </span>
+        </td>
+        <td class="px-4 py-3 text-sm text-center">
+          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+            -${detay.tuketim}
+          </span>
+        </td>
+        <td class="px-4 py-3 text-sm text-center">
+          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+            ${detay.bitis_stok}
+          </span>
+        </td>
       </tr>
     `;
   });

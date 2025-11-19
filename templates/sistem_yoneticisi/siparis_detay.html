@@ -1,284 +1,374 @@
-{% extends "base.html" %}
-
-{% block title %}Sipariş Detayı - {{ siparis.siparis_no }}{% endblock %}
-{% block page_title %}Sipariş Detayı{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Sipariş Detayı - {{
+siparis.siparis_no }}{% endblock %} {% block page_title %}Sipariş Detayı{%
+endblock %} {% block content %}
 <div class="space-y-6">
-    <!-- Geri Butonu -->
-    <div>
-        <a href="{{ url_for('yonetici_siparis_listesi') }}"
-           class="inline-flex items-center px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors">
-            <i class="fas fa-arrow-left mr-2"></i>
-            Sipariş Listesine Dön
-        </a>
+  <!-- Geri Butonu -->
+  <div>
+    <a
+      href="{{ url_for('yonetici_siparis_listesi') }}"
+      class="inline-flex items-center px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
+    >
+      <i class="fas fa-arrow-left mr-2"></i>
+      Sipariş Listesine Dön
+    </a>
+  </div>
+
+  <!-- Sipariş Bilgileri -->
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-6"
+  >
+    <div class="flex justify-between items-start mb-6">
+      <div>
+        <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+          {{ siparis.siparis_no }}
+        </h3>
+        <p class="text-sm text-slate-600 dark:text-slate-400">
+          Oluşturulma: {{ siparis.siparis_tarihi.strftime('%d.%m.%Y %H:%M') }}
+        </p>
+      </div>
+
+      <div class="text-right">
+        {% if siparis.durum == 'beklemede' %}
+        <span
+          class="px-4 py-2 text-sm font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200"
+        >
+          <i class="fas fa-hourglass-half mr-1"></i>Beklemede
+        </span>
+        {% elif siparis.durum == 'onaylandi' %}
+        <span
+          class="px-4 py-2 text-sm font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
+        >
+          <i class="fas fa-check-circle mr-1"></i>Onaylandı
+        </span>
+        {% elif siparis.durum == 'teslim_alindi' %}
+        <span
+          class="px-4 py-2 text-sm font-semibold rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
+        >
+          <i class="fas fa-box mr-1"></i>Teslim Alındı
+        </span>
+        {% elif siparis.durum == 'iptal' %}
+        <span
+          class="px-4 py-2 text-sm font-semibold rounded-full bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
+        >
+          <i class="fas fa-times-circle mr-1"></i>İptal
+        </span>
+        {% endif %}
+      </div>
     </div>
 
-    <!-- Sipariş Bilgileri -->
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-6">
-        <div class="flex justify-between items-start mb-6">
-            <div>
-                <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                    {{ siparis.siparis_no }}
-                </h3>
-                <p class="text-sm text-slate-600 dark:text-slate-400">
-                    Oluşturulma: {{ siparis.siparis_tarihi.strftime('%d.%m.%Y %H:%M') }}
-                </p>
-            </div>
-            
-            <div class="text-right">
-                {% if siparis.durum == 'beklemede' %}
-                <span class="px-4 py-2 text-sm font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
-                    <i class="fas fa-hourglass-half mr-1"></i>Beklemede
-                </span>
-                {% elif siparis.durum == 'onaylandi' %}
-                <span class="px-4 py-2 text-sm font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                    <i class="fas fa-check-circle mr-1"></i>Onaylandı
-                </span>
-                {% elif siparis.durum == 'teslim_alindi' %}
-                <span class="px-4 py-2 text-sm font-semibold rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                    <i class="fas fa-box mr-1"></i>Teslim Alındı
-                </span>
-                {% elif siparis.durum == 'iptal' %}
-                <span class="px-4 py-2 text-sm font-semibold rounded-full bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
-                    <i class="fas fa-times-circle mr-1"></i>İptal
-                </span>
-                {% endif %}
-            </div>
-        </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <h4
+          class="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-3"
+        >
+          Sipariş Bilgileri
+        </h4>
+        <dl class="space-y-2">
+          <div class="flex justify-between">
+            <dt class="text-sm text-slate-600 dark:text-slate-400">Otel:</dt>
+            <dd class="text-sm font-medium text-slate-900 dark:text-white">
+              {{ siparis.otel.ad }}
+            </dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-sm text-slate-600 dark:text-slate-400">
+              Tedarikçi:
+            </dt>
+            <dd class="text-sm font-medium text-slate-900 dark:text-white">
+              {% if siparis.tedarikci %} {{ siparis.tedarikci.tedarikci_adi }}
+              {% else %}
+              <span class="text-slate-400">Belirtilmemiş</span>
+              {% endif %}
+            </dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-sm text-slate-600 dark:text-slate-400">
+              Oluşturan:
+            </dt>
+            <dd class="text-sm font-medium text-slate-900 dark:text-white">
+              {{ siparis.olusturan.ad }} {{ siparis.olusturan.soyad }}
+            </dd>
+          </div>
+          {% if siparis.onaylayan %}
+          <div class="flex justify-between">
+            <dt class="text-sm text-slate-600 dark:text-slate-400">
+              Onaylayan:
+            </dt>
+            <dd class="text-sm font-medium text-slate-900 dark:text-white">
+              {{ siparis.onaylayan.ad }} {{ siparis.onaylayan.soyad }}
+            </dd>
+          </div>
+          {% endif %}
+        </dl>
+      </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <h4 class="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-3">Sipariş Bilgileri</h4>
-                <dl class="space-y-2">
-                    <div class="flex justify-between">
-                        <dt class="text-sm text-slate-600 dark:text-slate-400">Otel:</dt>
-                        <dd class="text-sm font-medium text-slate-900 dark:text-white">{{ siparis.otel.ad }}</dd>
-                    </div>
-                    <div class="flex justify-between">
-                        <dt class="text-sm text-slate-600 dark:text-slate-400">Tedarikçi:</dt>
-                        <dd class="text-sm font-medium text-slate-900 dark:text-white">
-                            {% if siparis.tedarikci %}
-                                {{ siparis.tedarikci.tedarikci_adi }}
-                            {% else %}
-                                <span class="text-slate-400">Belirtilmemiş</span>
-                            {% endif %}
-                        </dd>
-                    </div>
-                    <div class="flex justify-between">
-                        <dt class="text-sm text-slate-600 dark:text-slate-400">Oluşturan:</dt>
-                        <dd class="text-sm font-medium text-slate-900 dark:text-white">
-                            {{ siparis.olusturan.ad }} {{ siparis.olusturan.soyad }}
-                        </dd>
-                    </div>
-                    {% if siparis.onaylayan %}
-                    <div class="flex justify-between">
-                        <dt class="text-sm text-slate-600 dark:text-slate-400">Onaylayan:</dt>
-                        <dd class="text-sm font-medium text-slate-900 dark:text-white">
-                            {{ siparis.onaylayan.ad }} {{ siparis.onaylayan.soyad }}
-                        </dd>
-                    </div>
-                    {% endif %}
-                </dl>
-            </div>
+      <div>
+        <h4
+          class="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-3"
+        >
+          Teslimat Bilgileri
+        </h4>
+        <dl class="space-y-2">
+          <div class="flex justify-between">
+            <dt class="text-sm text-slate-600 dark:text-slate-400">
+              Tahmini Teslimat:
+            </dt>
+            <dd class="text-sm font-medium text-slate-900 dark:text-white">
+              {% if siparis.tahmini_teslimat_tarihi %} {{
+              siparis.tahmini_teslimat_tarihi.strftime('%d.%m.%Y') }} {% else %}
+              - {% endif %}
+            </dd>
+          </div>
+          {% if siparis.gerceklesen_teslimat_tarihi %}
+          <div class="flex justify-between">
+            <dt class="text-sm text-slate-600 dark:text-slate-400">
+              Gerçekleşen Teslimat:
+            </dt>
+            <dd class="text-sm font-medium text-slate-900 dark:text-white">
+              {{ siparis.gerceklesen_teslimat_tarihi.strftime('%d.%m.%Y') }}
+            </dd>
+          </div>
+          {% endif %}
+          <div class="flex justify-between">
+            <dt class="text-sm text-slate-600 dark:text-slate-400">
+              Toplam Tutar:
+            </dt>
+            <dd class="text-lg font-bold text-slate-900 dark:text-white">
+              {{ "%.2f"|format(siparis.toplam_tutar) }} ₺
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
 
-            <div>
-                <h4 class="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-3">Teslimat Bilgileri</h4>
-                <dl class="space-y-2">
-                    <div class="flex justify-between">
-                        <dt class="text-sm text-slate-600 dark:text-slate-400">Tahmini Teslimat:</dt>
-                        <dd class="text-sm font-medium text-slate-900 dark:text-white">
-                            {% if siparis.tahmini_teslimat_tarihi %}
-                                {{ siparis.tahmini_teslimat_tarihi.strftime('%d.%m.%Y') }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </dd>
-                    </div>
-                    {% if siparis.gerceklesen_teslimat_tarihi %}
-                    <div class="flex justify-between">
-                        <dt class="text-sm text-slate-600 dark:text-slate-400">Gerçekleşen Teslimat:</dt>
-                        <dd class="text-sm font-medium text-slate-900 dark:text-white">
-                            {{ siparis.gerceklesen_teslimat_tarihi.strftime('%d.%m.%Y') }}
-                        </dd>
-                    </div>
-                    {% endif %}
-                    <div class="flex justify-between">
-                        <dt class="text-sm text-slate-600 dark:text-slate-400">Toplam Tutar:</dt>
-                        <dd class="text-lg font-bold text-slate-900 dark:text-white">
-                            {{ "%.2f"|format(siparis.toplam_tutar) }} ₺
-                        </dd>
-                    </div>
-                </dl>
-            </div>
-        </div>
+    {% if siparis.aciklama %}
+    <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+      <h4 class="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2">
+        Açıklama
+      </h4>
+      <p class="text-sm text-slate-700 dark:text-slate-300">
+        {{ siparis.aciklama }}
+      </p>
+    </div>
+    {% endif %}
 
-        {% if siparis.aciklama %}
-        <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-            <h4 class="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2">Açıklama</h4>
-            <p class="text-sm text-slate-700 dark:text-slate-300">{{ siparis.aciklama }}</p>
-        </div>
+    <!-- Onaylama, Satın Alma ve İptal Butonları -->
+    <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+      <div class="flex justify-between items-center">
+        <!-- İptal Butonu (Sol) -->
+        {% if siparis.durum != 'iptal' and not satin_alma_var %}
+        <button
+          type="button"
+          onclick="document.getElementById('iptalModal').classList.remove('hidden')"
+          class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
+        >
+          <i class="fas fa-times-circle mr-2"></i>
+          Siparişi İptal Et
+        </button>
+        {% else %}
+        <div></div>
         {% endif %}
 
-        <!-- Onaylama, Satın Alma ve İptal Butonları -->
-        <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-            <div class="flex justify-between items-center">
-                <!-- İptal Butonu (Sol) -->
-                {% if siparis.durum != 'iptal' %}
-                <button type="button"
-                        onclick="document.getElementById('iptalModal').classList.remove('hidden')"
-                        class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors">
-                    <i class="fas fa-times-circle mr-2"></i>
-                    Siparişi İptal Et
-                </button>
-                {% else %}
-                <div></div>
-                {% endif %}
-                
-                <!-- Onaylama/Satın Alma Butonları (Sağ) -->
-                <div class="flex gap-3">
-                    {% if siparis.durum == 'beklemede' %}
-                    <form method="POST" action="{{ url_for('yonetici_siparis_onayla', siparis_id=siparis.id) }}" class="inline">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <button type="submit"
-                                class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors"
-                                onclick="return confirm('Bu siparişi onaylamak istediğinizden emin misiniz?')">
-                            <i class="fas fa-check mr-2"></i>
-                            Siparişi Onayla
-                        </button>
-                    </form>
-                    {% elif siparis.durum == 'onaylandi' %}
-                    <a href="{{ url_for('satin_alma_giris', siparis_id=siparis.id) }}"
-                       class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors">
-                        <i class="fas fa-money-bill-wave mr-2"></i>
-                        Satın Alma Girişi Yap
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
+        <!-- Onaylama/Satın Alma Butonları (Sağ) -->
+        <div class="flex gap-3">
+          {% if siparis.durum == 'beklemede' %}
+          <form
+            method="POST"
+            action="{{ url_for('yonetici_siparis_onayla', siparis_id=siparis.id) }}"
+            class="inline"
+          >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button
+              type="submit"
+              class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors"
+              onclick="return confirm('Bu siparişi onaylamak istediğinizden emin misiniz?')"
+            >
+              <i class="fas fa-check mr-2"></i>
+              Siparişi Onayla
+            </button>
+          </form>
+          {% elif siparis.durum == 'onaylandi' %}
+          <a
+            href="{{ url_for('satin_alma_giris', siparis_id=siparis.id) }}"
+            class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+          >
+            <i class="fas fa-money-bill-wave mr-2"></i>
+            Satın Alma Girişi Yap
+          </a>
+          {% endif %}
         </div>
-        
-        <!-- İptal Modal -->
-        <div id="iptalModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full mx-4">
-                <div class="p-6">
-                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                        <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
-                        Sipariş İptal Onayı
-                    </h3>
-                    
-                    <form method="POST" action="{{ url_for('yonetici_siparis_iptal', siparis_id=siparis.id) }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        
-                        <div class="mb-4">
-                            <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                                <strong>{{ siparis.siparis_no }}</strong> numaralı siparişi iptal etmek istediğinizden emin misiniz?
-                            </p>
-                            
-                            {% if siparis.durum == 'teslim_alindi' %}
-                            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
-                                <p class="text-sm text-yellow-800 dark:text-yellow-200">
-                                    <i class="fas fa-info-circle mr-1"></i>
-                                    <strong>Uyarı:</strong> Bu sipariş teslim alınmış durumda. İptal edildiğinde stok hareketleri geri alınacaktır.
-                                </p>
-                            </div>
-                            {% endif %}
-                            
-                            <label for="iptal_nedeni" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                İptal Nedeni <span class="text-red-500">*</span>
-                            </label>
-                            <textarea id="iptal_nedeni" 
-                                      name="iptal_nedeni" 
-                                      rows="3" 
-                                      required
-                                      placeholder="İptal nedenini açıklayın..."
-                                      class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500"></textarea>
-                        </div>
-                        
-                        <div class="flex justify-end gap-3">
-                            <button type="button"
-                                    onclick="document.getElementById('iptalModal').classList.add('hidden')"
-                                    class="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors">
-                                Vazgeç
-                            </button>
-                            <button type="submit"
-                                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors">
-                                <i class="fas fa-times-circle mr-2"></i>
-                                İptal Et
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
 
-    <!-- Sipariş Detayları -->
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-6">
-        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-            <i class="fas fa-list mr-2"></i>Sipariş Kalemleri
-        </h3>
+    <!-- İptal Modal -->
+    <div
+      id="iptalModal"
+      class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+    >
+      <div
+        class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full mx-4"
+      >
+        <div class="p-6">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+            <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+            Sipariş İptal Onayı
+          </h3>
 
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                <thead class="bg-slate-50 dark:bg-slate-900">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                            Ürün
-                        </th>
-                        <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                            Miktar
-                        </th>
-                        <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                            Birim Fiyat
-                        </th>
-                        <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                            Toplam
-                        </th>
-                        <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                            Teslim Alınan
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                    {% for detay in detaylar %}
-                    <tr>
-                        <td class="px-4 py-4">
-                            <div class="text-sm font-medium text-slate-900 dark:text-white">
-                                {{ detay.urun.urun_adi }}
-                            </div>
-                            <div class="text-xs text-slate-500 dark:text-slate-400">
-                                {{ detay.urun.birim }}
-                            </div>
-                        </td>
-                        <td class="px-4 py-4 text-right text-sm text-slate-900 dark:text-white">
-                            {{ detay.miktar }}
-                        </td>
-                        <td class="px-4 py-4 text-right text-sm text-slate-900 dark:text-white">
-                            {{ "%.2f"|format(detay.birim_fiyat) }} ₺
-                        </td>
-                        <td class="px-4 py-4 text-right text-sm font-semibold text-slate-900 dark:text-white">
-                            {{ "%.2f"|format(detay.toplam_fiyat) }} ₺
-                        </td>
-                        <td class="px-4 py-4 text-right text-sm text-slate-900 dark:text-white">
-                            {{ detay.teslim_alinan_miktar }}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-                <tfoot class="bg-slate-50 dark:bg-slate-900">
-                    <tr>
-                        <td colspan="3" class="px-4 py-4 text-right text-sm font-semibold text-slate-900 dark:text-white">
-                            Genel Toplam:
-                        </td>
-                        <td class="px-4 py-4 text-right text-lg font-bold text-slate-900 dark:text-white">
-                            {{ "%.2f"|format(siparis.toplam_tutar) }} ₺
-                        </td>
-                        <td></td>
-                    </tr>
-                </tfoot>
-            </table>
+          <form
+            method="POST"
+            action="{{ url_for('yonetici_siparis_iptal', siparis_id=siparis.id) }}"
+          >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+            <div class="mb-4">
+              <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                <strong>{{ siparis.siparis_no }}</strong> numaralı siparişi
+                iptal etmek istediğinizden emin misiniz?
+              </p>
+
+              {% if siparis.durum == 'teslim_alindi' %}
+              <div
+                class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4"
+              >
+                <p class="text-sm text-yellow-800 dark:text-yellow-200">
+                  <i class="fas fa-info-circle mr-1"></i>
+                  <strong>Uyarı:</strong> Bu sipariş teslim alınmış durumda.
+                  İptal edildiğinde stok hareketleri geri alınacaktır.
+                </p>
+              </div>
+              {% endif %}
+
+              <label
+                for="iptal_nedeni"
+                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+              >
+                İptal Nedeni <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                id="iptal_nedeni"
+                name="iptal_nedeni"
+                rows="3"
+                required
+                placeholder="İptal nedenini açıklayın..."
+                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-red-500"
+              ></textarea>
+            </div>
+
+            <div class="flex justify-end gap-3">
+              <button
+                type="button"
+                onclick="document.getElementById('iptalModal').classList.add('hidden')"
+                class="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors"
+              >
+                Vazgeç
+              </button>
+              <button
+                type="submit"
+                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
+              >
+                <i class="fas fa-times-circle mr-2"></i>
+                İptal Et
+              </button>
+            </div>
+          </form>
         </div>
+      </div>
     </div>
+  </div>
+
+  <!-- Sipariş Detayları -->
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-6"
+  >
+    <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+      <i class="fas fa-list mr-2"></i>Sipariş Kalemleri
+    </h3>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+        <thead class="bg-slate-50 dark:bg-slate-900">
+          <tr>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Ürün
+            </th>
+            <th
+              class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Miktar
+            </th>
+            <th
+              class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Birim Fiyat
+            </th>
+            <th
+              class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Toplam
+            </th>
+            <th
+              class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Teslim Alınan
+            </th>
+          </tr>
+        </thead>
+        <tbody
+          class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+        >
+          {% for detay in detaylar %}
+          <tr>
+            <td class="px-4 py-4">
+              <div class="text-sm font-medium text-slate-900 dark:text-white">
+                {{ detay.urun.urun_adi }}
+              </div>
+              <div class="text-xs text-slate-500 dark:text-slate-400">
+                {{ detay.urun.birim }}
+              </div>
+            </td>
+            <td
+              class="px-4 py-4 text-right text-sm text-slate-900 dark:text-white"
+            >
+              {{ detay.miktar }}
+            </td>
+            <td
+              class="px-4 py-4 text-right text-sm text-slate-900 dark:text-white"
+            >
+              {{ "%.2f"|format(detay.birim_fiyat) }} ₺
+            </td>
+            <td
+              class="px-4 py-4 text-right text-sm font-semibold text-slate-900 dark:text-white"
+            >
+              {{ "%.2f"|format(detay.toplam_fiyat) }} ₺
+            </td>
+            <td
+              class="px-4 py-4 text-right text-sm text-slate-900 dark:text-white"
+            >
+              {{ detay.teslim_alinan_miktar }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot class="bg-slate-50 dark:bg-slate-900">
+          <tr>
+            <td
+              colspan="3"
+              class="px-4 py-4 text-right text-sm font-semibold text-slate-900 dark:text-white"
+            >
+              Genel Toplam:
+            </td>
+            <td
+              class="px-4 py-4 text-right text-lg font-bold text-slate-900 dark:text-white"
+            >
+              {{ "%.2f"|format(siparis.toplam_tutar) }} ₺
+            </td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
 </div>
 {% endblock %}

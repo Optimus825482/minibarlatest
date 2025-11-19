@@ -1,313 +1,442 @@
-{% extends "base.html" %}
-
-{% block title %}Tedarikçi Performans - {{ tedarikci.tedarikci_adi }}{% endblock %}
-{% block page_title %}Tedarikçi Performans Raporu{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Tedarikçi Performans - {{
+tedarikci.tedarikci_adi }}{% endblock %} {% block page_title %}Tedarikçi
+Performans Raporu{% endblock %} {% block content %}
 <div class="space-y-6">
-    <!-- Başlık ve Geri Butonu -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+  <!-- Başlık ve Geri Butonu -->
+  <div
+    class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+  >
+    <div>
+      <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
+        {{ tedarikci.tedarikci_adi }}
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+        Performans Raporu ve Analiz
+      </p>
+    </div>
+    <div class="flex gap-2">
+      <a
+        href="{{ url_for('tedarikci_duzenle', tedarikci_id=tedarikci.id) }}"
+        class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+      >
+        <i class="fas fa-edit mr-2"></i>Düzenle
+      </a>
+      <a
+        href="{{ url_for('tedarikci_yonetimi') }}"
+        class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+      >
+        <i class="fas fa-arrow-left mr-2"></i>Geri
+      </a>
+    </div>
+  </div>
+
+  <!-- Dönem Seçimi -->
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-4"
+  >
+    <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >Başlangıç Tarihi</label
+        >
+        <input
+          type="date"
+          name="baslangic"
+          value="{{ baslangic_tarihi }}"
+          class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
+        />
+      </div>
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >Bitiş Tarihi</label
+        >
+        <input
+          type="date"
+          name="bitis"
+          value="{{ bitis_tarihi }}"
+          class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
+        />
+      </div>
+      <div class="md:col-span-2">
+        <button
+          type="submit"
+          class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+        >
+          <i class="fas fa-filter mr-2"></i>Filtrele
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Performans Metrikleri -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Toplam Sipariş -->
+    <div
+      class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6"
+    >
+      <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-2xl font-bold text-slate-900 dark:text-white">{{ tedarikci.tedarikci_adi }}</h2>
-            <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Performans Raporu ve Analiz</p>
+          <p class="text-sm text-slate-600 dark:text-slate-400">
+            Toplam Sipariş
+          </p>
+          <p class="text-3xl font-bold text-slate-900 dark:text-white mt-2">
+            {{ performans.toplam_siparis }}
+          </p>
         </div>
-        <div class="flex gap-2">
-            <a href="{{ url_for('tedarikci_duzenle', tedarikci_id=tedarikci.id) }}" 
-               class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                <i class="fas fa-edit mr-2"></i>Düzenle
-            </a>
-            <a href="{{ url_for('tedarikci_yonetimi') }}" 
-               class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                <i class="fas fa-arrow-left mr-2"></i>Geri
-            </a>
+        <div
+          class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center"
+        >
+          <i
+            class="fas fa-shopping-cart text-blue-600 dark:text-blue-400 text-xl"
+          ></i>
         </div>
+      </div>
     </div>
 
-    <!-- Dönem Seçimi -->
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-4">
-        <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Başlangıç Tarihi</label>
-                <input type="date" name="baslangic" value="{{ baslangic_tarihi }}" 
-                       class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bitiş Tarihi</label>
-                <input type="date" name="bitis" value="{{ bitis_tarihi }}" 
-                       class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white">
-            </div>
-            <div class="md:col-span-2">
-                <button type="submit" 
-                        class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
-                    <i class="fas fa-filter mr-2"></i>Filtrele
-                </button>
-            </div>
-        </form>
+    <!-- Zamanında Teslimat -->
+    <div
+      class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-slate-600 dark:text-slate-400">
+            Zamanında Teslimat
+          </p>
+          <p class="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">
+            {{ "%.0f"|format((performans.zamaninda_teslimat /
+            performans.toplam_siparis * 100) if performans.toplam_siparis > 0
+            else 0) }}%
+          </p>
+          <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">
+            {{ performans.zamaninda_teslimat }} / {{ performans.toplam_siparis
+            }}
+          </p>
+        </div>
+        <div
+          class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center"
+        >
+          <i
+            class="fas fa-check-circle text-green-600 dark:text-green-400 text-xl"
+          ></i>
+        </div>
+      </div>
     </div>
 
-    <!-- Performans Metrikleri -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Toplam Sipariş -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-slate-600 dark:text-slate-400">Toplam Sipariş</p>
-                    <p class="text-3xl font-bold text-slate-900 dark:text-white mt-2">{{ performans.toplam_siparis_sayisi }}</p>
-                </div>
-                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-shopping-cart text-blue-600 dark:text-blue-400 text-xl"></i>
-                </div>
-            </div>
+    <!-- Ortalama Teslimat Süresi -->
+    <div
+      class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-slate-600 dark:text-slate-400">
+            Ort. Teslimat Süresi
+          </p>
+          <p
+            class="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-2"
+          >
+            {{ performans.ortalama_teslimat_suresi or 0 }}
+          </p>
+          <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">Gün</p>
         </div>
-
-        <!-- Zamanında Teslimat -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-slate-600 dark:text-slate-400">Zamanında Teslimat</p>
-                    <p class="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">
-                        {{ "%.0f"|format((performans.zamaninda_teslimat_sayisi / performans.toplam_siparis_sayisi * 100) if performans.toplam_siparis_sayisi > 0 else 0) }}%
-                    </p>
-                    <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                        {{ performans.zamaninda_teslimat_sayisi }} / {{ performans.toplam_siparis_sayisi }}
-                    </p>
-                </div>
-                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-check-circle text-green-600 dark:text-green-400 text-xl"></i>
-                </div>
-            </div>
+        <div
+          class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center"
+        >
+          <i
+            class="fas fa-clock text-purple-600 dark:text-purple-400 text-xl"
+          ></i>
         </div>
-
-        <!-- Ortalama Teslimat Süresi -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-slate-600 dark:text-slate-400">Ort. Teslimat Süresi</p>
-                    <p class="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-2">
-                        {{ performans.ortalama_teslimat_suresi or 0 }}
-                    </p>
-                    <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">Gün</p>
-                </div>
-                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-clock text-purple-600 dark:text-purple-400 text-xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Performans Skoru -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-slate-600 dark:text-slate-400">Performans Skoru</p>
-                    <p class="text-3xl font-bold text-orange-600 dark:text-orange-400 mt-2">
-                        {{ "%.1f"|format(performans.performans_skoru or 0) }}
-                    </p>
-                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mt-2">
-                        <div class="h-2 rounded-full transition-all 
-                            {% if performans.performans_skoru >= 80 %}bg-green-500
-                            {% elif performans.performans_skoru >= 60 %}bg-yellow-500
-                            {% else %}bg-red-500{% endif %}"
-                            style="width: {{ performans.performans_skoru or 0 }}%">
-                        </div>
-                    </div>
-                </div>
-                <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-star text-orange-600 dark:text-orange-400 text-xl"></i>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
 
-    <!-- Grafik ve Tablo -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Aylık Sipariş Grafiği -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                <i class="fas fa-chart-bar mr-2 text-blue-600 dark:text-blue-400"></i>
-                Aylık Sipariş Dağılımı
-            </h3>
-            <canvas id="siparisGrafik" height="250"></canvas>
+    <!-- Performans Skoru -->
+    <div
+      class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6"
+    >
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-slate-600 dark:text-slate-400">
+            Performans Skoru
+          </p>
+          <p
+            class="text-3xl font-bold text-orange-600 dark:text-orange-400 mt-2"
+          >
+            {{ "%.1f"|format(performans.performans_skoru or 0) }}
+          </p>
+          <div
+            class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mt-2"
+          >
+            <div
+              class="h-2 rounded-full transition-all {% if performans.performans_skoru >= 80 %}bg-green-500 {% elif performans.performans_skoru >= 60 %}bg-yellow-500 {% else %}bg-red-500{% endif %}"
+              style="width: {{ performans.performans_skoru or 0 }}%"
+            ></div>
+          </div>
         </div>
+        <div
+          class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center"
+        >
+          <i
+            class="fas fa-star text-orange-600 dark:text-orange-400 text-xl"
+          ></i>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        <!-- Teslimat Performansı -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                <i class="fas fa-chart-pie mr-2 text-green-600 dark:text-green-400"></i>
-                Teslimat Performansı
-            </h3>
-            <canvas id="teslimatGrafik" height="250"></canvas>
-        </div>
+  <!-- Grafik ve Tablo -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Aylık Sipariş Grafiği -->
+    <div
+      class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6"
+    >
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+        <i class="fas fa-chart-bar mr-2 text-blue-600 dark:text-blue-400"></i>
+        Aylık Sipariş Dağılımı
+      </h3>
+      <canvas id="siparisGrafik" height="250"></canvas>
     </div>
 
-    <!-- Son Siparişler -->
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-                <i class="fas fa-list mr-2 text-slate-600 dark:text-slate-400"></i>
-                Son Siparişler
-            </h3>
-        </div>
-        
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-slate-50 dark:bg-slate-700 border-b border-slate-200 dark:border-slate-600">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">Sipariş No</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">Tarih</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">Tutar</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">Teslimat</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">Durum</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-700 dark:text-slate-300 uppercase">Süre</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                    {% if siparisler %}
-                        {% for siparis in siparisler %}
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                            <td class="px-6 py-4 text-sm font-medium text-blue-600 dark:text-blue-400">
-                                <a href="{{ url_for('siparis_detay', siparis_id=siparis.id) }}">{{ siparis.siparis_no }}</a>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-slate-900 dark:text-white">
-                                {{ siparis.siparis_tarihi.strftime('%d.%m.%Y') }}
-                            </td>
-                            <td class="px-6 py-4 text-sm text-right font-medium text-slate-900 dark:text-white">
-                                {{ "%.2f"|format(siparis.toplam_tutar) }} ₺
-                            </td>
-                            <td class="px-6 py-4 text-sm text-center text-slate-600 dark:text-slate-400">
-                                {% if siparis.gerceklesen_teslimat_tarihi %}
-                                    {{ siparis.gerceklesen_teslimat_tarihi.strftime('%d.%m.%Y') }}
-                                {% else %}
-                                    {{ siparis.tahmini_teslimat_tarihi.strftime('%d.%m.%Y') }}
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                {% if siparis.durum.value == 'teslim_alindi' %}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                                    Teslim Alındı
-                                </span>
-                                {% elif siparis.durum.value == 'onaylandi' %}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                                    Onaylandı
-                                </span>
-                                {% elif siparis.durum.value == 'beklemede' %}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
-                                    Beklemede
-                                </span>
-                                {% else %}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
-                                    İptal
-                                </span>
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 text-sm text-center">
-                                {% if siparis.gerceklesen_teslimat_tarihi %}
-                                    {% set teslimat_suresi = (siparis.gerceklesen_teslimat_tarihi.date() - siparis.siparis_tarihi.date()).days %}
-                                    {% if teslimat_suresi <= siparis.tahmini_teslimat_tarihi %}
-                                    <span class="text-green-600 dark:text-green-400 font-medium">
-                                        {{ teslimat_suresi }} gün
-                                        <i class="fas fa-check-circle ml-1"></i>
-                                    </span>
-                                    {% else %}
-                                    <span class="text-red-600 dark:text-red-400 font-medium">
-                                        {{ teslimat_suresi }} gün
-                                        <i class="fas fa-exclamation-circle ml-1"></i>
-                                    </span>
-                                    {% endif %}
-                                {% else %}
-                                <span class="text-slate-500 dark:text-slate-400">-</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    {% else %}
-                    <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
-                            Seçilen dönemde sipariş bulunamadı
-                        </td>
-                    </tr>
-                    {% endif %}
-                </tbody>
-            </table>
-        </div>
+    <!-- Teslimat Performansı -->
+    <div
+      class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6"
+    >
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+        <i class="fas fa-chart-pie mr-2 text-green-600 dark:text-green-400"></i>
+        Teslimat Performansı
+      </h3>
+      <canvas id="teslimatGrafik" height="250"></canvas>
+    </div>
+  </div>
+
+  <!-- Son Siparişler -->
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700"
+  >
+    <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+        <i class="fas fa-list mr-2 text-slate-600 dark:text-slate-400"></i>
+        Son Siparişler
+      </h3>
     </div>
 
-    <!-- Toplam Sipariş Tutarı -->
-    <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm opacity-90">Toplam Sipariş Tutarı</p>
-                <p class="text-4xl font-bold mt-2">{{ "%.2f"|format(performans.toplam_siparis_tutari or 0) }} ₺</p>
-                <p class="text-sm opacity-75 mt-1">{{ baslangic_tarihi }} - {{ bitis_tarihi }} arası</p>
-            </div>
-            <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                <i class="fas fa-lira-sign text-3xl"></i>
-            </div>
-        </div>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead
+          class="bg-slate-50 dark:bg-slate-700 border-b border-slate-200 dark:border-slate-600"
+        >
+          <tr>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Sipariş No
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Tarih
+            </th>
+            <th
+              class="px-6 py-3 text-right text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Tutar
+            </th>
+            <th
+              class="px-6 py-3 text-center text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Teslimat
+            </th>
+            <th
+              class="px-6 py-3 text-center text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Durum
+            </th>
+            <th
+              class="px-6 py-3 text-center text-xs font-medium text-slate-700 dark:text-slate-300 uppercase"
+            >
+              Süre
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+          {% if siparisler %} {% for siparis in siparisler %}
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+            <td
+              class="px-6 py-4 text-sm font-medium text-blue-600 dark:text-blue-400"
+            >
+              <a href="{{ url_for('siparis_detay', siparis_id=siparis.id) }}"
+                >{{ siparis.siparis_no }}</a
+              >
+            </td>
+            <td class="px-6 py-4 text-sm text-slate-900 dark:text-white">
+              {{ siparis.siparis_tarihi.strftime('%d.%m.%Y') }}
+            </td>
+            <td
+              class="px-6 py-4 text-sm text-right font-medium text-slate-900 dark:text-white"
+            >
+              {{ "%.2f"|format(siparis.toplam_tutar) }} ₺
+            </td>
+            <td
+              class="px-6 py-4 text-sm text-center text-slate-600 dark:text-slate-400"
+            >
+              {% if siparis.gerceklesen_teslimat_tarihi %} {{
+              siparis.gerceklesen_teslimat_tarihi.strftime('%d.%m.%Y') }} {%
+              else %} {{ siparis.tahmini_teslimat_tarihi.strftime('%d.%m.%Y') }}
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 text-center">
+              {% if siparis.durum.value == 'teslim_alindi' %}
+              <span
+                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+              >
+                Teslim Alındı
+              </span>
+              {% elif siparis.durum.value == 'onaylandi' %}
+              <span
+                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+              >
+                Onaylandı
+              </span>
+              {% elif siparis.durum.value == 'beklemede' %}
+              <span
+                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+              >
+                Beklemede
+              </span>
+              {% else %}
+              <span
+                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+              >
+                İptal
+              </span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 text-sm text-center">
+              {% if siparis.gerceklesen_teslimat_tarihi %} {% set
+              teslimat_suresi = (siparis.gerceklesen_teslimat_tarihi.date() -
+              siparis.siparis_tarihi.date()).days %} {% if teslimat_suresi <=
+              siparis.tahmini_teslimat_tarihi %}
+              <span class="text-green-600 dark:text-green-400 font-medium">
+                {{ teslimat_suresi }} gün
+                <i class="fas fa-check-circle ml-1"></i>
+              </span>
+              {% else %}
+              <span class="text-red-600 dark:text-red-400 font-medium">
+                {{ teslimat_suresi }} gün
+                <i class="fas fa-exclamation-circle ml-1"></i>
+              </span>
+              {% endif %} {% else %}
+              <span class="text-slate-500 dark:text-slate-400">-</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %} {% else %}
+          <tr>
+            <td
+              colspan="6"
+              class="px-6 py-12 text-center text-slate-500 dark:text-slate-400"
+            >
+              Seçilen dönemde sipariş bulunamadı
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
     </div>
+  </div>
+
+  <!-- Toplam Sipariş Tutarı -->
+  <div
+    class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white"
+  >
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm opacity-90">Toplam Sipariş Tutarı</p>
+        <p class="text-4xl font-bold mt-2">
+          {{ "%.2f"|format(performans.toplam_tutar or 0) }} ₺
+        </p>
+        <p class="text-sm opacity-75 mt-1">
+          {{ baslangic_tarihi }} - {{ bitis_tarihi }} arası
+        </p>
+      </div>
+      <div
+        class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center"
+      >
+        <i class="fas fa-lira-sign text-3xl"></i>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-// Aylık Sipariş Grafiği
-const siparisCtx = document.getElementById('siparisGrafik').getContext('2d');
-new Chart(siparisCtx, {
-    type: 'bar',
-    data: {
-        labels: {{ aylar|tojson }},
-        datasets: [{
-            label: 'Sipariş Sayısı',
-            data: {{ siparis_sayilari|tojson }},
-            backgroundColor: 'rgba(59, 130, 246, 0.5)',
-            borderColor: 'rgb(59, 130, 246)',
-            borderWidth: 2
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    stepSize: 1
-                }
-            }
-        }
-    }
-});
+  // Aylık Sipariş Grafiği
+  const siparisCtx = document.getElementById('siparisGrafik').getContext('2d');
+  const aylar = {{ aylar|tojson|safe }} || [];
+  const siparisSayilari = {{ siparis_sayilari|tojson|safe }} || [];
 
-// Teslimat Performansı Grafiği
-const teslimatCtx = document.getElementById('teslimatGrafik').getContext('2d');
-new Chart(teslimatCtx, {
-    type: 'doughnut',
-    data: {
-        labels: ['Zamanında', 'Geç'],
-        datasets: [{
-            data: [{{ performans.zamaninda_teslimat_sayisi }}, {{ performans.toplam_siparis_sayisi - performans.zamaninda_teslimat_sayisi }}],
-            backgroundColor: [
-                'rgba(34, 197, 94, 0.8)',
-                'rgba(239, 68, 68, 0.8)'
-            ],
-            borderColor: [
-                'rgb(34, 197, 94)',
-                'rgb(239, 68, 68)'
-            ],
-            borderWidth: 2
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        }
-    }
-});
+  new Chart(siparisCtx, {
+      type: 'bar',
+      data: {
+          labels: aylar,
+          datasets: [{
+              label: 'Sipariş Sayısı',
+              data: siparisSayilari,
+              backgroundColor: 'rgba(59, 130, 246, 0.5)',
+              borderColor: 'rgb(59, 130, 246)',
+              borderWidth: 2
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+              legend: {
+                  display: false
+              }
+          },
+          scales: {
+              y: {
+                  beginAtZero: true,
+                  ticks: {
+                      stepSize: 1
+                  }
+              }
+          }
+      }
+  });
+
+  // Teslimat Performansı Grafiği
+  const teslimatCtx = document.getElementById('teslimatGrafik').getContext('2d');
+  const zamanindaTeslimat = {{ performans.zamaninda_teslimat or 0 }};
+  const toplamSiparis = {{ performans.toplam_siparis or 0 }};
+  const gecTeslimat = toplamSiparis > 0 ? toplamSiparis - zamanindaTeslimat : 0;
+
+  new Chart(teslimatCtx, {
+      type: 'doughnut',
+      data: {
+          labels: ['Zamanında', 'Geç'],
+          datasets: [{
+              data: [zamanindaTeslimat, gecTeslimat],
+              backgroundColor: [
+                  'rgba(34, 197, 94, 0.8)',
+                  'rgba(239, 68, 68, 0.8)'
+              ],
+              borderColor: [
+                  'rgb(34, 197, 94)',
+                  'rgb(239, 68, 68)'
+              ],
+              borderWidth: 2
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+              legend: {
+                  position: 'bottom'
+              }
+          }
+      }
+  });
 </script>
 {% endblock %}

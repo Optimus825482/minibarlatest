@@ -30,6 +30,8 @@
                                 %}selected{% endif %}>Ürün Bazlı Zimmet Detay</option>
                             <option value="minibar_tuketim" {% if request.args.get('rapor_tipi')=='minibar_tuketim'
                                 %}selected{% endif %}>Minibar Tüketim Raporu</option>
+                            <option value="minibar_kontrol_odalar" {% if request.args.get('rapor_tipi')=='minibar_kontrol_odalar'
+                                %}selected{% endif %}>Günlük Minibar Kontrolü Yapılan Odalar</option>
                             <option value="urun_grup" {% if request.args.get('rapor_tipi')=='urun_grup' %}selected{%
                                 endif %}>Ürün Grubu Bazlı Rapor</option>
                             <option value="ozet" {% if request.args.get('rapor_tipi')=='ozet' %}selected{% endif %}>
@@ -523,6 +525,9 @@
                                     {{ kayit[0] }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                    {{ kayit[2] }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                     {{ kayit[1] }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
@@ -535,20 +540,74 @@
                                     {{ kayit[7] }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    {% if kayit[6] == 'doldurma' %}
+                                    {% if kayit[6] == 'setup_kontrol' %}
+                                    <span
+                                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        Setup Kontrol
+                                    </span>
+                                    {% elif kayit[6] == 'ekstra_tuketim' %}
+                                    <span
+                                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                        Ekstra Tüketim
+                                    </span>
+                                    {% elif kayit[6] == 'ekstra_ekleme' %}
                                     <span
                                         class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                        Doldurma
-                                    </span>
-                                    {% elif kayit[6] == 'kontrol' %}
-                                    <span
-                                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                        Kontrol
+                                        Ekstra Ekleme
                                     </span>
                                     {% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                     {{ kayit[8] }} {{ kayit[9] }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% elif rapor_tipi == 'minibar_kontrol_odalar' %}
+                <!-- Günlük Minibar Kontrolü Yapılan Odalar Raporu -->
+                <div class="overflow-hidden rounded-lg border border-slate-200">
+                    <table id="minibar-kontrol-odalar-table" class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Tarih</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Oda No</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Kat</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Kontrol Eden</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Ürün Sayısı</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    Toplam Tüketim</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-200">
+                            {% for kayit in rapor_verisi %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                                    {{ kayit[0].strftime('%d.%m.%Y %H:%M') }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                                    {{ kayit[1] }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                    {{ kayit[2] }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                    {{ kayit[3] }} {{ kayit[4] }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        {{ kayit[5] }} ürün
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-red-600">
+                                    {{ kayit[6] }} adet
                                 </td>
                             </tr>
                             {% endfor %}
@@ -669,6 +728,10 @@
             document.getElementById( 'tarih_filter2' ).style.display = 'block';
             document.getElementById( 'grup_filter' ).style.display = 'block';
             document.getElementById( 'urun_filter' ).style.display = 'block';
+            document.getElementById( 'personel_filter' ).style.display = 'block';
+        } else if ( raporTipi === 'minibar_kontrol_odalar' ) {
+            document.getElementById( 'tarih_filter' ).style.display = 'block';
+            document.getElementById( 'tarih_filter2' ).style.display = 'block';
             document.getElementById( 'personel_filter' ).style.display = 'block';
         }
     } );

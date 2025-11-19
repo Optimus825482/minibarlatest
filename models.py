@@ -1573,6 +1573,12 @@ class SatinAlmaIslem(db.Model):
     # Açıklama
     aciklama = db.Column(db.Text, nullable=True)
     
+    # Durum ve İptal Bilgileri
+    durum = db.Column(db.String(20), default='aktif', nullable=False)  # aktif, iptal
+    iptal_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    iptal_eden_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    iptal_aciklama = db.Column(db.Text, nullable=True)
+    
     # Kullanıcı Bilgileri
     olusturan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
     
@@ -1586,7 +1592,8 @@ class SatinAlmaIslem(db.Model):
     otel = db.relationship('Otel', backref='satin_alma_islemleri')
     siparis = db.relationship('SatinAlmaSiparisi', backref='satin_alma_islemleri')
     detaylar = db.relationship('SatinAlmaIslemDetay', backref='islem', lazy=True, cascade='all, delete-orphan')
-    olusturan = db.relationship('Kullanici', backref='satin_alma_islemleri')
+    olusturan = db.relationship('Kullanici', foreign_keys=[olusturan_id], backref='olusturdugun_satin_alma_islemleri')
+    iptal_eden = db.relationship('Kullanici', foreign_keys=[iptal_eden_id], backref='iptal_ettigi_satin_alma_islemleri')
 
     __table_args__ = (
         db.Index('idx_satin_alma_islem_tarih', 'islem_tarihi'),
@@ -1739,3 +1746,85 @@ class TedarikciDokuman(db.Model):
 
     def __repr__(self):
         return f'<TedarikciDokuman tedarikci_id={self.tedarikci_id} tip={self.dokuman_tipi.value}>'
+
+
+# ============================================
+# KAT SORUMLUSU SİPARİŞ TALEPLERİ
+# ============================================
+
+class KatSorumlusuSiparisTalebi(db.Model):
+    """Kat sorumlusunun depodan talep ettiği siparişler"""
+    __tablename__ = 'kat_sorumlusu_siparis_talepleri'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    talep_no = db.Column(db.String(50), unique=True, nullable=False)
+    
+    # Kullanıcı Bilgileri
+    kat_sorumlusu_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='CASCADE'), nullable=False)
+    depo_sorumlusu_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    
+    # Tarih Bilgileri
+    talep_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    onay_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    teslim_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    
+    # Durum: beklemede, onaylandi, hazirlaniyor, teslim_edildi, iptal
+    durum = db.Column(db.String(20), default='beklemede', nullable=False)
+    
+    # Açıklama
+    aciklama = db.Column(db.Text, nullable=True)
+    red_nedeni = db.Column(db.Text, nullable=True)
+    
+    # Sistem Bilgileri
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+
+    # İlişkiler
+    kat_sorumlusu = db.relationship('Kullanici', foreign_keys=[kat_sorumlusu_id], backref='siparis_talepleri')
+    depo_sorumlusu = db.relationship('Kullanici', foreign_keys=[depo_sorumlusu_id], backref='islenen_talepler')
+    detaylar = db.relationship('KatSorumlusuSiparisTalepDetay', backref='talep', lazy=True, cascade='all, delete-orphan')
+
+    __table_args__ = (
+        db.Index('idx_talep_durum_tarih', 'durum', 'talep_tarihi'),
+        db.Index('idx_talep_kat_sorumlusu', 'kat_sorumlusu_id'),
+        db.Index('idx_talep_depo_sorumlusu', 'depo_sorumlusu_id'),
+        db.Index('idx_talep_no', 'talep_no'),
+    )
+
+    def __repr__(self):
+        return f'<KatSorumlusuSiparisTalebi {self.talep_no} - {self.durum}>'
+
+
+class KatSorumlusuSiparisTalepDetay(db.Model):
+    """Sipariş talep detay satırları"""
+    __tablename__ = 'kat_sorumlusu_siparis_talep_detaylari'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    talep_id = db.Column(db.Integer, db.ForeignKey('kat_sorumlusu_siparis_talepleri.id', ondelete='CASCADE'), nullable=False)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='RESTRICT'), nullable=False)
+    
+    # Miktar Bilgileri
+    talep_miktari = db.Column(db.Integer, nullable=False)
+    onaylanan_miktar = db.Column(db.Integer, default=0, nullable=False)
+    teslim_edilen_miktar = db.Column(db.Integer, default=0, nullable=False)
+    
+    # Aciliyet: normal, acil
+    aciliyet = db.Column(db.String(10), default='normal', nullable=False)
+    
+    # Sistem Bilgileri
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    # İlişkiler
+    urun = db.relationship('Urun', backref='talep_detaylari')
+
+    __table_args__ = (
+        db.Index('idx_talep_detay_talep', 'talep_id'),
+        db.Index('idx_talep_detay_urun', 'urun_id'),
+        db.CheckConstraint('talep_miktari > 0', name='check_talep_miktar_pozitif'),
+        db.CheckConstraint('onaylanan_miktar >= 0', name='check_onaylanan_miktar_pozitif'),
+        db.CheckConstraint('teslim_edilen_miktar >= 0', name='check_teslim_miktar_pozitif'),
+        db.CheckConstraint('teslim_edilen_miktar <= onaylanan_miktar', name='check_teslim_onay_limit'),
+    )
+
+    def __repr__(self):
+        return f'<KatSorumlusuSiparisTalepDetay talep_id={self.talep_id} urun_id={self.urun_id}>'

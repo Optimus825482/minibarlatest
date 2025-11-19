@@ -206,6 +206,67 @@ def register_dolum_talebi_routes(app):
             }), 500
     
     
+    @app.route('/api/dolum-talepleri-tamamlanan')
+    @login_required
+    @role_required('kat_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_dolum_talepleri_tamamlanan():
+        """Son 7 gün içinde tamamlanan dolum taleplerini listele"""
+        try:
+            from datetime import date
+            from models import Kullanici
+            
+            # Son 7 günün başlangıcı
+            yedi_gun_once = datetime.combine(date.today() - timedelta(days=7), datetime.min.time())
+            
+            # Tamamlanan talepleri getir
+            talepler = MinibarDolumTalebi.query.filter(
+                MinibarDolumTalebi.durum == 'tamamlandi',
+                MinibarDolumTalebi.tamamlanma_tarihi >= yedi_gun_once
+            ).order_by(
+                MinibarDolumTalebi.tamamlanma_tarihi.desc()
+            ).all()
+            
+            talep_listesi = []
+            # Kıbrıs/Türkiye saat dilimi (UTC+3)
+            local_tz = timezone(timedelta(hours=3))
+            
+            for talep in talepler:
+                # UTC'den yerel saate çevir
+                talep_tarihi_local = talep.talep_tarihi.replace(tzinfo=timezone.utc).astimezone(local_tz)
+                tamamlanma_tarihi_local = talep.tamamlanma_tarihi.replace(tzinfo=timezone.utc).astimezone(local_tz)
+                
+                # Tamamlayan kişiyi bul (session'dan)
+                tamamlayan_ad = "-"
+                if hasattr(talep, 'tamamlayan_id') and talep.tamamlayan_id:
+                    tamamlayan = db.session.get(Kullanici, talep.tamamlayan_id)
+                    if tamamlayan:
+                        tamamlayan_ad = f"{tamamlayan.ad} {tamamlayan.soyad}"
+                
+                talep_listesi.append({
+                    'id': talep.id,
+                    'oda_id': talep.oda_id,
+                    'oda_no': talep.oda.oda_no,
+                    'kat_adi': talep.oda.kat.kat_adi,
+                    'talep_tarihi': talep_tarihi_local.isoformat(),
+                    'tamamlanma_tarihi': tamamlanma_tarihi_local.isoformat(),
+                    'tamamlayan_ad': tamamlayan_ad,
+                    'notlar': talep.notlar or ''
+                })
+            
+            return jsonify({
+                'success': True,
+                'talepler': talep_listesi,
+                'count': len(talep_listesi)
+            })
+            
+        except Exception as e:
+            log_hata(e, modul='dolum_talepleri_tamamlanan_api')
+            return jsonify({
+                'success': False,
+                'message': 'Tamamlanan talepler yüklenirken hata oluştu'
+            }), 500
+    
+    
     @app.route('/api/dolum-talepleri-istatistik')
     @login_required
     @role_required('sistem_yoneticisi', 'admin')

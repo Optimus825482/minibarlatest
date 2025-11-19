@@ -1,206 +1,416 @@
-{% extends "base.html" %}
-
-{% block title %}Dolum Talepleri - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Dolum Talepleri{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Dolum Talepleri - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}Dolum Talepleri{% endblock %} {%
+block content %}
 <div class="space-y-6">
-    <!-- Bekleyen Talepler -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100">Bekleyen Dolum Talepleri</h3>
-                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Misafirlerden gelen minibar dolum talepleri</p>
-                </div>
-                <button onclick="yenile()" 
-                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                    </svg>
-                    Yenile
-                </button>
-            </div>
-
-            <!-- Talepler Listesi -->
-            <div id="talep_listesi">
-                <div class="text-center py-8">
-                    <svg class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Yükleniyor...</p>
-                </div>
-            </div>
+  <!-- Bekleyen Talepler -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h3
+            class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100"
+          >
+            Bekleyen Dolum Talepleri
+          </h3>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Misafirlerden gelen minibar dolum talepleri
+          </p>
         </div>
+        <button
+          onclick="yenile()"
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+        >
+          <svg
+            class="h-5 w-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            ></path>
+          </svg>
+          Yenile
+        </button>
+      </div>
+
+      <!-- Talepler Listesi -->
+      <div id="talep_listesi">
+        <div class="text-center py-8">
+          <svg
+            class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600 animate-spin"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            Yükleniyor...
+          </p>
+        </div>
+      </div>
     </div>
+  </div>
+
+  <!-- Tamamlanan Talepler (Accordion) -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <button
+        onclick="toggleTamamlananlar()"
+        class="w-full flex items-center justify-between text-left"
+      >
+        <div>
+          <h3
+            class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100"
+          >
+            Tamamlanan Dolum Talepleri
+          </h3>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Son 7 gün içinde tamamlanan talepler
+          </p>
+        </div>
+        <svg
+          id="accordion_icon"
+          class="w-6 h-6 text-slate-400 transform transition-transform duration-200"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 9l-7 7-7-7"
+          ></path>
+        </svg>
+      </button>
+
+      <!-- Tamamlanan Talepler İçeriği -->
+      <div id="tamamlanan_icerik" class="hidden mt-6">
+        <div id="tamamlanan_listesi">
+          <div class="text-center py-8">
+            <svg
+              class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600 animate-spin"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              Yükleniyor...
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Tamamla Onay Modal -->
-<div class="modal fade" id="tamamlaModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-            <div class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
-                <h5 class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    <svg class="inline-block h-5 w-5 mr-2 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    Talebi Tamamla
-                </h5>
-                <button type="button" class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" data-dismiss="modal">
-                    <span class="text-2xl">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body p-6">
-                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
-                    <p class="text-sm text-blue-800 dark:text-blue-200">
-                        <strong>Oda:</strong> <span id="tamamla_oda_no"></span>
-                    </p>
-                    <p class="text-sm text-blue-800 dark:text-blue-200 mt-1">
-                        <strong>Talep Tarihi:</strong> <span id="tamamla_tarih"></span>
-                    </p>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Notlar (Opsiyonel)
-                    </label>
-                    <textarea id="tamamla_notlar" 
-                              rows="3" 
-                              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                              placeholder="Varsa not ekleyin..."></textarea>
-                </div>
-                
-                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                    <p class="text-sm text-green-800 dark:text-green-200">
-                        <strong>✓</strong> Bu talep tamamlandı olarak işaretlenecek
-                    </p>
-                </div>
-            </div>
-            <div class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4">
-                <button type="button" 
-                        class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700" 
-                        data-dismiss="modal">
-                    İptal
-                </button>
-                <button type="button" 
-                        onclick="talepTamamla()"
-                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
-                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    Tamamla
-                </button>
-            </div>
-        </div>
+<div id="tamamlaModal" class="modal p-4 sm:p-6 md:p-8">
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full mx-auto"
+  >
+    <div
+      class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between"
+    >
+      <h5
+        class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
+      >
+        <svg
+          class="h-5 w-5 mr-2 text-green-600 dark:text-green-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          ></path>
+        </svg>
+        Talebi Tamamla
+      </h5>
+      <a
+        href="#"
+        rel="modal:close"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </a>
     </div>
+    <div class="p-6">
+      <div
+        class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4"
+      >
+        <p class="text-sm text-blue-800 dark:text-blue-200">
+          <strong>Oda:</strong> <span id="tamamla_oda_no"></span>
+        </p>
+        <p class="text-sm text-blue-800 dark:text-blue-200 mt-1">
+          <strong>Talep Tarihi:</strong> <span id="tamamla_tarih"></span>
+        </p>
+      </div>
+
+      <div class="mb-4">
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          Notlar (Opsiyonel)
+        </label>
+        <textarea
+          id="tamamla_notlar"
+          rows="3"
+          class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+          placeholder="Varsa not ekleyin..."
+        ></textarea>
+      </div>
+
+      <div
+        class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4"
+      >
+        <p class="text-sm text-green-800 dark:text-green-200">
+          <strong>✓</strong> Bu talep tamamlandı olarak işaretlenecek
+        </p>
+      </div>
+    </div>
+    <div
+      class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3"
+    >
+      <a
+        href="#"
+        rel="modal:close"
+        class="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-600"
+      >
+        İptal
+      </a>
+      <button
+        type="button"
+        onclick="talepTamamla()"
+        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
+      >
+        <svg
+          class="h-4 w-4 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5 13l4 4L19 7"
+          ></path>
+        </svg>
+        Tamamla
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- İptal Onay Modal -->
-<div class="modal fade" id="iptalModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content bg-white dark:bg-slate-800 border-0 shadow-xl">
-            <div class="modal-header border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
-                <h5 class="modal-title text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    <svg class="inline-block h-5 w-5 mr-2 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                    Talebi İptal Et
-                </h5>
-                <button type="button" class="close text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" data-dismiss="modal">
-                    <span class="text-2xl">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body p-6">
-                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
-                    <p class="text-sm text-blue-800 dark:text-blue-200">
-                        <strong>Oda:</strong> <span id="iptal_oda_no"></span>
-                    </p>
-                    <p class="text-sm text-blue-800 dark:text-blue-200 mt-1">
-                        <strong>Talep Tarihi:</strong> <span id="iptal_tarih"></span>
-                    </p>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        İptal Nedeni <span class="text-red-500">*</span>
-                    </label>
-                    <textarea id="iptal_notlar" 
-                              rows="3" 
-                              required
-                              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                              placeholder="İptal nedenini giriniz..."></textarea>
-                </div>
-                
-                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                    <p class="text-sm text-red-800 dark:text-red-200">
-                        <strong>⚠️</strong> Bu talep iptal edilecek
-                    </p>
-                </div>
-            </div>
-            <div class="modal-footer border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-6 py-4">
-                <button type="button" 
-                        class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700" 
-                        data-dismiss="modal">
-                    Vazgeç
-                </button>
-                <button type="button" 
-                        onclick="talepIptal()"
-                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
-                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                    İptal Et
-                </button>
-            </div>
-        </div>
+<div id="iptalModal" class="modal p-4 sm:p-6 md:p-8">
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full mx-auto"
+  >
+    <div
+      class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between"
+    >
+      <h5
+        class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center"
+      >
+        <svg
+          class="h-5 w-5 mr-2 text-red-600 dark:text-red-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+        Talebi İptal Et
+      </h5>
+      <a
+        href="#"
+        rel="modal:close"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </a>
     </div>
+    <div class="p-6">
+      <div
+        class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4"
+      >
+        <p class="text-sm text-blue-800 dark:text-blue-200">
+          <strong>Oda:</strong> <span id="iptal_oda_no"></span>
+        </p>
+        <p class="text-sm text-blue-800 dark:text-blue-200 mt-1">
+          <strong>Talep Tarihi:</strong> <span id="iptal_tarih"></span>
+        </p>
+      </div>
+
+      <div class="mb-4">
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          İptal Nedeni <span class="text-red-500">*</span>
+        </label>
+        <textarea
+          id="iptal_notlar"
+          rows="3"
+          required
+          class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+          placeholder="İptal nedenini giriniz..."
+        ></textarea>
+      </div>
+
+      <div
+        class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"
+      >
+        <p class="text-sm text-red-800 dark:text-red-200">
+          <strong>⚠️</strong> Bu talep iptal edilecek
+        </p>
+      </div>
+    </div>
+    <div
+      class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3"
+    >
+      <a
+        href="#"
+        rel="modal:close"
+        class="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-600"
+      >
+        Vazgeç
+      </a>
+      <button
+        type="button"
+        onclick="talepIptal()"
+        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+      >
+        <svg
+          class="h-4 w-4 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+        İptal Et
+      </button>
+    </div>
+  </div>
 </div>
 
-{% endblock %}
-
-{% block extra_scripts %}
+{% endblock %} {% block extra_scripts %}
 <!-- Toastr CSS & JS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
+/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
 <script>
-    let aktifTalepId = null;
-    
-    // Toastr ayarları
-    toastr.options = {
-        "closeButton": true,
-        "progressBar": true,
-        "positionClass": "toast-top-right",
-        "timeOut": "3000"
-    };
-    
-    // Sayfa yüklendiğinde talepleri getir
-    document.addEventListener('DOMContentLoaded', function() {
-        talepleriYukle();
-        
-        // Her 30 saniyede bir otomatik yenile
-        setInterval(talepleriYukle, 30000);
-    });
-    
-    // Talepleri yükle
-    async function talepleriYukle() {
-        try {
-            const response = await fetch('/api/dolum-talepleri');
-            const data = await response.json();
-            
-            console.log('API Response:', data); // Debug için
-            
-            if (data.success) {
-                // API'den gelen veri yapısını kontrol et
-                const talepler = data.talepler || data.data || [];
-                talepListesiGoster(talepler);
-            } else {
-                throw new Error(data.message);
-            }
-        } catch (error) {
-            console.error('Hata:', error);
-            document.getElementById('talep_listesi').innerHTML = `
+  let aktifTalepId = null;
+
+  // Toastr ayarları
+  toastr.options = {
+    closeButton: true,
+    progressBar: true,
+    positionClass: "toast-top-right",
+    timeOut: "3000",
+  };
+
+  let tamamlananlarAcik = false;
+
+  // Sayfa yüklendiğinde talepleri getir
+  document.addEventListener("DOMContentLoaded", function () {
+    talepleriYukle();
+
+    // Her 30 saniyede bir otomatik yenile
+    setInterval(talepleriYukle, 30000);
+  });
+
+  // Talepleri yükle
+  async function talepleriYukle() {
+    try {
+      const response = await fetch("/api/dolum-talepleri");
+      const data = await response.json();
+
+      console.log("API Response:", data); // Debug için
+
+      if (data.success) {
+        // API'den gelen veri yapısını kontrol et
+        const talepler = data.talepler || data.data || [];
+        talepListesiGoster(talepler);
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      console.error("Hata:", error);
+      document.getElementById("talep_listesi").innerHTML = `
                 <div class="text-center py-8">
                     <svg class="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -208,17 +418,17 @@
                     <p class="mt-2 text-sm text-red-600">Talepler yüklenirken hata oluştu</p>
                 </div>
             `;
-        }
     }
-    
-    // Talep listesini göster
-    function talepListesiGoster(talepler) {
-        const container = document.getElementById('talep_listesi');
-        
-        // Veri kontrolü
-        if (!talepler || !Array.isArray(talepler)) {
-            console.error('Geçersiz talepler verisi:', talepler);
-            container.innerHTML = `
+  }
+
+  // Talep listesini göster
+  function talepListesiGoster(talepler) {
+    const container = document.getElementById("talep_listesi");
+
+    // Veri kontrolü
+    if (!talepler || !Array.isArray(talepler)) {
+      console.error("Geçersiz talepler verisi:", talepler);
+      container.innerHTML = `
                 <div class="text-center py-8">
                     <svg class="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -226,11 +436,11 @@
                     <p class="mt-2 text-sm text-red-600">Veri formatı hatalı</p>
                 </div>
             `;
-            return;
-        }
-        
-        if (talepler.length === 0) {
-            container.innerHTML = `
+      return;
+    }
+
+    if (talepler.length === 0) {
+      container.innerHTML = `
                 <div class="text-center py-12">
                     <svg class="mx-auto h-16 w-16 text-slate-400 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -239,16 +449,17 @@
                     <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Şu anda bekleyen dolum talebi bulunmuyor</p>
                 </div>
             `;
-            return;
-        }
-        
-        let html = '<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">';
-        
-        talepler.forEach(talep => {
-            const talepTarihi = new Date(talep.talep_tarihi).toLocaleString('tr-TR');
-            const gecenSure = hesaplaGecenSure(talep.talep_tarihi);
-            
-            html += `
+      return;
+    }
+
+    let html =
+      '<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">';
+
+    talepler.forEach((talep) => {
+      const talepTarihi = new Date(talep.talep_tarihi).toLocaleString("tr-TR");
+      const gecenSure = hesaplaGecenSure(talep.talep_tarihi);
+
+      html += `
                 <div class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
                     <div class="flex items-start justify-between mb-3">
                         <div>
@@ -293,124 +504,265 @@
                     </div>
                 </div>
             `;
-        });
-        
-        html += '</div>';
-        container.innerHTML = html;
+    });
+
+    html += "</div>";
+    container.innerHTML = html;
+  }
+
+  // Geçen süreyi hesapla
+  function hesaplaGecenSure(talepTarihi) {
+    const simdi = new Date();
+    const talep = new Date(talepTarihi);
+    const farkMs = simdi - talep;
+    const farkDk = Math.floor(farkMs / 60000);
+
+    let metin, renk;
+
+    if (farkDk < 15) {
+      metin = `${farkDk} dakika önce`;
+      renk = "text-green-600 dark:text-green-400";
+    } else if (farkDk < 30) {
+      metin = `${farkDk} dakika önce`;
+      renk = "text-yellow-600 dark:text-yellow-400";
+    } else if (farkDk < 60) {
+      metin = `${farkDk} dakika önce`;
+      renk = "text-orange-600 dark:text-orange-400";
+    } else {
+      const farkSaat = Math.floor(farkDk / 60);
+      metin = `${farkSaat} saat önce`;
+      renk = "text-red-600 dark:text-red-400";
     }
-    
-    // Geçen süreyi hesapla
-    function hesaplaGecenSure(talepTarihi) {
-        const simdi = new Date();
-        const talep = new Date(talepTarihi);
-        const farkMs = simdi - talep;
-        const farkDk = Math.floor(farkMs / 60000);
-        
-        let metin, renk;
-        
-        if (farkDk < 15) {
-            metin = `${farkDk} dakika önce`;
-            renk = 'text-green-600 dark:text-green-400';
-        } else if (farkDk < 30) {
-            metin = `${farkDk} dakika önce`;
-            renk = 'text-yellow-600 dark:text-yellow-400';
-        } else if (farkDk < 60) {
-            metin = `${farkDk} dakika önce`;
-            renk = 'text-orange-600 dark:text-orange-400';
-        } else {
-            const farkSaat = Math.floor(farkDk / 60);
-            metin = `${farkSaat} saat önce`;
-            renk = 'text-red-600 dark:text-red-400';
+
+    return { metin, renk };
+  }
+
+  // Tamamla modal aç
+  function tamamlaModalAc(talepId, odaNo, tarih) {
+    aktifTalepId = talepId;
+    document.getElementById("tamamla_oda_no").textContent = odaNo;
+    document.getElementById("tamamla_tarih").textContent = tarih;
+    document.getElementById("tamamla_notlar").value = "";
+    $("#tamamlaModal").modal({
+      fadeDuration: 200,
+      fadeDelay: 0.1,
+    });
+  }
+
+  // İptal modal aç
+  function iptalModalAc(talepId, odaNo, tarih) {
+    aktifTalepId = talepId;
+    document.getElementById("iptal_oda_no").textContent = odaNo;
+    document.getElementById("iptal_tarih").textContent = tarih;
+    document.getElementById("iptal_notlar").value = "";
+    $("#iptalModal").modal({
+      fadeDuration: 200,
+      fadeDelay: 0.1,
+    });
+  }
+
+  // Talebi tamamla
+  async function talepTamamla() {
+    const notlar = document.getElementById("tamamla_notlar").value.trim();
+
+    try {
+      const response = await fetch(
+        `/api/dolum-talebi-tamamla/${aktifTalepId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token() }}",
+          },
+          body: JSON.stringify({ notlar }),
         }
-        
-        return { metin, renk };
-    }
-    
-    // Tamamla modal aç
-    function tamamlaModalAc(talepId, odaNo, tarih) {
-        aktifTalepId = talepId;
-        document.getElementById('tamamla_oda_no').textContent = odaNo;
-        document.getElementById('tamamla_tarih').textContent = tarih;
-        document.getElementById('tamamla_notlar').value = '';
-        $('#tamamlaModal').modal('show');
-    }
-    
-    // İptal modal aç
-    function iptalModalAc(talepId, odaNo, tarih) {
-        aktifTalepId = talepId;
-        document.getElementById('iptal_oda_no').textContent = odaNo;
-        document.getElementById('iptal_tarih').textContent = tarih;
-        document.getElementById('iptal_notlar').value = '';
-        $('#iptalModal').modal('show');
-    }
-    
-    // Talebi tamamla
-    async function talepTamamla() {
-        const notlar = document.getElementById('tamamla_notlar').value.trim();
-        
-        try {
-            const response = await fetch(`/api/dolum-talebi-tamamla/${aktifTalepId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ notlar })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                toastr.success(data.message);
-                $('#tamamlaModal').modal('hide');
-                talepleriYukle();
-            } else {
-                toastr.error(data.message);
-            }
-        } catch (error) {
-            console.error('Hata:', error);
-            toastr.error('İşlem sırasında hata oluştu');
-        }
-    }
-    
-    // Talebi iptal et
-    async function talepIptal() {
-        const notlar = document.getElementById('iptal_notlar').value.trim();
-        
-        if (!notlar) {
-            toastr.error('İptal nedeni giriniz');
-            return;
-        }
-        
-        try {
-            const response = await fetch(`/api/dolum-talebi-iptal/${aktifTalepId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ notlar })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                toastr.success(data.message);
-                $('#iptalModal').modal('hide');
-                talepleriYukle();
-            } else {
-                toastr.error(data.message);
-            }
-        } catch (error) {
-            console.error('Hata:', error);
-            toastr.error('İşlem sırasında hata oluştu');
-        }
-    }
-    
-    // Yenile
-    function yenile() {
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        toastr.success(data.message);
+        $.modal.close();
         talepleriYukle();
-        toastr.info('Liste yenilendi');
+      } else {
+        toastr.error(data.message);
+      }
+    } catch (error) {
+      console.error("Hata:", error);
+      toastr.error("İşlem sırasında hata oluştu");
     }
+  }
+
+  // Talebi iptal et
+  async function talepIptal() {
+    const notlar = document.getElementById("iptal_notlar").value.trim();
+
+    if (!notlar) {
+      toastr.error("İptal nedeni giriniz");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/dolum-talebi-iptal/${aktifTalepId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": "{{ csrf_token() }}",
+        },
+        body: JSON.stringify({ notlar }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toastr.success(data.message);
+        $.modal.close();
+        talepleriYukle();
+      } else {
+        toastr.error(data.message);
+      }
+    } catch (error) {
+      console.error("Hata:", error);
+      toastr.error("İşlem sırasında hata oluştu");
+    }
+  }
+
+  // Yenile
+  function yenile() {
+    talepleriYukle();
+    if (tamamlananlarAcik) {
+      tamamlananTalepleriYukle();
+    }
+    toastr.info("Liste yenilendi");
+  }
+
+  // Tamamlananlar accordion toggle
+  function toggleTamamlananlar() {
+    const icerik = document.getElementById("tamamlanan_icerik");
+    const icon = document.getElementById("accordion_icon");
+
+    tamamlananlarAcik = !tamamlananlarAcik;
+
+    if (tamamlananlarAcik) {
+      icerik.classList.remove("hidden");
+      icon.classList.add("rotate-180");
+      tamamlananTalepleriYukle();
+    } else {
+      icerik.classList.add("hidden");
+      icon.classList.remove("rotate-180");
+    }
+  }
+
+  // Tamamlanan talepleri yükle
+  async function tamamlananTalepleriYukle() {
+    try {
+      const response = await fetch("/api/dolum-talepleri-tamamlanan");
+      const data = await response.json();
+
+      if (data.success) {
+        const talepler = data.talepler || [];
+        tamamlananListesiGoster(talepler);
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      console.error("Hata:", error);
+      document.getElementById("tamamlanan_listesi").innerHTML = `
+        <div class="text-center py-8">
+          <svg class="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <p class="mt-2 text-sm text-red-600">Talepler yüklenirken hata oluştu</p>
+        </div>
+      `;
+    }
+  }
+
+  // Tamamlanan talep listesini göster
+  function tamamlananListesiGoster(talepler) {
+    const container = document.getElementById("tamamlanan_listesi");
+
+    if (!talepler || !Array.isArray(talepler)) {
+      container.innerHTML = `
+        <div class="text-center py-8">
+          <svg class="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <p class="mt-2 text-sm text-red-600">Veri formatı hatalı</p>
+        </div>
+      `;
+      return;
+    }
+
+    if (talepler.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-12">
+          <svg class="mx-auto h-16 w-16 text-slate-400 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <h3 class="mt-4 text-lg font-medium text-slate-900 dark:text-slate-100">Tamamlanan talep yok</h3>
+          <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Son 7 günde tamamlanan talep bulunmuyor</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html =
+      '<div class="overflow-x-auto"><table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"><thead class="bg-slate-50 dark:bg-slate-900"><tr>';
+    html +=
+      '<th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Oda</th>';
+    html +=
+      '<th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Talep Tarihi</th>';
+    html +=
+      '<th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Tamamlanma Tarihi</th>';
+    html +=
+      '<th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Tamamlayan</th>';
+    html +=
+      '<th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Notlar</th>';
+    html +=
+      '</tr></thead><tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">';
+
+    talepler.forEach((talep) => {
+      const talepTarihi = new Date(talep.talep_tarihi).toLocaleString("tr-TR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const tamamlanmaTarihi = new Date(talep.tamamlanma_tarihi).toLocaleString(
+        "tr-TR",
+        {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }
+      );
+
+      html += `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+          <td class="px-4 py-3 text-sm font-medium text-slate-900 dark:text-slate-100">
+            ${talep.oda_no}
+            <div class="text-xs text-slate-500 dark:text-slate-400">${
+              talep.kat_adi
+            }</div>
+          </td>
+          <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">${talepTarihi}</td>
+          <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">${tamamlanmaTarihi}</td>
+          <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">${
+            talep.tamamlayan_ad || "-"
+          }</td>
+          <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">${
+            talep.notlar || "-"
+          }</td>
+        </tr>
+      `;
+    });
+
+    html += "</tbody></table></div>";
+    container.innerHTML = html;
+  }
 </script>
 {% endblock %}

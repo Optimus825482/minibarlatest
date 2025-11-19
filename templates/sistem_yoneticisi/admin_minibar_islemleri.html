@@ -69,23 +69,10 @@
     
     <!-- Minibar İşlemleri Tablosu -->
     <div class="bg-white shadow rounded-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
             <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 Minibar İşlemleri ({{ islemler.total }} kayıt)
             </h3>
-            <div class="flex gap-2">
-                <button onclick="openIlkDolumModal()"
-                    class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    İlk Dolum
-                </button>
-                <button onclick="openMinibarIslemModal()"
-                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                    + Yeni İşlem
-                </button>
-            </div>
         </div>
         
         {% if islemler.items %}
@@ -1047,34 +1034,46 @@ function renderDetayContent(islem) {
         <div>
             <h4 class="text-md font-semibold text-slate-900 dark:text-slate-100 mb-3">Ürün Detayları</h4>
             ${islem.detaylar.length > 0 ? `
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
                     <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
                         <thead class="bg-slate-50 dark:bg-slate-900">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Ürün</th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Başlangıç</th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Eklenen</th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Tüketim</th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Bitiş</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Ürün</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Başlangıç</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Eklenen</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tüketim</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Bitiş</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
                             ${islem.detaylar.map(detay => `
-                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                                     <td class="px-4 py-3 text-sm font-medium text-slate-900 dark:text-slate-100">
                                         ${detay.urun_adi}
                                     </td>
-                                    <td class="px-4 py-3 text-sm text-center text-slate-600 dark:text-slate-400">
-                                        ${detay.baslangic_stok}
+                                    <td class="px-4 py-3 text-sm text-center">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                                            ${detay.baslangic_stok}
+                                        </span>
                                     </td>
-                                    <td class="px-4 py-3 text-sm text-center ${detay.eklenen_miktar > 0 ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-slate-400'}">
-                                        ${detay.eklenen_miktar > 0 ? '+' + detay.eklenen_miktar : '-'}
+                                    <td class="px-4 py-3 text-sm text-center">
+                                        ${detay.eklenen_miktar > 0 ? `
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                                                +${detay.eklenen_miktar}
+                                            </span>
+                                        ` : '<span class="text-slate-400">-</span>'}
                                     </td>
-                                    <td class="px-4 py-3 text-sm text-center ${detay.tuketim > 0 ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-slate-400'}">
-                                        ${detay.tuketim > 0 ? '-' + detay.tuketim : '-'}
+                                    <td class="px-4 py-3 text-sm text-center">
+                                        ${detay.tuketim > 0 ? `
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
+                                                -${detay.tuketim}
+                                            </span>
+                                        ` : '<span class="text-slate-400">-</span>'}
                                     </td>
-                                    <td class="px-4 py-3 text-sm text-center font-semibold text-slate-900 dark:text-slate-100">
-                                        ${detay.bitis_stok}
+                                    <td class="px-4 py-3 text-sm text-center">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                                            ${detay.bitis_stok}
+                                        </span>
                                     </td>
                                 </tr>
                             `).join('')}

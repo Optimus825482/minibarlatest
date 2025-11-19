@@ -211,7 +211,7 @@ def register_admin_qr_routes(app):
     @login_required
     @role_required('sistem_yoneticisi', 'admin')
     def admin_oda_qr_indir(oda_id):
-        """QR kodu PNG olarak indir"""
+        """QR kodu SVG olarak indir"""
         try:
             oda = db.session.get(Oda, oda_id)
             if not oda or not oda.qr_kod_gorsel:
@@ -220,10 +220,8 @@ def register_admin_qr_routes(app):
                     'message': 'QR kod bulunamadı'
                 }), 404
             
-            # Base64'ten PNG'ye çevir
-            import base64
-            img_data = oda.qr_kod_gorsel.split(',')[1]  # data:image/png;base64, kısmını at
-            img_bytes = base64.b64decode(img_data)
+            # SVG string'i al
+            svg_data = oda.qr_kod_gorsel
             
             # Log kaydı
             log_islem('export', 'qr_kod', {
@@ -232,11 +230,11 @@ def register_admin_qr_routes(app):
             })
             
             # Dosya adı
-            filename = f'QR_Oda_{oda.oda_no}.png'
+            filename = f'QR_Oda_{oda.oda_no}.svg'
             
             return send_file(
-                io.BytesIO(img_bytes),
-                mimetype='image/png',
+                io.BytesIO(svg_data.encode('utf-8')),
+                mimetype='image/svg+xml',
                 as_attachment=True,
                 download_name=filename
             )
@@ -384,4 +382,54 @@ def register_admin_qr_routes(app):
             return jsonify({
                 'success': False,
                 'message': 'İşlem sırasında hata oluştu'
+            }), 500
+
+
+    @app.route('/admin/tum-qr-temizle', methods=['POST'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def admin_tum_qr_temizle():
+        """Tüm odaların QR kodlarını temizle"""
+        try:
+            # Tüm aktif odaları getir
+            odalar = Oda.query.filter_by(aktif=True).all()
+            
+            temizlenen_adet = 0
+            
+            for oda in odalar:
+                if oda.qr_kod_token or oda.qr_kod_gorsel:
+                    # QR bilgilerini temizle
+                    oda.qr_kod_token = None
+                    oda.qr_kod_gorsel = None
+                    oda.qr_kod_olusturma_tarihi = None
+                    temizlenen_adet += 1
+            
+            db.session.commit()
+            
+            # Audit log
+            audit_create(
+                tablo_adi='odalar',
+                kayit_id=None,
+                yeni_deger={'temizlenen_adet': temizlenen_adet},
+                aciklama=f'Tüm QR kodları temizlendi - {temizlenen_adet} oda'
+            )
+            
+            # Log kaydı
+            log_islem('silme', 'qr_kod_toplu', {
+                'temizlenen_adet': temizlenen_adet,
+                'islem': 'tum_qr_temizle'
+            })
+            
+            return jsonify({
+                'success': True,
+                'message': f'{temizlenen_adet} odanın QR kodu başarıyla temizlendi',
+                'temizlenen_adet': temizlenen_adet
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='admin_tum_qr_temizle')
+            return jsonify({
+                'success': False,
+                'message': 'QR kodları temizlenirken hata oluştu'
             }), 500
