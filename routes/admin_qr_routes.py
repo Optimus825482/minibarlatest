@@ -267,29 +267,44 @@ def register_admin_qr_routes(app):
             
             # ZIP dosyası oluştur
             zip_buffer = io.BytesIO()
+            basarili_sayisi = 0
             
             with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-                import base64
-                
                 for oda in odalar:
                     try:
-                        # Base64'ten PNG'ye çevir
-                        img_data = oda.qr_kod_gorsel.split(',')[1]
-                        img_bytes = base64.b64decode(img_data)
+                        if not oda.qr_kod_gorsel:
+                            continue
                         
-                        # ZIP'e ekle
-                        filename = f'Oda_{oda.oda_no}_QR.png'
-                        zip_file.writestr(filename, img_bytes)
+                        # Kat ve otel bilgisini al (Oda -> Kat -> Otel ilişkisi)
+                        kat_adi = oda.kat.kat_adi if oda.kat else 'BilinmeyenKat'
+                        otel_adi = oda.kat.otel.ad if (oda.kat and oda.kat.otel) else 'BilinmeyenOtel'
+                        
+                        # Dosya adı için güvenli karakterler (Türkçe karakter temizle)
+                        otel_safe = otel_adi.replace(' ', '_').replace('ı', 'i').replace('ğ', 'g').replace('ü', 'u').replace('ş', 's').replace('ö', 'o').replace('ç', 'c').replace('İ', 'I').replace('Ğ', 'G').replace('Ü', 'U').replace('Ş', 'S').replace('Ö', 'O').replace('Ç', 'C')
+                        kat_safe = kat_adi.replace(' ', '_').replace('ı', 'i').replace('ğ', 'g').replace('ü', 'u').replace('ş', 's').replace('ö', 'o').replace('ç', 'c').replace('İ', 'I').replace('Ğ', 'G').replace('Ü', 'U').replace('Ş', 'S').replace('Ö', 'O').replace('Ç', 'C')
+                        
+                        # SVG formatında kaydet: OtelAdi_KatAdi_OdaNo_QR.svg
+                        filename = f'{otel_safe}_{kat_safe}_Oda{oda.oda_no}_QR.svg'
+                        zip_file.writestr(filename, oda.qr_kod_gorsel.encode('utf-8'))
+                        basarili_sayisi += 1
                         
                     except Exception as e:
                         log_hata(e, modul='admin_qr_zip', extra_info={'oda_id': oda.id})
                         continue
             
+            # Hiç dosya eklenemediyse hata döndür
+            if basarili_sayisi == 0:
+                return jsonify({
+                    'success': False,
+                    'message': 'QR kodları ZIP dosyasına eklenemedi'
+                }), 500
+            
             zip_buffer.seek(0)
             
             # Log kaydı
             log_islem('export', 'qr_kod_toplu', {
-                'oda_sayisi': len(odalar)
+                'toplam_oda': len(odalar),
+                'basarili': basarili_sayisi
             })
             
             # Dosya adı
