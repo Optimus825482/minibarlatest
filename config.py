@@ -45,16 +45,16 @@ class Config:
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # PostgreSQL Optimized Engine Options - Coolify Production
+    # PostgreSQL Optimized Engine Options - Performance Optimized
     SQLALCHEMY_ENGINE_OPTIONS = {
-        # Connection Pool Configuration - REDUCED FOR MEMORY
-        'pool_size': 2,                     # 2 connection pool (was 5)
-        'max_overflow': 3,                  # Max 5 connection total (was 15)
+        # Connection Pool Configuration - OPTIMIZED FOR PERFORMANCE
+        'pool_size': 5,                     # 5 connection pool (increased from 2)
+        'max_overflow': 10,                 # Max 15 connection total (increased from 3)
         'pool_timeout': 30,                 # 30 saniye wait timeout
-        'pool_recycle': 1800,               # 30 dakikada bir recycle (was 3600)
+        'pool_recycle': 1800,               # 30 dakikada bir recycle
         'pool_pre_ping': True,              # Health check before use
         
-        # MEMORY OPTIMIZATION: Close idle connections faster
+        # Connection Management
         'pool_reset_on_return': 'rollback',  # Reset connections on return
         
         # PostgreSQL Specific Options
@@ -100,7 +100,7 @@ class Config:
     WTF_CSRF_HEADERS = ['X-CSRFToken', 'X-CSRF-Token']
     
     # Dosya yükleme ayarları - GÜVENLİK
-    MAX_CONTENT_LENGTH = 100 * 1024 * 1024  # 100MB - backup restore için artırıldı
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB - Optimized (was 100MB)
     UPLOAD_FOLDER = 'uploads'
     ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'pdf', 'sql'}  # SQL backup için eklendi
     

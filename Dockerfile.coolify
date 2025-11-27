@@ -28,6 +28,6 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
-# Güvenli başlatma scripti
-# Son satırdaki CMD'yi şununla değiştir:
-CMD ["sh", "-c", "python safe_deploy.py && gunicorn -c gunicorn.conf.py app:app"]
+# Entrypoint ve CMD
+ENTRYPOINT ["./docker-entrypoint.sh"]
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "app:app"]
