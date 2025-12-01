@@ -1,18 +1,20 @@
 # Coolify için Güvenli Dockerfile
-# Mevcut veritabanına dokunmaz
+# Flask + Celery Worker + Celery Beat (Supervisor ile)
 
 FROM python:3.11-slim
 
 # Çalışma dizini
 WORKDIR /app
 
-# Sistem bağımlılıkları
+# Sistem bağımlılıkları (supervisor eklendi)
 RUN apt-get update && apt-get install -y \
     gcc \
     postgresql-client \
     libpq-dev \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    supervisor \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /var/log/supervisor
 
 # Python bağımlılıkları
 COPY requirements.txt .
@@ -21,12 +23,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Uygulama dosyalarını kopyala
 COPY . .
 
+# Supervisor config
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 # Port
 EXPOSE 5000
 
-# Healthcheck - curl kullan
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
-# Direkt gunicorn ile başlat (entrypoint yok)
-CMD ["sh", "-c", "python safe_deploy.py && gunicorn -c gunicorn.conf.py app:app"]
+# Supervisor ile başlat (gunicorn + celery worker + celery beat)
+CMD ["sh", "-c", "python safe_deploy.py && supervisord -c /etc/supervisor/conf.d/supervisord.conf"]

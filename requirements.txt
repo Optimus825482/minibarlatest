@@ -28,6 +28,9 @@ psutil==5.9.6
 # QR Kod Sistemi
 qrcode[pil]==7.4.2
 Pillow==10.4.0
+
+# Timezone Support
+pytz==2024.1
 bleach==6.0.0
 
 # ML Anomaly Detection System

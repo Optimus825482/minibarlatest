@@ -1,0 +1,112 @@
+{% extends "base.html" %} {% block title %}DND Bildirimleri - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}DND Bildirimleri{% endblock %} {%
+block content %}
+<div class="space-y-6">
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h3 class="text-lg font-medium text-slate-900 dark:text-white">
+          <i class="fas fa-door-closed mr-2 text-orange-600"></i>{{
+          tarih.strftime('%d.%m.%Y') }} - Tamamlanmayan DND Görevleri
+        </h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          3 kez kontrol edilmemiş DND odaları
+        </p>
+      </div>
+      <form method="GET" class="flex items-center gap-2">
+        <input
+          type="date"
+          name="tarih"
+          value="{{ tarih.isoformat() }}"
+          class="rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm"
+        />
+        <button
+          type="submit"
+          class="px-4 py-2 bg-slate-600 text-white rounded-lg text-sm"
+        >
+          <i class="fas fa-search mr-1"></i>Göster
+        </button>
+      </form>
+    </div>
+
+    {% if dnd_listesi %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-100 dark:bg-slate-900">
+          <tr>
+            <th class="px-4 py-3 text-left text-slate-700 dark:text-slate-300">
+              Oda No
+            </th>
+            <th class="px-4 py-3 text-left text-slate-700 dark:text-slate-300">
+              Personel
+            </th>
+            <th
+              class="px-4 py-3 text-center text-slate-700 dark:text-slate-300"
+            >
+              DND Sayısı
+            </th>
+            <th class="px-4 py-3 text-left text-slate-700 dark:text-slate-300">
+              Son Kontrol
+            </th>
+            <th
+              class="px-4 py-3 text-center text-slate-700 dark:text-slate-300"
+            >
+              Durum
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+          {% for dnd in dnd_listesi %}
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+            <td class="px-4 py-3">
+              <span
+                class="px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded font-medium"
+              >
+                {{ dnd.oda_no }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-slate-600 dark:text-slate-400">
+              {{ dnd.personel_adi }}
+            </td>
+            <td class="px-4 py-3 text-center">
+              <span
+                class="px-2 py-1 rounded text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400"
+              >
+                {{ dnd.dnd_sayisi }}/3
+              </span>
+            </td>
+            <td class="px-4 py-3 text-slate-600 dark:text-slate-400">
+              {{ dnd.son_dnd_zamani or '-' }}
+            </td>
+            <td class="px-4 py-3 text-center">
+              <span
+                class="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+              >
+                <i class="fas fa-clock mr-1"></i>Bekliyor
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div
+      class="mt-4 p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800"
+    >
+      <div class="flex items-center gap-2 text-orange-700 dark:text-orange-400">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span class="font-medium"
+          >{{ dnd_listesi|length }} oda henüz 3 kez kontrol edilmedi.</span
+        >
+      </div>
+    </div>
+    {% else %}
+    <div class="text-center py-12 text-slate-500 dark:text-slate-400">
+      <i class="fas fa-check-circle text-5xl mb-3 text-green-500"></i>
+      <p class="text-lg">Tamamlanmayan DND görevi yok!</p>
+      <p class="text-sm mt-1">Tüm DND odaları en az 3 kez kontrol edilmiş.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\utils\ml\model_trainer.py
+# hypothesis_version: 6.148.2
+
+[0.1, 0.2, 0.8, 0.85, 100, 'ML_MIN_DATA_POINTS', 'accuracy', 'contamination', 'dolum_sure', 'entity_id', 'is_active', 'isolation_forest', 'n_estimators', 'precision', 'random_state', 'recall', 'stok_seviye', 'tuketim_miktar', 'value']

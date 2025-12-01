@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\routes\admin_zimmet_routes.py
+# hypothesis_version: 6.148.2
+
+[400, 404, 500, 'POST', 'Zimmet bulunamadı', 'Zimmet iptal edildi', 'admin', 'admin_zimmet_detay', 'admin_zimmet_iade', 'admin_zimmet_iptal', 'aktif', 'danger', 'depo_sorumlusu', 'durum', 'giris', 'goruntuleme', 'guncelleme', 'iade_miktarlari', 'iptal', 'kat_sorumlusu', 'kayit_sayisi', 'kullanici_id', 'message', 'personel_id', 'personel_zimmet', 'personel_zimmetleri', 'sayfa', 'sistem_yoneticisi', 'success', 'tamamlandi', 'zimmet_detay', 'zimmet_iade', 'zimmet_id', 'zimmet_iptal']

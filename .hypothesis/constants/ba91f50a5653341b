@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\utils\cache_manager.py
+# hypothesis_version: 6.148.2
+
+[100, 300, 600, 1800, 3600, '%Y-%m-%d', ':', 'CACHE_KEY_PREFIX', 'CACHE_TIMEOUT_FIYAT', 'CACHE_TIMEOUT_KAR', 'CACHE_TIMEOUT_STOK', 'CACHE_TYPE', '_client', 'all', 'cache_type', 'default', 'default_timeout', 'error', 'fiyat:*', 'fiyat_timeout', 'hit_rate', 'kar:*', 'kar_timeout', 'keyspace_hits', 'keyspace_misses', 'minibar_cache:', 'none', 'redis_stats', 'stats', 'stok_timeout', 'strftime', 'tedarikci:en_uygun:*']

@@ -80,6 +80,22 @@ services:
     profiles:
       - migration # Sadece migration sırasında çalıştır
 
+  # Redis - Sadece Celery Broker (cache yok)
+  redis:
+    image: redis:7-alpine
+    container_name: minibar_redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 128mb --maxmemory-policy noeviction
+    ports:
+      - "6379:6379"
+    networks:
+      - minibar_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Flask Application
   web:
     build:
@@ -102,6 +118,14 @@ services:
       FLASK_ENV: ${FLASK_ENV:-production}
       SECRET_KEY: ${SECRET_KEY:-change-this-secret-key-in-production}
 
+      # Celery (Redis sadece broker)
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+
+      # ML System
+      ML_ENABLED: "true"
+      ML_MIN_DATA_POINTS: 30
+
       # Backup Configuration
       BACKUP_DIR: /backups
 
@@ -116,6 +140,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - minibar_network
     healthcheck:
@@ -124,6 +150,70 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # Celery Worker - Arka plan görevleri
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: minibar_celery_worker
+    restart: unless-stopped
+    command: celery -A celery_app worker --loglevel=info --concurrency=2
+    environment:
+      DB_TYPE: postgresql
+      DB_HOST: postgres
+      DB_USER: ${DB_USER:-minibar_user}
+      DB_PASSWORD: ${DB_PASSWORD:-minibar123}
+      DB_NAME: ${DB_NAME:-minibar_takip}
+      DB_PORT: 5432
+      FLASK_ENV: ${FLASK_ENV:-production}
+      SECRET_KEY: ${SECRET_KEY:-change-this-secret-key-in-production}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      ML_ENABLED: "true"
+      ML_MIN_DATA_POINTS: 30
+      PYTHONUNBUFFERED: 1
+    volumes:
+      - ./uploads:/app/uploads
+      - ./backups:/backups
+      - ml_models:/app/ml_models
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - minibar_network
+
+  # Celery Beat - Zamanlanmış görevler
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: minibar_celery_beat
+    restart: unless-stopped
+    command: celery -A celery_app beat --loglevel=info
+    environment:
+      DB_TYPE: postgresql
+      DB_HOST: postgres
+      DB_USER: ${DB_USER:-minibar_user}
+      DB_PASSWORD: ${DB_PASSWORD:-minibar123}
+      DB_NAME: ${DB_NAME:-minibar_takip}
+      DB_PORT: 5432
+      FLASK_ENV: ${FLASK_ENV:-production}
+      SECRET_KEY: ${SECRET_KEY:-change-this-secret-key-in-production}
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      PYTHONUNBUFFERED: 1
+    volumes:
+      - celery_beat_data:/app/celerybeat
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - minibar_network
 
   # pgAdmin (PostgreSQL yönetimi için)
   pgadmin:
@@ -172,6 +262,8 @@ volumes:
   pgadmin_data:
     driver: local
   ml_models:
+    driver: local
+  celery_beat_data:
     driver: local
 
 networks:

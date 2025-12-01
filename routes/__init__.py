@@ -117,6 +117,14 @@ def register_all_routes(app):
     from routes.db_optimization_routes import db_optimization_bp
     app.register_blueprint(db_optimization_bp)
     
+    # Görevlendirme Sistemi Routes
+    from routes.gorev_routes import gorev_bp
+    app.register_blueprint(gorev_bp)
+    
+    # Sistem Ayarları Routes
+    from routes.sistem_ayarlari_routes import register_sistem_ayarlari_routes
+    register_sistem_ayarlari_routes(app)
+    
     # API endpoint'lerini CSRF'den muaf tut
     # Blueprint'leri register ettikten sonra CSRF exempt yap
     if hasattr(app, 'extensions') and 'csrf' in app.extensions:

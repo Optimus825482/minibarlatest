@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\routes\misafir_qr_routes.py
+# hypothesis_version: 6.148.2
+
+[400, 404, 429, 500, '/qr/<token>', 'GET', 'Geçersiz QR kod', 'Geçersiz token', 'POST', 'beklemede', 'dolum_talebi', 'ekleme', 'errors/404.html', 'errors/429.html', 'errors/500.html', 'kat_sorumlusu', 'kullanici_id', 'message', 'misafir', 'misafir_dolum_talebi', 'notlar', 'oda_id', 'oda_no', 'qr_redirect', 'rol', 'success', 'talep_id', 'token']

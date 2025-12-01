@@ -1,0 +1,77 @@
+{% extends "base.html" %} {% block title %}Yükleme Görevleri - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}Günlük Yükleme Görevleri{% endblock
+%} {% block content %}
+<div class="space-y-6">
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h3 class="text-lg font-medium text-slate-900 dark:text-white">
+          <i class="fas fa-upload mr-2 text-blue-600"></i>{{
+          tarih.strftime('%d.%m.%Y') }} - Yükleme Görevleri
+        </h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Günlük doluluk dosyası yükleme görevleri
+        </p>
+      </div>
+      <form method="GET" class="flex items-center gap-2">
+        <input
+          type="date"
+          name="tarih"
+          value="{{ tarih.isoformat() }}"
+          class="rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm"
+        />
+        <button
+          type="submit"
+          class="px-4 py-2 bg-slate-600 text-white rounded-lg text-sm"
+        >
+          <i class="fas fa-search mr-1"></i>Göster
+        </button>
+      </form>
+    </div>
+
+    {% if bekleyen %}
+    <div class="grid gap-4">
+      {% for gorev in bekleyen %}
+      <div
+        class="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800"
+      >
+        <div class="flex items-center gap-4">
+          <div
+            class="w-14 h-14 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center"
+          >
+            <i
+              class="fas fa-file-excel text-yellow-600 dark:text-yellow-400 text-2xl"
+            ></i>
+          </div>
+          <div>
+            <div class="font-medium text-slate-900 dark:text-white">
+              {{ 'In House' if gorev.dosya_tipi == 'inhouse' else 'Arrivals' }}
+              Yükleme
+            </div>
+            <div class="text-sm text-slate-500 dark:text-slate-400">
+              {{ gorev.otel_adi }}
+            </div>
+            <div class="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+              <i class="fas fa-clock mr-1"></i>Bekliyor
+            </div>
+          </div>
+        </div>
+        <a
+          href="{{ url_for('doluluk.doluluk_yonetimi') }}"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
+        >
+          <i class="fas fa-upload mr-1"></i>Yükle
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12 text-slate-500 dark:text-slate-400">
+      <i class="fas fa-check-circle text-5xl mb-3 text-green-500"></i>
+      <p class="text-lg">Tüm yükleme görevleri tamamlandı!</p>
+      <p class="text-sm mt-1">Bugün için bekleyen yükleme görevi yok.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -72,6 +72,16 @@ from flask_migrate import Migrate
 db.init_app(app)
 migrate = Migrate(app, db)
 
+# Veritabanı metadata'sını yenile (schema değişikliklerini algıla)
+with app.app_context():
+    try:
+        # Mevcut bağlantıları temizle ve metadata'yı yenile
+        db.engine.dispose()
+        db.reflect()
+        logger.info("✅ Database engine yenilendi ve metadata reflect edildi")
+    except Exception as e:
+        logger.warning(f"⚠️ Metadata refresh hatası (görmezden geliniyor): {e}")
+
 # Redis Cache başlat
 from flask_caching import Cache
 cache = Cache(app)
@@ -3072,6 +3082,60 @@ except Exception as e:
 
 # ============================================
 
+# Error Handlers - Session timeout ve diğer hatalar için
+@app.errorhandler(500)
+def internal_error(error):
+    """500 hatası - Session timeout durumunda login'e yönlendir"""
+    db.session.rollback()
+    if 'kullanici_id' not in session:
+        flash('Oturumunuz sona erdi. Lütfen tekrar giriş yapın.', 'warning')
+        return redirect(url_for('login'))
+    logger.error(f"500 Hatası: {error}")
+    return render_template('errors/500.html'), 500
+
+@app.errorhandler(401)
+def unauthorized_error(error):
+    """401 hatası - Yetkisiz erişim"""
+    flash('Bu sayfaya erişim yetkiniz yok. Lütfen giriş yapın.', 'warning')
+    return redirect(url_for('login'))
+
+@app.errorhandler(403)
+def forbidden_error(error):
+    """403 hatası - Yasaklı erişim"""
+    flash('Bu sayfaya erişim yetkiniz yok.', 'danger')
+    return redirect(url_for('dashboard'))
+
+@app.errorhandler(404)
+def not_found_error(error):
+    """404 hatası - Sayfa bulunamadı"""
+    if 'kullanici_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('errors/404.html'), 404
+
+# Session kontrolü - Her istekte
+@app.before_request
+def check_session_validity():
+    """Her istekte session geçerliliğini kontrol et"""
+    from datetime import datetime as dt
+    # Static dosyalar ve login sayfası hariç
+    if request.endpoint and not request.endpoint.startswith('static') and request.endpoint not in ['login', 'logout']:
+        if 'kullanici_id' in session:
+            # Session son aktivite zamanını kontrol et
+            last_activity = session.get('last_activity')
+            if last_activity:
+                try:
+                    last_time = dt.fromisoformat(last_activity)
+                    timeout = app.config.get('PERMANENT_SESSION_LIFETIME', timedelta(hours=8))
+                    if isinstance(timeout, int):
+                        timeout = timedelta(seconds=timeout)
+                    if dt.now() - last_time > timeout:
+                        session.clear()
+                        flash('Oturumunuz sona erdi. Lütfen tekrar giriş yapın.', 'warning')
+                        return redirect(url_for('login'))
+                except:
+                    pass
+            # Son aktivite zamanını güncelle
+            session['last_activity'] = dt.now().isoformat()
 
 
 if __name__ == '__main__':

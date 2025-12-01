@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\routes\restore_routes.py
+# hypothesis_version: 6.148.2
+
+[100, 400, 500, 1024, 8192, ');', '--', '.', '/api/restore_all', '/api/restore_table', '/api/upload_backup', '/restore_backup', ';', 'CREATE SCHEMA public', 'CREATE TABLE (\\w+)', 'Dosya seçilmedi', 'POST', 'Tablo adı gerekli', 'backup_count', 'backup_file', 'backup_filepath', 'comparison', 'current_count', 'dependencies', 'error', 'error_count', 'filename', 'has_dependencies', 'ignore', 'message', 'r', 'referred_table', 'restore', 'restore_backup.html', 'restored_count', 'sql', 'success', 'table', 'uploads/backups', 'utf-8', 'wb']

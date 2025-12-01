@@ -1,0 +1,137 @@
+{% extends "base.html" %} {% block title %}DND Odaları - Minibar Takip Sistemi{%
+endblock %} {% block page_title %}DND Odaları Listesi{% endblock %} {% block
+content %}
+<div class="space-y-6">
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h3 class="text-lg font-medium text-slate-900 dark:text-white">
+          <i class="fas fa-door-closed mr-2 text-orange-600"></i>{{
+          tarih.strftime('%d.%m.%Y') }} - DND Odaları
+        </h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Rahatsız Etmeyin durumundaki odalar
+        </p>
+      </div>
+      <a
+        href="{{ url_for('gorev.gorev_listesi') }}"
+        class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm"
+      >
+        <i class="fas fa-arrow-left mr-1"></i>Geri
+      </a>
+    </div>
+
+    {% if dnd_gorevler %}
+    <div class="grid gap-4">
+      {% for gorev in dnd_gorevler %}
+      <div
+        class="p-4 {% if gorev.durum == 'completed' %}bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800{% else %}bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800{% endif %} rounded-lg border"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-4">
+            <div
+              class="w-14 h-14 {% if gorev.durum == 'completed' %}bg-green-100 dark:bg-green-900/30{% else %}bg-orange-100 dark:bg-orange-900/30{% endif %} rounded-lg flex items-center justify-center"
+            >
+              <span
+                class="{% if gorev.durum == 'completed' %}text-green-600 dark:text-green-400{% else %}text-orange-600 dark:text-orange-400{% endif %} font-bold text-lg"
+                >{{ gorev.oda_no }}</span
+              >
+            </div>
+            <div>
+              <div
+                class="font-medium text-slate-900 dark:text-white text-lg flex items-center gap-2"
+              >
+                Oda {{ gorev.oda_no }} {% if gorev.kaynak_silindi and
+                gorev.durum == 'completed' %}
+                <span
+                  class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400"
+                  title="Kaynak doluluk verisi silindi"
+                >
+                  <i class="fas fa-unlink mr-1"></i>Kaynak silindi
+                </span>
+                {% endif %}
+              </div>
+              <div class="flex items-center gap-2 mt-1">
+                <span
+                  class="px-2 py-1 rounded text-xs font-medium {% if gorev.durum == 'completed' %}bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200{% else %}bg-orange-200 text-orange-800 dark:bg-orange-800 dark:text-orange-200{% endif %}"
+                >
+                  DND: {{ gorev.dnd_sayisi }}/3
+                </span>
+                {% if gorev.durum == 'completed' %}
+                <span
+                  class="px-2 py-1 rounded text-xs font-medium bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200"
+                >
+                  <i class="fas fa-check mr-1"></i>Tamamlandı
+                </span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% if gorev.durum != 'completed' %}
+          <div class="flex gap-2">
+            <form
+              method="POST"
+              action="{{ url_for('gorev.gorev_tamamla', gorev_detay_id=gorev.detay_id) }}"
+              class="inline"
+            >
+              <button
+                type="submit"
+                class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm"
+              >
+                <i class="fas fa-check mr-1"></i>Tamamla
+              </button>
+            </form>
+            <form
+              method="POST"
+              action="{{ url_for('gorev.gorev_dnd', gorev_detay_id=gorev.detay_id) }}"
+              class="inline"
+            >
+              <button
+                type="submit"
+                class="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm"
+              >
+                <i class="fas fa-redo mr-1"></i>Tekrar Kontrol
+              </button>
+            </form>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Kontrol Geçmişi -->
+        {% if gorev.kontrol_gecmisi %}
+        <div
+          class="mt-3 pt-3 border-t border-orange-200 dark:border-orange-700"
+        >
+          <div
+            class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >
+            Kontrol Geçmişi:
+          </div>
+          <div class="space-y-1">
+            {% for kontrol in gorev.kontrol_gecmisi %}
+            <div
+              class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"
+            >
+              <i class="fas fa-clock text-orange-500"></i>
+              <span>{{ kontrol.kontrol_zamani }}</span>
+              {% if kontrol.notlar %}
+              <span class="text-slate-500">- {{ kontrol.notlar }}</span>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12 text-slate-500 dark:text-slate-400">
+      <i class="fas fa-door-open text-5xl mb-3"></i>
+      <p class="text-lg">DND oda bulunmuyor.</p>
+      <p class="text-sm mt-1">Tüm odalar kontrol edilebilir durumda.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

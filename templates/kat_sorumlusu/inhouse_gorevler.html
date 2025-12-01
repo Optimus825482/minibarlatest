@@ -1,0 +1,146 @@
+{% extends "base.html" %} {% block title %}In House Görevleri - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}In House Kontrol Görevleri{%
+endblock %} {% block content %}
+<div class="space-y-6">
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h3 class="text-lg font-medium text-slate-900 dark:text-white">
+          <i class="fas fa-home mr-2 text-blue-600"></i>{{
+          tarih.strftime('%d.%m.%Y') }} - In House Görevleri
+        </h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Kalmaya devam eden misafir odaları
+        </p>
+      </div>
+      <a
+        href="{{ url_for('gorev.gorev_listesi') }}"
+        class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm"
+      >
+        <i class="fas fa-arrow-left mr-1"></i>Geri
+      </a>
+    </div>
+
+    <!-- Bekleyen -->
+    <h4 class="text-md font-medium text-slate-900 dark:text-white mb-4">
+      <i class="fas fa-sort-amount-down mr-2 text-blue-500"></i>Bekleyen ({{
+      bekleyen|length }})
+      <span class="text-sm font-normal text-slate-500 dark:text-slate-400 ml-2"
+        >(Öncelik sırasına göre)</span
+      >
+    </h4>
+    {% set bekleyen_sirali = bekleyen|sort(attribute='oncelik_sirasi') %} {% if
+    bekleyen_sirali %}
+    <div class="grid gap-3 mb-6">
+      {% for gorev in bekleyen_sirali %}
+      <div
+        class="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
+      >
+        <div class="flex items-center gap-4">
+          <!-- Öncelik Sırası -->
+          <div
+            class="w-8 h-8 bg-blue-200 dark:bg-blue-800 text-blue-700 dark:text-blue-200 rounded-full flex items-center justify-center text-sm font-bold"
+          >
+            {{ loop.index }}
+          </div>
+          <div
+            class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center"
+          >
+            <span class="text-blue-600 dark:text-blue-400 font-bold"
+              >{{ gorev.oda_no }}</span
+            >
+          </div>
+          <div>
+            <div class="font-medium text-slate-900 dark:text-white">
+              Oda {{ gorev.oda_no }}
+            </div>
+            <div class="text-sm text-slate-500 dark:text-slate-400">
+              {% if gorev.dnd_sayisi > 0 %}
+              <span class="text-orange-600 dark:text-orange-400"
+                >DND: {{ gorev.dnd_sayisi }}x</span
+              >
+              {% else %}Bekliyor{% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <form
+            method="POST"
+            action="{{ url_for('gorev.gorev_tamamla', gorev_detay_id=gorev.detay_id) }}"
+            class="inline"
+          >
+            <button
+              type="submit"
+              class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm"
+            >
+              <i class="fas fa-check mr-1"></i>Tamamla
+            </button>
+          </form>
+          <form
+            method="POST"
+            action="{{ url_for('gorev.gorev_dnd', gorev_detay_id=gorev.detay_id) }}"
+            class="inline"
+          >
+            <button
+              type="submit"
+              class="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm"
+            >
+              <i class="fas fa-door-closed mr-1"></i>DND
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-8 text-slate-500 dark:text-slate-400 mb-6">
+      <i class="fas fa-check-circle text-4xl mb-2 text-green-500"></i>
+      <p>Tüm In House görevleri tamamlandı!</p>
+    </div>
+    {% endif %}
+
+    <!-- Tamamlanan -->
+    <h4 class="text-md font-medium text-slate-900 dark:text-white mb-4">
+      Tamamlanan ({{ tamamlanan|length }})
+    </h4>
+    {% if tamamlanan %}
+    <div class="grid gap-3">
+      {% for gorev in tamamlanan %}
+      <div
+        class="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
+      >
+        <div class="flex items-center gap-4">
+          <div
+            class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center"
+          >
+            <i class="fas fa-check text-green-600 dark:text-green-400"></i>
+          </div>
+          <div>
+            <div
+              class="font-medium text-slate-900 dark:text-white flex items-center gap-2"
+            >
+              Oda {{ gorev.oda_no }} {% if gorev.kaynak_silindi %}
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400"
+                title="Kaynak doluluk verisi silindi"
+              >
+                <i class="fas fa-unlink mr-1"></i>Kaynak silindi
+              </span>
+              {% endif %}
+            </div>
+            <div class="text-sm text-green-600 dark:text-green-400">
+              Tamamlandı: {{ gorev.kontrol_zamani }}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-4 text-slate-500 dark:text-slate-400">
+      <p>Henüz tamamlanan görev yok.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

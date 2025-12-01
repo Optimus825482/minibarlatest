@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\routes\dashboard_routes.py
+# hypothesis_version: 6.148.2
+
+[100, '%Zimmet iadesi%', '%d.%m', '/dashboard', '/depo', '/kat-sorumlusu', '/sistem-yoneticisi', 'ML_ENABLED', 'admin', 'aktif', 'arrivals', 'arrivals_durum', 'bekleyen', 'bos_oda', 'cikis', 'completed', 'danger', 'depo_dashboard', 'depo_sorumlusu', 'dikkat', 'dikkat_sayi', 'dnd', 'dolu_oda', 'doluluk_orani', 'eksik_tamamlama', 'false', 'geciken_siparis', 'giris', 'ilk_dolum', 'inhouse', 'inhouse_durum', 'iptal', 'istatistik', 'kalan', 'kat_sorumlusu', 'kritik', 'kritik_sayi', 'kritik_sayisi', 'kritik_stok', 'kullanici_id', 'kullanilan', 'logout', 'normal', 'normal_sayi', 'onay_bekleyen', 'onaylandi', 'otel', 'otel_ad', 'otel_id', 'otel_logo', 'pending', 'rol', 'sistem_yoneticisi', 'stokout_sayisi', 'tamamlanan', 'tamamlanma_orani', 'teslim_edilen', 'toplam', 'toplam_oda', 'toplam_tuketim', 'true', 'warning', 'yeniden_dolum']

@@ -35,7 +35,7 @@ from utils.helpers import log_islem, log_hata, get_stok_toplamlari
 from utils.audit import audit_create, audit_update, audit_delete, serialize_model
 from utils.satin_alma_servisleri import SatinAlmaServisi
 from utils.tedarikci_servisleri import TedarikciServisi
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import os
 
 
@@ -2335,4 +2335,292 @@ def register_depo_routes(app):
             return jsonify({
                 'success': False,
                 'error': str(e)
+            }), 500
+
+    @app.route('/api/depo/kat-sorumlusu-siparis-reddet/<int:talep_id>', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu')
+    def api_kat_sorumlusu_siparis_reddet(talep_id):
+        """Kat sorumlusu sipariş talebini reddet"""
+        try:
+            from models import KatSorumlusuSiparisTalebi
+            
+            # Sipariş talebini bul
+            talep = KatSorumlusuSiparisTalebi.query.get(talep_id)
+            if not talep:
+                return jsonify({
+                    'success': False,
+                    'message': 'Sipariş talebi bulunamadı'
+                }), 404
+            
+            # Sadece bekleyen talepler reddedilebilir
+            if talep.durum != 'beklemede':
+                return jsonify({
+                    'success': False,
+                    'message': f'Sadece bekleyen talepler reddedilebilir. Mevcut durum: {talep.durum}'
+                }), 400
+            
+            # Red nedeni al
+            red_nedeni = request.json.get('red_nedeni', 'Belirtilmemiş')
+            
+            # Talebi reddet
+            talep.durum = 'reddedildi'
+            talep.red_nedeni = red_nedeni
+            talep.islem_tarihi = datetime.utcnow()
+            talep.islem_yapan_id = session['kullanici_id']
+            
+            db.session.commit()
+            
+            # Log kaydı
+            log_islem('reddet', 'kat_sorumlusu_siparis_talep', {
+                'talep_id': talep.id,
+                'kat_sorumlusu_id': talep.kat_sorumlusu_id,
+                'red_nedeni': red_nedeni,
+                'depo_sorumlusu_id': session['kullanici_id']
+            })
+            
+            return jsonify({
+                'success': True,
+                'message': 'Sipariş talebi başarıyla reddedildi'
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='kat_sorumlusu_siparis_reddet')
+            return jsonify({
+                'success': False,
+                'message': f'Hata oluştu: {str(e)}'
+            }), 500
+    
+    @app.route('/api/depo/kat-sorumlusu-siparis-onayla/<int:talep_id>', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu')
+    def api_kat_sorumlusu_siparis_onayla(talep_id):
+        """Kat sorumlusu sipariş talebini onayla ve zimmet oluştur"""
+        try:
+            from models import KatSorumlusuSiparisTalebi, KatSorumlusuSiparisTalepDetay
+            
+            # Sipariş talebini bul
+            talep = KatSorumlusuSiparisTalebi.query.get(talep_id)
+            if not talep:
+                return jsonify({
+                    'success': False,
+                    'message': 'Sipariş talebi bulunamadı'
+                }), 404
+            
+            # Sadece bekleyen talepler onaylanabilir
+            if talep.durum != 'beklemede':
+                return jsonify({
+                    'success': False,
+                    'message': f'Sadece bekleyen talepler onaylanabilir. Mevcut durum: {talep.durum}'
+                }), 400
+            
+            # Zimmet oluştur
+            zimmet = PersonelZimmet(
+                personel_id=talep.kat_sorumlusu_id,
+                durum='aktif',
+                talep_tarihi=datetime.utcnow(),
+                aciklama=f'Kat sorumlusu sipariş talebinden oluşturuldu (Talep #{talep.id})'
+            )
+            db.session.add(zimmet)
+            db.session.flush()
+            
+            # Zimmet detaylarını oluştur
+            for detay in talep.detaylar:
+                zimmet_detay = PersonelZimmetDetay(
+                    zimmet_id=zimmet.id,
+                    urun_id=detay.urun_id,
+                    miktar=detay.talep_miktari
+                )
+                db.session.add(zimmet_detay)
+            
+            # Talebi onayla
+            talep.durum = 'onaylandi'
+            talep.islem_tarihi = datetime.utcnow()
+            talep.islem_yapan_id = session['kullanici_id']
+            talep.zimmet_id = zimmet.id
+            
+            db.session.commit()
+            
+            # Log kaydı
+            log_islem('onayla', 'kat_sorumlusu_siparis_talep', {
+                'talep_id': talep.id,
+                'kat_sorumlusu_id': talep.kat_sorumlusu_id,
+                'zimmet_id': zimmet.id,
+                'depo_sorumlusu_id': session['kullanici_id']
+            })
+            
+            return jsonify({
+                'success': True,
+                'message': 'Sipariş talebi onaylandı ve zimmet oluşturuldu',
+                'zimmet_id': zimmet.id
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='kat_sorumlusu_siparis_onayla')
+            return jsonify({
+                'success': False,
+                'message': f'Hata oluştu: {str(e)}'
+            }), 500
+
+    # ==================== MANUEL RAPOR GÖNDERİM ROUTE'LARI ====================
+    
+    @app.route('/api/rapor/gorev-tamamlanma-gonder', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi')
+    def manuel_gorev_raporu_gonder():
+        """Manuel görev tamamlanma raporu gönderimi"""
+        try:
+            from utils.rapor_email_service import RaporEmailService
+            from models import Kullanici
+            from utils.authorization import get_kullanici_otelleri
+            
+            data = request.get_json() or {}
+            rapor_tarihi_str = data.get('tarih')
+            kat_sorumlusu_id = data.get('kat_sorumlusu_id')
+            
+            # Tarih parse
+            if rapor_tarihi_str:
+                rapor_tarihi = datetime.strptime(rapor_tarihi_str, '%Y-%m-%d').date()
+            else:
+                rapor_tarihi = date.today() - timedelta(days=1)
+            
+            # Kullanıcının erişebileceği oteller
+            kullanici_otelleri = get_kullanici_otelleri()
+            otel_ids = [o.id for o in kullanici_otelleri]
+            
+            gonderilen = 0
+            hatali = 0
+            sonuclar = []
+            
+            if kat_sorumlusu_id:
+                # Tek kat sorumlusu için rapor gönder
+                ks = Kullanici.query.get(kat_sorumlusu_id)
+                if ks and ks.rol == 'kat_sorumlusu' and (session.get('rol') == 'sistem_yoneticisi' or ks.otel_id in otel_ids):
+                    result = RaporEmailService.send_gorev_raporu(ks.id, rapor_tarihi)
+                    if result.get('success'):
+                        gonderilen += 1
+                        sonuclar.append({'ad': f"{ks.ad} {ks.soyad}", 'durum': 'başarılı'})
+                    else:
+                        hatali += 1
+                        sonuclar.append({'ad': f"{ks.ad} {ks.soyad}", 'durum': result.get('message', 'hata')})
+            else:
+                # Tüm kat sorumluları için rapor gönder
+                if session.get('rol') == 'sistem_yoneticisi':
+                    kat_sorumlulari = Kullanici.query.filter(
+                        Kullanici.rol == 'kat_sorumlusu',
+                        Kullanici.aktif == True
+                    ).all()
+                else:
+                    kat_sorumlulari = Kullanici.query.filter(
+                        Kullanici.rol == 'kat_sorumlusu',
+                        Kullanici.aktif == True,
+                        Kullanici.otel_id.in_(otel_ids)
+                    ).all()
+                
+                for ks in kat_sorumlulari:
+                    result = RaporEmailService.send_gorev_raporu(ks.id, rapor_tarihi)
+                    if result.get('success'):
+                        gonderilen += 1
+                        sonuclar.append({'ad': f"{ks.ad} {ks.soyad}", 'durum': 'başarılı'})
+                    else:
+                        hatali += 1
+                        sonuclar.append({'ad': f"{ks.ad} {ks.soyad}", 'durum': result.get('message', 'hata')})
+            
+            log_islem('rapor_gonder', 'gorev_tamamlanma', {
+                'tarih': rapor_tarihi.isoformat(),
+                'gonderilen': gonderilen,
+                'hatali': hatali
+            })
+            
+            return jsonify({
+                'success': gonderilen > 0,
+                'message': f'{gonderilen} rapor gönderildi, {hatali} hata',
+                'gonderilen': gonderilen,
+                'hatali': hatali,
+                'sonuclar': sonuclar
+            })
+            
+        except Exception as e:
+            log_hata(e, modul='manuel_gorev_raporu_gonder')
+            return jsonify({
+                'success': False,
+                'message': f'Hata oluştu: {str(e)}'
+            }), 500
+    
+    @app.route('/api/rapor/minibar-sarfiyat-gonder', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi')
+    def manuel_minibar_raporu_gonder():
+        """Manuel minibar sarfiyat raporu gönderimi"""
+        try:
+            from utils.rapor_email_service import RaporEmailService
+            from models import Otel
+            from utils.authorization import get_kullanici_otelleri
+            
+            data = request.get_json() or {}
+            rapor_tarihi_str = data.get('tarih')
+            otel_id = data.get('otel_id')
+            
+            # Tarih parse
+            if rapor_tarihi_str:
+                rapor_tarihi = datetime.strptime(rapor_tarihi_str, '%Y-%m-%d').date()
+            else:
+                rapor_tarihi = date.today() - timedelta(days=1)
+            
+            # Kullanıcının erişebileceği oteller
+            kullanici_otelleri = get_kullanici_otelleri()
+            otel_ids = [o.id for o in kullanici_otelleri]
+            
+            gonderilen = 0
+            hatali = 0
+            sonuclar = []
+            
+            if otel_id:
+                # Tek otel için rapor gönder
+                otel = Otel.query.get(otel_id)
+                if otel and (session.get('rol') == 'sistem_yoneticisi' or otel.id in otel_ids):
+                    result = RaporEmailService.send_minibar_raporu(otel.id, rapor_tarihi)
+                    if result.get('success'):
+                        gonderilen += 1
+                        sonuclar.append({'ad': otel.ad, 'durum': 'başarılı'})
+                    else:
+                        hatali += 1
+                        sonuclar.append({'ad': otel.ad, 'durum': result.get('message', 'hata')})
+            else:
+                # Tüm oteller için rapor gönder
+                if session.get('rol') == 'sistem_yoneticisi':
+                    oteller = Otel.query.filter_by(aktif=True).all()
+                else:
+                    oteller = [o for o in kullanici_otelleri if o.aktif]
+                
+                for otel in oteller:
+                    result = RaporEmailService.send_minibar_raporu(otel.id, rapor_tarihi)
+                    if result.get('success'):
+                        gonderilen += 1
+                        sonuclar.append({'ad': otel.ad, 'durum': 'başarılı'})
+                    else:
+                        hatali += 1
+                        sonuclar.append({'ad': otel.ad, 'durum': result.get('message', 'hata')})
+            
+            log_islem('rapor_gonder', 'minibar_sarfiyat', {
+                'tarih': rapor_tarihi.isoformat(),
+                'gonderilen': gonderilen,
+                'hatali': hatali
+            })
+            
+            return jsonify({
+                'success': gonderilen > 0,
+                'message': f'{gonderilen} rapor gönderildi, {hatali} hata',
+                'gonderilen': gonderilen,
+                'hatali': hatali,
+                'sonuclar': sonuclar
+            })
+            
+        except Exception as e:
+            log_hata(e, modul='manuel_minibar_raporu_gonder')
+            return jsonify({
+                'success': False,
+                'message': f'Hata oluştu: {str(e)}'
             }), 500

@@ -669,9 +669,10 @@ class MisafirKayit(db.Model):
     giris_tarihi = db.Column(db.Date, nullable=False, index=True)
     giris_saati = db.Column(db.Time, nullable=True)  # Sadece ARRIVALS için (Arr.Time)
     cikis_tarihi = db.Column(db.Date, nullable=False, index=True)
+    cikis_saati = db.Column(db.Time, nullable=True)  # Sadece DEPARTURES için (Dep.Time)
     
-    # Kayıt Tipi (Otomatik algılanır: in_house veya arrival)
-    kayit_tipi = db.Column(db.Enum('in_house', 'arrival', name='misafir_kayit_tipi'), nullable=False)
+    # Kayıt Tipi (Otomatik algılanır: in_house, arrival veya departure)
+    kayit_tipi = db.Column(db.String(20), nullable=False)  # in_house, arrival, departure
     
     # Sistem Bilgileri
     olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
@@ -700,13 +701,13 @@ class DosyaYukleme(db.Model):
     # Dosya Bilgileri
     dosya_adi = db.Column(db.String(255), nullable=False)
     dosya_yolu = db.Column(db.String(500), nullable=False)
-    dosya_tipi = db.Column(db.Enum('in_house', 'arrivals', name='dosya_tipi'), nullable=False)  # Otomatik algılanır
+    dosya_tipi = db.Column(db.String(20), nullable=False)  # in_house, arrivals, departures
     dosya_boyutu = db.Column(db.Integer)  # bytes
     
     # İşlem Bilgileri
     yukleme_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     silme_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)  # Otomatik silme için
-    durum = db.Column(db.Enum('yuklendi', 'isleniyor', 'tamamlandi', 'hata', 'silindi', name='yukleme_durum'), default='yuklendi', nullable=False)
+    durum = db.Column(db.String(20), default='yuklendi', nullable=False)  # yuklendi, isleniyor, tamamlandi, hata, silindi
     
     # İstatistikler
     toplam_satir = db.Column(db.Integer, default=0)
@@ -1828,3 +1829,317 @@ class KatSorumlusuSiparisTalepDetay(db.Model):
 
     def __repr__(self):
         return f'<KatSorumlusuSiparisTalepDetay talep_id={self.talep_id} urun_id={self.urun_id}>'
+
+
+# ============================================
+# GÖREVLENDİRME SİSTEMİ MODELLERİ
+# ============================================
+
+class GorevTipi(str, enum.Enum):
+    """Görev tipleri"""
+    INHOUSE_KONTROL = 'inhouse_kontrol'
+    ARRIVAL_KONTROL = 'arrival_kontrol'
+    DEPARTURE_KONTROL = 'departure_kontrol'
+    INHOUSE_YUKLEME = 'inhouse_yukleme'
+    ARRIVALS_YUKLEME = 'arrivals_yukleme'
+    DEPARTURES_YUKLEME = 'departures_yukleme'
+
+
+class GorevDurum(str, enum.Enum):
+    """Görev durumları"""
+    PENDING = 'pending'
+    IN_PROGRESS = 'in_progress'
+    COMPLETED = 'completed'
+    DND_PENDING = 'dnd_pending'
+    INCOMPLETE = 'incomplete'
+
+
+class GunlukGorev(db.Model):
+    """Günlük görev ana tablosu - Kat sorumluları için minibar kontrol görevleri"""
+    __tablename__ = 'gunluk_gorevler'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=False)
+    personel_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='CASCADE'), nullable=False)
+    gorev_tarihi = db.Column(db.Date, nullable=False)
+    gorev_tipi = db.Column(
+        db.Enum('inhouse_kontrol', 'arrival_kontrol', 'departure_kontrol', 'inhouse_yukleme', 'arrivals_yukleme', 'departures_yukleme', name='gorev_tipi_enum'),
+        nullable=False
+    )
+    durum = db.Column(
+        db.Enum('pending', 'in_progress', 'completed', 'dnd_pending', 'incomplete', name='gorev_durum_enum'),
+        default='pending',
+        nullable=False
+    )
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    tamamlanma_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    notlar = db.Column(db.Text, nullable=True)
+    
+    # İlişkiler
+    otel = db.relationship('Otel', backref='gunluk_gorevler')
+    personel = db.relationship('Kullanici', backref='gunluk_gorevler')
+    detaylar = db.relationship('GorevDetay', backref='gorev', lazy=True, cascade='all, delete-orphan')
+    
+    __table_args__ = (
+        db.Index('idx_gunluk_gorev_otel_tarih', 'otel_id', 'gorev_tarihi'),
+        db.Index('idx_gunluk_gorev_personel_tarih', 'personel_id', 'gorev_tarihi'),
+        db.Index('idx_gunluk_gorev_durum', 'durum'),
+        db.Index('idx_gunluk_gorev_tipi', 'gorev_tipi'),
+    )
+    
+    def __repr__(self):
+        return f'<GunlukGorev #{self.id} - {self.gorev_tipi} - {self.durum}>'
+
+
+class GorevDetay(db.Model):
+    """Görev detay tablosu - Her oda için ayrı görev detayı"""
+    __tablename__ = 'gorev_detaylari'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    gorev_id = db.Column(db.Integer, db.ForeignKey('gunluk_gorevler.id', ondelete='CASCADE'), nullable=False)
+    oda_id = db.Column(db.Integer, db.ForeignKey('odalar.id', ondelete='CASCADE'), nullable=False)
+    misafir_kayit_id = db.Column(db.Integer, db.ForeignKey('misafir_kayitlari.id', ondelete='SET NULL'), nullable=True)
+    durum = db.Column(
+        db.Enum('pending', 'in_progress', 'completed', 'dnd_pending', 'incomplete', name='gorev_durum_enum'),
+        default='pending',
+        nullable=False
+    )
+    varis_saati = db.Column(db.Time, nullable=True)  # Arrivals için varış saati
+    cikis_saati = db.Column(db.Time, nullable=True)  # Departures için çıkış saati
+    oncelik_sirasi = db.Column(db.Integer, default=999, nullable=False)  # Görev öncelik sırası
+    kontrol_zamani = db.Column(db.DateTime(timezone=True), nullable=True)
+    dnd_sayisi = db.Column(db.Integer, default=0, nullable=False)
+    son_dnd_zamani = db.Column(db.DateTime(timezone=True), nullable=True)
+    notlar = db.Column(db.Text, nullable=True)
+    
+    # İlişkiler
+    oda = db.relationship('Oda', backref='gorev_detaylari')
+    misafir_kayit = db.relationship('MisafirKayit', backref='gorev_detaylari')
+    dnd_kontroller = db.relationship('DNDKontrol', backref='gorev_detay', lazy=True, cascade='all, delete-orphan')
+    durum_loglari = db.relationship('GorevDurumLog', backref='gorev_detay', lazy=True, cascade='all, delete-orphan')
+    
+    __table_args__ = (
+        db.Index('idx_gorev_detay_gorev', 'gorev_id'),
+        db.Index('idx_gorev_detay_oda', 'oda_id'),
+        db.Index('idx_gorev_detay_durum', 'durum'),
+        db.Index('idx_gorev_detay_dnd', 'dnd_sayisi'),
+        db.Index('idx_gorev_detay_oncelik', 'oncelik_sirasi'),
+    )
+    
+    def __repr__(self):
+        return f'<GorevDetay #{self.id} - Oda {self.oda_id} - {self.durum}>'
+
+
+class DNDKontrol(db.Model):
+    """DND kontrol kayıtları - Her DND işaretlemesi için ayrı kayıt"""
+    __tablename__ = 'dnd_kontroller'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    gorev_detay_id = db.Column(db.Integer, db.ForeignKey('gorev_detaylari.id', ondelete='CASCADE'), nullable=False)
+    kontrol_zamani = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    kontrol_eden_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    notlar = db.Column(db.Text, nullable=True)
+    
+    # İlişkiler
+    kontrol_eden = db.relationship('Kullanici', backref='dnd_kontrolleri')
+    
+    __table_args__ = (
+        db.Index('idx_dnd_kontrol_gorev_detay', 'gorev_detay_id'),
+        db.Index('idx_dnd_kontrol_zaman', 'kontrol_zamani'),
+    )
+    
+    def __repr__(self):
+        return f'<DNDKontrol #{self.id} - GorevDetay {self.gorev_detay_id}>'
+
+
+class YuklemeGorev(db.Model):
+    """Yükleme görevleri - Depo sorumluları için günlük doluluk yükleme görevleri"""
+    __tablename__ = 'yukleme_gorevleri'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=False)
+    depo_sorumlusu_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='CASCADE'), nullable=False)
+    gorev_tarihi = db.Column(db.Date, nullable=False)
+    dosya_tipi = db.Column(db.String(20), nullable=False)  # 'inhouse' veya 'arrivals'
+    durum = db.Column(
+        db.Enum('pending', 'in_progress', 'completed', 'dnd_pending', 'incomplete', name='gorev_durum_enum'),
+        default='pending',
+        nullable=False
+    )
+    yukleme_zamani = db.Column(db.DateTime(timezone=True), nullable=True)
+    dosya_yukleme_id = db.Column(db.Integer, db.ForeignKey('dosya_yuklemeleri.id', ondelete='SET NULL'), nullable=True)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    
+    # İlişkiler
+    otel = db.relationship('Otel', backref='yukleme_gorevleri')
+    depo_sorumlusu = db.relationship('Kullanici', backref='yukleme_gorevleri')
+    dosya_yukleme = db.relationship('DosyaYukleme', backref='yukleme_gorevi')
+    
+    __table_args__ = (
+        db.Index('idx_yukleme_gorev_otel_tarih', 'otel_id', 'gorev_tarihi'),
+        db.Index('idx_yukleme_gorev_depo_sorumlusu', 'depo_sorumlusu_id'),
+        db.Index('idx_yukleme_gorev_durum', 'durum'),
+        db.UniqueConstraint('otel_id', 'gorev_tarihi', 'dosya_tipi', name='uq_yukleme_gorev_otel_tarih_tip'),
+    )
+    
+    def __repr__(self):
+        return f'<YuklemeGorev #{self.id} - {self.dosya_tipi} - {self.durum}>'
+
+
+class GorevDurumLog(db.Model):
+    """Görev durum değişiklik logları - Audit trail için"""
+    __tablename__ = 'gorev_durum_loglari'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    gorev_detay_id = db.Column(db.Integer, db.ForeignKey('gorev_detaylari.id', ondelete='CASCADE'), nullable=False)
+    onceki_durum = db.Column(
+        db.Enum('pending', 'in_progress', 'completed', 'dnd_pending', 'incomplete', name='gorev_durum_enum'),
+        nullable=True
+    )
+    yeni_durum = db.Column(
+        db.Enum('pending', 'in_progress', 'completed', 'dnd_pending', 'incomplete', name='gorev_durum_enum'),
+        nullable=False
+    )
+    degisiklik_zamani = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    degistiren_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    aciklama = db.Column(db.Text, nullable=True)
+    
+    # İlişkiler
+    degistiren = db.relationship('Kullanici', backref='gorev_durum_degisiklikleri')
+    
+    __table_args__ = (
+        db.Index('idx_gorev_durum_log_detay', 'gorev_detay_id'),
+        db.Index('idx_gorev_durum_log_zaman', 'degisiklik_zamani'),
+    )
+    
+    def __repr__(self):
+        return f'<GorevDurumLog #{self.id} - {self.onceki_durum} -> {self.yeni_durum}>'
+
+
+# ============================================
+# ODA KONTROL KAYITLARI
+# ============================================
+
+class OdaKontrolKaydi(db.Model):
+    """Oda kontrol kayıtları - Kat sorumlusunun oda kontrolü başlangıç ve bitiş zamanları"""
+    __tablename__ = 'oda_kontrol_kayitlari'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    oda_id = db.Column(db.Integer, db.ForeignKey('odalar.id', ondelete='CASCADE'), nullable=False)
+    personel_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='CASCADE'), nullable=False)
+    kontrol_tarihi = db.Column(db.Date, nullable=False)
+    
+    # Zaman bilgileri
+    baslangic_zamani = db.Column(db.DateTime(timezone=True), nullable=False)
+    bitis_zamani = db.Column(db.DateTime(timezone=True), nullable=True)
+    
+    # Kontrol tipi: sarfiyat_yok, urun_eklendi
+    kontrol_tipi = db.Column(db.String(20), default='sarfiyat_yok', nullable=False)
+    
+    # Sistem bilgileri
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    
+    # İlişkiler
+    oda = db.relationship('Oda', backref='kontrol_kayitlari')
+    personel = db.relationship('Kullanici', backref='oda_kontrol_kayitlari')
+    
+    __table_args__ = (
+        db.Index('idx_oda_kontrol_oda_tarih', 'oda_id', 'kontrol_tarihi'),
+        db.Index('idx_oda_kontrol_personel_tarih', 'personel_id', 'kontrol_tarihi'),
+        db.Index('idx_oda_kontrol_bitis', 'bitis_zamani'),
+    )
+    
+    def __repr__(self):
+        return f'<OdaKontrolKaydi #{self.id} - Oda {self.oda_id} - {self.kontrol_tipi}>'
+
+
+# ============================================
+# EMAIL SİSTEMİ MODELLERİ
+# ============================================
+
+class EmailAyarlari(db.Model):
+    """Email SMTP ayarları tablosu"""
+    __tablename__ = 'email_ayarlari'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    smtp_server = db.Column(db.String(255), nullable=False)
+    smtp_port = db.Column(db.Integer, nullable=False, default=587)
+    smtp_username = db.Column(db.String(255), nullable=False)
+    smtp_password = db.Column(db.String(500), nullable=False)  # Şifrelenmiş saklanmalı
+    smtp_use_tls = db.Column(db.Boolean, default=True)
+    smtp_use_ssl = db.Column(db.Boolean, default=False)
+    sender_email = db.Column(db.String(255), nullable=False)
+    sender_name = db.Column(db.String(255), default='Minibar Takip Sistemi')
+    aktif = db.Column(db.Boolean, default=True)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+    guncelleyen_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    
+    # İlişkiler
+    guncelleyen = db.relationship('Kullanici', foreign_keys=[guncelleyen_id], backref='email_ayar_guncellemeleri')
+    
+    def __repr__(self):
+        return f'<EmailAyarlari {self.smtp_server}:{self.smtp_port}>'
+
+
+class EmailLog(db.Model):
+    """Gönderilen email kayıtları tablosu"""
+    __tablename__ = 'email_loglari'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    alici_email = db.Column(db.String(255), nullable=False)
+    alici_kullanici_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    konu = db.Column(db.String(500), nullable=False)
+    icerik = db.Column(db.Text, nullable=False)
+    email_tipi = db.Column(db.String(50), nullable=False)  # uyari, bilgi, sistem
+    durum = db.Column(db.String(20), default='gonderildi')  # gonderildi, hata, beklemede
+    hata_mesaji = db.Column(db.Text, nullable=True)
+    gonderim_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    okundu = db.Column(db.Boolean, default=False)
+    okunma_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    tracking_id = db.Column(db.String(100), unique=True, nullable=True)
+    ilgili_tablo = db.Column(db.String(100), nullable=True)
+    ilgili_kayit_id = db.Column(db.Integer, nullable=True)
+    ek_bilgiler = db.Column(JSONB, nullable=True)
+    
+    # İlişkiler
+    alici_kullanici = db.relationship('Kullanici', foreign_keys=[alici_kullanici_id], backref='alinan_emailler')
+    
+    __table_args__ = (
+        db.Index('idx_email_log_alici', 'alici_email'),
+        db.Index('idx_email_log_tarih', 'gonderim_tarihi'),
+        db.Index('idx_email_log_tipi', 'email_tipi'),
+        db.Index('idx_email_log_durum', 'durum'),
+        db.Index('idx_email_log_tracking', 'tracking_id'),
+    )
+    
+    def __repr__(self):
+        return f'<EmailLog #{self.id} - {self.alici_email} - {self.durum}>'
+
+
+class DolulukUyariLog(db.Model):
+    """Günlük doluluk uyarı kayıtları tablosu"""
+    __tablename__ = 'doluluk_uyari_loglari'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=False)
+    depo_sorumlusu_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='CASCADE'), nullable=False)
+    uyari_tarihi = db.Column(db.Date, nullable=False)
+    uyari_tipi = db.Column(db.String(50), nullable=False)  # inhouse_eksik, arrivals_eksik, her_ikisi_eksik
+    email_gonderildi = db.Column(db.Boolean, default=False)
+    email_log_id = db.Column(db.Integer, db.ForeignKey('email_loglari.id', ondelete='SET NULL'), nullable=True)
+    sistem_yoneticisi_bilgilendirildi = db.Column(db.Boolean, default=False)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    
+    # İlişkiler
+    otel = db.relationship('Otel', backref='doluluk_uyarilari')
+    depo_sorumlusu = db.relationship('Kullanici', foreign_keys=[depo_sorumlusu_id], backref='doluluk_uyarilari')
+    email_log = db.relationship('EmailLog', backref='doluluk_uyari')
+    
+    __table_args__ = (
+        db.Index('idx_doluluk_uyari_tarih', 'uyari_tarihi'),
+        db.Index('idx_doluluk_uyari_otel', 'otel_id', 'uyari_tarihi'),
+    )
+    
+    def __repr__(self):
+        return f'<DolulukUyariLog #{self.id} - Otel {self.otel_id} - {self.uyari_tarihi}>'

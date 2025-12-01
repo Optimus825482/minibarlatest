@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\utils\ml\anomaly_detector.py
+# hypothesis_version: 6.148.2
+
+[0.0, 0.5, 2.0, 2.5, 3.0, 10.0, 15.0, 70.0, 100.0, 100, 120, '%Fallback%', 'beklemede', 'bosta_tuketim', 'bosta_tuketim_var', 'corrupt_file', 'critical', 'dolum_gecikme', 'dolum_sure', 'dusuk', 'fallback_count', 'fallback_rate', 'fallback_reasons', 'file_not_found', 'isolation_forest', 'kat_sorumlusu', 'kritik', 'load_error', 'oda', 'ok', 'orta', 'personel', 'prediction_error', 'qr_kullanim_dusuk', 'qr_okutma_siklik', 'sistem', 'status', 'stok_anomali', 'stok_seviye', 'talep_yanitlanmadi', 'total_detections', 'tuketim_anomali', 'tuketim_miktar', 'urun', 'warning', 'yuksek', 'zimmet_fire', 'zimmet_fire_yuksek', 'zimmet_kullanim']

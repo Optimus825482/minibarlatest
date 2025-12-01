@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\utils\ml\model_manager.py
+# hypothesis_version: 6.148.2
+
+[0.0, 0.1, 100, 420, 493, 1000, 1024, '%Y%m%d_%H%M%S', './ml_models', '.gitkeep', 'ML_MODELS_DIR', 'accuracy', 'avg_size_mb', 'avg_time_ms', 'contamination', 'count', 'created_at', 'deleted_count', 'disk', 'disk_usage_percent', 'dolum_sure', 'duration_ms', 'error', 'fail', 'file_size_mb', 'free_gb', 'freed_space_mb', 'id', 'is_active', 'kept_models', 'load', 'metric_type', 'model_load', 'model_save', 'model_type', 'n_estimators', 'operation', 'path', 'percent', 'period_hours', 'precision', 'random_state', 'rb', 'recall', 'save', 'size_kb', 'success', 'success_rate', 'total_gb', 'training_date', 'used_gb', 'wb']

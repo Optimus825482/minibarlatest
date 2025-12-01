@@ -2,6 +2,227 @@
 Sistemi{% endblock %} {% block page_title %}Depo Sorumlusu Panel{% endblock %}
 {% block content %}
 <div class="space-y-6">
+  <!-- Günlük Görevlerim Widget - Depo Sorumlusu -->
+  {% set yukleme = yukleme_gorev_ozeti or {'toplam': 0, 'tamamlanan': 0,
+  'bekleyen': 0, 'tamamlanma_orani': 0, 'inhouse_durum': 'pending',
+  'arrivals_durum': 'pending', 'departures_durum': 'pending'} %}
+  <div
+    class="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-lg shadow-lg border border-emerald-200 dark:border-emerald-800 p-6"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center space-x-3">
+        <div
+          class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg"
+        >
+          <i class="fas fa-cloud-upload-alt text-white text-xl"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-emerald-900 dark:text-emerald-100">
+            Günlük Doluluk Yüklemeleri
+          </h3>
+          <p class="text-sm text-emerald-700 dark:text-emerald-300">
+            {{ now().strftime('%d.%m.%Y') }}
+          </p>
+        </div>
+      </div>
+      <a
+        href="{{ url_for('doluluk.doluluk_yonetimi') }}"
+        class="px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium text-sm"
+      >
+        <i class="fas fa-upload mr-2"></i>Yükleme Yap
+      </a>
+    </div>
+
+    <!-- İlerleme Çubuğu -->
+    <div class="mb-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm font-medium text-emerald-700 dark:text-emerald-300"
+          >İlerleme</span
+        >
+        <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400"
+          >%{{ yukleme.tamamlanma_orani }}</span
+        >
+      </div>
+      <div
+        class="w-full bg-emerald-100 dark:bg-emerald-900/50 rounded-full h-3"
+      >
+        <div
+          class="bg-gradient-to-r from-emerald-500 to-teal-500 h-3 rounded-full"
+          style="width: {{ yukleme.tamamlanma_orani }}%"
+        ></div>
+      </div>
+    </div>
+
+    <!-- Yükleme Durumları -->
+    <div class="grid grid-cols-3 gap-4">
+      <!-- In House -->
+      <div
+        class="bg-white dark:bg-slate-800 rounded-lg p-4 border {% if yukleme.inhouse_durum == 'completed' %}border-green-300 dark:border-green-700{% else %}border-yellow-300 dark:border-yellow-700{% endif %}"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-medium text-slate-700 dark:text-slate-300"
+            >In House</span
+          >
+          {% if yukleme.inhouse_durum == 'completed' %}
+          <span
+            class="px-2 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+          >
+            <i class="fas fa-check mr-1"></i>Yüklendi
+          </span>
+          {% else %}
+          <span
+            class="px-2 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 animate-pulse"
+          >
+            <i class="fas fa-clock mr-1"></i>Bekliyor
+          </span>
+          {% endif %}
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Mevcut misafir listesi
+        </p>
+      </div>
+
+      <!-- Arrivals -->
+      <div
+        class="bg-white dark:bg-slate-800 rounded-lg p-4 border {% if yukleme.arrivals_durum == 'completed' %}border-green-300 dark:border-green-700{% else %}border-yellow-300 dark:border-yellow-700{% endif %}"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-medium text-slate-700 dark:text-slate-300"
+            >Arrivals</span
+          >
+          {% if yukleme.arrivals_durum == 'completed' %}
+          <span
+            class="px-2 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+          >
+            <i class="fas fa-check mr-1"></i>Yüklendi
+          </span>
+          {% else %}
+          <span
+            class="px-2 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 animate-pulse"
+          >
+            <i class="fas fa-clock mr-1"></i>Bekliyor
+          </span>
+          {% endif %}
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Bugün gelecek misafirler
+        </p>
+      </div>
+
+      <!-- Departures -->
+      <div
+        class="bg-white dark:bg-slate-800 rounded-lg p-4 border {% if yukleme.departures_durum == 'completed' %}border-green-300 dark:border-green-700{% else %}border-yellow-300 dark:border-yellow-700{% endif %}"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-medium text-slate-700 dark:text-slate-300"
+            >Departures</span
+          >
+          {% if yukleme.departures_durum == 'completed' %}
+          <span
+            class="px-2 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+          >
+            <i class="fas fa-check mr-1"></i>Yüklendi
+          </span>
+          {% else %}
+          <span
+            class="px-2 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 animate-pulse"
+          >
+            <i class="fas fa-clock mr-1"></i>Bekliyor
+          </span>
+          {% endif %}
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Bugün çıkış yapacaklar
+        </p>
+      </div>
+    </div>
+
+    {% if yukleme.bekleyen > 0 %}
+    <div
+      class="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg border border-yellow-300 dark:border-yellow-700"
+    >
+      <div class="flex items-center">
+        <i
+          class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400 mr-2"
+        ></i>
+        <span class="text-sm text-yellow-800 dark:text-yellow-200">
+          <strong>{{ yukleme.bekleyen }}</strong> dosya yüklenmedi! Saat 10:00'a
+          kadar yükleyiniz.
+        </span>
+      </div>
+    </div>
+    {% endif %} {% if oda_kontrol_ozeti %}
+    <!-- Oda Kontrol Görevleri Özeti (Yüklemeler tamamlandığında göster) -->
+    <div
+      class="mt-4 p-4 bg-white dark:bg-slate-800 rounded-lg border border-emerald-200 dark:border-emerald-700"
+    >
+      <div class="flex items-center justify-between mb-3">
+        <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200">
+          <i class="fas fa-tasks text-blue-500 mr-2"></i>Oda Kontrol Görevleri
+        </h4>
+        <span
+          class="text-xs font-bold px-2 py-1 rounded-full {% if oda_kontrol_ozeti.tamamlanma_orani == 100 %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400{% else %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400{% endif %}"
+        >
+          %{{ oda_kontrol_ozeti.tamamlanma_orani }}
+        </span>
+      </div>
+
+      <!-- İlerleme Çubuğu -->
+      <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mb-3">
+        <div
+          class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full"
+          style="width: {{ oda_kontrol_ozeti.tamamlanma_orani }}%"
+        ></div>
+      </div>
+
+      <!-- Görev Tipleri -->
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+          <div class="text-lg font-bold text-blue-600 dark:text-blue-400">
+            {{ oda_kontrol_ozeti.inhouse.tamamlanan }}/{{
+            oda_kontrol_ozeti.inhouse.toplam }}
+          </div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">In House</div>
+        </div>
+        <div class="p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
+          <div class="text-lg font-bold text-purple-600 dark:text-purple-400">
+            {{ oda_kontrol_ozeti.arrival.tamamlanan }}/{{
+            oda_kontrol_ozeti.arrival.toplam }}
+          </div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Arrivals</div>
+        </div>
+        <div class="p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
+          <div class="text-lg font-bold text-orange-600 dark:text-orange-400">
+            {{ oda_kontrol_ozeti.departure.tamamlanan }}/{{
+            oda_kontrol_ozeti.departure.toplam }}
+          </div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">
+            Departures
+          </div>
+        </div>
+      </div>
+
+      <!-- Özet Bilgiler -->
+      <div
+        class="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400"
+      >
+        <span
+          ><i class="fas fa-check-circle text-green-500 mr-1"></i>{{
+          oda_kontrol_ozeti.tamamlanan }} Tamamlandı</span
+        >
+        <span
+          ><i class="fas fa-spinner text-blue-500 mr-1"></i>{{
+          oda_kontrol_ozeti.devam_eden }} Devam Ediyor</span
+        >
+        <span
+          ><i class="fas fa-clock text-yellow-500 mr-1"></i>{{
+          oda_kontrol_ozeti.bekleyen }} Bekliyor</span
+        >
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
   <!-- Bekleyen Kat Sorumlusu Siparişleri Widget -->
   <div
     id="bekleyen_siparisler_widget"
@@ -25,7 +246,7 @@ Sistemi{% endblock %} {% block page_title %}Depo Sorumlusu Panel{% endblock %}
       </div>
       <a
         href="{{ url_for('kat_sorumlusu_siparisler') }}"
-        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium"
       >
         <i class="fas fa-arrow-right mr-2"></i>Siparişleri Gör
       </a>
@@ -54,7 +275,7 @@ Sistemi{% endblock %} {% block page_title %}Depo Sorumlusu Panel{% endblock %}
       {% for bildirim in dashboard_bildirimleri %}
       <a href="{{ bildirim.link }}" class="block group">
         <div
-          class="p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-lg {% if bildirim.tip == 'danger' %} bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700 hover:border-red-500 {% elif bildirim.tip == 'warning' %} bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700 hover:border-yellow-500 {% elif bildirim.tip == 'info' %} bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700 hover:border-blue-500 {% elif bildirim.tip == 'success' %} bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700 hover:border-green-500 {% endif %}"
+          class="p-4 rounded-lg border-2 {% if bildirim.tip == 'danger' %} bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700 {% elif bildirim.tip == 'warning' %} bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700 {% elif bildirim.tip == 'info' %} bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700 {% elif bildirim.tip == 'success' %} bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700 {% endif %}"
         >
           <div class="flex items-start justify-between">
             <div class="flex items-center gap-3">
@@ -85,9 +306,7 @@ Sistemi{% endblock %} {% block page_title %}Depo Sorumlusu Panel{% endblock %}
                 </p>
               </div>
             </div>
-            <i
-              class="fas fa-chevron-right text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors"
-            ></i>
+            <i class="fas fa-chevron-right text-slate-400"></i>
           </div>
         </div>
       </a>
@@ -97,12 +316,15 @@ Sistemi{% endblock %} {% block page_title %}Depo Sorumlusu Panel{% endblock %}
   {% endif %}
 
   <!-- Otel Doluluk Bilgileri -->
-  {% if otel_doluluk_bilgileri %}
-  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
+  {% if otel_doluluk_bilgileri %} {% set otel_sayisi =
+  otel_doluluk_bilgileri|length %}
+  <div
+    class="grid grid-cols-1 gap-4 {% if otel_sayisi == 1 %}{% elif otel_sayisi == 2 %}sm:grid-cols-2{% else %}sm:grid-cols-2 lg:grid-cols-3{% endif %}"
+  >
     {% for otel in otel_doluluk_bilgileri %}
     <a
       href="{{ url_for('doluluk.gunluk_doluluk') }}?otel_id={{ otel.otel_id }}"
-      class="block bg-white dark:bg-slate-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
+      class="block bg-white dark:bg-slate-800 rounded-lg shadow-md overflow-hidden cursor-pointer"
     >
       <!-- Otel Başlık -->
       <div
@@ -162,7 +384,7 @@ Sistemi{% endblock %} {% block page_title %}Depo Sorumlusu Panel{% endblock %}
             class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden"
           >
             <div
-              class="h-3 rounded-full transition-all duration-500 {% if otel.doluluk_orani >= 80 %}bg-gradient-to-r from-red-500 to-red-600 {% elif otel.doluluk_orani >= 50 %}bg-gradient-to-r from-yellow-500 to-yellow-600 {% else %}bg-gradient-to-r from-green-500 to-green-600{% endif %}"
+              class="h-3 rounded-full {% if otel.doluluk_orani >= 80 %}bg-gradient-to-r from-red-500 to-red-600 {% elif otel.doluluk_orani >= 50 %}bg-gradient-to-r from-yellow-500 to-yellow-600 {% else %}bg-gradient-to-r from-green-500 to-green-600{% endif %}"
               style="width: {{ otel.doluluk_orani }}%"
             ></div>
           </div>
@@ -359,7 +581,7 @@ Sistemi{% endblock %} {% block page_title %}Depo Sorumlusu Panel{% endblock %}
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <a
           href="{{ url_for('satin_alma') }}"
-          class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg border border-slate-200 hover:border-blue-300 transition-all"
+          class="relative bg-white p-6 rounded-lg border border-slate-200"
         >
           <div>
             <span
@@ -391,7 +613,7 @@ Sistemi{% endblock %} {% block page_title %}Depo Sorumlusu Panel{% endblock %}
 
         <a
           href="{{ url_for('siparis_listesi') }}"
-          class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-purple-500 rounded-lg border border-slate-200 hover:border-purple-300 transition-all"
+          class="relative bg-white p-6 rounded-lg border border-slate-200"
         >
           <div>
             <span
@@ -425,7 +647,7 @@ Sistemi{% endblock %} {% block page_title %}Depo Sorumlusu Panel{% endblock %}
 
         <a
           href="{{ url_for('personel_zimmet') }}"
-          class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg border border-slate-200 hover:border-green-300 transition-all"
+          class="relative bg-white p-6 rounded-lg border border-slate-200"
         >
           <div>
             <span
@@ -459,7 +681,7 @@ Sistemi{% endblock %} {% block page_title %}Depo Sorumlusu Panel{% endblock %}
 
         <a
           href="{{ url_for('depo_raporlar') }}"
-          class="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-yellow-500 rounded-lg border border-slate-200 hover:border-yellow-300 transition-all"
+          class="relative bg-white p-6 rounded-lg border border-slate-200"
         >
           <div>
             <span
@@ -545,9 +767,7 @@ Sistemi{% endblock %} {% block page_title %}Depo Sorumlusu Panel{% endblock %}
         </h4>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {% for item in stok_durumlari.kritik %}
-          <div
-            class="bg-red-50 border-2 border-red-300 rounded-lg p-4 hover:shadow-md transition-shadow"
-          >
+          <div class="bg-red-50 border-2 border-red-300 rounded-lg p-4">
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <div class="flex items-center mb-2">
@@ -612,9 +832,7 @@ Sistemi{% endblock %} {% block page_title %}Depo Sorumlusu Panel{% endblock %}
         </h4>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {% for item in stok_durumlari.dikkat %}
-          <div
-            class="bg-yellow-50 border border-yellow-300 rounded-lg p-3 hover:shadow-md transition-shadow"
-          >
+          <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-3">
             <div class="flex items-center mb-2">
               <span
                 class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full {{ item.badge_class }}"
@@ -759,7 +977,7 @@ Sistemi{% endblock %} {% block page_title %}Depo Sorumlusu Panel{% endblock %}
           </thead>
           <tbody class="bg-white divide-y divide-slate-200">
             {% for hareket in son_hareketler %}
-            <tr class="hover:bg-slate-50 transition-colors duration-150">
+            <tr>
               <td
                 class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900"
               >
@@ -798,7 +1016,7 @@ Sistemi{% endblock %} {% block page_title %}Depo Sorumlusu Panel{% endblock %}
               >
                 <a
                   href="{{ url_for('stok_duzenle', hareket_id=hareket.id) }}"
-                  class="text-blue-600 hover:text-blue-900 font-medium"
+                  class="text-blue-600 font-medium"
                 >
                   ✏️ Düzenle
                 </a>

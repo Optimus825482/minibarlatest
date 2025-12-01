@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\utils\monitoring\query_analyzer.py
+# hypothesis_version: 6.148.2
+
+[0.01, 1.0, 5.0, 10.0, 100, 500, 2000, 'JOIN', 'JOIN optimizasyonu', 'LIMIT', 'LIMIT kullanımı', 'ORDER BY', 'Query bulunamadı', 'SELECT', 'SELECT *', 'SELECT * kullanımı', 'WHERE', 'WHERE clause eksik', 'Yavaş query', 'after_cursor_execute', 'avg_execution_time', 'avg_time', 'count', 'critical', 'description', 'endpoint', 'error', 'execution_time', 'high', 'id', 'impact', 'info', 'is_slow', 'low', 'medium', 'none', 'parameters', 'period_hours', 'plan', 'query', 'query_id', 'query_start_time', 'query_text', 'severity', 'slow_percentage', 'slow_queries_count', 'slowest_query_time', 'success', 'suggestions', 'timestamp', 'title', 'top_endpoints', 'total_queries', 'type', 'user_id', 'warning', 'Çok yavaş query', 'İyi performans']

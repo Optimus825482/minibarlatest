@@ -1,459 +1,405 @@
 <!DOCTYPE html>
 <html lang="tr" class="h-full">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Minibar Takip Sistemi{% endblock %}</title>
 
-    <!-- CRITICAL: Dark Mode - Sayfa yüklenmeden önce temayı uygula (FOUC önleme) -->
-    <script>
-      // LocalStorage'dan temayı al ve hemen uygula
-      (function () {
-        const savedTheme = localStorage.getItem("minibar-theme");
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-          .matches
-          ? "dark"
-          : "light";
-        const theme = savedTheme || systemTheme;
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Minibar Takip Sistemi{% endblock %}</title>
 
-        if (theme === "dark") {
-          document.documentElement.classList.add("dark");
-        }
-      })();
-    </script>
+  <!-- CRITICAL: Dark Mode - Sayfa yüklenmeden önce temayı uygula (FOUC önleme) -->
+  <script>
+    // LocalStorage'dan temayı al ve hemen uygula
+    (function () {
+      const savedTheme = localStorage.getItem("minibar-theme");
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light";
+      const theme = savedTheme || systemTheme;
 
-    <!-- CSRF Token -->
-    <meta name="csrf-token" content="{{ csrf_token() }}" />
-
-    <!-- Cache Busting -->
-    <meta
-      http-equiv="Cache-Control"
-      content="no-cache, no-store, must-revalidate"
-    />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
-    <meta name="version" content="{{ cache_version }}" />
-
-    <!-- PWA Meta Tags -->
-    <meta
-      name="description"
-      content="Otel minibar yönetim ve takip sistemi - Mobil uyumlu PWA"
-    />
-    <meta name="theme-color" content="#475569" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
-    <meta name="apple-mobile-web-app-title" content="Minibar" />
-    <meta name="application-name" content="Minibar Takip" />
-
-    <!-- PWA Manifest -->
-    <link
-      rel="manifest"
-      href="{{ url_for('static', filename='manifest.json') }}"
-    />
-
-    <!-- Apple Touch Icons -->
-    <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="{{ url_for('static', filename='icons/ios/180.png') }}"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="152x152"
-      href="{{ url_for('static', filename='icons/ios/152.png') }}"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="144x144"
-      href="{{ url_for('static', filename='icons/ios/144.png') }}"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="120x120"
-      href="{{ url_for('static', filename='icons/ios/120.png') }}"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="114x114"
-      href="{{ url_for('static', filename='icons/ios/114.png') }}"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="76x76"
-      href="{{ url_for('static', filename='icons/ios/76.png') }}"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="72x72"
-      href="{{ url_for('static', filename='icons/ios/72.png') }}"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="60x60"
-      href="{{ url_for('static', filename='icons/ios/60.png') }}"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="57x57"
-      href="{{ url_for('static', filename='icons/ios/57.png') }}"
-    />
-
-    <!-- Standard Favicon -->
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="192x192"
-      href="{{ url_for('static', filename='icons/android/android-launchericon-192-192.png') }}"
-    />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="32x32"
-      href="{{ url_for('static', filename='icons/ios/32.png') }}"
-    />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="16x16"
-      href="{{ url_for('static', filename='icons/ios/16.png') }}"
-    />
-
-    <!-- Windows Tiles -->
-    <meta name="msapplication-TileColor" content="#475569" />
-    <meta
-      name="msapplication-TileImage"
-      content="{{ url_for('static', filename='icons/android/android-launchericon-144-144.png') }}"
-    />
-
-    <!-- Font Awesome -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-
-    <script src="{{url_for('static', filename='js/browser@4.js')}}"></script>
-
-    <!-- jQuery CDN -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- jQuery UI (Dialog için) -->
-    <link
-      rel="stylesheet"
-      href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.min.css"
-    />
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-
-    <!-- jQuery UI Dialog - Dark Mode Uyumlu Custom Styles -->
-    <style>
-      /* jQuery UI Dialog - Temaya Uygun Özelleştirme */
-      .ui-dialog {
-        background: white;
-        border: 1px solid rgba(148, 163, 184, 0.2);
-        border-radius: 16px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        padding: 0;
-        font-family: inherit;
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
       }
+    })();
+  </script>
 
-      .ui-dialog-titlebar {
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-        color: white;
-        border: none;
-        border-radius: 16px 16px 0 0;
-        padding: 1rem 1.5rem;
-        font-weight: 600;
-        font-size: 1.125rem;
-      }
+  <!-- CSRF Token -->
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
 
-      .ui-dialog-titlebar-close {
-        background: rgba(255, 255, 255, 0.2);
-        border: none;
-        border-radius: 8px;
-        color: white;
-        width: 32px;
-        height: 32px;
-        top: 50%;
-        transform: translateY(-50%);
-        right: 1rem;
-      }
+  <!-- Cache Busting -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="version" content="{{ cache_version }}" />
 
-      .ui-dialog-titlebar-close:hover {
-        background: rgba(255, 255, 255, 0.3);
-      }
+  <!-- PWA Meta Tags -->
+  <meta name="description" content="Otel minibar yönetim ve takip sistemi - Mobil uyumlu PWA" />
+  <meta name="theme-color" content="#475569" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Minibar" />
+  <meta name="application-name" content="Minibar Takip" />
 
-      .ui-dialog-titlebar-close .ui-icon {
-        background: none;
-        text-indent: 0;
-      }
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
 
-      .ui-dialog-titlebar-close .ui-icon:before {
-        content: "×";
-        font-size: 24px;
-        line-height: 32px;
-        display: block;
-      }
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='icons/ios/180.png') }}" />
+  <link rel="apple-touch-icon" sizes="152x152" href="{{ url_for('static', filename='icons/ios/152.png') }}" />
+  <link rel="apple-touch-icon" sizes="144x144" href="{{ url_for('static', filename='icons/ios/144.png') }}" />
+  <link rel="apple-touch-icon" sizes="120x120" href="{{ url_for('static', filename='icons/ios/120.png') }}" />
+  <link rel="apple-touch-icon" sizes="114x114" href="{{ url_for('static', filename='icons/ios/114.png') }}" />
+  <link rel="apple-touch-icon" sizes="76x76" href="{{ url_for('static', filename='icons/ios/76.png') }}" />
+  <link rel="apple-touch-icon" sizes="72x72" href="{{ url_for('static', filename='icons/ios/72.png') }}" />
+  <link rel="apple-touch-icon" sizes="60x60" href="{{ url_for('static', filename='icons/ios/60.png') }}" />
+  <link rel="apple-touch-icon" sizes="57x57" href="{{ url_for('static', filename='icons/ios/57.png') }}" />
 
-      .ui-dialog-content {
-        padding: 1.5rem;
-        color: #334155;
-      }
+  <!-- Standard Favicon -->
+  <link rel="icon" type="image/png" sizes="192x192"
+    href="{{ url_for('static', filename='icons/android/android-launchericon-192-192.png') }}" />
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/ios/32.png') }}" />
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='icons/ios/16.png') }}" />
 
-      .ui-dialog-buttonpane {
-        background: #f8fafc;
-        border-top: 1px solid #e2e8f0;
-        padding: 1rem 1.5rem;
-        border-radius: 0 0 16px 16px;
-      }
+  <!-- Windows Tiles -->
+  <meta name="msapplication-TileColor" content="#475569" />
+  <meta name="msapplication-TileImage"
+    content="{{ url_for('static', filename='icons/android/android-launchericon-144-144.png') }}" />
 
-      .ui-dialog-buttonset {
-        display: flex;
-        gap: 0.75rem;
-        justify-content: flex-end;
-      }
+  <!-- Tailwind CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.min.css') }}" />
 
-      .ui-dialog-buttonset button {
-        padding: 0.625rem 1.25rem;
-        border-radius: 8px;
-        font-weight: 500;
-        font-size: 0.875rem;
-        border: none;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-      .ui-dialog-buttonset button:first-child {
-        background: #ef4444;
-        color: white;
-      }
+  <script src="{{url_for('static', filename='js/browser@4.js')}}"></script>
 
-      .ui-dialog-buttonset button:first-child:hover {
-        background: #dc2626;
-      }
+  <!-- jQuery CDN -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-      .ui-dialog-buttonset button:last-child {
-        background: #e2e8f0;
-        color: #475569;
-      }
+  <!-- jQuery UI (Dialog için) -->
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.min.css" />
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 
-      .ui-dialog-buttonset button:last-child:hover {
-        background: #cbd5e1;
-      }
+  <!-- jQuery UI Dialog - Dark Mode Uyumlu Custom Styles -->
+  <style>
+    /* jQuery UI Dialog - Temaya Uygun Özelleştirme */
+    .ui-dialog {
+      background: white;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      padding: 0;
+      font-family: inherit;
+    }
 
-      .ui-widget-overlay {
-        background: rgba(15, 23, 42, 0.75);
-        backdrop-filter: blur(4px);
-      }
+    .ui-dialog-titlebar {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      color: white;
+      border: none;
+      border-radius: 16px 16px 0 0;
+      padding: 1rem 1.5rem;
+      font-weight: 600;
+      font-size: 1.125rem;
+    }
 
-      /* Dark Mode */
-      .dark .ui-dialog {
-        background: #1e293b;
-        border-color: rgba(71, 85, 105, 0.3);
-      }
+    .ui-dialog-titlebar-close {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      width: 32px;
+      height: 32px;
+      top: 50%;
+      transform: translateY(-50%);
+      right: 1rem;
+    }
 
-      .dark .ui-dialog-content {
-        color: #e2e8f0;
-      }
+    .ui-dialog-titlebar-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
 
-      .dark .ui-dialog-buttonpane {
-        background: #0f172a;
-        border-top-color: rgba(71, 85, 105, 0.3);
-      }
+    .ui-dialog-titlebar-close .ui-icon {
+      background: none;
+      text-indent: 0;
+    }
 
-      .dark .ui-dialog-buttonset button:last-child {
-        background: #334155;
-        color: #e2e8f0;
-      }
+    .ui-dialog-titlebar-close .ui-icon:before {
+      content: "×";
+      font-size: 24px;
+      line-height: 32px;
+      display: block;
+    }
 
-      .dark .ui-dialog-buttonset button:last-child:hover {
-        background: #475569;
-      }
+    .ui-dialog-content {
+      padding: 1.5rem;
+      color: #334155;
+    }
 
-      .dark .ui-widget-overlay {
-        background: rgba(0, 0, 0, 0.85);
-      }
-    </style>
+    .ui-dialog-buttonpane {
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      padding: 1rem 1.5rem;
+      border-radius: 0 0 16px 16px;
+    }
 
-    <!-- jQuery Modal -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.css"
-    />
+    .ui-dialog-buttonset {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
 
-    <!-- jQuery Modal - Global Custom Styles -->
-    <style>
-      /* jQuery Modal - Temaya Uygun Global Özelleştirme */
-      .modal {
-        display: none;
-        border-radius: 16px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        border: 1px solid rgba(148, 163, 184, 0.2);
-        padding: 0;
-        max-width: 90vw;
-        max-height: 90vh;
-        margin: 5vh auto;
-        overflow: hidden;
-        position: relative !important;
-        z-index: 10000 !important;
-        width: auto !important; /* jQuery Modal CSS'den gelen width: 90% override */
-      }
+    .ui-dialog-buttonset button {
+      padding: 0.625rem 1.25rem;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.875rem;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
 
-      /* Dark mode için modal */
-      .dark .modal {
-        background: #1e293b;
-        border-color: rgba(71, 85, 105, 0.3);
-      }
+    .ui-dialog-buttonset button:first-child {
+      background: #ef4444;
+      color: white;
+    }
 
-      /* Modal overlay - CDN CSS Override */
-      .jquery-modal.blocker,
-      .jquery-modal.blocker.current,
-      div.jquery-modal.blocker,
-      div.jquery-modal.blocker.current {
-        background: rgba(15, 23, 42, 0.75) !important;
-        backdrop-filter: blur(4px) !important;
-        z-index: 999999 !important;
-        padding: 5vh 2vw !important;
-        overflow-y: auto !important;
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        box-sizing: border-box !important;
-      }
+    .ui-dialog-buttonset button:first-child:hover {
+      background: #dc2626;
+    }
 
-      /* Kapatma butonu */
-      .modal a.close-modal {
-        top: 12px !important;
-        right: 12px !important;
-        width: 32px !important;
-        height: 32px !important;
-        background: linear-gradient(
-          135deg,
+    .ui-dialog-buttonset button:last-child {
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    .ui-dialog-buttonset button:last-child:hover {
+      background: #cbd5e1;
+    }
+
+    .ui-widget-overlay {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(4px);
+    }
+
+    /* Dark Mode */
+    .dark .ui-dialog {
+      background: #1e293b;
+      border-color: rgba(71, 85, 105, 0.3);
+    }
+
+    .dark .ui-dialog-content {
+      color: #e2e8f0;
+    }
+
+    .dark .ui-dialog-buttonpane {
+      background: #0f172a;
+      border-top-color: rgba(71, 85, 105, 0.3);
+    }
+
+    .dark .ui-dialog-buttonset button:last-child {
+      background: #334155;
+      color: #e2e8f0;
+    }
+
+    .dark .ui-dialog-buttonset button:last-child:hover {
+      background: #475569;
+    }
+
+    .dark .ui-widget-overlay {
+      background: rgba(0, 0, 0, 0.85);
+    }
+  </style>
+
+  <!-- jQuery Modal -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.css" />
+
+  <!-- jQuery Modal - Global Custom Styles -->
+  <style>
+    /* jQuery Modal - Temaya Uygun Global Özelleştirme */
+    .modal {
+      display: none;
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      padding: 0;
+      max-width: 90vw;
+      max-height: 90vh;
+      margin: 5vh auto;
+      overflow: hidden;
+      position: relative !important;
+      z-index: 10000 !important;
+      width: auto !important;
+      /* jQuery Modal CSS'den gelen width: 90% override */
+    }
+
+    /* Dark mode için modal */
+    .dark .modal {
+      background: #1e293b;
+      border-color: rgba(71, 85, 105, 0.3);
+    }
+
+    /* Modal overlay - CDN CSS Override */
+    .jquery-modal.blocker,
+    .jquery-modal.blocker.current,
+    div.jquery-modal.blocker,
+    div.jquery-modal.blocker.current {
+      background: rgba(15, 23, 42, 0.75) !important;
+      backdrop-filter: blur(4px) !important;
+      z-index: 999999 !important;
+      padding: 5vh 2vw !important;
+      overflow-y: auto !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    /* Kapatma butonu */
+    .modal a.close-modal {
+      top: 12px !important;
+      right: 12px !important;
+      width: 32px !important;
+      height: 32px !important;
+      background: linear-gradient(135deg,
           #ef4444 0%,
-          #dc2626 100%
-        ) !important;
-        border-radius: 8px !important;
-        color: white !important;
-        font-size: 20px !important;
-        line-height: 32px !important;
-        text-align: center !important;
-        text-decoration: none !important;
-        box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3) !important;
-        transition: all 0.2s ease !important;
-        position: absolute !important;
-        z-index: 10001 !important;
-      }
+          #dc2626 100%) !important;
+      border-radius: 8px !important;
+      color: white !important;
+      font-size: 20px !important;
+      line-height: 32px !important;
+      text-align: center !important;
+      text-decoration: none !important;
+      box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3) !important;
+      transition: all 0.2s ease !important;
+      position: absolute !important;
+      z-index: 10001 !important;
+    }
 
-      .modal a.close-modal:hover {
-        background: linear-gradient(
-          135deg,
+    .modal a.close-modal:hover {
+      background: linear-gradient(135deg,
           #dc2626 0%,
-          #b91c1c 100%
-        ) !important;
-        transform: scale(1.05);
-        box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4) !important;
+          #b91c1c 100%) !important;
+      transform: scale(1.05);
+      box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4) !important;
+    }
+
+    /* Modal animasyonu */
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
       }
 
-      /* Modal animasyonu */
-      @keyframes modalFadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(-20px) scale(0.95);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
       }
+    }
 
+    .modal {
+      animation: modalFadeIn 0.3s ease-out;
+    }
+
+    /* Scrollbar özelleştirme */
+    .modal::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .modal::-webkit-scrollbar-track {
+      background: rgba(148, 163, 184, 0.1);
+      border-radius: 4px;
+    }
+
+    .modal::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      border-radius: 4px;
+    }
+
+    .modal::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+    }
+
+    /* Responsive - Mobil */
+    @media (max-width: 768px) {
       .modal {
-        animation: modalFadeIn 0.3s ease-out;
+        max-width: 95vw;
+        max-height: 85vh;
+        margin: 2vh auto;
+        border-radius: 12px;
       }
 
-      /* Scrollbar özelleştirme */
-      .modal::-webkit-scrollbar {
-        width: 8px;
+      .jquery-modal.blocker {
+        padding: 2vh 1vw !important;
+      }
+    }
+
+    /* Responsive - Tablet */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .modal {
+        max-width: 85vw;
+        max-height: 88vh;
+      }
+    }
+  </style>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Custom CSS -->
+  <style>
+    /* Sidebar Transitions */
+    .sidebar-transition {
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Hamburger button visibility */
+    @media (min-width: 768px) {
+
+      /* Desktop/Tablet: Sidebar açıkken hamburger'ı gizle */
+      body:has(#sidebar.sidebar-open) #mobile-menu-button {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
       }
 
-      .modal::-webkit-scrollbar-track {
-        background: rgba(148, 163, 184, 0.1);
-        border-radius: 4px;
+      /* Desktop/Tablet: Sidebar kapalıyken hamburger'ı göster */
+      body:has(#sidebar.sidebar-hidden) #mobile-menu-button {
+        opacity: 1;
+        pointer-events: auto;
       }
+    }
 
-      .modal::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
-        border-radius: 4px;
+    /* Mobile: Hamburger her zaman görünür */
+    @media (max-width: 767px) {
+      #mobile-menu-button {
+        opacity: 1 !important;
+        pointer-events: auto !important;
       }
+    }
 
-      .modal::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
-      }
+    /* Sidebar States */
+    .sidebar-hidden {
+      transform: translateX(-100%);
+    }
 
-      /* Responsive - Mobil */
-      @media (max-width: 768px) {
-        .modal {
-          max-width: 95vw;
-          max-height: 85vh;
-          margin: 2vh auto;
-          border-radius: 12px;
-        }
+    .sidebar-open {
+      transform: translateX(0);
+    }
 
-        .jquery-modal.blocker {
-          padding: 2vh 1vw !important;
-        }
-      }
+    /* Mobile: Main content full width */
+    #main-content {
+      margin-left: 0;
+      width: 100%;
+    }
 
-      /* Responsive - Tablet */
-      @media (min-width: 769px) and (max-width: 1024px) {
-        .modal {
-          max-width: 85vw;
-          max-height: 88vh;
-        }
-      }
-    </style>
-
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-    <!-- Custom CSS -->
-    <style>
-      /* Sidebar Transitions */
-      .sidebar-transition {
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-
-      /* Hamburger button visibility */
-      @media (min-width: 768px) {
-        /* Desktop/Tablet: Sidebar açıkken hamburger'ı gizle */
-        body:has(#sidebar.sidebar-open) #mobile-menu-button {
-          opacity: 0;
-          pointer-events: none;
-          transition: opacity 0.3s ease;
-        }
-
-        /* Desktop/Tablet: Sidebar kapalıyken hamburger'ı göster */
-        body:has(#sidebar.sidebar-hidden) #mobile-menu-button {
-          opacity: 1;
-          pointer-events: auto;
-        }
-      }
-
-      /* Mobile: Hamburger her zaman görünür */
-      @media (max-width: 767px) {
-        #mobile-menu-button {
-          opacity: 1 !important;
-          pointer-events: auto !important;
-        }
-      }
-
-      /* Sidebar States */
+    /* Tablet/Desktop: Sidebar default açık, content kenara çekilir */
+    @media (min-width: 768px) {
       .sidebar-hidden {
         transform: translateX(-100%);
       }
@@ -462,2070 +408,1499 @@
         transform: translateX(0);
       }
 
-      /* Mobile: Main content full width */
+      /* Content sidebar açıkken kenarda */
       #main-content {
+        margin-left: 16rem;
+        width: calc(100% - 16rem);
+        transition: margin-left 0.3s ease, width 0.3s ease;
+      }
+
+      /* Sidebar kapalıyken content tam genişlik */
+      body:has(#sidebar.sidebar-hidden) #main-content {
         margin-left: 0;
         width: 100%;
       }
+    }
 
-      /* Tablet/Desktop: Sidebar default açık, content kenara çekilir */
-      @media (min-width: 768px) {
-        .sidebar-hidden {
-          transform: translateX(-100%);
-        }
+    /* Overlay için smooth transition */
+    .overlay-transition {
+      transition: opacity 0.3s ease-in-out;
+    }
 
-        .sidebar-open {
-          transform: translateX(0);
-        }
+    /* Touch-friendly tap targets */
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
 
-        /* Content sidebar açıkken kenarda */
-        #main-content {
-          margin-left: 16rem;
-          width: calc(100% - 16rem);
-          transition: margin-left 0.3s ease, width 0.3s ease;
-        }
+    /* Smooth scrolling */
+    .mobile-scroll {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
 
-        /* Sidebar kapalıyken content tam genişlik */
-        body:has(#sidebar.sidebar-hidden) #main-content {
-          margin-left: 0;
-          width: 100%;
-        }
-      }
+    /* Sidebar - Hide scrollbar */
+    nav::-webkit-scrollbar {
+      width: 6px;
+    }
 
-      /* Overlay için smooth transition */
-      .overlay-transition {
-        transition: opacity 0.3s ease-in-out;
-      }
+    nav::-webkit-scrollbar-track {
+      background: transparent;
+    }
 
-      /* Touch-friendly tap targets */
-      .touch-target {
-        min-height: 44px;
-        min-width: 44px;
-      }
+    nav::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.3);
+      border-radius: 3px;
+    }
 
-      /* Smooth scrolling */
-      .mobile-scroll {
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-      }
+    nav::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.5);
+    }
 
-      /* Sidebar - Hide scrollbar */
-      nav::-webkit-scrollbar {
-        width: 6px;
-      }
+    /* Firefox scrollbar */
+    nav {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+    }
 
-      nav::-webkit-scrollbar-track {
-        background: transparent;
-      }
+    /* Z-Index ayarları */
+    #sidebar {
+      z-index: 40;
+    }
 
-      nav::-webkit-scrollbar-thumb {
-        background: rgba(148, 163, 184, 0.3);
-        border-radius: 3px;
-      }
+    header {
+      z-index: 20;
+    }
 
-      nav::-webkit-scrollbar-thumb:hover {
-        background: rgba(148, 163, 184, 0.5);
-      }
+    /* Header height optimization */
+    header {
+      min-height: 56px;
+      /* Mobile */
+    }
 
-      /* Firefox scrollbar */
-      nav {
-        scrollbar-width: thin;
-        scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
-      }
-
-      /* Z-Index ayarları */
-      #sidebar {
-        z-index: 40;
-      }
-
+    @media (min-width: 640px) {
       header {
-        z-index: 20;
+        min-height: 64px;
+        /* Desktop */
       }
+    }
 
-      /* Header height optimization */
-      header {
-        min-height: 56px; /* Mobile */
-      }
+    /* Logo sizing */
+    header img {
+      max-height: 40px;
+      /* Mobile */
+    }
 
-      @media (min-width: 640px) {
-        header {
-          min-height: 64px; /* Desktop */
-        }
-      }
-
-      /* Logo sizing */
+    @media (min-width: 640px) {
       header img {
-        max-height: 40px; /* Mobile */
+        max-height: 48px;
+        /* Desktop */
+      }
+    }
+
+    /* Nav links - text overflow önleme */
+    nav a {
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    nav a span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Modal Notification Styles */
+    .notification-modal {
+      animation: modalSlideIn 0.3s ease-out;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
       }
 
-      @media (min-width: 640px) {
-        header img {
-          max-height: 48px; /* Desktop */
-        }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .notification-modal.closing {
+      animation: modalSlideOut 0.3s ease-in;
+    }
+
+    @keyframes modalSlideOut {
+      from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
       }
 
-      /* Nav links - text overflow önleme */
-      nav a {
-        white-space: nowrap;
-        overflow: hidden;
+      to {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+      }
+    }
+
+    .notification-icon {
+      animation: iconPop 0.5s ease-out 0.2s;
+      animation-fill-mode: both;
+    }
+
+    @keyframes iconPop {
+      0% {
+        transform: scale(0);
       }
 
-      nav a span {
-        overflow: hidden;
-        text-overflow: ellipsis;
+      50% {
+        transform: scale(1.1);
       }
 
-      /* Modal Notification Styles */
-      .notification-modal {
-        animation: modalSlideIn 0.3s ease-out;
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    /* PWA Install Banner Animation */
+    .animate-slide-up {
+      animation: slideUp 0.5s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
       }
 
-      @keyframes modalSlideIn {
-        from {
-          opacity: 0;
-          transform: scale(0.9) translateY(-20px);
-        }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
 
-        to {
-          opacity: 1;
-          transform: scale(1) translateY(0);
-        }
+    /* Mobil Tablo Optimizasyonları */
+    .table-wrapper {
+      overflow-x: auto;
+      overflow-y: visible;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+      border-radius: 0.5rem;
+    }
+
+    /* Scrollbar Stilleri - Mobil İçin Görünür */
+    .table-wrapper::-webkit-scrollbar {
+      height: 8px;
+      background-color: rgba(203, 213, 225, 0.3);
+      border-radius: 4px;
+    }
+
+    .table-wrapper::-webkit-scrollbar-thumb {
+      background-color: rgba(71, 85, 105, 0.5);
+      border-radius: 4px;
+    }
+
+    .table-wrapper::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(71, 85, 105, 0.7);
+    }
+
+    /* Firefox scrollbar */
+    .table-wrapper {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(71, 85, 105, 0.5) rgba(203, 213, 225, 0.3);
+    }
+
+    /* Mobilde scroll göstergesi */
+    @media (max-width: 768px) {
+      .table-wrapper::after {
+        content: "→";
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        background: linear-gradient(to right, transparent, white 30%);
+        padding: 0.5rem 1rem;
+        font-size: 1.5rem;
+        color: rgba(71, 85, 105, 0.5);
+        pointer-events: none;
+        opacity: 1;
+        transition: opacity 0.3s;
       }
 
-      .notification-modal.closing {
-        animation: modalSlideOut 0.3s ease-in;
+      .table-wrapper.scrolled-end::after {
+        opacity: 0;
       }
 
-      @keyframes modalSlideOut {
-        from {
-          opacity: 1;
-          transform: scale(1) translateY(0);
-        }
-
-        to {
-          opacity: 0;
-          transform: scale(0.9) translateY(-20px);
-        }
+      /* Dark mode için */
+      .dark .table-wrapper::after {
+        background: linear-gradient(to right, transparent, #1e293b 30%);
       }
+    }
 
-      .notification-icon {
-        animation: iconPop 0.5s ease-out 0.2s;
-        animation-fill-mode: both;
-      }
+    /* Tablo sütunlarının minimum genişliği */
+    .table-wrapper table {
+      min-width: 100%;
+    }
 
-      @keyframes iconPop {
-        0% {
-          transform: scale(0);
-        }
-
-        50% {
-          transform: scale(1.1);
-        }
-
-        100% {
-          transform: scale(1);
-        }
-      }
-
-      /* PWA Install Banner Animation */
-      .animate-slide-up {
-        animation: slideUp 0.5s ease-out;
-      }
-
-      @keyframes slideUp {
-        from {
-          transform: translateY(100%);
-          opacity: 0;
-        }
-
-        to {
-          transform: translateY(0);
-          opacity: 1;
-        }
-      }
-
-      /* Mobil Tablo Optimizasyonları */
-      .table-wrapper {
-        overflow-x: auto;
-        overflow-y: visible;
-        -webkit-overflow-scrolling: touch;
-        position: relative;
-        border-radius: 0.5rem;
-      }
-
-      /* Scrollbar Stilleri - Mobil İçin Görünür */
-      .table-wrapper::-webkit-scrollbar {
-        height: 8px;
-        background-color: rgba(203, 213, 225, 0.3);
-        border-radius: 4px;
-      }
-
-      .table-wrapper::-webkit-scrollbar-thumb {
-        background-color: rgba(71, 85, 105, 0.5);
-        border-radius: 4px;
-      }
-
-      .table-wrapper::-webkit-scrollbar-thumb:hover {
-        background-color: rgba(71, 85, 105, 0.7);
-      }
-
-      /* Firefox scrollbar */
-      .table-wrapper {
-        scrollbar-width: thin;
-        scrollbar-color: rgba(71, 85, 105, 0.5) rgba(203, 213, 225, 0.3);
-      }
-
-      /* Mobilde scroll göstergesi */
-      @media (max-width: 768px) {
-        .table-wrapper::after {
-          content: "→";
-          position: absolute;
-          right: 0;
-          top: 50%;
-          transform: translateY(-50%);
-          background: linear-gradient(to right, transparent, white 30%);
-          padding: 0.5rem 1rem;
-          font-size: 1.5rem;
-          color: rgba(71, 85, 105, 0.5);
-          pointer-events: none;
-          opacity: 1;
-          transition: opacity 0.3s;
-        }
-
-        .table-wrapper.scrolled-end::after {
-          opacity: 0;
-        }
-
-        /* Dark mode için */
-        .dark .table-wrapper::after {
-          background: linear-gradient(to right, transparent, #1e293b 30%);
-        }
-      }
-
-      /* Tablo sütunlarının minimum genişliği */
+    @media (max-width: 640px) {
       .table-wrapper table {
-        min-width: 100%;
+        min-width: 600px;
+        /* Mobilde minimum genişlik */
       }
+    }
 
-      @media (max-width: 640px) {
-        .table-wrapper table {
-          min-width: 600px;
-          /* Mobilde minimum genişlik */
-        }
+    /* Touch-friendly tablo hücreleri */
+    @media (max-width: 768px) {
+
+      .table-wrapper td,
+      .table-wrapper th {
+        white-space: nowrap;
+        padding: 0.75rem 0.5rem !important;
       }
+    }
 
-      /* Touch-friendly tablo hücreleri */
-      @media (max-width: 768px) {
-        .table-wrapper td,
-        .table-wrapper th {
-          white-space: nowrap;
-          padding: 0.75rem 0.5rem !important;
-        }
+    /* ===================================== */
+    /* DARK MODE STYLES */
+    /* ===================================== */
+
+    /* Dark mode geçişleri */
+    .dark {
+      color-scheme: dark;
+    }
+
+    /* Dark mode için genel arka plan ve metin renkleri */
+    .dark body {
+      background-color: #0f172a;
+      color: #e2e8f0;
+    }
+
+    /* Dark mode kartlar */
+    .dark .bg-white {
+      background-color: #1e293b !important;
+    }
+
+    .dark .bg-slate-50 {
+      background-color: #0f172a !important;
+    }
+
+    .dark .bg-slate-100 {
+      background-color: #1e293b !important;
+    }
+
+    /* Dark mode metin renkleri */
+    .dark .text-slate-900 {
+      color: #f1f5f9 !important;
+    }
+
+    .dark .text-slate-700 {
+      color: #cbd5e1 !important;
+    }
+
+    .dark .text-slate-600 {
+      color: #94a3b8 !important;
+    }
+
+    .dark .text-slate-500 {
+      color: #64748b !important;
+    }
+
+    /* Dark mode border'lar */
+    .dark .border-slate-200 {
+      border-color: #334155 !important;
+    }
+
+    .dark .border-slate-300 {
+      border-color: #475569 !important;
+    }
+
+    /* Dark mode hover efektleri */
+    .dark .hover\:bg-slate-50:hover {
+      background-color: #1e293b !important;
+    }
+
+    .dark .hover\:bg-slate-100:hover {
+      background-color: #334155 !important;
+    }
+
+    /* Dark mode input'lar */
+    .dark input,
+    .dark textarea,
+    .dark select {
+      background-color: #1e293b;
+      border-color: #334155;
+      color: #e2e8f0;
+    }
+
+    .dark input:focus,
+    .dark textarea:focus,
+    .dark select:focus {
+      border-color: #3b82f6;
+      background-color: #0f172a;
+    }
+
+    /* Dark mode tablo */
+    .dark table {
+      color: #e2e8f0;
+    }
+
+    .dark thead {
+      background-color: #1e293b !important;
+    }
+
+    .dark tbody tr {
+      border-color: #334155;
+    }
+
+    .dark tbody tr:hover {
+      background-color: #1e293b !important;
+    }
+
+    /* Dark mode shadow'lar */
+    .dark .shadow {
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5),
+        0 1px 2px -1px rgba(0, 0, 0, 0.5);
+    }
+
+    .dark .shadow-lg {
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5),
+        0 4px 6px -4px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Dark mode toast bildirimleri */
+    .dark .toast-item {
+      background-color: #1e293b !important;
+      border-color: #334155;
+    }
+
+    .dark .toast-item p {
+      color: #e2e8f0;
+    }
+
+    /* Animasyonlu geçişler - Sadece gerekli elementlerde */
+    /* PERFORMANS: Tüm elementlerde transition çok yavaş, sadece dark mode geçişlerinde */
+    @media (prefers-reduced-motion: no-preference) {
+
+      .dark,
+      body,
+      .bg-white,
+      .bg-slate-50,
+      .bg-slate-100,
+      .text-slate-900,
+      .text-slate-700,
+      .text-slate-600,
+      .text-slate-500,
+      .border-slate-200,
+      .border-slate-300,
+      input,
+      textarea,
+      select,
+      button,
+      .card,
+      .toast-item {
+        transition: background-color 0.2s ease, color 0.2s ease,
+          border-color 0.2s ease;
       }
+    }
 
-      /* ===================================== */
-      /* DARK MODE STYLES */
-      /* ===================================== */
-
-      /* Dark mode geçişleri */
-      .dark {
-        color-scheme: dark;
-      }
-
-      /* Dark mode için genel arka plan ve metin renkleri */
-      .dark body {
-        background-color: #0f172a;
-        color: #e2e8f0;
-      }
-
-      /* Dark mode kartlar */
-      .dark .bg-white {
-        background-color: #1e293b !important;
-      }
-
-      .dark .bg-slate-50 {
-        background-color: #0f172a !important;
-      }
-
-      .dark .bg-slate-100 {
-        background-color: #1e293b !important;
-      }
-
-      /* Dark mode metin renkleri */
-      .dark .text-slate-900 {
-        color: #f1f5f9 !important;
-      }
-
-      .dark .text-slate-700 {
-        color: #cbd5e1 !important;
-      }
-
-      .dark .text-slate-600 {
-        color: #94a3b8 !important;
-      }
-
-      .dark .text-slate-500 {
-        color: #64748b !important;
-      }
-
-      /* Dark mode border'lar */
-      .dark .border-slate-200 {
-        border-color: #334155 !important;
-      }
-
-      .dark .border-slate-300 {
-        border-color: #475569 !important;
-      }
-
-      /* Dark mode hover efektleri */
-      .dark .hover\:bg-slate-50:hover {
-        background-color: #1e293b !important;
-      }
-
-      .dark .hover\:bg-slate-100:hover {
-        background-color: #334155 !important;
-      }
-
-      /* Dark mode input'lar */
-      .dark input,
-      .dark textarea,
-      .dark select {
-        background-color: #1e293b;
-        border-color: #334155;
-        color: #e2e8f0;
-      }
-
-      .dark input:focus,
-      .dark textarea:focus,
-      .dark select:focus {
-        border-color: #3b82f6;
-        background-color: #0f172a;
-      }
-
-      /* Dark mode tablo */
-      .dark table {
-        color: #e2e8f0;
-      }
-
-      .dark thead {
-        background-color: #1e293b !important;
-      }
-
-      .dark tbody tr {
-        border-color: #334155;
-      }
-
-      .dark tbody tr:hover {
-        background-color: #1e293b !important;
-      }
-
-      /* Dark mode shadow'lar */
-      .dark .shadow {
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5),
-          0 1px 2px -1px rgba(0, 0, 0, 0.5);
-      }
-
-      .dark .shadow-lg {
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5),
-          0 4px 6px -4px rgba(0, 0, 0, 0.5);
-      }
-
-      /* Dark mode toast bildirimleri */
-      .dark .toast-item {
-        background-color: #1e293b !important;
-        border-color: #334155;
-      }
-
-      .dark .toast-item p {
-        color: #e2e8f0;
-      }
-
-      /* Animasyonlu geçişler - Sadece gerekli elementlerde */
-      /* PERFORMANS: Tüm elementlerde transition çok yavaş, sadece dark mode geçişlerinde */
-      @media (prefers-reduced-motion: no-preference) {
-        .dark,
-        body,
-        .bg-white,
-        .bg-slate-50,
-        .bg-slate-100,
-        .text-slate-900,
-        .text-slate-700,
-        .text-slate-600,
-        .text-slate-500,
-        .border-slate-200,
-        .border-slate-300,
-        input,
-        textarea,
-        select,
-        button,
-        .card,
-        .toast-item {
-          transition: background-color 0.2s ease, color 0.2s ease,
-            border-color 0.2s ease;
-        }
-      }
-
-      /* ============================================
+    /* ============================================
          RESPONSIVE TABLE STYLES - GLOBAL
          ============================================ */
 
-      /* Tablo container'ı için responsive wrapper */
-      .overflow-x-auto {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    /* Tablo container'ı için responsive wrapper */
+    .overflow-x-auto {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Tablo için temel responsive ayarlar - TÜM TABLOLAR */
+    table.min-w-full,
+    table {
+      table-layout: auto !important;
+      width: 100% !important;
+    }
+
+    /* Tablo container'ları için max-width */
+    .overflow-x-auto {
+      max-width: 100%;
+    }
+
+    /* Mobil görünüm için tablo hücreleri - TÜM TABLOLAR */
+    @media (max-width: 768px) {
+
+      /* Tablo header ve cell padding'lerini küçült */
+      table th,
+      table td {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        padding-top: 0.75rem !important;
+        padding-bottom: 0.75rem !important;
+        font-size: 0.75rem !important;
       }
 
-      /* Tablo için temel responsive ayarlar - TÜM TABLOLAR */
-      table.min-w-full,
+      /* Tablo header'ları daha kompakt yap */
+      table th {
+        font-size: 0.7rem !important;
+        white-space: nowrap;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+      }
+
+      /* İşlem butonları için özel stil */
+      table td .flex {
+        gap: 0.25rem !important;
+      }
+
+      table td button,
+      table td a {
+        padding: 0.25rem !important;
+      }
+
+      table td svg {
+        width: 1rem !important;
+        height: 1rem !important;
+      }
+
+      /* Badge'ler için küçültme */
+      table .inline-flex {
+        padding-left: 0.4rem !important;
+        padding-right: 0.4rem !important;
+        padding-top: 0.25rem !important;
+        padding-bottom: 0.25rem !important;
+        font-size: 0.7rem !important;
+      }
+
+      /* Overflow text için */
+      table td>div {
+        max-width: 120px;
+      }
+
+      table td .truncate {
+        max-width: 100px;
+      }
+
+      /* Tablo genişliğini sınırla */
       table {
-        table-layout: auto !important;
-        width: 100% !important;
-      }
-
-      /* Tablo container'ları için max-width */
-      .overflow-x-auto {
+        display: block;
         max-width: 100%;
       }
 
-      /* Mobil görünüm için tablo hücreleri - TÜM TABLOLAR */
-      @media (max-width: 768px) {
-        /* Tablo header ve cell padding'lerini küçült */
-        table th,
-        table td {
-          padding-left: 0.5rem !important;
-          padding-right: 0.5rem !important;
-          padding-top: 0.75rem !important;
-          padding-bottom: 0.75rem !important;
-          font-size: 0.75rem !important;
-        }
-
-        /* Tablo header'ları daha kompakt yap */
-        table th {
-          font-size: 0.7rem !important;
-          white-space: nowrap;
-          padding-left: 0.5rem !important;
-          padding-right: 0.5rem !important;
-        }
-
-        /* İşlem butonları için özel stil */
-        table td .flex {
-          gap: 0.25rem !important;
-        }
-
-        table td button,
-        table td a {
-          padding: 0.25rem !important;
-        }
-
-        table td svg {
-          width: 1rem !important;
-          height: 1rem !important;
-        }
-
-        /* Badge'ler için küçültme */
-        table .inline-flex {
-          padding-left: 0.4rem !important;
-          padding-right: 0.4rem !important;
-          padding-top: 0.25rem !important;
-          padding-bottom: 0.25rem !important;
-          font-size: 0.7rem !important;
-        }
-
-        /* Overflow text için */
-        table td > div {
-          max-width: 120px;
-        }
-
-        table td .truncate {
-          max-width: 100px;
-        }
-
-        /* Tablo genişliğini sınırla */
-        table {
-          display: block;
-          max-width: 100%;
-        }
-
-        table thead,
-        table tbody,
-        table tr {
-          display: table;
-          width: 100%;
-          table-layout: fixed;
-        }
+      table thead,
+      table tbody,
+      table tr {
+        display: table;
+        width: 100%;
+        table-layout: fixed;
       }
+    }
 
-      /* Tablet görünüm - TÜM TABLOLAR */
-      @media (min-width: 769px) and (max-width: 1024px) {
-        table th,
-        table td {
-          padding-left: 0.75rem !important;
-          padding-right: 0.75rem !important;
-          font-size: 0.875rem !important;
-        }
+    /* Tablet görünüm - TÜM TABLOLAR */
+    @media (min-width: 769px) and (max-width: 1024px) {
+
+      table th,
+      table td {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+        font-size: 0.875rem !important;
       }
+    }
 
-      /* Tablo scroll indicator (mobil için) */
-      @media (max-width: 768px) {
-        .overflow-x-auto::after {
-          content: "";
-          position: absolute;
-          top: 0;
-          right: 0;
-          bottom: 0;
-          width: 30px;
-          background: linear-gradient(
-            to left,
+    /* Tablo scroll indicator (mobil için) */
+    @media (max-width: 768px) {
+      .overflow-x-auto::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 30px;
+        background: linear-gradient(to left,
             rgba(255, 255, 255, 0.8),
-            transparent
-          );
-          pointer-events: none;
-          opacity: 0;
-          transition: opacity 0.3s;
-        }
-
-        .overflow-x-auto:not(:hover)::after {
-          opacity: 1;
-        }
-
-        .dark .overflow-x-auto::after {
-          background: linear-gradient(
-            to left,
-            rgba(30, 41, 59, 0.8),
-            transparent
-          );
-        }
+            transparent);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s;
       }
-    </style>
 
-    {% block extra_head %}{% endblock %}
-  </head>
+      .overflow-x-auto:not(:hover)::after {
+        opacity: 1;
+      }
 
-  <body class="h-full bg-slate-50 dark:bg-slate-900">
-    <div class="flex h-full">
-      <!-- Menu Toggle Button - All Devices -->
-      <button
-        id="mobile-menu-button"
-        class="fixed top-4 left-4 z-50 bg-white dark:bg-slate-800 p-2.5 rounded-lg shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 hover:scale-105"
-      >
-        <svg
-          class="w-5 h-5 text-slate-700 dark:text-slate-200"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M4 6h16M4 12h16M4 18h16"
-          ></path>
-        </svg>
-      </button>
+      .dark .overflow-x-auto::after {
+        background: linear-gradient(to left,
+            rgba(30, 41, 59, 0.8),
+            transparent);
+      }
+    }
+  </style>
 
-      <!-- Sidebar -->
-      <div
-        id="sidebar"
-        class="fixed inset-y-0 left-0 z-40 bg-white dark:bg-slate-800 shadow-2xl sidebar-transition sidebar-open"
-        style="width: 16rem"
-      >
-        <div class="flex flex-col h-full overflow-hidden">
-          <!-- Logo & Close Button -->
-          <div
-            class="flex items-center justify-between h-16 px-4 bg-slate-600 dark:bg-slate-700 flex-shrink-0"
-          >
-            <h1 class="text-xl font-bold text-white truncate">Minibar Takip</h1>
-            <!-- Kibar Kapatma Butonu (sadece tablet/desktop) -->
-            <button
-              id="sidebar-close-button"
-              class="hidden md:flex text-white hover:bg-slate-500 dark:hover:bg-slate-600 p-1.5 rounded-md transition-colors group"
-            >
-              <svg
-                class="w-5 h-5 transform group-hover:rotate-180 transition-transform duration-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                ></path>
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="h-full bg-slate-50 dark:bg-slate-900">
+  <div class="flex h-full">
+    <!-- Menu Toggle Button - All Devices -->
+    <button id="mobile-menu-button"
+      class="fixed top-4 left-4 z-50 bg-white dark:bg-slate-800 p-2.5 rounded-lg shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 hover:scale-105">
+      <svg class="w-5 h-5 text-slate-700 dark:text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
+
+    <!-- Sidebar -->
+    <div id="sidebar"
+      class="fixed inset-y-0 left-0 z-40 bg-white dark:bg-slate-800 shadow-2xl sidebar-transition sidebar-open"
+      style="width: 16rem">
+      <div class="flex flex-col h-full overflow-hidden">
+        <!-- Logo & Close Button -->
+        <div class="flex items-center justify-between h-16 px-4 bg-slate-600 dark:bg-slate-700 flex-shrink-0">
+          <h1 class="text-xl font-bold text-white truncate">Minibar Takip</h1>
+          <!-- Kibar Kapatma Butonu (sadece tablet/desktop) -->
+          <button id="sidebar-close-button"
+            class="hidden md:flex text-white hover:bg-slate-500 dark:hover:bg-slate-600 p-1.5 rounded-md transition-colors group">
+            <svg class="w-5 h-5 transform group-hover:rotate-180 transition-transform duration-300" fill="none"
+              stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto overflow-x-hidden">
+          {% if current_user %} {% if current_user.rol == 'sistem_yoneticisi'
+          or current_user.rol == 'admin' %} {% include
+          'components/admin_sidebar.html' %} {% elif False %}
+          <!-- Eski kod kaldırıldı -->
+          <a href="{{ url_for('sistem_yoneticisi_dashboard') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+            </svg>
+            Panel
+          </a>
+
+          <!-- Sistem Yönetimi -->
+          <div class="px-4 py-2">
+            <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Sistem Yönetimi
+            </h3>
+          </div>
+          <a href="{{ url_for('otel_listesi') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+              </path>
+            </svg>
+            Otel Yönetimi
+          </a>
+          <a href="{{ url_for('kat_tanimla') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6">
+              </path>
+            </svg>
+            Kat Yönetimi
+          </a>
+          <a href="{{ url_for('oda_tanimla') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+            </svg>
+            Oda Yönetimi
+          </a>
+
+          <!-- Ürün Yönetimi -->
+          <div class="px-4 py-2 mt-4">
+            <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Ürün Yönetimi
+            </h3>
+          </div>
+          <a href="{{ url_for('urun_gruplari') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+              </path>
+            </svg>
+            Ürün Grupları
+          </a>
+          <a href="{{ url_for('urunler') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+            Ürünler
+          </a>
+
+          <!-- Kullanıcı Yönetimi -->
+          <div class="px-4 py-2 mt-4">
+            <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Kullanıcı Yönetimi
+            </h3>
+          </div>
+          <a href="{{ url_for('personel_tanimla') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+              </path>
+            </svg>
+            Kullanıcı Yönetimi
+          </a>
+
+          <!-- Minibar Yönetimi -->
+          <div class="px-4 py-2 mt-4">
+            <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Minibar Yönetimi
+            </h3>
+          </div>
+          <a href="{{ url_for('admin_depo_stoklari') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+              </path>
+            </svg>
+            Depo Stokları
+          </a>
+
+          <a href="{{ url_for('api_dolum_talepleri') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+              </path>
+            </svg>
+            Dolum Talepleri
+          </a>
+          <a href="{{ url_for('admin_minibar_sifirla') }}"
+            class="flex items-center px-4 py-2 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+              </path>
+            </svg>
+            Minibarları Sıfırla
+          </a>
+
+          <!-- Güvenlik & Denetim -->
+          <div class="px-4 py-2 mt-4">
+            <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Güvenlik & Denetim
+            </h3>
+          </div>
+          <a href="{{ url_for('audit_trail') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+              </path>
+            </svg>
+            Audit Trail
+          </a>
+
+          {% elif False %}
+          <!-- Admin artık yukarıda include ediliyor -->
+          <a href="{{ url_for('sistem_yoneticisi_dashboard') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+            </svg>
+            Panel
+          </a>
+
+          <!-- Sistem Yönetimi -->
+          <div class="px-4 py-2">
+            <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Sistem Yönetimi
+            </h3>
+          </div>
+          <a href="{{ url_for('otel_listesi') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+              </path>
+            </svg>
+            Otel Yönetimi
+          </a>
+          <a href="{{ url_for('kat_tanimla') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6">
+              </path>
+            </svg>
+            Kat Yönetimi
+          </a>
+          <a href="{{ url_for('oda_tanimla') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+            </svg>
+            Oda Yönetimi
+          </a>
+
+          <!-- Ürün Yönetimi -->
+          <div class="px-4 py-2 mt-4">
+            <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Ürün Yönetimi
+            </h3>
+          </div>
+          <a href="{{ url_for('urun_gruplari') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+              </path>
+            </svg>
+            Ürün Grupları
+          </a>
+          <a href="{{ url_for('urunler') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+            Ürünler
+          </a>
+
+          <!-- Kullanıcı Yönetimi -->
+          <div class="px-4 py-2 mt-4">
+            <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Kullanıcı Yönetimi
+            </h3>
+          </div>
+          <a href="{{ url_for('personel_tanimla') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+              </path>
+            </svg>
+            Kullanıcı Yönetimi
+          </a>
+
+          <!-- Minibar Yönetimi -->
+          <div class="px-4 py-2 mt-4">
+            <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Minibar Yönetimi
+            </h3>
+          </div>
+          <a href="{{ url_for('admin_depo_stoklari') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+              </path>
+            </svg>
+            Depo Stokları
+          </a>
+
+          <a href="{{ url_for('api_dolum_talepleri') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+              </path>
+            </svg>
+            Dolum Talepleri
+          </a>
+          <a href="{{ url_for('admin_minibar_sifirla') }}"
+            class="flex items-center px-4 py-2 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+              </path>
+            </svg>
+            Minibarları Sıfırla
+          </a>
+
+          <!-- Güvenlik & Denetim -->
+          <div class="px-4 py-2 mt-4">
+            <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Güvenlik & Denetim
+            </h3>
+          </div>
+          <a href="{{ url_for('audit_trail') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+              </path>
+            </svg>
+            Audit Trail
+          </a>
+
+          {% elif current_user.rol == 'depo_sorumlusu' %}
+          <a href="{{ url_for('depo_dashboard') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+            </svg>
+            Panel
+          </a>
+          <a href="{{ url_for('satin_alma') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+              </path>
+            </svg>
+            Satın Alma
+          </a>
+          <a href="{{ url_for('siparis_listesi') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+              </path>
+            </svg>
+            Sipariş Listesi
+          </a>
+          <a href="{{ url_for('depo_stoklarim') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+            Stoklarım
+          </a>
+          <a href="{{ url_for('personel_zimmet') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+              </path>
+            </svg>
+            Personel Zimmet
+          </a>
+          <a href="{{ url_for('kat_sorumlusu_siparisler') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+            </svg>
+            Kat Sorumlusu Siparişleri
+          </a>
+
+          <a href="{{ url_for('kat_bazli_rapor') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+              </path>
+            </svg>
+            Kat Tüketim Raporu
+          </a>
+
+          <a href="{{ url_for('depo_raporlar') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+              </path>
+            </svg>
+            Raporlar
+          </a>
+
+          <a href="{{ url_for('doluluk.doluluk_yonetimi') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            Doluluk Yönetimi
+          </a>
+
+          <a href="{{ url_for('doluluk.gunluk_doluluk') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
+              </path>
+            </svg>
+            Günlük Doluluk
+          </a>
+
+          <!-- PWA Install Button - Depo Sorumlusu -->
+          <div class="mt-6 px-4">
+            <button id="pwa-sidebar-install-btn"
+              class="pwa-install-button hidden w-full flex items-center justify-center px-3 py-2 text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors border border-purple-200 dark:border-purple-800">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
               </svg>
+              Uygulama Olarak Yükle
             </button>
           </div>
 
-          <!-- Navigation -->
-          <nav
-            class="flex-1 px-4 py-6 space-y-2 overflow-y-auto overflow-x-hidden"
-          >
-            {% if current_user %} {% if current_user.rol == 'sistem_yoneticisi'
-            or current_user.rol == 'admin' %} {% include
-            'components/admin_sidebar.html' %} {% elif False %}
-            <!-- Eski kod kaldırıldı -->
-            <a
-              href="{{ url_for('sistem_yoneticisi_dashboard') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-                ></path>
-              </svg>
-              Panel
-            </a>
+          {% elif current_user.rol == 'kat_sorumlusu' %}
+          <!-- Ana Sayfa -->
+          <a href="{{ url_for('kat_sorumlusu_dashboard') }}"
+            class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base">
+            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+            </svg>
+            Ana Sayfa
+          </a>
 
-            <!-- Sistem Yönetimi -->
-            <div class="px-4 py-2">
-              <h3
-                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                Sistem Yönetimi
-              </h3>
-            </div>
-            <a
-              href="{{ url_for('otel_listesi') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                ></path>
-              </svg>
-              Otel Yönetimi
-            </a>
-            <a
-              href="{{ url_for('kat_tanimla') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                ></path>
-              </svg>
-              Kat Yönetimi
-            </a>
-            <a
-              href="{{ url_for('oda_tanimla') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-                ></path>
-              </svg>
-              Oda Yönetimi
-            </a>
-
-            <!-- Ürün Yönetimi -->
-            <div class="px-4 py-2 mt-4">
-              <h3
-                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                Ürün Yönetimi
-              </h3>
-            </div>
-            <a
-              href="{{ url_for('urun_gruplari') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                ></path>
-              </svg>
-              Ürün Grupları
-            </a>
-            <a
-              href="{{ url_for('urunler') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                ></path>
-              </svg>
-              Ürünler
-            </a>
-
-            <!-- Kullanıcı Yönetimi -->
-            <div class="px-4 py-2 mt-4">
-              <h3
-                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                Kullanıcı Yönetimi
-              </h3>
-            </div>
-            <a
-              href="{{ url_for('personel_tanimla') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                ></path>
-              </svg>
-              Kullanıcı Yönetimi
-            </a>
-
-            <!-- Minibar Yönetimi -->
-            <div class="px-4 py-2 mt-4">
-              <h3
-                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                Minibar Yönetimi
-              </h3>
-            </div>
-            <a
-              href="{{ url_for('admin_depo_stoklari') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                ></path>
-              </svg>
-              Depo Stokları
-            </a>
-
-            <a
-              href="{{ url_for('api_dolum_talepleri') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                ></path>
-              </svg>
-              Dolum Talepleri
-            </a>
-            <a
-              href="{{ url_for('admin_minibar_sifirla') }}"
-              class="flex items-center px-4 py-2 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                ></path>
-              </svg>
-              Minibarları Sıfırla
-            </a>
-
-            <!-- Güvenlik & Denetim -->
-            <div class="px-4 py-2 mt-4">
-              <h3
-                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                Güvenlik & Denetim
-              </h3>
-            </div>
-            <a
-              href="{{ url_for('audit_trail') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                ></path>
-              </svg>
-              Audit Trail
-            </a>
-
-            {% elif False %}
-            <!-- Admin artık yukarıda include ediliyor -->
-            <a
-              href="{{ url_for('sistem_yoneticisi_dashboard') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-                ></path>
-              </svg>
-              Panel
-            </a>
-
-            <!-- Sistem Yönetimi -->
-            <div class="px-4 py-2">
-              <h3
-                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                Sistem Yönetimi
-              </h3>
-            </div>
-            <a
-              href="{{ url_for('otel_listesi') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                ></path>
-              </svg>
-              Otel Yönetimi
-            </a>
-            <a
-              href="{{ url_for('kat_tanimla') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                ></path>
-              </svg>
-              Kat Yönetimi
-            </a>
-            <a
-              href="{{ url_for('oda_tanimla') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-                ></path>
-              </svg>
-              Oda Yönetimi
-            </a>
-
-            <!-- Ürün Yönetimi -->
-            <div class="px-4 py-2 mt-4">
-              <h3
-                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                Ürün Yönetimi
-              </h3>
-            </div>
-            <a
-              href="{{ url_for('urun_gruplari') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                ></path>
-              </svg>
-              Ürün Grupları
-            </a>
-            <a
-              href="{{ url_for('urunler') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                ></path>
-              </svg>
-              Ürünler
-            </a>
-
-            <!-- Kullanıcı Yönetimi -->
-            <div class="px-4 py-2 mt-4">
-              <h3
-                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                Kullanıcı Yönetimi
-              </h3>
-            </div>
-            <a
-              href="{{ url_for('personel_tanimla') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                ></path>
-              </svg>
-              Kullanıcı Yönetimi
-            </a>
-
-            <!-- Minibar Yönetimi -->
-            <div class="px-4 py-2 mt-4">
-              <h3
-                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                Minibar Yönetimi
-              </h3>
-            </div>
-            <a
-              href="{{ url_for('admin_depo_stoklari') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                ></path>
-              </svg>
-              Depo Stokları
-            </a>
-
-            <a
-              href="{{ url_for('api_dolum_talepleri') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                ></path>
-              </svg>
-              Dolum Talepleri
-            </a>
-            <a
-              href="{{ url_for('admin_minibar_sifirla') }}"
-              class="flex items-center px-4 py-2 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                ></path>
-              </svg>
-              Minibarları Sıfırla
-            </a>
-
-            <!-- Güvenlik & Denetim -->
-            <div class="px-4 py-2 mt-4">
-              <h3
-                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-              >
-                Güvenlik & Denetim
-              </h3>
-            </div>
-            <a
-              href="{{ url_for('audit_trail') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                ></path>
-              </svg>
-              Audit Trail
-            </a>
-
-            {% elif current_user.rol == 'depo_sorumlusu' %}
-            <a
-              href="{{ url_for('depo_dashboard') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-                ></path>
-              </svg>
-              Panel
-            </a>
-            <a
-              href="{{ url_for('satin_alma') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                ></path>
-              </svg>
-              Satın Alma
-            </a>
-            <a
-              href="{{ url_for('siparis_listesi') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                ></path>
-              </svg>
-              Sipariş Listesi
-            </a>
-            <a
-              href="{{ url_for('depo_stoklarim') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                ></path>
-              </svg>
-              Stoklarım
-            </a>
-            <a
-              href="{{ url_for('personel_zimmet') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                ></path>
-              </svg>
-              Personel Zimmet
-            </a>
-            <a
-              href="{{ url_for('kat_sorumlusu_siparisler') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                ></path>
-              </svg>
-              Kat Sorumlusu Siparişleri
-            </a>
-
-            <a
-              href="{{ url_for('kat_bazli_rapor') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                ></path>
-              </svg>
-              Kat Tüketim Raporu
-            </a>
-
-            <a
-              href="{{ url_for('depo_raporlar') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                ></path>
-              </svg>
-              Raporlar
-            </a>
-
-            <a
-              href="{{ url_for('doluluk.doluluk_yonetimi') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                ></path>
-              </svg>
-              Doluluk Yönetimi
-            </a>
-
-            <a
-              href="{{ url_for('doluluk.gunluk_doluluk') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-                ></path>
-              </svg>
-              Günlük Doluluk
-            </a>
-
-            <!-- PWA Install Button - Depo Sorumlusu -->
-            <div class="mt-6 px-4">
-              <button
-                id="pwa-sidebar-install-btn"
-                class="pwa-install-button hidden w-full flex items-center justify-center px-3 py-2 text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors border border-purple-200 dark:border-purple-800"
-              >
-                <svg
-                  class="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 4v16m8-8H4"
-                  ></path>
-                </svg>
-                Uygulama Olarak Yükle
-              </button>
-            </div>
-
-            {% elif current_user.rol == 'kat_sorumlusu' %}
-            <!-- Ana Sayfa -->
-            <a
-              href="{{ url_for('kat_sorumlusu_dashboard') }}"
-              class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base"
-            >
-              <svg
-                class="w-6 h-6 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-                ></path>
-              </svg>
-              Ana Sayfa
-            </a>
-
-            <!-- Minibar Kontrol - EN ÖNEMLİ -->
-            <div class="px-4 py-2 mt-4">
-              <p
-                class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider"
-              >
-                Minibar İşlemleri
-              </p>
-            </div>
-
-            <a
-              href="{{ url_for('oda_kontrol') }}"
-              class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base font-medium"
-            >
-              <svg
-                class="w-6 h-6 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                ></path>
-              </svg>
-              Oda Kontrol
-            </a>
-
-            <a
-              href="{{ url_for('minibar_islemlerim') }}"
-              class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base"
-            >
-              <svg
-                class="w-6 h-6 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                ></path>
-              </svg>
-
-              Minibar İşlemlerim
-            </a>
-
-            <a
-              href="{{ url_for('dolum_talepleri') }}"
-              class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base"
-            >
-              <svg
-                class="w-6 h-6 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                ></path>
-              </svg>
-              Dolum Talepleri
-            </a>
-
-            <!-- Stok Yönetimi -->
-            <div class="px-4 py-2 mt-4">
-              <p
-                class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider"
-              >
-                Stok Yönetimi
-              </p>
-            </div>
-
-            <a
-              href="{{ url_for('kat_sorumlusu_zimmet_stoklarim') }}"
-              class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base"
-            >
-              <svg
-                class="w-6 h-6 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                ></path>
-              </svg>
-              Stoklarım
-            </a>
-
-            <a
-              href="{{ url_for('kat_sorumlusu_kritik_stoklar') }}"
-              class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base"
-            >
-              <svg
-                class="w-6 h-6 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                ></path>
-              </svg>
-              Kritik Stoklar
-            </a>
-
-            <!-- Doluluk Yönetimi -->
-            <div class="px-4 py-2 mt-4">
-              <p
-                class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider"
-              >
-                Doluluk Bilgileri
-              </p>
-            </div>
-
-            <a
-              href="{{ url_for('doluluk.gunluk_doluluk') }}"
-              class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base"
-            >
-              <svg
-                class="w-6 h-6 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                ></path>
-              </svg>
-              Günlük Doluluk
-            </a>
-
-            <a
-              href="{{ url_for('kat_sorumlusu_siparis_hazirla') }}"
-              class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base"
-            >
-              <svg
-                class="w-6 h-6 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                ></path>
-              </svg>
-              Sipariş Ver
-            </a>
-
-            <!-- Raporlar -->
-            <div class="px-4 py-2 mt-4">
-              <p
-                class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider"
-              >
-                Raporlar
-              </p>
-            </div>
-
-            <a
-              href="{{ url_for('kat_raporlar') }}"
-              class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base"
-            >
-              <svg
-                class="w-6 h-6 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                ></path>
-              </svg>
-              Raporlarım
-            </a>
-            <a
-              href="{{ url_for('kat_bazli_rapor') }}"
-              class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <svg
-                class="w-5 h-5 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                ></path>
-              </svg>
-              Kat Bazlı Rapor
-            </a>
-
-            <!-- PWA Install Button - Kat Sorumlusu -->
-            <div class="mt-6 px-4">
-              <button
-                id="pwa-sidebar-install-btn"
-                class="pwa-install-button hidden w-full flex items-center justify-center px-3 py-2 text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors border border-purple-200 dark:border-purple-800"
-              >
-                <svg
-                  class="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 4v16m8-8H4"
-                  ></path>
-                </svg>
-                Uygulama Olarak Yükle
-              </button>
-            </div>
-            {% endif %} {% endif %}
-          </nav>
-
-          <!-- User Info -->
-          {% if current_user %}
-          <div class="p-4 border-t border-slate-200 dark:border-slate-700">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <div
-                  class="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center"
-                >
-                  <span class="text-sm font-medium text-white">
-                    {{ current_user.ad[0] }}{{ current_user.soyad[0] }}
-                  </span>
-                </div>
-              </div>
-              <div class="ml-3">
-                <p
-                  class="text-sm font-medium text-slate-700 dark:text-slate-200"
-                >
-                  {{ current_user.ad }} {{ current_user.soyad }}
-                </p>
-                <p class="text-xs text-slate-500 dark:text-slate-400">
-                  {{ current_user.rol.replace('_', ' ').title() }}
-                </p>
-              </div>
-            </div>
-          </div>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Main Content -->
-      <div id="main-content" class="flex-1 flex flex-col w-full">
-        <!-- Top Navigation - Responsive -->
-        <header
-          class="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700 sticky top-0 z-20"
-        >
-          <div class="flex items-center justify-between px-4 py-2.5 gap-4">
-            <!-- Spacer for mobile menu button -->
-            <div class="w-12 md:hidden"></div>
-
-            <!-- Logo & Page Title Section -->
-            <div class="flex items-center gap-3 flex-1 min-w-0">
-              {% if kullanici_otel %} {% if kullanici_otel.logo %}
-              <!-- Otel Logosu - Büyütülmüş -->
-              <img
-                src="data:image/png;base64,{{ kullanici_otel.logo }}"
-                alt="{{ kullanici_otel.ad }}"
-                class="h-10 sm:h-12 w-auto object-contain flex-shrink-0"
-              />
-              {% endif %}
-
-              <!-- Sayfa Başlığı ve Açıklama -->
-              <div class="flex flex-col min-w-0 flex-1">
-                <h1
-                  class="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 truncate"
-                >
-                  {% block page_title %}Panel{% endblock %}
-                </h1>
-                {% block page_description %}{% endblock %}
-              </div>
-              {% else %}
-              <!-- Sadece Sayfa Başlığı (Otel bilgisi yok) -->
-              <div class="flex flex-col min-w-0 flex-1">
-                <h1
-                  class="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 truncate"
-                >
-                  {% block page_title_fallback %}Panel{% endblock %}
-                </h1>
-                {% block page_description_fallback %}{% endblock %}
-              </div>
-              {% endif %}
-            </div>
-
-            <!-- Right side actions -->
-            <div class="flex items-center gap-2">
-              <!-- Theme Toggle -->
-              <button
-                id="theme-toggle"
-                class="p-2 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors"
-              >
-                <svg
-                  id="theme-toggle-dark-icon"
-                  class="hidden w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"
-                  ></path>
-                </svg>
-                <svg
-                  id="theme-toggle-light-icon"
-                  class="hidden w-5 h-5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
-                    clip-rule="evenodd"
-                  ></path>
-                </svg>
-              </button>
-
-              <!-- Logout -->
-              {% if current_user %}
-              <a
-                href="{{ url_for('logout') }}"
-                class="p-2 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors"
-                title="Çıkış Yap"
-              >
-                <svg
-                  class="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                  ></path>
-                </svg>
-              </a>
-              {% endif %}
-            </div>
-          </div>
-        </header>
-
-        <!-- Flash Messages - Sadece toast olarak gösterilecek (JavaScript'te) -->
-
-        <!-- Page Content - Mobile optimized -->
-        <main class="flex-1 p-3 sm:p-4 md:p-6 overflow-x-hidden">
-          {% block content %}{% endblock %}
-        </main>
-      </div>
-    </div>
-
-    <!-- Overlay for mobile - Touch-friendly -->
-    <div
-      id="sidebar-overlay"
-      class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden overlay-transition"
-    ></div>
-
-    <!-- PWA Install Prompt -->
-    <div
-      id="pwa-install-banner"
-      class="hidden fixed bottom-0 left-0 right-0 bg-slate-800 text-white p-4 shadow-2xl z-50 animate-slide-up"
-    >
-      <div class="max-w-4xl mx-auto flex items-center justify-between gap-4">
-        <div class="flex items-center gap-3 flex-1">
-          <svg
-            class="w-10 h-10 text-blue-400 flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
-            ></path>
-          </svg>
-          <div class="flex-1">
-            <h3 class="font-semibold text-sm sm:text-base">Uygulamayı Yükle</h3>
-            <p class="text-xs sm:text-sm text-slate-300">
-              Hızlı erişim için ana ekrana ekleyin
+          <!-- Görev Yönetimi -->
+          <div class="px-4 py-2 mt-4">
+            <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              Görev Yönetimi
             </p>
           </div>
+
+          <a href="{{ url_for('kat_sorumlusu_gorev_listesi') }}"
+            class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base font-medium relative">
+            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16">
+              </path>
+            </svg>
+            Görev Listesi
+          </a>
+
+          <!-- Minibar Kontrol - EN ÖNEMLİ -->
+          <div class="px-4 py-2 mt-4">
+            <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              Minibar İşlemleri
+            </p>
+          </div>
+
+          <a href="{{ url_for('oda_kontrol') }}"
+            class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base font-medium">
+            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+              </path>
+            </svg>
+            Oda Kontrol
+          </a>
+
+          <a href="{{ url_for('minibar_islemlerim') }}"
+            class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base">
+            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+              </path>
+            </svg>
+
+            Minibar İşlemlerim
+          </a>
+
+          <a href="{{ url_for('dolum_talepleri') }}"
+            class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base">
+            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+              </path>
+            </svg>
+            Dolum Talepleri
+          </a>
+
+          <!-- Stok Yönetimi -->
+          <div class="px-4 py-2 mt-4">
+            <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              Stok Yönetimi
+            </p>
+          </div>
+
+          <a href="{{ url_for('kat_sorumlusu_zimmet_stoklarim') }}"
+            class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base">
+            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+            Stoklarım
+          </a>
+
+          <a href="{{ url_for('kat_sorumlusu_kritik_stoklar') }}"
+            class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base">
+            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+              </path>
+            </svg>
+            Kritik Stoklar
+          </a>
+          <a href="{{ url_for('kat_sorumlusu_siparis_hazirla') }}"
+            class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base">
+            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+              </path>
+            </svg>
+            Sipariş Ver
+          </a>
+
+          <!-- Doluluk Yönetimi -->
+          <div class="px-4 py-2 mt-4">
+            <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              Doluluk Bilgileri
+            </p>
+          </div>
+
+          <a href="{{ url_for('doluluk.gunluk_doluluk') }}"
+            class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base">
+            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            Günlük Doluluk
+          </a>
+
+          <!-- Raporlar -->
+          <div class="px-4 py-2 mt-4">
+            <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              Raporlar
+            </p>
+          </div>
+
+          <a href="{{ url_for('kat_raporlar') }}"
+            class="flex items-center px-4 py-3 text-slate-700 dark:text-slate-200 rounded-lg text-base">
+            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+              </path>
+            </svg>
+            Raporlarım
+          </a>
+          <a href="{{ url_for('kat_bazli_rapor') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+              </path>
+            </svg>
+            Kat Bazlı Rapor
+          </a>
+
+          <!-- PWA Install Button - Kat Sorumlusu -->
+          <div class="mt-6 px-4">
+            <button id="pwa-sidebar-install-btn"
+              class="pwa-install-button hidden w-full flex items-center justify-center px-3 py-2 text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors border border-purple-200 dark:border-purple-800">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              Uygulama Olarak Yükle
+            </button>
+          </div>
+          {% endif %} {% endif %}
+        </nav>
+
+        <!-- User Info -->
+        {% if current_user %}
+        <div class="p-4 border-t border-slate-200 dark:border-slate-700">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center">
+                <span class="text-sm font-medium text-white">
+                  {{ current_user.ad[0] }}{{ current_user.soyad[0] }}
+                </span>
+              </div>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm font-medium text-slate-700 dark:text-slate-200">
+                {{ current_user.ad }} {{ current_user.soyad }}
+              </p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                {{ current_user.rol.replace('_', ' ').title() }}
+              </p>
+            </div>
+          </div>
         </div>
-        <div class="flex gap-2">
-          <button
-            id="pwa-install-dismiss"
-            class="px-3 py-2 text-sm text-slate-300 hover:text-white transition-colors"
-          >
-            Kapat
-          </button>
-          <button
-            id="pwa-install-button"
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold transition-all transform hover:scale-105"
-          >
-            Yükle
-          </button>
-        </div>
+        {% endif %}
       </div>
     </div>
 
-    <!-- JavaScript -->
-    <script>
-      // Service Worker Registration
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("/static/service-worker.js")
-            .then((registration) => {
-              console.log("✓ Service Worker registered:", registration.scope);
+    <!-- Main Content -->
+    <div id="main-content" class="flex-1 flex flex-col w-full">
+      <!-- Top Navigation - Responsive -->
+      <header
+        class="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700 sticky top-0 z-20">
+        <div class="flex items-center justify-between px-4 py-2.5 gap-4">
+          <!-- Spacer for mobile menu button -->
+          <div class="w-12 md:hidden"></div>
 
-              // Güncelleme kontrolü
-              registration.addEventListener("updatefound", () => {
-                const newWorker = registration.installing;
-                newWorker.addEventListener("statechange", () => {
+          <!-- Logo & Page Title Section -->
+          <div class="flex items-center gap-3 flex-1 min-w-0">
+            {% if kullanici_otel %} {% if kullanici_otel.logo %}
+            <!-- Otel Logosu - Büyütülmüş -->
+            <img src="data:image/png;base64,{{ kullanici_otel.logo }}" alt="{{ kullanici_otel.ad }}"
+              class="h-10 sm:h-12 w-auto object-contain flex-shrink-0" />
+            {% endif %}
+
+            <!-- Sayfa Başlığı ve Açıklama -->
+            <div class="flex flex-col min-w-0 flex-1">
+              <h1 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 truncate">
+                {% block page_title %}Panel{% endblock %}
+              </h1>
+              {% block page_description %}{% endblock %}
+            </div>
+            {% else %}
+            <!-- Sadece Sayfa Başlığı (Otel bilgisi yok) -->
+            <div class="flex flex-col min-w-0 flex-1">
+              <h1 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 truncate">
+                {% block page_title_fallback %}Panel{% endblock %}
+              </h1>
+              {% block page_description_fallback %}{% endblock %}
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Right side actions -->
+          <div class="flex items-center gap-2">
+            <!-- Theme Toggle -->
+            <button id="theme-toggle"
+              class="p-2 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors">
+              <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+              </svg>
+              <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                  d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+                  clip-rule="evenodd"></path>
+              </svg>
+            </button>
+
+            <!-- Logout -->
+            {% if current_user %}
+            <a href="{{ url_for('logout') }}"
+              class="p-2 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+              title="Çıkış Yap">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+              </svg>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </header>
+
+      <!-- Flash Messages - Sadece toast olarak gösterilecek (JavaScript'te) -->
+
+      <!-- Page Content - Mobile optimized -->
+      <main class="flex-1 p-3 sm:p-4 md:p-6 overflow-x-hidden">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <!-- Overlay for mobile - Touch-friendly -->
+  <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden overlay-transition"></div>
+
+  <!-- PWA Install Prompt -->
+  <div id="pwa-install-banner"
+    class="hidden fixed bottom-0 left-0 right-0 bg-slate-800 text-white p-4 shadow-2xl z-50 animate-slide-up">
+    <div class="max-w-4xl mx-auto flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 flex-1">
+        <svg class="w-10 h-10 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+        </svg>
+        <div class="flex-1">
+          <h3 class="font-semibold text-sm sm:text-base">Uygulamayı Yükle</h3>
+          <p class="text-xs sm:text-sm text-slate-300">
+            Hızlı erişim için ana ekrana ekleyin
+          </p>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button id="pwa-install-dismiss" class="px-3 py-2 text-sm text-slate-300 hover:text-white transition-colors">
+          Kapat
+        </button>
+        <button id="pwa-install-button"
+          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-semibold transition-all transform hover:scale-105">
+          Yükle
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    // Service Worker Registration
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("/static/service-worker.js")
+          .then((registration) => {
+            console.log("✓ Service Worker registered:", registration.scope);
+
+            // Güncelleme kontrolü
+            registration.addEventListener("updatefound", () => {
+              const newWorker = registration.installing;
+              newWorker.addEventListener("statechange", () => {
+                if (
+                  newWorker.state === "installed" &&
+                  navigator.serviceWorker.controller
+                ) {
+                  // Yeni versiyon hazır - kullanıcıya bildir
                   if (
-                    newWorker.state === "installed" &&
-                    navigator.serviceWorker.controller
+                    confirm(
+                      "Yeni bir sürüm mevcut. Sayfayı yenilemek ister misiniz?"
+                    )
                   ) {
-                    // Yeni versiyon hazır - kullanıcıya bildir
-                    if (
-                      confirm(
-                        "Yeni bir sürüm mevcut. Sayfayı yenilemek ister misiniz?"
-                      )
-                    ) {
-                      window.location.reload();
-                    }
+                    window.location.reload();
                   }
-                });
+                }
               });
-            })
-            .catch((error) => {
-              console.log("Service Worker registration failed:", error);
             });
-        });
+          })
+          .catch((error) => {
+            console.log("Service Worker registration failed:", error);
+          });
+      });
+    }
+
+    // PWA Install Prompt
+    let deferredPrompt;
+    const installBanner = document.getElementById("pwa-install-banner");
+    const installButton = document.getElementById("pwa-install-button");
+    const dismissButton = document.getElementById("pwa-install-dismiss");
+
+    // beforeinstallprompt olayını yakala
+    window.addEventListener("beforeinstallprompt", (e) => {
+      // Varsayılan tarayıcı prompt'unu engelle
+      e.preventDefault();
+      deferredPrompt = e;
+
+      // Kullanıcı daha önce dismiss etmediyse banner'ı göster
+      const dismissed = localStorage.getItem("pwa-install-dismissed");
+      const dismissedTime = localStorage.getItem(
+        "pwa-install-dismissed-time"
+      );
+      const currentTime = new Date().getTime();
+      const dayInMs = 24 * 60 * 60 * 1000;
+
+      // 7 gün geçmişse tekrar göster
+      if (
+        !dismissed ||
+        (dismissedTime && currentTime - dismissedTime > 7 * dayInMs)
+      ) {
+        setTimeout(() => {
+          installBanner.classList.remove("hidden");
+        }, 3000); // 3 saniye sonra göster
       }
+    });
 
-      // PWA Install Prompt
-      let deferredPrompt;
-      const installBanner = document.getElementById("pwa-install-banner");
-      const installButton = document.getElementById("pwa-install-button");
-      const dismissButton = document.getElementById("pwa-install-dismiss");
+    // Install butonuna tıklanınca
+    if (installButton) {
+      installButton.addEventListener("click", async () => {
+        if (!deferredPrompt) return;
 
-      // beforeinstallprompt olayını yakala
-      window.addEventListener("beforeinstallprompt", (e) => {
-        // Varsayılan tarayıcı prompt'unu engelle
-        e.preventDefault();
-        deferredPrompt = e;
+        // Install prompt'unu göster
+        deferredPrompt.prompt();
 
-        // Kullanıcı daha önce dismiss etmediyse banner'ı göster
-        const dismissed = localStorage.getItem("pwa-install-dismissed");
-        const dismissedTime = localStorage.getItem(
-          "pwa-install-dismissed-time"
-        );
-        const currentTime = new Date().getTime();
-        const dayInMs = 24 * 60 * 60 * 1000;
+        // Kullanıcının cevabını bekle
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response: ${outcome}`);
 
-        // 7 gün geçmişse tekrar göster
-        if (
-          !dismissed ||
-          (dismissedTime && currentTime - dismissedTime > 7 * dayInMs)
-        ) {
-          setTimeout(() => {
-            installBanner.classList.remove("hidden");
-          }, 3000); // 3 saniye sonra göster
+        // Prompt'u kullanıldı, temizle
+        deferredPrompt = null;
+        installBanner.classList.add("hidden");
+
+        if (outcome === "accepted") {
+          localStorage.removeItem("pwa-install-dismissed");
         }
       });
+    }
 
-      // Install butonuna tıklanınca
-      if (installButton) {
-        installButton.addEventListener("click", async () => {
-          if (!deferredPrompt) return;
-
-          // Install prompt'unu göster
-          deferredPrompt.prompt();
-
-          // Kullanıcının cevabını bekle
-          const { outcome } = await deferredPrompt.userChoice;
-          console.log(`User response: ${outcome}`);
-
-          // Prompt'u kullanıldı, temizle
-          deferredPrompt = null;
-          installBanner.classList.add("hidden");
-
-          if (outcome === "accepted") {
-            localStorage.removeItem("pwa-install-dismissed");
-          }
-        });
-      }
-
-      // Dismiss butonuna tıklanınca
-      if (dismissButton) {
-        dismissButton.addEventListener("click", () => {
-          installBanner.classList.add("hidden");
-          localStorage.setItem("pwa-install-dismissed", "true");
-          localStorage.setItem(
-            "pwa-install-dismissed-time",
-            new Date().getTime()
-          );
-        });
-      }
-
-      // Uygulama yüklendiyse banner'ı gösterme
-      window.addEventListener("appinstalled", () => {
-        console.log("✓ PWA installed successfully");
+    // Dismiss butonuna tıklanınca
+    if (dismissButton) {
+      dismissButton.addEventListener("click", () => {
         installBanner.classList.add("hidden");
         localStorage.setItem("pwa-install-dismissed", "true");
+        localStorage.setItem(
+          "pwa-install-dismissed-time",
+          new Date().getTime()
+        );
       });
+    }
 
-      // Theme toggle artık theme.js tarafından yönetiliyor
-      // Eski localStorage'daki 'theme' anahtarını 'minibar-theme' anahtarına migrate et
-      const oldTheme = localStorage.getItem("theme");
-      if (oldTheme && !localStorage.getItem("minibar-theme")) {
-        localStorage.setItem("minibar-theme", oldTheme);
-        localStorage.removeItem("theme"); // Eski anahtarı temizle
-      }
+    // Uygulama yüklendiyse banner'ı gösterme
+    window.addEventListener("appinstalled", () => {
+      console.log("✓ PWA installed successfully");
+      installBanner.classList.add("hidden");
+      localStorage.setItem("pwa-install-dismissed", "true");
+    });
 
-      // Sidebar Toggle
-      const menuButton = document.getElementById("mobile-menu-button");
-      const closeButton = document.getElementById("sidebar-close-button");
-      const sidebar = document.getElementById("sidebar");
-      const sidebarOverlay = document.getElementById("sidebar-overlay");
+    // Theme toggle artık theme.js tarafından yönetiliyor
+    // Eski localStorage'daki 'theme' anahtarını 'minibar-theme' anahtarına migrate et
+    const oldTheme = localStorage.getItem("theme");
+    if (oldTheme && !localStorage.getItem("minibar-theme")) {
+      localStorage.setItem("minibar-theme", oldTheme);
+      localStorage.removeItem("theme"); // Eski anahtarı temizle
+    }
 
-      // Sidebar açma/kapama fonksiyonu
-      function toggleSidebar() {
-        const isHidden = sidebar.classList.contains("sidebar-hidden");
-        const isMobile = window.innerWidth < 768;
+    // Sidebar Toggle
+    const menuButton = document.getElementById("mobile-menu-button");
+    const closeButton = document.getElementById("sidebar-close-button");
+    const sidebar = document.getElementById("sidebar");
+    const sidebarOverlay = document.getElementById("sidebar-overlay");
 
-        if (isHidden) {
-          // Sidebar'ı aç
-          sidebar.classList.remove("sidebar-hidden");
-          sidebar.classList.add("sidebar-open");
+    // Sidebar açma/kapama fonksiyonu
+    function toggleSidebar() {
+      const isHidden = sidebar.classList.contains("sidebar-hidden");
+      const isMobile = window.innerWidth < 768;
 
-          // Overlay sadece mobile'da
-          if (isMobile) {
-            sidebarOverlay.classList.remove("hidden");
-            document.body.style.overflow = "hidden";
-          }
-        } else {
-          // Sidebar'ı kapat
-          sidebar.classList.add("sidebar-hidden");
-          sidebar.classList.remove("sidebar-open");
-          sidebarOverlay.classList.add("hidden");
-          document.body.style.overflow = "";
-        }
-      }
+      if (isHidden) {
+        // Sidebar'ı aç
+        sidebar.classList.remove("sidebar-hidden");
+        sidebar.classList.add("sidebar-open");
 
-      // Menu butonuna tıklama
-      if (menuButton) {
-        menuButton.addEventListener("click", function (e) {
-          e.stopPropagation();
-          toggleSidebar();
-        });
-      }
-
-      // Sidebar kapatma butonuna tıklama (tablet/desktop)
-      if (closeButton) {
-        closeButton.addEventListener("click", function (e) {
-          e.stopPropagation();
-          toggleSidebar();
-        });
-      }
-
-      // Overlay'e tıklayınca menüyü kapat
-      if (sidebarOverlay) {
-        sidebarOverlay.addEventListener("click", function () {
-          toggleSidebar();
-        });
-      }
-
-      // Menü linklerine tıklayınca loading göster ve mobile'da menüyü kapat
-      const menuLinks = sidebar.querySelectorAll("a");
-      menuLinks.forEach(function (link) {
-        link.addEventListener("click", function (e) {
-          // Sadece normal navigasyon linkleri için (# veya javascript: değilse)
-          const href = link.getAttribute("href");
-          if (href && href !== "#" && !href.startsWith("javascript:")) {
-            // Loading animasyonu göster
-            if (window.showLoading) {
-              window.showLoading("Yükleniyor...");
-            }
-          }
-
-          // Mobile'da menüyü kapat
-          if (window.innerWidth < 768) {
-            toggleSidebar();
-          }
-        });
-      });
-
-      // ESC tuşu ile menüyü kapat
-      document.addEventListener("keydown", function (e) {
-        if (
-          e.key === "Escape" &&
-          !sidebar.classList.contains("sidebar-hidden")
-        ) {
-          toggleSidebar();
-        }
-      });
-
-      // Sayfa yüklendiğinde ve ekran boyutu değiştiğinde sidebar durumunu ayarla
-      function adjustSidebarForScreenSize() {
-        const isMobile = window.innerWidth < 768;
-
+        // Overlay sadece mobile'da
         if (isMobile) {
-          // Mobile: Sidebar'ı kapat
-          sidebar.classList.add("sidebar-hidden");
-          sidebar.classList.remove("sidebar-open");
-          sidebarOverlay.classList.add("hidden");
-          document.body.style.overflow = "";
-        } else {
-          // Desktop/Tablet: Sidebar'ı aç, overlay'i kapat
-          sidebar.classList.remove("sidebar-hidden");
-          sidebar.classList.add("sidebar-open");
-          sidebarOverlay.classList.add("hidden");
-          document.body.style.overflow = "";
+          sidebarOverlay.classList.remove("hidden");
+          document.body.style.overflow = "hidden";
         }
+      } else {
+        // Sidebar'ı kapat
+        sidebar.classList.add("sidebar-hidden");
+        sidebar.classList.remove("sidebar-open");
+        sidebarOverlay.classList.add("hidden");
+        document.body.style.overflow = "";
       }
+    }
 
-      // Sayfa yüklendiğinde çalıştır
-      adjustSidebarForScreenSize();
-
-      // Ekran boyutu değiştiğinde sidebar durumunu ayarla
-      let resizeTimer;
-      window.addEventListener("resize", function () {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(adjustSidebarForScreenSize, 100);
+    // Menu butonuna tıklama
+    if (menuButton) {
+      menuButton.addEventListener("click", function (e) {
+        e.stopPropagation();
+        toggleSidebar();
       });
+    }
 
-      // Modern Notification System
-      function showNotification(category, message) {
-        // Kategori ayarları
-        const config = {
-          success: {
-            icon: `<svg class="w-16 h-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    // Sidebar kapatma butonuna tıklama (tablet/desktop)
+    if (closeButton) {
+      closeButton.addEventListener("click", function (e) {
+        e.stopPropagation();
+        toggleSidebar();
+      });
+    }
+
+    // Overlay'e tıklayınca menüyü kapat
+    if (sidebarOverlay) {
+      sidebarOverlay.addEventListener("click", function () {
+        toggleSidebar();
+      });
+    }
+
+    // Menü linklerine tıklayınca loading göster ve mobile'da menüyü kapat
+    const menuLinks = sidebar.querySelectorAll("a");
+    menuLinks.forEach(function (link) {
+      link.addEventListener("click", function (e) {
+        // Sadece normal navigasyon linkleri için (# veya javascript: değilse)
+        const href = link.getAttribute("href");
+        if (href && href !== "#" && !href.startsWith("javascript:")) {
+          // Loading animasyonu göster
+          if (window.showLoading) {
+            window.showLoading("Yükleniyor...");
+          }
+        }
+
+        // Mobile'da menüyü kapat
+        if (window.innerWidth < 768) {
+          toggleSidebar();
+        }
+      });
+    });
+
+    // ESC tuşu ile menüyü kapat
+    document.addEventListener("keydown", function (e) {
+      if (
+        e.key === "Escape" &&
+        !sidebar.classList.contains("sidebar-hidden")
+      ) {
+        toggleSidebar();
+      }
+    });
+
+    // Sayfa yüklendiğinde ve ekran boyutu değiştiğinde sidebar durumunu ayarla
+    function adjustSidebarForScreenSize() {
+      const isMobile = window.innerWidth < 768;
+
+      if (isMobile) {
+        // Mobile: Sidebar'ı kapat
+        sidebar.classList.add("sidebar-hidden");
+        sidebar.classList.remove("sidebar-open");
+        sidebarOverlay.classList.add("hidden");
+        document.body.style.overflow = "";
+      } else {
+        // Desktop/Tablet: Sidebar'ı aç, overlay'i kapat
+        sidebar.classList.remove("sidebar-hidden");
+        sidebar.classList.add("sidebar-open");
+        sidebarOverlay.classList.add("hidden");
+        document.body.style.overflow = "";
+      }
+    }
+
+    // Sayfa yüklendiğinde çalıştır
+    adjustSidebarForScreenSize();
+
+    // Ekran boyutu değiştiğinde sidebar durumunu ayarla
+    let resizeTimer;
+    window.addEventListener("resize", function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(adjustSidebarForScreenSize, 100);
+    });
+
+    // Modern Notification System
+    function showNotification(category, message) {
+      // Kategori ayarları
+      const config = {
+        success: {
+          icon: `<svg class="w-16 h-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                           </svg>`,
-            bgColor: "bg-green-50 dark:bg-green-900/20",
-            borderColor: "border-green-200 dark:border-green-800",
-            textColor: "text-green-800 dark:text-green-200",
-            buttonBg: "bg-green-600 hover:bg-green-700",
-            title: "Başarılı!",
-          },
-          danger: {
-            icon: `<svg class="w-16 h-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          bgColor: "bg-green-50 dark:bg-green-900/20",
+          borderColor: "border-green-200 dark:border-green-800",
+          textColor: "text-green-800 dark:text-green-200",
+          buttonBg: "bg-green-600 hover:bg-green-700",
+          title: "Başarılı!",
+        },
+        danger: {
+          icon: `<svg class="w-16 h-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                           </svg>`,
-            bgColor: "bg-red-50 dark:bg-red-900/20",
-            borderColor: "border-red-200 dark:border-red-800",
-            textColor: "text-red-800 dark:text-red-200",
-            buttonBg: "bg-red-600 hover:bg-red-700",
-            title: "Hata!",
-          },
-          warning: {
-            icon: `<svg class="w-16 h-16 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          bgColor: "bg-red-50 dark:bg-red-900/20",
+          borderColor: "border-red-200 dark:border-red-800",
+          textColor: "text-red-800 dark:text-red-200",
+          buttonBg: "bg-red-600 hover:bg-red-700",
+          title: "Hata!",
+        },
+        warning: {
+          icon: `<svg class="w-16 h-16 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                           </svg>`,
-            bgColor: "bg-yellow-50 dark:bg-yellow-900/20",
-            borderColor: "border-yellow-200 dark:border-yellow-800",
-            textColor: "text-yellow-800 dark:text-yellow-200",
-            buttonBg: "bg-yellow-600 hover:bg-yellow-700",
-            title: "Uyarı!",
-          },
-          info: {
-            icon: `<svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          bgColor: "bg-yellow-50 dark:bg-yellow-900/20",
+          borderColor: "border-yellow-200 dark:border-yellow-800",
+          textColor: "text-yellow-800 dark:text-yellow-200",
+          buttonBg: "bg-yellow-600 hover:bg-yellow-700",
+          title: "Uyarı!",
+        },
+        info: {
+          icon: `<svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                           </svg>`,
-            bgColor: "bg-blue-50 dark:bg-blue-900/20",
-            borderColor: "border-blue-200 dark:border-blue-800",
-            textColor: "text-blue-800 dark:text-blue-200",
-            buttonBg: "bg-blue-600 hover:bg-blue-700",
-            title: "Bilgi",
-          },
-        };
+          bgColor: "bg-blue-50 dark:bg-blue-900/20",
+          borderColor: "border-blue-200 dark:border-blue-800",
+          textColor: "text-blue-800 dark:text-blue-200",
+          buttonBg: "bg-blue-600 hover:bg-blue-700",
+          title: "Bilgi",
+        },
+      };
 
-        const settings = config[category] || config.info;
+      const settings = config[category] || config.info;
 
-        // Modal HTML oluştur
-        const modalHTML = `
+      // Modal HTML oluştur
+      const modalHTML = `
                 <div id="notification-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style="backdrop-filter: blur(4px);">
                     <div class="notification-modal ${settings.bgColor} ${settings.borderColor} border-2 rounded-2xl shadow-2xl max-w-md w-full p-8 relative">
                         <!-- Kapatma butonu -->
@@ -2558,393 +1933,411 @@
                 </div>
             `;
 
-        // Modal'ı sayfaya ekle
-        document.body.insertAdjacentHTML("beforeend", modalHTML);
+      // Modal'ı sayfaya ekle
+      document.body.insertAdjacentHTML("beforeend", modalHTML);
 
-        // Overlay'e tıklanınca kapat
-        document
-          .getElementById("notification-overlay")
-          .addEventListener("click", function (e) {
-            if (e.target.id === "notification-overlay") {
-              closeNotification();
-            }
-          });
-
-        // ESC tuşu ile kapat
-        document.addEventListener("keydown", function escHandler(e) {
-          if (e.key === "Escape") {
+      // Overlay'e tıklanınca kapat
+      document
+        .getElementById("notification-overlay")
+        .addEventListener("click", function (e) {
+          if (e.target.id === "notification-overlay") {
             closeNotification();
-            document.removeEventListener("keydown", escHandler);
           }
         });
 
-        // Otomatik kapanma (5 saniye)
-        setTimeout(function () {
+      // ESC tuşu ile kapat
+      document.addEventListener("keydown", function escHandler(e) {
+        if (e.key === "Escape") {
           closeNotification();
-        }, 5000);
-      }
-
-      function closeNotification() {
-        const overlay = document.getElementById("notification-overlay");
-        if (overlay) {
-          const modal = overlay.querySelector(".notification-modal");
-          modal.classList.add("closing");
-          setTimeout(function () {
-            overlay.remove();
-          }, 300);
-        }
-      }
-
-      // Sayfa yüklendiğinde flash mesajları göster
-      document.addEventListener("DOMContentLoaded", function () {
-        const flashData = document.getElementById("flash-messages-data");
-        if (flashData) {
-          const messages = flashData.querySelectorAll("[data-category]");
-          messages.forEach(function (msg, index) {
-            setTimeout(function () {
-              showNotification(msg.dataset.category, msg.dataset.message);
-            }, index * 400); // Birden fazla mesaj varsa sırayla göster
-          });
+          document.removeEventListener("keydown", escHandler);
         }
       });
-    </script>
 
-    <!-- Mobil Tablo Scroll İndikatörü -->
-    <script>
-      // Tablo scroll indicator
-      function initTableScrollIndicators() {
-        const tableWrappers = document.querySelectorAll(".table-wrapper");
+      // Otomatik kapanma (5 saniye)
+      setTimeout(function () {
+        closeNotification();
+      }, 5000);
+    }
 
-        tableWrappers.forEach((wrapper) => {
-          function checkScrollEnd() {
-            const isScrolledToEnd =
-              wrapper.scrollLeft + wrapper.clientWidth >=
-              wrapper.scrollWidth - 5;
-            if (isScrolledToEnd) {
-              wrapper.classList.add("scrolled-end");
-            } else {
-              wrapper.classList.remove("scrolled-end");
+    function closeNotification() {
+      const overlay = document.getElementById("notification-overlay");
+      if (overlay) {
+        const modal = overlay.querySelector(".notification-modal");
+        modal.classList.add("closing");
+        setTimeout(function () {
+          overlay.remove();
+        }, 300);
+      }
+    }
+
+    // Sayfa yüklendiğinde flash mesajları göster
+    document.addEventListener("DOMContentLoaded", function () {
+      const flashData = document.getElementById("flash-messages-data");
+      if (flashData) {
+        const messages = flashData.querySelectorAll("[data-category]");
+        messages.forEach(function (msg, index) {
+          setTimeout(function () {
+            showNotification(msg.dataset.category, msg.dataset.message);
+          }, index * 400); // Birden fazla mesaj varsa sırayla göster
+        });
+      }
+    });
+  </script>
+
+  <!-- Mobil Tablo Scroll İndikatörü -->
+  <script>
+    // Tablo scroll indicator
+    function initTableScrollIndicators() {
+      const tableWrappers = document.querySelectorAll(".table-wrapper");
+
+      tableWrappers.forEach((wrapper) => {
+        function checkScrollEnd() {
+          const isScrolledToEnd =
+            wrapper.scrollLeft + wrapper.clientWidth >=
+            wrapper.scrollWidth - 5;
+          if (isScrolledToEnd) {
+            wrapper.classList.add("scrolled-end");
+          } else {
+            wrapper.classList.remove("scrolled-end");
+          }
+        }
+
+        wrapper.addEventListener("scroll", checkScrollEnd);
+        checkScrollEnd(); // İlk kontrol
+      });
+    }
+
+    // Sayfa yüklendiğinde ve dinamik içerik eklendiğinde çalıştır
+    if (document.readyState === "loading") {
+      document.addEventListener(
+        "DOMContentLoaded",
+        initTableScrollIndicators
+      );
+    } else {
+      initTableScrollIndicators();
+    }
+
+    // MutationObserver ile dinamik tablolar için
+    const observer = new MutationObserver(() => {
+      initTableScrollIndicators();
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  </script>
+
+  <!-- Toast Notification System -->
+  <script src="{{ url_for('static', filename='js/toast.js') }}" defer></script>
+
+  <!-- Loading & Progress Indicators -->
+  >
+
+  <!-- Dark Mode / Theme Switcher -->
+  <script src="{{ url_for('static', filename='js/theme.js') }}" defer></script>
+
+  <!-- Gelişmiş Tablo Arama ve Filtreleme Sistemi -->
+  <script src="{{ url_for('static', filename='js/table-search-filter.js') }}" defer></script>
+
+  <!-- Form Validation System -->
+  <script src="{{ url_for('static', filename='js/form-validation.js') }}" defer></script>
+
+  <!-- Flask Flash Mesajları için Toast -->
+  <script>
+    // Flask flash mesajlarını toast olarak göster
+    {% with messages = get_flashed_messages(with_categories = true) %}
+    {% if messages %}
+    document.addEventListener('DOMContentLoaded', function () {
+      {% for category, message in messages %}
+      // Flask kategorilerini toast türlerine çevir
+      let toastType = '{{ category }}';
+      let toastMessage = {{ message| tojson
+    }};
+    if (toastType === 'success') {
+      toastSuccess(toastMessage);
+    } else if (toastType === 'danger' || toastType === 'error') {
+      toastError(toastMessage);
+    } else if (toastType === 'warning') {
+      toastWarning(toastMessage);
+    } else {
+      toastInfo(toastMessage);
+    }
+    {% endfor %}
+      } );
+    {% endif %}
+    {% endwith %}
+  </script>
+
+  <!-- Global Navigation Loading Interceptor -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      // Tüm navigasyon linklerini yakala (sidebar ve navbar)
+      const allNavigationLinks = document.querySelectorAll(
+        'a[href]:not([target="_blank"]):not([download])'
+      );
+
+      allNavigationLinks.forEach(function (link) {
+        link.addEventListener("click", function (e) {
+          const href = link.getAttribute("href");
+
+          // Sadece gerçek sayfa navigasyonları için loading göster
+          // # veya javascript: linkleri hariç
+          if (
+            href &&
+            href !== "#" &&
+            !href.startsWith("javascript:") &&
+            !href.startsWith("mailto:") &&
+            !href.startsWith("tel:")
+          ) {
+            // Loading animasyonu göster
+            if (window.showLoading) {
+              // Link'te title varsa onu kullan, yoksa "Yükleniyor..."
+              const loadingText =
+                link.getAttribute("title") || "Yükleniyor...";
+              window.showLoading(loadingText);
             }
           }
-
-          wrapper.addEventListener("scroll", checkScrollEnd);
-          checkScrollEnd(); // İlk kontrol
         });
-      }
+      });
 
-      // Sayfa yüklendiğinde ve dinamik içerik eklendiğinde çalıştır
-      if (document.readyState === "loading") {
-        document.addEventListener(
-          "DOMContentLoaded",
-          initTableScrollIndicators
-        );
+      // Sayfa yüklendiğinde loading'i gizle (geri buton durumu için)
+      window.addEventListener("pageshow", function (event) {
+        if (window.hideLoading) {
+          window.hideLoading();
+        }
+      });
+    });
+  </script>
+
+  <!-- Global Notification Functions -->
+  <script>
+    // SweetAlert2 Dark Mode Konfigürasyonu
+    // Basit fonksiyonlar (SweetAlert2 kaldırıldı)
+    window.showSuccess = (message, title = "Başarılı!") => {
+      if (window.showToast) {
+        window.showToast(message, "success");
       } else {
-        initTableScrollIndicators();
+        alert(`${title}\n${message}`);
       }
+    };
 
-      // MutationObserver ile dinamik tablolar için
-      const observer = new MutationObserver(() => {
-        initTableScrollIndicators();
+    window.showError = (message, title = "Hata!") => {
+      if (window.showToast) {
+        window.showToast(message, "error");
+      } else {
+        alert(`${title}\n${message}`);
+      }
+    };
+
+    window.showWarning = (message, title = "Dikkat!") => {
+      if (window.showToast) {
+        window.showToast(message, "warning");
+      } else {
+        alert(`${title}\n${message}`);
+      }
+    };
+
+    window.showInfo = (message, title = "Bilgi") => {
+      if (window.showToast) {
+        window.showToast(message, "info");
+      } else {
+        alert(`${title}\n${message}`);
+      }
+    };
+
+    window.showConfirm = (message, title = "Emin misiniz?") => {
+      return Promise.resolve({
+        isConfirmed: confirm(`${title}\n${message}`),
       });
+    };
 
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-      });
-    </script>
+    window.showLoading = (message = "İşlem yapılıyor...") => {
+      if (window.Loading) {
+        window.Loading.showOverlay(message);
+      }
+    };
 
-    <!-- Toast Notification System -->
-    <script
-      src="{{ url_for('static', filename='js/toast.js') }}"
-      defer
-    ></script>
+    window.hideLoading = () => {
+      if (window.Loading) {
+        window.Loading.hideOverlay();
+      }
+    };
+  </script>
 
-    <!-- Loading & Progress Indicators -->
-    >
+  <style>
+    /* SweetAlert2 stilleri kaldırıldı */
+    .removed-swal-styles {
+      background-color: #1e293b !important;
+      color: #f1f5f9 !important;
+    }
 
-    <!-- Dark Mode / Theme Switcher -->
-    <script
-      src="{{ url_for('static', filename='js/theme.js') }}"
-      defer
-    ></script>
+    .dark .swal2-title {
+      color: #f1f5f9 !important;
+    }
 
-    <!-- Gelişmiş Tablo Arama ve Filtreleme Sistemi -->
-    <script
-      src="{{ url_for('static', filename='js/table-search-filter.js') }}"
-      defer
-    ></script>
+    .dark .swal2-html-container {
+      color: #cbd5e1 !important;
+    }
 
-    <!-- Form Validation System -->
-    <script
-      src="{{ url_for('static', filename='js/form-validation.js') }}"
-      defer
-    ></script>
+    .dark .swal2-icon.swal2-success [class^="swal2-success-line"] {
+      background-color: #10b981 !important;
+    }
 
-    <!-- Flask Flash Mesajları için Toast -->
-    <script>
-      // Flask flash mesajlarını toast olarak göster
-      {% with messages = get_flashed_messages( with_categories = true ) %}
-      {% if messages %}
-      document.addEventListener( 'DOMContentLoaded', function () {
-          {% for category, message in messages %}
-          // Flask kategorilerini toast türlerine çevir
-          let toastType = '{{ category }}';
-          let toastMessage = {{ message|tojson }};
-          if ( toastType === 'success' ) {
-              toastSuccess( toastMessage );
-          } else if ( toastType === 'danger' || toastType === 'error' ) {
-              toastError( toastMessage );
-          } else if ( toastType === 'warning' ) {
-              toastWarning( toastMessage );
-          } else {
-              toastInfo( toastMessage );
-          }
-          {% endfor %}
-      } );
-      {% endif %}
-      {% endwith %}
-    </script>
+    .dark .swal2-icon.swal2-success .swal2-success-ring {
+      border-color: rgba(16, 185, 129, 0.3) !important;
+    }
 
-    <!-- Global Navigation Loading Interceptor -->
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        // Tüm navigasyon linklerini yakala (sidebar ve navbar)
-        const allNavigationLinks = document.querySelectorAll(
-          'a[href]:not([target="_blank"]):not([download])'
-        );
+    .dark .swal2-icon.swal2-error [class^="swal2-x-mark-line"] {
+      background-color: #ef4444 !important;
+    }
 
-        allNavigationLinks.forEach(function (link) {
-          link.addEventListener("click", function (e) {
-            const href = link.getAttribute("href");
+    .dark .swal2-timer-progress-bar {
+      background: #3b82f6 !important;
+    }
 
-            // Sadece gerçek sayfa navigasyonları için loading göster
-            // # veya javascript: linkleri hariç
-            if (
-              href &&
-              href !== "#" &&
-              !href.startsWith("javascript:") &&
-              !href.startsWith("mailto:") &&
-              !href.startsWith("tel:")
-            ) {
-              // Loading animasyonu göster
-              if (window.showLoading) {
-                // Link'te title varsa onu kullan, yoksa "Yükleniyor..."
-                const loadingText =
-                  link.getAttribute("title") || "Yükleniyor...";
-                window.showLoading(loadingText);
+    /* Choices.js Özel Stiller - Temaya Uygun */
+    .choices {
+      margin-bottom: 0 !important;
+    }
+
+    .choices__inner {
+      background-color: white !important;
+      border: 2px solid #cbd5e1 !important;
+      border-radius: 0.5rem !important;
+      padding: 0.5rem !important;
+      min-height: 44px !important;
+      font-size: 0.875rem !important;
+    }
+
+    .dark .choices__inner {
+      background-color: #1e293b !important;
+      border-color: #475569 !important;
+      color: #f1f5f9 !important;
+    }
+
+    .choices[data-type*="select-multiple"] .choices__inner {
+      min-height: 80px !important;
+      padding: 0.75rem !important;
+    }
+
+    .choices__input {
+      background-color: transparent !important;
+      color: inherit !important;
+    }
+
+    .dark .choices__input {
+      color: #f1f5f9 !important;
+    }
+
+    .choices__list--multiple .choices__item {
+      background-color: #4f46e5 !important;
+      border: none !important;
+      color: white !important;
+      padding: 0.5rem 0.75rem !important;
+      border-radius: 0.375rem !important;
+      font-size: 0.875rem !important;
+      font-weight: 500 !important;
+      margin: 0.25rem !important;
+    }
+
+    .choices__list--multiple .choices__item.is-highlighted {
+      background-color: #4338ca !important;
+    }
+
+    .choices__button {
+      border-left: 1px solid rgba(255, 255, 255, 0.3) !important;
+      opacity: 1 !important;
+      padding: 0 8px !important;
+    }
+
+    .choices__button:hover {
+      opacity: 0.8 !important;
+    }
+
+    .choices__list--dropdown {
+      background-color: white !important;
+      border: 2px solid #c7d2fe !important;
+      border-radius: 0.5rem !important;
+      margin-top: 4px !important;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .dark .choices__list--dropdown {
+      background-color: #1e293b !important;
+      border-color: #4f46e5 !important;
+    }
+
+    .choices__list--dropdown .choices__item {
+      padding: 0.75rem 1rem !important;
+      font-size: 0.875rem !important;
+      color: #334155 !important;
+    }
+
+    .dark .choices__list--dropdown .choices__item {
+      color: #f1f5f9 !important;
+    }
+
+    .choices__list--dropdown .choices__item--selectable.is-highlighted {
+      background-color: #4f46e5 !important;
+      color: white !important;
+    }
+
+    .choices.is-focused .choices__inner {
+      border-color: #4f46e5 !important;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1) !important;
+    }
+
+    .choices.is-disabled .choices__inner {
+      background-color: #f1f5f9 !important;
+      cursor: not-allowed !important;
+      opacity: 0.6 !important;
+    }
+
+    .dark .choices.is-disabled .choices__inner {
+      background-color: #0f172a !important;
+    }
+
+    .dark .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+      background-color: #4f46e5 !important;
+      color: white !important;
+    }
+  </style>
+
+  <!-- PWA Kurulum Uyarısı -->
+  <script src="{{ url_for('static', filename='js/pwa-install.js') }}"></script>
+
+  <!-- Görev Badge Güncelleme (Kat Sorumlusu) -->
+  {% if current_user and current_user.rol == 'kat_sorumlusu' %}
+  <script>
+    // Bekleyen görev sayısını güncelle
+    function updateGorevBadge() {
+      fetch("/gorevler/api/bekleyen")
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            const badge = document.getElementById("gorev-badge");
+            if (badge) {
+              const bekleyen = data.bekleyen + data.dnd;
+              if (bekleyen > 0) {
+                badge.textContent = bekleyen;
+                badge.classList.remove("hidden");
+              } else {
+                badge.classList.add("hidden");
               }
             }
-          });
-        });
-
-        // Sayfa yüklendiğinde loading'i gizle (geri buton durumu için)
-        window.addEventListener("pageshow", function (event) {
-          if (window.hideLoading) {
-            window.hideLoading();
           }
-        });
-      });
-    </script>
+        })
+        .catch((err) => console.log("Görev badge güncelleme hatası:", err));
+    }
 
-    <!-- Global Notification Functions -->
-    <script>
-      // SweetAlert2 Dark Mode Konfigürasyonu
-      // Basit fonksiyonlar (SweetAlert2 kaldırıldı)
-      window.showSuccess = (message, title = "Başarılı!") => {
-        if (window.showToast) {
-          window.showToast(message, "success");
-        } else {
-          alert(`${title}\n${message}`);
-        }
-      };
+    // Sayfa yüklendiğinde ve her 60 saniyede bir güncelle
+    document.addEventListener("DOMContentLoaded", function () {
+      updateGorevBadge();
+      setInterval(updateGorevBadge, 60000);
+    });
+  </script>
+  {% endif %} {% block extra_scripts %}{% endblock %}
+</body>
 
-      window.showError = (message, title = "Hata!") => {
-        if (window.showToast) {
-          window.showToast(message, "error");
-        } else {
-          alert(`${title}\n${message}`);
-        }
-      };
-
-      window.showWarning = (message, title = "Dikkat!") => {
-        if (window.showToast) {
-          window.showToast(message, "warning");
-        } else {
-          alert(`${title}\n${message}`);
-        }
-      };
-
-      window.showInfo = (message, title = "Bilgi") => {
-        if (window.showToast) {
-          window.showToast(message, "info");
-        } else {
-          alert(`${title}\n${message}`);
-        }
-      };
-
-      window.showConfirm = (message, title = "Emin misiniz?") => {
-        return Promise.resolve({
-          isConfirmed: confirm(`${title}\n${message}`),
-        });
-      };
-
-      window.showLoading = (message = "İşlem yapılıyor...") => {
-        if (window.Loading) {
-          window.Loading.showOverlay(message);
-        }
-      };
-
-      window.hideLoading = () => {
-        if (window.Loading) {
-          window.Loading.hideOverlay();
-        }
-      };
-    </script>
-
-    <style>
-      /* SweetAlert2 stilleri kaldırıldı */
-      .removed-swal-styles {
-        background-color: #1e293b !important;
-        color: #f1f5f9 !important;
-      }
-
-      .dark .swal2-title {
-        color: #f1f5f9 !important;
-      }
-
-      .dark .swal2-html-container {
-        color: #cbd5e1 !important;
-      }
-
-      .dark .swal2-icon.swal2-success [class^="swal2-success-line"] {
-        background-color: #10b981 !important;
-      }
-
-      .dark .swal2-icon.swal2-success .swal2-success-ring {
-        border-color: rgba(16, 185, 129, 0.3) !important;
-      }
-
-      .dark .swal2-icon.swal2-error [class^="swal2-x-mark-line"] {
-        background-color: #ef4444 !important;
-      }
-
-      .dark .swal2-timer-progress-bar {
-        background: #3b82f6 !important;
-      }
-
-      /* Choices.js Özel Stiller - Temaya Uygun */
-      .choices {
-        margin-bottom: 0 !important;
-      }
-
-      .choices__inner {
-        background-color: white !important;
-        border: 2px solid #cbd5e1 !important;
-        border-radius: 0.5rem !important;
-        padding: 0.5rem !important;
-        min-height: 44px !important;
-        font-size: 0.875rem !important;
-      }
-
-      .dark .choices__inner {
-        background-color: #1e293b !important;
-        border-color: #475569 !important;
-        color: #f1f5f9 !important;
-      }
-
-      .choices[data-type*="select-multiple"] .choices__inner {
-        min-height: 80px !important;
-        padding: 0.75rem !important;
-      }
-
-      .choices__input {
-        background-color: transparent !important;
-        color: inherit !important;
-      }
-
-      .dark .choices__input {
-        color: #f1f5f9 !important;
-      }
-
-      .choices__list--multiple .choices__item {
-        background-color: #4f46e5 !important;
-        border: none !important;
-        color: white !important;
-        padding: 0.5rem 0.75rem !important;
-        border-radius: 0.375rem !important;
-        font-size: 0.875rem !important;
-        font-weight: 500 !important;
-        margin: 0.25rem !important;
-      }
-
-      .choices__list--multiple .choices__item.is-highlighted {
-        background-color: #4338ca !important;
-      }
-
-      .choices__button {
-        border-left: 1px solid rgba(255, 255, 255, 0.3) !important;
-        opacity: 1 !important;
-        padding: 0 8px !important;
-      }
-
-      .choices__button:hover {
-        opacity: 0.8 !important;
-      }
-
-      .choices__list--dropdown {
-        background-color: white !important;
-        border: 2px solid #c7d2fe !important;
-        border-radius: 0.5rem !important;
-        margin-top: 4px !important;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
-      }
-
-      .dark .choices__list--dropdown {
-        background-color: #1e293b !important;
-        border-color: #4f46e5 !important;
-      }
-
-      .choices__list--dropdown .choices__item {
-        padding: 0.75rem 1rem !important;
-        font-size: 0.875rem !important;
-        color: #334155 !important;
-      }
-
-      .dark .choices__list--dropdown .choices__item {
-        color: #f1f5f9 !important;
-      }
-
-      .choices__list--dropdown .choices__item--selectable.is-highlighted {
-        background-color: #4f46e5 !important;
-        color: white !important;
-      }
-
-      .choices.is-focused .choices__inner {
-        border-color: #4f46e5 !important;
-        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1) !important;
-      }
-
-      .choices.is-disabled .choices__inner {
-        background-color: #f1f5f9 !important;
-        cursor: not-allowed !important;
-        opacity: 0.6 !important;
-      }
-
-      .dark .choices.is-disabled .choices__inner {
-        background-color: #0f172a !important;
-      }
-
-      .dark
-        .select2-container--default
-        .select2-results__option--highlighted.select2-results__option--selectable {
-        background-color: #4f46e5 !important;
-        color: white !important;
-      }
-    </style>
-
-    <!-- PWA Kurulum Uyarısı -->
-    <script src="{{ url_for('static', filename='js/pwa-install.js') }}"></script>
-
-    {% block extra_scripts %}{% endblock %}
-  </body>
 </html>

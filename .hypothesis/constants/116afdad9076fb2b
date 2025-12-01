@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\utils\occupancy_service.py
+# hypothesis_version: 6.148.2
+
+[100, 'Cuma', 'Cumartesi', 'Pazar', 'Pazartesi', 'Perşembe', 'Salı', 'bos_oda', 'bos_odalar', 'cikis_sayisi', 'dolu', 'dolu_oda', 'dolu_oda_sayisi', 'dolu_odalar', 'doluluk_orani', 'gecmis_kayitlar', 'gelecek_rezervasyon', 'giris_sayisi', 'gun_adi', 'kalan_gun', 'kat', 'kat_bazli', 'mevcut_misafir', 'misafir', 'oda', 'odalar', 'tarih', 'toplam_oda', 'toplam_oda_sayisi', 'Çarşamba']

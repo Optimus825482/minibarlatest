@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\routes\kat_sorumlusu_qr_routes.py
+# hypothesis_version: 6.148.2
+
+[400, 403, 404, 429, 500, 'Geçersiz token', 'POST', 'Token bulunamadı', 'data', 'kat_adi', 'kat_id', 'kat_sorumlusu', 'kat_sorumlusu_qr', 'kullanici_id', 'message', 'oda_id', 'oda_no', 'personel_kontrol', 'qr_okutma', 'success', 'token']

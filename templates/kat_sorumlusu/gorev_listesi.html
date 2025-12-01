@@ -1,0 +1,682 @@
+{% extends "base.html" %}
+{% block title %}Görev Listesi - Minibar Takip Sistemi{% endblock %}
+{% block page_title %}Günlük Görev Listesi{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <!-- Tarih Seçici ve Özet -->
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+      <h3 class="text-lg font-medium text-slate-900 dark:text-white">
+        <i class="fas fa-tasks mr-2 text-slate-600 dark:text-slate-400"></i>
+        {{ tarih.strftime('%d.%m.%Y') }} - Görev Durumu
+      </h3>
+      <form method="GET" class="flex items-center gap-2">
+        <input type="date" name="tarih" value="{{ tarih.isoformat() }}"
+          class="rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm" />
+        <button type="submit" class="px-4 py-2 bg-slate-600 text-white rounded-lg text-sm">
+          <i class="fas fa-search mr-1"></i> Göster
+        </button>
+      </form>
+    </div>
+
+    <!-- Özet Kartları -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+        <div class="text-slate-500 dark:text-slate-400 text-sm mb-1">Toplam</div>
+        <div class="text-3xl font-bold text-slate-900 dark:text-white">{{ ozet.toplam }}</div>
+      </div>
+      <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+        <div class="text-green-600 dark:text-green-400 text-sm mb-1">Tamamlanan</div>
+        <div class="text-3xl font-bold text-green-700 dark:text-green-300">{{ ozet.tamamlanan }}</div>
+      </div>
+      <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800">
+        <div class="text-yellow-600 dark:text-yellow-400 text-sm mb-1">Bekleyen</div>
+        <div class="text-3xl font-bold text-yellow-700 dark:text-yellow-300">{{ ozet.bekleyen }}</div>
+      </div>
+      <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+        <div class="text-orange-600 dark:text-orange-400 text-sm mb-1">DND</div>
+        <div class="text-3xl font-bold text-orange-700 dark:text-orange-300">{{ ozet.dnd }}</div>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="bg-slate-100 dark:bg-slate-700 rounded-lg p-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Günlük İlerleme</span>
+        <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400">{{ ozet.tamamlanan }}/{{ ozet.toplam }}
+          (%{{ ozet.tamamlanma_orani }})</span>
+      </div>
+      <div class="w-full bg-slate-300 dark:bg-slate-600 rounded-full h-4">
+        <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-4 rounded-full transition-all duration-500"
+          style="width: {{ ozet.tamamlanma_orani }}%"></div>
+      </div>
+    </div>
+  </div>
+  <!-- 
+Tab Navigasyonu -->
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow">
+    <div class="border-b border-slate-200 dark:border-slate-700 overflow-x-auto">
+      <nav class="flex -mb-px">
+        <button onclick="showTab('tumu')" id="tab-tumu"
+          class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600 dark:text-blue-400 whitespace-nowrap">
+          <i class="fas fa-list mr-2"></i>Tümü
+        </button>
+        <button onclick="showTab('inhouse')" id="tab-inhouse"
+          class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 dark:text-slate-400 whitespace-nowrap">
+          <i class="fas fa-home mr-2"></i>In House
+        </button>
+        <button onclick="showTab('arrivals')" id="tab-arrivals"
+          class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 dark:text-slate-400 whitespace-nowrap">
+          <i class="fas fa-plane-arrival mr-2"></i>Arrivals
+        </button>
+        <button onclick="showTab('departures')" id="tab-departures"
+          class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 dark:text-slate-400 whitespace-nowrap">
+          <i class="fas fa-plane-departure mr-2"></i>Departures
+        </button>
+        <button onclick="showTab('dnd')" id="tab-dnd"
+          class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 dark:text-slate-400 whitespace-nowrap">
+          <i class="fas fa-door-closed mr-2"></i>DND ({{ ozet.dnd }})
+        </button>
+        <button onclick="showTab('tamamlanan')" id="tab-tamamlanan"
+          class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-transparent text-slate-500 dark:text-slate-400 whitespace-nowrap">
+          <i class="fas fa-check-circle mr-2"></i>Tamamlanan
+        </button>
+      </nav>
+    </div>
+
+    <!-- Tümü Tab - Kata Göre Gruplu -->
+    <div id="content-tumu" class="tab-content p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="text-md font-medium text-slate-900 dark:text-white">
+          <i class="fas fa-layer-group mr-2 text-slate-400"></i>
+          Tüm Görevler
+          <span class="text-sm font-normal text-slate-500 dark:text-slate-400 ml-2">(Kata göre gruplu)</span>
+        </h4>
+        <button onclick="yazdirTab('tumu')" class="px-3 py-1.5 bg-slate-600 text-white rounded-lg text-sm">
+          <i class="fas fa-print mr-1"></i>Yazdır
+        </button>
+      </div>
+      {% set tum_bekleyen = bekleyen|list %}
+      {% if tum_bekleyen %}
+      <div class="space-y-6" id="print-tumu">
+        {% set katlar = tum_bekleyen|map(attribute='kat_adi')|unique|list %}
+        {% for kat_adi in katlar %}
+        {% set kat_gorevleri = tum_bekleyen|selectattr('kat_adi', 'equalto', kat_adi)|list %}
+        {% if kat_gorevleri %}
+        <div class="kat-grup">
+          <div class="flex items-center gap-2 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">
+            <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
+              <span class="text-indigo-600 dark:text-indigo-400 font-bold text-lg">{{ kat_gorevleri[0].kat_no if
+                kat_gorevleri[0].kat_no is not none else '-' }}</span>
+            </div>
+            <div>
+              <h5 class="font-semibold text-slate-900 dark:text-white">{{ kat_adi or 'Belirsiz' }}</h5>
+              <span class="text-xs text-slate-500 dark:text-slate-400">{{ kat_gorevleri|length }} görev</span>
+            </div>
+          </div>
+          <div class="space-y-2 pl-2">
+            {% for gorev in kat_gorevleri %}
+            <div class="gorev-item flex items-center p-3 rounded-lg border 
+              {% if gorev.gorev_tipi == 'arrival_kontrol' %}bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800
+              {% elif gorev.gorev_tipi == 'departure_kontrol' %}bg-teal-50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-800
+              {% else %}bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800{% endif %}"
+              data-kat="{{ gorev.kat_adi or 'Kat ' ~ gorev.kat_no if gorev.kat_no else '-' }}"
+              data-oda="{{ gorev.oda_no }}"
+              data-tip="{% if gorev.gorev_tipi == 'arrival_kontrol' %}Arrival{% elif gorev.gorev_tipi == 'departure_kontrol' %}Departure{% else %}In House{% endif %}"
+              data-detay="{% if gorev.gorev_tipi == 'arrival_kontrol' and gorev.varis_saati %}Varış: {{ gorev.varis_saati[:5] }}{% elif gorev.gorev_tipi == 'departure_kontrol' and gorev.cikis_saati %}Çıkış: {{ gorev.cikis_saati[:5] }}{% elif gorev.dnd_sayisi > 0 %}DND: {{ gorev.dnd_sayisi }}x{% else %}Bekliyor{% endif %}"
+              data-durum="{% if gorev.dnd_sayisi > 0 %}DND{% else %}Bekliyor{% endif %}">
+              <div class="flex items-center gap-3 flex-1">
+                <div class="w-12 h-12 rounded-lg flex items-center justify-center
+                  {% if gorev.gorev_tipi == 'arrival_kontrol' %}bg-purple-100 dark:bg-purple-900/30
+                  {% elif gorev.gorev_tipi == 'departure_kontrol' %}bg-teal-100 dark:bg-teal-900/30
+                  {% else %}bg-blue-100 dark:bg-blue-900/30{% endif %}">
+                  <span class="font-bold text-lg
+                    {% if gorev.gorev_tipi == 'arrival_kontrol' %}text-purple-600 dark:text-purple-400
+                    {% elif gorev.gorev_tipi == 'departure_kontrol' %}text-teal-600 dark:text-teal-400
+                    {% else %}text-blue-600 dark:text-blue-400{% endif %}">{{ gorev.oda_no }}</span>
+                </div>
+                <div class="flex-1">
+                  <div class="font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                    Oda {{ gorev.oda_no }}
+                    <span class="text-xs px-2 py-0.5 rounded-full
+                      {% if gorev.gorev_tipi == 'arrival_kontrol' %}bg-purple-200 text-purple-700 dark:bg-purple-800 dark:text-purple-200
+                      {% elif gorev.gorev_tipi == 'departure_kontrol' %}bg-teal-200 text-teal-700 dark:bg-teal-800 dark:text-teal-200
+                      {% else %}bg-blue-200 text-blue-700 dark:bg-blue-800 dark:text-blue-200{% endif %}">
+                      {% if gorev.gorev_tipi == 'arrival_kontrol' %}Arrival
+                      {% elif gorev.gorev_tipi == 'departure_kontrol' %}Departure
+                      {% else %}In House{% endif %}
+                    </span>
+                  </div>
+                  <div class="text-sm text-slate-500 dark:text-slate-400">
+                    {% if gorev.gorev_tipi == 'arrival_kontrol' and gorev.varis_saati %}
+                    <i class="fas fa-clock mr-1"></i>Varış: {{ gorev.varis_saati[:5] }}
+                    {% elif gorev.gorev_tipi == 'departure_kontrol' and gorev.cikis_saati %}
+                    <i class="fas fa-sign-out-alt mr-1"></i>Çıkış: {{ gorev.cikis_saati[:5] }}
+                    {% elif gorev.dnd_sayisi > 0 %}
+                    <span class="text-orange-600 dark:text-orange-400">DND: {{ gorev.dnd_sayisi }}x</span>
+                    {% else %}Bekliyor{% endif %}
+                  </div>
+                </div>
+                {% if gorev.countdown %}
+                <div class="flex flex-col items-center">
+                  <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Kalan</div>
+                  <div data-saat="{{ gorev.varis_saati or gorev.cikis_saati }}" class="countdown-timer px-3 py-1 rounded-lg text-sm font-mono font-bold
+                    {% if gorev.countdown.gecmis %}bg-gray-500 text-white
+                    {% elif gorev.countdown.uyari %}bg-red-500 text-white animate-pulse
+                    {% elif gorev.countdown.toplam_saniye and gorev.countdown.toplam_saniye < 1800 %}bg-yellow-500 text-white
+                    {% else %}bg-indigo-500 text-white{% endif %}">
+                    {% if gorev.countdown.gecmis %}GEÇTİ
+                    {% else %}{{ '%02d'|format(gorev.countdown.saat) }}:{{ '%02d'|format(gorev.countdown.dakika) }}:{{
+                    '%02d'|format(gorev.countdown.saniye) }}{% endif %}
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-8 text-slate-500 dark:text-slate-400">
+        <i class="fas fa-check-circle text-4xl mb-2 text-green-500"></i>
+        <p>Tüm görevler tamamlandı!</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- In House Tab - Kata Göre Gruplu -->
+    <div id="content-inhouse" class="tab-content p-6 hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="text-md font-medium text-slate-900 dark:text-white">
+          <i class="fas fa-home mr-2 text-blue-500"></i>In House Görevleri
+          <span class="text-sm font-normal text-slate-500 dark:text-slate-400 ml-2">(Kata göre gruplu)</span>
+        </h4>
+        <button onclick="yazdirTab('inhouse')" class="px-3 py-1.5 bg-slate-600 text-white rounded-lg text-sm">
+          <i class="fas fa-print mr-1"></i>Yazdır
+        </button>
+      </div>
+      {% set inhouse = bekleyen|selectattr('gorev_tipi', 'equalto', 'inhouse_kontrol')|list %}
+      {% if inhouse %}
+      <div class="space-y-6" id="print-inhouse">
+        {% set inhouse_katlar = inhouse|map(attribute='kat_adi')|unique|list %}
+        {% for kat_adi in inhouse_katlar %}
+        {% set kat_gorevleri = inhouse|selectattr('kat_adi', 'equalto', kat_adi)|list %}
+        {% if kat_gorevleri %}
+        <div class="kat-grup">
+          <div class="flex items-center gap-2 mb-3 pb-2 border-b border-blue-200 dark:border-blue-800">
+            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+              <span class="text-blue-600 dark:text-blue-400 font-bold text-lg">{{ kat_gorevleri[0].kat_no if
+                kat_gorevleri[0].kat_no is not none else '-' }}</span>
+            </div>
+            <div>
+              <h5 class="font-semibold text-slate-900 dark:text-white">{{ kat_adi or 'Belirsiz' }}</h5>
+              <span class="text-xs text-slate-500 dark:text-slate-400">{{ kat_gorevleri|length }} oda</span>
+            </div>
+          </div>
+          <div class="space-y-2 pl-2">
+            {% for gorev in kat_gorevleri %}
+            <div
+              class="gorev-item flex items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
+              data-kat="{{ gorev.kat_adi or 'Kat ' ~ gorev.kat_no if gorev.kat_no else '-' }}"
+              data-oda="{{ gorev.oda_no }}" data-tip="In House"
+              data-detay="{% if gorev.dnd_sayisi > 0 %}DND: {{ gorev.dnd_sayisi }}x{% else %}Bekliyor{% endif %}"
+              data-durum="{% if gorev.dnd_sayisi > 0 %}DND{% else %}Bekliyor{% endif %}">
+              <div class="flex items-center gap-3 flex-1">
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                  <span class="text-blue-600 dark:text-blue-400 font-bold text-lg">{{ gorev.oda_no }}</span>
+                </div>
+                <div>
+                  <div class="font-medium text-slate-900 dark:text-white">Oda {{ gorev.oda_no }}</div>
+                  <div class="text-sm text-slate-500 dark:text-slate-400">
+                    {% if gorev.dnd_sayisi > 0 %}<span class="text-orange-600 dark:text-orange-400">DND: {{
+                      gorev.dnd_sayisi }}x</span>{% else %}Bekliyor{% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-8 text-slate-500 dark:text-slate-400">
+        <i class="fas fa-check-circle text-4xl mb-2 text-green-500"></i>
+        <p>Tüm In House görevleri tamamlandı!</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Arrivals Tab - Kata Göre Gruplu -->
+    <div id="content-arrivals" class="tab-content p-6 hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="text-md font-medium text-slate-900 dark:text-white">
+          <i class="fas fa-plane-arrival mr-2 text-purple-500"></i>Arrivals Görevleri
+          <span class="text-sm font-normal text-slate-500 dark:text-slate-400 ml-2">(Kata göre gruplu)</span>
+        </h4>
+        <button onclick="yazdirTab('arrivals')" class="px-3 py-1.5 bg-slate-600 text-white rounded-lg text-sm">
+          <i class="fas fa-print mr-1"></i>Yazdır
+        </button>
+      </div>
+      {% set arrivals = bekleyen|selectattr('gorev_tipi', 'equalto',
+      'arrival_kontrol')|list|sort(attribute='varis_saati') %}
+      {% if arrivals %}
+      <div class="space-y-6" id="print-arrivals">
+        {% set arrivals_katlar = arrivals|map(attribute='kat_adi')|unique|list %}
+        {% for kat_adi in arrivals_katlar %}
+        {% set kat_gorevleri = arrivals|selectattr('kat_adi', 'equalto', kat_adi)|list|sort(attribute='varis_saati') %}
+        {% if kat_gorevleri %}
+        <div class="kat-grup">
+          <div class="flex items-center gap-2 mb-3 pb-2 border-b border-purple-200 dark:border-purple-800">
+            <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+              <span class="text-purple-600 dark:text-purple-400 font-bold text-lg">{{ kat_gorevleri[0].kat_no if
+                kat_gorevleri[0].kat_no is not none else '-' }}</span>
+            </div>
+            <div>
+              <h5 class="font-semibold text-slate-900 dark:text-white">{{ kat_adi or 'Belirsiz' }}</h5>
+              <span class="text-xs text-slate-500 dark:text-slate-400">{{ kat_gorevleri|length }} varış</span>
+            </div>
+          </div>
+          <div class="space-y-2 pl-2">
+            {% for gorev in kat_gorevleri %}
+            <div
+              class="gorev-item flex items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800"
+              data-kat="{{ gorev.kat_adi or 'Kat ' ~ gorev.kat_no if gorev.kat_no else '-' }}"
+              data-oda="{{ gorev.oda_no }}" data-tip="Arrival"
+              data-detay="Varış: {{ gorev.varis_saati[:5] if gorev.varis_saati else '-' }}" data-durum="Bekliyor">
+              <div class="flex items-center gap-3 flex-1">
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                  <span class="text-purple-600 dark:text-purple-400 font-bold text-lg">{{ gorev.oda_no }}</span>
+                </div>
+                <div class="flex-1">
+                  <div class="font-medium text-slate-900 dark:text-white">Oda {{ gorev.oda_no }}</div>
+                  <div class="text-sm text-slate-500 dark:text-slate-400"><i class="fas fa-clock mr-1"></i>Varış: {{
+                    gorev.varis_saati[:5] if gorev.varis_saati else '-' }}</div>
+                </div>
+                {% if gorev.countdown %}
+                <div class="flex flex-col items-center">
+                  <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Kalan</div>
+                  <div data-saat="{{ gorev.varis_saati }}"
+                    class="countdown-timer px-3 py-1 rounded-lg text-sm font-mono font-bold {% if gorev.countdown.gecmis %}bg-gray-500{% elif gorev.countdown.uyari %}bg-red-500 animate-pulse{% else %}bg-purple-500{% endif %} text-white">
+                    {% if gorev.countdown.gecmis %}GEÇTİ{% else %}{{ '%02d'|format(gorev.countdown.saat) }}:{{
+                    '%02d'|format(gorev.countdown.dakika) }}:{{ '%02d'|format(gorev.countdown.saniye) }}{% endif %}
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-8 text-slate-500 dark:text-slate-400">
+        <i class="fas fa-check-circle text-4xl mb-2 text-green-500"></i>
+        <p>Tüm Arrivals görevleri tamamlandı!</p>
+      </div>
+      {% endif %}
+    </div>
+    <!-- Departures Tab - Kata Göre Gruplu -->
+    <div id="content-departures" class="tab-content p-6 hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="text-md font-medium text-slate-900 dark:text-white">
+          <i class="fas fa-plane-departure mr-2 text-teal-500"></i>Departures Görevleri
+          <span class="text-sm font-normal text-slate-500 dark:text-slate-400 ml-2">(Kata göre gruplu)</span>
+        </h4>
+        <button onclick="yazdirTab('departures')" class="px-3 py-1.5 bg-slate-600 text-white rounded-lg text-sm">
+          <i class="fas fa-print mr-1"></i>Yazdır
+        </button>
+      </div>
+      {% set departures = bekleyen|selectattr('gorev_tipi', 'equalto',
+      'departure_kontrol')|list|sort(attribute='cikis_saati') %}
+      {% if departures %}
+      <div class="space-y-6" id="print-departures">
+        {% set departures_katlar = departures|map(attribute='kat_adi')|unique|list %}
+        {% for kat_adi in departures_katlar %}
+        {% set kat_gorevleri = departures|selectattr('kat_adi', 'equalto', kat_adi)|list|sort(attribute='cikis_saati')
+        %}
+        {% if kat_gorevleri %}
+        <div class="kat-grup">
+          <div class="flex items-center gap-2 mb-3 pb-2 border-b border-teal-200 dark:border-teal-800">
+            <div class="w-10 h-10 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center">
+              <span class="text-teal-600 dark:text-teal-400 font-bold text-lg">{{ kat_gorevleri[0].kat_no if
+                kat_gorevleri[0].kat_no is not none else '-' }}</span>
+            </div>
+            <div>
+              <h5 class="font-semibold text-slate-900 dark:text-white">{{ kat_adi or 'Belirsiz' }}</h5>
+              <span class="text-xs text-slate-500 dark:text-slate-400">{{ kat_gorevleri|length }} çıkış</span>
+            </div>
+          </div>
+          <div class="space-y-2 pl-2">
+            {% for gorev in kat_gorevleri %}
+            <div
+              class="gorev-item flex items-center p-3 bg-teal-50 dark:bg-teal-900/20 rounded-lg border border-teal-200 dark:border-teal-800"
+              data-kat="{{ gorev.kat_adi or 'Kat ' ~ gorev.kat_no if gorev.kat_no else '-' }}"
+              data-oda="{{ gorev.oda_no }}" data-tip="Departure"
+              data-detay="Çıkış: {{ gorev.cikis_saati[:5] if gorev.cikis_saati else '-' }}" data-durum="Bekliyor">
+              <div class="flex items-center gap-3 flex-1">
+                <div class="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center">
+                  <span class="text-teal-600 dark:text-teal-400 font-bold text-lg">{{ gorev.oda_no }}</span>
+                </div>
+                <div class="flex-1">
+                  <div class="font-medium text-slate-900 dark:text-white">Oda {{ gorev.oda_no }}</div>
+                  <div class="text-sm text-slate-500 dark:text-slate-400"><i class="fas fa-sign-out-alt mr-1"></i>Çıkış:
+                    {{ gorev.cikis_saati[:5] if gorev.cikis_saati else '-' }}</div>
+                </div>
+                {% if gorev.countdown %}
+                <div class="flex flex-col items-center">
+                  <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Kalan</div>
+                  <div data-saat="{{ gorev.cikis_saati }}"
+                    class="countdown-timer px-3 py-1 rounded-lg text-sm font-mono font-bold {% if gorev.countdown.gecmis %}bg-gray-500{% elif gorev.countdown.uyari %}bg-red-500 animate-pulse{% else %}bg-teal-500{% endif %} text-white">
+                    {% if gorev.countdown.gecmis %}GEÇTİ{% else %}{{ '%02d'|format(gorev.countdown.saat) }}:{{
+                    '%02d'|format(gorev.countdown.dakika) }}:{{ '%02d'|format(gorev.countdown.saniye) }}{% endif %}
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-8 text-slate-500 dark:text-slate-400">
+        <i class="fas fa-check-circle text-4xl mb-2 text-green-500"></i>
+        <p>Tüm Departures görevleri tamamlandı!</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- DND Tab - Kata Göre Gruplu -->
+    <div id="content-dnd" class="tab-content p-6 hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="text-md font-medium text-slate-900 dark:text-white">
+          <i class="fas fa-door-closed mr-2 text-orange-500"></i>DND Odaları
+          <span class="text-sm font-normal text-slate-500 dark:text-slate-400 ml-2">(Kata göre gruplu)</span>
+        </h4>
+        <button onclick="yazdirTab('dnd')" class="px-3 py-1.5 bg-slate-600 text-white rounded-lg text-sm">
+          <i class="fas fa-print mr-1"></i>Yazdır
+        </button>
+      </div>
+      {% if dnd_gorevler %}
+      <div class="space-y-6" id="print-dnd">
+        {% set dnd_katlar = dnd_gorevler|map(attribute='kat_adi')|unique|list %}
+        {% for kat_adi in dnd_katlar %}
+        {% set kat_gorevleri = dnd_gorevler|selectattr('kat_adi', 'equalto', kat_adi)|list|sort(attribute='dnd_sayisi',
+        reverse=true) %}
+        {% if kat_gorevleri %}
+        <div class="kat-grup">
+          <div class="flex items-center gap-2 mb-3 pb-2 border-b border-orange-200 dark:border-orange-800">
+            <div class="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+              <span class="text-orange-600 dark:text-orange-400 font-bold text-lg">{{ kat_gorevleri[0].kat_no if
+                kat_gorevleri[0].kat_no is not none else '-' }}</span>
+            </div>
+            <div>
+              <h5 class="font-semibold text-slate-900 dark:text-white">{{ kat_adi or 'Belirsiz' }}</h5>
+              <span class="text-xs text-slate-500 dark:text-slate-400">{{ kat_gorevleri|length }} DND oda</span>
+            </div>
+          </div>
+          <div class="space-y-2 pl-2">
+            {% for gorev in kat_gorevleri %}
+            <div
+              class="gorev-item flex items-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800"
+              data-kat="{{ gorev.kat_adi or 'Kat ' ~ gorev.kat_no if gorev.kat_no else '-' }}"
+              data-oda="{{ gorev.oda_no }}" data-tip="DND" data-detay="DND: {{ gorev.dnd_sayisi }}/3" data-durum="DND">
+              <div class="flex items-center gap-3 flex-1">
+                <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                  <span class="text-orange-600 dark:text-orange-400 font-bold text-lg">{{ gorev.oda_no }}</span>
+                </div>
+                <div>
+                  <div class="font-medium text-slate-900 dark:text-white">Oda {{ gorev.oda_no }}</div>
+                  <div class="text-sm text-orange-600 dark:text-orange-400">DND: {{ gorev.dnd_sayisi }}/3</div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-8 text-slate-500 dark:text-slate-400">
+        <i class="fas fa-door-open text-4xl mb-2"></i>
+        <p>DND oda bulunmuyor.</p>
+      </div>
+      {% endif %}
+    </div>
+    <!-- Tamamlanan Tab - Kata Göre Gruplu -->
+    <div id="content-tamamlanan" class="tab-content p-6 hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="text-md font-medium text-slate-900 dark:text-white">
+          <i class="fas fa-check-circle mr-2 text-green-500"></i>Tamamlanan Görevler
+          <span class="text-sm font-normal text-slate-500 dark:text-slate-400 ml-2">(Kata göre gruplu)</span>
+        </h4>
+        <button onclick="yazdirTab('tamamlanan')" class="px-3 py-1.5 bg-slate-600 text-white rounded-lg text-sm">
+          <i class="fas fa-print mr-1"></i>Yazdır
+        </button>
+      </div>
+      {% if tamamlanan %}
+      <div class="space-y-6" id="print-tamamlanan">
+        {% set tamamlanan_katlar = tamamlanan|map(attribute='kat_adi')|unique|list %}
+        {% for kat_adi in tamamlanan_katlar %}
+        {% set kat_gorevleri = tamamlanan|selectattr('kat_adi', 'equalto', kat_adi)|list %}
+        {% if kat_gorevleri %}
+        <div class="kat-grup">
+          <div class="flex items-center gap-2 mb-3 pb-2 border-b border-green-200 dark:border-green-800">
+            <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+              <span class="text-green-600 dark:text-green-400 font-bold text-lg">{{ kat_gorevleri[0].kat_no if
+                kat_gorevleri[0].kat_no is not none else '-' }}</span>
+            </div>
+            <div>
+              <h5 class="font-semibold text-slate-900 dark:text-white">{{ kat_adi or 'Belirsiz' }}</h5>
+              <span class="text-xs text-slate-500 dark:text-slate-400">{{ kat_gorevleri|length }} tamamlandı</span>
+            </div>
+          </div>
+          <div class="space-y-2 pl-2">
+            {% for gorev in kat_gorevleri %}
+            <div
+              class="gorev-item flex items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
+              data-kat="{{ gorev.kat_adi or 'Kat ' ~ gorev.kat_no if gorev.kat_no else '-' }}"
+              data-oda="{{ gorev.oda_no }}"
+              data-tip="{% if gorev.gorev_tipi == 'inhouse_kontrol' %}In House{% elif gorev.gorev_tipi == 'arrival_kontrol' %}Arrival{% elif gorev.gorev_tipi == 'departure_kontrol' %}Departure{% endif %}"
+              data-detay="{% if gorev.kontrol_zamani %}Tamamlandı: {{ gorev.kontrol_zamani }}{% else %}Tamamlandı{% endif %}"
+              data-durum="Tamamlandı">
+              <div class="flex items-center gap-3 flex-1">
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                  <span class="text-green-600 dark:text-green-400 font-bold text-lg">{{ gorev.oda_no }}</span>
+                </div>
+                <div>
+                  <div class="font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                    Oda {{ gorev.oda_no }}
+                    <i class="fas fa-check-circle text-green-500 text-sm"></i>
+                  </div>
+                  <div class="text-sm text-slate-500 dark:text-slate-400">
+                    {% if gorev.gorev_tipi == 'inhouse_kontrol' %}In House{% elif gorev.gorev_tipi == 'arrival_kontrol'
+                    %}Arrivals{% elif gorev.gorev_tipi == 'departure_kontrol' %}Departures{% endif %}
+                    {% if gorev.kontrol_zamani %} - {{ gorev.kontrol_zamani }}{% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-8 text-slate-500 dark:text-slate-400">
+        <i class="fas fa-clipboard-list text-4xl mb-2"></i>
+        <p>Henüz tamamlanan görev yok.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  function showTab(tabName) {
+    document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+    document.querySelectorAll(".tab-btn").forEach(el => {
+      el.classList.remove("border-blue-500", "text-blue-600", "dark:text-blue-400");
+      el.classList.add("border-transparent", "text-slate-500", "dark:text-slate-400");
+    });
+    document.getElementById("content-" + tabName).classList.remove("hidden");
+    const btn = document.getElementById("tab-" + tabName);
+    btn.classList.remove("border-transparent", "text-slate-500", "dark:text-slate-400");
+    btn.classList.add("border-blue-500", "text-blue-600", "dark:text-blue-400");
+  }
+
+  function yazdirTab(tabName) {
+    const content = document.getElementById("print-" + tabName);
+    if (!content) { alert("Yazdırılacak içerik bulunamadı"); return; }
+
+    const tabNames = {
+      'tumu': 'Tüm Görevler',
+      'inhouse': 'In House Görevleri',
+      'arrivals': 'Arrivals Görevleri',
+      'departures': 'Departures Görevleri',
+      'dnd': 'DND Odaları',
+      'tamamlanan': 'Tamamlanan Görevler'
+    };
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Görev Listesi - ${tabNames[tabName]}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; background: #fff; color: #333; }
+    .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #4f46e5; }
+    .header h1 { font-size: 24px; color: #1e293b; margin-bottom: 5px; }
+    .header .date { font-size: 16px; color: #64748b; }
+    .header .tab-name { font-size: 14px; color: #4f46e5; font-weight: 600; margin-top: 5px; }
+    .summary { display: flex; justify-content: space-around; margin-bottom: 25px; padding: 15px; background: #f8fafc; border-radius: 8px; }
+    .summary-item { text-align: center; }
+    .summary-item .value { font-size: 28px; font-weight: bold; }
+    .summary-item .label { font-size: 12px; color: #64748b; }
+    .summary-item.total .value { color: #1e293b; }
+    .summary-item.completed .value { color: #16a34a; }
+    .summary-item.pending .value { color: #ca8a04; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th { background: #4f46e5; color: white; padding: 12px 8px; text-align: left; font-size: 12px; font-weight: 600; }
+    td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+    tr:nth-child(even) { background: #f8fafc; }
+    .oda-no { font-weight: bold; font-size: 15px; color: #1e293b; }
+    .tip-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .tip-inhouse { background: #dbeafe; color: #1d4ed8; }
+    .tip-arrival { background: #f3e8ff; color: #7c3aed; }
+    .tip-departure { background: #ccfbf1; color: #0d9488; }
+    .status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .status-bekliyor { background: #fef3c7; color: #b45309; }
+    .status-dnd { background: #fed7aa; color: #c2410c; }
+    .status-tamamlandi { background: #dcfce7; color: #15803d; }
+    .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #94a3b8; }
+    @media print {
+      body { padding: 10px; }
+      .header { margin-bottom: 20px; }
+      table { page-break-inside: auto; }
+      tr { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Minibar Takip Sistemi</h1>
+    <div class="date">{{ tarih.strftime('%d.%m.%Y') }} - Görev Listesi</div>
+    <div class="tab-name">${tabNames[tabName]}</div>
+  </div>
+  
+  <div class="summary">
+    <div class="summary-item total"><div class="value">{{ ozet.toplam }}</div><div class="label">Toplam</div></div>
+    <div class="summary-item completed"><div class="value">{{ ozet.tamamlanan }}</div><div class="label">Tamamlanan</div></div>
+    <div class="summary-item pending"><div class="value">{{ ozet.bekleyen }}</div><div class="label">Bekleyen</div></div>
+  </div>
+  
+  <table>
+    <thead>
+      <tr>
+        <th style="width:40px">#</th>
+        <th style="width:60px">Kat</th>
+        <th style="width:80px">Oda No</th>
+        <th style="width:100px">Görev Tipi</th>
+        <th>Detay</th>
+        <th style="width:100px">Durum</th>
+      </tr>
+    </thead>
+    <tbody>`);
+
+    let sira = 0;
+    content.querySelectorAll('.gorev-item').forEach((item) => {
+      sira++;
+      const kat = item.dataset.kat || '-';
+      const oda = item.dataset.oda || '-';
+      const tip = item.dataset.tip || 'In House';
+      const detay = item.dataset.detay || '-';
+      const durum = item.dataset.durum || 'Bekliyor';
+
+      // Tip badge class
+      let tipClass = 'tip-inhouse';
+      if (tip === 'Arrival') tipClass = 'tip-arrival';
+      else if (tip === 'Departure') tipClass = 'tip-departure';
+
+      // Durum badge class
+      let durumClass = 'status-bekliyor';
+      let durumText = durum;
+      if (durum === 'DND') durumClass = 'status-dnd';
+      else if (durum === 'Tamamlandı') durumClass = 'status-tamamlandi';
+
+      printWindow.document.write(`
+      <tr>
+        <td>${sira}</td>
+        <td><strong>${kat}</strong></td>
+        <td><span class="oda-no">${oda}</span></td>
+        <td><span class="tip-badge ${tipClass}">${tip}</span></td>
+        <td>${detay}</td>
+        <td><span class="status-badge ${durumClass}">${durumText}</span></td>
+      </tr>`);
+    });
+
+    printWindow.document.write(`
+    </tbody>
+  </table>
+  
+  <div class="footer">
+    <p>Yazdırma Tarihi: ${new Date().toLocaleString('tr-TR')} | Minibar Takip Sistemi</p>
+  </div>
+</body>
+</html>`);
+
+    printWindow.document.close();
+    setTimeout(() => printWindow.print(), 250);
+  }
+
+  function updateCountdowns() {
+    document.querySelectorAll(".countdown-timer").forEach(el => {
+      const saat = el.dataset.saat;
+      if (!saat) return;
+      const [h, m, s] = saat.split(":").map(Number);
+      const now = new Date();
+      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, s || 0);
+      const diff = target - now;
+      if (diff <= 0) { el.textContent = "GEÇTİ"; el.className = "countdown-timer px-3 py-1 rounded-lg text-sm font-mono font-bold bg-gray-500 text-white"; return; }
+      const ts = Math.floor(diff / 1000);
+      el.textContent = `${String(Math.floor(ts / 3600)).padStart(2, "0")}:${String(Math.floor((ts % 3600) / 60)).padStart(2, "0")}:${String(ts % 60).padStart(2, "0")}`;
+    });
+  }
+  setInterval(updateCountdowns, 1000);
+  updateCountdowns();
+</script>
+{% endblock %}

@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\routes\admin_stok_routes.py
+# hypothesis_version: 6.148.2
+
+[404, 500, '/admin/stok-giris', 'Admin stok girişi', 'GET', 'POST', 'aciklama', 'admin', 'admin_stok_giris', 'baslangic_tarih', 'bitis_tarih', 'danger', 'ekleme', 'giris', 'goruntuleme', 'guncelleme', 'hareket_id', 'hareket_tipi', 'kayit_sayisi', 'kullanici_id', 'message', 'miktar', 'sayfa', 'silme', 'sistem_yoneticisi', 'stok_giris', 'stok_hareketi', 'stok_hareketleri', 'success', 'urun_id']

@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\utils\decorators.py
+# hypothesis_version: 6.148.2
+
+[1.5, 400, 401, 403, '/api/', '1', 'Geçersiz otel ID', 'Geçersiz otel ID.', 'Giriş yapmalısınız', 'admin', 'danger', 'dashboard', 'error', 'info', 'kullanici_id', 'kullanici_rol', 'login', 'otel_id', 'rol', 'setup', 'setup_tamamlandi', 'sistem_yoneticisi', 'success', 'warning']

@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\utils\audit_logger.py
+# hypothesis_version: 6.148.2
+
+[100, 'BACKUP_CREATE', 'BACKUP_DELETE', 'BACKUP_RESTORE', 'Backup Created', 'Backup Deleted', 'Backup Restored', 'CACHE_CLEAR', 'CONFIG_CHANGE', 'CRITICAL', 'Cache Cleared', 'ERROR', 'Failed Login Attempt', 'INFO', 'JOB_CANCEL', 'JOB_START', 'Job Cancelled', 'Job Started', 'LOGIN', 'LOGIN_FAILED', 'LOGOUT', 'PROFILER_START', 'PROFILER_STOP', 'Profiler Started', 'Profiler Stopped', 'QUERY_EXECUTE', 'Query Executed', 'RATE_LIMIT', 'Rate Limit Exceeded', 'SECURITY_ALERT', 'SQL_INJECTION', 'Security Alert', 'UNAUTHORIZED_ACCESS', 'User Login', 'User Logout', 'WARNING', 'XSS Attempt', 'XSS_ATTEMPT', 'a', 'description', 'endpoint', 'error', 'event_name', 'event_type', 'function', 'ip_address', 'logs', 'logs/audit.log', 'metadata', 'method', 'r', 'severity', 'timestamp', 'user', 'user_agent', 'user_id', 'utf-8']

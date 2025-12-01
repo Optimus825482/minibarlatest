@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
-from models import DosyaYukleme
+from models import DosyaYukleme, db
 from utils.decorators import login_required, role_required
 from utils.helpers import log_hata
 from utils.occupancy_service import OccupancyService
@@ -22,8 +22,10 @@ def doluluk_yonetimi():
         secili_otel_id = request.args.get("otel_id", type=int)
         if not secili_otel_id and kullanici_otelleri:
             secili_otel_id = kullanici_otelleri[0].id
+        # Silinen kayıtları gösterme
         yukleme_gecmisi = DosyaYukleme.query.filter(
-            DosyaYukleme.yuklenen_kullanici_id == session["kullanici_id"]
+            DosyaYukleme.yuklenen_kullanici_id == session["kullanici_id"],
+            DosyaYukleme.durum != 'silindi'
         ).order_by(DosyaYukleme.yukleme_tarihi.desc()).limit(50).all()
         return render_template("depo_sorumlusu/doluluk_yonetimi.html",
             yukleme_gecmisi=yukleme_gecmisi, otel_secenekleri=otel_secenekleri,
@@ -52,14 +54,87 @@ def gunluk_doluluk():
                 secili_tarih = date.today()
         else:
             secili_tarih = date.today()
-        rapor = OccupancyService.get_gunluk_doluluk_raporu(secili_tarih, secili_otel_id)
-        haftalik_ozet = OccupancyService.get_haftalik_doluluk_ozeti(date.today(), secili_otel_id)
+        rapor_data = OccupancyService.get_gunluk_doluluk_raporu(secili_tarih, secili_otel_id)
+        
+        # Template için oda listesi oluştur
+        from models import Oda, Kat, MisafirKayit
+        from sqlalchemy import and_
+        
+        oda_query = Oda.query.filter_by(aktif=True).join(Kat)
+        if secili_otel_id:
+            oda_query = oda_query.filter(Kat.otel_id == secili_otel_id)
+        
+        odalar = oda_query.order_by(Kat.kat_adi, Oda.oda_no).all()
+        
+        # Görev durumlarını al
+        from models import GorevDetay, GunlukGorev
+        gorev_durumlari = {}
+        gorev_detaylari = GorevDetay.query.join(GunlukGorev).filter(
+            GunlukGorev.gorev_tarihi == secili_tarih
+        ).all()
+        for detay in gorev_detaylari:
+            gorev_durumlari[detay.oda_id] = detay.durum
+        
+        rapor = []
+        for oda in odalar:
+            # O odanın o tarihteki misafir bilgisi
+            misafir = MisafirKayit.query.filter(
+                and_(
+                    MisafirKayit.oda_id == oda.id,
+                    MisafirKayit.giris_tarihi <= secili_tarih,
+                    MisafirKayit.cikis_tarihi > secili_tarih
+                )
+            ).first()
+            
+            # Görev durumunu al
+            gorev_durumu = gorev_durumlari.get(oda.id, 'pending')
+            
+            rapor.append({
+                'oda_no': oda.oda_no,
+                'oda_id': oda.id,
+                'kat_id': oda.kat_id,
+                'kat_adi': oda.kat.kat_adi if oda.kat else '-',
+                'durum': 'dolu' if misafir else 'bos',
+                'gorev_durumu': gorev_durumu,
+                'misafir_adi': f"{misafir.misafir_sayisi} kişi" if misafir else None,
+                'giris_tarihi': misafir.giris_tarihi if misafir else None,
+                'cikis_tarihi': misafir.cikis_tarihi if misafir else None
+            })
+        
+        # Günlük özet için rapor_data kullan
+        haftalik_ozet = {
+            'toplam_oda': rapor_data.get('toplam_oda', 0),
+            'dolu_oda': rapor_data.get('dolu_oda', 0),
+            'doluluk_orani': (rapor_data.get('dolu_oda', 0) / rapor_data.get('toplam_oda', 1) * 100) if rapor_data.get('toplam_oda', 0) > 0 else 0
+        }
+        
+        # Kat bazlı özet oluştur
+        from collections import defaultdict
+        kat_sayilari = defaultdict(lambda: {'toplam': 0, 'dolu': 0, 'kat_adi': '', 'kat_id': None})
+        for oda_bilgi in rapor:
+            kat_adi = oda_bilgi['kat_adi']
+            kat_sayilari[kat_adi]['toplam'] += 1
+            kat_sayilari[kat_adi]['kat_adi'] = kat_adi
+            kat_sayilari[kat_adi]['kat_id'] = oda_bilgi['kat_id']
+            if oda_bilgi['durum'] == 'dolu':
+                kat_sayilari[kat_adi]['dolu'] += 1
+        
+        kat_bazli_ozet = []
+        for kat_adi, veriler in sorted(kat_sayilari.items()):
+            oran = (veriler['dolu'] / veriler['toplam'] * 100) if veriler['toplam'] > 0 else 0
+            kat_bazli_ozet.append({
+                'kat_id': veriler['kat_id'],
+                'kat_adi': kat_adi,
+                'toplam': veriler['toplam'],
+                'dolu': veriler['dolu'],
+                'oran': oran
+            })
         
         # Seçili oteli bul
         from models import Otel
         secili_otel = Otel.query.get(secili_otel_id) if secili_otel_id else None
         
-        return render_template("kat_sorumlusu/gunluk_doluluk.html", rapor=rapor,
+        return render_template("kat_sorumlusu/gunluk_doluluk.html", rapor=rapor, kat_bazli_ozet=kat_bazli_ozet,
             haftalik_ozet=haftalik_ozet, secili_tarih=secili_tarih,
             otel_secenekleri=otel_secenekleri, secili_otel_id=secili_otel_id,
             secili_otel=secili_otel)
@@ -86,6 +161,7 @@ def gunluk_doluluk_yazdir():
         # Parametreleri al
         tarih_str = request.args.get("tarih")
         secili_otel_id = request.args.get("otel_id", type=int)
+        bos_odalar_dahil = request.args.get("bos_odalar", "0") == "1"
         
         if tarih_str:
             try:
@@ -107,7 +183,8 @@ def gunluk_doluluk_yazdir():
         return render_template("kat_sorumlusu/gunluk_doluluk_yazdir.html",
             rapor=rapor,
             secili_tarih=secili_tarih,
-            simdi=datetime.now()
+            simdi=datetime.now(),
+            bos_odalar_dahil=bos_odalar_dahil
         )
         
     except Exception as e:
@@ -121,8 +198,8 @@ def gunluk_doluluk_yazdir():
 def kat_doluluk_detay(kat_id):
     """Kat bazlı detaylı doluluk raporu"""
     try:
-        from models import Kat, Oda, MisafirKayit
-        from sqlalchemy import and_
+        from models import Kat, Oda, MisafirKayit, GorevDetay, GunlukGorev
+        from sqlalchemy import and_, or_
         
         # Tarihi al
         tarih_str = request.args.get("tarih")
@@ -140,6 +217,19 @@ def kat_doluluk_detay(kat_id):
         # Kat'a ait tüm odaları al
         odalar = Oda.query.filter_by(kat_id=kat_id, aktif=True).order_by(Oda.oda_no).all()
         
+        # Görev durumlarını ve detaylarını al (varış/çıkış saatleri için)
+        gorev_durumlari = {}
+        gorev_saatleri = {}  # varis_saati ve cikis_saati için
+        gorev_detaylari_db = GorevDetay.query.join(GunlukGorev).filter(
+            GunlukGorev.gorev_tarihi == secili_tarih
+        ).all()
+        for detay in gorev_detaylari_db:
+            gorev_durumlari[detay.oda_id] = detay.durum
+            gorev_saatleri[detay.oda_id] = {
+                'varis_saati': str(detay.varis_saati) if detay.varis_saati else None,
+                'cikis_saati': str(detay.cikis_saati) if detay.cikis_saati else None
+            }
+        
         # Her oda için doluluk durumunu kontrol et
         oda_detaylari = []
         dolu_sayisi = 0
@@ -147,17 +237,28 @@ def kat_doluluk_detay(kat_id):
         bugun_giris_sayisi = 0
         bugun_cikis_sayisi = 0
         
+        # Arrivals ve Departures görevlerini sayaç için topla
+        arrivals_gorevler = []
+        departures_gorevler = []
+        
         for oda in odalar:
-            # Bugün için misafir kaydı var mı?
+            # Bugün için misafir kaydı var mı? (bugün çıkış yapanlar DAHİL)
             misafir = MisafirKayit.query.filter(
                 MisafirKayit.oda_id == oda.id,
                 MisafirKayit.giris_tarihi <= secili_tarih,
-                MisafirKayit.cikis_tarihi > secili_tarih
+                MisafirKayit.cikis_tarihi >= secili_tarih  # >= ile bugün çıkış yapanlar da dahil
             ).first()
             
             durum = "bos"
             misafir_info = None
             kalan_gun = None
+            varis_saati = None
+            cikis_saati = None
+            
+            # Görev saatlerini al
+            if oda.id in gorev_saatleri:
+                varis_saati = gorev_saatleri[oda.id].get('varis_saati')
+                cikis_saati = gorev_saatleri[oda.id].get('cikis_saati')
             
             if misafir:
                 durum = "dolu"
@@ -168,17 +269,29 @@ def kat_doluluk_detay(kat_id):
                 if misafir.giris_tarihi == secili_tarih:
                     durum = "bugun_giris"
                     bugun_giris_sayisi += 1
+                    # Arrivals listesine ekle
+                    arrivals_gorevler.append({
+                        'oda_no': oda.oda_no,
+                        'varis_saati': varis_saati
+                    })
                 
                 # Bugün çıkış mı?
                 if misafir.cikis_tarihi == secili_tarih:
                     durum = "bugun_cikis"
                     bugun_cikis_sayisi += 1
+                    # Departures listesine ekle
+                    departures_gorevler.append({
+                        'oda_no': oda.oda_no,
+                        'cikis_saati': cikis_saati
+                    })
                 
                 misafir_info = {
                     'misafir_sayisi': misafir.misafir_sayisi,
                     'giris_tarihi': misafir.giris_tarihi,
                     'cikis_tarihi': misafir.cikis_tarihi,
-                    'kalan_gun': kalan_gun
+                    'kalan_gun': kalan_gun,
+                    'varis_saati': varis_saati,
+                    'cikis_saati': cikis_saati
                 }
             else:
                 bos_sayisi += 1
@@ -186,7 +299,10 @@ def kat_doluluk_detay(kat_id):
             oda_detaylari.append({
                 'oda': oda,
                 'durum': durum,
-                'misafir': misafir_info
+                'misafir': misafir_info,
+                'gorev_durumu': gorev_durumlari.get(oda.id, 'pending') if misafir else None,
+                'varis_saati': varis_saati,
+                'cikis_saati': cikis_saati
             })
         
         return render_template("kat_sorumlusu/kat_doluluk_detay.html",
@@ -197,7 +313,9 @@ def kat_doluluk_detay(kat_id):
             dolu_sayisi=dolu_sayisi,
             bos_sayisi=bos_sayisi,
             bugun_giris_sayisi=bugun_giris_sayisi,
-            bugun_cikis_sayisi=bugun_cikis_sayisi
+            bugun_cikis_sayisi=bugun_cikis_sayisi,
+            arrivals_gorevler=arrivals_gorevler,
+            departures_gorevler=departures_gorevler
         )
         
     except Exception as e:
@@ -282,15 +400,19 @@ def doluluk_onizle():
                 col_indices['giris'] = idx
             elif header_str == 'Departure':
                 col_indices['cikis'] = idx
-            elif header_str == 'Adult':
+            elif header_str in ('Adult', 'Adults'):  # Her iki format da destekleniyor
                 col_indices['misafir'] = idx
+            elif header_str == 'Arr.Time':
+                col_indices['giris_saati'] = idx
+            elif header_str == 'Dep.Time':
+                col_indices['cikis_saati'] = idx
 
         # Validasyon için veriler
         toplam_satir = 0
         gecerli_satir = 0
         hatali_satir = 0
         uyarilar = []
-        ornek_satirlar = []
+        tum_satirlar = []  # Tüm satırları tutacak liste
         oda_sayaci = defaultdict(int)  # Duplicate kontrolü
         bulunamayan_odalar = set()
         
@@ -311,6 +433,8 @@ def doluluk_onizle():
             giris = str(row[col_indices['giris']]) if col_indices.get('giris') is not None and row[col_indices['giris']] else None
             cikis = str(row[col_indices['cikis']]) if col_indices.get('cikis') is not None and row[col_indices['cikis']] else None
             misafir = str(row[col_indices['misafir']]) if col_indices.get('misafir') is not None and row[col_indices['misafir']] else None
+            # ARRIVALS için giriş saati
+            giris_saati = str(row[col_indices['giris_saati']]) if col_indices.get('giris_saati') is not None and row[col_indices['giris_saati']] else None
             
             # Validasyon
             satir_hatalari = []
@@ -335,24 +459,25 @@ def doluluk_onizle():
                 satir_hatalari.append("Çıkış tarihi eksik")
                 hatali_satir += 1
             
-            if not misafir or misafir == 'None':
+            # Misafir sayısı kontrolü - Departures için zorunlu değil
+            if dosya_tipi != 'departures' and (not misafir or misafir == 'None'):
                 satir_hatalari.append("Misafir sayısı eksik")
                 hatali_satir += 1
             
             if not satir_hatalari:
                 gecerli_satir += 1
             
-            # İlk 5 satırı örnek olarak göster
-            if len(ornek_satirlar) < 5:
-                ornek_satirlar.append({
-                    'satir_no': idx,
-                    'oda_no': oda_no or 'None',
-                    'giris': giris or '-',
-                    'cikis': cikis or '-',
-                    'misafir': misafir or '-',
-                    'hatalar': satir_hatalari,
-                    'gecerli': len(satir_hatalari) == 0
-                })
+            # Tüm satırları ekle (eklenecek veriler olarak gösterilecek)
+            tum_satirlar.append({
+                'satir_no': idx,
+                'oda_no': oda_no or 'None',
+                'giris_saati': giris_saati or '-',
+                'giris': giris or '-',
+                'cikis': cikis or '-',
+                'misafir': misafir or '-',
+                'hatalar': satir_hatalari,
+                'gecerli': len(satir_hatalari) == 0
+            })
             
             # Hataları kaydet
             if satir_hatalari:
@@ -374,11 +499,11 @@ def doluluk_onizle():
         return jsonify({
             "success": True,
             "dosya_tipi": dosya_tipi,
-            "dosya_tipi_adi": "ARRIVALS" if dosya_tipi == "arrivals" else "IN HOUSE",
+            "dosya_tipi_adi": "ARRIVALS" if dosya_tipi == "arrivals" else ("DEPARTURES" if dosya_tipi == "departures" else "IN HOUSE"),
             "toplam_satir": toplam_satir,
             "gecerli_satir": gecerli_satir,
             "hatali_satir": hatali_satir,
-            "ornek_satirlar": ornek_satirlar,
+            "tum_satirlar": tum_satirlar,  # Tüm satırları gönder
             "uyarilar": uyarilar[:20],  # İlk 20 uyarı
             "dosya_adi": file.filename,
             "duplicate_sayisi": len(duplicate_odalar),
@@ -446,6 +571,33 @@ def doluluk_yukle():
                 hata_detaylari=json.dumps(result['hatalar'], ensure_ascii=False) if result['hatalar'] else None
             )
             
+            # YuklemeGorev tablosunu güncelle (dashboard için)
+            try:
+                from models import YuklemeGorev
+                from datetime import date
+                
+                # Dosya tipini YuklemeGorev formatına çevir
+                dosya_tipi_map = {
+                    'in_house': 'inhouse',
+                    'arrivals': 'arrivals', 
+                    'departures': 'departures'
+                }
+                yukleme_dosya_tipi = dosya_tipi_map.get(result['dosya_tipi'], result['dosya_tipi'])
+                
+                # Bugünkü görevi bul ve güncelle
+                yukleme_gorev = YuklemeGorev.query.filter(
+                    YuklemeGorev.depo_sorumlusu_id == user_id,
+                    YuklemeGorev.gorev_tarihi == date.today(),
+                    YuklemeGorev.dosya_tipi == yukleme_dosya_tipi
+                ).first()
+                
+                if yukleme_gorev:
+                    yukleme_gorev.durum = 'completed'
+                    yukleme_gorev.dosya_yukleme_id = DosyaYukleme.query.filter_by(islem_kodu=islem_kodu).first().id
+                    db.session.commit()
+            except Exception as gorev_err:
+                print(f"YuklemeGorev güncelleme hatası: {gorev_err}")
+            
             flash(f"✓ Dosya başarıyla işlendi! İşlem Kodu: {islem_kodu} | "
                   f"Başarılı: {result['basarili_satir']}, Hatalı: {result['hatali_satir']}", "success")
         else:
@@ -481,13 +633,17 @@ def doluluk_sil(islem_kodu):
             return redirect(url_for("doluluk.doluluk_yonetimi"))
 
         # İlişkili misafir kayıtlarını ve dosyayı sil
-        success, message = FileManagementService.delete_upload_by_islem_kodu(
+        # Tamamlanmış görevler korunur, bekleyen görevler silinir
+        success, message, summary = FileManagementService.delete_upload_by_islem_kodu(
             islem_kodu, 
             session.get("kullanici_id")
         )
 
         if success:
             flash(f"✓ {message}", "success")
+            # Korunan görev varsa bilgi ver
+            if summary.get('preserved_completed_tasks', 0) > 0:
+                flash(f"ℹ️ {summary['preserved_completed_tasks']} tamamlanmış görev kaydı korundu", "info")
         else:
             flash(f"Silme hatası: {message}", "danger")
 

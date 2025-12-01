@@ -1,554 +1,1124 @@
-{% extends "base.html" %}
-
-{% block title %}Doluluk Yönetimi - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Doluluk Yönetimi{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Doluluk Yönetimi - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}Doluluk Yönetimi{% endblock %} {%
+block content %}
 <div class="space-y-6">
-    <!-- Excel Dosyası Yükleme Formu -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-white mb-4">
-                <i class="fas fa-file-excel mr-2 text-green-600"></i>
-                Excel Dosyası Yükle
-            </h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
-                IN HOUSE veya ARRIVALS listesini yükleyin. Sistem otomatik olarak dosya tipini algılayacaktır.
-            </p>
+  <!-- Excel Dosyası Yükleme Formu -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3
+        class="text-lg leading-6 font-medium text-slate-900 dark:text-white mb-4"
+      >
+        <i class="fas fa-file-excel mr-2 text-green-600"></i>
+        Excel Dosyası Yükle
+      </h3>
+      <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
+        IN HOUSE, ARRIVALS veya DEPARTURES listelerini yükleyin.
+        <strong>Birden fazla dosya</strong> seçebilirsiniz. Sistem otomatik
+        olarak dosya tiplerini algılayacaktır.
+      </p>
 
-            <form method="POST" action="{{ url_for('doluluk.doluluk_yukle') }}" enctype="multipart/form-data" id="uploadForm">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <input type="hidden" name="otel_id" id="otel_id_input" value="{{ secili_otel_id or '' }}" />
-                
-                <div class="space-y-4">
-                    <!-- Dosya Yükleme Alanı -->
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                            Excel Dosyası <span class="text-red-500">*</span>
-                        </label>
-                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-md hover:border-slate-400 dark:hover:border-slate-500 transition-colors cursor-pointer"
-                             id="dropZone">
-                            <div class="space-y-1 text-center">
-                                <svg class="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                                <div class="flex text-sm text-slate-600 dark:text-slate-400">
-                                    <label for="excel_file" class="relative cursor-pointer bg-white dark:bg-slate-800 rounded-md font-medium text-slate-600 dark:text-slate-300 hover:text-slate-500 focus-within:outline-none">
-                                        <span>Dosya seçin</span>
-                                        <input id="excel_file" name="excel_file" type="file" class="sr-only" accept=".xlsx,.xls" required>
-                                    </label>
-                                    <p class="pl-1">veya sürükleyip bırakın</p>
-                                </div>
-                                <p class="text-xs text-slate-500 dark:text-slate-400">
-                                    XLSX veya XLS (Maksimum 10 MB)
-                                </p>
-                                <p id="fileName" class="text-sm text-slate-700 dark:text-slate-300 font-medium mt-2"></p>
-                            </div>
-                        </div>
-                    </div>
+      <form
+        method="POST"
+        action="{{ url_for('doluluk.doluluk_yukle') }}"
+        enctype="multipart/form-data"
+        id="uploadForm"
+      >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input
+          type="hidden"
+          name="otel_id"
+          id="otel_id_input"
+          value="{{ secili_otel_id or '' }}"
+        />
 
-                    <!-- Önizleme Butonu -->
-                    <div class="flex justify-end">
-                        <button type="button" id="previewBtn" onclick="previewExcel()"
-                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <i class="fas fa-eye mr-2"></i>
-                            Önizle
-                        </button>
-                    </div>
+        <div class="space-y-4">
+          <!-- Dosya Yükleme Alanı -->
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              Excel Dosyaları <span class="text-red-500">*</span>
+            </label>
+            <div
+              class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-md cursor-pointer"
+              id="dropZone"
+            >
+              <div class="space-y-1 text-center">
+                <svg
+                  class="mx-auto h-12 w-12 text-slate-400"
+                  stroke="currentColor"
+                  fill="none"
+                  viewBox="0 0 48 48"
+                >
+                  <path
+                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <div class="flex text-sm text-slate-600 dark:text-slate-400">
+                  <label
+                    for="excel_file"
+                    class="relative cursor-pointer bg-white dark:bg-slate-800 rounded-md font-medium text-slate-600 dark:text-slate-300 focus-within:outline-none"
+                  >
+                    <span>Dosya seçin</span>
+                    <input
+                      id="excel_file"
+                      name="excel_file"
+                      type="file"
+                      class="sr-only"
+                      accept=".xlsx,.xls"
+                      multiple
+                      required
+                    />
+                  </label>
+                  <p class="pl-1">veya sürükleyip bırakın</p>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Yükleme Geçmişi -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-white mb-4">
-                <i class="fas fa-history mr-2 text-slate-600"></i>
-                Yükleme Geçmişi
-            </h3>
-
-            {% if yukleme_gecmisi %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                    <thead class="bg-slate-50 dark:bg-slate-900">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                İşlem Kodu
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Dosya Adı
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Tip
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Durum
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                İstatistikler
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Tarih
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                İşlemler
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                        {% for yukleme in yukleme_gecmisi %}
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-slate-900 dark:text-slate-100">
-                                {{ yukleme.islem_kodu }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
-                                {{ yukleme.dosya_adi }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                {% if yukleme.dosya_tipi == 'in_house' %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                    IN HOUSE
-                                </span>
-                                {% elif yukleme.dosya_tipi == 'arrivals' %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                                    ARRIVALS
-                                </span>
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                {% if yukleme.durum == 'tamamlandi' %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                    <i class="fas fa-check-circle mr-1"></i> Tamamlandı
-                                </span>
-                                {% elif yukleme.durum == 'isleniyor' %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                                    <i class="fas fa-spinner fa-spin mr-1"></i> İşleniyor
-                                </span>
-                                {% elif yukleme.durum == 'hata' %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                                    <i class="fas fa-exclamation-circle mr-1"></i> Hata
-                                </span>
-                                {% elif yukleme.durum == 'silindi' %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200">
-                                    <i class="fas fa-trash mr-1"></i> Silindi
-                                </span>
-                                {% else %}
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200">
-                                    {{ yukleme.durum }}
-                                </span>
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
-                                {% if yukleme.toplam_satir > 0 %}
-                                <div class="text-xs">
-                                    <div class="text-green-600 dark:text-green-400">✓ {{ yukleme.basarili_satir }} başarılı</div>
-                                    {% if yukleme.hatali_satir > 0 %}
-                                    <div class="text-red-600 dark:text-red-400">✗ {{ yukleme.hatali_satir }} hatalı</div>
-                                    {% endif %}
-                                </div>
-                                {% else %}
-                                <span class="text-slate-400">-</span>
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                                {{ yukleme.yukleme_tarihi.strftime('%d.%m.%Y %H:%M') }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                {% if yukleme.durum != 'silindi' %}
-                                <button onclick="deleteUpload('{{ yukleme.islem_kodu }}')"
-                                        class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
-                                    <i class="fas fa-trash"></i> Sil
-                                </button>
-                                {% endif %}
-                                {% if yukleme.hata_detaylari %}
-                                <button onclick="showErrors('{{ yukleme.islem_kodu }}')"
-                                        class="ml-3 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300">
-                                    <i class="fas fa-info-circle"></i> Detay
-                                </button>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                  XLSX veya XLS (Birden fazla dosya seçebilirsiniz)
+                </p>
+              </div>
             </div>
-            {% else %}
-            <div class="text-center py-12">
-                <i class="fas fa-inbox text-slate-300 dark:text-slate-600 text-5xl mb-4"></i>
-                <p class="text-slate-500 dark:text-slate-400">Henüz dosya yüklenmemiş</p>
-            </div>
-            {% endif %}
+          </div>
+
+          <!-- Seçilen Dosyalar Listesi -->
+          <div id="selectedFilesContainer" class="hidden">
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+            >
+              <i class="fas fa-list mr-1"></i> Seçilen Dosyalar
+            </label>
+            <div id="selectedFilesList" class="space-y-2"></div>
+          </div>
+
+          <!-- Önizleme Butonu -->
+          <div class="flex justify-end gap-2">
+            <button
+              type="button"
+              id="clearFilesBtn"
+              onclick="clearSelectedFiles()"
+              class="hidden inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800"
+            >
+              <i class="fas fa-times mr-2"></i>
+              Temizle
+            </button>
+            <button
+              type="button"
+              id="previewBtn"
+              onclick="previewMultipleExcel()"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <i class="fas fa-eye mr-2"></i>
+              Önizle ve Analiz Et
+            </button>
+          </div>
         </div>
+      </form>
     </div>
+  </div>
+
+  <!-- Yükleme Geçmişi -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3
+        class="text-lg leading-6 font-medium text-slate-900 dark:text-white mb-4"
+      >
+        <i class="fas fa-history mr-2 text-slate-600"></i>
+        Yükleme Geçmişi
+      </h3>
+
+      {% if yukleme_gecmisi %}
+      <div class="overflow-x-auto">
+        <table
+          class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
+        >
+          <thead class="bg-slate-50 dark:bg-slate-900">
+            <tr>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                İşlem Kodu
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                Dosya Adı
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                Tip
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                Durum
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                İstatistikler
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                Tarih
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                İşlemler
+              </th>
+            </tr>
+          </thead>
+          <tbody
+            class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+          >
+            {% for yukleme in yukleme_gecmisi %}
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700">
+              <td
+                class="px-6 py-4 whitespace-nowrap text-sm font-mono text-slate-900 dark:text-slate-100"
+              >
+                {{ yukleme.islem_kodu }}
+              </td>
+              <td
+                class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100"
+              >
+                {{ yukleme.dosya_adi }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                {% if yukleme.dosya_tipi == 'in_house' %}
+                <span
+                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                >
+                  IN HOUSE
+                </span>
+                {% elif yukleme.dosya_tipi == 'arrivals' %}
+                <span
+                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                >
+                  ARRIVALS
+                </span>
+                {% elif yukleme.dosya_tipi == 'departures' %}
+                <span
+                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                >
+                  DEPARTURES
+                </span>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                {% if yukleme.durum == 'tamamlandi' %}
+                <span
+                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                >
+                  <i class="fas fa-check-circle mr-1"></i> Tamamlandı
+                </span>
+                {% elif yukleme.durum == 'isleniyor' %}
+                <span
+                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                >
+                  <i class="fas fa-spinner fa-spin mr-1"></i> İşleniyor
+                </span>
+                {% elif yukleme.durum == 'hata' %}
+                <span
+                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                >
+                  <i class="fas fa-exclamation-circle mr-1"></i> Hata
+                </span>
+                {% elif yukleme.durum == 'silindi' %}
+                <span
+                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200"
+                >
+                  <i class="fas fa-trash mr-1"></i> Silindi
+                </span>
+                {% else %}
+                <span
+                  class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200"
+                >
+                  {{ yukleme.durum }}
+                </span>
+                {% endif %}
+              </td>
+              <td
+                class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100"
+              >
+                {% if yukleme.toplam_satir > 0 %}
+                <div class="text-xs">
+                  <div class="text-green-600 dark:text-green-400">
+                    ✓ {{ yukleme.basarili_satir }} başarılı
+                  </div>
+                  {% if yukleme.hatali_satir > 0 %}
+                  <div class="text-red-600 dark:text-red-400">
+                    ✗ {{ yukleme.hatali_satir }} hatalı
+                  </div>
+                  {% endif %}
+                </div>
+                {% else %}
+                <span class="text-slate-400">-</span>
+                {% endif %}
+              </td>
+              <td
+                class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+              >
+                {{ yukleme.yukleme_tarihi.strftime('%d.%m.%Y %H:%M') }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                {% if yukleme.durum != 'silindi' %}
+                <button
+                  onclick="deleteUpload('{{ yukleme.islem_kodu }}')"
+                  class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                >
+                  <i class="fas fa-trash"></i> Sil
+                </button>
+                {% endif %} {% if yukleme.hata_detaylari %}
+                <button
+                  onclick="showErrors('{{ yukleme.islem_kodu }}')"
+                  class="ml-3 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-300"
+                >
+                  <i class="fas fa-info-circle"></i> Detay
+                </button>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-12">
+        <i
+          class="fas fa-inbox text-slate-300 dark:text-slate-600 text-5xl mb-4"
+        ></i>
+        <p class="text-slate-500 dark:text-slate-400">
+          Henüz dosya yüklenmemiş
+        </p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
 </div>
 
 <!-- Önizleme Modal -->
-<div id="previewModal" class="hidden fixed z-10 inset-0 overflow-y-auto">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity"></div>
-        <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
-            <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-white">
-                        <i class="fas fa-file-excel mr-2 text-green-600"></i>
-                        Excel Dosyası Önizleme
-                    </h3>
-                    <button onclick="closePreviewModal()" class="text-slate-400 hover:text-slate-600">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-
-                <div id="previewContent" class="space-y-4">
-                    <!-- Özet Bilgiler -->
-                    <div class="grid grid-cols-4 gap-3">
-                        <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg">
-                            <div class="text-xs text-slate-600 dark:text-slate-400">Dosya Tipi</div>
-                            <div id="preview_dosya_tipi" class="text-lg font-semibold text-slate-900 dark:text-white mt-1"></div>
-                        </div>
-                        <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg">
-                            <div class="text-xs text-slate-600 dark:text-slate-400">Toplam Satır</div>
-                            <div id="preview_toplam_satir" class="text-lg font-semibold text-slate-900 dark:text-white mt-1"></div>
-                        </div>
-                        <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
-                            <div class="text-xs text-green-600 dark:text-green-400">Geçerli</div>
-                            <div id="preview_gecerli_satir" class="text-lg font-semibold text-green-700 dark:text-green-300 mt-1"></div>
-                        </div>
-                        <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
-                            <div class="text-xs text-red-600 dark:text-red-400">Hatalı</div>
-                            <div id="preview_hatali_satir" class="text-lg font-semibold text-red-700 dark:text-red-300 mt-1"></div>
-                        </div>
-                    </div>
-
-                    <!-- Dosya Adı -->
-                    <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg">
-                        <div class="text-xs text-slate-600 dark:text-slate-400 mb-1">Dosya Adı</div>
-                        <div id="preview_dosya_adi" class="text-sm font-medium text-slate-900 dark:text-white truncate"></div>
-                    </div>
-
-                    <!-- Uyarılar (varsa) -->
-                    <div id="preview_uyarilar_container" class="hidden">
-                        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                            <div class="flex items-start">
-                                <i class="fas fa-exclamation-circle text-red-600 dark:text-red-400 mr-3 mt-1"></i>
-                                <div class="flex-1">
-                                    <h4 class="text-sm font-semibold text-red-800 dark:text-red-200 mb-2">
-                                        Tespit Edilen Sorunlar
-                                    </h4>
-                                    <ul id="preview_uyarilar_list" class="text-xs text-red-700 dark:text-red-300 space-y-1 list-disc list-inside max-h-40 overflow-y-auto">
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Örnek Veriler -->
-                    <div>
-                        <h4 class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                            Örnek Veriler (İlk 5 Satır)
-                        </h4>
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700 text-sm">
-                                <thead class="bg-slate-50 dark:bg-slate-900">
-                                    <tr>
-                                        <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">Durum</th>
-                                        <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">Satır</th>
-                                        <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">Oda No</th>
-                                        <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">Giriş</th>
-                                        <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">Çıkış</th>
-                                        <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">Misafir</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="preview_table_body" class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Genel Uyarı -->
-                    <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                        <div class="flex">
-                            <i class="fas fa-info-circle text-yellow-600 dark:text-yellow-400 mr-3 mt-1"></i>
-                            <div class="text-sm text-yellow-800 dark:text-yellow-200">
-                                <strong>Dikkat:</strong> Onayladığınızda <strong>sadece geçerli veriler</strong> veritabanına kaydedilecektir. 
-                                Hatalı satırlar atlanacaktır.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-slate-50 dark:bg-slate-900 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
-                <button type="button" onclick="confirmUpload()"
-                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none sm:w-auto sm:text-sm">
-                    <i class="fas fa-check mr-2"></i>
-                    Onayla ve Yükle
-                </button>
-                <button type="button" onclick="closePreviewModal()"
-                        class="w-full inline-flex justify-center rounded-md border border-slate-300 dark:border-slate-600 shadow-sm px-4 py-2 bg-white dark:bg-slate-800 text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none sm:w-auto sm:text-sm">
-                    İptal
-                </button>
-            </div>
+<div id="previewModal" class="hidden fixed inset-0 overflow-y-auto z-50">
+  <div
+    class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
+  >
+    <div
+      class="fixed inset-0 bg-slate-900 bg-opacity-75"
+      onclick="closePreviewModal()"
+    ></div>
+    <!-- Ortalama için gizli element -->
+    <span
+      class="hidden sm:inline-block sm:align-middle sm:h-screen"
+      aria-hidden="true"
+      >&#8203;</span
+    >
+    <div
+      class="relative inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
+    >
+      <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3
+            class="text-lg leading-6 font-medium text-slate-900 dark:text-white"
+          >
+            <i class="fas fa-file-excel mr-2 text-green-600"></i>
+            Excel Dosyası Önizleme
+          </h3>
+          <button
+            onclick="closePreviewModal()"
+            class="text-slate-400 hover:text-slate-600"
+          >
+            <i class="fas fa-times text-xl"></i>
+          </button>
         </div>
+
+        <div id="previewContent" class="space-y-4">
+          <!-- Özet Bilgiler -->
+          <div class="grid grid-cols-4 gap-3">
+            <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg">
+              <div class="text-xs text-slate-600 dark:text-slate-400">
+                Dosya Tipi
+              </div>
+              <div
+                id="preview_dosya_tipi"
+                class="text-lg font-semibold text-slate-900 dark:text-white mt-1"
+              ></div>
+            </div>
+            <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg">
+              <div class="text-xs text-slate-600 dark:text-slate-400">
+                Toplam Satır
+              </div>
+              <div
+                id="preview_toplam_satir"
+                class="text-lg font-semibold text-slate-900 dark:text-white mt-1"
+              ></div>
+            </div>
+            <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+              <div class="text-xs text-green-600 dark:text-green-400">
+                Geçerli
+              </div>
+              <div
+                id="preview_gecerli_satir"
+                class="text-lg font-semibold text-green-700 dark:text-green-300 mt-1"
+              ></div>
+            </div>
+            <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+              <div class="text-xs text-red-600 dark:text-red-400">Hatalı</div>
+              <div
+                id="preview_hatali_satir"
+                class="text-lg font-semibold text-red-700 dark:text-red-300 mt-1"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Dosya Adı -->
+          <div class="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg">
+            <div class="text-xs text-slate-600 dark:text-slate-400 mb-1">
+              Dosya Adı
+            </div>
+            <div
+              id="preview_dosya_adi"
+              class="text-sm font-medium text-slate-900 dark:text-white truncate"
+            ></div>
+          </div>
+
+          <!-- Uyarılar (varsa) -->
+          <div id="preview_uyarilar_container" class="hidden">
+            <div
+              class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"
+            >
+              <div class="flex items-start">
+                <i
+                  class="fas fa-exclamation-circle text-red-600 dark:text-red-400 mr-3 mt-1"
+                ></i>
+                <div class="flex-1">
+                  <h4
+                    class="text-sm font-semibold text-red-800 dark:text-red-200 mb-2"
+                  >
+                    Tespit Edilen Sorunlar
+                  </h4>
+                  <ul
+                    id="preview_uyarilar_list"
+                    class="text-xs text-red-700 dark:text-red-300 space-y-1 list-disc list-inside max-h-40 overflow-y-auto"
+                  ></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Eklenecek Veriler -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h4
+                class="text-sm font-medium text-slate-700 dark:text-slate-300"
+              >
+                <i class="fas fa-list-check mr-1 text-blue-500"></i>
+                Eklenecek Veriler
+              </h4>
+              <span
+                id="preview_kayit_sayisi"
+                class="text-xs text-slate-500 dark:text-slate-400"
+              ></span>
+            </div>
+            <div
+              class="overflow-x-auto max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg"
+            >
+              <table
+                class="min-w-full divide-y divide-slate-200 dark:divide-slate-700 text-sm"
+              >
+                <thead class="bg-slate-50 dark:bg-slate-900 sticky top-0">
+                  <tr>
+                    <th
+                      class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400"
+                    >
+                      Durum
+                    </th>
+                    <th
+                      class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400"
+                    >
+                      Oda No
+                    </th>
+                    <th
+                      id="th_giris_saati"
+                      class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 hidden"
+                    >
+                      Giriş Saati
+                    </th>
+                    <th
+                      class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400"
+                    >
+                      Giriş Tarihi
+                    </th>
+                    <th
+                      class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400"
+                    >
+                      Çıkış Tarihi
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  id="preview_table_body"
+                  class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+                ></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Genel Uyarı -->
+          <div
+            class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4"
+          >
+            <div class="flex">
+              <i
+                class="fas fa-info-circle text-yellow-600 dark:text-yellow-400 mr-3 mt-1"
+              ></i>
+              <div class="text-sm text-yellow-800 dark:text-yellow-200">
+                <strong>Dikkat:</strong> Onayladığınızda
+                <strong>sadece geçerli veriler</strong> veritabanına
+                kaydedilecektir. Hatalı satırlar atlanacaktır.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-slate-50 dark:bg-slate-900 px-4 py-3 sm:px-6">
+        <!-- Çoklu dosya navigasyonu -->
+        <div
+          id="previewNavigation"
+          class="flex items-center justify-between mb-3"
+        >
+          <button
+            type="button"
+            id="prevFileBtn"
+            onclick="prevFile()"
+            class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 disabled:opacity-50"
+          >
+            <i class="fas fa-chevron-left mr-1"></i> Önceki
+          </button>
+          <span
+            id="fileCounter"
+            class="text-sm font-medium text-slate-600 dark:text-slate-400"
+            >1 / 1</span
+          >
+          <button
+            type="button"
+            id="nextFileBtn"
+            onclick="nextFile()"
+            class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 disabled:opacity-50"
+          >
+            Sonraki <i class="fas fa-chevron-right ml-1"></i>
+          </button>
+        </div>
+
+        <!-- Aksiyon butonları -->
+        <div class="flex flex-row-reverse gap-2">
+          <button
+            type="button"
+            onclick="confirmCurrentUpload()"
+            class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white sm:text-sm"
+          >
+            <i class="fas fa-check mr-2"></i>
+            Bu Dosyayı Yükle
+          </button>
+          <button
+            type="button"
+            onclick="confirmAllUploads()"
+            class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white sm:text-sm"
+          >
+            <i class="fas fa-upload mr-2"></i>
+            Tümünü Yükle
+          </button>
+          <button
+            type="button"
+            onclick="closePreviewModal()"
+            class="inline-flex justify-center rounded-md border border-slate-300 dark:border-slate-600 shadow-sm px-4 py-2 bg-white dark:bg-slate-800 text-base font-medium text-slate-700 dark:text-slate-300 sm:text-sm"
+          >
+            İptal
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 
 <!-- Hata Detayları Modal -->
-<div id="errorModal" class="hidden fixed z-10 inset-0 overflow-y-auto">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity"></div>
-        <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-white mb-4">
-                    Hata Detayları
-                </h3>
-                <div id="errorContent" class="text-sm text-slate-600 dark:text-slate-400 max-h-96 overflow-y-auto">
-                </div>
-            </div>
-            <div class="bg-slate-50 dark:bg-slate-900 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button type="button" onclick="closeErrorModal()"
-                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-slate-600 text-base font-medium text-white hover:bg-slate-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
-                    Kapat
-                </button>
-            </div>
-        </div>
+<div id="errorModal" class="hidden fixed inset-0 overflow-y-auto z-50">
+  <div
+    class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center"
+  >
+    <div
+      class="fixed inset-0 bg-slate-900 bg-opacity-75 transition-opacity"
+      onclick="closeErrorModal()"
+    ></div>
+    <div
+      class="relative bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full"
+    >
+      <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <h3
+          class="text-lg leading-6 font-medium text-slate-900 dark:text-white mb-4 sticky top-0 bg-white dark:bg-slate-800 pb-2 border-b border-slate-200 dark:border-slate-700"
+        >
+          <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+          Hata Detayları
+        </h3>
+        <div
+          id="errorContent"
+          class="text-sm text-slate-600 dark:text-slate-400 max-h-80 overflow-y-auto"
+        ></div>
+      </div>
+      <div
+        class="bg-slate-50 dark:bg-slate-900 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse"
+      >
+        <button
+          type="button"
+          onclick="closeErrorModal()"
+          class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-slate-600 text-base font-medium text-white hover:bg-slate-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+        >
+          Kapat
+        </button>
+      </div>
     </div>
+  </div>
 </div>
 
 <script>
-// Drag & Drop
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('excel_file');
-const fileName = document.getElementById('fileName');
+  // Çoklu dosya yönetimi
+  let selectedFiles = [];
+  let currentFileIndex = 0;
+  let allPreviewData = [];
 
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+  const dropZone = document.getElementById("dropZone");
+  const fileInput = document.getElementById("excel_file");
+  const selectedFilesContainer = document.getElementById(
+    "selectedFilesContainer"
+  );
+  const selectedFilesList = document.getElementById("selectedFilesList");
+  const clearFilesBtn = document.getElementById("clearFilesBtn");
+
+  ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
     dropZone.addEventListener(eventName, preventDefaults, false);
-});
+  });
 
-function preventDefaults(e) {
+  function preventDefaults(e) {
     e.preventDefault();
     e.stopPropagation();
-}
+  }
 
-['dragenter', 'dragover'].forEach(eventName => {
-    dropZone.addEventListener(eventName, () => {
-        dropZone.classList.add('border-slate-500', 'bg-slate-50');
-    }, false);
-});
+  ["dragenter", "dragover"].forEach((eventName) => {
+    dropZone.addEventListener(
+      eventName,
+      () => {
+        dropZone.classList.add("border-slate-500", "bg-slate-50");
+      },
+      false
+    );
+  });
 
-['dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, () => {
-        dropZone.classList.remove('border-slate-500', 'bg-slate-50');
-    }, false);
-});
+  ["dragleave", "drop"].forEach((eventName) => {
+    dropZone.addEventListener(
+      eventName,
+      () => {
+        dropZone.classList.remove("border-slate-500", "bg-slate-50");
+      },
+      false
+    );
+  });
 
-dropZone.addEventListener('drop', (e) => {
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-        fileInput.files = files;
-        updateFileName(files[0].name);
-        // Otomatik önizleme aç
-        setTimeout(() => {
-            previewExcel();
-        }, 300);
+  dropZone.addEventListener(
+    "drop",
+    (e) => {
+      const files = Array.from(e.dataTransfer.files).filter(
+        (f) => f.name.endsWith(".xlsx") || f.name.endsWith(".xls")
+      );
+      if (files.length > 0) {
+        addFiles(files, true); // Otomatik önizleme aç
+      }
+    },
+    false
+  );
+
+  dropZone.addEventListener("click", (e) => {
+    if (e.target.tagName !== "LABEL" && e.target.tagName !== "INPUT") {
+      fileInput.click();
     }
-}, false);
+  });
 
-// Sürükle-bırak alanına tıklayınca dosya seçme dialogu aç
-dropZone.addEventListener('click', (e) => {
-    // Label'a tıklanmadıysa (çift tetikleme önleme)
-    if (e.target.tagName !== 'LABEL' && e.target.tagName !== 'INPUT') {
-        fileInput.click();
-    }
-});
-
-fileInput.addEventListener('change', (e) => {
+  fileInput.addEventListener("change", (e) => {
     if (e.target.files.length > 0) {
-        updateFileName(e.target.files[0].name);
-        // Otomatik önizleme aç
-        setTimeout(() => {
-            previewExcel();
-        }, 300);
+      addFiles(Array.from(e.target.files), true); // Otomatik önizleme aç
     }
-});
+  });
 
-function updateFileName(name) {
-    fileName.textContent = `Seçilen dosya: ${name}`;
-}
-
-// Silme işlemi
-function deleteUpload(islemKodu) {
-    if (confirm(`${islemKodu} işlem kodlu yüklemeyi silmek istediğinizden emin misiniz?\n\nBu işlem tüm ilgili misafir kayıtlarını da silecektir.`)) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `{{ url_for('doluluk.doluluk_sil', islem_kodu='PLACEHOLDER') }}`.replace('PLACEHOLDER', islemKodu);
-
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = 'csrf_token';
-        csrfInput.value = '{{ csrf_token() }}';
-        form.appendChild(csrfInput);
-
-        document.body.appendChild(form);
-        form.submit();
-    }
-}
-
-// Hata detayları modal
-function showErrors(islemKodu) {
-    fetch(`{{ url_for('doluluk.doluluk_durum', islem_kodu='PLACEHOLDER') }}`.replace('PLACEHOLDER', islemKodu))
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.hata_detaylari) {
-                const errorContent = document.getElementById('errorContent');
-                errorContent.innerHTML = '';
-                
-                if (Array.isArray(data.hata_detaylari) && data.hata_detaylari.length > 0) {
-                    const ul = document.createElement('ul');
-                    ul.className = 'list-disc list-inside space-y-1';
-                    data.hata_detaylari.forEach(hata => {
-                        const li = document.createElement('li');
-                        li.textContent = hata;
-                        ul.appendChild(li);
-                    });
-                    errorContent.appendChild(ul);
-                } else {
-                    errorContent.textContent = 'Hata detayı bulunamadı';
-                }
-                
-                document.getElementById('errorModal').classList.remove('hidden');
-            }
-        })
-        .catch(error => {
-            console.error('Hata detayları alınamadı:', error);
-            alert('Hata detayları alınamadı');
-        });
-}
-
-function closeErrorModal() {
-    document.getElementById('errorModal').classList.add('hidden');
-}
-
-// Önizleme fonksiyonları
-let previewData = null;
-
-function previewExcel() {
-    const fileInput = document.getElementById('excel_file');
-    const previewBtn = document.getElementById('previewBtn');
-    
-    if (!fileInput.files || fileInput.files.length === 0) {
-        alert('Lütfen önce bir dosya seçin');
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('excel_file', fileInput.files[0]);
-    formData.append('otel_id', document.getElementById('otel_id_input').value);
-    formData.append('csrf_token', '{{ csrf_token() }}');
-
-    previewBtn.disabled = true;
-    previewBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analiz ediliyor...';
-
-    fetch('{{ url_for("doluluk.doluluk_onizle") }}', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            previewData = data;
-            showPreviewModal(data);
-        } else {
-            alert('Önizleme hatası: ' + data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Önizleme hatası:', error);
-        alert('Önizleme sırasında bir hata oluştu');
-    })
-    .finally(() => {
-        previewBtn.disabled = false;
-        previewBtn.innerHTML = '<i class="fas fa-eye mr-2"></i>Önizle';
+  function addFiles(files, autoPreview = false) {
+    files.forEach((file) => {
+      // Aynı dosya zaten eklenmişse ekleme
+      if (
+        !selectedFiles.some((f) => f.name === file.name && f.size === file.size)
+      ) {
+        selectedFiles.push(file);
+      }
     });
-}
+    updateFilesList();
 
-function showPreviewModal(data) {
+    // Otomatik önizleme
+    if (autoPreview && selectedFiles.length > 0) {
+      setTimeout(() => {
+        previewMultipleExcel();
+      }, 300);
+    }
+  }
+
+  function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    updateFilesList();
+  }
+
+  function clearSelectedFiles() {
+    selectedFiles = [];
+    allPreviewData = [];
+    currentFileIndex = 0;
+    fileInput.value = "";
+    updateFilesList();
+  }
+
+  function updateFilesList() {
+    if (selectedFiles.length === 0) {
+      selectedFilesContainer.classList.add("hidden");
+      clearFilesBtn.classList.add("hidden");
+      return;
+    }
+
+    selectedFilesContainer.classList.remove("hidden");
+    clearFilesBtn.classList.remove("hidden");
+
+    selectedFilesList.innerHTML = selectedFiles
+      .map(
+        (file, index) => `
+      <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900 rounded-lg px-4 py-2">
+        <div class="flex items-center gap-3">
+          <i class="fas fa-file-excel text-green-600 text-lg"></i>
+          <div>
+            <div class="text-sm font-medium text-slate-900 dark:text-white">${
+              file.name
+            }</div>
+            <div class="text-xs text-slate-500">${(file.size / 1024).toFixed(
+              1
+            )} KB</div>
+          </div>
+        </div>
+        <button type="button" onclick="removeFile(${index})" class="text-red-500 p-1">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    `
+      )
+      .join("");
+  }
+
+  // Silme işlemi
+  function deleteUpload(islemKodu) {
+    if (
+      confirm(
+        `${islemKodu} işlem kodlu yüklemeyi silmek istediğinizden emin misiniz?\n\nBu işlem tüm ilgili misafir kayıtlarını da silecektir.`
+      )
+    ) {
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action =
+        `{{ url_for('doluluk.doluluk_sil', islem_kodu='PLACEHOLDER') }}`.replace(
+          "PLACEHOLDER",
+          islemKodu
+        );
+
+      const csrfInput = document.createElement("input");
+      csrfInput.type = "hidden";
+      csrfInput.name = "csrf_token";
+      csrfInput.value = "{{ csrf_token() }}";
+      form.appendChild(csrfInput);
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+
+  // Hata detayları modal
+  function showErrors(islemKodu) {
+    fetch(
+      `{{ url_for('doluluk.doluluk_durum', islem_kodu='PLACEHOLDER') }}`.replace(
+        "PLACEHOLDER",
+        islemKodu
+      )
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success && data.hata_detaylari) {
+          const errorContent = document.getElementById("errorContent");
+          errorContent.innerHTML = "";
+
+          if (
+            Array.isArray(data.hata_detaylari) &&
+            data.hata_detaylari.length > 0
+          ) {
+            const ul = document.createElement("ul");
+            ul.className = "list-disc list-inside space-y-1";
+            data.hata_detaylari.forEach((hata) => {
+              const li = document.createElement("li");
+              li.textContent = hata;
+              ul.appendChild(li);
+            });
+            errorContent.appendChild(ul);
+          } else {
+            errorContent.textContent = "Hata detayı bulunamadı";
+          }
+
+          document.getElementById("errorModal").classList.remove("hidden");
+        }
+      })
+      .catch((error) => {
+        console.error("Hata detayları alınamadı:", error);
+        alert("Hata detayları alınamadı");
+      });
+  }
+
+  function closeErrorModal() {
+    document.getElementById("errorModal").classList.add("hidden");
+  }
+
+  // Çoklu dosya önizleme
+  let previewData = null;
+
+  async function previewMultipleExcel() {
+    if (selectedFiles.length === 0) {
+      alert("Lütfen önce dosya seçin");
+      return;
+    }
+
+    const previewBtn = document.getElementById("previewBtn");
+    previewBtn.disabled = true;
+
+    allPreviewData = [];
+    currentFileIndex = 0;
+
+    // Tüm dosyaları sırayla analiz et
+    for (let i = 0; i < selectedFiles.length; i++) {
+      previewBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Analiz ediliyor (${
+        i + 1
+      }/${selectedFiles.length})...`;
+
+      try {
+        const data = await analyzeFile(selectedFiles[i]);
+        if (data.success) {
+          allPreviewData.push({
+            ...data,
+            fileIndex: i,
+            fileName: selectedFiles[i].name,
+          });
+        } else {
+          allPreviewData.push({
+            success: false,
+            error: data.error,
+            fileIndex: i,
+            fileName: selectedFiles[i].name,
+          });
+        }
+      } catch (error) {
+        allPreviewData.push({
+          success: false,
+          error: error.message,
+          fileIndex: i,
+          fileName: selectedFiles[i].name,
+        });
+      }
+    }
+
+    previewBtn.disabled = false;
+    previewBtn.innerHTML = '<i class="fas fa-eye mr-2"></i>Önizle ve Analiz Et';
+
+    // İlk dosyanın önizlemesini göster
+    if (allPreviewData.length > 0) {
+      currentFileIndex = 0;
+      showMultiPreviewModal();
+    }
+  }
+
+  async function analyzeFile(file) {
+    const formData = new FormData();
+    formData.append("excel_file", file);
+    formData.append("otel_id", document.getElementById("otel_id_input").value);
+    formData.append("csrf_token", "{{ csrf_token() }}");
+
+    const response = await fetch('{{ url_for("doluluk.doluluk_onizle") }}', {
+      method: "POST",
+      body: formData,
+    });
+    return await response.json();
+  }
+
+  function showMultiPreviewModal() {
+    const data = allPreviewData[currentFileIndex];
+
+    if (!data.success) {
+      // Hatalı dosya için özel gösterim
+      document.getElementById("preview_dosya_tipi").textContent = "HATA";
+      document.getElementById("preview_toplam_satir").textContent = "-";
+      document.getElementById("preview_gecerli_satir").textContent = "-";
+      document.getElementById("preview_hatali_satir").textContent = "-";
+      document.getElementById("preview_dosya_adi").textContent = data.fileName;
+      document.getElementById("preview_table_body").innerHTML = `
+        <tr><td colspan="6" class="px-3 py-8 text-center text-red-600">
+          <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
+          <div>${data.error}</div>
+        </td></tr>
+      `;
+      document
+        .getElementById("preview_uyarilar_container")
+        .classList.add("hidden");
+    } else {
+      previewData = data;
+      showPreviewModal(data);
+      return; // showPreviewModal zaten modal'ı açıyor
+    }
+
+    updateNavigationButtons();
+    document.getElementById("previewModal").classList.remove("hidden");
+  }
+
+  function updateNavigationButtons() {
+    // Navigation butonlarını güncelle
+    const navContainer = document.getElementById("previewNavigation");
+    if (!navContainer) return;
+
+    const prevBtn = document.getElementById("prevFileBtn");
+    const nextBtn = document.getElementById("nextFileBtn");
+    const fileCounter = document.getElementById("fileCounter");
+
+    if (prevBtn) prevBtn.disabled = currentFileIndex === 0;
+    if (nextBtn)
+      nextBtn.disabled = currentFileIndex >= allPreviewData.length - 1;
+    if (fileCounter)
+      fileCounter.textContent = `${currentFileIndex + 1} / ${
+        allPreviewData.length
+      }`;
+  }
+
+  function prevFile() {
+    if (currentFileIndex > 0) {
+      currentFileIndex--;
+      showMultiPreviewModal();
+    }
+  }
+
+  function nextFile() {
+    if (currentFileIndex < allPreviewData.length - 1) {
+      currentFileIndex++;
+      showMultiPreviewModal();
+    }
+  }
+
+  // Eski tek dosya fonksiyonu (geriye uyumluluk)
+  function previewExcel() {
+    previewMultipleExcel();
+  }
+
+  function showPreviewModal(data) {
     // Özet bilgileri doldur
-    document.getElementById('preview_dosya_tipi').textContent = data.dosya_tipi_adi;
-    document.getElementById('preview_toplam_satir').textContent = data.toplam_satir;
-    document.getElementById('preview_gecerli_satir').textContent = data.gecerli_satir;
-    document.getElementById('preview_hatali_satir').textContent = data.hatali_satir;
-    document.getElementById('preview_dosya_adi').textContent = data.dosya_adi;
+    document.getElementById("preview_dosya_tipi").textContent =
+      data.dosya_tipi_adi;
+    document.getElementById("preview_toplam_satir").textContent =
+      data.toplam_satir;
+    document.getElementById("preview_gecerli_satir").textContent =
+      data.gecerli_satir;
+    document.getElementById("preview_hatali_satir").textContent =
+      data.hatali_satir;
+    document.getElementById("preview_dosya_adi").textContent = data.dosya_adi;
+
+    // Kayıt sayısını göster
+    document.getElementById("preview_kayit_sayisi").textContent = `Toplam ${
+      data.tum_satirlar ? data.tum_satirlar.length : data.gecerli_satir
+    } kayıt`;
+
+    // ARRIVALS ise giriş saati sütununu göster
+    const thGirisSaati = document.getElementById("th_giris_saati");
+    const isArrivals = data.dosya_tipi === "arrivals";
+    if (isArrivals) {
+      thGirisSaati.classList.remove("hidden");
+    } else {
+      thGirisSaati.classList.add("hidden");
+    }
 
     // Uyarıları göster (varsa)
-    const uyarilarContainer = document.getElementById('preview_uyarilar_container');
-    const uyarilarList = document.getElementById('preview_uyarilar_list');
-    
+    const uyarilarContainer = document.getElementById(
+      "preview_uyarilar_container"
+    );
+    const uyarilarList = document.getElementById("preview_uyarilar_list");
+
     if (data.uyarilar && data.uyarilar.length > 0) {
-        uyarilarContainer.classList.remove('hidden');
-        uyarilarList.innerHTML = '';
-        
-        data.uyarilar.forEach(uyari => {
-            const li = document.createElement('li');
-            li.textContent = uyari;
-            uyarilarList.appendChild(li);
-        });
+      uyarilarContainer.classList.remove("hidden");
+      uyarilarList.innerHTML = "";
+      data.uyarilar.forEach((uyari) => {
+        const li = document.createElement("li");
+        li.textContent = uyari;
+        uyarilarList.appendChild(li);
+      });
     } else {
-        uyarilarContainer.classList.add('hidden');
+      uyarilarContainer.classList.add("hidden");
     }
 
-    // Tablo verilerini doldur
-    const tbody = document.getElementById('preview_table_body');
-    tbody.innerHTML = '';
-    
-    data.ornek_satirlar.forEach(satir => {
-        const tr = document.createElement('tr');
-        const durumIcon = satir.gecerli 
-            ? '<i class="fas fa-check-circle text-green-600"></i>' 
-            : '<i class="fas fa-times-circle text-red-600"></i>';
-        
-        const rowClass = satir.gecerli 
-            ? '' 
-            : 'bg-red-50 dark:bg-red-900/10';
-        
-        tr.className = rowClass;
-        tr.innerHTML = `
-            <td class="px-3 py-2">${durumIcon}</td>
-            <td class="px-3 py-2 text-slate-900 dark:text-white">${satir.satir_no}</td>
-            <td class="px-3 py-2 text-slate-900 dark:text-white font-medium ${satir.oda_no === 'None' ? 'text-red-600' : ''}">${satir.oda_no}</td>
-            <td class="px-3 py-2 text-slate-600 dark:text-slate-400">${satir.giris}</td>
-            <td class="px-3 py-2 text-slate-600 dark:text-slate-400">${satir.cikis}</td>
-            <td class="px-3 py-2 text-slate-600 dark:text-slate-400">${satir.misafir}</td>
-        `;
-        
-        // Hata tooltip'i ekle
-        if (satir.hatalar && satir.hatalar.length > 0) {
-            tr.title = satir.hatalar.join(', ');
-        }
-        
-        tbody.appendChild(tr);
+    // Tablo verilerini doldur - TÜM VERİLERİ GÖSTER
+    const tbody = document.getElementById("preview_table_body");
+    tbody.innerHTML = "";
+
+    // tum_satirlar varsa onu kullan, yoksa ornek_satirlar
+    const satirlar = data.tum_satirlar || data.ornek_satirlar || [];
+
+    satirlar.forEach((satir) => {
+      const tr = document.createElement("tr");
+      const durumIcon = satir.gecerli
+        ? '<i class="fas fa-check-circle text-green-600"></i>'
+        : '<i class="fas fa-times-circle text-red-600"></i>';
+
+      const rowClass = satir.gecerli ? "" : "bg-red-50 dark:bg-red-900/10";
+      tr.className = rowClass;
+
+      // Giriş saati sütunu (sadece ARRIVALS için)
+      const girisSaatiTd = isArrivals
+        ? `<td class="px-3 py-2 text-slate-600 dark:text-slate-400">${
+            satir.giris_saati || "-"
+          }</td>`
+        : "";
+
+      tr.innerHTML = `
+        <td class="px-3 py-2">${durumIcon}</td>
+        <td class="px-3 py-2 text-slate-900 dark:text-white font-medium ${
+          satir.oda_no === "None" ? "text-red-600" : ""
+        }">${satir.oda_no}</td>
+        ${girisSaatiTd}
+        <td class="px-3 py-2 text-slate-600 dark:text-slate-400">${
+          satir.giris
+        }</td>
+        <td class="px-3 py-2 text-slate-600 dark:text-slate-400">${
+          satir.cikis
+        }</td>
+      `;
+
+      // Hata tooltip'i ekle
+      if (satir.hatalar && satir.hatalar.length > 0) {
+        tr.title = satir.hatalar.join(", ");
+      }
+
+      tbody.appendChild(tr);
     });
 
+    // Navigasyon butonlarını güncelle
+    updateNavigationButtons();
+
     // Modal'ı göster
-    document.getElementById('previewModal').classList.remove('hidden');
-}
+    document.getElementById("previewModal").classList.remove("hidden");
+  }
 
-function closePreviewModal() {
-    document.getElementById('previewModal').classList.add('hidden');
+  function closePreviewModal() {
+    document.getElementById("previewModal").classList.add("hidden");
     previewData = null;
-}
+  }
 
-function confirmUpload() {
-    if (!previewData) {
-        alert('Önizleme verisi bulunamadı');
-        return;
+  // Mevcut dosyayı yükle
+  async function confirmCurrentUpload() {
+    const data = allPreviewData[currentFileIndex];
+    if (!data || !data.success) {
+      alert("Bu dosya yüklenemez");
+      return;
     }
 
-    // Modal'ı kapat
-    closePreviewModal();
+    await uploadSingleFile(currentFileIndex);
 
-    // Formu submit et
-    document.getElementById('uploadForm').submit();
-}
+    // Yüklenen dosyayı listeden kaldır
+    allPreviewData.splice(currentFileIndex, 1);
+    selectedFiles.splice(currentFileIndex, 1);
+
+    if (allPreviewData.length === 0) {
+      closePreviewModal();
+      clearSelectedFiles();
+      location.reload();
+    } else {
+      if (currentFileIndex >= allPreviewData.length) {
+        currentFileIndex = allPreviewData.length - 1;
+      }
+      updateFilesList();
+      showMultiPreviewModal();
+    }
+  }
+
+  // Tüm dosyaları sırayla yükle
+  async function confirmAllUploads() {
+    const validFiles = allPreviewData.filter((d) => d.success);
+    if (validFiles.length === 0) {
+      alert("Yüklenecek geçerli dosya yok");
+      return;
+    }
+
+    const confirmBtn = document.querySelector(
+      '[onclick="confirmAllUploads()"]'
+    );
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML =
+      '<i class="fas fa-spinner fa-spin mr-2"></i>Yükleniyor...';
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < allPreviewData.length; i++) {
+      if (allPreviewData[i].success) {
+        try {
+          await uploadSingleFile(i);
+          successCount++;
+        } catch (error) {
+          errorCount++;
+          console.error(
+            `Dosya yükleme hatası (${allPreviewData[i].fileName}):`,
+            error
+          );
+        }
+      }
+    }
+
+    closePreviewModal();
+    clearSelectedFiles();
+
+    alert(
+      `Yükleme tamamlandı!\n✓ ${successCount} dosya başarıyla yüklendi\n${
+        errorCount > 0 ? "✗ " + errorCount + " dosya yüklenemedi" : ""
+      }`
+    );
+    location.reload();
+  }
+
+  // Tek dosya yükleme
+  async function uploadSingleFile(index) {
+    const file = selectedFiles[index];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("excel_file", file);
+    formData.append("otel_id", document.getElementById("otel_id_input").value);
+    formData.append("csrf_token", "{{ csrf_token() }}");
+
+    const response = await fetch('{{ url_for("doluluk.doluluk_yukle") }}', {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response;
+  }
+
+  // Eski fonksiyon (geriye uyumluluk)
+  function confirmUpload() {
+    confirmCurrentUpload();
+  }
 </script>
 
 {% endblock %}

@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\routes\dolum_talebi_routes.py
+# hypothesis_version: 6.148.2
+
+[100, 400, 404, 500, '-', '/api/dolum-talepleri', 'POST', 'Talep bulunamadı', 'Talep iptal edildi', 'admin', 'beklemede', 'bekleyen', 'count', 'dolum_talebi', 'dolum_talebi_iptal', 'dolum_talebi_tamamla', 'dolum_talepleri_api', 'durum', 'guncelleme', 'id', 'iptal', 'iptal_bugun', 'kat_adi', 'kat_sorumlusu', 'message', 'notlar', 'oda_id', 'oda_no', 'sistem_yoneticisi', 'success', 'talep_id', 'talep_tarihi', 'talepler', 'tamamlanan_bugun', 'tamamlandi', 'tamamlanma_tarihi', 'tamamlayan_ad', 'tamamlayan_id', 'tumu']

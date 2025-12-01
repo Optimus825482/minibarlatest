@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\routes\admin_user_routes.py
+# hypothesis_version: 6.148.2
+
+['/admin-ata', 'Bir hata oluştu!', 'GET', 'POST', 'User-Agent', 'ad', 'admin', 'admin_ata', 'admin_duzenle', 'create', 'dashboard', 'delete', 'depo_sorumlusu', 'email', 'error', 'kullanici_adi', 'kullanici_id', 'kullanici_rol', 'kullanicilar', 'login', 'otel_ids', 'personel_tanimla', 'sifre', 'sistem_yoneticisi', 'soyad', 'success', 'telefon', 'update', 'yeni_sifre', 'Şifre güncellendi']

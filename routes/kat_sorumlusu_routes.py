@@ -678,6 +678,48 @@ def register_kat_sorumlusu_routes(app):
                 oda = Oda.query.get(oda_id)
                 urun = Urun.query.get(urun_id)
                 
+                # Görev tamamlama - Ürün eklendiğinde görev tamamlanır
+                gorev_tamamlandi = False
+                try:
+                    from models import GorevDetay, GorevDurumLog, GunlukGorev
+                    from datetime import date
+                    
+                    bugun = date.today()
+                    detay = GorevDetay.query.join(GunlukGorev).filter(
+                        GunlukGorev.personel_id == kullanici_id,
+                        GunlukGorev.gorev_tarihi == bugun,
+                        GorevDetay.oda_id == oda_id,
+                        GorevDetay.durum != 'completed'
+                    ).first()
+                    
+                    if detay:
+                        onceki_durum = detay.durum
+                        detay.durum = 'completed'
+                        detay.kontrol_zamani = datetime.now(timezone.utc)
+                        detay.notlar = f'Ürün eklendi: {urun.urun_adi} x{eklenen_miktar}'
+                        
+                        log = GorevDurumLog(
+                            gorev_detay_id=detay.id,
+                            onceki_durum=onceki_durum,
+                            yeni_durum='completed',
+                            degistiren_id=kullanici_id,
+                            aciklama=f'Ürün eklendi: {urun.urun_adi} x{eklenen_miktar} - Oda kontrol ile tamamlandı'
+                        )
+                        db.session.add(log)
+                        
+                        gorev = detay.gorev
+                        if gorev:
+                            tamamlanan = sum(1 for d in gorev.detaylar if d.durum == 'completed')
+                            if tamamlanan == len(gorev.detaylar):
+                                gorev.durum = 'completed'
+                                gorev.tamamlanma_tarihi = datetime.now(timezone.utc)
+                            elif tamamlanan > 0:
+                                gorev.durum = 'in_progress'
+                        
+                        gorev_tamamlandi = True
+                except Exception as e:
+                    print(f"Görev tamamlama hatası: {str(e)}")
+                
                 # Audit log
                 audit_create(
                     tablo_adi='minibar_islem',
@@ -686,12 +728,17 @@ def register_kat_sorumlusu_routes(app):
                     aciklama=f"Oda {oda.oda_no} - {urun.urun_adi} eklendi (Miktar: {eklenen_miktar}, Tüketim: {tuketim})"
                 )
                 
+                mesaj = 'Ürün başarıyla eklendi'
+                if gorev_tamamlandi:
+                    mesaj += ' - Görev tamamlandı!'
+                
                 return jsonify({
                     'success': True,
-                    'message': 'Ürün başarıyla eklendi',
+                    'message': mesaj,
                     'tuketim': tuketim,
                     'yeni_miktar': setup_miktari,
-                    'zimmet_kalan': zimmet_detay.kalan_miktar
+                    'zimmet_kalan': zimmet_detay.kalan_miktar,
+                    'gorev_tamamlandi': gorev_tamamlandi
                 })
                 
             except ZimmetStokYetersizError as e:
@@ -1463,3 +1510,520 @@ def register_kat_sorumlusu_routes(app):
                 'error': str(e)
             }), 500
     
+
+    @app.route('/api/kat-sorumlusu/sarfiyat-yok', methods=['POST'])
+    @login_required
+    @role_required('kat_sorumlusu')
+    def api_sarfiyat_yok():
+        """
+        Sarfiyat yok kaydı - Oda kontrolü yapıldı ama tüketim yok
+        Görev varsa otomatik tamamlanır
+        
+        Request Body:
+            {
+                "oda_id": 101,
+                "gorev_detay_id": 45 (opsiyonel)
+            }
+            
+        Returns:
+            JSON: İşlem sonucu
+        """
+        try:
+            from datetime import date
+            
+            data = request.get_json()
+            
+            if not data:
+                return jsonify({
+                    'success': False,
+                    'error': 'Geçersiz istek'
+                }), 400
+            
+            oda_id = data.get('oda_id')
+            gorev_detay_id = data.get('gorev_detay_id')
+            
+            if not oda_id:
+                return jsonify({
+                    'success': False,
+                    'error': 'Oda ID gerekli'
+                }), 400
+            
+            kullanici_id = session.get('kullanici_id')
+            
+            # Oda bilgilerini al
+            oda = Oda.query.get(oda_id)
+            if not oda:
+                return jsonify({
+                    'success': False,
+                    'error': 'Oda bulunamadı'
+                }), 404
+            
+            # Minibar kontrol kaydı oluştur (sarfiyat yok)
+            islem = MinibarIslem(
+                oda_id=oda_id,
+                personel_id=kullanici_id,
+                islem_tipi='kontrol',
+                islem_tarihi=datetime.now(timezone.utc),
+                aciklama='Sarfiyat yok - Kontrol tamamlandı'
+            )
+            db.session.add(islem)
+            db.session.flush()
+            
+            # Görev varsa tamamla
+            gorev_tamamlandi = False
+            if gorev_detay_id:
+                try:
+                    from models import GorevDetay, GorevDurumLog, GunlukGorev
+                    
+                    detay = GorevDetay.query.get(gorev_detay_id)
+                    if detay and detay.durum != 'completed':
+                        onceki_durum = detay.durum
+                        detay.durum = 'completed'
+                        detay.kontrol_zamani = datetime.now(timezone.utc)
+                        detay.notlar = 'Sarfiyat yok - Oda kontrol ile tamamlandı'
+                        
+                        # Log kaydı
+                        log = GorevDurumLog(
+                            gorev_detay_id=gorev_detay_id,
+                            onceki_durum=onceki_durum,
+                            yeni_durum='completed',
+                            degistiren_id=kullanici_id,
+                            aciklama='Sarfiyat yok - Oda kontrol ile tamamlandı'
+                        )
+                        db.session.add(log)
+                        
+                        # Ana görev durumunu güncelle
+                        gorev = detay.gorev
+                        if gorev:
+                            tamamlanan = sum(1 for d in gorev.detaylar if d.durum == 'completed')
+                            if tamamlanan == len(gorev.detaylar):
+                                gorev.durum = 'completed'
+                                gorev.tamamlanma_tarihi = datetime.now(timezone.utc)
+                            elif tamamlanan > 0:
+                                gorev.durum = 'in_progress'
+                        
+                        gorev_tamamlandi = True
+                except Exception as e:
+                    print(f"Görev tamamlama hatası: {str(e)}")
+            else:
+                # Görev detay ID verilmemişse, bugünkü görevi bul ve tamamla
+                try:
+                    from models import GorevDetay, GorevDurumLog, GunlukGorev
+                    
+                    bugun = date.today()
+                    detay = GorevDetay.query.join(GunlukGorev).filter(
+                        GunlukGorev.personel_id == kullanici_id,
+                        GunlukGorev.gorev_tarihi == bugun,
+                        GorevDetay.oda_id == oda_id,
+                        GorevDetay.durum != 'completed'
+                    ).first()
+                    
+                    if detay:
+                        onceki_durum = detay.durum
+                        detay.durum = 'completed'
+                        detay.kontrol_zamani = datetime.now(timezone.utc)
+                        detay.notlar = 'Sarfiyat yok - Oda kontrol ile tamamlandı'
+                        
+                        log = GorevDurumLog(
+                            gorev_detay_id=detay.id,
+                            onceki_durum=onceki_durum,
+                            yeni_durum='completed',
+                            degistiren_id=kullanici_id,
+                            aciklama='Sarfiyat yok - Oda kontrol ile tamamlandı'
+                        )
+                        db.session.add(log)
+                        
+                        gorev = detay.gorev
+                        if gorev:
+                            tamamlanan = sum(1 for d in gorev.detaylar if d.durum == 'completed')
+                            if tamamlanan == len(gorev.detaylar):
+                                gorev.durum = 'completed'
+                                gorev.tamamlanma_tarihi = datetime.now(timezone.utc)
+                            elif tamamlanan > 0:
+                                gorev.durum = 'in_progress'
+                        
+                        gorev_tamamlandi = True
+                except Exception as e:
+                    print(f"Otomatik görev tamamlama hatası: {str(e)}")
+            
+            db.session.commit()
+            
+            # Audit log
+            audit_create(
+                tablo_adi='minibar_islem',
+                kayit_id=islem.id,
+                yeni_deger={
+                    'oda_id': oda_id,
+                    'islem_tipi': 'kontrol',
+                    'sarfiyat_yok': True,
+                    'gorev_tamamlandi': gorev_tamamlandi
+                },
+                aciklama=f"Oda {oda.oda_no} - Sarfiyat yok kontrolü"
+            )
+            
+            mesaj = f'Oda {oda.oda_no} kontrolü kaydedildi.'
+            if gorev_tamamlandi:
+                mesaj += ' Görev tamamlandı!'
+            
+            return jsonify({
+                'success': True,
+                'message': mesaj,
+                'gorev_tamamlandi': gorev_tamamlandi
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='api_sarfiyat_yok')
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            }), 500
+
+    @app.route('/api/kat-sorumlusu/kontrol-baslat', methods=['POST'])
+    @login_required
+    @role_required('kat_sorumlusu')
+    def api_kontrol_baslat():
+        """
+        Oda kontrolü başlatma - Varış kaydı oluşturur
+        Eğer tamamlanmamış bir kayıt varsa önce onu siler
+        """
+        try:
+            from models import OdaKontrolKaydi
+            from datetime import date
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({'success': False, 'error': 'Geçersiz istek'}), 400
+            
+            oda_id = data.get('oda_id')
+            if not oda_id:
+                return jsonify({'success': False, 'error': 'Oda ID gerekli'}), 400
+            
+            kullanici_id = session.get('kullanici_id')
+            bugun = date.today()
+            simdi = datetime.now(timezone.utc)
+            
+            # Tamamlanmamış (bitis_zamani NULL) kayıtları sil
+            tamamlanmamis = OdaKontrolKaydi.query.filter(
+                OdaKontrolKaydi.personel_id == kullanici_id,
+                OdaKontrolKaydi.kontrol_tarihi == bugun,
+                OdaKontrolKaydi.bitis_zamani.is_(None)
+            ).all()
+            
+            for kayit in tamamlanmamis:
+                db.session.delete(kayit)
+            
+            # Yeni kontrol kaydı oluştur
+            yeni_kayit = OdaKontrolKaydi(
+                oda_id=oda_id,
+                personel_id=kullanici_id,
+                kontrol_tarihi=bugun,
+                baslangic_zamani=simdi
+            )
+            db.session.add(yeni_kayit)
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Kontrol başlatıldı',
+                'kayit_id': yeni_kayit.id,
+                'baslangic_zamani': simdi.isoformat()
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='api_kontrol_baslat')
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/kat-sorumlusu/kontrol-tamamla', methods=['POST'])
+    @login_required
+    @role_required('kat_sorumlusu')
+    def api_kontrol_tamamla():
+        """
+        Oda kontrolünü tamamla - Bitiş zamanını kaydeder
+        """
+        try:
+            from models import OdaKontrolKaydi
+            from datetime import date
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({'success': False, 'error': 'Geçersiz istek'}), 400
+            
+            oda_id = data.get('oda_id')
+            kontrol_tipi = data.get('kontrol_tipi', 'sarfiyat_yok')
+            
+            if not oda_id:
+                return jsonify({'success': False, 'error': 'Oda ID gerekli'}), 400
+            
+            kullanici_id = session.get('kullanici_id')
+            bugun = date.today()
+            simdi = datetime.now(timezone.utc)
+            
+            # Bugünkü tamamlanmamış kaydı bul
+            kayit = OdaKontrolKaydi.query.filter(
+                OdaKontrolKaydi.oda_id == oda_id,
+                OdaKontrolKaydi.personel_id == kullanici_id,
+                OdaKontrolKaydi.kontrol_tarihi == bugun,
+                OdaKontrolKaydi.bitis_zamani.is_(None)
+            ).first()
+            
+            if kayit:
+                kayit.bitis_zamani = simdi
+                kayit.kontrol_tipi = kontrol_tipi
+            else:
+                # Kayıt yoksa yeni oluştur (başlangıç ve bitiş aynı)
+                kayit = OdaKontrolKaydi(
+                    oda_id=oda_id,
+                    personel_id=kullanici_id,
+                    kontrol_tarihi=bugun,
+                    baslangic_zamani=simdi,
+                    bitis_zamani=simdi,
+                    kontrol_tipi=kontrol_tipi
+                )
+                db.session.add(kayit)
+            
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Kontrol tamamlandı',
+                'kayit_id': kayit.id,
+                'bitis_zamani': simdi.isoformat()
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='api_kontrol_tamamla')
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+
+    @app.route('/api/kat-sorumlusu/dnd-kaydet', methods=['POST'])
+    @login_required
+    @role_required('kat_sorumlusu')
+    def api_dnd_kaydet():
+        """
+        Oda için DND kaydı oluşturur
+        3 kez DND kaydı yapılırsa görev otomatik tamamlanır
+        """
+        try:
+            from models import GorevDetay, GunlukGorev, DNDKontrol, GorevDurumLog
+            from datetime import date
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({'success': False, 'error': 'Geçersiz istek'}), 400
+            
+            oda_id = data.get('oda_id')
+            gorev_detay_id = data.get('gorev_detay_id')
+            
+            if not oda_id:
+                return jsonify({'success': False, 'error': 'Oda ID gerekli'}), 400
+            
+            kullanici_id = session.get('kullanici_id')
+            bugun = date.today()
+            simdi = datetime.now(timezone.utc)
+            
+            # Oda bilgisini al
+            oda = db.session.get(Oda, oda_id)
+            if not oda:
+                return jsonify({'success': False, 'error': 'Oda bulunamadı'}), 404
+            
+            # Görev detayını bul veya oluştur
+            detay = None
+            if gorev_detay_id:
+                detay = GorevDetay.query.get(gorev_detay_id)
+            
+            if not detay:
+                # Bugünkü görevi bul
+                detay = GorevDetay.query.join(GunlukGorev).filter(
+                    GunlukGorev.personel_id == kullanici_id,
+                    GunlukGorev.gorev_tarihi == bugun,
+                    GorevDetay.oda_id == oda_id
+                ).first()
+            
+            if not detay:
+                return jsonify({'success': False, 'error': 'Bu oda için görev bulunamadı'}), 404
+            
+            # DND sayısını artır
+            onceki_durum = detay.durum
+            detay.dnd_sayisi += 1
+            detay.son_dnd_zamani = simdi
+            detay.durum = 'dnd_pending'
+            
+            # DND kontrol kaydı oluştur
+            dnd_kontrol = DNDKontrol(
+                gorev_detay_id=detay.id,
+                kontrol_eden_id=kullanici_id,
+                notlar=f'DND kontrolü #{detay.dnd_sayisi}'
+            )
+            db.session.add(dnd_kontrol)
+            
+            mesaj = f'Oda {oda.oda_no} DND olarak işaretlendi ({detay.dnd_sayisi}/3)'
+            otomatik_tamamlandi = False
+            
+            # 3 kez DND kontrolü yapıldıysa otomatik tamamla
+            if detay.dnd_sayisi >= 3:
+                detay.durum = 'completed'
+                detay.kontrol_zamani = simdi
+                detay.notlar = '3 kez DND kontrolü yapıldı - Otomatik tamamlandı (Kontrol edilmedi)'
+                mesaj = f'Oda {oda.oda_no} - 3. DND kontrolü tamamlandı!'
+                otomatik_tamamlandi = True
+                
+                # Ana görevin durumunu güncelle
+                gorev = detay.gorev
+                if gorev:
+                    tamamlanan = sum(1 for d in gorev.detaylar if d.durum == 'completed')
+                    if tamamlanan == len(gorev.detaylar):
+                        gorev.durum = 'completed'
+                        gorev.tamamlanma_tarihi = simdi
+                    elif tamamlanan > 0:
+                        gorev.durum = 'in_progress'
+            
+            # Log kaydı oluştur
+            log = GorevDurumLog(
+                gorev_detay_id=detay.id,
+                onceki_durum=onceki_durum,
+                yeni_durum=detay.durum,
+                degistiren_id=kullanici_id,
+                aciklama=f'DND kontrolü #{detay.dnd_sayisi}'
+            )
+            db.session.add(log)
+            
+            db.session.commit()
+            
+            # Audit log
+            audit_create(
+                tablo_adi='gorev_detay',
+                kayit_id=detay.id,
+                yeni_deger={
+                    'oda_id': oda_id,
+                    'dnd_sayisi': detay.dnd_sayisi,
+                    'durum': detay.durum
+                },
+                aciklama=f"Oda {oda.oda_no} - DND kontrolü #{detay.dnd_sayisi}"
+            )
+            
+            return jsonify({
+                'success': True,
+                'message': mesaj,
+                'dnd_sayisi': detay.dnd_sayisi,
+                'otomatik_tamamlandi': otomatik_tamamlandi
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='api_dnd_kaydet')
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/kat-sorumlusu/bugun-eklemeler/<int:oda_id>', methods=['GET'])
+    @login_required
+    @role_required('kat_sorumlusu')
+    def api_bugun_eklemeler(oda_id):
+        """
+        Bugün bu odaya eklenen ürün miktarlarını getirir
+        
+        Args:
+            oda_id (int): Oda ID
+            
+        Returns:
+            JSON: Ürün ID -> Eklenen miktar dictionary
+        """
+        try:
+            from datetime import date
+            from sqlalchemy import func
+            
+            kullanici_id = session.get('kullanici_id')
+            bugun = date.today()
+            
+            # Bugünkü minibar işlem detaylarını getir
+            eklemeler = db.session.query(
+                MinibarIslemDetay.urun_id,
+                func.sum(MinibarIslemDetay.eklenen_miktar).label('toplam')
+            ).join(
+                MinibarIslem, MinibarIslemDetay.islem_id == MinibarIslem.id
+            ).filter(
+                MinibarIslem.oda_id == oda_id,
+                MinibarIslem.personel_id == kullanici_id,
+                func.date(MinibarIslem.islem_tarihi) == bugun
+            ).group_by(MinibarIslemDetay.urun_id).all()
+            
+            eklemeler_dict = {}
+            for ekleme in eklemeler:
+                if ekleme.toplam and ekleme.toplam > 0:
+                    eklemeler_dict[ekleme.urun_id] = int(ekleme.toplam)
+            
+            return jsonify({
+                'success': True,
+                'eklemeler': eklemeler_dict
+            })
+            
+        except Exception as e:
+            log_hata(e, modul='api_bugun_eklemeler')
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'eklemeler': {}
+            })
+
+
+    # ============================================================================
+    # GÖREV LİSTESİ SAYFASI
+    # ============================================================================
+    
+    @app.route('/kat-sorumlusu/gorev-listesi')
+    @login_required
+    @role_required('kat_sorumlusu', 'depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def kat_sorumlusu_gorev_listesi():
+        """
+        Günlük görev listesi sayfası - Kata göre gruplu
+        GET /kat-sorumlusu/gorev-listesi
+        """
+        try:
+            from utils.gorev_service import GorevService
+            from datetime import date
+            
+            kullanici_id = session.get('kullanici_id')
+            kullanici = Kullanici.query.get(kullanici_id)
+            
+            tarih_str = request.args.get('tarih', date.today().isoformat())
+            tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
+            
+            # Görev özetini al
+            ozet = GorevService.get_task_summary(kullanici_id, tarih)
+            
+            # Bekleyen görevleri al
+            bekleyen = GorevService.get_pending_tasks(kullanici_id, tarih)
+            
+            # Öncelik sıralaması: Önce kata göre, sonra Arrivals/Departures zamana göre
+            def oncelik_sirala(g):
+                kat = g.get('kat_no') or 999
+                tip = g.get('gorev_tipi', '')
+                if tip == 'arrival_kontrol' and g.get('varis_saati'):
+                    return (kat, 0, g.get('varis_saati', '99:99:99'))
+                elif tip == 'departure_kontrol' and g.get('cikis_saati'):
+                    return (kat, 0, g.get('cikis_saati', '99:99:99'))
+                return (kat, 1, str(g.get('oncelik_sirasi') or 999).zfill(5))
+            
+            bekleyen.sort(key=oncelik_sirala)
+            
+            # Tamamlanan görevleri al
+            tamamlanan = GorevService.get_completed_tasks(kullanici_id, tarih)
+            
+            # DND görevleri al
+            dnd_gorevler = GorevService.get_dnd_tasks(kullanici_id, tarih)
+            
+            return render_template(
+                'kat_sorumlusu/gorev_listesi.html',
+                ozet=ozet,
+                bekleyen=bekleyen,
+                tamamlanan=tamamlanan,
+                dnd_gorevler=dnd_gorevler,
+                tarih=tarih,
+                kullanici=kullanici
+            )
+            
+        except Exception as e:
+            log_hata(e, modul='kat_sorumlusu_gorev_listesi')
+            flash(f'Görev listesi yüklenirken hata oluştu: {str(e)}', 'danger')
+            return redirect(url_for('dashboard'))

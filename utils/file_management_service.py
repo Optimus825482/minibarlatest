@@ -6,9 +6,11 @@ Excel dosyalarının yüklenmesi, silinmesi ve temizlenmesi işlemlerini yöneti
 import os
 import uuid
 from datetime import datetime, timedelta, timezone
+from typing import Tuple, Dict
 from werkzeug.utils import secure_filename
 from models import db, DosyaYukleme, MisafirKayit
 from sqlalchemy import and_
+from utils.audit import log_audit
 
 
 class FileManagementService:
@@ -89,45 +91,153 @@ class FileManagementService:
             return False, None, None, f'Dosya kaydetme hatası: {str(e)}'
     
     @staticmethod
-    def delete_upload_by_islem_kodu(islem_kodu, user_id=None):
+    def delete_upload_by_islem_kodu(islem_kodu: str, user_id: int = None) -> Tuple[bool, str, Dict]:
         """
-        İşlem koduna göre yüklemeyi ve ilgili kayıtları siler
+        İşlem koduna göre yüklemeyi ve ilgili kayıtları siler.
+        Tamamlanmış görevleri korur, bekleyen görevleri siler.
         
         Args:
             islem_kodu: İşlem kodu
             user_id: Silme işlemini yapan kullanıcı ID (audit için)
             
         Returns:
-            tuple: (success, message)
+            Tuple[bool, str, Dict]: (success, message, summary)
+            summary: {
+                'deleted_misafir_kayit': int,
+                'deleted_pending_tasks': int,
+                'preserved_completed_tasks': int,
+                'deleted_empty_gorevler': int
+            }
         """
+        # Boş özet
+        empty_summary = {
+            'deleted_misafir_kayit': 0,
+            'deleted_pending_tasks': 0,
+            'preserved_completed_tasks': 0,
+            'deleted_empty_gorevler': 0
+        }
+        
         try:
             # Dosya yükleme kaydını bul
             dosya_yukleme = DosyaYukleme.query.filter_by(islem_kodu=islem_kodu).first()
             
             if not dosya_yukleme:
-                return False, 'İşlem kodu bulunamadı'
+                return False, 'İşlem kodu bulunamadı', empty_summary
             
-            # İlgili misafir kayıtlarını sil
-            deleted_count = MisafirKayit.query.filter_by(islem_kodu=islem_kodu).delete()
+            # Audit log için dosya bilgilerini sakla (silmeden önce)
+            dosya_adi = dosya_yukleme.dosya_adi
+            dosya_tipi = dosya_yukleme.dosya_tipi
+            dosya_yolu = dosya_yukleme.dosya_yolu
+            
+            # İlgili MisafirKayit ID'lerini topla (silmeden önce)
+            misafir_kayitlar = MisafirKayit.query.filter_by(islem_kodu=islem_kodu).all()
+            misafir_kayit_ids = [mk.id for mk in misafir_kayitlar]
+            
+            # Özet bilgilerini hazırla
+            summary = {
+                'deleted_misafir_kayit': len(misafir_kayit_ids),
+                'deleted_pending_tasks': 0,
+                'preserved_completed_tasks': 0,
+                'deleted_empty_gorevler': 0
+            }
+            
+            # Görev yönetimini çağır (MisafirKayit silinmeden önce)
+            if misafir_kayit_ids:
+                from utils.gorev_service import GorevService
+                gorev_result = GorevService.handle_misafir_kayit_deletion(misafir_kayit_ids)
+                
+                summary['deleted_pending_tasks'] = gorev_result.get('deleted_pending', 0)
+                summary['preserved_completed_tasks'] = gorev_result.get('nullified_completed', 0)
+                summary['deleted_empty_gorevler'] = gorev_result.get('deleted_empty_gorevler', 0)
+            
+            # MisafirKayit kayıtlarını sil
+            for mk in misafir_kayitlar:
+                db.session.delete(mk)
             
             # Fiziksel dosyayı sil
             if os.path.exists(dosya_yukleme.dosya_yolu):
                 try:
                     os.remove(dosya_yukleme.dosya_yolu)
                 except Exception as e:
+                    # Dosya silme hatası kritik değil, log'la ve devam et
                     print(f"Dosya silme hatası: {str(e)}")
             
-            # Dosya yükleme kaydını güncelle
-            dosya_yukleme.durum = 'silindi'
-            dosya_yukleme.silme_tarihi = datetime.now(timezone.utc)
-            
+            # Dosya yükleme kaydını tamamen sil
+            db.session.delete(dosya_yukleme)
             db.session.commit()
             
-            return True, f'{deleted_count} misafir kaydı ve dosya başarıyla silindi'
+            # Başarı mesajı oluştur
+            message_parts = [f"{summary['deleted_misafir_kayit']} misafir kaydı silindi"]
+            if summary['deleted_pending_tasks'] > 0:
+                message_parts.append(f"{summary['deleted_pending_tasks']} bekleyen görev silindi")
+            if summary['preserved_completed_tasks'] > 0:
+                message_parts.append(f"{summary['preserved_completed_tasks']} tamamlanmış görev korundu")
+            if summary['deleted_empty_gorevler'] > 0:
+                message_parts.append(f"{summary['deleted_empty_gorevler']} boş ana görev silindi")
+            
+            message = ', '.join(message_parts)
+            
+            # Audit log kaydı oluştur (Requirements 4.3)
+            audit_aciklama = (
+                f"Doluluk dosyası silindi - İşlem Kodu: {islem_kodu}, "
+                f"Dosya: {dosya_adi}, Tip: {dosya_tipi}"
+            )
+            
+            log_audit(
+                islem_tipi='delete',
+                tablo_adi='dosya_yukleme',
+                kayit_id=None,  # Kayıt zaten silindi
+                eski_deger={
+                    'islem_kodu': islem_kodu,
+                    'dosya_adi': dosya_adi,
+                    'dosya_tipi': dosya_tipi,
+                    'dosya_yolu': dosya_yolu
+                },
+                yeni_deger=None,
+                aciklama=audit_aciklama,
+                basarili=True
+            )
+            
+            # Görev yönetimi için ayrı audit log
+            if summary['deleted_pending_tasks'] > 0 or summary['preserved_completed_tasks'] > 0:
+                gorev_aciklama = (
+                    f"Görev yönetimi - Silinen bekleyen: {summary['deleted_pending_tasks']}, "
+                    f"Korunan tamamlanmış: {summary['preserved_completed_tasks']}, "
+                    f"Silinen boş ana görev: {summary['deleted_empty_gorevler']}"
+                )
+                
+                log_audit(
+                    islem_tipi='delete',
+                    tablo_adi='gorev_detay',
+                    kayit_id=None,
+                    eski_deger=summary,
+                    yeni_deger=None,
+                    aciklama=gorev_aciklama,
+                    basarili=True
+                )
+            
+            return True, message, summary
             
         except Exception as e:
             db.session.rollback()
-            return False, f'Silme hatası: {str(e)}'
+            
+            # Hata durumunda da audit log kaydı oluştur
+            try:
+                log_audit(
+                    islem_tipi='delete',
+                    tablo_adi='dosya_yukleme',
+                    kayit_id=None,
+                    eski_deger={'islem_kodu': islem_kodu},
+                    yeni_deger=None,
+                    aciklama=f"Doluluk dosyası silme hatası - İşlem Kodu: {islem_kodu}",
+                    basarili=False,
+                    hata_mesaji=str(e)
+                )
+            except Exception:
+                # Audit log hatası ana hatayı gizlememeli
+                pass
+            
+            return False, f'Silme hatası: {str(e)}', empty_summary
     
     @staticmethod
     def cleanup_old_files():

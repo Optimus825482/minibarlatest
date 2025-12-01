@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\routes\error_handlers.py
+# hypothesis_version: 6.148.2
+
+[400, 404, 429, 500, 'csrf', 'danger', 'error', 'errors/404.html', 'errors/429.html', 'errors/500.html', 'index', 'method', 'path', 'rate_limit', 'success', 'view']

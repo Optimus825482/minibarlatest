@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\utils\ml\alert_manager.py
+# hypothesis_version: 6.148.2
+
+[100, 'false_positive_rate', 'false_positives', 'total_alerts', 'type_distribution', 'unread_alerts']

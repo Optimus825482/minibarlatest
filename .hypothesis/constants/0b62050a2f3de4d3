@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\middleware\metrics_middleware.py
+# hypothesis_version: 6.148.2
+
+[200, 500, 'X-Response-Time', 'start_time', 'user_id']

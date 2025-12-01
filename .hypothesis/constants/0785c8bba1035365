@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\routes\celery_routes.py
+# hypothesis_version: 6.148.2
+
+[200, 202, 400, 500, '/api/v1/celery', '/task/donemsel-kar', '/task/stok-devir', '/task/tuketim-trendi', '/tasks/active', '/tasks/scheduled', 'Eksik parametreler', 'FAILURE', 'GET', 'PENDING', 'POST', 'STARTED', 'SUCCESS', 'Task başarısız', 'Task iptal edildi', 'Task çalışıyor', 'admin', 'args', 'aylik', 'baslangic_tarihi', 'bitis_tarihi', 'celery', 'depo_sorumlusu', 'donem', 'donem_tipi', 'error', 'eta', 'gunluk', 'id', 'info', 'kwargs', 'message', 'name', 'otel_id', 'request', 'result', 'sistem_yoneticisi', 'state', 'status', 'success', 'task_id', 'task_name', 'tasks', 'total', 'worker']

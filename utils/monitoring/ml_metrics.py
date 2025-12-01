@@ -61,28 +61,10 @@ class MLMetrics:
                             "file_size": file_stat.st_size
                         })
             
-            # Eğer model yoksa demo data göster
+            # Model yoksa boş liste döndür (demo data kaldırıldı)
             if not models:
-                models = [
-                    {
-                        "name": "user_recommendation",
-                        "version": "v1.2.3",
-                        "type": "collaborative_filtering",
-                        "status": "demo",
-                        "last_trained": (datetime.now() - timedelta(days=2)).isoformat(),
-                        "accuracy": 0.87,
-                        "predictions_count": 15420
-                    },
-                    {
-                        "name": "fraud_detection",
-                        "version": "v2.1.0",
-                        "type": "classification",
-                        "status": "demo",
-                        "last_trained": (datetime.now() - timedelta(days=1)).isoformat(),
-                        "accuracy": 0.94,
-                        "predictions_count": 8932
-                    }
-                ]
+                logger.info("Henüz eğitilmiş model yok - Yeterli veri biriktiğinde otomatik eğitilecek")
+                models = []
             
             # Cache'e kaydet
             self.models_cache['model_list'] = {
@@ -136,23 +118,19 @@ class MLMetrics:
                 except Exception as e:
                     logger.warning(f"Metadata okunamadı: {str(e)}")
             
-            # Metadata yoksa default değerler
+            # Metadata yoksa boş döndür (demo data kaldırıldı)
             if not metrics:
                 metrics = {
                     "model_name": model_name,
-                    "accuracy": 0.87,
-                    "precision": 0.85,
-                    "recall": 0.89,
-                    "f1_score": 0.87,
-                    "auc_roc": 0.92,
-                    "confusion_matrix": {
-                        "true_positive": 850,
-                        "true_negative": 920,
-                        "false_positive": 80,
-                        "false_negative": 50
-                    },
+                    "accuracy": None,
+                    "precision": None,
+                    "recall": None,
+                    "f1_score": None,
+                    "auc_roc": None,
+                    "confusion_matrix": None,
                     "last_updated": datetime.now().isoformat(),
-                    "note": "Demo metrics - gerçek model metrikleri için metadata dosyası oluşturun"
+                    "status": "not_trained",
+                    "message": "Model henüz eğitilmedi - Yeterli veri biriktiğinde otomatik eğitilecek"
                 }
             
             # Cache'e kaydet
@@ -393,26 +371,9 @@ class MLMetrics:
                 except Exception as e:
                     logger.warning(f"Alerts dosyası okunamadı: {str(e)}")
             
-            # Alert yoksa demo data
+            # Alert yoksa boş liste döndür (demo data kaldırıldı)
             if not alerts:
-                alerts = [
-                    {
-                        "id": 1,
-                        "model_name": "fraud_detection",
-                        "severity": "warning",
-                        "message": "Model accuracy düştü: 0.94 -> 0.89",
-                        "timestamp": datetime.now().isoformat(),
-                        "is_read": False
-                    },
-                    {
-                        "id": 2,
-                        "model_name": "user_recommendation",
-                        "severity": "info",
-                        "message": "Model başarıyla güncellendi",
-                        "timestamp": (datetime.now() - timedelta(hours=2)).isoformat(),
-                        "is_read": True
-                    }
-                ]
+                alerts = []
             
             if unread_only:
                 alerts = [a for a in alerts if not a['is_read']]

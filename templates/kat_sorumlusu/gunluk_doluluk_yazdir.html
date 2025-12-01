@@ -1,273 +1,295 @@
 <!DOCTYPE html>
 <html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Günlük Doluluk Raporu - {{ secili_tarih.strftime('%d.%m.%Y') }}</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Günlük Doluluk Raporu - {{ secili_tarih.strftime('%d.%m.%Y') }}
+    </title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
+      body {
+        font-family: Arial, sans-serif;
+        font-size: 10pt;
+        line-height: 1.4;
+        color: #000;
+        background: #fff;
+        padding: 20px;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #333;
+      }
+
+      .header h1 {
+        font-size: 20pt;
+        font-weight: bold;
+        margin-bottom: 8px;
+      }
+
+      .header .date {
+        font-size: 12pt;
+        color: #666;
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin-bottom: 25px;
+        page-break-inside: avoid;
+      }
+
+      .summary-card {
+        border: 2px solid #ddd;
+        padding: 12px;
+        border-radius: 6px;
+        text-align: center;
+      }
+
+      .summary-card .label {
+        font-size: 9pt;
+        color: #666;
+        margin-bottom: 5px;
+      }
+
+      .summary-card .value {
+        font-size: 20pt;
+        font-weight: bold;
+      }
+
+      .summary-card .sub {
+        font-size: 8pt;
+        color: #999;
+        margin-top: 3px;
+      }
+
+      .section {
+        margin-bottom: 30px;
+        page-break-inside: avoid;
+      }
+
+      .section-title {
+        font-size: 14pt;
+        font-weight: bold;
+        margin-bottom: 12px;
+        padding: 8px 12px;
+        background: #f0f0f0;
+        border-left: 4px solid #333;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        page-break-inside: avoid;
+      }
+
+      table thead {
+        background: #e8e8e8;
+      }
+
+      table th {
+        border: 1px solid #999;
+        padding: 8px;
+        text-align: left;
+        font-weight: bold;
+        font-size: 9pt;
+      }
+
+      table td {
+        border: 1px solid #ccc;
+        padding: 6px 8px;
+        font-size: 9pt;
+      }
+
+      table tbody tr:nth-child(even) {
+        background: #f9f9f9;
+      }
+
+      .oda-no {
+        font-weight: bold;
+        font-size: 11pt;
+      }
+
+      .text-center {
+        text-align: center;
+      }
+
+      .footer {
+        margin-top: 30px;
+        padding-top: 15px;
+        border-top: 2px solid #ddd;
+        text-align: center;
+        font-size: 8pt;
+        color: #999;
+      }
+
+      @media print {
         body {
-            font-family: Arial, sans-serif;
-            font-size: 10pt;
-            line-height: 1.4;
-            color: #000;
-            background: #fff;
-            padding: 20px;
+          padding: 0;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 3px solid #333;
+        .no-print {
+          display: none !important;
         }
 
-        .header h1 {
-            font-size: 20pt;
-            font-weight: bold;
-            margin-bottom: 8px;
+        @page {
+          size: A4 portrait;
+          margin: 1.5cm;
         }
+      }
 
-        .header .date {
-            font-size: 12pt;
-            color: #666;
-        }
+      .print-button {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 24px;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 11pt;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
 
-        .summary {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin-bottom: 25px;
-            page-break-inside: avoid;
-        }
-
-        .summary-card {
-            border: 2px solid #ddd;
-            padding: 12px;
-            border-radius: 6px;
-            text-align: center;
-        }
-
-        .summary-card .label {
-            font-size: 9pt;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        .summary-card .value {
-            font-size: 20pt;
-            font-weight: bold;
-        }
-
-        .summary-card .sub {
-            font-size: 8pt;
-            color: #999;
-            margin-top: 3px;
-        }
-
-        .section {
-            margin-bottom: 30px;
-            page-break-inside: avoid;
-        }
-
-        .section-title {
-            font-size: 14pt;
-            font-weight: bold;
-            margin-bottom: 12px;
-            padding: 8px 12px;
-            background: #f0f0f0;
-            border-left: 4px solid #333;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-            page-break-inside: avoid;
-        }
-
-        table thead {
-            background: #e8e8e8;
-        }
-
-        table th {
-            border: 1px solid #999;
-            padding: 8px;
-            text-align: left;
-            font-weight: bold;
-            font-size: 9pt;
-        }
-
-        table td {
-            border: 1px solid #ccc;
-            padding: 6px 8px;
-            font-size: 9pt;
-        }
-
-        table tbody tr:nth-child(even) {
-            background: #f9f9f9;
-        }
-
-        .oda-no {
-            font-weight: bold;
-            font-size: 11pt;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .footer {
-            margin-top: 30px;
-            padding-top: 15px;
-            border-top: 2px solid #ddd;
-            text-align: center;
-            font-size: 8pt;
-            color: #999;
-        }
-
-        @media print {
-            body {
-                padding: 0;
-            }
-
-            .no-print {
-                display: none !important;
-            }
-
-            @page {
-                size: A4 portrait;
-                margin: 1.5cm;
-            }
-        }
-
-        .print-button {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 24px;
-            background: #333;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 11pt;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-
-        .print-button:hover {
-            background: #555;
-        }
+      .print-button:hover {
+        background: #555;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Yazdır Butonu -->
     <button onclick="window.print()" class="print-button no-print">
-        🖨️ Yazdır
+      🖨️ Yazdır
     </button>
 
     <!-- Başlık -->
     <div class="header">
-        <h1>Günlük Doluluk Raporu</h1>
-        <div class="date">{{ secili_tarih.strftime('%d %B %Y - %A') }}</div>
+      <h1>Günlük Doluluk Raporu</h1>
+      <div class="date">{{ secili_tarih.strftime('%d %B %Y - %A') }}</div>
     </div>
 
     <!-- Özet İstatistikler -->
     <div class="summary">
-        <div class="summary-card">
-            <div class="label">Toplam Oda</div>
-            <div class="value">{{ rapor.toplam_oda }}</div>
-        </div>
-        <div class="summary-card">
-            <div class="label">Dolu Oda</div>
-            <div class="value" style="color: #c00;">{{ rapor.dolu_oda }}</div>
-            <div class="sub">Boş: {{ rapor.bos_oda }}</div>
-        </div>
-        <div class="summary-card">
-            <div class="label">Bugün Giriş</div>
-            <div class="value" style="color: #060;">{{ rapor.giris_sayisi }}</div>
-            <div class="sub">Misafir</div>
-        </div>
-        <div class="summary-card">
-            <div class="label">Bugün Çıkış</div>
-            <div class="value" style="color: #c60;">{{ rapor.cikis_sayisi }}</div>
-            <div class="sub">Misafir</div>
-        </div>
+      <div class="summary-card">
+        <div class="label">Toplam Oda</div>
+        <div class="value">{{ rapor.toplam_oda }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Dolu Oda</div>
+        <div class="value" style="color: #c00">{{ rapor.dolu_oda }}</div>
+        <div class="sub">Boş: {{ rapor.bos_oda }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Bugün Giriş</div>
+        <div class="value" style="color: #060">{{ rapor.giris_sayisi }}</div>
+        <div class="sub">Misafir</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Bugün Çıkış</div>
+        <div class="value" style="color: #c60">{{ rapor.cikis_sayisi }}</div>
+        <div class="sub">Misafir</div>
+      </div>
     </div>
 
-    <!-- Dolu Odalar Listesi -->
-    {% if rapor.kat_bazli %}
-    {% for kat_id, kat_info in rapor.kat_bazli.items() %}
+    <!-- Oda Listesi -->
+    {% if rapor.kat_bazli %} {% for kat_id, kat_info in rapor.kat_bazli.items()
+    %}
     <div class="section">
-        <div class="section-title">
-            {{ kat_info.kat.kat_adi }} - {{ kat_info.dolu_oda_sayisi }} Dolu Oda
-        </div>
+      <div class="section-title">
+        {{ kat_info.kat.kat_adi }} - {{ kat_info.dolu_oda_sayisi }} Dolu / {{
+        kat_info.toplam_oda_sayisi }} Toplam Oda
+      </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 15%;">Oda No</th>
-                    <th style="width: 12%;" class="text-center">Misafir</th>
-                    <th style="width: 23%;">Giriş Tarihi</th>
-                    <th style="width: 23%;">Çıkış Tarihi</th>
-                    <th style="width: 15%;" class="text-center">Kalan Gün</th>
-                    <th style="width: 12%;" class="text-center">Durum</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for oda_info in kat_info.odalar %}
-                <tr>
-                    <td class="oda-no">{{ oda_info.oda.oda_no }}</td>
-                    <td class="text-center">{{ oda_info.misafir.misafir_sayisi }}</td>
-                    <td>{{ oda_info.misafir.giris_tarihi.strftime('%d.%m.%Y') }}</td>
-                    <td>{{ oda_info.misafir.cikis_tarihi.strftime('%d.%m.%Y') }}</td>
-                    <td class="text-center">
-                        {% if oda_info.kalan_gun == 0 %}
-                        <strong style="color: #c00;">Bugün</strong>
-                        {% elif oda_info.kalan_gun == 1 %}
-                        1 gün
-                        {% else %}
-                        {{ oda_info.kalan_gun }} gün
-                        {% endif %}
-                    </td>
-                    <td class="text-center">
-                        {% if oda_info.kalan_gun == 0 %}
-                        <strong style="color: #c00;">Çıkış</strong>
-                        {% else %}
-                        Dolu
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 15%">Oda No</th>
+            <th style="width: 12%" class="text-center">Durum</th>
+            <th style="width: 12%" class="text-center">Misafir</th>
+            <th style="width: 20%">Giriş Tarihi</th>
+            <th style="width: 20%">Çıkış Tarihi</th>
+            <th style="width: 21%" class="text-center">Kalan Gün</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for oda_info in kat_info.odalar %}
+          <tr>
+            <td class="oda-no">{{ oda_info.oda.oda_no }}</td>
+            <td class="text-center">
+              {% if oda_info.misafir %} {% if oda_info.kalan_gun == 0 %}
+              <strong style="color: #c00">Çıkış</strong>
+              {% else %}
+              <span style="color: #060">Dolu</span>
+              {% endif %} {% else %}
+              <span style="color: #999">Boş</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              {% if oda_info.misafir %}{{ oda_info.misafir.misafir_sayisi }}{%
+              else %}-{% endif %}
+            </td>
+            <td>
+              {% if oda_info.misafir %}{{
+              oda_info.misafir.giris_tarihi.strftime('%d.%m.%Y') }}{% else %}-{%
+              endif %}
+            </td>
+            <td>
+              {% if oda_info.misafir %}{{
+              oda_info.misafir.cikis_tarihi.strftime('%d.%m.%Y') }}{% else %}-{%
+              endif %}
+            </td>
+            <td class="text-center">
+              {% if oda_info.misafir %} {% if oda_info.kalan_gun == 0 %}
+              <strong style="color: #c00">Bugün</strong>
+              {% elif oda_info.kalan_gun == 1 %} 1 gün {% else %} {{
+              oda_info.kalan_gun }} gün {% endif %} {% else %} - {% endif %}
+            </td>
+          </tr>
+          {% endfor %} {% if bos_odalar_dahil %} {% for bos_oda in
+          kat_info.bos_odalar %}
+          <tr style="background: #f5f5f5">
+            <td class="oda-no">{{ bos_oda.oda_no }}</td>
+            <td class="text-center"><span style="color: #999">Boş</span></td>
+            <td class="text-center">-</td>
+            <td>-</td>
+            <td>-</td>
+            <td class="text-center">-</td>
+          </tr>
+          {% endfor %} {% endif %}
+        </tbody>
+      </table>
     </div>
-    {% endfor %}
-    {% else %}
+    {% endfor %} {% else %}
     <div class="section">
-        <div class="section-title">Dolu Oda Bulunmamaktadır</div>
-        <p style="text-align: center; padding: 30px; color: #999;">
-            {{ secili_tarih.strftime('%d.%m.%Y') }} tarihinde tüm odalar boştur.
-        </p>
+      <div class="section-title">Dolu Oda Bulunmamaktadır</div>
+      <p style="text-align: center; padding: 30px; color: #999">
+        {{ secili_tarih.strftime('%d.%m.%Y') }} tarihinde tüm odalar boştur.
+      </p>
     </div>
     {% endif %}
 
     <!-- Footer -->
     <div class="footer">
-        Minibar Takip Sistemi - Günlük Doluluk Raporu<br>
-        Yazdırma Tarihi: {{ simdi.strftime('%d.%m.%Y %H:%M') }}
+      Minibar Takip Sistemi - Günlük Doluluk Raporu<br />
+      Yazdırma Tarihi: {{ simdi.strftime('%d.%m.%Y %H:%M') }}
     </div>
 
     <script>
-        // Sayfa yüklendiğinde otomatik yazdırma dialogu aç (opsiyonel)
-        // window.onload = function() {
-        //     window.print();
-        // };
+      // Sayfa yüklendiğinde otomatik yazdırma dialogu aç (opsiyonel)
+      // window.onload = function() {
+      //     window.print();
+      // };
     </script>
-</body>
+  </body>
 </html>

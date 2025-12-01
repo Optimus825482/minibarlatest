@@ -281,6 +281,20 @@
   </button>
   <div class="sidebar-section-content" id="section-sistem">
     <a
+      href="{{ url_for('sistem_ayarlari') }}"
+      class="sidebar-item {% if request.endpoint in ['sistem_ayarlari', 'sistem_ayarlari_email'] %}active{% endif %}"
+    >
+      <i class="fas fa-cogs sidebar-icon text-purple-500"></i>
+      <span class="sidebar-text font-medium">Sistem Ayarları</span>
+    </a>
+    <a
+      href="{{ url_for('email_loglari') }}"
+      class="sidebar-item {% if request.endpoint == 'email_loglari' %}active{% endif %}"
+    >
+      <i class="fas fa-envelope sidebar-icon text-blue-500"></i>
+      <span class="sidebar-text">Email Logları</span>
+    </a>
+    <a
       href="{{ url_for('audit_trail') }}"
       class="sidebar-item {% if request.endpoint == 'audit_trail' %}active{% endif %}"
     >

@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\routes\sistem_ayarlari_routes.py
+# hypothesis_version: 6.148.2
+
+[b'GIF89a\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;', 587, '/sistem-ayarlari', 'GET', 'POST', 'admin', 'danger', 'durum', 'email', 'email_ayarlari', 'genel', 'gonderildi', 'guncelleme', 'hata', 'image/gif', 'kullanici_id', 'message', 'okundu', 'on', 'page', 'sender_email', 'sender_name', 'sistem', 'sistem_yoneticisi', 'smtp_password', 'smtp_port', 'smtp_server', 'smtp_use_ssl', 'smtp_use_tls', 'smtp_username', 'success', 'tarih_baslangic', 'tarih_bitis', 'tipi', 'toplam']

@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\utils\gorev_service.py
+# hypothesis_version: 6.148.2
+
+[100, 900, 999, 3600, '%H:%M', 'Görev tamamlandı', 'arrival', 'arrival_gorev_sayisi', 'arrival_kontrol', 'bekleyen', 'cikis_saati', 'completed', 'countdown', 'dakika', 'deleted_pending', 'departure', 'departure_kontrol', 'detay_id', 'dnd', 'dnd_pending', 'dnd_sayisi', 'durum', 'gecmis', 'gorev_id', 'gorev_tipi', 'hatalar', 'in_house', 'in_progress', 'inhouse_gorev_sayisi', 'inhouse_kontrol', 'kat_sorumlusu', 'kaynak_silindi', 'kontrol_baslangic', 'kontrol_gecmisi', 'kontrol_suresi', 'kontrol_zamani', 'notlar', 'nullified_completed', 'oda_id', 'oda_no', 'oda_sayisi', 'oncelik_sirasi', 'pending', 'saat', 'saniye', 'son_dnd_zamani', 'tamamlanan', 'tamamlanma_orani', 'toplam', 'toplam_oda_sayisi', 'toplam_saniye', 'uyari', 'varis_saati']

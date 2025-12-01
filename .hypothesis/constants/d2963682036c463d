@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\utils\__init__.py
+# hypothesis_version: 6.148.2
+
+['login_required', 'role_required', 'setup_not_completed', 'setup_required']

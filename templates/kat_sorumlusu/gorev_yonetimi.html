@@ -1,0 +1,658 @@
+{% extends "base.html" %}
+{% block title %}Görev Yönetimi - Minibar Takip Sistemi{% endblock %}
+{% block page_title %}Görev Yönetimi{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Üst Bilgi ve Filtreler -->
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fas fa-tasks text-indigo-500"></i>
+          Görev Yönetimi
+        </h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          {{ tarih.strftime('%d.%m.%Y') }} - {{ gun_adi }}
+        </p>
+      </div>
+      
+      <!-- Filtreler -->
+      <div class="flex flex-wrap items-center gap-3">
+        <form method="GET" class="flex items-center gap-2">
+          <input type="date" name="tarih" value="{{ tarih.isoformat() }}"
+            class="rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm" />
+          <select name="durum" class="rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm">
+            <option value="">Tüm Durumlar</option>
+            <option value="pending" {% if filtre_durum == 'pending' %}selected{% endif %}>Bekleyen</option>
+            <option value="completed" {% if filtre_durum == 'completed' %}selected{% endif %}>Tamamlanan</option>
+            <option value="dnd_pending" {% if filtre_durum == 'dnd_pending' %}selected{% endif %}>DND</option>
+          </select>
+          <select name="tip" class="rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm">
+            <option value="">Tüm Tipler</option>
+            <option value="inhouse_kontrol" {% if filtre_tip == 'inhouse_kontrol' %}selected{% endif %}>In House</option>
+            <option value="arrival_kontrol" {% if filtre_tip == 'arrival_kontrol' %}selected{% endif %}>Arrivals</option>
+          </select>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium">
+            <i class="fas fa-filter mr-1"></i> Filtrele
+          </button>
+        </form>
+        
+        <!-- Yazdır Butonu -->
+        <a href="{{ url_for('gorev.gorev_yazdir', tarih=tarih.isoformat()) }}" target="_blank" 
+           class="px-4 py-2 bg-slate-600 text-white rounded-lg text-sm font-medium inline-flex items-center">
+          <i class="fas fa-print mr-1"></i> Yazdır
+        </a>
+      </div>
+    </div>
+
+    <!-- Özet Kartları - Tıklanabilir -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div onclick="filtreleByDurum('')" class="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 border-2 border-slate-200 dark:border-slate-700 text-center cursor-pointer transition-all active:scale-95 filtre-kart" data-filtre="">
+        <div class="text-3xl font-bold text-slate-900 dark:text-white">{{ ozet.toplam }}</div>
+        <div class="text-sm text-slate-500 dark:text-slate-400">Toplam</div>
+      </div>
+      <div onclick="filtreleByDurum('completed')" class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border-2 border-green-200 dark:border-green-800 text-center cursor-pointer transition-all active:scale-95 filtre-kart" data-filtre="completed">
+        <div class="text-3xl font-bold text-green-700 dark:text-green-300">{{ ozet.tamamlanan }}</div>
+        <div class="text-sm text-green-600 dark:text-green-400">Tamamlanan</div>
+      </div>
+      <div onclick="filtreleByDurum('pending')" class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border-2 border-yellow-200 dark:border-yellow-800 text-center cursor-pointer transition-all active:scale-95 filtre-kart" data-filtre="pending">
+        <div class="text-3xl font-bold text-yellow-700 dark:text-yellow-300">{{ ozet.bekleyen }}</div>
+        <div class="text-sm text-yellow-600 dark:text-yellow-400">Bekleyen</div>
+      </div>
+      <div onclick="filtreleByDurum('dnd_pending')" class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border-2 border-orange-200 dark:border-orange-800 text-center cursor-pointer transition-all active:scale-95 filtre-kart" data-filtre="dnd_pending">
+        <div class="text-3xl font-bold text-orange-700 dark:text-orange-300">{{ ozet.dnd }}</div>
+        <div class="text-sm text-orange-600 dark:text-orange-400">DND</div>
+      </div>
+      <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-4 border-2 border-indigo-200 dark:border-indigo-800 text-center">
+        <div class="text-3xl font-bold text-indigo-700 dark:text-indigo-300">%{{ ozet.tamamlanma_orani }}</div>
+        <div class="text-sm text-indigo-600 dark:text-indigo-400">Tamamlanma</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- İlerleme Çubuğu -->
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Günlük İlerleme</span>
+      <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400">{{ ozet.tamamlanan }}/{{ ozet.toplam }}</span>
+    </div>
+    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-4">
+      <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-4 rounded-full transition-all duration-500" 
+           style="width: {{ ozet.tamamlanma_orani }}%"></div>
+    </div>
+  </div>
+
+  <!-- Görev Listesi -->
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow">
+    <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-medium text-slate-900 dark:text-white">
+          <i class="fas fa-list-check mr-2 text-slate-500"></i>
+          Görev Listesi
+        </h3>
+        <div class="flex items-center gap-2">
+          <input type="text" id="searchInput" placeholder="Oda ara..." 
+            class="rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm w-40" />
+        </div>
+      </div>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700" id="gorevTable">
+        <thead class="bg-slate-50 dark:bg-slate-900">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider w-12">#</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Oda</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tip</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Durum</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden md:table-cell">Kalan Süre</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden md:table-cell">Başlangıç</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden lg:table-cell">Bitiş</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden lg:table-cell">Süre</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+          {% for gorev in gorevler %}
+          <tr class="gorev-row {% if gorev.durum == 'dnd_pending' or gorev.durum == 'completed' %}cursor-pointer{% endif %} {% if gorev.countdown and gorev.countdown.uyari and gorev.durum != 'completed' %}bg-red-50 dark:bg-red-900/10{% elif gorev.countdown and gorev.countdown.toplam_saniye and gorev.countdown.toplam_saniye < 1800 and gorev.durum != 'completed' %}bg-yellow-50 dark:bg-yellow-900/10{% endif %}" 
+              data-oda="{{ gorev.oda_no }}" data-durum="{{ gorev.durum }}"
+              {% if gorev.durum == 'dnd_pending' %}onclick="dndDetayGoster({{ gorev.detay_id }}, '{{ gorev.oda_no }}', {{ gorev.dnd_sayisi }})"{% endif %}
+              {% if gorev.durum == 'completed' %}onclick="gorevDetayGoster({{ gorev.detay_id }}, '{{ gorev.oda_no }}')"{% endif %}>
+            <!-- Öncelik Sırası -->
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
+                {% if gorev.durum == 'completed' %}bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400
+                {% elif gorev.countdown and gorev.countdown.uyari %}bg-red-200 dark:bg-red-800 text-red-700 dark:text-red-200
+                {% else %}bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300{% endif %}">
+                {{ loop.index }}
+              </div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm
+                  {% if gorev.gorev_tipi == 'inhouse_kontrol' %}bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400
+                  {% else %}bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400{% endif %}">
+                  {{ gorev.oda_no }}
+                </div>
+                {% if gorev.kaynak_silindi and gorev.durum == 'completed' %}
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400" title="Kaynak doluluk verisi silindi">
+                  <i class="fas fa-unlink"></i>
+                </span>
+                {% endif %}
+              </div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                {% if gorev.gorev_tipi == 'inhouse_kontrol' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400
+                {% else %}bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400{% endif %}">
+                {% if gorev.gorev_tipi == 'inhouse_kontrol' %}
+                <i class="fas fa-home mr-1"></i> In House
+                {% else %}
+                <i class="fas fa-plane-arrival mr-1"></i> Arrivals
+                {% endif %}
+              </span>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              {% if gorev.durum == 'completed' %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                <i class="fas fa-check-circle mr-1"></i> Tamamlandı
+              </span>
+              {% elif gorev.durum == 'dnd_pending' %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
+                <i class="fas fa-door-closed mr-1"></i> DND ({{ gorev.dnd_sayisi }}{% if gorev.dnd_sayisi >= 3 %}+{% else %}/3{% endif %})
+              </span>
+              {% else %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                <i class="fas fa-clock mr-1"></i> Bekliyor
+              </span>
+              {% endif %}
+            </td>
+            <!-- Kalan Süre (Arrivals için geri sayım) -->
+            <td class="px-4 py-4 whitespace-nowrap hidden md:table-cell">
+              {% if gorev.gorev_tipi == 'arrival_kontrol' and gorev.varis_saati and gorev.durum != 'completed' %}
+                {% if gorev.countdown %}
+                <div class="countdown-timer px-3 py-1 rounded-lg text-sm font-mono font-bold inline-flex items-center
+                  {% if gorev.countdown.gecmis %}bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400
+                  {% elif gorev.countdown.uyari %}bg-red-500 text-white animate-pulse
+                  {% elif gorev.countdown.toplam_saniye and gorev.countdown.toplam_saniye < 1800 %}bg-yellow-500 text-white
+                  {% else %}bg-blue-500 text-white{% endif %}"
+                  data-varis-saati="{{ gorev.varis_saati }}">
+                  {% if gorev.countdown.gecmis %}
+                    <i class="fas fa-exclamation-triangle mr-1"></i>GEÇTİ
+                  {% else %}
+                    {{ '%02d'|format(gorev.countdown.saat) }}:{{ '%02d'|format(gorev.countdown.dakika) }}:{{ '%02d'|format(gorev.countdown.saniye) }}
+                  {% endif %}
+                </div>
+                {% if gorev.countdown.uyari and not gorev.countdown.gecmis %}
+                <div class="text-xs text-red-600 dark:text-red-400 mt-1 font-medium">
+                  <i class="fas fa-bell"></i> Acil!
+                </div>
+                {% endif %}
+                {% else %}
+                <span class="text-sm text-slate-500 dark:text-slate-400">{{ gorev.varis_saati[:5] if gorev.varis_saati else '-' }}</span>
+                {% endif %}
+              {% else %}
+              <span class="text-sm text-slate-400 dark:text-slate-500">-</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap hidden md:table-cell">
+              {% if gorev.durum == 'dnd_pending' %}
+              <span class="text-sm text-orange-600 dark:text-orange-400 font-medium">{{ gorev.son_dnd_zamani or '-' }}</span>
+              {% elif gorev.kontrol_baslangic %}
+              <span class="text-sm text-slate-600 dark:text-slate-400">{{ gorev.kontrol_baslangic }}</span>
+              {% else %}
+              <span class="text-sm text-slate-400 dark:text-slate-500">-</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap hidden lg:table-cell">
+              {% if gorev.durum == 'dnd_pending' %}
+              <span class="text-sm text-orange-600 dark:text-orange-400">{{ gorev.dnd_sayisi }} kontrol</span>
+              {% elif gorev.kontrol_zamani %}
+              <span class="text-sm text-slate-600 dark:text-slate-400">{{ gorev.kontrol_zamani }}</span>
+              {% else %}
+              <span class="text-slate-400 dark:text-slate-500">-</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap hidden lg:table-cell">
+              {% if gorev.durum == 'dnd_pending' %}
+              <span class="text-xs text-orange-500 dark:text-orange-400"><i class="fas fa-info-circle mr-1"></i>Detay için tıkla</span>
+              {% elif gorev.durum == 'completed' %}
+              <span class="text-sm font-medium text-green-600 dark:text-green-400">{{ gorev.kontrol_suresi or '-' }} <i class="fas fa-info-circle ml-1 text-xs" title="Detay için tıkla"></i></span>
+              {% elif gorev.kontrol_suresi %}
+              <span class="text-sm font-medium text-green-600 dark:text-green-400">{{ gorev.kontrol_suresi }}</span>
+              {% else %}
+              <span class="text-slate-400 dark:text-slate-500">-</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+              <i class="fas fa-clipboard-check text-4xl mb-3 text-slate-300 dark:text-slate-600"></i>
+              <p>Bu tarih için görev bulunamadı.</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="notModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-md mx-4 shadow-2xl">
+    <h3 class="text-lg font-medium text-slate-900 dark:text-white mb-4" id="modalTitle">Not Ekle</h3>
+    <textarea id="notInput" rows="3" placeholder="Not ekleyin (opsiyonel)..."
+      class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white"></textarea>
+    <div class="flex justify-end gap-2 mt-4">
+      <button onclick="closeModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg">
+        İptal
+      </button>
+      <button onclick="submitAction()" id="modalSubmit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">
+        Kaydet
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- DND Detay Modal -->
+<div id="dndDetayModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-lg mx-4 shadow-2xl">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+        <i class="fas fa-door-closed text-orange-500"></i>
+        <span id="dndModalTitle">DND Kontrol Kayıtları</span>
+      </h3>
+      <button onclick="closeDndModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+    
+    <!-- Özet -->
+    <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 mb-4">
+      <div class="flex items-center justify-between">
+        <span class="text-sm text-orange-700 dark:text-orange-300">Toplam Kontrol</span>
+        <span id="dndToplam" class="text-2xl font-bold text-orange-600 dark:text-orange-400">0</span>
+      </div>
+      <div class="mt-2 text-xs text-orange-600 dark:text-orange-400">
+        <i class="fas fa-info-circle mr-1"></i>
+        <span id="dndDurum">Minimum 3 kontrol gerekli</span>
+      </div>
+    </div>
+    
+    <!-- Kontrol Listesi -->
+    <div class="max-h-64 overflow-y-auto">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+        <thead class="bg-slate-50 dark:bg-slate-900 sticky top-0">
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">#</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">Saat</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">Kontrol Eden</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">Not</th>
+          </tr>
+        </thead>
+        <tbody id="dndKontrolListesi" class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+          <!-- JavaScript ile doldurulacak -->
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="flex justify-end mt-4">
+      <button onclick="closeDndModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg">
+        Kapat
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Tamamlanan Görev Detay Modal -->
+<div id="gorevDetayModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-lg mx-4 shadow-2xl">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
+        <i class="fas fa-check-circle text-green-500"></i>
+        <span id="gorevModalTitle">Görev Detayları</span>
+      </h3>
+      <button onclick="closeGorevModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+    
+    <!-- Kaynak Silindi Uyarısı -->
+    <div id="kaynakSilindiUyari" class="hidden bg-slate-100 dark:bg-slate-700 rounded-lg p-3 mb-4 border border-slate-300 dark:border-slate-600">
+      <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+        <i class="fas fa-unlink"></i>
+        <span class="text-sm font-medium">Kaynak silindi</span>
+      </div>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Bu görevin bağlı olduğu doluluk verisi silinmiş. Görev detayları korunmaktadır.</p>
+    </div>
+    
+    <!-- Özet Bilgiler -->
+    <div class="bg-slate-100 dark:bg-slate-700 rounded-lg p-4 mb-4 border border-slate-200 dark:border-slate-600">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Başlangıç</span>
+          <div id="gorevBaslangic" class="text-sm font-bold text-slate-900 dark:text-white">-</div>
+        </div>
+        <div>
+          <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Bitiş</span>
+          <div id="gorevBitis" class="text-sm font-bold text-slate-900 dark:text-white">-</div>
+        </div>
+        <div>
+          <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Süre</span>
+          <div id="gorevSure" class="text-sm font-bold text-green-600 dark:text-green-400">-</div>
+        </div>
+        <div>
+          <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Tamamlama Tipi</span>
+          <div id="gorevTip" class="text-sm font-bold text-indigo-600 dark:text-indigo-400">-</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Not -->
+    <div class="mb-4">
+      <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Not</span>
+      <div id="gorevNot" class="text-sm text-slate-700 dark:text-slate-300 mt-1 p-2 bg-slate-50 dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700">-</div>
+    </div>
+    
+    <!-- Durum Geçmişi -->
+    <div>
+      <span class="text-xs text-slate-500 dark:text-slate-400 mb-2 block font-medium">İşlem Geçmişi</span>
+      <div id="gorevGecmis" class="max-h-40 overflow-y-auto space-y-2">
+        <!-- JavaScript ile doldurulacak -->
+      </div>
+    </div>
+    
+    <div class="flex justify-end mt-4">
+      <button onclick="closeGorevModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg">
+        Kapat
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentAction = null;
+let currentDetayId = null;
+
+let aktifFiltre = '';
+
+// Arama fonksiyonu
+document.getElementById('searchInput').addEventListener('input', function(e) {
+  const searchTerm = e.target.value.toLowerCase();
+  document.querySelectorAll('.gorev-row').forEach(row => {
+    const oda = row.dataset.oda.toLowerCase();
+    const durum = row.dataset.durum;
+    const aramaUygun = oda.includes(searchTerm);
+    const filtreUygun = !aktifFiltre || durum === aktifFiltre;
+    row.style.display = (aramaUygun && filtreUygun) ? '' : 'none';
+  });
+});
+
+// Kart tıklama ile filtreleme
+function filtreleByDurum(durum) {
+  aktifFiltre = durum;
+  
+  // Aktif kartı vurgula
+  document.querySelectorAll('.filtre-kart').forEach(kart => {
+    kart.classList.remove('ring-4', 'ring-indigo-500', 'ring-offset-2');
+    if (kart.dataset.filtre === durum) {
+      kart.classList.add('ring-4', 'ring-indigo-500', 'ring-offset-2');
+    }
+  });
+  
+  // Listeyi filtrele
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+  document.querySelectorAll('.gorev-row').forEach(row => {
+    const oda = row.dataset.oda.toLowerCase();
+    const rowDurum = row.dataset.durum;
+    const aramaUygun = oda.includes(searchTerm);
+    const filtreUygun = !durum || rowDurum === durum;
+    row.style.display = (aramaUygun && filtreUygun) ? '' : 'none';
+  });
+}
+
+function tamamlaGorev(detayId) {
+  currentAction = 'tamamla';
+  currentDetayId = detayId;
+  document.getElementById('modalTitle').textContent = 'Görevi Tamamla';
+  document.getElementById('modalSubmit').textContent = 'Tamamla';
+  document.getElementById('modalSubmit').className = 'px-4 py-2 bg-green-600 text-white rounded-lg';
+  document.getElementById('notModal').classList.remove('hidden');
+  document.getElementById('notModal').classList.add('flex');
+}
+
+function dndIsaretle(detayId) {
+  currentAction = 'dnd';
+  currentDetayId = detayId;
+  document.getElementById('modalTitle').textContent = 'DND Olarak İşaretle';
+  document.getElementById('modalSubmit').textContent = 'DND İşaretle';
+  document.getElementById('modalSubmit').className = 'px-4 py-2 bg-orange-600 text-white rounded-lg';
+  document.getElementById('notModal').classList.remove('hidden');
+  document.getElementById('notModal').classList.add('flex');
+}
+
+function closeModal() {
+  document.getElementById('notModal').classList.add('hidden');
+  document.getElementById('notModal').classList.remove('flex');
+  document.getElementById('notInput').value = '';
+  currentAction = null;
+  currentDetayId = null;
+}
+
+function submitAction() {
+  const notlar = document.getElementById('notInput').value;
+  const formData = new FormData();
+  formData.append('notlar', notlar);
+
+  const url = currentAction === 'tamamla' 
+    ? `/gorevler/${currentDetayId}/tamamla` 
+    : `/gorevler/${currentDetayId}/dnd`;
+
+  fetch(url, {
+    method: 'POST',
+    body: formData,
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    } else {
+      alert('Hata: ' + (data.error || 'Bilinmeyen hata'));
+    }
+  })
+  .catch(error => {
+    alert('Hata oluştu: ' + error);
+  });
+
+  closeModal();
+}
+
+// Geri sayım güncelleme - Client-side hesaplama
+function updateCountdowns() {
+  document.querySelectorAll('.countdown-timer').forEach(el => {
+    const varisSaati = el.dataset.varisSaati;
+    if (!varisSaati) return;
+    
+    const [saat, dakika, saniye] = varisSaati.split(':').map(Number);
+    const now = new Date();
+    const varisDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), saat, dakika, saniye || 0);
+    const fark = varisDate - now;
+    
+    if (fark <= 0) {
+      el.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i>GEÇTİ';
+      el.className = 'countdown-timer px-3 py-1 rounded-lg text-sm font-mono font-bold inline-flex items-center bg-gray-500 text-white';
+      return;
+    }
+    
+    const toplamSaniye = Math.floor(fark / 1000);
+    const kalanSaat = Math.floor(toplamSaniye / 3600);
+    const kalanDakika = Math.floor((toplamSaniye % 3600) / 60);
+    const kalanSaniye = toplamSaniye % 60;
+    
+    el.textContent = `${String(kalanSaat).padStart(2, '0')}:${String(kalanDakika).padStart(2, '0')}:${String(kalanSaniye).padStart(2, '0')}`;
+    
+    el.classList.remove('bg-blue-500', 'bg-yellow-500', 'bg-red-500', 'animate-pulse', 'bg-gray-200', 'bg-gray-500');
+    el.classList.add('text-white');
+    
+    if (toplamSaniye < 900) {
+      el.classList.add('bg-red-500', 'animate-pulse');
+    } else if (toplamSaniye < 1800) {
+      el.classList.add('bg-yellow-500');
+    } else {
+      el.classList.add('bg-blue-500');
+    }
+  });
+}
+
+setInterval(updateCountdowns, 1000);
+updateCountdowns();
+
+// DND Detay Modal fonksiyonları
+function dndDetayGoster(detayId, odaNo, dndSayisi) {
+  document.getElementById('dndModalTitle').textContent = `Oda ${odaNo} - DND Kontrolleri`;
+  document.getElementById('dndToplam').textContent = dndSayisi;
+  
+  // Durum mesajını güncelle
+  const durumEl = document.getElementById('dndDurum');
+  if (dndSayisi >= 3) {
+    durumEl.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Minimum kontrol tamamlandı';
+    durumEl.classList.remove('text-orange-600', 'dark:text-orange-400');
+    durumEl.classList.add('text-green-600', 'dark:text-green-400');
+  } else {
+    durumEl.innerHTML = `<i class="fas fa-info-circle mr-1"></i>${3 - dndSayisi} kontrol daha gerekli`;
+    durumEl.classList.remove('text-green-600', 'dark:text-green-400');
+    durumEl.classList.add('text-orange-600', 'dark:text-orange-400');
+  }
+  
+  // Kontrol listesini yükle
+  const listEl = document.getElementById('dndKontrolListesi');
+  listEl.innerHTML = '<tr><td colspan="4" class="px-4 py-3 text-center text-slate-500"><i class="fas fa-spinner fa-spin mr-2"></i>Yükleniyor...</td></tr>';
+  
+  fetch(`/gorevler/api/dnd-kontroller/${detayId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        if (data.kontroller.length === 0) {
+          listEl.innerHTML = '<tr><td colspan="4" class="px-4 py-3 text-center text-slate-500">Henüz kontrol kaydı yok</td></tr>';
+        } else {
+          listEl.innerHTML = data.kontroller.map((k, i) => `
+            <tr>
+              <td class="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">${data.kontroller.length - i}</td>
+              <td class="px-4 py-2 text-sm font-medium text-slate-900 dark:text-white">${k.kontrol_zamani}</td>
+              <td class="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">${k.kontrol_eden}</td>
+              <td class="px-4 py-2 text-sm text-slate-500 dark:text-slate-400">${k.notlar || '-'}</td>
+            </tr>
+          `).join('');
+        }
+      } else {
+        listEl.innerHTML = '<tr><td colspan="4" class="px-4 py-3 text-center text-red-500">Hata: ' + data.error + '</td></tr>';
+      }
+    })
+    .catch(error => {
+      listEl.innerHTML = '<tr><td colspan="4" class="px-4 py-3 text-center text-red-500">Bağlantı hatası</td></tr>';
+    });
+  
+  document.getElementById('dndDetayModal').classList.remove('hidden');
+  document.getElementById('dndDetayModal').classList.add('flex');
+}
+
+function closeDndModal() {
+  document.getElementById('dndDetayModal').classList.add('hidden');
+  document.getElementById('dndDetayModal').classList.remove('flex');
+}
+
+// Tamamlanan Görev Detay Modal fonksiyonları
+function gorevDetayGoster(detayId, odaNo) {
+  document.getElementById('gorevModalTitle').textContent = `Oda ${odaNo} - Görev Detayları`;
+  
+  // Kaynak silindi uyarısını gizle
+  document.getElementById('kaynakSilindiUyari').classList.add('hidden');
+  
+  // Yükleniyor göster
+  document.getElementById('gorevBaslangic').textContent = 'Yükleniyor...';
+  document.getElementById('gorevBitis').textContent = 'Yükleniyor...';
+  document.getElementById('gorevSure').textContent = 'Yükleniyor...';
+  document.getElementById('gorevTip').textContent = 'Yükleniyor...';
+  document.getElementById('gorevNot').textContent = 'Yükleniyor...';
+  document.getElementById('gorevGecmis').innerHTML = '<div class="text-center text-slate-500"><i class="fas fa-spinner fa-spin mr-2"></i>Yükleniyor...</div>';
+  
+  fetch(`/gorevler/api/gorev-detay/${detayId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Kaynak silindi uyarısını göster/gizle
+        if (data.kaynak_silindi) {
+          document.getElementById('kaynakSilindiUyari').classList.remove('hidden');
+        } else {
+          document.getElementById('kaynakSilindiUyari').classList.add('hidden');
+        }
+        
+        document.getElementById('gorevBaslangic').textContent = data.baslangic || '-';
+        document.getElementById('gorevBitis').textContent = data.bitis || '-';
+        document.getElementById('gorevSure').textContent = data.sure || '-';
+        document.getElementById('gorevTip').textContent = data.tamamlama_tipi || 'Manuel';
+        document.getElementById('gorevNot').textContent = data.notlar || 'Not yok';
+        
+        // Durum geçmişi - basit gösterim
+        if (data.gecmis && data.gecmis.length > 0) {
+          document.getElementById('gorevGecmis').innerHTML = data.gecmis.map(g => {
+            // Durum adlarını Türkçeleştir
+            const durumlar = {
+              'pending': 'Bekliyor',
+              'completed': 'Tamamlandı',
+              'dnd_pending': 'DND',
+              'in_progress': 'Devam Ediyor',
+              'incomplete': 'Tamamlanmadı',
+              'Yeni': 'Yeni'
+            };
+            const onceki = durumlar[g.onceki_durum] || g.onceki_durum;
+            const yeni = durumlar[g.yeni_durum] || g.yeni_durum;
+            
+            // İkon ve renk belirle
+            let ikon = 'fa-circle';
+            let renk = 'text-slate-500';
+            if (g.yeni_durum === 'completed') {
+              ikon = 'fa-check-circle';
+              renk = 'text-green-500';
+            } else if (g.yeni_durum === 'dnd_pending') {
+              ikon = 'fa-door-closed';
+              renk = 'text-orange-500';
+            } else if (g.yeni_durum === 'pending') {
+              ikon = 'fa-clock';
+              renk = 'text-yellow-500';
+            }
+            
+            return `
+              <div class="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-900 rounded text-sm">
+                <i class="fas ${ikon} ${renk}"></i>
+                <div class="flex-1">
+                  <span class="font-medium text-slate-800 dark:text-slate-200">${yeni}</span>
+                  <span class="text-slate-400 text-xs ml-2">${g.zaman}</span>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          document.getElementById('gorevGecmis').innerHTML = '<div class="text-center text-slate-500 text-sm py-2">Geçmiş kaydı yok</div>';
+        }
+      } else {
+        document.getElementById('gorevNot').textContent = 'Hata: ' + data.error;
+      }
+    })
+    .catch(error => {
+      document.getElementById('gorevNot').textContent = 'Bağlantı hatası';
+    });
+  
+  document.getElementById('gorevDetayModal').classList.remove('hidden');
+  document.getElementById('gorevDetayModal').classList.add('flex');
+}
+
+function closeGorevModal() {
+  document.getElementById('gorevDetayModal').classList.add('hidden');
+  document.getElementById('gorevDetayModal').classList.remove('flex');
+}
+</script>
+{% endblock %}

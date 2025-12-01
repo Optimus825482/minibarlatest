@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\utils\bildirim_service.py
+# hypothesis_version: 6.148.2
+
+['%H:%M', 'Arrivals', 'Bildirim bulunamadı', 'Bilinmiyor', 'Görev tamamlandı', 'In House', 'Personel bulunamadı', 'Yükleme tamamlandı', 'bildirim', 'dnd_isaretlendi', 'dnd_tamamlanmadi', 'false', 'gorev_olusturuldu', 'gorev_tamamlandi', 'gorevlendirme', 'id', 'ilgili_id', 'inhouse', 'inhouse_kontrol', 'mesaj', 'okundu', 'okunma_zamani', 'olusturma_zamani', 'sistem_yoneticisi', 'tarih', 'tip', 'yukleme_bekliyor', 'yukleme_eksik', 'yukleme_tamamlandi']

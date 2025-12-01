@@ -149,11 +149,33 @@ class OccupancyService:
                 kat_bazli[kat_id] = {
                     'kat': oda.kat,
                     'dolu_oda_sayisi': 0,
-                    'odalar': []
+                    'toplam_oda_sayisi': 0,
+                    'odalar': [],
+                    'bos_odalar': []
                 }
             
             kat_bazli[kat_id]['dolu_oda_sayisi'] += 1
             kat_bazli[kat_id]['odalar'].append(oda_info)
+        
+        # Boş odaları da ekle (her kat için)
+        tum_odalar = oda_query.all()
+        for oda in tum_odalar:
+            kat_id = oda.kat_id
+            
+            if kat_id not in kat_bazli:
+                kat_bazli[kat_id] = {
+                    'kat': oda.kat,
+                    'dolu_oda_sayisi': 0,
+                    'toplam_oda_sayisi': 0,
+                    'odalar': [],
+                    'bos_odalar': []
+                }
+            
+            kat_bazli[kat_id]['toplam_oda_sayisi'] += 1
+            
+            # Eğer oda dolu değilse boş odalara ekle
+            if oda.id not in dolu_oda_ids:
+                kat_bazli[kat_id]['bos_odalar'].append(oda)
         
         return {
             'tarih': tarih,

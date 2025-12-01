@@ -2,7 +2,7 @@
 %} {% block page_title %}Oda Kontrol{% endblock %} {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
   <!-- Oda Seçimi Kartı -->
-  <div class="bg-white rounded-lg shadow-sm border border-slate-200 mb-6">
+  <div id="oda_secim_formu" class="bg-white rounded-lg shadow-sm border border-slate-200 mb-6">
     <div class="p-6">
       <div class="flex items-center justify-between mb-6">
         <h2 class="text-xl font-semibold text-slate-900">Oda Seçimi</h2>
@@ -65,6 +65,19 @@
     </div>
   </div>
 
+  <!-- Geri Butonu (Oda seçildikten sonra görünür) -->
+  <div id="geri_butonu" class="hidden mb-4">
+    <button
+      onclick="odaSecimineGeriDon()"
+      class="inline-flex items-center px-4 py-2 bg-slate-600 text-white rounded-lg active:bg-slate-700 transition-colors"
+    >
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+      </svg>
+      Farklı Oda Seç
+    </button>
+  </div>
+
   <!-- Oda Bilgileri -->
   <div
     id="oda_bilgileri"
@@ -83,6 +96,33 @@
         <div class="text-right">
           <p class="text-indigo-100 text-sm">Toplam Setup</p>
           <p class="text-4xl font-bold" id="toplam_setup">0</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Görev Bilgisi ve Hızlı İşlemler -->
+  <div id="gorev_islemleri" class="hidden bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
+    <div class="p-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
+            <i class="fas fa-tasks text-indigo-600 dark:text-indigo-400"></i>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-slate-900 dark:text-white">Günlük Görev</p>
+            <p id="gorev_bilgi_text" class="text-xs text-slate-500 dark:text-slate-400">Bu oda için kontrol görevi mevcut</p>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="dndOnayla()" 
+            class="flex-1 sm:flex-none px-4 py-3 bg-orange-600 text-white rounded-lg text-sm font-medium inline-flex items-center justify-center">
+            <i class="fas fa-door-closed mr-2"></i>DND
+          </button>
+          <button onclick="sarfiyatYokOnayla()" 
+            class="flex-1 sm:flex-none px-4 py-3 bg-green-600 text-white rounded-lg text-sm font-medium inline-flex items-center justify-center">
+            <i class="fas fa-check-circle mr-2"></i>Sarfiyat Yok
+          </button>
         </div>
       </div>
     </div>
@@ -464,6 +504,161 @@
     </div>
   </div>
 </div>
+<!-- Sarfiyat Yok Onay Modal -->
+<div
+  id="sarfiyatYokModal"
+  class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn"
+  onclick="if(event.target === this) sarfiyatYokModalKapat()"
+>
+  <div
+    class="bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto transform transition-all animate-slideUp"
+  >
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-5 rounded-t-2xl sm:rounded-t-2xl">
+      <div class="flex items-center justify-center">
+        <div class="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+      </div>
+      <h3 class="text-xl font-bold text-white text-center mt-3">Kontrol Onayı</h3>
+    </div>
+
+    <!-- Content -->
+    <div class="p-6 space-y-5">
+      <!-- Oda ve Tarih Bilgisi -->
+      <div class="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="text-center">
+            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Oda</p>
+            <p id="sarfiyat_modal_oda_no" class="text-2xl font-bold text-slate-900 dark:text-white"></p>
+          </div>
+          <div class="text-center">
+            <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Tarih</p>
+            <p id="sarfiyat_modal_tarih" class="text-lg font-bold text-slate-900 dark:text-white"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bilgi Kutusu -->
+      <div class="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border-l-4 border-green-500">
+        <div class="flex items-start space-x-3">
+          <svg class="w-6 h-6 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+          </svg>
+          <div>
+            <p class="text-sm font-medium text-green-900 dark:text-green-100">
+              Bu oda için tüm minibar setup'larında ürün miktarlarında değişim olmamıştır.
+            </p>
+            <p class="text-sm font-bold text-green-800 dark:text-green-200 mt-2">
+              Herhangi bir sarfiyat yoktur.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Onay Sorusu -->
+      <p class="text-center text-base font-semibold text-slate-700 dark:text-slate-300">
+        Bu kaydı onaylıyor musunuz?
+      </p>
+    </div>
+
+    <!-- Footer Buttons -->
+    <div class="sticky bottom-0 bg-slate-50 dark:bg-slate-900 px-6 py-4 border-t border-slate-200 dark:border-slate-700 rounded-b-2xl sm:rounded-b-2xl">
+      <div class="flex gap-3">
+        <button
+          onclick="sarfiyatYokModalKapat()"
+          class="flex-1 px-6 py-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-xl border-2 border-slate-300 dark:border-slate-600 active:scale-95 transition-all touch-manipulation"
+        >
+          İptal
+        </button>
+        <button
+          onclick="sarfiyatYokModalKapat(); sarfiyatYokKaydet();"
+          class="flex-1 px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-green-500/30 touch-manipulation"
+        >
+          <span class="flex items-center justify-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            Onayla
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DND Onay Modal -->
+<div
+  id="dndModal"
+  class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn"
+  onclick="if(event.target === this) dndModalKapat()"
+>
+  <div
+    class="bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto transform transition-all animate-slideUp"
+  >
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-5 rounded-t-2xl sm:rounded-t-2xl">
+      <div class="flex items-center justify-center">
+        <div class="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center">
+          <i class="fas fa-door-closed text-white text-2xl"></i>
+        </div>
+      </div>
+      <h3 class="text-xl font-bold text-white text-center mt-3">DND - Rahatsız Etmeyin</h3>
+    </div>
+
+    <!-- Content -->
+    <div class="p-6 space-y-5">
+      <!-- Oda Bilgisi -->
+      <div class="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700 text-center">
+        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Oda</p>
+        <p id="dnd_modal_oda_no" class="text-2xl font-bold text-slate-900 dark:text-white"></p>
+      </div>
+
+      <!-- DND Sayısı Bilgisi -->
+      <div id="dnd_sayisi_bilgi" class="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-4 border-l-4 border-orange-500">
+        <div class="flex items-start space-x-3">
+          <i class="fas fa-info-circle text-orange-600 dark:text-orange-400 mt-0.5"></i>
+          <div>
+            <p class="text-sm font-medium text-orange-900 dark:text-orange-100">
+              Bu oda DND olarak işaretlenecek.
+            </p>
+            <p class="text-xs text-orange-700 dark:text-orange-300 mt-1">
+              Gün içinde en az 3 kez DND kontrolü yapılmalıdır.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Onay Sorusu -->
+      <p class="text-center text-base font-semibold text-slate-700 dark:text-slate-300">
+        Bu odayı DND olarak işaretlemek istiyor musunuz?
+      </p>
+    </div>
+
+    <!-- Footer Buttons -->
+    <div class="sticky bottom-0 bg-slate-50 dark:bg-slate-900 px-6 py-4 border-t border-slate-200 dark:border-slate-700 rounded-b-2xl sm:rounded-b-2xl">
+      <div class="flex gap-3">
+        <button
+          onclick="dndModalKapat()"
+          class="flex-1 px-6 py-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-xl border-2 border-slate-300 dark:border-slate-600 active:scale-95 transition-all touch-manipulation"
+        >
+          İptal
+        </button>
+        <button
+          onclick="dndModalKapat(); dndKaydet();"
+          class="flex-1 px-6 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-orange-500/30 touch-manipulation"
+        >
+          <span class="flex items-center justify-center">
+            <i class="fas fa-door-closed mr-2"></i>
+            DND İşaretle
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %} {% block extra_styles %}
 <style>
   /* PWA Modal Animasyonları */
@@ -568,6 +763,38 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
+  }
+
+  /* Success Dialog Animasyonu */
+  @keyframes successPop {
+    0% {
+      transform: scale(0.5);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  .animate-successPop {
+    animation: successPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .animate-fadeOut {
+    animation: fadeOut 0.3s ease-out forwards;
   }
 </style>
 {% endblock %} {% block extra_scripts %}

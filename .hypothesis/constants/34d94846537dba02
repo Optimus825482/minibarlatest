@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\utils\ml\metrics_calculator.py
+# hypothesis_version: 6.148.2
+
+[100, 999, 'aktif_alert_count', 'cikis', 'decreasing', 'dolum_sure', 'giris', 'increasing', 'kritik', 'kritik_urun_count', 'kritik_urunler', 'mevcut_stok', 'orta', 'stable', 'stok_bitis_uyari', 'stok_seviye', 'tahmini_gun', 'tuketim_miktar', 'urun', 'yuksek']

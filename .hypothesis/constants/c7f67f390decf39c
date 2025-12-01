@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\routes\db_optimization_routes.py
+# hypothesis_version: 6.148.2
+
+[200, 500, '/api/v1/db', '/dashboard', '/health', '/indexes/check', '/indexes/create', '/optimize/full', '/performance/analyze', '/pool/stats', '/tables/optimize', 'CONFIG_CHANGE', 'GET', 'INFO', 'POST', 'QUERY_EXECUTE', 'db_optimization', 'error', 'message', 'sistem_yoneticisi', 'status']

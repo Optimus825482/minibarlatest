@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\routes\health_routes.py
+# hypothesis_version: 6.148.2
+
+[0.8, 100, 200, 500, 503, '/health', '/health/database', '/health/pool-stats', '/health/routes', 'FLASK_ENV', 'GET', 'SELECT 1', 'SELECT VERSION()', 'SELECT version()', 'active', 'cache_hit_ratio', 'checked_in', 'checked_out', 'connection_pool', 'connections', 'database', 'database_size', 'database_size_mb', 'database_type', 'endpoint', 'environment', 'error', 'health', 'healthy', 'idle', 'idle_in_transaction', 'max_overflow', 'methods', 'metrics', 'mysql', 'overflow', 'path', 'pool_size', 'postgresql', 'production', 'recycle', 'routes', 'size', 'status', 'timeout', 'timestamp', 'total', 'total_routes', 'type', 'unhealthy', 'unknown', 'usage_percent', 'version', 'warning']

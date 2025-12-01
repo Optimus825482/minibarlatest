@@ -5,7 +5,7 @@ class Config:
     """Flask uygulama yapılandırması - GÜVENLİK İYİLEŞTİRMELERİ"""
 
     # Cache Busting Version - Her değişiklikte artır
-    CACHE_VERSION = '1.1.61'
+    CACHE_VERSION = '1.1.77'
 
     ENV = os.getenv('FLASK_ENV', os.getenv('ENV', 'production')).lower()
     IS_DEVELOPMENT = ENV in {'development', 'dev', 'local'}
@@ -114,24 +114,9 @@ class Config:
         'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'  # HTTPS için
     }
     
-    # Redis Cache Configuration
-    REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-    
-    # Flask-Caching Configuration
-    CACHE_TYPE = 'redis' if not IS_DEVELOPMENT else 'simple'  # Development'ta simple cache
-    CACHE_REDIS_URL = REDIS_URL
-    CACHE_DEFAULT_TIMEOUT = 3600  # 1 saat default timeout
-    CACHE_KEY_PREFIX = 'minibar_cache:'
-    
-    # Cache Timeouts (saniye)
-    CACHE_TIMEOUT_FIYAT = 3600  # 1 saat - Fiyat hesaplamaları
-    CACHE_TIMEOUT_KAR = 1800  # 30 dakika - Kar analizleri
-    CACHE_TIMEOUT_STOK = 300  # 5 dakika - Stok durumu
-    CACHE_TIMEOUT_RAPOR = 600  # 10 dakika - Raporlar
-    
-    # Celery Configuration
-    CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/1')
-    CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/1')
+    # Celery Configuration (Redis sadece broker olarak kullanılıyor, cache yok)
+    CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+    CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
     CELERY_TASK_SERIALIZER = 'json'
     CELERY_RESULT_SERIALIZER = 'json'
     CELERY_ACCEPT_CONTENT = ['json']

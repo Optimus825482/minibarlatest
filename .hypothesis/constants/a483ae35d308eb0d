@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\routes\auth_routes.py
+# hypothesis_version: 6.148.2
+
+['/', '/login', '/logout', '/setup', '1', 'GET', 'POST', 'Setup IntegrityError', 'action', 'ad', 'ad_soyad', 'cikis', 'danger', 'dashboard', 'errors', 'form_data', 'giris', 'info', 'kullanici_adi', 'kullanici_id', 'login', 'login.html', 'note', 'rol', 'setup', 'setup.html', 'setup_tamamlandi', 'sistem', 'sistem_yoneticisi', 'son_giris_guncelleme', 'soyad', 'success', 'unknown']

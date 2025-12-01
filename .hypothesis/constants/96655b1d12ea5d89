@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\utils\yukleme_gorev_service.py
+# hypothesis_version: 6.148.2
+
+[100, 'arrivals', 'baslangic', 'beklenen', 'bitis', 'completed', 'depo_sorumlusu', 'depo_sorumlusu_adi', 'depo_sorumlusu_id', 'donem', 'dosya_tipi', 'dosya_yukleme_id', 'durum', 'gorev_id', 'gorev_tarihi', 'haftalik', 'in_house', 'inhouse', 'oran', 'otel_adi', 'otel_id', 'pending', 'tamamlanan', 'tarih', 'toplam_gun', 'toplam_oran', 'yukleme_zamani']

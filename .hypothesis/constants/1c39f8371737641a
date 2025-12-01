@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\routes\stok_routes.py
+# hypothesis_version: 6.148.2
+
+[200, 400, 404, 405, 500, '%Y-%m-%d', '/api/v1/stok', '/deger-raporu', '/devir-raporu', '/durum', '/durum/<int:urun_id>', '/guncelle', '/kritik', '/sayim', 'Endpoint bulunamadı', 'GET', 'POST', 'Sunucu hatası', 'aciklama', 'admin', 'baslangic', 'bitis', 'cikis', 'depo_sorumlusu', 'devir', 'error', 'farkli_urun_sayisi', 'fire', 'giris', 'goruntuleme', 'guncelleme', 'islem_tipi', 'kat_sorumlusu', 'kritik_stok_sayisi', 'kritik_stoklar', 'miktar', 'otel_id', 'otel_id zorunludur', 'rapor', 'sayilan_miktar', 'sayim_verileri', 'sistem_yoneticisi', 'stok', 'stok_deger_raporu', 'stok_devir_raporu', 'stok_guncelleme', 'stok_sayim', 'stoklar', 'success', 'toplam_urun', 'urun_id', 'urun_stok']

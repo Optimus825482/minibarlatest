@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\routes\admin_qr_routes.py
+# hypothesis_version: 6.148.2
+
+[400, 404, 429, 500, '%d.%m.%Y %H:%M', '...', 'BilinmeyenKat', 'BilinmeyenOtel', 'C', 'G', 'GET', 'I', 'O', 'Oda bulunamadı', 'POST', 'QR kod bulunamadı', 'S', 'U', '_', 'admin', 'admin_qr', 'admin_qr_toplu', 'admin_qr_zip', 'admin_tum_qr_temizle', 'application/zip', 'basarili', 'basarisiz', 'c', 'data', 'ekleme', 'export', 'g', 'goruntuleme', 'guncelleme', 'i', 'image', 'image/svg+xml', 'islem', 'kat_adi', 'mesaj', 'message', 'mod', 'o', 'oda_id', 'oda_misafir_mesaji', 'oda_no', 'odalar', 'olusturma_tarihi', 'qr_image', 'qr_kod', 'qr_kod_token', 'qr_kod_toplu', 'qrsiz', 's', 'silme', 'sistem_yoneticisi', 'success', 'temizlenen_adet', 'token', 'toplam', 'toplam_oda', 'tum_qr_temizle', 'tumu', 'u', 'utf-8', 'w', 'Ç', 'Ö', 'Ü', 'ç', 'ö', 'ü', 'Ğ', 'ğ', 'İ', 'ı', 'Ş', 'ş']

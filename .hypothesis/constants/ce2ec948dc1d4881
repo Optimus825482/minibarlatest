@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\utils\email_service.py
+# hypothesis_version: 6.148.2
+
+['Arrivals', 'Europe/Nicosia', 'From', 'In House', 'Subject', 'To', 'X-Tracking-ID', 'admin', 'admin_notification', 'alternative', 'arrivals', 'arrivals_eksik', 'bildirim_tipi', 'bilgi', 'depo_sorumlusu', 'details', 'eksik_yuklemeler', 'email', 'email_gonderildi', 'email_log_id', 'error', 'failed', 'gonderildi', 'hata', 'her_ikisi_eksik', 'html', 'inhouse', 'inhouse_eksik', 'kullanici_id', 'message', 'otel', 'otel_ad', 'otel_id', 'pending', 'plain', 'results', 'sender_email', 'sender_name', 'sistem', 'sistem_yoneticisi', 'smtp_password', 'smtp_port', 'smtp_server', 'smtp_use_ssl', 'smtp_use_tls', 'smtp_username', 'success', 'tracking_id', 'utf-8', 'uyari', 'warnings_sent', 'yukleme_gorevleri']

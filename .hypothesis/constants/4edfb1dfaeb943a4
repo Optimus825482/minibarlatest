@@ -1,0 +1,4 @@
+# file: D:\minibartakip2cool\utils\ml\data_collector.py
+# hypothesis_version: 6.148.2
+
+[100, 'aktif', 'arrival', 'bosta_tuketim', 'cikis', 'dolum_sure', 'eksik_tamamlama', 'giris', 'grup', 'ilk_dolum', 'in_house', 'islem_sayisi', 'kat', 'kat_sorumlusu', 'kritik_seviye', 'oda_dolu', 'oda_no', 'oda_tipi', 'okutma_sayisi', 'otel', 'personel_adi', 'qr_okutma_siklik', 'sayim', 'stok_seviye', 'talep_id', 'talep_yanit_sure', 'talep_yogunluk', 'tamamlandi', 'toplam_fire', 'toplam_kullanim', 'toplam_zimmet', 'tuketim', 'tuketim_oran', 'urun_adi', 'yeniden_dolum', 'zimmet_fire', 'zimmet_kullanim']
