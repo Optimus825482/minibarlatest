@@ -21,10 +21,39 @@ def get_flask_app():
     """Flask app'i lazy loading ile al - Celery worker'lar için"""
     global _flask_app, _db
     if _flask_app is None:
-        # app.py'den Flask app'i import et
-        from app import app as flask_app, db as flask_db
-        _flask_app = flask_app
-        _db = flask_db
+        try:
+            # Önce app.py'den import etmeyi dene
+            from app import app as flask_app, db as flask_db
+            _flask_app = flask_app
+            _db = flask_db
+        except ImportError:
+            # Import başarısız olursa, Flask app'i manuel oluştur
+            import sys
+            import os
+            
+            # Proje kök dizinini path'e ekle
+            project_root = os.path.dirname(os.path.abspath(__file__))
+            if project_root not in sys.path:
+                sys.path.insert(0, project_root)
+            
+            from flask import Flask
+            from models import db as models_db
+            from config import Config
+            
+            flask_app = Flask(__name__)
+            flask_app.config.from_object(Config)
+            
+            # Database bağlantısı
+            database_url = os.getenv('DATABASE_URL')
+            if database_url:
+                flask_app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+            
+            models_db.init_app(flask_app)
+            _flask_app = flask_app
+            _db = models_db
+            
+            logger.info("Flask app Celery worker için manuel oluşturuldu")
+    
     return _flask_app, _db
 
 
