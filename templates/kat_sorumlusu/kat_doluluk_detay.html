@@ -77,7 +77,7 @@ Doluluk Detayı{% endblock %} {% block content %}
 
   <!-- Filtreler -->
   <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
-    <div class="flex flex-wrap gap-2">
+    <div class="flex flex-wrap items-center gap-2">
       <button onclick="filterOdalar('all')"
         class="filter-btn active px-4 py-2 rounded-lg text-sm font-medium transition-colors">
         Tümü ({{ toplam_oda }})
@@ -98,15 +98,31 @@ Doluluk Detayı{% endblock %} {% block content %}
         class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors">
         Bugün Çıkış ({{ bugun_cikis_sayisi }})
       </button>
+
     </div>
   </div>
 
   <!-- Oda Listesi -->
   <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-      <h3 class="text-lg font-medium text-slate-900 dark:text-white">
-        Oda Detayları
-      </h3>
+      <div class="flex items-center gap-4">
+        <h3 class="text-lg font-medium text-slate-900 dark:text-white">
+          Oda Detayları
+        </h3>
+        <!-- Bos Odalar Toggle -->
+        <!-- Bos Odalar Toggle Switch -->
+        <div id="bos_oda_toggle" class="flex items-center gap-2">
+          <span class="text-sm font-medium text-slate-600 dark:text-slate-300">Boş Odalar:</span>
+          <div class="bos-oda-toggle-wrapper">
+            <input type="checkbox" id="bosOdalarSwitch" checked onchange="setBosOdalar(this.checked)">
+            <label for="bosOdalarSwitch" class="bos-oda-toggle">
+              <span class="toggle-handler"></span>
+              <span class="toggle-on">Göster</span>
+              <span class="toggle-off">Gizle</span>
+            </label>
+          </div>
+        </div>
+      </div>
       <div class="flex flex-wrap items-center gap-3 text-xs">
         <span class="inline-flex items-center gap-1">
           <span class="w-4 h-4 rounded bg-yellow-300 dark:bg-yellow-600 border border-yellow-500"></span>
@@ -153,7 +169,7 @@ Doluluk Detayı{% endblock %} {% block content %}
         </div>
         {% else %}
         <!-- Dolu Oda -->
-        <a href="{{ url_for('oda_kontrol') }}?kat_id={{ kat.id }}&oda_id={{ oda_detay.oda.id }}&from_kat_detay=1 }}" class="block h-full min-h-[160px] p-4 border-2 rounded-lg transition-colors flex flex-col
+        <a href="{{ url_for('oda_kontrol') }}?kat_id={{ kat.id }}&oda_id={{ oda_detay.oda.id }}&from_kat_detay=1" class="block h-full min-h-[160px] p-4 border-2 rounded-lg transition-colors flex flex-col
           {% if oda_detay.gorev_durumu == 'completed' %} border-green-500 dark:border-green-400 bg-green-200 dark:bg-green-800
           {% elif oda_detay.gorev_durumu == 'dnd_pending' %} border-orange-600 dark:border-orange-400 bg-orange-300 dark:bg-orange-700
           {% elif oda_detay.durum == 'bugun_giris' %} border-emerald-400 dark:border-emerald-500 bg-emerald-100 dark:bg-emerald-900/40
@@ -264,26 +280,92 @@ Doluluk Detayı{% endblock %} {% block content %}
     background: #2563eb;
     color: white;
   }
+
+  /* Bos Odalar Toggle Switch */
+  .bos-oda-toggle-wrapper {
+    display: inline-block;
+  }
+  .bos-oda-toggle-wrapper input[type="checkbox"] {
+    display: none;
+  }
+  .bos-oda-toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 100px;
+    height: 32px;
+    background: linear-gradient(to bottom, #64748b 0%, #475569 100%);
+    border-radius: 16px;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .toggle-handler {
+    position: absolute;
+    left: 2px;
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(to bottom, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    transition: left 0.3s ease;
+    z-index: 3;
+  }
+  .toggle-on, .toggle-off {
+    position: absolute;
+    font-size: 11px;
+    font-weight: 600;
+    transition: opacity 0.3s;
+  }
+  .toggle-on {
+    left: 10px;
+    color: white;
+    opacity: 0;
+  }
+  .toggle-off {
+    right: 10px;
+    color: white;
+    opacity: 1;
+  }
+  .bos-oda-toggle-wrapper input:checked + .bos-oda-toggle {
+    background: linear-gradient(to bottom, #2563eb 0%, #1d4ed8 100%);
+  }
+  .bos-oda-toggle-wrapper input:checked + .bos-oda-toggle .toggle-handler {
+    left: 70px;
+  }
+  .bos-oda-toggle-wrapper input:checked + .bos-oda-toggle .toggle-on {
+    opacity: 1;
+  }
+  .bos-oda-toggle-wrapper input:checked + .bos-oda-toggle .toggle-off {
+    opacity: 0;
+  }
 </style>
 
 <script>
+  let mevcutFiltre = "all";
+  let bosOdalarGoster = true;
+
   function filterOdalar(durum) {
+    mevcutFiltre = durum;
     const cards = document.querySelectorAll(".oda-card");
     const buttons = document.querySelectorAll(".filter-btn");
+    const toggleDiv = document.getElementById("bos_oda_toggle");
 
-    // Buton aktif durumunu güncelle
     buttons.forEach((btn) => btn.classList.remove("active"));
     event.target.classList.add("active");
 
-    // Kartları filtrele
+    // Toggle sadece Tumu seciliyken gorunsun
+    if (toggleDiv) {
+      toggleDiv.style.display = durum === "all" ? "flex" : "none";
+    }
+
     cards.forEach((card) => {
       const cardDurum = card.dataset.durum;
       let goster = false;
       
       if (durum === "all") {
-        goster = true;
+        goster = cardDurum === "bos" ? bosOdalarGoster : true;
       } else if (durum === "dolu") {
-        // Dolu = bos olmayan tüm odalar (dolu, bugun_giris, bugun_cikis)
         goster = cardDurum !== "bos";
       } else {
         goster = cardDurum === durum;
@@ -291,6 +373,17 @@ Doluluk Detayı{% endblock %} {% block content %}
       
       card.style.display = goster ? "block" : "none";
     });
+  }
+
+  function setBosOdalar(goster) {
+    bosOdalarGoster = goster;
+    if (mevcutFiltre === "all") {
+      document.querySelectorAll(".oda-card").forEach((card) => {
+        if (card.dataset.durum === "bos") {
+          card.style.display = goster ? "block" : "none";
+        }
+      });
+    }
   }
 
   // Geri sayım sayaçları

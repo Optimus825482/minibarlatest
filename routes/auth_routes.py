@@ -164,6 +164,9 @@ def register_auth_routes(app):
                     basarili=True
                 )
 
+                # Cache temizleme flag'i - tarayıcı cache'ini temizlemek için
+                session['clear_cache'] = True
+
                 flash(f'Hoş geldiniz, {kullanici.ad} {kullanici.soyad}!', 'success')
                 return redirect(url_for('dashboard'))
             else:

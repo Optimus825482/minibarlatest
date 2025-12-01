@@ -936,6 +936,26 @@
 </head>
 
 <body class="h-full bg-slate-50 dark:bg-slate-900">
+  <!-- Login sonrası cache temizleme -->
+  {% if session.get('clear_cache') %}
+  <script>
+    (function() {
+      // Cache temizleme işlemi
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (let name of names) caches.delete(name);
+        });
+      }
+      // LocalStorage'dan eski verileri temizle (tema hariç)
+      const theme = localStorage.getItem('minibar-theme');
+      localStorage.clear();
+      if (theme) localStorage.setItem('minibar-theme', theme);
+      // SessionStorage temizle
+      sessionStorage.clear();
+      console.log('Cache temizlendi');
+    })();
+  </script>
+  {% endif %}
   <div class="flex h-full">
     <!-- Menu Toggle Button - All Devices -->
     <button id="mobile-menu-button"

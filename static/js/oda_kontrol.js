@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Kat detaylarından gelindiyse geri dön URL'ini kaydet
   if (fromKatDetay === "1" && qrKatId) {
-    katDetayGeriDonUrl = "/doluluk/kat-doluluk/" + qrKatId;
+    katDetayGeriDonUrl = "/kat-doluluk/" + qrKatId;
     const katGeriButonu = document.getElementById("kat_gorunumu_geri_butonu");
     const katGeriLink = document.getElementById("kat_gorunumu_link");
     if (katGeriButonu && katGeriLink) {
@@ -136,6 +136,13 @@ function odaSecimineGeriDon() {
   // Kat detaylarından gelindiyse oraya geri dön
   if (katDetayGeriDonUrl) {
     window.location.href = katDetayGeriDonUrl;
+    return;
+  }
+
+  // Yedek: Seçili kat ID'sinden kat detaylarına git
+  const katId = document.getElementById("kat_id")?.value;
+  if (katId) {
+    window.location.href = "/kat-doluluk/" + katId;
     return;
   }
 

@@ -38,6 +38,10 @@ def register_dashboard_routes(app):
     @login_required
     def dashboard():
         """Rol bazlı dashboard yönlendirmesi"""
+        # Login sonrası cache temizleme flag'ini kaldır (bir kez çalışması için)
+        if session.get('clear_cache'):
+            session.pop('clear_cache', None)
+        
         rol = session.get('rol')
         
         if rol == 'sistem_yoneticisi':
