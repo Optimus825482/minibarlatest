@@ -82,11 +82,9 @@ with app.app_context():
     except Exception as e:
         logger.warning(f"⚠️ Metadata refresh hatası (görmezden geliniyor): {e}")
 
-# Redis Cache başlat
-from flask_caching import Cache
-cache = Cache(app)
-
-logger.info(f"✅ Cache initialized: {app.config['CACHE_TYPE']}")
+# Cache devre dışı (Redis sadece Celery broker olarak kullanılıyor)
+cache = None
+logger.info("ℹ️ Cache devre dışı - Redis sadece Celery broker olarak kullanılıyor")
 
 # Query Logging - SQLAlchemy Event Listener
 try:
