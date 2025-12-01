@@ -574,7 +574,7 @@ def doluluk_yukle():
             # YuklemeGorev tablosunu güncelle (dashboard için)
             try:
                 from models import YuklemeGorev
-                from datetime import date
+                from datetime import date, datetime, timezone
                 
                 # Dosya tipini YuklemeGorev formatına çevir
                 dosya_tipi_map = {
@@ -583,6 +583,7 @@ def doluluk_yukle():
                     'departures': 'departures'
                 }
                 yukleme_dosya_tipi = dosya_tipi_map.get(result['dosya_tipi'], result['dosya_tipi'])
+                dosya_yukleme = DosyaYukleme.query.filter_by(islem_kodu=islem_kodu).first()
                 
                 # Bugünkü görevi bul ve güncelle
                 yukleme_gorev = YuklemeGorev.query.filter(
@@ -592,9 +593,24 @@ def doluluk_yukle():
                 ).first()
                 
                 if yukleme_gorev:
+                    # Mevcut görevi güncelle
                     yukleme_gorev.durum = 'completed'
-                    yukleme_gorev.dosya_yukleme_id = DosyaYukleme.query.filter_by(islem_kodu=islem_kodu).first().id
-                    db.session.commit()
+                    yukleme_gorev.yukleme_zamani = datetime.now(timezone.utc)
+                    yukleme_gorev.dosya_yukleme_id = dosya_yukleme.id if dosya_yukleme else None
+                else:
+                    # Görev yoksa yeni oluştur
+                    yukleme_gorev = YuklemeGorev(
+                        otel_id=otel_id,
+                        depo_sorumlusu_id=user_id,
+                        gorev_tarihi=date.today(),
+                        dosya_tipi=yukleme_dosya_tipi,
+                        durum='completed',
+                        yukleme_zamani=datetime.now(timezone.utc),
+                        dosya_yukleme_id=dosya_yukleme.id if dosya_yukleme else None
+                    )
+                    db.session.add(yukleme_gorev)
+                
+                db.session.commit()
             except Exception as gorev_err:
                 print(f"YuklemeGorev güncelleme hatası: {gorev_err}")
             

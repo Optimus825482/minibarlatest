@@ -222,6 +222,105 @@ def register_dashboard_routes(app):
                 print(f"Ürün tüketim verileri hatası: {str(e)}")
                 db.session.rollback()  # Transaction'ı temizle
         
+            # Günlük Yükleme Görev Özeti (Sistem Yöneticisi için)
+            yukleme_gorev_ozeti = None
+            try:
+                from models import YuklemeGorev
+                kullanici_otelleri = get_kullanici_otelleri()
+                otel_ids = [o.id for o in kullanici_otelleri] if kullanici_otelleri else []
+                
+                if otel_ids:
+                    # Bugünkü yükleme görevlerini kontrol et
+                    inhouse_gorev = YuklemeGorev.query.filter(
+                        YuklemeGorev.otel_id.in_(otel_ids),
+                        db.func.date(YuklemeGorev.gorev_tarihi) == bugun,
+                        YuklemeGorev.dosya_tipi == 'inhouse'
+                    ).first()
+                    
+                    arrivals_gorev = YuklemeGorev.query.filter(
+                        YuklemeGorev.otel_id.in_(otel_ids),
+                        db.func.date(YuklemeGorev.gorev_tarihi) == bugun,
+                        YuklemeGorev.dosya_tipi == 'arrivals'
+                    ).first()
+                    
+                    departures_gorev = YuklemeGorev.query.filter(
+                        YuklemeGorev.otel_id.in_(otel_ids),
+                        db.func.date(YuklemeGorev.gorev_tarihi) == bugun,
+                        YuklemeGorev.dosya_tipi == 'departures'
+                    ).first()
+                    
+                    tamamlanan = 0
+                    inhouse_durum = 'pending'
+                    arrivals_durum = 'pending'
+                    departures_durum = 'pending'
+                    
+                    if inhouse_gorev and inhouse_gorev.durum == 'completed':
+                        tamamlanan += 1
+                        inhouse_durum = 'completed'
+                    
+                    if arrivals_gorev and arrivals_gorev.durum == 'completed':
+                        tamamlanan += 1
+                        arrivals_durum = 'completed'
+                    
+                    if departures_gorev and departures_gorev.durum == 'completed':
+                        tamamlanan += 1
+                        departures_durum = 'completed'
+                    
+                    yukleme_gorev_ozeti = {
+                        'toplam': 3,
+                        'tamamlanan': tamamlanan,
+                        'bekleyen': 3 - tamamlanan,
+                        'tamamlanma_orani': int((tamamlanan / 3) * 100),
+                        'inhouse_durum': inhouse_durum,
+                        'arrivals_durum': arrivals_durum,
+                        'departures_durum': departures_durum
+                    }
+            except Exception as e:
+                print(f"Sistem yöneticisi yükleme görev özeti hatası: {str(e)}")
+            
+            # Kat Sorumlusu Görevleri Özeti (Sistem Yöneticisi için)
+            kat_sorumlusu_gorev_ozeti = None
+            try:
+                from models import GunlukGorev
+                kullanici_otelleri = get_kullanici_otelleri()
+                otel_ids = [o.id for o in kullanici_otelleri] if kullanici_otelleri else []
+                
+                if otel_ids:
+                    # Bugünkü görevleri say - GunlukGorev üzerinden
+                    bugun_gorevler = GunlukGorev.query.filter(
+                        GunlukGorev.otel_id.in_(otel_ids),
+                        db.func.date(GunlukGorev.gorev_tarihi) == bugun
+                    ).all()
+                    
+                    toplam_gorev = len(bugun_gorevler)
+                    tamamlanan_gorev = len([g for g in bugun_gorevler if g.durum == 'completed'])
+                    bekleyen_gorev = len([g for g in bugun_gorevler if g.durum == 'pending'])
+                    devam_eden = len([g for g in bugun_gorevler if g.durum == 'in_progress'])
+                    dnd_gorev = len([g for g in bugun_gorevler if g.durum == 'dnd_pending'])
+                    
+                    # Görev tiplerine göre say
+                    inhouse = len([g for g in bugun_gorevler if g.gorev_tipi == 'inhouse_kontrol'])
+                    arrival = len([g for g in bugun_gorevler if g.gorev_tipi == 'arrival_kontrol'])
+                    departure = len([g for g in bugun_gorevler if g.gorev_tipi == 'departure_kontrol'])
+                    
+                    inhouse_tamamlanan = len([g for g in bugun_gorevler if g.gorev_tipi == 'inhouse_kontrol' and g.durum == 'completed'])
+                    arrival_tamamlanan = len([g for g in bugun_gorevler if g.gorev_tipi == 'arrival_kontrol' and g.durum == 'completed'])
+                    departure_tamamlanan = len([g for g in bugun_gorevler if g.gorev_tipi == 'departure_kontrol' and g.durum == 'completed'])
+                    
+                    kat_sorumlusu_gorev_ozeti = {
+                        'toplam': toplam_gorev,
+                        'tamamlanan': tamamlanan_gorev,
+                        'bekleyen': bekleyen_gorev,
+                        'devam_eden': devam_eden,
+                        'dnd': dnd_gorev,
+                        'tamamlanma_orani': int((tamamlanan_gorev / toplam_gorev) * 100) if toplam_gorev > 0 else 0,
+                        'inhouse': {'toplam': inhouse, 'tamamlanan': inhouse_tamamlanan},
+                        'arrival': {'toplam': arrival, 'tamamlanan': arrival_tamamlanan},
+                        'departure': {'toplam': departure, 'tamamlanan': departure_tamamlanan}
+                    }
+            except Exception as e:
+                print(f"Kat sorumlusu görev özeti hatası: {str(e)}")
+            
             return render_template('sistem_yoneticisi/dashboard.html',
                                  otel_doluluk_raporlari=otel_doluluk_raporlari,
                                  toplam_kat=toplam_kat,
@@ -248,7 +347,9 @@ def register_dashboard_routes(app):
                                  ml_alert_count=ml_alert_count,
                                  dashboard_bildirimleri=dashboard_bildirimleri,
                                  bildirim_sayilari=bildirim_sayilari,
-                                 istatistikler=istatistikler)
+                                 istatistikler=istatistikler,
+                                 yukleme_gorev_ozeti=yukleme_gorev_ozeti,
+                                 kat_sorumlusu_gorev_ozeti=kat_sorumlusu_gorev_ozeti)
         except Exception as e:
             print(f"Sistem yöneticisi dashboard hatası: {str(e)}")
             import traceback
@@ -281,7 +382,9 @@ def register_dashboard_routes(app):
                                  ml_alert_count=0,
                                  dashboard_bildirimleri=[],
                                  bildirim_sayilari={'kritik_stok': 0, 'geciken_siparis': 0, 'onay_bekleyen': 0, 'toplam': 0},
-                                 istatistikler={'onaylandi': 0})
+                                 istatistikler={'onaylandi': 0},
+                                 yukleme_gorev_ozeti=None,
+                                 kat_sorumlusu_gorev_ozeti=None)
 
     
     @app.route('/depo')
@@ -513,32 +616,32 @@ def register_dashboard_routes(app):
         oda_kontrol_ozeti = None
         try:
             if yukleme_gorev_ozeti and yukleme_gorev_ozeti.get('tamamlanma_orani') == 100:
-                from models import Gorev
+                from models import GunlukGorev
                 from utils.authorization import get_kullanici_otelleri
                 
                 kullanici_otelleri = get_kullanici_otelleri()
                 otel_ids = [o.id for o in kullanici_otelleri] if kullanici_otelleri else []
                 
                 if otel_ids:
-                    # Bugünkü görevleri say
-                    bugun_gorevler = Gorev.query.filter(
-                        Gorev.otel_id.in_(otel_ids),
-                        db.func.date(Gorev.gorev_tarihi) == bugun
+                    # Bugünkü görevleri say - GunlukGorev üzerinden
+                    bugun_gorevler = GunlukGorev.query.filter(
+                        GunlukGorev.otel_id.in_(otel_ids),
+                        db.func.date(GunlukGorev.gorev_tarihi) == bugun
                     ).all()
                     
                     toplam = len(bugun_gorevler)
-                    tamamlanan_gorev = len([g for g in bugun_gorevler if g.durum == 'tamamlandi'])
-                    bekleyen_gorev = len([g for g in bugun_gorevler if g.durum == 'bekliyor'])
-                    devam_eden = len([g for g in bugun_gorevler if g.durum == 'devam_ediyor'])
+                    tamamlanan_gorev = len([g for g in bugun_gorevler if g.durum == 'completed'])
+                    bekleyen_gorev = len([g for g in bugun_gorevler if g.durum == 'pending'])
+                    devam_eden = len([g for g in bugun_gorevler if g.durum == 'in_progress'])
                     
                     # Görev tiplerine göre say
                     inhouse = len([g for g in bugun_gorevler if g.gorev_tipi == 'inhouse_kontrol'])
                     arrival = len([g for g in bugun_gorevler if g.gorev_tipi == 'arrival_kontrol'])
                     departure = len([g for g in bugun_gorevler if g.gorev_tipi == 'departure_kontrol'])
                     
-                    inhouse_tamamlanan = len([g for g in bugun_gorevler if g.gorev_tipi == 'inhouse_kontrol' and g.durum == 'tamamlandi'])
-                    arrival_tamamlanan = len([g for g in bugun_gorevler if g.gorev_tipi == 'arrival_kontrol' and g.durum == 'tamamlandi'])
-                    departure_tamamlanan = len([g for g in bugun_gorevler if g.gorev_tipi == 'departure_kontrol' and g.durum == 'tamamlandi'])
+                    inhouse_tamamlanan = len([g for g in bugun_gorevler if g.gorev_tipi == 'inhouse_kontrol' and g.durum == 'completed'])
+                    arrival_tamamlanan = len([g for g in bugun_gorevler if g.gorev_tipi == 'arrival_kontrol' and g.durum == 'completed'])
+                    departure_tamamlanan = len([g for g in bugun_gorevler if g.gorev_tipi == 'departure_kontrol' and g.durum == 'completed'])
                     
                     oda_kontrol_ozeti = {
                         'toplam': toplam,

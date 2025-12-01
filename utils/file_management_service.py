@@ -154,6 +154,32 @@ class FileManagementService:
             for mk in misafir_kayitlar:
                 db.session.delete(mk)
             
+            # YuklemeGorev tablosunu güncelle (dashboard senkronizasyonu için)
+            try:
+                from models import YuklemeGorev
+                from datetime import date
+                
+                # Dosya tipini YuklemeGorev formatına çevir
+                dosya_tipi_map = {
+                    'in_house': 'inhouse',
+                    'arrivals': 'arrivals', 
+                    'departures': 'departures'
+                }
+                yukleme_dosya_tipi = dosya_tipi_map.get(dosya_tipi, dosya_tipi)
+                
+                # İlgili yükleme görevini bul ve pending'e çevir
+                yukleme_gorev = YuklemeGorev.query.filter(
+                    YuklemeGorev.dosya_yukleme_id == dosya_yukleme.id
+                ).first()
+                
+                if yukleme_gorev:
+                    yukleme_gorev.durum = 'pending'
+                    yukleme_gorev.yukleme_zamani = None
+                    yukleme_gorev.dosya_yukleme_id = None
+                    summary['reset_yukleme_gorev'] = 1
+            except Exception as yg_err:
+                print(f"YuklemeGorev güncelleme hatası: {yg_err}")
+            
             # Fiziksel dosyayı sil
             if os.path.exists(dosya_yukleme.dosya_yolu):
                 try:

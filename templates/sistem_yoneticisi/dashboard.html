@@ -6,7 +6,8 @@
 {% block content %}
 <div class="space-y-4 md:space-y-6">
     <!-- Bekleyen Dolum Talepleri Widget -->
-    <div id="dolum_talepleri_widget" class="hidden bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-lg shadow-lg border-2 border-orange-300 dark:border-orange-700 p-4 md:p-6">
+    <div id="dolum_talepleri_widget"
+        class="hidden bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-lg shadow-lg border-2 border-orange-300 dark:border-orange-700 p-4 md:p-6">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center animate-pulse">
@@ -19,7 +20,8 @@
                     <p class="text-sm text-orange-700 dark:text-orange-300">Misafirlerden gelen talepler</p>
                 </div>
             </div>
-            <a href="{{ url_for('dolum_talepleri') }}" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors font-medium">
+            <a href="{{ url_for('dolum_talepleri') }}"
+                class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors font-medium">
                 <i class="fas fa-arrow-right mr-2"></i>Talepleri Gör
             </a>
         </div>
@@ -27,7 +29,8 @@
 
     <!-- Satın Alma Modülü Bildirimleri -->
     {% if dashboard_bildirimleri %}
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 md:p-6">
+    <div
+        class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 md:p-6">
         <div class="flex items-center mb-4">
             <h3 class="text-lg font-medium text-slate-900 dark:text-white">
                 <i class="fas fa-bell mr-2 text-slate-600 dark:text-slate-400"></i>
@@ -53,7 +56,7 @@
                     {% elif bildirim.tip == 'success' %}
                         bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700 hover:border-green-500
                     {% endif %}">
-                    
+
                     <div class="flex items-start justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full flex items-center justify-center
@@ -95,7 +98,8 @@
                                 </p>
                             </div>
                         </div>
-                        <i class="fas fa-chevron-right text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors"></i>
+                        <i
+                            class="fas fa-chevron-right text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors"></i>
                     </div>
                 </div>
             </a>
@@ -106,7 +110,8 @@
 
     <!-- Otel Bazlı Doluluk Durumu -->
     {% if otel_doluluk_raporlari %}
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 md:p-6">
+    <div
+        class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-4 md:p-6">
         <div class="flex items-center mb-4">
             <h3 class="text-lg font-medium text-slate-900 dark:text-white">
                 <i class="fas fa-calendar-check mr-2 text-slate-600 dark:text-slate-400"></i>
@@ -118,15 +123,16 @@
         <!-- Otel Kartları -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {% for rapor in otel_doluluk_raporlari %}
-            <div class="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-lg p-4 border-2 border-slate-300 dark:border-slate-700 shadow-md hover:shadow-lg transition-shadow flex flex-col">
+            <div
+                class="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-lg p-4 border-2 border-slate-300 dark:border-slate-700 shadow-md hover:shadow-lg transition-shadow flex flex-col">
                 <!-- Otel Başlığı -->
                 <div class="flex items-center gap-3 mb-4 pb-3 border-b border-slate-300 dark:border-slate-600">
                     {% if rapor.otel.logo %}
-                    <img src="data:image/png;base64,{{ rapor.otel.logo }}" 
-                         alt="{{ rapor.otel.ad }}" 
-                         class="w-10 h-10 rounded-lg object-cover border border-slate-300 dark:border-slate-600">
+                    <img src="data:image/png;base64,{{ rapor.otel.logo }}" alt="{{ rapor.otel.ad }}"
+                        class="w-10 h-10 rounded-lg object-cover border border-slate-300 dark:border-slate-600">
                     {% else %}
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                    <div
+                        class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
                         <i class="fas fa-hotel text-white text-lg"></i>
                     </div>
                     {% endif %}
@@ -141,7 +147,8 @@
                     <!-- Satır 1: Toplam & Dolu -->
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
+                            <div
+                                class="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
                                 <i class="fas fa-door-closed text-slate-600 dark:text-slate-400 text-sm"></i>
                             </div>
                             <div>
@@ -163,21 +170,25 @@
                     <!-- Satır 2: Giriş & Çıkış -->
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded flex items-center justify-center">
+                            <div
+                                class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded flex items-center justify-center">
                                 <i class="fas fa-arrow-right text-green-600 dark:text-green-400 text-sm"></i>
                             </div>
                             <div>
                                 <p class="text-xs text-green-500 dark:text-green-400">Giriş</p>
-                                <p class="text-lg font-bold text-green-700 dark:text-green-300">{{ rapor.giris_sayisi }}</p>
+                                <p class="text-lg font-bold text-green-700 dark:text-green-300">{{ rapor.giris_sayisi }}
+                                </p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 bg-orange-100 dark:bg-orange-900/30 rounded flex items-center justify-center">
+                            <div
+                                class="w-8 h-8 bg-orange-100 dark:bg-orange-900/30 rounded flex items-center justify-center">
                                 <i class="fas fa-arrow-left text-orange-600 dark:text-orange-400 text-sm"></i>
                             </div>
                             <div>
                                 <p class="text-xs text-orange-500 dark:text-orange-400">Çıkış</p>
-                                <p class="text-lg font-bold text-orange-700 dark:text-orange-300">{{ rapor.cikis_sayisi }}</p>
+                                <p class="text-lg font-bold text-orange-700 dark:text-orange-300">{{ rapor.cikis_sayisi
+                                    }}</p>
                             </div>
                         </div>
                     </div>
@@ -186,10 +197,12 @@
                     <div class="pt-2">
                         <div class="flex items-center justify-between mb-1">
                             <span class="text-xs font-medium text-slate-600 dark:text-slate-400">Doluluk Oranı</span>
-                            <span class="text-xs font-bold text-slate-900 dark:text-white">{{ rapor.doluluk_orani }}%</span>
+                            <span class="text-xs font-bold text-slate-900 dark:text-white">{{ rapor.doluluk_orani
+                                }}%</span>
                         </div>
                         <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                            <div class="h-2 rounded-full transition-all duration-300 {% if rapor.doluluk_orani >= 80 %}bg-gradient-to-r from-red-500 to-red-600{% elif rapor.doluluk_orani >= 50 %}bg-gradient-to-r from-yellow-500 to-orange-500{% else %}bg-gradient-to-r from-green-500 to-green-600{% endif %}" style="width: {{ rapor.doluluk_orani }}%;">
+                            <div class="h-2 rounded-full transition-all duration-300 {% if rapor.doluluk_orani >= 80 %}bg-gradient-to-r from-red-500 to-red-600{% elif rapor.doluluk_orani >= 50 %}bg-gradient-to-r from-yellow-500 to-orange-500{% else %}bg-gradient-to-r from-green-500 to-green-600{% endif %}"
+                                style="width: {{ rapor.doluluk_orani }}%;">
                             </div>
                         </div>
                     </div>
@@ -203,7 +216,8 @@
                         {% for kat_id, kat_info in rapor.kat_bazli.items() %}
                         <a href="{{ url_for('doluluk.kat_doluluk_detay', kat_id=kat_info.kat.id) }}"
                             class="inline-flex items-center px-2 py-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded text-xs transition-colors">
-                            <span class="font-semibold text-slate-900 dark:text-white">{{ kat_info.kat.kat_adi }}:</span>
+                            <span class="font-semibold text-slate-900 dark:text-white">{{ kat_info.kat.kat_adi
+                                }}:</span>
                             <span class="ml-1 text-red-600 dark:text-red-400">{{ kat_info.dolu_oda_sayisi }}</span>
                         </a>
                         {% endfor %}
@@ -226,16 +240,171 @@
     </div>
     {% endif %}
 
+    <!-- Günlük Doluluk Yüklemeleri ve Kat Sorumlusu Görevleri Widget'ları -->
+    {% if yukleme_gorev_ozeti or kat_sorumlusu_gorev_ozeti %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Günlük Doluluk Yüklemeleri Widget -->
+        {% if yukleme_gorev_ozeti %}
+        <div
+            class="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-lg shadow-lg border border-emerald-200 dark:border-emerald-800 p-4">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-3">
+                    <div
+                        class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow">
+                        <i class="fas fa-cloud-upload-alt text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-emerald-900 dark:text-emerald-100">Günlük Doluluk
+                            Yüklemeleri</h3>
+                        <p class="text-xs text-emerald-700 dark:text-emerald-300">{{ now().strftime('%d.%m.%Y') }}</p>
+                    </div>
+                </div>
+                <span
+                    class="text-lg font-bold {% if yukleme_gorev_ozeti.tamamlanma_orani == 100 %}text-green-600{% else %}text-yellow-600{% endif %}">
+                    %{{ yukleme_gorev_ozeti.tamamlanma_orani }}
+                </span>
+            </div>
+
+            <!-- İlerleme Çubuğu -->
+            <div class="mb-3">
+                <div class="w-full bg-emerald-100 dark:bg-emerald-900/50 rounded-full h-2">
+                    <div class="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full"
+                        style="width: {{ yukleme_gorev_ozeti.tamamlanma_orani }}%"></div>
+                </div>
+            </div>
+
+            <!-- Yükleme Durumları -->
+            <div class="grid grid-cols-3 gap-2">
+                <div
+                    class="bg-white dark:bg-slate-800 rounded p-2 text-center border {% if yukleme_gorev_ozeti.inhouse_durum == 'completed' %}border-green-300{% else %}border-yellow-300{% endif %}">
+                    <div class="text-xs font-medium text-slate-700 dark:text-slate-300">In House</div>
+                    {% if yukleme_gorev_ozeti.inhouse_durum == 'completed' %}
+                    <i class="fas fa-check text-green-500 text-sm"></i>
+                    {% else %}
+                    <i class="fas fa-clock text-yellow-500 text-sm"></i>
+                    {% endif %}
+                </div>
+                <div
+                    class="bg-white dark:bg-slate-800 rounded p-2 text-center border {% if yukleme_gorev_ozeti.arrivals_durum == 'completed' %}border-green-300{% else %}border-yellow-300{% endif %}">
+                    <div class="text-xs font-medium text-slate-700 dark:text-slate-300">Arrivals</div>
+                    {% if yukleme_gorev_ozeti.arrivals_durum == 'completed' %}
+                    <i class="fas fa-check text-green-500 text-sm"></i>
+                    {% else %}
+                    <i class="fas fa-clock text-yellow-500 text-sm"></i>
+                    {% endif %}
+                </div>
+                <div
+                    class="bg-white dark:bg-slate-800 rounded p-2 text-center border {% if yukleme_gorev_ozeti.departures_durum == 'completed' %}border-green-300{% else %}border-yellow-300{% endif %}">
+                    <div class="text-xs font-medium text-slate-700 dark:text-slate-300">Departures</div>
+                    {% if yukleme_gorev_ozeti.departures_durum == 'completed' %}
+                    <i class="fas fa-check text-green-500 text-sm"></i>
+                    {% else %}
+                    <i class="fas fa-clock text-yellow-500 text-sm"></i>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if yukleme_gorev_ozeti.bekleyen > 0 %}
+            <div
+                class="mt-3 p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded border border-yellow-300 dark:border-yellow-700">
+                <div class="flex items-center text-xs">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>
+                    <span class="text-yellow-800 dark:text-yellow-200"><strong>{{ yukleme_gorev_ozeti.bekleyen
+                            }}</strong> dosya yüklenmedi</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Kat Sorumlusu Görevleri İlerleme Widget -->
+        {% if kat_sorumlusu_gorev_ozeti %}
+        <div
+            class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg shadow-lg border border-blue-200 dark:border-blue-800 p-4">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-3">
+                    <div
+                        class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow">
+                        <i class="fas fa-tasks text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-blue-900 dark:text-blue-100">Kat Sorumlusu Görevleri</h3>
+                        <p class="text-xs text-blue-700 dark:text-blue-300">{{ now().strftime('%d.%m.%Y') }} - Oda
+                            Kontrolleri</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span
+                        class="text-lg font-bold {% if kat_sorumlusu_gorev_ozeti.tamamlanma_orani == 100 %}text-green-600{% elif kat_sorumlusu_gorev_ozeti.tamamlanma_orani >= 50 %}text-blue-600{% else %}text-yellow-600{% endif %}">
+                        %{{ kat_sorumlusu_gorev_ozeti.tamamlanma_orani }}
+                    </span>
+                    <a href="{{ url_for('gorev.sistem_gorev_ozeti') }}"
+                        class="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium">
+                        <i class="fas fa-chart-bar mr-1"></i>Detay
+                    </a>
+                </div>
+            </div>
+
+            <!-- İlerleme Çubuğu -->
+            <div class="mb-3">
+                <div class="w-full bg-blue-100 dark:bg-blue-900/50 rounded-full h-2">
+                    <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full"
+                        style="width: {{ kat_sorumlusu_gorev_ozeti.tamamlanma_orani }}%"></div>
+                </div>
+            </div>
+
+            <!-- Görev Tipleri -->
+            <div class="grid grid-cols-3 gap-2 mb-3">
+                <div class="bg-white dark:bg-slate-800 rounded p-2 text-center">
+                    <div class="text-lg font-bold text-blue-600 dark:text-blue-400">{{
+                        kat_sorumlusu_gorev_ozeti.inhouse.tamamlanan }}/{{ kat_sorumlusu_gorev_ozeti.inhouse.toplam }}
+                    </div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400">In House</div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 rounded p-2 text-center">
+                    <div class="text-lg font-bold text-purple-600 dark:text-purple-400">{{
+                        kat_sorumlusu_gorev_ozeti.arrival.tamamlanan }}/{{ kat_sorumlusu_gorev_ozeti.arrival.toplam }}
+                    </div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400">Arrivals</div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 rounded p-2 text-center">
+                    <div class="text-lg font-bold text-orange-600 dark:text-orange-400">{{
+                        kat_sorumlusu_gorev_ozeti.departure.tamamlanan }}/{{ kat_sorumlusu_gorev_ozeti.departure.toplam
+                        }}</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400">Departures</div>
+                </div>
+            </div>
+
+            <!-- Özet Bilgiler -->
+            <div
+                class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-blue-200 dark:border-blue-700">
+                <span><i class="fas fa-check-circle text-green-500 mr-1"></i>{{ kat_sorumlusu_gorev_ozeti.tamamlanan }}
+                    Tamamlandı</span>
+                <span><i class="fas fa-spinner text-blue-500 mr-1"></i>{{ kat_sorumlusu_gorev_ozeti.devam_eden }}
+                    Devam</span>
+                <span><i class="fas fa-clock text-yellow-500 mr-1"></i>{{ kat_sorumlusu_gorev_ozeti.bekleyen }}
+                    Bekliyor</span>
+                {% if kat_sorumlusu_gorev_ozeti.dnd > 0 %}
+                <span><i class="fas fa-moon text-orange-500 mr-1"></i>{{ kat_sorumlusu_gorev_ozeti.dnd }} DND</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <!-- ML Anomali Uyarıları -->
     {% if ml_enabled and ml_alert_count > 0 %}
-    <div class="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-lg shadow-lg border-2 border-red-300 dark:border-red-700 p-4 md:p-6">
+    <div
+        class="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-lg shadow-lg border-2 border-red-300 dark:border-red-700 p-4 md:p-6">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-red-800 dark:text-red-300">
                 <i class="fas fa-exclamation-triangle mr-2"></i>
                 🤖 ML Anomali Uyarıları
                 <span class="ml-2 px-2 py-1 text-xs bg-red-600 text-white rounded-full">{{ ml_alert_count }}</span>
             </h3>
-            <a href="{{ url_for('ml.dashboard') }}" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition">
+            <a href="{{ url_for('ml.dashboard') }}"
+                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition">
                 <i class="fas fa-chart-line mr-1"></i>
                 Tüm Uyarılar
             </a>
@@ -245,480 +414,543 @@
             {% for alert in ml_alerts %}
             {% if alert.severity == 'kritik' %}
             <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border-l-4 border-red-500">
-            {% elif alert.severity == 'yuksek' %}
-            <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border-l-4 border-orange-500">
-            {% elif alert.severity == 'orta' %}
-            <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border-l-4 border-yellow-500">
-            {% else %}
-            <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border-l-4 border-blue-500">
-            {% endif %}
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-2">
-                            {% if alert.severity == 'kritik' %}
-                            <span class="px-2 py-1 text-xs font-semibold rounded bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200">
-                            {% elif alert.severity == 'yuksek' %}
-                            <span class="px-2 py-1 text-xs font-semibold rounded bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200">
-                            {% elif alert.severity == 'orta' %}
-                            <span class="px-2 py-1 text-xs font-semibold rounded bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200">
-                            {% else %}
-                            <span class="px-2 py-1 text-xs font-semibold rounded bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
+                {% elif alert.severity == 'yuksek' %}
+                <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border-l-4 border-orange-500">
+                    {% elif alert.severity == 'orta' %}
+                    <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border-l-4 border-yellow-500">
+                        {% else %}
+                        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border-l-4 border-blue-500">
                             {% endif %}
-                                {{ alert.severity.upper() }}
-                            </span>
-                            <span class="text-xs text-slate-500 dark:text-slate-400">
-                                {{ alert.created_at.strftime('%d.%m.%Y %H:%M') }}
-                            </span>
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        {% if alert.severity == 'kritik' %}
+                                        <span
+                                            class="px-2 py-1 text-xs font-semibold rounded bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200">
+                                            {% elif alert.severity == 'yuksek' %}
+                                            <span
+                                                class="px-2 py-1 text-xs font-semibold rounded bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200">
+                                                {% elif alert.severity == 'orta' %}
+                                                <span
+                                                    class="px-2 py-1 text-xs font-semibold rounded bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200">
+                                                    {% else %}
+                                                    <span
+                                                        class="px-2 py-1 text-xs font-semibold rounded bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
+                                                        {% endif %}
+                                                        {{ alert.severity.upper() }}
+                                                    </span>
+                                                    <span class="text-xs text-slate-500 dark:text-slate-400">
+                                                        {{ alert.created_at.strftime('%d.%m.%Y %H:%M') }}
+                                                    </span>
+                                    </div>
+                                    <p class="text-sm font-medium text-slate-900 dark:text-white mb-1">
+                                        {{ alert.message }}
+                                    </p>
+                                    <p class="text-xs text-slate-600 dark:text-slate-400">
+                                        💡 {{ alert.suggested_action }}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                        <p class="text-sm font-medium text-slate-900 dark:text-white mb-1">
-                            {{ alert.message }}
-                        </p>
-                        <p class="text-xs text-slate-600 dark:text-slate-400">
-                            💡 {{ alert.suggested_action }}
-                        </p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mt-4 text-center">
+                        <a href="{{ url_for('ml.dashboard') }}"
+                            class="text-sm text-red-700 dark:text-red-400 hover:underline">
+                            Tüm uyarıları görüntüle ve yönet →
+                        </a>
                     </div>
                 </div>
-            </div>
-            {% endfor %}
-        </div>
-
-        <div class="mt-4 text-center">
-            <a href="{{ url_for('ml.dashboard') }}" class="text-sm text-red-700 dark:text-red-400 hover:underline">
-                Tüm uyarıları görüntüle ve yönet →
-            </a>
-        </div>
-    </div>
-    {% endif %}
+                {% endif %}
 
 
 
-    <!-- Hızlı Rapor Erişimi -->
-    <div class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700 p-6">
-        <div class="flex items-center mb-4">
-            <i class="fas fa-chart-bar text-2xl text-blue-600 dark:text-blue-400 mr-3"></i>
-            <h3 class="text-lg font-medium text-slate-900 dark:text-white">Hızlı Rapor Erişimi</h3>
-        </div>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <a href="{{ url_for('raporlar.doluluk_raporlari') }}"
-                class="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-800 hover:shadow-md transition-all">
-                <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-calendar-alt text-white text-xl"></i>
+                <!-- Hızlı Rapor Erişimi -->
+                <div
+                    class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700 p-6">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-chart-bar text-2xl text-blue-600 dark:text-blue-400 mr-3"></i>
+                        <h3 class="text-lg font-medium text-slate-900 dark:text-white">Hızlı Rapor Erişimi</h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <a href="{{ url_for('raporlar.doluluk_raporlari') }}"
+                            class="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-800 hover:shadow-md transition-all">
+                            <div
+                                class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-calendar-alt text-white text-xl"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-semibold text-slate-900 dark:text-white">Doluluk Raporları</p>
+                                <p class="text-xs text-slate-600 dark:text-slate-400 truncate">Günlük doluluk analizi
+                                </p>
+                            </div>
+                            <i class="fas fa-arrow-right text-blue-600 dark:text-blue-400"></i>
+                        </a>
+
+                        <a href="{{ url_for('raporlar.stok_raporlari') }}"
+                            class="flex items-center gap-3 p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg border border-green-200 dark:border-green-800 hover:shadow-md transition-all">
+                            <div
+                                class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-boxes text-white text-xl"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-semibold text-slate-900 dark:text-white">Stok Raporları</p>
+                                <p class="text-xs text-slate-600 dark:text-slate-400 truncate">Stok durumu ve hareketler
+                                </p>
+                            </div>
+                            <i class="fas fa-arrow-right text-green-600 dark:text-green-400"></i>
+                        </a>
+
+
+                        <a href="{{ url_for('raporlar.zimmet_raporlari') }}"
+                            class="flex items-center gap-3 p-4 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg border border-orange-200 dark:border-orange-800 hover:shadow-md transition-all">
+                            <div
+                                class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-user-tag text-white text-xl"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-semibold text-slate-900 dark:text-white">Zimmet Raporları</p>
+                                <p class="text-xs text-slate-600 dark:text-slate-400 truncate">Personel zimmet takibi
+                                </p>
+                            </div>
+                            <i class="fas fa-arrow-right text-orange-600 dark:text-orange-400"></i>
+                        </a>
+
+                        <a href="{{ url_for('raporlar.performans_raporlari') }}"
+                            class="flex items-center gap-3 p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 rounded-lg border border-indigo-200 dark:border-indigo-800 hover:shadow-md transition-all">
+                            <div
+                                class="w-12 h-12 bg-indigo-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-chart-line text-white text-xl"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-semibold text-slate-900 dark:text-white">Performans Raporları</p>
+                                <p class="text-xs text-slate-600 dark:text-slate-400 truncate">Personel performans
+                                    analizi</p>
+                            </div>
+                            <i class="fas fa-arrow-right text-indigo-600 dark:text-indigo-400"></i>
+                        </a>
+                    </div>
                 </div>
-                <div class="flex-1 min-w-0">
-                    <p class="font-semibold text-slate-900 dark:text-white">Doluluk Raporları</p>
-                    <p class="text-xs text-slate-600 dark:text-slate-400 truncate">Günlük doluluk analizi</p>
-                </div>
-                <i class="fas fa-arrow-right text-blue-600 dark:text-blue-400"></i>
-            </a>
 
-            <a href="{{ url_for('raporlar.stok_raporlari') }}"
-                class="flex items-center gap-3 p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg border border-green-200 dark:border-green-800 hover:shadow-md transition-all">
-                <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-boxes text-white text-xl"></i>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="font-semibold text-slate-900 dark:text-white">Stok Raporları</p>
-                    <p class="text-xs text-slate-600 dark:text-slate-400 truncate">Stok durumu ve hareketler</p>
-                </div>
-                <i class="fas fa-arrow-right text-green-600 dark:text-green-400"></i>
-            </a>
+                <!-- Sistem Yönetimi -->
+                <div
+                    class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-base md:text-lg leading-6 font-medium text-slate-900 dark:text-white mb-4">
+                            Sistem Yönetimi</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                            <a href="{{ url_for('otel_tanimla') }}"
+                                class="relative group bg-white p-4 md:p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-500 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+                                <div>
+                                    <span
+                                        class="rounded-lg inline-flex p-2 md:p-3 bg-blue-50 text-blue-700 ring-4 ring-white">
+                                        <svg class="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                                            </path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="mt-3 md:mt-4">
+                                    <h3 class="text-sm md:text-base lg:text-lg font-medium">
+                                        <span class="absolute inset-0" aria-hidden="true"></span>
+                                        Otel Yönetimi
+                                    </h3>
+                                    <p class="mt-1 md:mt-2 text-xs md:text-sm text-slate-500">Otel bilgilerini yönetin
+                                    </p>
+                                </div>
+                            </a>
 
+                            <a href="{{ url_for('kat_tanimla') }}"
+                                class="relative group bg-white p-4 md:p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-500 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+                                <div>
+                                    <span
+                                        class="rounded-lg inline-flex p-2 md:p-3 bg-green-50 text-green-700 ring-4 ring-white">
+                                        <svg class="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="mt-3 md:mt-4">
+                                    <h3 class="text-sm md:text-base lg:text-lg font-medium">
+                                        <span class="absolute inset-0" aria-hidden="true"></span>
+                                        Kat Yönetimi
+                                    </h3>
+                                    <p class="mt-1 md:mt-2 text-xs md:text-sm text-slate-500">Kat tanımlamalarını
+                                        yönetin</p>
+                                </div>
+                            </a>
 
-            <a href="{{ url_for('raporlar.zimmet_raporlari') }}"
-                class="flex items-center gap-3 p-4 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg border border-orange-200 dark:border-orange-800 hover:shadow-md transition-all">
-                <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-user-tag text-white text-xl"></i>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="font-semibold text-slate-900 dark:text-white">Zimmet Raporları</p>
-                    <p class="text-xs text-slate-600 dark:text-slate-400 truncate">Personel zimmet takibi</p>
-                </div>
-                <i class="fas fa-arrow-right text-orange-600 dark:text-orange-400"></i>
-            </a>
+                            <a href="{{ url_for('oda_tanimla') }}"
+                                class="relative group bg-white p-4 md:p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-500 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+                                <div>
+                                    <span
+                                        class="rounded-lg inline-flex p-2 md:p-3 bg-purple-50 text-purple-700 ring-4 ring-white">
+                                        <svg class="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z">
+                                            </path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="mt-3 md:mt-4">
+                                    <h3 class="text-sm md:text-base lg:text-lg font-medium">
+                                        <span class="absolute inset-0" aria-hidden="true"></span>
+                                        Oda Yönetimi
+                                    </h3>
+                                    <p class="mt-1 md:mt-2 text-xs md:text-sm text-slate-500">Oda tanımlamalarını
+                                        yönetin</p>
+                                </div>
+                            </a>
 
-            <a href="{{ url_for('raporlar.performans_raporlari') }}"
-                class="flex items-center gap-3 p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 rounded-lg border border-indigo-200 dark:border-indigo-800 hover:shadow-md transition-all">
-                <div class="w-12 h-12 bg-indigo-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-chart-line text-white text-xl"></i>
+                            <a href="{{ url_for('personel_tanimla') }}"
+                                class="relative group bg-white p-4 md:p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-500 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+                                <div>
+                                    <span
+                                        class="rounded-lg inline-flex p-2 md:p-3 bg-indigo-50 text-indigo-700 ring-4 ring-white">
+                                        <svg class="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z">
+                                            </path>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="mt-3 md:mt-4">
+                                    <h3 class="text-sm md:text-base lg:text-lg font-medium">
+                                        <span class="absolute inset-0" aria-hidden="true"></span>
+                                        Kullanıcı Yönetimi
+                                    </h3>
+                                    <p class="mt-1 md:mt-2 text-xs md:text-sm text-slate-500">Kullanıcıları yönetin</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex-1 min-w-0">
-                    <p class="font-semibold text-slate-900 dark:text-white">Performans Raporları</p>
-                    <p class="text-xs text-slate-600 dark:text-slate-400 truncate">Personel performans analizi</p>
-                </div>
-                <i class="fas fa-arrow-right text-indigo-600 dark:text-indigo-400"></i>
-            </a>
-        </div>
-    </div>
 
-    <!-- Sistem Yönetimi -->
-    <div class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-base md:text-lg leading-6 font-medium text-slate-900 dark:text-white mb-4">Sistem Yönetimi</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-                <a href="{{ url_for('otel_tanimla') }}"
-                    class="relative group bg-white p-4 md:p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-500 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
-                    <div>
-                        <span class="rounded-lg inline-flex p-2 md:p-3 bg-blue-50 text-blue-700 ring-4 ring-white">
-                            <svg class="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- YENİ: Dashboard Widget'ları -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                    <!-- Ürün Bazlı Tüketim Grafiği -->
+                    <div
+                        class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700 p-4 md:p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-base md:text-lg leading-6 font-medium text-slate-900 dark:text-white">📈
+                                Ürün Bazlı Tüketim</h3>
+                            <span class="text-xs text-slate-500">Son 30 gün</span>
+                        </div>
+                        {% if urun_labels %}
+                        <div class="h-64 md:h-80">
+                            <canvas id="urunTuketimChart"></canvas>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-12">
+                            <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
                                 </path>
                             </svg>
-                        </span>
+                            <p class="mt-2 text-sm text-slate-500">Tüketim verisi yok</p>
+                        </div>
+                        {% endif %}
                     </div>
-                    <div class="mt-3 md:mt-4">
-                        <h3 class="text-sm md:text-base lg:text-lg font-medium">
-                            <span class="absolute inset-0" aria-hidden="true"></span>
-                            Otel Yönetimi
-                        </h3>
-                        <p class="mt-1 md:mt-2 text-xs md:text-sm text-slate-500">Otel bilgilerini yönetin</p>
-                    </div>
-                </a>
 
-                <a href="{{ url_for('kat_tanimla') }}"
-                    class="relative group bg-white p-4 md:p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-500 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
-                    <div>
-                        <span class="rounded-lg inline-flex p-2 md:p-3 bg-green-50 text-green-700 ring-4 ring-white">
-                            <svg class="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                            </svg>
-                        </span>
-                    </div>
-                    <div class="mt-3 md:mt-4">
-                        <h3 class="text-sm md:text-base lg:text-lg font-medium">
-                            <span class="absolute inset-0" aria-hidden="true"></span>
-                            Kat Yönetimi
-                        </h3>
-                        <p class="mt-1 md:mt-2 text-xs md:text-sm text-slate-500">Kat tanımlamalarını yönetin</p>
-                    </div>
-                </a>
-
-                <a href="{{ url_for('oda_tanimla') }}"
-                    class="relative group bg-white p-4 md:p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-500 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
-                    <div>
-                        <span class="rounded-lg inline-flex p-2 md:p-3 bg-purple-50 text-purple-700 ring-4 ring-white">
-                            <svg class="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                            </svg>
-                        </span>
-                    </div>
-                    <div class="mt-3 md:mt-4">
-                        <h3 class="text-sm md:text-base lg:text-lg font-medium">
-                            <span class="absolute inset-0" aria-hidden="true"></span>
-                            Oda Yönetimi
-                        </h3>
-                        <p class="mt-1 md:mt-2 text-xs md:text-sm text-slate-500">Oda tanımlamalarını yönetin</p>
-                    </div>
-                </a>
-
-                <a href="{{ url_for('personel_tanimla') }}"
-                    class="relative group bg-white p-4 md:p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-slate-500 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
-                    <div>
-                        <span class="rounded-lg inline-flex p-2 md:p-3 bg-indigo-50 text-indigo-700 ring-4 ring-white">
-                            <svg class="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z">
+                    <!-- Kullanıcı Aktivite Widget'ı -->
+                    <div
+                        class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700 p-4 md:p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-base md:text-lg leading-6 font-medium text-slate-900 dark:text-white">Son
+                                Kullanıcı Aktiviteleri</h3>
+                            <button onclick="aktiviteleriYenile()" class="text-sm text-slate-600 hover:text-slate-900">
+                                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div id="aktiviteListesi" class="space-y-3 max-h-80 overflow-y-auto">
+                            <!-- Aktiviteler buraya yüklenecek -->
+                        </div>
+                        <div id="aktiviteLoading" class="text-center py-8">
+                            <svg class="animate-spin h-8 w-8 mx-auto text-slate-600" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                 </path>
                             </svg>
-                        </span>
-                    </div>
-                    <div class="mt-3 md:mt-4">
-                        <h3 class="text-sm md:text-base lg:text-lg font-medium">
-                            <span class="absolute inset-0" aria-hidden="true"></span>
-                            Kullanıcı Yönetimi
-                        </h3>
-                        <p class="mt-1 md:mt-2 text-xs md:text-sm text-slate-500">Kullanıcıları yönetin</p>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- YENİ: Dashboard Widget'ları -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        <!-- Ürün Bazlı Tüketim Grafiği -->
-        <div class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700 p-4 md:p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base md:text-lg leading-6 font-medium text-slate-900 dark:text-white">📈 Ürün Bazlı Tüketim</h3>
-                <span class="text-xs text-slate-500">Son 30 gün</span>
-            </div>
-            {% if urun_labels %}
-            <div class="h-64 md:h-80">
-                <canvas id="urunTuketimChart"></canvas>
-            </div>
-            {% else %}
-            <div class="text-center py-12">
-                <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                    </path>
-                </svg>
-                <p class="mt-2 text-sm text-slate-500">Tüketim verisi yok</p>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- Kullanıcı Aktivite Widget'ı -->
-        <div class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700 p-4 md:p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base md:text-lg leading-6 font-medium text-slate-900 dark:text-white">Son Kullanıcı Aktiviteleri</h3>
-                <button onclick="aktiviteleriYenile()" class="text-sm text-slate-600 hover:text-slate-900">
-                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                        </path>
-                    </svg>
-                </button>
-            </div>
-            <div id="aktiviteListesi" class="space-y-3 max-h-80 overflow-y-auto">
-                <!-- Aktiviteler buraya yüklenecek -->
-            </div>
-            <div id="aktiviteLoading" class="text-center py-8">
-                <svg class="animate-spin h-8 w-8 mx-auto text-slate-600" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                    </path>
-                </svg>
-                <p class="text-sm text-slate-600 mt-2">Yükleniyor...</p>
-            </div>
-        </div>
-    </div>
-
-
-
-    <!-- Stok Durumu İstatistikleri - Kompakt Görünüm -->
-    {% if stok_durumlari %}
-    <div class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base md:text-lg leading-6 font-medium text-slate-900">📊 Stok Durumu Özeti</h3>
-                <a href="{{ url_for('urunler') }}" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                    Tüm Ürünler →
-                </a>
-            </div>
-
-            <!-- İstatistik Kartları -->
-            <div class="grid grid-cols-3 gap-4 mb-6">
-                <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border-2 border-red-200">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-red-600 font-medium mb-1">Kritik Stok</p>
-                            <p class="text-2xl font-bold text-red-700">{{ stok_durumlari.istatistik.kritik_sayi }}</p>
-                        </div>
-                        <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                    clip-rule="evenodd" />
-                            </svg>
+                            <p class="text-sm text-slate-600 mt-2">Yükleniyor...</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-4 border-2 border-yellow-200">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-yellow-600 font-medium mb-1">Dikkat</p>
-                            <p class="text-2xl font-bold text-yellow-700">{{ stok_durumlari.istatistik.dikkat_sayi }}
-                            </p>
+
+
+                <!-- Stok Durumu İstatistikleri - Kompakt Görünüm -->
+                {% if stok_durumlari %}
+                <div
+                    class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700">
+                    <div class="px-4 py-5 sm:p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-base md:text-lg leading-6 font-medium text-slate-900">📊 Stok Durumu Özeti
+                            </h3>
+                            <a href="{{ url_for('urunler') }}"
+                                class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                                Tüm Ürünler →
+                            </a>
                         </div>
-                        <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                    clip-rule="evenodd" />
-                            </svg>
+
+                        <!-- İstatistik Kartları -->
+                        <div class="grid grid-cols-3 gap-4 mb-6">
+                            <div
+                                class="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border-2 border-red-200">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs text-red-600 font-medium mb-1">Kritik Stok</p>
+                                        <p class="text-2xl font-bold text-red-700">{{
+                                            stok_durumlari.istatistik.kritik_sayi }}</p>
+                                    </div>
+                                    <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd"
+                                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-4 border-2 border-yellow-200">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs text-yellow-600 font-medium mb-1">Dikkat</p>
+                                        <p class="text-2xl font-bold text-yellow-700">{{
+                                            stok_durumlari.istatistik.dikkat_sayi }}
+                                        </p>
+                                    </div>
+                                    <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd"
+                                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs text-green-600 font-medium mb-1">Normal</p>
+                                        <p class="text-2xl font-bold text-green-700">{{
+                                            stok_durumlari.istatistik.normal_sayi }}</p>
+                                    </div>
+                                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Kritik Stok Listesi (En Fazla 6 Adet) -->
+                        {% if stok_durumlari.kritik %}
+                        <div class="border-t border-slate-200 pt-4">
+                            <h4 class="text-sm font-semibold text-slate-700 mb-3 flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                Acil Müdahale Gereken Ürünler
+                            </h4>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                {% for item in stok_durumlari.kritik[:6] %}
+                                <div
+                                    class="bg-red-50 border border-red-200 rounded-lg p-3 hover:shadow-sm transition-shadow">
+                                    <div class="flex items-start justify-between mb-2">
+                                        <span
+                                            class="inline-flex px-2 py-0.5 text-xs font-bold rounded {{ item.badge_class }}">
+                                            KRİTİK
+                                        </span>
+                                    </div>
+                                    <h5 class="text-sm font-semibold text-slate-900 mb-1 truncate">{{ item.urun.urun_adi
+                                        }}</h5>
+                                    <div class="flex justify-between text-xs text-slate-600">
+                                        <span>Mevcut:</span>
+                                        <span class="font-bold text-red-700">{{ item.mevcut_stok }}</span>
+                                    </div>
+                                    <div class="mt-2">
+                                        <div class="w-full bg-red-200 rounded-full h-1.5">
+                                            <div class="bg-red-600 h-1.5 rounded-full"
+                                                style="width: {% if item.yuzde > 100 %}100{% else %}{{ item.yuzde }}{% endif %}%;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% if stok_durumlari.kritik|length > 6 %}
+                            <div class="mt-3 text-center">
+                                <a href="{{ url_for('urunler') }}"
+                                    class="text-sm text-red-600 hover:text-red-800 font-medium">
+                                    +{{ stok_durumlari.kritik|length - 6 }} kritik ürün daha →
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
-
-                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-green-600 font-medium mb-1">Normal</p>
-                            <p class="text-2xl font-bold text-green-700">{{ stok_durumlari.istatistik.normal_sayi }}</p>
-                        </div>
-                        <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Kritik Stok Listesi (En Fazla 6 Adet) -->
-            {% if stok_durumlari.kritik %}
-            <div class="border-t border-slate-200 pt-4">
-                <h4 class="text-sm font-semibold text-slate-700 mb-3 flex items-center">
-                    <svg class="w-4 h-4 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd"
-                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                            clip-rule="evenodd" />
-                    </svg>
-                    Acil Müdahale Gereken Ürünler
-                </h4>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {% for item in stok_durumlari.kritik[:6] %}
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-3 hover:shadow-sm transition-shadow">
-                        <div class="flex items-start justify-between mb-2">
-                            <span class="inline-flex px-2 py-0.5 text-xs font-bold rounded {{ item.badge_class }}">
-                                KRİTİK
-                            </span>
-                        </div>
-                        <h5 class="text-sm font-semibold text-slate-900 mb-1 truncate">{{ item.urun.urun_adi }}</h5>
-                        <div class="flex justify-between text-xs text-slate-600">
-                            <span>Mevcut:</span>
-                            <span class="font-bold text-red-700">{{ item.mevcut_stok }}</span>
-                        </div>
-                        <div class="mt-2">
-                            <div class="w-full bg-red-200 rounded-full h-1.5">
-                                <div class="bg-red-600 h-1.5 rounded-full" style="width: {% if item.yuzde > 100 %}100{% else %}{{ item.yuzde }}{% endif %}%;">
+                {% endif %}
+                <!-- İstatistik Kartları - Responsive Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+                    <div
+                        class="bg-white dark:bg-slate-800 overflow-hidden shadow-md hover:shadow-lg transition-shadow rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div class="p-4 md:p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div
+                                        class="w-10 h-10 md:w-12 md:h-12 bg-blue-500 rounded-md flex items-center justify-center">
+                                        <svg class="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="ml-4 md:ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-xs md:text-sm font-medium text-slate-500 truncate">Toplam Kat
+                                        </dt>
+                                        <dd class="text-xl md:text-2xl font-semibold text-slate-900">{{ toplam_kat }}
+                                        </dd>
+                                    </dl>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    {% endfor %}
-                </div>
-                {% if stok_durumlari.kritik|length > 6 %}
-                <div class="mt-3 text-center">
-                    <a href="{{ url_for('urunler') }}" class="text-sm text-red-600 hover:text-red-800 font-medium">
-                        +{{ stok_durumlari.kritik|length - 6 }} kritik ürün daha →
-                    </a>
-                </div>
-                {% endif %}
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
-        <!-- İstatistik Kartları - Responsive Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-md hover:shadow-lg transition-shadow rounded-lg border border-slate-200 dark:border-slate-700">
-            <div class="p-4 md:p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-500 rounded-md flex items-center justify-center">
-                            <svg class="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
-                                </path>
-                            </svg>
+
+                    <div
+                        class="bg-white dark:bg-slate-800 overflow-hidden shadow-md hover:shadow-lg transition-shadow rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div class="p-4 md:p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div
+                                        class="w-10 h-10 md:w-12 md:h-12 bg-green-500 rounded-md flex items-center justify-center">
+                                        <svg class="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="ml-4 md:ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-xs md:text-sm font-medium text-slate-500 truncate">Toplam Oda
+                                        </dt>
+                                        <dd class="text-xl md:text-2xl font-semibold text-slate-900">{{ toplam_oda }}
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="ml-4 md:ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-xs md:text-sm font-medium text-slate-500 truncate">Toplam Kat</dt>
-                            <dd class="text-xl md:text-2xl font-semibold text-slate-900">{{ toplam_kat }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-md hover:shadow-lg transition-shadow rounded-lg border border-slate-200 dark:border-slate-700">
-            <div class="p-4 md:p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 md:w-12 md:h-12 bg-green-500 rounded-md flex items-center justify-center">
-                            <svg class="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                            </svg>
+                    <div
+                        class="bg-white dark:bg-slate-800 overflow-hidden shadow-md hover:shadow-lg transition-shadow rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div class="p-4 md:p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div
+                                        class="w-10 h-10 md:w-12 md:h-12 bg-yellow-500 rounded-md flex items-center justify-center">
+                                        <svg class="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="ml-4 md:ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-xs md:text-sm font-medium text-slate-500 truncate">Toplam
+                                            Kullanıcı</dt>
+                                        <dd class="text-xl md:text-2xl font-semibold text-slate-900">{{ toplam_kullanici
+                                            }}</dd>
+                                    </dl>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="ml-4 md:ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-xs md:text-sm font-medium text-slate-500 truncate">Toplam Oda</dt>
-                            <dd class="text-xl md:text-2xl font-semibold text-slate-900">{{ toplam_oda }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-md hover:shadow-lg transition-shadow rounded-lg border border-slate-200 dark:border-slate-700">
-            <div class="p-4 md:p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div
-                            class="w-10 h-10 md:w-12 md:h-12 bg-yellow-500 rounded-md flex items-center justify-center">
-                            <svg class="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z">
-                                </path>
-                            </svg>
+                    <div
+                        class="bg-white dark:bg-slate-800 overflow-hidden shadow-md hover:shadow-lg transition-shadow rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div class="p-4 md:p-5">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div
+                                        class="w-10 h-10 md:w-12 md:h-12 bg-purple-500 rounded-md flex items-center justify-center">
+                                        <svg class="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="ml-4 md:ml-5 w-0 flex-1">
+                                    <dl>
+                                        <dt class="text-xs md:text-sm font-medium text-slate-500 truncate">Toplam
+                                            Personel</dt>
+                                        <dd class="text-xl md:text-2xl font-semibold text-slate-900">{{ toplam_personel
+                                            }}</dd>
+                                    </dl>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="ml-4 md:ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-xs md:text-sm font-medium text-slate-500 truncate">Toplam Kullanıcı</dt>
-                            <dd class="text-xl md:text-2xl font-semibold text-slate-900">{{ toplam_kullanici }}</dd>
-                        </dl>
-                    </div>
                 </div>
+
+
             </div>
-        </div>
 
-        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow-md hover:shadow-lg transition-shadow rounded-lg border border-slate-200 dark:border-slate-700">
-            <div class="p-4 md:p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div
-                            class="w-10 h-10 md:w-12 md:h-12 bg-purple-500 rounded-md flex items-center justify-center">
-                            <svg class="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
-                                </path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="ml-4 md:ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-xs md:text-sm font-medium text-slate-500 truncate">Toplam Personel</dt>
-                            <dd class="text-xl md:text-2xl font-semibold text-slate-900">{{ toplam_personel }}</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-  
-   
-</div>
+            <script>
+                // Utility: Fetch wrapper
+                async function fetchWithLoading(url, options = {}) {
+                    return fetch(url);
+                }
 
-<script>
-    // Utility: Fetch wrapper
-    async function fetchWithLoading(url, options = {}) {
-        return fetch(url);
-    }
+                // Ürün Bazlı Tüketim Grafiği
+                {% if urun_labels %}
+                (function () {
+                    const urunTuketimCtx = document.getElementById('urunTuketimChart');
+                    if (!urunTuketimCtx) return;
 
-    // Ürün Bazlı Tüketim Grafiği
-    {% if urun_labels %}
-    (function() {
-        const urunTuketimCtx = document.getElementById('urunTuketimChart');
-        if (!urunTuketimCtx) return;
-        
-        // Gradient oluştur
-        const gradient = urunTuketimCtx.getContext('2d').createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.8)');
-        gradient.addColorStop(0.5, 'rgba(99, 102, 241, 0.6)');
-        gradient.addColorStop(1, 'rgba(139, 92, 246, 0.4)');
+                    // Gradient oluştur
+                    const gradient = urunTuketimCtx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+                    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.8)');
+                    gradient.addColorStop(0.5, 'rgba(99, 102, 241, 0.6)');
+                    gradient.addColorStop(1, 'rgba(139, 92, 246, 0.4)');
 
-        new Chart(urunTuketimCtx, {
-            type: 'bar',
-            data: {
-                labels: {{ urun_labels | tojson }},
+                    new Chart(urunTuketimCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: {{ urun_labels | tojson }},
                 datasets: [{
                     label: 'Tüketim Miktarı',
                     data: {{ urun_tuketim_miktarlari | tojson }},
@@ -729,225 +961,225 @@
                     borderSkipped: false
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    title: {
-                        display: false
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        padding: 12,
-                        titleFont: {
-                            size: 14,
-                            weight: 'bold'
-                        },
-                        bodyFont: {
-                            size: 13
-                        },
-                        callbacks: {
-                            label: function(context) {
-                                return ' Tüketim: ' + context.parsed.y + ' adet';
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            precision: 0
-                        }
-                    },
-                    x: {
-                        grid: {
+                options: {
+                    responsive: true,
+                        maintainAspectRatio: false,
+                            plugins: {
+                        legend: {
                             display: false
                         },
-                        ticks: {
-                            font: {
-                                size: window.innerWidth < 768 ? 10 : 11
-                            },
-                            color: '#64748b',
-                            maxRotation: 45,
-                            minRotation: 45
-                        }
-                    }
-                },
-                animation: {
-                    duration: 1000,
-                    easing: 'easeInOutQuart'
-                }
-            }
-        });
-    })();
-    {% endif %}
-
-    
-
-
-    // ========================================================================
-    // YENİ: Dashboard Widget İşlevleri
-    // ========================================================================
-
-    // Tüketim Trend Grafiği
-    let tuketimTrendChart = null;
-
-    async function tuketimTrendiniYukle( gunSayisi = 7 ) {
-        const trendLoading = document.getElementById( 'trendLoading' );
-        const chartCanvas = document.getElementById( 'tuketimTrendChart' );
-
-        try {
-            // Loading göster
-            if ( trendLoading ) trendLoading.classList.remove( 'hidden' );
-            if ( chartCanvas ) chartCanvas.style.opacity = '0.3';
-
-            // Progress bar ile fetch yap
-            const response = await fetchWithLoading( `/api/tuketim-trendleri?gun=${gunSayisi}`, {
-                loading: {
-                    showProgress: true
-                }
-            } );
-
-            // HTTP hata kontrolü
-            if ( !response.ok ) {
-                throw new Error( `HTTP ${response.status}: ${response.statusText}` );
-            }
-
-            const data = await response.json();
-
-            if ( data.success ) {
-                // Mevcut grafiği yok et
-                if ( tuketimTrendChart ) {
-                    tuketimTrendChart.destroy();
-                }
-
-                // Yeni grafik oluştur
-                const ctx = document.getElementById( 'tuketimTrendChart' );
-                if ( ctx ) {
-                    tuketimTrendChart = new Chart( ctx, {
-                        type: 'line',
-                        data: {
-                            labels: data.labels,
-                            datasets: data.datasets
+                        title: {
+                            display: false
                         },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            interaction: {
-                                mode: 'index',
-                                intersect: false,
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 12,
+                                    titleFont: {
+                                size: 14,
+                                    weight: 'bold'
                             },
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: {
-                                        padding: 15,
-                                        font: {
-                                            size: window.innerWidth < 768 ? 11 : 12
-                                        }
-                                    }
-                                },
-                                tooltip: {
-                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                    padding: 12,
-                                    titleFont: { size: 14 },
-                                    bodyFont: { size: 13 }
-                                }
+                            bodyFont: {
+                                size: 13
                             },
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        font: {
-                                            size: window.innerWidth < 768 ? 10 : 11
-                                        }
-                                    }
-                                },
-                                x: {
-                                    ticks: {
-                                        font: {
-                                            size: window.innerWidth < 768 ? 10 : 11
-                                        }
-                                    }
+                            callbacks: {
+                                label: function(context) {
+                                    return ' Tüketim: ' + context.parsed.y + ' adet';
                                 }
                             }
                         }
-                    } );
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                                grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                    drawBorder: false
+                            },
+                            ticks: {
+                                precision: 0
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: window.innerWidth < 768 ? 10 : 11
+                                },
+                                color: '#64748b',
+                                    maxRotation: 45,
+                                        minRotation: 45
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                            easing: 'easeInOutQuart'
+                    }
                 }
-            } else {
-                // API'den hata mesajı
-                console.error( 'Tüketim trendi API hatası:', data.error || 'Bilinmeyen hata' );
-                if ( chartCanvas ) {
-                    const ctx = chartCanvas.getContext( '2d' );
-                    ctx.font = '14px Arial';
-                    ctx.fillStyle = '#64748b';
-                    ctx.textAlign = 'center';
-                    ctx.fillText( 'Veri yüklenemedi: ' + ( data.error || 'Hata' ), chartCanvas.width / 2, chartCanvas.height / 2 );
+        });
+    }) ();
+                {% endif %}
+
+
+
+
+                // ========================================================================
+                // YENİ: Dashboard Widget İşlevleri
+                // ========================================================================
+
+                // Tüketim Trend Grafiği
+                let tuketimTrendChart = null;
+
+                async function tuketimTrendiniYukle(gunSayisi = 7) {
+                    const trendLoading = document.getElementById('trendLoading');
+                    const chartCanvas = document.getElementById('tuketimTrendChart');
+
+                    try {
+                        // Loading göster
+                        if (trendLoading) trendLoading.classList.remove('hidden');
+                        if (chartCanvas) chartCanvas.style.opacity = '0.3';
+
+                        // Progress bar ile fetch yap
+                        const response = await fetchWithLoading(`/api/tuketim-trendleri?gun=${gunSayisi}`, {
+                            loading: {
+                                showProgress: true
+                            }
+                        });
+
+                        // HTTP hata kontrolü
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            // Mevcut grafiği yok et
+                            if (tuketimTrendChart) {
+                                tuketimTrendChart.destroy();
+                            }
+
+                            // Yeni grafik oluştur
+                            const ctx = document.getElementById('tuketimTrendChart');
+                            if (ctx) {
+                                tuketimTrendChart = new Chart(ctx, {
+                                    type: 'line',
+                                    data: {
+                                        labels: data.labels,
+                                        datasets: data.datasets
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        interaction: {
+                                            mode: 'index',
+                                            intersect: false,
+                                        },
+                                        plugins: {
+                                            legend: {
+                                                position: 'bottom',
+                                                labels: {
+                                                    padding: 15,
+                                                    font: {
+                                                        size: window.innerWidth < 768 ? 11 : 12
+                                                    }
+                                                }
+                                            },
+                                            tooltip: {
+                                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                                padding: 12,
+                                                titleFont: { size: 14 },
+                                                bodyFont: { size: 13 }
+                                            }
+                                        },
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                ticks: {
+                                                    font: {
+                                                        size: window.innerWidth < 768 ? 10 : 11
+                                                    }
+                                                }
+                                            },
+                                            x: {
+                                                ticks: {
+                                                    font: {
+                                                        size: window.innerWidth < 768 ? 10 : 11
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                        } else {
+                            // API'den hata mesajı
+                            console.error('Tüketim trendi API hatası:', data.error || 'Bilinmeyen hata');
+                            if (chartCanvas) {
+                                const ctx = chartCanvas.getContext('2d');
+                                ctx.font = '14px Arial';
+                                ctx.fillStyle = '#64748b';
+                                ctx.textAlign = 'center';
+                                ctx.fillText('Veri yüklenemedi: ' + (data.error || 'Hata'), chartCanvas.width / 2, chartCanvas.height / 2);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Tüketim trendi yüklenirken hata:', error);
+                        // Kullanıcıya görsel geri bildirim
+                        if (chartCanvas) {
+                            const ctx = chartCanvas.getContext('2d');
+                            ctx.font = '14px Arial';
+                            ctx.fillStyle = '#ef4444';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('Veriler yüklenemedi', chartCanvas.width / 2, chartCanvas.height / 2 - 10);
+                            ctx.font = '12px Arial';
+                            ctx.fillStyle = '#64748b';
+                            ctx.fillText(error.message, chartCanvas.width / 2, chartCanvas.height / 2 + 10);
+                        }
+                    } finally {
+                        // Loading gizle
+                        if (trendLoading) trendLoading.classList.add('hidden');
+                        if (chartCanvas) chartCanvas.style.opacity = '1';
+                    }
                 }
-            }
-        } catch ( error ) {
-            console.error( 'Tüketim trendi yüklenirken hata:', error );
-            // Kullanıcıya görsel geri bildirim
-            if ( chartCanvas ) {
-                const ctx = chartCanvas.getContext( '2d' );
-                ctx.font = '14px Arial';
-                ctx.fillStyle = '#ef4444';
-                ctx.textAlign = 'center';
-                ctx.fillText( 'Veriler yüklenemedi', chartCanvas.width / 2, chartCanvas.height / 2 - 10 );
-                ctx.font = '12px Arial';
-                ctx.fillStyle = '#64748b';
-                ctx.fillText( error.message, chartCanvas.width / 2, chartCanvas.height / 2 + 10 );
-            }
-        } finally {
-            // Loading gizle
-            if ( trendLoading ) trendLoading.classList.add( 'hidden' );
-            if ( chartCanvas ) chartCanvas.style.opacity = '1';
-        }
-    }
 
-    // Gün seçimi değiştiğinde
-    const trendGunSecim = document.getElementById( 'trendGunSecim' );
-    if ( trendGunSecim ) {
-        trendGunSecim.addEventListener( 'change', function () {
-            tuketimTrendiniYukle( parseInt( this.value ) );
-        } );
-    }
-
-    // Kullanıcı Aktiviteleri Widget'ı
-    async function aktiviteleriYukle() {
-        const aktiviteListesi = document.getElementById( 'aktiviteListesi' );
-        const aktiviteLoading = document.getElementById( 'aktiviteLoading' );
-
-        try {
-            // Loading göster
-            if ( aktiviteLoading ) aktiviteLoading.classList.remove( 'hidden' );
-            if ( aktiviteListesi ) aktiviteListesi.innerHTML = '';
-
-            // Progress bar ile fetch yap
-            const response = await fetchWithLoading( '/api/son-aktiviteler?limit=10', {
-                loading: {
-                    showProgress: true
+                // Gün seçimi değiştiğinde
+                const trendGunSecim = document.getElementById('trendGunSecim');
+                if (trendGunSecim) {
+                    trendGunSecim.addEventListener('change', function () {
+                        tuketimTrendiniYukle(parseInt(this.value));
+                    });
                 }
-            } );
 
-            // HTTP hata kontrolü
-            if ( !response.ok ) {
-                throw new Error( `HTTP ${response.status}: ${response.statusText}` );
-            }
+                // Kullanıcı Aktiviteleri Widget'ı
+                async function aktiviteleriYukle() {
+                    const aktiviteListesi = document.getElementById('aktiviteListesi');
+                    const aktiviteLoading = document.getElementById('aktiviteLoading');
 
-            const data = await response.json();
+                    try {
+                        // Loading göster
+                        if (aktiviteLoading) aktiviteLoading.classList.remove('hidden');
+                        if (aktiviteListesi) aktiviteListesi.innerHTML = '';
 
-            if ( data.success && aktiviteListesi ) {
-                if ( data.aktiviteler.length === 0 ) {
-                    aktiviteListesi.innerHTML = `
+                        // Progress bar ile fetch yap
+                        const response = await fetchWithLoading('/api/son-aktiviteler?limit=10', {
+                            loading: {
+                                showProgress: true
+                            }
+                        });
+
+                        // HTTP hata kontrolü
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+
+                        const data = await response.json();
+
+                        if (data.success && aktiviteListesi) {
+                            if (data.aktiviteler.length === 0) {
+                                aktiviteListesi.innerHTML = `
                         <div class="text-center py-8 text-slate-500">
                             <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -955,36 +1187,36 @@
                             <p class="mt-2 text-sm">Henüz aktivite kaydı yok</p>
                         </div>
                     `;
-                } else {
-                    aktiviteListesi.innerHTML = data.aktiviteler.map( aktivite => {
-                        // İşlem tipine göre ikon ve renk
-                        let iconSvg, colorClass;
-                        switch ( aktivite.islem_tipi ) {
-                            case 'ekleme':
-                                iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>';
-                                colorClass = 'bg-green-100 text-green-600';
-                                break;
-                            case 'guncelleme':
-                                iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>';
-                                colorClass = 'bg-blue-100 text-blue-600';
-                                break;
-                            case 'silme':
-                                iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>';
-                                colorClass = 'bg-red-100 text-red-600';
-                                break;
-                            default:
-                                iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
-                                colorClass = 'bg-slate-100 text-slate-600';
-                        }
+                            } else {
+                                aktiviteListesi.innerHTML = data.aktiviteler.map(aktivite => {
+                                    // İşlem tipine göre ikon ve renk
+                                    let iconSvg, colorClass;
+                                    switch (aktivite.islem_tipi) {
+                                        case 'ekleme':
+                                            iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>';
+                                            colorClass = 'bg-green-100 text-green-600';
+                                            break;
+                                        case 'guncelleme':
+                                            iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>';
+                                            colorClass = 'bg-blue-100 text-blue-600';
+                                            break;
+                                        case 'silme':
+                                            iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>';
+                                            colorClass = 'bg-red-100 text-red-600';
+                                            break;
+                                        default:
+                                            iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+                                            colorClass = 'bg-slate-100 text-slate-600';
+                                    }
 
-                        // Detay metni oluştur
-                        let detayText = '';
-                        if ( aktivite.detay && Object.keys( aktivite.detay ).length > 0 ) {
-                            const firstKey = Object.keys( aktivite.detay )[0];
-                            detayText = aktivite.detay[firstKey] || '';
-                        }
+                                    // Detay metni oluştur
+                                    let detayText = '';
+                                    if (aktivite.detay && Object.keys(aktivite.detay).length > 0) {
+                                        const firstKey = Object.keys(aktivite.detay)[0];
+                                        detayText = aktivite.detay[firstKey] || '';
+                                    }
 
-                        return `
+                                    return `
                             <div class="flex items-start space-x-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
                                 <div class="flex-shrink-0">
                                     <div class="${colorClass} rounded-full p-2">
@@ -1008,13 +1240,13 @@
                                 </div>
                             </div>
                         `;
-                    } ).join( '' );
-                }
-            } else {
-                // API'den hata mesajı
-                console.error( 'Aktiviteler API hatası:', data.error || 'Bilinmeyen hata' );
-                if ( aktiviteListesi ) {
-                    aktiviteListesi.innerHTML = `
+                                }).join('');
+                            }
+                        } else {
+                            // API'den hata mesajı
+                            console.error('Aktiviteler API hatası:', data.error || 'Bilinmeyen hata');
+                            if (aktiviteListesi) {
+                                aktiviteListesi.innerHTML = `
                         <div class="text-center py-8 text-amber-600">
                             <svg class="mx-auto h-12 w-12 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
@@ -1022,12 +1254,12 @@
                             <p class="mt-2 text-sm">${data.error || 'Veri yüklenemedi'}</p>
                         </div>
                     `;
-                }
-            }
-        } catch ( error ) {
-            console.error( 'Aktiviteler yüklenirken hata:', error );
-            if ( aktiviteListesi ) {
-                aktiviteListesi.innerHTML = `
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Aktiviteler yüklenirken hata:', error);
+                        if (aktiviteListesi) {
+                            aktiviteListesi.innerHTML = `
                     <div class="text-center py-8 text-red-500">
                         <svg class="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -1036,47 +1268,47 @@
                         <p class="mt-1 text-xs text-red-400">${error.message}</p>
                     </div>
                 `;
-            }
-        } finally {
-            // Loading gizle
-            if ( aktiviteLoading ) aktiviteLoading.classList.add( 'hidden' );
-        }
-    }
+                        }
+                    } finally {
+                        // Loading gizle
+                        if (aktiviteLoading) aktiviteLoading.classList.add('hidden');
+                    }
+                }
 
-    // Aktiviteleri yenile fonksiyonu
-    function aktiviteleriYenile() {
-        aktiviteleriYukle();
-    }
+                // Aktiviteleri yenile fonksiyonu
+                function aktiviteleriYenile() {
+                    aktiviteleriYukle();
+                }
 
-    // Dolum taleplerini yükle
-    async function dolumTalepleriniYukle() {
-        try {
-            const response = await fetch('/api/dolum-talepleri');
-            const data = await response.json();
-            
-            if (data.success && data.talepler && data.talepler.length > 0) {
-                document.getElementById('bekleyen_talep_sayisi').textContent = data.talepler.length;
-                document.getElementById('dolum_talepleri_widget').classList.remove('hidden');
-            }
-        } catch (error) {
-            console.error('❌ Dolum talepleri yüklenemedi:', error);
-        }
-    }
+                // Dolum taleplerini yükle
+                async function dolumTalepleriniYukle() {
+                    try {
+                        const response = await fetch('/api/dolum-talepleri');
+                        const data = await response.json();
 
-    // Sayfa yüklendiğinde widget'ları başlat
-    document.addEventListener( 'DOMContentLoaded', function () {
-        // Dolum taleplerini yükle
-        dolumTalepleriniYukle();
-        setInterval(dolumTalepleriniYukle, 30000); // 30 saniyede bir yenile
-        
-        // Tüketim trendini yükle
-        tuketimTrendiniYukle( 7 );
+                        if (data.success && data.talepler && data.talepler.length > 0) {
+                            document.getElementById('bekleyen_talep_sayisi').textContent = data.talepler.length;
+                            document.getElementById('dolum_talepleri_widget').classList.remove('hidden');
+                        }
+                    } catch (error) {
+                        console.error('❌ Dolum talepleri yüklenemedi:', error);
+                    }
+                }
 
-        // Aktiviteleri yükle
-        aktiviteleriYukle();
+                // Sayfa yüklendiğinde widget'ları başlat
+                document.addEventListener('DOMContentLoaded', function () {
+                    // Dolum taleplerini yükle
+                    dolumTalepleriniYukle();
+                    setInterval(dolumTalepleriniYukle, 30000); // 30 saniyede bir yenile
 
-        // Her 30 saniyede bir aktiviteleri otomatik yenile
-        setInterval( aktiviteleriYukle, 30000 );
-    } );
-</script>
-{% endblock %}
+                    // Tüketim trendini yükle
+                    tuketimTrendiniYukle(7);
+
+                    // Aktiviteleri yükle
+                    aktiviteleriYukle();
+
+                    // Her 30 saniyede bir aktiviteleri otomatik yenile
+                    setInterval(aktiviteleriYukle, 30000);
+                });
+            </script>
+            {% endblock %}

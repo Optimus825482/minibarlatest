@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}{{ personel.ad }} {{ personel.soyad }} - Görev Detayları{% endblock %}
+{% block page_title %}{{ personel.ad }} {{ personel.soyad }} - Görev Detayları{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <!-- Geri Butonu ve Özet -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-4">
+                <a href="{{ url_for('gorev.sistem_gorev_ozeti', tarih=tarih.isoformat()) }}"
+                    class="px-4 py-2 bg-slate-600 text-white rounded-lg text-sm">
+                    <i class="fas fa-arrow-left mr-2"></i>Geri
+                </a>
+                <div>
+                    <h3 class="text-lg font-medium text-slate-900 dark:text-white">
+                        <i class="fas fa-user mr-2 text-blue-600"></i>{{ personel.ad }} {{ personel.soyad }}
+                    </h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ tarih.strftime('%d.%m.%Y') }} - Oda Kontrol
+                        Görevleri</p>
+                </div>
+            </div>
+            <form method="GET" class="flex items-center gap-2">
+                <input type="date" name="tarih" value="{{ tarih.isoformat() }}"
+                    class="rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm" />
+                <button type="submit" class="px-4 py-2 bg-slate-600 text-white rounded-lg text-sm">
+                    <i class="fas fa-search mr-1"></i>Göster
+                </button>
+            </form>
+        </div>
+
+        <!-- Özet Kartları - Tıklanabilir Filtreler -->
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <div onclick="filterGorevler('all')"
+                class="filter-card cursor-pointer bg-slate-50 dark:bg-slate-900 rounded-lg p-4 border-2 border-slate-300 dark:border-slate-600 text-center transition-all duration-200"
+                data-filter="all">
+                <i class="fas fa-list-ul text-slate-600 dark:text-slate-400 text-lg mb-1"></i>
+                <div class="text-2xl font-bold text-slate-900 dark:text-white">{{ ozet.toplam }}</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400">Toplam</div>
+            </div>
+            <div onclick="filterGorevler('completed')"
+                class="filter-card cursor-pointer bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border-2 border-green-200 dark:border-green-800 text-center transition-all duration-200"
+                data-filter="completed">
+                <i class="fas fa-check-circle text-green-600 text-lg mb-1"></i>
+                <div class="text-2xl font-bold text-green-600">{{ ozet.tamamlanan }}</div>
+                <div class="text-xs text-green-600">Tamamlanan</div>
+            </div>
+            <div onclick="filterGorevler('pending')"
+                class="filter-card cursor-pointer bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border-2 border-yellow-200 dark:border-yellow-800 text-center transition-all duration-200"
+                data-filter="pending">
+                <i class="fas fa-clock text-yellow-600 text-lg mb-1"></i>
+                <div class="text-2xl font-bold text-yellow-600">{{ ozet.bekleyen }}</div>
+                <div class="text-xs text-yellow-600">Bekleyen</div>
+            </div>
+            <div onclick="filterGorevler('in_progress')"
+                class="filter-card cursor-pointer bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border-2 border-blue-200 dark:border-blue-800 text-center transition-all duration-200"
+                data-filter="in_progress">
+                <i class="fas fa-spinner text-blue-600 text-lg mb-1"></i>
+                <div class="text-2xl font-bold text-blue-600">{{ ozet.devam_eden }}</div>
+                <div class="text-xs text-blue-600">Devam Eden</div>
+            </div>
+            <div onclick="filterGorevler('dnd_pending')"
+                class="filter-card cursor-pointer bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border-2 border-orange-200 dark:border-orange-800 text-center transition-all duration-200"
+                data-filter="dnd_pending">
+                <i class="fas fa-moon text-orange-600 text-lg mb-1"></i>
+                <div class="text-2xl font-bold text-orange-600">{{ ozet.dnd }}</div>
+                <div class="text-xs text-orange-600">DND</div>
+            </div>
+            <div
+                class="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-4 border-2 border-indigo-200 dark:border-indigo-800 text-center">
+                <i class="fas fa-percentage text-indigo-600 text-lg mb-1"></i>
+                <div class="text-2xl font-bold text-indigo-600">%{{ ozet.tamamlanma_orani }}</div>
+                <div class="text-xs text-indigo-600">Oran</div>
+            </div>
+        </div>
+    </div>
+    <!--
+ Görev Listesi -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+        <h3 class="text-lg font-medium text-slate-900 dark:text-white mb-4">
+            <i class="fas fa-door-open mr-2 text-slate-600"></i>Oda Bazlı Görevler
+        </h3>
+
+        {% if gorevler %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-slate-100 dark:bg-slate-900">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-slate-700 dark:text-slate-300">Oda No</th>
+                        <th class="px-4 py-3 text-left text-slate-700 dark:text-slate-300">Görev Tipi</th>
+                        <th class="px-4 py-3 text-center text-slate-700 dark:text-slate-300">Misafir</th>
+                        <th class="px-4 py-3 text-center text-slate-700 dark:text-slate-300">Durum</th>
+                        <th class="px-4 py-3 text-center text-slate-700 dark:text-slate-300">Tamamlanma</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                    {% for gorev in gorevler %}
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50 gorev-row" data-durum="{{ gorev.durum }}">
+                        <td class="px-4 py-3">
+                            <span class="font-medium text-slate-900 dark:text-white">{{ gorev.oda_no }}</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if 'inhouse' in gorev.gorev_tipi %}
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">In House</span>
+                            {% elif 'arrival' in gorev.gorev_tipi %}
+                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Arrival</span>
+                            {% elif 'departure' in gorev.gorev_tipi %}
+                            <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">Departure</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-slate-100 text-slate-800 rounded text-xs">{{ gorev.gorev_tipi
+                                }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-slate-600 dark:text-slate-400 text-center">
+                            {{ gorev.misafir_sayisi }} kişi
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            {% if gorev.durum == 'completed' %}
+                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-medium">
+                                <i class="fas fa-check mr-1"></i>Tamamlandı
+                            </span>
+                            {% elif gorev.durum == 'pending' %}
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-medium">
+                                <i class="fas fa-clock mr-1"></i>Bekliyor
+                            </span>
+                            {% elif gorev.durum == 'in_progress' %}
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+                                <i class="fas fa-spinner mr-1"></i>Devam Ediyor
+                            </span>
+                            {% elif gorev.durum == 'dnd_pending' %}
+                            <span class="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs font-medium">
+                                <i class="fas fa-moon mr-1"></i>DND
+                            </span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-slate-100 text-slate-800 rounded text-xs">{{ gorev.durum }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-center text-slate-500 dark:text-slate-400 text-xs">
+                            {% if gorev.kontrol_zamani %}
+                            {{ gorev.kontrol_zamani.strftime('%H:%M') }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-slate-500 dark:text-slate-400">
+            <i class="fas fa-inbox text-4xl mb-2"></i>
+            <p>Bu tarihte görev bulunamadı.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function filterGorevler(durum) {
+        const rows = document.querySelectorAll('.gorev-row');
+        const cards = document.querySelectorAll('.filter-card');
+
+        // Kartların aktif durumunu güncelle
+        cards.forEach(card => {
+            if (card.dataset.filter === durum) {
+                card.classList.add('ring-2', 'ring-offset-2', 'ring-blue-500', 'scale-105');
+            } else {
+                card.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-500', 'scale-105');
+            }
+        });
+
+        // Satırları filtrele
+        rows.forEach(row => {
+            if (durum === 'all' || row.dataset.durum === durum) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // Sayfa yüklendiğinde "Toplam" kartını aktif yap
+    document.addEventListener('DOMContentLoaded', function () {
+        const allCard = document.querySelector('[data-filter="all"]');
+        if (allCard) {
+            allCard.classList.add('ring-2', 'ring-offset-2', 'ring-blue-500', 'scale-105');
+        }
+    });
+</script>
+{% endblock %}

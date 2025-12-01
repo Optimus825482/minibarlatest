@@ -126,11 +126,11 @@ class QRKodService:
     @staticmethod
     def validate_token(token):
         """
-        Token'ı doğrula ve oda bilgisini döndür
+        Token'dan oda bilgisini parse et (validasyon yok, direkt parse)
         Args:
-            token (str): Doğrulanacak token (URL veya token string)
+            token (str): Parse edilecek token (URL veya token string)
         Returns:
-            Oda | None: Geçerli ise Oda instance, değilse None
+            Oda | None: Oda instance veya None
         """
         try:
             # Eğer URL formatındaysa token'ı çıkar
@@ -141,32 +141,23 @@ class QRKodService:
                 if len(parts) == 2:
                     token = parts[1]
             
-            # Önce basit format kontrol et: MINIBAR_ODA_{oda_id}_KAT_{kat_id}
+            # MINIBAR_ODA_{oda_id}_KAT_{kat_id} formatını parse et
             if token.startswith('MINIBAR_ODA_'):
                 try:
-                    # Token'ı parse et
                     parts = token.split('_')
                     if len(parts) >= 5 and parts[0] == 'MINIBAR' and parts[1] == 'ODA' and parts[3] == 'KAT':
                         oda_id = int(parts[2])
-                        
-                        # Oda'yı veritabanından getir
-                        oda = Oda.query.filter_by(
-                            id=oda_id,
-                            aktif=True
-                        ).first()
-                        
-                        if oda:
-                            return oda
+                        # Direkt oda ID ile getir
+                        return Oda.query.filter_by(id=oda_id, aktif=True).first()
                 except (ValueError, IndexError):
                     pass
             
-            # Veritabanında token ara (güvenli token sistemi)
-            oda = Oda.query.filter_by(
-                qr_kod_token=token,
-                aktif=True
-            ).first()
+            # Sayısal token ise direkt oda ID olarak dene
+            if token.isdigit():
+                return Oda.query.filter_by(id=int(token), aktif=True).first()
             
-            return oda
+            # Son çare: veritabanında token ara
+            return Oda.query.filter_by(qr_kod_token=token, aktif=True).first()
             
         except Exception:
             return None

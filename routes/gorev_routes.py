@@ -518,6 +518,86 @@ def sistem_gorev_ozeti():
         return redirect(url_for('dashboard'))
 
 
+@gorev_bp.route('/personel/<int:personel_id>/gorev-detay')
+@login_required
+@rol_gerekli('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
+def personel_gorev_detay(personel_id):
+    """
+    Personelin oda bazlı görev detayları
+    GET /gorevler/personel/<personel_id>/gorev-detay?tarih=2025-12-01
+    """
+    try:
+        kullanici = get_current_user()
+        tarih_str = request.args.get('tarih', date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
+        
+        # Personeli bul
+        personel = Kullanici.query.get_or_404(personel_id)
+        
+        # Depo sorumlusu sadece kendi kat sorumlularını görebilir
+        if kullanici.rol == 'depo_sorumlusu':
+            if personel.depo_sorumlusu_id != kullanici.id:
+                flash('Bu personelin görevlerini görüntüleme yetkiniz yok', 'danger')
+                return redirect(url_for('gorev.depo_personel_gorevler'))
+        
+        # Personelin o günkü ana görevlerini al
+        ana_gorevler = GunlukGorev.query.filter(
+            GunlukGorev.personel_id == personel_id,
+            GunlukGorev.gorev_tarihi == tarih
+        ).all()
+        
+        # Tüm görev detaylarını topla
+        gorevler = []
+        for ag in ana_gorevler:
+            for detay in ag.detaylar:
+                gorevler.append({
+                    'id': detay.id,
+                    'oda_no': detay.oda.oda_no if detay.oda else '-',
+                    'gorev_tipi': ag.gorev_tipi,
+                    'durum': detay.durum,
+                    'misafir_sayisi': detay.misafir_kayit.misafir_sayisi if detay.misafir_kayit else 0,
+                    'kontrol_zamani': detay.kontrol_zamani
+                })
+        
+        # Oda numarasına göre sırala
+        gorevler.sort(key=lambda x: x['oda_no'])
+        
+        # Görevleri kategorize et
+        tamamlanan = [g for g in gorevler if g['durum'] == 'completed']
+        bekleyen = [g for g in gorevler if g['durum'] == 'pending']
+        devam_eden = [g for g in gorevler if g['durum'] == 'in_progress']
+        dnd = [g for g in gorevler if g['durum'] == 'dnd_pending']
+        
+        ozet = {
+            'toplam': len(gorevler),
+            'tamamlanan': len(tamamlanan),
+            'bekleyen': len(bekleyen),
+            'devam_eden': len(devam_eden),
+            'dnd': len(dnd),
+            'tamamlanma_orani': round((len(tamamlanan) / len(gorevler) * 100), 1) if gorevler else 0
+        }
+        
+        return render_template(
+            'sistem_yoneticisi/personel_gorev_detay.html',
+            personel=personel,
+            gorevler=gorevler,
+            tamamlanan=tamamlanan,
+            bekleyen=bekleyen,
+            devam_eden=devam_eden,
+            dnd=dnd,
+            ozet=ozet,
+            tarih=tarih,
+            kullanici=kullanici
+        )
+        
+    except Exception as e:
+        import traceback
+        print(f"personel_gorev_detay HATA: {str(e)}")
+        print(traceback.format_exc())
+        flash(f'Görev detayları yüklenirken hata oluştu: {str(e)}', 'danger')
+        return redirect(url_for('gorev.sistem_gorev_ozeti'))
+
+
 @gorev_bp.route('/sistem/yukleme-takip')
 @login_required
 @rol_gerekli('sistem_yoneticisi', 'admin')

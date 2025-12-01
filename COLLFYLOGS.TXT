@@ -1,0 +1,270 @@
+
+2025-12-01T03:23:15.697241198Z 2025-12-01 05:23:15,694 - app - INFO - ✅ Database engine yenilendi ve test edildi
+2025-12-01T03:23:15.697306105Z 2025-12-01 05:23:15,695 - app - INFO - ✅ Database bağlantısı başarılı (Deneme 1/3)
+2025-12-01T03:23:15.704501873Z 2025-12-01 05:23:15,699 - middleware.metrics_middleware - INFO - ✅ Metrics middleware başlatıldı
+2025-12-01T03:23:18.750563975Z 2025-12-01 05:23:18,750 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-12-01T03:23:18.754491303Z 2025-12-01 05:23:18,754 - apscheduler.scheduler - INFO - Added job "Eski doluluk dosyalarını temizle" to job store "default"
+2025-12-01T03:23:18.754727965Z 2025-12-01 05:23:18,754 - apscheduler.scheduler - INFO - Scheduler started
+2025-12-01T03:23:18.929971282Z ✅ CSRF exemptions uygulandı (restore, restore_v2, developer, fiyatlandirma, karlilik, stok, celery, db_optimization)
+2025-12-01T03:23:18.930043971Z ✅ Tüm route modülleri başarıyla register edildi!
+2025-12-01T03:23:18.930055360Z ✅ Scheduler başlatıldı (Günlük dosya temizleme: 02:00)
+2025-12-01T03:23:18.930076737Z ============================================================
+2025-12-01T03:23:18.930085933Z 🚀 SAFE DEPLOY - BAŞLATILIYOR
+2025-12-01T03:23:18.930094846Z ============================================================
+2025-12-01T03:23:18.930103494Z 
+2025-12-01T03:23:18.930111748Z 🔍 Database bağlantısı kontrol ediliyor...
+2025-12-01T03:23:18.930120614Z ✅ Database bağlantısı başarılı!
+2025-12-01T03:23:18.930129370Z 
+2025-12-01T03:23:18.930137577Z 🔍 Veritabanı tabloları kontrol ediliyor...
+2025-12-01T03:23:18.930146039Z ✅ Veritabanı tabloları hazır!
+2025-12-01T03:23:18.930154563Z 
+2025-12-01T03:23:18.930162799Z ============================================================
+2025-12-01T03:23:18.930171602Z ✅ SAFE DEPLOY - TAMAMLANDI
+2025-12-01T03:23:18.930180241Z ============================================================
+2025-12-01T03:23:18.930188932Z 
+2025-12-01T03:23:20.052638719Z 2025-12-01 05:23:20,052 INFO Set uid to user 0 succeeded
+2025-12-01T03:23:20.055913336Z 2025-12-01 05:23:20,055 INFO supervisord started with pid 22
+2025-12-01T03:23:21.065345274Z 2025-12-01 05:23:21,060 INFO spawned: 'gunicorn' with pid 23
+2025-12-01T03:23:21.065404474Z 2025-12-01 05:23:21,064 INFO spawned: 'celery-worker' with pid 24
+2025-12-01T03:23:21.069241501Z 2025-12-01 05:23:21,067 INFO spawned: 'celery-beat' with pid 25
+2025-12-01T03:23:21.297667216Z [2025-12-01 05:23:21 +0200] [23] [INFO] Starting gunicorn 21.2.0
+2025-12-01T03:23:21.297739523Z [2025-12-01 05:23:21 +0200] [23] [INFO] Listening at: http://0.0.0.0:5000 (23)
+2025-12-01T03:23:21.297750116Z [2025-12-01 05:23:21 +0200] [23] [INFO] Using worker: gthread
+2025-12-01T03:23:21.297759466Z [2025-12-01 05:23:21 +0200] [23] [INFO] Server is ready. Spawning workers
+2025-12-01T03:23:21.305609098Z [2025-12-01 05:23:21 +0200] [26] [INFO] Booting worker with pid: 26
+2025-12-01T03:23:21.306151080Z [2025-12-01 05:23:21 +0200] [26] [INFO] Worker spawned (pid: 26)
+2025-12-01T03:23:22.004788565Z /usr/local/lib/python3.11/site-packages/celery/platforms.py:829: SecurityWarning: You're running the worker with superuser privileges: this is
+2025-12-01T03:23:22.004876232Z absolutely not recommended!
+2025-12-01T03:23:22.004900528Z 
+2025-12-01T03:23:22.004920572Z Please specify a different user using the --uid option.
+2025-12-01T03:23:22.004939972Z 
+2025-12-01T03:23:22.004957089Z User information: uid=0 euid=0 gid=0 egid=0
+2025-12-01T03:23:22.004975685Z 
+2025-12-01T03:23:22.004993847Z   warnings.warn(SecurityWarning(ROOT_DISCOURAGED.format(
+2025-12-01T03:23:22.124380808Z [2025-12-01 05:23:22,122: INFO/MainProcess] beat: Starting...
+2025-12-01T03:23:22.124449122Z 2025-12-01 05:23:22,124 INFO success: gunicorn entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-12-01T03:23:22.125214288Z 2025-12-01 05:23:22,124 INFO success: celery-worker entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-12-01T03:23:22.125237787Z 2025-12-01 05:23:22,124 INFO success: celery-beat entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-12-01T03:23:22.252462991Z  
+2025-12-01T03:23:22.252533649Z  -------------- celery@1c57e284fc43 v5.3.4 (emerald-rush)
+2025-12-01T03:23:22.252543670Z --- ***** ----- 
+2025-12-01T03:23:22.252552343Z -- ******* ---- Linux-5.15.0-161-generic-x86_64-with-glibc2.41 2025-12-01 05:23:22
+2025-12-01T03:23:22.252561166Z - *** --- * --- 
+2025-12-01T03:23:22.252569432Z - ** ---------- [config]
+2025-12-01T03:23:22.252577718Z - ** ---------- .> app:         minibar_takip:0x7f4ce85df950
+2025-12-01T03:23:22.252586846Z - ** ---------- .> transport:   redis://default:**@ck4ow0gkks808wgwksww4ooo:6379/0
+2025-12-01T03:23:22.252600279Z - ** ---------- .> results:     redis://default:**@ck4ow0gkks808wgwksww4ooo:6379/0
+2025-12-01T03:23:22.252608898Z - *** --- * --- .> concurrency: 2 (prefork)
+2025-12-01T03:23:22.252617162Z -- ******* ---- .> task events: OFF (enable -E to monitor tasks in this worker)
+2025-12-01T03:23:22.252625789Z --- ***** ----- 
+2025-12-01T03:23:22.252664716Z  -------------- [queues]
+2025-12-01T03:23:22.252674417Z                 .> celery           exchange=celery(direct) key=celery
+2025-12-01T03:23:22.252682928Z                 
+2025-12-01T03:23:22.252691100Z 
+2025-12-01T03:23:22.252699273Z [tasks]
+2025-12-01T03:23:22.252707821Z   . backup.eski_yedekleri_temizle
+2025-12-01T03:23:22.252717201Z   . backup.otomatik_yedekleme
+2025-12-01T03:23:22.252725517Z   . fiyatlandirma.aylik_stok_devir_analizi
+2025-12-01T03:23:22.252733712Z   . fiyatlandirma.donemsel_kar_hesapla
+2025-12-01T03:23:22.252741887Z   . fiyatlandirma.gunluk_kar_analizi
+2025-12-01T03:23:22.252750002Z   . fiyatlandirma.haftalik_trend_analizi
+2025-12-01T03:23:22.252758197Z   . fiyatlandirma.stok_devir_guncelle
+2025-12-01T03:23:22.252766530Z   . fiyatlandirma.tuketim_trendi_guncelle
+2025-12-01T03:23:22.252774855Z   . gorevlendirme.dnd_tamamlanmayan_kontrol
+2025-12-01T03:23:22.252782990Z   . gorevlendirme.doluluk_yukleme_uyari_kontrolu
+2025-12-01T03:23:22.252791276Z   . gorevlendirme.eksik_yukleme_uyarisi
+2025-12-01T03:23:22.252799398Z   . gorevlendirme.gunluk_yukleme_gorevleri_olustur
+2025-12-01T03:23:22.252807637Z   . ml.anomali_tespiti
+2025-12-01T03:23:22.252815755Z   . ml.eski_verileri_temizle
+2025-12-01T03:23:22.252823834Z   . ml.gunluk_alert_ozeti
+2025-12-01T03:23:22.252831956Z   . ml.model_egitimi
+2025-12-01T03:23:22.252840410Z   . ml.stok_bitis_kontrolu
+2025-12-01T03:23:22.252848586Z   . ml.veri_toplama
+2025-12-01T03:23:22.252856691Z   . rapor.gunluk_gorev_raporu
+2025-12-01T03:23:22.252864678Z   . rapor.gunluk_minibar_sarfiyat_raporu
+2025-12-01T03:23:22.252872771Z 
+2025-12-01T03:23:22.375710816Z [2025-12-01 05:23:22,374: WARNING/MainProcess] /usr/local/lib/python3.11/site-packages/celery/worker/consumer/consumer.py:507: CPendingDeprecationWarning: The broker_connection_retry configuration setting will no longer determine
+2025-12-01T03:23:22.375774974Z whether broker connection retries are made during startup in Celery 6.0 and above.
+2025-12-01T03:23:22.375785040Z If you wish to retain the existing behavior for retrying connections on startup,
+2025-12-01T03:23:22.375794116Z you should set broker_connection_retry_on_startup to True.
+2025-12-01T03:23:22.375802743Z   warnings.warn(
+2025-12-01T03:23:22.375811014Z 
+2025-12-01T03:23:22.404703130Z [2025-12-01 05:23:22,403: INFO/MainProcess] Connected to redis://default:**@ck4ow0gkks808wgwksww4ooo:6379/0
+2025-12-01T03:23:22.406799224Z [2025-12-01 05:23:22,406: WARNING/MainProcess] /usr/local/lib/python3.11/site-packages/celery/worker/consumer/consumer.py:507: CPendingDeprecationWarning: The broker_connection_retry configuration setting will no longer determine
+2025-12-01T03:23:22.406826176Z whether broker connection retries are made during startup in Celery 6.0 and above.
+2025-12-01T03:23:22.406860262Z If you wish to retain the existing behavior for retrying connections on startup,
+2025-12-01T03:23:22.406870215Z you should set broker_connection_retry_on_startup to True.
+2025-12-01T03:23:22.406879156Z   warnings.warn(
+2025-12-01T03:23:22.406888243Z 
+2025-12-01T03:23:22.412052992Z [2025-12-01 05:23:22,411: INFO/MainProcess] mingle: searching for neighbors
+2025-12-01T03:23:23.434742880Z [2025-12-01 05:23:23,433: INFO/MainProcess] mingle: all alone
+2025-12-01T03:23:23.459176319Z 2025-12-01 05:23:23,458 - app - INFO - ✅ Database engine yenilendi ve metadata reflect edildi
+2025-12-01T03:23:23.459655413Z 2025-12-01 05:23:23,459 - app - INFO - ℹ️ Cache devre dışı - Redis sadece Celery broker olarak kullanılıyor
+2025-12-01T03:23:23.463933785Z [2025-12-01 05:23:23,463: INFO/MainProcess] celery@1c57e284fc43 ready.
+2025-12-01T03:23:23.467162937Z 2025-12-01 05:23:23,466 - utils.monitoring.query_analyzer - INFO - ✅ SQLAlchemy query logging aktif edildi (threshold: 10ms)
+2025-12-01T03:23:23.467519199Z 2025-12-01 05:23:23,467 - utils.monitoring.query_analyzer - INFO - ✅ SQLAlchemy query logging aktif edildi (threshold: 10ms)
+2025-12-01T03:23:23.487712653Z 2025-12-01 05:23:23,487 - app - INFO - ✅ Database engine yenilendi ve test edildi
+2025-12-01T03:23:23.488746513Z 2025-12-01 05:23:23,488 - app - INFO - ✅ Database bağlantısı başarılı (Deneme 1/3)
+2025-12-01T03:23:23.491159923Z 2025-12-01 05:23:23,490 - middleware.metrics_middleware - INFO - ✅ Metrics middleware başlatıldı
+2025-12-01T03:23:25.981672807Z 2025-12-01 05:23:25,980 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-12-01T03:23:25.982393238Z 2025-12-01 05:23:25,982 - apscheduler.scheduler - INFO - Added job "Eski doluluk dosyalarını temizle" to job store "default"
+2025-12-01T03:23:25.982731529Z 2025-12-01 05:23:25,982 - apscheduler.scheduler - INFO - Scheduler started
+2025-12-01T03:23:26.017712688Z ✅ CSRF exemptions uygulandı (restore, restore_v2, developer, fiyatlandirma, karlilik, stok, celery, db_optimization)
+2025-12-01T03:23:26.017771007Z ✅ Tüm route modülleri başarıyla register edildi!
+2025-12-01T03:23:26.017781951Z ✅ Scheduler başlatıldı (Günlük dosya temizleme: 02:00)
+2025-12-01T03:23:26.017791573Z 127.0.0.1 - - [01/Dec/2025:05:23:26 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 21132
+2025-12-01T03:23:56.118152051Z 127.0.0.1 - - [01/Dec/2025:05:23:56 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 11340
+2025-12-01T03:24:00.920309376Z 10.0.1.6 - - [01/Dec/2025:05:24:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1893
+2025-12-01T03:24:00.924502516Z 10.0.1.6 - - [01/Dec/2025:05:24:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1576
+2025-12-01T03:24:00.924565619Z 10.0.1.6 - - [01/Dec/2025:05:24:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1041
+2025-12-01T03:24:26.218196384Z 127.0.0.1 - - [01/Dec/2025:05:24:26 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4793
+2025-12-01T03:24:56.316644904Z 127.0.0.1 - - [01/Dec/2025:05:24:56 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4587
+2025-12-01T03:25:00.914649588Z 10.0.1.6 - - [01/Dec/2025:05:25:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1891
+2025-12-01T03:25:00.916885142Z 10.0.1.6 - - [01/Dec/2025:05:25:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1573
+2025-12-01T03:25:00.918985258Z 10.0.1.6 - - [01/Dec/2025:05:25:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1202
+2025-12-01T03:25:26.412190646Z 127.0.0.1 - - [01/Dec/2025:05:25:26 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4287
+2025-12-01T03:25:56.540709841Z 127.0.0.1 - - [01/Dec/2025:05:25:56 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 5122
+2025-12-01T03:26:00.906312799Z 10.0.1.6 - - [01/Dec/2025:05:26:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1792
+2025-12-01T03:26:00.914261964Z 10.0.1.6 - - [01/Dec/2025:05:26:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 5179
+2025-12-01T03:26:00.915117450Z 10.0.1.6 - - [01/Dec/2025:05:26:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 3206
+2025-12-01T03:26:26.636082958Z 127.0.0.1 - - [01/Dec/2025:05:26:26 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4995
+2025-12-01T03:26:56.734674543Z 127.0.0.1 - - [01/Dec/2025:05:26:56 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4144
+2025-12-01T03:27:00.918530829Z 10.0.1.6 - - [01/Dec/2025:05:27:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1399
+2025-12-01T03:27:00.919632828Z 10.0.1.6 - - [01/Dec/2025:05:27:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 3725
+2025-12-01T03:27:00.920133558Z 10.0.1.6 - - [01/Dec/2025:05:27:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1127
+2025-12-01T03:27:26.825836230Z 127.0.0.1 - - [01/Dec/2025:05:27:26 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3706
+2025-12-01T03:27:56.921037765Z 127.0.0.1 - - [01/Dec/2025:05:27:56 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3735
+2025-12-01T03:28:00.910501872Z 10.0.1.6 - - [01/Dec/2025:05:28:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1438
+2025-12-01T03:28:00.913370092Z 10.0.1.6 - - [01/Dec/2025:05:28:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1029
+2025-12-01T03:28:00.916501898Z 10.0.1.6 - - [01/Dec/2025:05:28:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1235
+2025-12-01T03:28:22.212053489Z [2025-12-01 05:28:22,211: INFO/MainProcess] Scheduler: Sending due task ml-anomali-tespiti (ml.anomali_tespiti)
+2025-12-01T03:28:22.229563101Z [2025-12-01 05:28:22,228: INFO/MainProcess] Task ml.anomali_tespiti[96d5fcb7-8ec6-4b7a-bea9-76c83b54fb5a] received
+2025-12-01T03:28:22.245052636Z [2025-12-01 05:28:22,244: ERROR/ForkPoolWorker-2] ML anomali tespiti task hatası: No module named 'app'
+2025-12-01T03:28:22.247784169Z [2025-12-01 05:28:22,247: INFO/ForkPoolWorker-2] Task ml.anomali_tespiti[96d5fcb7-8ec6-4b7a-bea9-76c83b54fb5a] succeeded in 0.016111019998788834s: {'status': 'error', 'message': 'No module named \'app\''}
+2025-12-01T03:28:27.013732885Z 127.0.0.1 - - [01/Dec/2025:05:28:27 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4068
+2025-12-01T03:28:57.104675171Z 127.0.0.1 - - [01/Dec/2025:05:28:57 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3768
+2025-12-01T03:29:00.919527910Z 10.0.1.6 - - [01/Dec/2025:05:29:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 2796
+2025-12-01T03:29:00.921546207Z 10.0.1.6 - - [01/Dec/2025:05:29:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 870
+2025-12-01T03:29:00.921576733Z 10.0.1.6 - - [01/Dec/2025:05:29:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 3119
+2025-12-01T03:29:27.202636814Z 127.0.0.1 - - [01/Dec/2025:05:29:27 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4408
+2025-12-01T03:29:57.291915485Z 127.0.0.1 - - [01/Dec/2025:05:29:57 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3694
+2025-12-01T03:30:00.923425169Z 10.0.1.6 - - [01/Dec/2025:05:30:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1288
+2025-12-01T03:30:00.923877991Z 10.0.1.6 - - [01/Dec/2025:05:30:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1102
+2025-12-01T03:30:00.923908942Z 10.0.1.6 - - [01/Dec/2025:05:30:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 3106
+2025-12-01T03:30:27.383161594Z 127.0.0.1 - - [01/Dec/2025:05:30:27 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3966
+2025-12-01T03:30:57.470200658Z 127.0.0.1 - - [01/Dec/2025:05:30:57 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3784
+2025-12-01T03:31:00.924836849Z 10.0.1.6 - - [01/Dec/2025:05:31:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1324
+2025-12-01T03:31:00.924898849Z 10.0.1.6 - - [01/Dec/2025:05:31:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 3375
+2025-12-01T03:31:00.926557282Z 10.0.1.6 - - [01/Dec/2025:05:31:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 938
+2025-12-01T03:31:27.570029987Z 127.0.0.1 - - [01/Dec/2025:05:31:27 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3792
+2025-12-01T03:31:57.663934564Z 127.0.0.1 - - [01/Dec/2025:05:31:57 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3782
+2025-12-01T03:32:00.938846692Z 10.0.1.6 - - [01/Dec/2025:05:32:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1368
+2025-12-01T03:32:00.941714517Z 10.0.1.6 - - [01/Dec/2025:05:32:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1252
+2025-12-01T03:32:00.943466889Z 10.0.1.6 - - [01/Dec/2025:05:32:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 989
+2025-12-01T03:32:27.757290037Z 127.0.0.1 - - [01/Dec/2025:05:32:27 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3907
+2025-12-01T03:32:57.848397613Z 127.0.0.1 - - [01/Dec/2025:05:32:57 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4093
+2025-12-01T03:33:00.926868125Z 10.0.1.6 - - [01/Dec/2025:05:33:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 2571
+2025-12-01T03:33:00.927160924Z 10.0.1.6 - - [01/Dec/2025:05:33:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1515
+2025-12-01T03:33:00.929160892Z 10.0.1.6 - - [01/Dec/2025:05:33:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1053
+2025-12-01T03:33:22.206559266Z [2025-12-01 05:33:22,205: INFO/MainProcess] Scheduler: Sending due task ml-anomali-tespiti (ml.anomali_tespiti)
+2025-12-01T03:33:22.210986197Z [2025-12-01 05:33:22,210: INFO/MainProcess] Task ml.anomali_tespiti[fbacc52b-1b70-4e75-aa1f-84f44e701682] received
+2025-12-01T03:33:22.218398914Z [2025-12-01 05:33:22,216: ERROR/ForkPoolWorker-2] ML anomali tespiti task hatası: No module named 'app'
+2025-12-01T03:33:22.220503364Z [2025-12-01 05:33:22,219: INFO/ForkPoolWorker-2] Task ml.anomali_tespiti[fbacc52b-1b70-4e75-aa1f-84f44e701682] succeeded in 0.006215933943167329s: {'status': 'erro25-12-01T03:23:22.252864678Z   . rapor.gunluk_minibar_sarfiyat_raporu
+2025-12-01T03:23:22.252872771Z 
+2025-12-01T03:23:22.375710816Z [2025-12-01 05:23:22,374: WARNING/MainProcess] /usr/local/lib/python3.11/site-packages/celery/worker/consumer/consumer.py:507: CPendingDeprecationWarning: The broker_connection_retry configuration setting will no longer determine
+2025-12-01T03:23:22.375774974Z whether broker connection retries are made during startup in Celery 6.0 and above.
+2025-12-01T03:23:22.375785040Z If you wish to retain the existing behavior for retrying connections on startup,
+2025-12-01T03:23:22.375794116Z you should set broker_connection_retry_on_startup to True.
+2025-12-01T03:23:22.375802743Z   warnings.warn(
+2025-12-01T03:23:22.375811014Z 
+2025-12-01T03:23:22.404703130Z [2025-12-01 05:23:22,403: INFO/MainProcess] Connected to redis://default:**@ck4ow0gkks808wgwksww4ooo:6379/0
+2025-12-01T03:23:22.406799224Z [2025-12-01 05:23:22,406: WARNING/MainProcess] /usr/local/lib/python3.11/site-packages/celery/worker/consumer/consumer.py:507: CPendingDeprecationWarning: The broker_connection_retry configuration setting will no longer determine
+2025-12-01T03:23:22.406826176Z whether broker connection retries are made during startup in Celery 6.0 and above.
+2025-12-01T03:23:22.406860262Z If you wish to retain the existing behavior for retrying connections on startup,
+2025-12-01T03:23:22.406870215Z you should set broker_connection_retry_on_startup to True.
+2025-12-01T03:23:22.406879156Z   warnings.warn(
+2025-12-01T03:23:22.406888243Z 
+2025-12-01T03:23:22.412052992Z [2025-12-01 05:23:22,411: INFO/MainProcess] mingle: searching for neighbors
+2025-12-01T03:23:23.434742880Z [2025-12-01 05:23:23,433: INFO/MainProcess] mingle: all alone
+2025-12-01T03:23:23.459176319Z 2025-12-01 05:23:23,458 - app - INFO - ✅ Database engine yenilendi ve metadata reflect edildi
+2025-12-01T03:23:23.459655413Z 2025-12-01 05:23:23,459 - app - INFO - ℹ️ Cache devre dışı - Redis sadece Celery broker olarak kullanılıyor
+2025-12-01T03:23:23.463933785Z [2025-12-01 05:23:23,463: INFO/MainProcess] celery@1c57e284fc43 ready.
+2025-12-01T03:23:23.467162937Z 2025-12-01 05:23:23,466 - utils.monitoring.query_analyzer - INFO - ✅ SQLAlchemy query logging aktif edildi (threshold: 10ms)
+2025-12-01T03:23:23.467519199Z 2025-12-01 05:23:23,467 - utils.monitoring.query_analyzer - INFO - ✅ SQLAlchemy query logging aktif edildi (threshold: 10ms)
+2025-12-01T03:23:23.487712653Z 2025-12-01 05:23:23,487 - app - INFO - ✅ Database engine yenilendi ve test edildi
+2025-12-01T03:23:23.488746513Z 2025-12-01 05:23:23,488 - app - INFO - ✅ Database bağlantısı başarılı (Deneme 1/3)
+2025-12-01T03:23:23.491159923Z 2025-12-01 05:23:23,490 - middleware.metrics_middleware - INFO - ✅ Metrics middleware başlatıldı
+2025-12-01T03:23:25.981672807Z 2025-12-01 05:23:25,980 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-12-01T03:23:25.982393238Z 2025-12-01 05:23:25,982 - apscheduler.scheduler - INFO - Added job "Eski doluluk dosyalarını temizle" to job store "default"
+2025-12-01T03:23:25.982731529Z 2025-12-01 05:23:25,982 - apscheduler.scheduler - INFO - Scheduler started
+2025-12-01T03:23:26.017712688Z ✅ CSRF exemptions uygulandı (restore, restore_v2, developer, fiyatlandirma, karlilik, stok, celery, db_optimization)
+2025-12-01T03:23:26.017771007Z ✅ Tüm route modülleri başarıyla register edildi!
+2025-12-01T03:23:26.017781951Z ✅ Scheduler başlatıldı (Günlük dosya temizleme: 02:00)
+2025-12-01T03:23:26.017791573Z 127.0.0.1 - - [01/Dec/2025:05:23:26 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 21132
+2025-12-01T03:23:56.118152051Z 127.0.0.1 - - [01/Dec/2025:05:23:56 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 11340
+2025-12-01T03:24:00.920309376Z 10.0.1.6 - - [01/Dec/2025:05:24:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1893
+2025-12-01T03:24:00.924502516Z 10.0.1.6 - - [01/Dec/2025:05:24:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1576
+2025-12-01T03:24:00.924565619Z 10.0.1.6 - - [01/Dec/2025:05:24:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1041
+2025-12-01T03:24:26.218196384Z 127.0.0.1 - - [01/Dec/2025:05:24:26 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4793
+2025-12-01T03:24:56.316644904Z 127.0.0.1 - - [01/Dec/2025:05:24:56 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4587
+2025-12-01T03:25:00.914649588Z 10.0.1.6 - - [01/Dec/2025:05:25:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1891
+2025-12-01T03:25:00.916885142Z 10.0.1.6 - - [01/Dec/2025:05:25:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1573
+2025-12-01T03:25:00.918985258Z 10.0.1.6 - - [01/Dec/2025:05:25:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1202
+2025-12-01T03:25:26.412190646Z 127.0.0.1 - - [01/Dec/2025:05:25:26 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4287
+2025-12-01T03:25:56.540709841Z 127.0.0.1 - - [01/Dec/2025:05:25:56 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 5122
+2025-12-01T03:26:00.906312799Z 10.0.1.6 - - [01/Dec/2025:05:26:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1792
+2025-12-01T03:26:00.914261964Z 10.0.1.6 - - [01/Dec/2025:05:26:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 5179
+2025-12-01T03:26:00.915117450Z 10.0.1.6 - - [01/Dec/2025:05:26:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 3206
+2025-12-01T03:26:26.636082958Z 127.0.0.1 - - [01/Dec/2025:05:26:26 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4995
+2025-12-01T03:26:56.734674543Z 127.0.0.1 - - [01/Dec/2025:05:26:56 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4144
+2025-12-01T03:27:00.918530829Z 10.0.1.6 - - [01/Dec/2025:05:27:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1399
+2025-12-01T03:27:00.919632828Z 10.0.1.6 - - [01/Dec/2025:05:27:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 3725
+2025-12-01T03:27:00.920133558Z 10.0.1.6 - - [01/Dec/2025:05:27:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1127
+2025-12-01T03:27:26.825836230Z 127.0.0.1 - - [01/Dec/2025:05:27:26 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3706
+2025-12-01T03:27:56.921037765Z 127.0.0.1 - - [01/Dec/2025:05:27:56 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3735
+2025-12-01T03:28:00.910501872Z 10.0.1.6 - - [01/Dec/2025:05:28:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1438
+2025-12-01T03:28:00.913370092Z 10.0.1.6 - - [01/Dec/2025:05:28:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1029
+2025-12-01T03:28:00.916501898Z 10.0.1.6 - - [01/Dec/2025:05:28:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1235
+2025-12-01T03:28:22.212053489Z [2025-12-01 05:28:22,211: INFO/MainProcess] Scheduler: Sending due task ml-anomali-tespiti (ml.anomali_tespiti)
+2025-12-01T03:28:22.229563101Z [2025-12-01 05:28:22,228: INFO/MainProcess] Task ml.anomali_tespiti[96d5fcb7-8ec6-4b7a-bea9-76c83b54fb5a] received
+2025-12-01T03:28:22.245052636Z [2025-12-01 05:28:22,244: ERROR/ForkPoolWorker-2] ML anomali tespiti task hatası: No module named 'app'
+2025-12-01T03:28:22.247784169Z [2025-12-01 05:28:22,247: INFO/ForkPoolWorker-2] Task ml.anomali_tespiti[96d5fcb7-8ec6-4b7a-bea9-76c83b54fb5a] succeeded in 0.016111019998788834s: {'status': 'error', 'message': 'No module named \'app\''}
+2025-12-01T03:28:27.013732885Z 127.0.0.1 - - [01/Dec/2025:05:28:27 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4068
+2025-12-01T03:28:57.104675171Z 127.0.0.1 - - [01/Dec/2025:05:28:57 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3768
+2025-12-01T03:29:00.919527910Z 10.0.1.6 - - [01/Dec/2025:05:29:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 2796
+2025-12-01T03:29:00.921546207Z 10.0.1.6 - - [01/Dec/2025:05:29:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 870
+2025-12-01T03:29:00.921576733Z 10.0.1.6 - - [01/Dec/2025:05:29:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 3119
+2025-12-01T03:29:27.202636814Z 127.0.0.1 - - [01/Dec/2025:05:29:27 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4408
+2025-12-01T03:29:57.291915485Z 127.0.0.1 - - [01/Dec/2025:05:29:57 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3694
+2025-12-01T03:30:00.923425169Z 10.0.1.6 - - [01/Dec/2025:05:30:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1288
+2025-12-01T03:30:00.923877991Z 10.0.1.6 - - [01/Dec/2025:05:30:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1102
+2025-12-01T03:30:00.923908942Z 10.0.1.6 - - [01/Dec/2025:05:30:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 3106
+2025-12-01T03:30:27.383161594Z 127.0.0.1 - - [01/Dec/2025:05:30:27 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3966
+2025-12-01T03:30:57.470200658Z 127.0.0.1 - - [01/Dec/2025:05:30:57 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3784
+2025-12-01T03:31:00.924836849Z 10.0.1.6 - - [01/Dec/2025:05:31:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1324
+2025-12-01T03:31:00.924898849Z 10.0.1.6 - - [01/Dec/2025:05:31:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 3375
+2025-12-01T03:31:00.926557282Z 10.0.1.6 - - [01/Dec/2025:05:31:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 938
+2025-12-01T03:31:27.570029987Z 127.0.0.1 - - [01/Dec/2025:05:31:27 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3792
+2025-12-01T03:31:57.663934564Z 127.0.0.1 - - [01/Dec/2025:05:31:57 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3782
+2025-12-01T03:32:00.938846692Z 10.0.1.6 - - [01/Dec/2025:05:32:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1368
+2025-12-01T03:32:00.941714517Z 10.0.1.6 - - [01/Dec/2025:05:32:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1252
+2025-12-01T03:32:00.943466889Z 10.0.1.6 - - [01/Dec/2025:05:32:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 989
+2025-12-01T03:32:27.757290037Z 127.0.0.1 - - [01/Dec/2025:05:32:27 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3907
+2025-12-01T03:32:57.848397613Z 127.0.0.1 - - [01/Dec/2025:05:32:57 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4093
+2025-12-01T03:33:00.926868125Z 10.0.1.6 - - [01/Dec/2025:05:33:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 2571
+2025-12-01T03:33:00.927160924Z 10.0.1.6 - - [01/Dec/2025:05:33:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1515
+2025-12-01T03:33:00.929160892Z 10.0.1.6 - - [01/Dec/2025:05:33:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1053
+2025-12-01T03:33:22.206559266Z [2025-12-01 05:33:22,205: INFO/MainProcess] Scheduler: Sending due task ml-anomali-tespiti (ml.anomali_tespiti)
+2025-12-01T03:33:22.210986197Z [2025-12-01 05:33:22,210: INFO/MainProcess] Task ml.anomali_tespiti[fbacc52b-1b70-4e75-aa1f-84f44e701682] received
+2025-12-01T03:33:22.218398914Z [2025-12-01 05:33:22,216: ERROR/ForkPoolWorker-2] ML anomali tespiti task hatası: No module named 'app'
+2025-12-01T03:33:22.220503364Z [2025-12-01 05:33:22,219: INFO/ForkPoolWorker-2] Task ml.anomali_tespiti[fbacc52b-1b70-4e75-aa1f-84f44e701682] succeeded in 0.006215933943167329s: {'status': 'error', 'message': 'No module named \'app\''}
+2025-12-01T03:33:27.959287688Z 127.0.0.1 - - [01/Dec/2025:05:33:27 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3742
+2025-12-01T03:33:58.054388231Z 127.0.0.1 - - [01/Dec/2025:05:33:58 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 3701
+2025-12-01T03:34:00.925356457Z 10.0.1.6 - - [01/Dec/2025:05:34:00 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1432
+2025-12-01T03:34:00.928399599Z 10.0.1.6 - - [01/Dec/2025:05:34:00 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 2133
+2025-12-01T03:34:00.928426474Z 10.0.1.6 - - [01/Dec/2025:05:34:00 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1378
+2025-12-01T03:34:28.147396578Z 127.0.0.1 - - [01/Dec/2025:05:34:28 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4067
+2025-12-01T03:34:58.240034824Z 127.0.0.1 - - [01/Dec/2025:05:34:58 +0200] "GET /health HTTP/1.1" 200 244 "-" "curl/8.14.1" 4516
+2025-12-01T03:35:01.019548638Z 10.0.1.6 - - [01/Dec/2025:05:35:01 +0200] "GET /api/bekleyen-dolum-sayisi HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1321
+2025-12-01T03:35:01.023086062Z 10.0.1.6 - - [01/Dec/2025:05:35:01 +0200] "GET /api/son-aktiviteler?limit=10 HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 2404
+2025-12-01T03:35:01.023657931Z 10.0.1.6 - - [01/Dec/2025:05:35:01 +0200] "GET /api/dolum-talepleri HTTP/1.1" 401 67 "https://minibartakip.com/sistem-yoneticisi" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" 1467
