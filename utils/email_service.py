@@ -10,6 +10,7 @@ Bu modül sistem genelinde email gönderimi için kullanılır.
 import smtplib
 import uuid
 import logging
+import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timezone
@@ -109,7 +110,8 @@ class EmailService:
             # HTML part (varsa)
             if html_body:
                 # Okundu takibi için tracking pixel ekle
-                tracking_pixel = f'<img src="{{BASE_URL}}/api/email-tracking/{tracking_id}" width="1" height="1" style="display:none;" />'
+                base_url = os.getenv('BASE_URL', 'https://minibartakip.com')
+                tracking_pixel = f'<img src="{base_url}/api/email-tracking/{tracking_id}" width="1" height="1" style="display:none;" alt="" />'
                 html_with_tracking = html_body + tracking_pixel
                 html_part = MIMEText(html_with_tracking, 'html', 'utf-8')
                 msg.attach(html_part)
