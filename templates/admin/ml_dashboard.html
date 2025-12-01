@@ -1,1117 +1,337 @@
 {% extends "base.html" %}
-
-{% block title %}ML Anomali Tespit Sistemi - Minibar Takip{% endblock %}
-{% block page_title %}🤖 ML Anomali & İstatistik Analiz Sistemi{% endblock %}
+{% block title %}ML Anomali Tespit Sistemi{% endblock %}
+{% block page_title %}ML Kontrol Merkezi{% endblock %}
 
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-    .info-card {
-        transition: all 0.3s ease;
-    }
-
-    .info-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    }
+@keyframes pulse-glow{0%,100%{box-shadow:0 0 5px rgba(99,102,241,0.4),0 0 20px rgba(99,102,241,0.1)}50%{box-shadow:0 0 25px rgba(99,102,241,0.6),0 0 50px rgba(99,102,241,0.2)}}
+@keyframes gradient-shift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.cyber-bg{background-image:linear-gradient(rgba(99,102,241,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.03) 1px,transparent 1px);background-size:30px 30px}
+.neo-card{position:relative;background:linear-gradient(145deg,rgba(255,255,255,0.95) 0%,rgba(248,250,252,0.85) 100%);border:1px solid rgba(99,102,241,0.12);border-radius:24px;overflow:hidden;backdrop-filter:blur(20px);box-shadow:0 4px 6px -1px rgba(0,0,0,0.05),0 10px 15px -3px rgba(99,102,241,0.08)}
+.dark .neo-card{background:linear-gradient(145deg,rgba(30,41,59,0.95) 0%,rgba(15,23,42,0.85) 100%);border-color:rgba(99,102,241,0.2)}
+.neo-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#6366f1,#8b5cf6,#ec4899,#6366f1);background-size:200% 100%;animation:gradient-shift 4s ease infinite}
+.stat-card-neo{position:relative;padding:1.5rem;border-radius:20px;overflow:hidden}
+.stat-card-neo::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.15) 0%,transparent 50%);pointer-events:none}
+.stat-icon-neo{width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;background:rgba(255,255,255,0.2);backdrop-filter:blur(10px)}
+.stat-value-neo{font-size:2.5rem;font-weight:800;line-height:1}
+.cyber-btn{position:relative;background:linear-gradient(145deg,rgba(255,255,255,0.9) 0%,rgba(248,250,252,0.7) 100%);border:1px solid rgba(99,102,241,0.15);border-radius:20px;padding:1.5rem;overflow:hidden;backdrop-filter:blur(10px)}
+.dark .cyber-btn{background:linear-gradient(145deg,rgba(30,41,59,0.9) 0%,rgba(15,23,42,0.7) 100%);border-color:rgba(99,102,241,0.25)}
+.cyber-btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);transition:left 0.6s ease}
+.cyber-btn:active::before{left:100%}
+.cyber-btn-icon{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,0.15)}
+.flow-card-neo{position:relative;border-radius:20px;padding:1.5rem;overflow:hidden}
+.flow-number-neo{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;font-weight:800;color:white;box-shadow:0 8px 20px rgba(0,0,0,0.2)}
+.metric-card-neo{border-radius:16px;padding:1rem;border-left:4px solid;background:rgba(255,255,255,0.5);backdrop-filter:blur(10px)}
+.dark .metric-card-neo{background:rgba(30,41,59,0.5)}
+.alert-level-card{text-align:center;padding:1.25rem;border-radius:16px;border:1px solid}
+.alert-level-icon{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 0.75rem;font-size:1.5rem;box-shadow:0 8px 20px rgba(0,0,0,0.15)}
+.cyber-badge{display:inline-flex;align-items:center;gap:0.375rem;padding:0.375rem 0.875rem;border-radius:9999px;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
+.stats-grid-neo{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+@media(min-width:768px){.stats-grid-neo{grid-template-columns:repeat(4,1fr)}}
+.pulse-dot{width:10px;height:10px;border-radius:50%;animation:pulse-glow 2s ease-in-out infinite}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-
-    <!-- ML Kontrol Paneli -->
-    <div
-        class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 rounded-lg shadow-lg p-6 mb-6 border border-blue-200 dark:border-slate-600">
-        <div class="flex items-center justify-between mb-4">
-            <div>
-                <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center">
-                    <i class="fas fa-robot mr-3 text-blue-600 dark:text-blue-400"></i>
-                    ML Kontrol Paneli
-                </h3>
-                <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">
-                    Makine öğrenmesi işlemlerini manuel olarak tetikleyin
-                </p>
-            </div>
-            <div class="text-right">
-                <p class="text-xs text-slate-500 dark:text-slate-400">Son Güncelleme</p>
-                <p class="text-sm font-semibold text-slate-700 dark:text-slate-200" id="lastUpdate">
-                    {{ dashboard_metrics.son_guncelleme or 'Bilinmiyor' }}
-                </p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Veri Toplama -->
-            <button onclick="manuelVeriTopla()"
-                class="group relative bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border-2 border-blue-300 dark:border-blue-500 rounded-lg p-4 transition-all duration-300 hover:shadow-xl hover:scale-105">
-                <div class="flex items-center justify-between mb-2">
-                    <div
-                        class="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center group-hover:bg-blue-200 dark:group-hover:bg-blue-800/50 transition-colors">
-                        <i class="fas fa-database text-2xl text-blue-600 dark:text-blue-300"></i>
-                    </div>
-                    <span
-                        class="text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/50 px-2 py-1 rounded">
-                        15 dk
-                    </span>
+<div class="space-y-6 cyber-bg min-h-screen p-1">
+    <!-- Hero Header -->
+    <div class="neo-card p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/30" style="animation: float 3s ease-in-out infinite;">
+                    <i class="fas fa-brain text-2xl text-white"></i>
                 </div>
-                <h4 class="font-bold text-slate-900 dark:text-white mb-1">Veri Toplama</h4>
-                <p class="text-xs text-slate-600 dark:text-slate-300">
-                    Stok, tüketim ve dolum verilerini topla
-                </p>
-            </button>
-
-            <!-- Sapma Analizi -->
-            <button onclick="manuelAnomaliTespit()"
-                class="group relative bg-white dark:bg-slate-800 hover:bg-purple-50 dark:hover:bg-slate-700 border-2 border-purple-300 dark:border-purple-500 rounded-lg p-4 transition-all duration-300 hover:shadow-xl hover:scale-105">
-                <div class="flex items-center justify-between mb-2">
-                    <div
-                        class="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center group-hover:bg-purple-200 dark:group-hover:bg-purple-800/50 transition-colors">
-                        <i class="fas fa-chart-line text-2xl text-purple-600 dark:text-purple-300"></i>
-                    </div>
-                    <span
-                        class="text-xs font-semibold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/50 px-2 py-1 rounded">
-                        5 dk
-                    </span>
-                </div>
-                <h4 class="font-bold text-slate-900 dark:text-white mb-1">Sapma Analizi</h4>
-                <p class="text-xs text-slate-600 dark:text-slate-300">
-                    Anormal davranış ve sapmaları tespit et
-                </p>
-            </button>
-
-            <!-- Model Eğitimi -->
-            <button onclick="manuelModelEgitimi()"
-                class="group relative bg-white dark:bg-slate-800 hover:bg-green-50 dark:hover:bg-slate-700 border-2 border-green-300 dark:border-green-500 rounded-lg p-4 transition-all duration-300 hover:shadow-xl hover:scale-105">
-                <div class="flex items-center justify-between mb-2">
-                    <div
-                        class="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center group-hover:bg-green-200 dark:group-hover:bg-green-800/50 transition-colors">
-                        <i class="fas fa-brain text-2xl text-green-600 dark:text-green-300"></i>
-                    </div>
-                    <span
-                        class="text-xs font-semibold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/50 px-2 py-1 rounded">
-                        Günlük
-                    </span>
-                </div>
-                <h4 class="font-bold text-slate-900 dark:text-white mb-1">Model Eğitimi</h4>
-                <p class="text-xs text-slate-600 dark:text-slate-300">
-                    ML modellerini yeniden eğit (00:00)
-                </p>
-            </button>
-        </div>
-    </div>
-
-    <!-- Özet Kartlar -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Aktif Uyarılar -->
-        <div
-            class="info-card bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/70 dark:to-red-900/50 rounded-lg p-6 border-2 border-red-300 dark:border-red-500">
-            <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-red-700 dark:text-red-200 font-medium">Aktif Uyarılar</p>
-                    <p class="text-3xl font-bold text-red-800 dark:text-red-100 mt-2">
-                        {{ dashboard_metrics.aktif_alert_count or 0 }}
-                    </p>
-                </div>
-                <div class="w-12 h-12 bg-red-200 dark:bg-red-700/60 rounded-full flex items-center justify-center">
-                    <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-100 text-xl"></i>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">ML Kontrol Merkezi</h2>
+                    <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Makine öğrenmesi destekli anomali tespit sistemi</p>
                 </div>
             </div>
-        </div>
-
-        <!-- Kritik Ürünler -->
-        <div
-            class="info-card bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/70 dark:to-orange-900/50 rounded-lg p-6 border-2 border-orange-300 dark:border-orange-500">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-orange-700 dark:text-orange-200 font-medium">Kritik Stok</p>
-                    <p class="text-3xl font-bold text-orange-800 dark:text-orange-100 mt-2">
-                        {{ dashboard_metrics.kritik_urun_count or 0 }}
-                    </p>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700">
+                    <span class="pulse-dot bg-emerald-500"></span>
+                    <span class="text-sm font-semibold text-emerald-700 dark:text-emerald-400">Sistem Aktif</span>
                 </div>
-                <div
-                    class="w-12 h-12 bg-orange-200 dark:bg-orange-700/60 rounded-full flex items-center justify-center">
-                    <i class="fas fa-box text-orange-600 dark:text-orange-100 text-xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Veri Toplama (24h) -->
-        <div
-            class="info-card bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/70 dark:to-blue-900/50 rounded-lg p-6 border-2 border-blue-300 dark:border-blue-500">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-blue-700 dark:text-blue-200 font-medium">Veri Toplama (24h)</p>
-                    <p class="text-3xl font-bold text-blue-800 dark:text-blue-100 mt-2">
-                        {{ dashboard_metrics.stok_metrik_count_24h or 0 }}
-                    </p>
-                </div>
-                <div class="w-12 h-12 bg-blue-200 dark:bg-blue-700/60 rounded-full flex items-center justify-center">
-                    <i class="fas fa-database text-blue-600 dark:text-blue-100 text-xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Model Performansı -->
-        <div
-            class="info-card bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/70 dark:to-green-900/50 rounded-lg p-6 border-2 border-green-300 dark:border-green-500">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-green-700 dark:text-green-200 font-medium">Aktif Modeller</p>
-                    <p class="text-3xl font-bold text-green-800 dark:text-green-100 mt-2">
-                        {{ models|length }}
-                    </p>
-                </div>
-                <div class="w-12 h-12 bg-green-200 dark:bg-green-700/60 rounded-full flex items-center justify-center">
-                    <i class="fas fa-brain text-green-600 dark:text-green-100 text-xl"></i>
+                <div class="text-right hidden sm:block">
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Son Güncelleme</p>
+                    <p class="text-sm font-semibold text-slate-700 dark:text-slate-200" id="lastUpdate"></p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Sistem Çalışma Prensibi - GÖRSELLİ -->
-    <div
-        class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-800 dark:to-slate-900 rounded-lg shadow-lg border-2 border-indigo-200 dark:border-indigo-500 p-6">
-        <button type="button" id="toggleBtn"
-            class="w-full flex items-center justify-between mb-4 cursor-pointer hover:opacity-80 transition">
-            <h3 class="text-lg font-semibold text-indigo-900 dark:text-indigo-200">
-                <i class="fas fa-info-circle mr-2"></i>
-                🤖 Sistem Nasıl Çalışır? (Görsel Açıklama)
-            </h3>
-            <i id="explanationIcon" class="fas fa-chevron-down text-indigo-600 dark:text-indigo-300"></i>
+    <!-- Kontrol Butonlari -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <button onclick="manuelVeriTopla()" class="cyber-btn border-blue-200 dark:border-blue-700 group text-left">
+            <div class="flex items-start justify-between mb-3">
+                <div class="cyber-btn-icon bg-gradient-to-br from-blue-500 to-blue-600 text-white"><i class="fas fa-database text-xl"></i></div>
+                <span class="cyber-badge bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"><i class="fas fa-clock text-xs"></i> 15 dk</span>
+            </div>
+            <h4 class="font-bold text-slate-900 dark:text-white mb-1">Veri Toplama</h4>
+            <p class="text-xs text-slate-600 dark:text-slate-400">Stok, tüketim ve dolum verilerini topla</p>
+            <div class="mt-3 flex items-center text-blue-600 dark:text-blue-400 text-xs font-semibold"><span>Başlat</span><i class="fas fa-arrow-right ml-2"></i></div>
         </button>
+        <button onclick="manuelAnomaliTespit()" class="cyber-btn border-purple-200 dark:border-purple-700 group text-left">
+            <div class="flex items-start justify-between mb-3">
+                <div class="cyber-btn-icon bg-gradient-to-br from-purple-500 to-purple-600 text-white"><i class="fas fa-chart-line text-xl"></i></div>
+                <span class="cyber-badge bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300"><i class="fas fa-bolt text-xs"></i> 5 dk</span>
+            </div>
+            <h4 class="font-bold text-slate-900 dark:text-white mb-1">Sapma Analizi</h4>
+            <p class="text-xs text-slate-600 dark:text-slate-400">Anormal davranış ve sapmaları tespit et</p>
+            <div class="mt-3 flex items-center text-purple-600 dark:text-purple-400 text-xs font-semibold"><span>Başlat</span><i class="fas fa-arrow-right ml-2"></i></div>
+        </button>
+        <button onclick="manuelModelEgitimi()" class="cyber-btn border-emerald-200 dark:border-emerald-700 group text-left">
+            <div class="flex items-start justify-between mb-3">
+                <div class="cyber-btn-icon bg-gradient-to-br from-emerald-500 to-emerald-600 text-white"><i class="fas fa-graduation-cap text-xl"></i></div>
+                <span class="cyber-badge bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300"><i class="fas fa-sync text-xs"></i> Günlük</span>
+            </div>
+            <h4 class="font-bold text-slate-900 dark:text-white mb-1">Model Eğitimi</h4>
+            <p class="text-xs text-slate-600 dark:text-slate-400">ML modellerini yeniden eğit (00:00)</p>
+            <div class="mt-3 flex items-center text-emerald-600 dark:text-emerald-400 text-xs font-semibold"><span>Başlat</span><i class="fas fa-arrow-right ml-2"></i></div>
+        </button>
+    </div>
 
-        <div id="explanationContent" class="hidden space-y-6">
+    <!-- Istatistik Kartlari -->
+    <div class="stats-grid-neo">
+        <div class="stat-card-neo bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-lg shadow-red-500/20">
+            <div class="flex items-start justify-between">
+                <div><p class="text-red-100 text-sm font-medium mb-1">Aktif Uyarılar</p><p class="stat-value-neo">{{ dashboard_metrics.aktif_alert_count or 0 }}</p></div>
+                <div class="stat-icon-neo"><i class="fas fa-exclamation-triangle text-white"></i></div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-white/20"><span class="text-xs text-red-100"><i class="fas fa-arrow-up mr-1"></i>Son 24 saat</span></div>
+        </div>
+        <div class="stat-card-neo bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/20">
+            <div class="flex items-start justify-between">
+                <div><p class="text-amber-100 text-sm font-medium mb-1">Kritik Stok</p><p class="stat-value-neo">{{ dashboard_metrics.kritik_urun_count or 0 }}</p></div>
+                <div class="stat-icon-neo"><i class="fas fa-box text-white"></i></div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-white/20"><span class="text-xs text-amber-100"><i class="fas fa-clock mr-1"></i>7 gün içinde</span></div>
+        </div>
+        <div class="stat-card-neo bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/20">
+            <div class="flex items-start justify-between">
+                <div><p class="text-blue-100 text-sm font-medium mb-1">Veri Toplama</p><p class="stat-value-neo">{{ dashboard_metrics.stok_metrik_count_24h or 0 }}</p></div>
+                <div class="stat-icon-neo"><i class="fas fa-database text-white"></i></div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-white/20"><span class="text-xs text-blue-100"><i class="fas fa-chart-line mr-1"></i>Son 24 saat</span></div>
+        </div>
+        <div class="stat-card-neo bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20">
+            <div class="flex items-start justify-between">
+                <div><p class="text-emerald-100 text-sm font-medium mb-1">Aktif Modeller</p><p class="stat-value-neo">{{ models|length }}</p></div>
+                <div class="stat-icon-neo"><i class="fas fa-brain text-white"></i></div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-white/20"><span class="text-xs text-emerald-100"><i class="fas fa-check-circle mr-1"></i>Çalışıyor</span></div>
+        </div>
+    </div>
 
-            <!-- Çalışma Akışı Görseli -->
-            <div class="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-md">
-                <h4 class="font-semibold text-slate-900 dark:text-white mb-4 text-center">
-                    🤖 4 Aşamalı ML Çalışma Prensibi
-                </h4>
-                <p class="text-sm text-center text-slate-600 dark:text-slate-400 mb-6">
-                    Makine öğrenmesi destekli otomatik anomali tespit ve sürekli öğrenme sistemi
-                </p>
+    <!-- Sistem Nasil Calisir - Modal Butonu -->
+    <div class="neo-card p-4">
+        <button type="button" onclick="openSystemModal()" class="w-full flex items-center justify-between cursor-pointer">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <i class="fas fa-info-circle text-white text-lg"></i>
+                </div>
+                <div class="text-left">
+                    <h3 class="font-semibold text-slate-900 dark:text-white">Sistem Nasıl Çalışır?</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">4 aşamalı ML çalışma prensibi</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                <span class="text-sm font-medium">Detaylar</span>
+                <i class="fas fa-external-link-alt"></i>
+            </div>
+        </button>
+    </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <!-- Aşama 1 -->
-                    <div class="relative">
-                        <div
-                            class="bg-blue-50 dark:bg-blue-950/50 rounded-lg p-4 border-2 border-blue-300 dark:border-blue-500">
-                            <div class="text-center mb-3">
-                                <div
-                                    class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                                    <span class="text-2xl font-bold text-white">1</span>
-                                </div>
-                                <h5 class="font-bold text-blue-700 dark:text-blue-300">VERİ TOPLAMA</h5>
-                            </div>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex items-start">
-                                    <i class="fas fa-clock text-blue-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Her 15 dakikada otomatik</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-box text-blue-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Stok seviyeleri</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-chart-line text-blue-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Tüketim miktarları</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-user-clock text-blue-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Dolum süreleri</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-clipboard-check text-blue-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Zimmet durumları</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2">
-                            <i class="fas fa-arrow-right text-3xl text-blue-400"></i>
-                        </div>
+    <!-- Aktif Uyarilar -->
+    <div class="neo-card p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold text-slate-900 dark:text-white flex items-center gap-2"><i class="fas fa-bell text-red-500"></i>Aktif Uyarılar</h3>
+        </div>
+        <div class="space-y-3" id="alertsContainer">
+            {% if alerts %}
+                {% for alert in alerts[:5] %}
+                <div class="flex items-center gap-4 p-4 rounded-xl {% if alert.seviye == 'kritik' %}bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800{% elif alert.seviye == 'yuksek' %}bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800{% elif alert.seviye == 'orta' %}bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800{% else %}bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800{% endif %}">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center {% if alert.seviye == 'kritik' %}bg-red-500{% elif alert.seviye == 'yuksek' %}bg-orange-500{% elif alert.seviye == 'orta' %}bg-yellow-500{% else %}bg-blue-500{% endif %}">
+                        <i class="fas fa-exclamation text-white"></i>
                     </div>
-
-                    <!-- Aşama 2 -->
-                    <div class="relative">
-                        <div
-                            class="bg-green-50 dark:bg-green-950/50 rounded-lg p-4 border-2 border-green-300 dark:border-green-500">
-                            <div class="text-center mb-3">
-                                <div
-                                    class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                                    <span class="text-2xl font-bold text-white">2</span>
-                                </div>
-                                <h5 class="font-bold text-green-700 dark:text-green-300">ANALİZ & TESPİT</h5>
-                            </div>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex items-start">
-                                    <i class="fas fa-brain text-green-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Z-Score algoritması</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-project-diagram text-green-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Isolation Forest ML</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-search text-green-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Anomali tespiti</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-percentage text-green-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Sapma hesaplama</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-chart-area text-green-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Trend analizi</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2">
-                            <i class="fas fa-arrow-right text-3xl text-green-400"></i>
-                        </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ alert.mesaj }}</p>
+                        <p class="text-xs text-slate-500">{{ alert.olusturma_tarihi.strftime('%d.%m.%Y %H:%M') if alert.olusturma_tarihi else '' }}</p>
                     </div>
-
-                    <!-- Aşama 3 -->
-                    <div class="relative">
-                        <div
-                            class="bg-purple-50 dark:bg-purple-950/50 rounded-lg p-4 border-2 border-purple-300 dark:border-purple-500">
-                            <div class="text-center mb-3">
-                                <div
-                                    class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                                    <span class="text-2xl font-bold text-white">3</span>
-                                </div>
-                                <h5 class="font-bold text-purple-700 dark:text-purple-300">MODEL EĞİTİMİ</h5>
-                            </div>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex items-start">
-                                    <i class="fas fa-graduation-cap text-purple-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Günlük eğitim (00:00)</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-database text-purple-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Son 90 gün verisi</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-cogs text-purple-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Hyperparameter tuning</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-check-circle text-purple-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Accuracy > %85</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-sync text-purple-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Yanlış pozitif öğrenme</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="hidden lg:block absolute top-1/2 -right-4 transform -translate-y-1/2">
-                            <i class="fas fa-arrow-right text-3xl text-purple-400"></i>
-                        </div>
+                    <span class="cyber-badge {% if alert.seviye == 'kritik' %}bg-red-100 text-red-700{% elif alert.seviye == 'yuksek' %}bg-orange-100 text-orange-700{% elif alert.seviye == 'orta' %}bg-yellow-100 text-yellow-700{% else %}bg-blue-100 text-blue-700{% endif %}">{{ alert.seviye|upper }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-8">
+                    <div class="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-check text-2xl text-emerald-500"></i>
                     </div>
+                    <p class="text-slate-600 dark:text-slate-400">Aktif uyarı bulunmuyor</p>
+                    <p class="text-xs text-slate-500 mt-1">Sistem normal çalışıyor</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
 
-                    <!-- Aşama 4 -->
-                    <div>
-                        <div
-                            class="bg-orange-50 dark:bg-orange-950/50 rounded-lg p-4 border-2 border-orange-300 dark:border-orange-500">
-                            <div class="text-center mb-3">
-                                <div
-                                    class="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                                    <span class="text-2xl font-bold text-white">4</span>
-                                </div>
-                                <h5 class="font-bold text-orange-700 dark:text-orange-300">UYARI & AKSİYON</h5>
-                            </div>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex items-start">
-                                    <i class="fas fa-bell text-orange-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Otomatik uyarı</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-layer-group text-orange-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">4 seviye (Düşük-Kritik)</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-lightbulb text-orange-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Aksiyon önerisi</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-envelope text-orange-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Dashboard bildirimi</span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-history text-orange-500 mr-2 mt-1"></i>
-                                    <span class="text-slate-600 dark:text-slate-400">Geçmiş takibi</span>
-                                </div>
-                            </div>
-                        </div>
+<!-- Sistem Modal -->
+<div id="systemModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeSystemModal()"></div>
+    <div class="absolute inset-4 md:inset-8 lg:inset-16 bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+        <div class="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-indigo-500 to-purple-600">
+            <div class="flex items-center gap-3"><i class="fas fa-brain text-2xl text-white"></i><h2 class="text-xl font-bold text-white">ML Sistemi Nasıl Çalışır?</h2></div>
+            <button onclick="closeSystemModal()" class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white"><i class="fas fa-times text-lg"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <!-- 4 Asamali Akis -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="flow-card-neo bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/50 dark:to-blue-900/30 border border-blue-200 dark:border-blue-800">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="flow-number-neo bg-gradient-to-br from-blue-500 to-blue-600">1</div>
+                        <div><h5 class="font-bold text-blue-700 dark:text-blue-300">VERİ TOPLAMA</h5><p class="text-xs text-slate-500">Her 15 dakikada</p></div>
+                    </div>
+                    <div class="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                        <div class="flex items-center gap-2"><i class="fas fa-box text-blue-500 w-4"></i><span>Stok seviyeleri</span></div>
+                        <div class="flex items-center gap-2"><i class="fas fa-chart-line text-blue-500 w-4"></i><span>Tüketim miktarları</span></div>
+                        <div class="flex items-center gap-2"><i class="fas fa-user-clock text-blue-500 w-4"></i><span>Dolum süreleri</span></div>
+                    </div>
+                </div>
+                <div class="flow-card-neo bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/50 dark:to-emerald-900/30 border border-emerald-200 dark:border-emerald-800">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="flow-number-neo bg-gradient-to-br from-emerald-500 to-emerald-600">2</div>
+                        <div><h5 class="font-bold text-emerald-700 dark:text-emerald-300">ANALİZ</h5><p class="text-xs text-slate-500">Gerçek zamanlı</p></div>
+                    </div>
+                    <div class="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                        <div class="flex items-center gap-2"><i class="fas fa-brain text-emerald-500 w-4"></i><span>Z-Score algoritması</span></div>
+                        <div class="flex items-center gap-2"><i class="fas fa-project-diagram text-emerald-500 w-4"></i><span>Isolation Forest ML</span></div>
+                        <div class="flex items-center gap-2"><i class="fas fa-search text-emerald-500 w-4"></i><span>Anomali tespiti</span></div>
+                    </div>
+                </div>
+                <div class="flow-card-neo bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/50 dark:to-purple-900/30 border border-purple-200 dark:border-purple-800">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="flow-number-neo bg-gradient-to-br from-purple-500 to-purple-600">3</div>
+                        <div><h5 class="font-bold text-purple-700 dark:text-purple-300">EĞİTİM</h5><p class="text-xs text-slate-500">Günlük 00:00</p></div>
+                    </div>
+                    <div class="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                        <div class="flex items-center gap-2"><i class="fas fa-graduation-cap text-purple-500 w-4"></i><span>Son 90 gün verisi</span></div>
+                        <div class="flex items-center gap-2"><i class="fas fa-cogs text-purple-500 w-4"></i><span>Hyperparameter tuning</span></div>
+                        <div class="flex items-center gap-2"><i class="fas fa-check-circle text-purple-500 w-4"></i><span>Accuracy > %85</span></div>
+                    </div>
+                </div>
+                <div class="flow-card-neo bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/50 dark:to-amber-900/30 border border-amber-200 dark:border-amber-800">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="flow-number-neo bg-gradient-to-br from-amber-500 to-amber-600">4</div>
+                        <div><h5 class="font-bold text-amber-700 dark:text-amber-300">UYARI</h5><p class="text-xs text-slate-500">Anlık bildirim</p></div>
+                    </div>
+                    <div class="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                        <div class="flex items-center gap-2"><i class="fas fa-bell text-amber-500 w-4"></i><span>Otomatik uyarı</span></div>
+                        <div class="flex items-center gap-2"><i class="fas fa-layer-group text-amber-500 w-4"></i><span>4 seviye (Düşük-Kritik)</span></div>
+                        <div class="flex items-center gap-2"><i class="fas fa-lightbulb text-amber-500 w-4"></i><span>Aksiyon önerisi</span></div>
                     </div>
                 </div>
             </div>
 
-            <!-- İzlenen 5 Metrik -->
-            <div class="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-md">
-                <h4 class="font-semibold text-slate-900 dark:text-white mb-4 text-center">
-                    📈 İzlenen 7 Ana Metrik
-                </h4>
-
-                <div class="grid grid-cols-1 md:grid-cols-7 gap-2">
-                    <div class="bg-red-50 dark:bg-red-950/50 p-2 rounded-lg border-l-4 border-red-500">
-                        <div class="text-center mb-1">
-                            <i class="fas fa-box text-2xl text-red-500"></i>
-                        </div>
-                        <h5 class="text-xs font-bold text-slate-900 dark:text-white text-center">Stok Seviyeleri</h5>
-                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-2">
-                            Depo stok takibi, %30+ sapma tespiti, 7 gün önceden uyarı
-                        </p>
-                    </div>
-
-                    <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border-l-4 border-blue-500">
-                        <div class="text-center mb-2">
-                            <i class="fas fa-chart-line text-3xl text-blue-500"></i>
-                        </div>
-                        <h5 class="text-sm font-bold text-slate-900 dark:text-white text-center">Tüketim Miktarları</h5>
-                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-2">
-                            Oda bazlı minibar kullanımı, %40+ sapma, aşırı tüketim tespiti
-                        </p>
-                    </div>
-
-                    <div class="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg border-l-4 border-purple-500">
-                        <div class="text-center mb-2">
-                            <i class="fas fa-user-clock text-3xl text-purple-500"></i>
-                        </div>
-                        <h5 class="text-sm font-bold text-slate-900 dark:text-white text-center">Dolum Süreleri</h5>
-                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-2">
-                            Personel performansı, %50+ gecikme, operasyonel sorun tespiti
-                        </p>
-                    </div>
-
-                    <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border-l-4 border-green-500">
-                        <div class="text-center mb-2">
-                            <i class="fas fa-clipboard-check text-3xl text-green-500"></i>
-                        </div>
-                        <h5 class="text-sm font-bold text-slate-900 dark:text-white text-center">Zimmet Analizi</h5>
-                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-2">
-                            Fire oranı, kullanım takibi, %20+ fire uyarısı
-                        </p>
-                    </div>
-
-                    <div class="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg border-l-4 border-orange-500">
-                        <div class="text-center mb-2">
-                            <i class="fas fa-door-open text-3xl text-orange-500"></i>
-                        </div>
-                        <h5 class="text-sm font-bold text-slate-900 dark:text-white text-center">Oda Doluluk</h5>
-                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-2">
-                            Yetkisiz kullanım tespiti, doluluk-tüketim korelasyonu
-                        </p>
-                    </div>
-
-                    <div class="bg-pink-50 dark:bg-pink-900/20 p-3 rounded-lg border-l-4 border-pink-500">
-                        <div class="text-center mb-2">
-                            <i class="fas fa-bell text-3xl text-pink-500"></i>
-                        </div>
-                        <h5 class="text-sm font-bold text-slate-900 dark:text-white text-center">Talep Yanıt</h5>
-                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-2">
-                            Misafir talep yanıt süresi, 30+ dakika uyarı
-                        </p>
-                    </div>
-
-                    <div class="bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-lg border-l-4 border-indigo-500">
-                        <div class="text-center mb-2">
-                            <i class="fas fa-qrcode text-3xl text-indigo-500"></i>
-                        </div>
-                        <h5 class="text-sm font-bold text-slate-900 dark:text-white text-center">QR Kullanımı</h5>
-                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-2">
-                            Personel QR okutma sıklığı, sistem kullanım takibi
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- QR & Talep Sistemi Açıklaması -->
-            <div
-                class="bg-gradient-to-r from-pink-50 to-indigo-50 dark:from-pink-900/20 dark:to-indigo-900/20 rounded-lg p-6 shadow-md border-2 border-pink-300 dark:border-pink-700">
-                <h4 class="font-semibold text-slate-900 dark:text-white mb-4 text-center">
-                    🔔 QR Kod & Misafir Talep Sistemi
-                </h4>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-lg">
-                        <div class="flex items-center mb-3">
-                            <div
-                                class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mr-3">
-                                <i class="fas fa-qrcode text-2xl text-indigo-600"></i>
-                            </div>
-                            <div>
-                                <h5 class="font-bold text-slate-900 dark:text-white">QR Kod Sistemi</h5>
-                                <p class="text-xs text-slate-500">Personel Takip & Güvenlik</p>
-                            </div>
-                        </div>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex items-start">
-                                <i class="fas fa-check-circle text-green-500 mr-2 mt-1"></i>
-                                <span class="text-slate-600 dark:text-slate-400">Her oda için benzersiz QR kod</span>
-                            </div>
-                            <div class="flex items-start">
-                                <i class="fas fa-check-circle text-green-500 mr-2 mt-1"></i>
-                                <span class="text-slate-600 dark:text-slate-400">Personel hangi saatte hangi odaya gitti
-                                    (kayıt altında)</span>
-                            </div>
-                            <div class="flex items-start">
-                                <i class="fas fa-check-circle text-green-500 mr-2 mt-1"></i>
-                                <span class="text-slate-600 dark:text-slate-400">Hızlı işlem: QR okut → Oda seç → İşlem
-                                    yap</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-lg">
-                        <div class="flex items-center mb-3">
-                            <div
-                                class="w-12 h-12 bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center mr-3">
-                                <i class="fas fa-bell text-2xl text-pink-600"></i>
-                            </div>
-                            <div>
-                                <h5 class="font-bold text-slate-900 dark:text-white">Misafir Talep Sistemi</h5>
-                                <p class="text-xs text-slate-500">Hızlı Yanıt & Memnuniyet</p>
-                            </div>
-                        </div>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex items-start">
-                                <i class="fas fa-check-circle text-green-500 mr-2 mt-1"></i>
-                                <span class="text-slate-600 dark:text-slate-400">Misafir QR okutup dolum talebi
-                                    gönderir</span>
-                            </div>
-                            <div class="flex items-start">
-                                <i class="fas fa-check-circle text-green-500 mr-2 mt-1"></i>
-                                <span class="text-slate-600 dark:text-slate-400">Kat sorumlusuna anlık bildirim</span>
-                            </div>
-                            <div class="flex items-start">
-                                <i class="fas fa-check-circle text-green-500 mr-2 mt-1"></i>
-                                <span class="text-slate-600 dark:text-slate-400">Yanıt süresi otomatik hesaplanır (30+
-                                    dk uyarı)</span>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Izlenen Metrikler -->
+            <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5">
+                <h4 class="font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2"><i class="fas fa-chart-bar text-indigo-500"></i>İzlenen 7 Ana Metrik</h4>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                    <div class="metric-card-neo border-l-red-500"><i class="fas fa-box text-red-500 text-lg mb-2"></i><p class="text-xs font-semibold text-slate-900 dark:text-white">Stok</p><p class="text-xs text-slate-500 mt-1">%30+ sapma</p></div>
+                    <div class="metric-card-neo border-l-blue-500"><i class="fas fa-chart-line text-blue-500 text-lg mb-2"></i><p class="text-xs font-semibold text-slate-900 dark:text-white">Tüketim</p><p class="text-xs text-slate-500 mt-1">%40+ sapma</p></div>
+                    <div class="metric-card-neo border-l-purple-500"><i class="fas fa-user-clock text-purple-500 text-lg mb-2"></i><p class="text-xs font-semibold text-slate-900 dark:text-white">Dolum</p><p class="text-xs text-slate-500 mt-1">%50+ gecikme</p></div>
+                    <div class="metric-card-neo border-l-emerald-500"><i class="fas fa-clipboard-check text-emerald-500 text-lg mb-2"></i><p class="text-xs font-semibold text-slate-900 dark:text-white">Zimmet</p><p class="text-xs text-slate-500 mt-1">%20+ fire</p></div>
+                    <div class="metric-card-neo border-l-amber-500"><i class="fas fa-door-open text-amber-500 text-lg mb-2"></i><p class="text-xs font-semibold text-slate-900 dark:text-white">Doluluk</p><p class="text-xs text-slate-500 mt-1">Korelasyon</p></div>
+                    <div class="metric-card-neo border-l-pink-500"><i class="fas fa-bell text-pink-500 text-lg mb-2"></i><p class="text-xs font-semibold text-slate-900 dark:text-white">Talep</p><p class="text-xs text-slate-500 mt-1">30+ dk uyarı</p></div>
+                    <div class="metric-card-neo border-l-indigo-500"><i class="fas fa-qrcode text-indigo-500 text-lg mb-2"></i><p class="text-xs font-semibold text-slate-900 dark:text-white">QR</p><p class="text-xs text-slate-500 mt-1">Kullanım</p></div>
                 </div>
             </div>
 
             <!-- Alert Seviyeleri -->
-            <div class="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-md">
-                <h4 class="font-semibold text-slate-900 dark:text-white mb-4 text-center">
-                    🚨 Alert Seviyeleri ve Anlamları
-                </h4>
-
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-center border-2 border-blue-300">
-                        <div class="text-4xl mb-2">🔵</div>
-                        <h5 class="font-bold text-blue-700 dark:text-blue-300 mb-1">DÜŞÜK</h5>
-                        <p class="text-xs text-slate-600 dark:text-slate-400 mb-2">
-                            < %30 sapma</p>
-                                <p class="text-xs font-semibold text-blue-600 dark:text-blue-400">Bilgilendirme</p>
-                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">İzleme yeterli</p>
+            <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5">
+                <h4 class="font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2"><i class="fas fa-exclamation-triangle text-amber-500"></i>Alert Seviyeleri</h4>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="alert-level-card bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800">
+                        <div class="alert-level-icon bg-blue-500"><span class="text-white text-lg">1</span></div>
+                        <p class="font-bold text-blue-700 dark:text-blue-300 text-sm">DÜŞÜK</p>
+                        <p class="text-xs text-slate-500 mt-1">&lt; %30 sapma</p>
+                        <p class="text-xs text-blue-600 dark:text-blue-400 mt-2 font-medium">İzleme yeterli</p>
                     </div>
-
-                    <div
-                        class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg text-center border-2 border-yellow-300">
-                        <div class="text-4xl mb-2">🟡</div>
-                        <h5 class="font-bold text-yellow-700 dark:text-yellow-300 mb-1">ORTA</h5>
-                        <p class="text-xs text-slate-600 dark:text-slate-400 mb-2">%30-50 sapma</p>
-                        <p class="text-xs font-semibold text-yellow-600 dark:text-yellow-400">Dikkat</p>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Yakın takip edin</p>
+                    <div class="alert-level-card bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-800">
+                        <div class="alert-level-icon bg-yellow-500"><span class="text-white text-lg">2</span></div>
+                        <p class="font-bold text-yellow-700 dark:text-yellow-300 text-sm">ORTA</p>
+                        <p class="text-xs text-slate-500 mt-1">%30-50 sapma</p>
+                        <p class="text-xs text-yellow-600 dark:text-yellow-400 mt-2 font-medium">Yakın takip</p>
                     </div>
-
-                    <div
-                        class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg text-center border-2 border-orange-300">
-                        <div class="text-4xl mb-2">🟠</div>
-                        <h5 class="font-bold text-orange-700 dark:text-orange-300 mb-1">YÜKSEK</h5>
-                        <p class="text-xs text-slate-600 dark:text-slate-400 mb-2">%50-80 sapma</p>
-                        <p class="text-xs font-semibold text-orange-600 dark:text-orange-400">Müdahale</p>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Aksiyon alın</p>
+                    <div class="alert-level-card bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800">
+                        <div class="alert-level-icon bg-orange-500"><span class="text-white text-lg">3</span></div>
+                        <p class="font-bold text-orange-700 dark:text-orange-300 text-sm">YÜKSEK</p>
+                        <p class="text-xs text-slate-500 mt-1">%50-80 sapma</p>
+                        <p class="text-xs text-orange-600 dark:text-orange-400 mt-2 font-medium">Aksiyon alın</p>
                     </div>
-
-                    <div class="bg-red-50 dark:bg-red-950/50 p-4 rounded-lg text-center border-2 border-red-400">
-                        <div class="text-4xl mb-2">🔴</div>
-                        <h5 class="font-bold text-red-700 dark:text-red-300 mb-1">KRİTİK</h5>
-                        <p class="text-xs text-slate-600 dark:text-slate-400 mb-2">> %80 sapma</p>
-                        <p class="text-xs font-semibold text-red-600 dark:text-red-400">ACİL!</p>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Hemen müdahale</p>
+                    <div class="alert-level-card bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800">
+                        <div class="alert-level-icon bg-red-500"><span class="text-white text-lg">4</span></div>
+                        <p class="font-bold text-red-700 dark:text-red-300 text-sm">KRİTİK</p>
+                        <p class="text-xs text-slate-500 mt-1">&gt; %80 sapma</p>
+                        <p class="text-xs text-red-600 dark:text-red-400 mt-2 font-medium">ACİL müdahale</p>
                     </div>
                 </div>
-            </div>
-
-            <!-- Faydalar -->
-            <div
-                class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-6 shadow-md border-2 border-green-300 dark:border-green-700">
-                <h4 class="font-semibold text-slate-900 dark:text-white mb-4 text-center">
-                    ✅ Sistem Faydaları
-                </h4>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    <div class="flex items-start bg-white dark:bg-slate-800 p-3 rounded-lg">
-                        <i class="fas fa-check-circle text-green-500 mr-3 mt-1 text-lg"></i>
-                        <div>
-                            <p class="font-semibold text-slate-900 dark:text-white">Stok Krizlerini Önler</p>
-                            <p class="text-xs text-slate-600 dark:text-slate-400">7 gün önceden tespit ve uyarı</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start bg-white dark:bg-slate-800 p-3 rounded-lg">
-                        <i class="fas fa-shield-alt text-green-500 mr-3 mt-1 text-lg"></i>
-                        <div>
-                            <p class="font-semibold text-slate-900 dark:text-white">Güvenlik Kontrolü</p>
-                            <p class="text-xs text-slate-600 dark:text-slate-400">Yetkisiz kullanım ve anomali tespiti
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex items-start bg-white dark:bg-slate-800 p-3 rounded-lg">
-                        <i class="fas fa-chart-line text-green-500 mr-3 mt-1 text-lg"></i>
-                        <div>
-                            <p class="font-semibold text-slate-900 dark:text-white">Performans Optimizasyonu</p>
-                            <p class="text-xs text-slate-600 dark:text-slate-400">Personel verimliliği %30+ artış</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start bg-white dark:bg-slate-800 p-3 rounded-lg">
-                        <i class="fas fa-money-bill-wave text-green-500 mr-3 mt-1 text-lg"></i>
-                        <div>
-                            <p class="font-semibold text-slate-900 dark:text-white">Maliyet Düşürme</p>
-                            <p class="text-xs text-slate-600 dark:text-slate-400">Fire oranı %50 azalma</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start bg-white dark:bg-slate-800 p-3 rounded-lg">
-                        <i class="fas fa-robot text-green-500 mr-3 mt-1 text-lg"></i>
-                        <div>
-                            <p class="font-semibold text-slate-900 dark:text-white">Sürekli Öğrenme</p>
-                            <p class="text-xs text-slate-600 dark:text-slate-400">Kendini geliştiren AI modeli</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start bg-white dark:bg-slate-800 p-3 rounded-lg">
-                        <i class="fas fa-clock text-green-500 mr-3 mt-1 text-lg"></i>
-                        <div>
-                            <p class="font-semibold text-slate-900 dark:text-white">7/24 İzleme</p>
-                            <p class="text-xs text-slate-600 dark:text-slate-400">Otomatik ve kesintisiz</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- Aktif Uyarılar -->
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-                <i class="fas fa-bell mr-2 text-red-500"></i>
-                Aktif Uyarılar
-            </h3>
-            <div class="flex gap-2">
-                <button onclick="filterAlerts('all')"
-                    class="px-3 py-1 text-sm rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                    Tümü
-                </button>
-                <button onclick="filterAlerts('kritik')"
-                    class="px-3 py-1 text-sm rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
-                    Kritik
-                </button>
-                <button onclick="filterAlerts('yuksek')"
-                    class="px-3 py-1 text-sm rounded bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300">
-                    Yüksek
-                </button>
-            </div>
-        </div>
-
-        {% if active_alerts %}
-        <div class="space-y-3" id="alertsContainer">
-            {% for alert in active_alerts %}
-            <div class="alert-item border-l-4 p-4 rounded-r-lg 
-                {% if alert.severity == 'kritik' %}
-                    border-red-500 bg-red-50 dark:bg-red-900/20
-                {% elif alert.severity == 'yuksek' %}
-                    border-orange-500 bg-orange-50 dark:bg-orange-900/20
-                {% elif alert.severity == 'orta' %}
-                    border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20
-                {% else %}
-                    border-blue-500 bg-blue-50 dark:bg-blue-900/20
-                {% endif %}" data-severity="{{ alert.severity }}">
-
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="px-2 py-1 text-xs font-semibold rounded
-                                {% if alert.severity == 'kritik' %}
-                                    bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200
-                                {% elif alert.severity == 'yuksek' %}
-                                    bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200
-                                {% elif alert.severity == 'orta' %}
-                                    bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200
-                                {% else %}
-                                    bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200
-                                {% endif %}">
-                                {{ alert.severity.upper() }}
-                            </span>
-                            <span class="text-xs text-slate-500 dark:text-slate-400">
-                                {{ alert.created_at.strftime('%d.%m.%Y %H:%M') }}
-                            </span>
-                        </div>
-                        <p class="text-sm font-medium text-slate-900 dark:text-white mb-1">
-                            {{ alert.message }}
-                        </p>
-                        <p class="text-xs text-slate-600 dark:text-slate-400">
-                            💡 {{ alert.suggested_action }}
-                        </p>
-                    </div>
-                    <div class="flex gap-2 ml-4">
-                        <button onclick="markAsRead({{ alert.id }})"
-                            class="px-3 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded transition">
-                            <i class="fas fa-check"></i> Okundu
-                        </button>
-                        <button onclick="markAsFalsePositive({{ alert.id }})"
-                            class="px-3 py-1 text-xs bg-slate-500 hover:bg-slate-600 text-white rounded transition">
-                            <i class="fas fa-times"></i> Yanlış
-                        </button>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="text-center py-8 text-slate-500 dark:text-slate-400">
-            <i class="fas fa-check-circle text-4xl mb-2 text-green-500"></i>
-            <p>Aktif uyarı bulunmuyor</p>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Grafikler -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Alert Dağılımı -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-6">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                <i class="fas fa-chart-pie mr-2 text-blue-500"></i>
-                Alert Dağılımı (30 Gün)
-            </h3>
-            <div style="position: relative; height: 300px;">
-                <canvas id="alertDistributionChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Metrik Trendi -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-6">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                <i class="fas fa-chart-line mr-2 text-green-500"></i>
-                Veri Toplama Trendi (7 Gün)
-            </h3>
-            <div style="position: relative; height: 300px;">
-                <canvas id="metricTrendChart"></canvas>
             </div>
         </div>
     </div>
-
-    <!-- Top 10 Listeler -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Kritik Ürünler -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-6">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                <i class="fas fa-exclamation-circle mr-2 text-red-500"></i>
-                Top 10 Kritik Ürünler
-            </h3>
-            {% if dashboard_metrics.kritik_urunler %}
-            <div class="space-y-2">
-                {% for item in dashboard_metrics.kritik_urunler %}
-                <div class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-700 rounded">
-                    <div class="flex-1">
-                        <p class="text-sm font-medium text-slate-900 dark:text-white">{{ item.urun.urun_adi }}</p>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Stok: {{ item.mevcut_stok }}</p>
-                    </div>
-                    <span class="px-2 py-1 text-xs font-bold rounded
-                        {% if item.tahmini_gun <= 2 %}bg-red-100 text-red-700
-                        {% elif item.tahmini_gun <= 4 %}bg-orange-100 text-orange-700
-                        {% else %}bg-yellow-100 text-yellow-700{% endif %}">
-                        {{ item.tahmini_gun }} gün
-                    </span>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <p class="text-center text-slate-500 dark:text-slate-400 py-4 text-sm">Kritik ürün yok</p>
-            {% endif %}
-        </div>
-
-        <!-- Alert İstatistikleri -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-6">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                <i class="fas fa-chart-bar mr-2 text-blue-500"></i>
-                Alert İstatistikleri
-            </h3>
-            {% if alert_stats %}
-            <div class="space-y-3">
-                <div class="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-700 rounded">
-                    <span class="text-sm text-slate-600 dark:text-slate-400">Toplam Alert</span>
-                    <span class="text-lg font-bold text-slate-900 dark:text-white">{{ alert_stats.total_alerts }}</span>
-                </div>
-                <div class="flex justify-between items-center p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
-                    <span class="text-sm text-orange-600 dark:text-orange-400">Okunmamış</span>
-                    <span class="text-lg font-bold text-orange-600 dark:text-orange-400">{{ alert_stats.unread_alerts
-                        }}</span>
-                </div>
-                <div class="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-700 rounded">
-                    <span class="text-sm text-slate-600 dark:text-slate-400">Yanlış Pozitif</span>
-                    <span class="text-lg font-bold text-slate-600 dark:text-slate-400">{{ alert_stats.false_positives
-                        }}</span>
-                </div>
-                <div class="flex justify-between items-center p-2 bg-green-50 dark:bg-green-900/20 rounded">
-                    <span class="text-sm text-green-600 dark:text-green-400">Doğruluk Oranı</span>
-                    <span class="text-lg font-bold text-green-600 dark:text-green-400">
-                        {{ "%.1f"|format(100 - alert_stats.false_positive_rate) }}%
-                    </span>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- Model Performansı -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-6">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                <i class="fas fa-brain mr-2 text-purple-500"></i>
-                Model Performansı
-            </h3>
-            {% if models %}
-            <div class="space-y-2">
-                {% for model in models %}
-                <div class="p-2 bg-slate-50 dark:bg-slate-700 rounded">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-xs font-medium text-slate-900 dark:text-white">
-                            {{ model.metric_type.replace('_', ' ').title() }}
-                        </span>
-                        <span class="text-xs text-slate-500 dark:text-slate-400">
-                            {{ model.model_type }}
-                        </span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-1 text-xs">
-                        <div class="text-center">
-                            <p class="text-slate-500 dark:text-slate-400">Acc</p>
-                            <p class="font-bold text-green-600 dark:text-green-400">
-                                {{ "%.0f"|format(model.accuracy * 100) if model.accuracy else "N/A" }}%
-                            </p>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-slate-500 dark:text-slate-400">Pre</p>
-                            <p class="font-bold text-blue-600 dark:text-blue-400">
-                                {{ "%.0f"|format(model.precision * 100) if model.precision else "N/A" }}%
-                            </p>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-slate-500 dark:text-slate-400">Rec</p>
-                            <p class="font-bold text-purple-600 dark:text-purple-400">
-                                {{ "%.0f"|format(model.recall * 100) if model.recall else "N/A" }}%
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <p class="text-center text-slate-500 dark:text-slate-400 py-4 text-sm">
-                Henüz eğitilmiş model yok
-            </p>
-            {% endif %}
-        </div>
-    </div>
-
 </div>
+{% endblock %}
 
+{% block extra_scripts %}
 <script>
-    // Açıklama toggle
-    document.addEventListener('DOMContentLoaded', function () {
-        const toggleBtn = document.getElementById('toggleBtn');
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', function () {
-                const content = document.getElementById('explanationContent');
-                const icon = document.getElementById('explanationIcon');
+// Modal Fonksiyonlari
+function openSystemModal() {
+    document.getElementById('systemModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+function closeSystemModal() {
+    document.getElementById('systemModal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeSystemModal(); });
 
-                if (content.classList.contains('hidden')) {
-                    content.classList.remove('hidden');
-                    icon.classList.remove('fa-chevron-down');
-                    icon.classList.add('fa-chevron-up');
-                } else {
-                    content.classList.add('hidden');
-                    icon.classList.remove('fa-chevron-up');
-                    icon.classList.add('fa-chevron-down');
-                }
-            });
-        }
+// Toast Bildirimi
+function showToast(message, type = 'info') {
+    const colors = { success: 'bg-emerald-500', error: 'bg-red-500', warning: 'bg-amber-500', info: 'bg-blue-500' };
+    const icons = { success: 'check', error: 'times', warning: 'exclamation', info: 'info' };
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-xl shadow-lg z-50`;
+    toast.innerHTML = `<i class="fas fa-${icons[type]}-circle mr-2"></i>${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
 
-        // Grafikler
-        // Alert Dağılımı Pie Chart
-        {% if alert_stats and alert_stats.severity_distribution %}
-        const alertCtx = document.getElementById('alertDistributionChart');
-        if (alertCtx) {
-            new Chart(alertCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Kritik', 'Yüksek', 'Orta', 'Düşük'],
-                    datasets: [{
-                        data: [
-                            {{ alert_stats.severity_distribution.get('kritik', 0) }},
-                    {{ alert_stats.severity_distribution.get('yuksek', 0) }},
-                        {{ alert_stats.severity_distribution.get('orta', 0) }},
-        { { alert_stats.severity_distribution.get('dusuk', 0) } }
-                    ],
-        backgroundColor: [
-            'rgba(239, 68, 68, 0.8)',
-            'rgba(249, 115, 22, 0.8)',
-            'rgba(234, 179, 8, 0.8)',
-            'rgba(59, 130, 246, 0.8)'
-        ],
-            borderWidth: 2,
-                borderColor: '#fff'
-    }]
-            },
-        options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        }
-    }
+// API Cagrilari
+async function apiCall(endpoint, successMsg) {
+    try {
+        showToast('İşlem başlatılıyor...', 'info');
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
         });
-    }
-    {% endif %}
+        const data = await response.json();
+        if (data.success) { showToast(successMsg, 'success'); }
+        else { showToast(data.error || 'Bir hata oluştu', 'error'); }
+    } catch (error) { showToast('Bağlantı hatası', 'error'); }
+}
 
-    // Metrik Trendi Line Chart
-    const trendCtx = document.getElementById('metricTrendChart');
-    if (trendCtx) {
-        new Chart(trendCtx, {
-            type: 'line',
-            data: {
-                labels: ['6 gün önce', '5 gün önce', '4 gün önce', '3 gün önce', '2 gün önce', 'Dün', 'Bugün'],
-                datasets: [{
-                    label: 'Stok Metrikleri',
-                    data: [42, 45, 44, 46, 43, 44, {{ dashboard_metrics.stok_metrik_count_24h or 0 }}],
-                borderColor: 'rgba(59, 130, 246, 1)',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                tension: 0.4,
-                fill: true
-            }, {
-            label: 'Tüketim Metrikleri',
-            data: [12, 15, 14, 16, 13, 15, {{ dashboard_metrics.tuketim_metrik_count_24h or 0 }}],
-            borderColor: 'rgba(34, 197, 94, 1)',
-            backgroundColor: 'rgba(34, 197, 94, 0.1)',
-            tension: 0.4,
-            fill: true
-                }]
-            },
-    options: {
-        responsive: true,
-            maintainAspectRatio: true,
-                plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        }
-    }
-        });
+function manuelVeriTopla() { apiCall('/ml/api/collect-data', 'Veri toplama başlatıldı'); }
+function manuelAnomaliTespit() { apiCall('/ml/api/run-anomaly-detection', 'Anomali tespiti başlatıldı'); }
+function manuelModelEgitimi() { apiCall('/ml/api/train-models', 'Model eğitimi başlatıldı'); }
+
+// Sayfa yuklendiginde
+document.addEventListener('DOMContentLoaded', function() {
+    const lastUpdate = document.getElementById('lastUpdate');
+    if (lastUpdate) {
+        lastUpdate.textContent = new Date().toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
 });
-
-    // Alert filtreleme
-    function filterAlerts(severity) {
-        const alerts = document.querySelectorAll('.alert-item');
-        alerts.forEach(alert => {
-            if (severity === 'all' || alert.dataset.severity === severity) {
-                alert.style.display = 'block';
-            } else {
-                alert.style.display = 'none';
-            }
-        });
-    }
-
-    // Alert'i okundu işaretle
-    async function markAsRead(alertId) {
-        const result = await showConfirm(
-            'Bu uyarıyı okundu olarak işaretlemek istediğinize emin misiniz?',
-            'Uyarı İşaretle'
-        );
-
-        if (!result.isConfirmed) return;
-
-        showLoading('İşleniyor...');
-
-        try {
-            const response = await fetch(`/ml/api/alerts/${alertId}/read`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
-                }
-            });
-
-            const data = await response.json();
-            hideLoading();
-
-            if (data.success) {
-                await showToast('✅ Uyarı okundu olarak işaretlendi', 'success');
-                location.reload();
-            } else {
-                showToast('❌ Hata: ' + data.error, 'error');
-            }
-        } catch (error) {
-            hideLoading();
-            console.error('Error:', error);
-            showToast('❌ Bağlantı hatası', 'error');
-        }
-    }
-
-    // Yanlış pozitif işaretle
-    async function markAsFalsePositive(alertId) {
-        const result = await showConfirm(
-            'Bu uyarıyı yanlış pozitif olarak işaretlemek istediğinize emin misiniz?\n\nBu, sistemin öğrenmesine yardımcı olacaktır.',
-            'Yanlış Pozitif İşaretle'
-        );
-
-        if (!result.isConfirmed) return;
-
-        showLoading('İşleniyor...');
-
-        try {
-            const response = await fetch(`/ml/api/alerts/${alertId}/false-positive`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
-                }
-            });
-
-            const data = await response.json();
-            hideLoading();
-
-            if (data.success) {
-                await showToast('✅ Yanlış pozitif olarak işaretlendi. Sistem öğrendi!', 'success');
-                location.reload();
-            } else {
-                showToast('❌ Hata: ' + data.error, 'error');
-            }
-        } catch (error) {
-            hideLoading();
-            console.error('Error:', error);
-            showToast('❌ Bağlantı hatası', 'error');
-        }
-    }
-
-    // Manuel Veri Toplama
-    async function manuelVeriTopla() {
-        const result = await showConfirm(
-            'Stok, tüketim ve dolum verilerini toplamak istediğinize emin misiniz?',
-            'Veri Toplama Başlat'
-        );
-
-        if (!result.isConfirmed) return;
-
-        showLoading('Veri toplanıyor...');
-
-        try {
-            const response = await fetch('/ml/api/collect-data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
-                }
-            });
-
-            const data = await response.json();
-            hideLoading();
-
-            if (data.success) {
-                await showToast(`✅ Başarılı! ${data.collected.total} metrik toplandı`, 'success');
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                showToast('❌ Hata: ' + data.error, 'error');
-            }
-        } catch (error) {
-            hideLoading();
-            showToast('❌ Bağlantı hatası: ' + error.message, 'error');
-        }
-    }
-
-    // Manuel Sapma Analizi
-    async function manuelAnomaliTespit() {
-        const result = await showConfirm(
-            'Sapma analizi başlatılsın mı?\n\nBu işlem mevcut verilerdeki anormal davranışları tespit eder.',
-            'Sapma Analizi Başlat'
-        );
-
-        if (!result.isConfirmed) return;
-
-        showLoading('Sapma analizi yapılıyor...');
-
-        try {
-            const response = await fetch('/ml/api/run-anomaly-detection', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
-                }
-            });
-
-            const data = await response.json();
-            hideLoading();
-
-            if (data.success) {
-                if (data.alerts.total > 0) {
-                    await showToast(`⚠️ ${data.alerts.total} sapma tespit edildi!`, 'warning');
-                } else {
-                    await showToast('✅ Sapma tespit edilmedi. Sistem normal çalışıyor.', 'success');
-                }
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                showToast('❌ Hata: ' + data.error, 'error');
-            }
-        } catch (error) {
-            hideLoading();
-            showToast('❌ Bağlantı hatası: ' + error.message, 'error');
-        }
-    }
-
-    // Manuel Model Eğitimi
-    async function manuelModelEgitimi() {
-        const result = await showConfirm(
-            'Model eğitimi başlatılsın mı?\n\n⚠️ Bu işlem 2-5 dakika sürebilir ve sistem performansını etkileyebilir.',
-            'Model Eğitimi Başlat'
-        );
-
-        if (!result.isConfirmed) return;
-
-        showLoading('Model eğitimi yapılıyor... (Bu işlem birkaç dakika sürebilir)');
-
-        try {
-            const response = await fetch('/ml/api/train-models', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
-                }
-            });
-
-            const data = await response.json();
-            hideLoading();
-
-            if (data.success) {
-                await showToast('✅ Model eğitimi başarıyla tamamlandı!', 'success');
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                showToast('❌ Hata: ' + data.error, 'error');
-            }
-        } catch (error) {
-            hideLoading();
-            showToast('❌ Bağlantı hatası: ' + error.message, 'error');
-        }
-    }
 </script>
-
 {% endblock %}
+
+
+

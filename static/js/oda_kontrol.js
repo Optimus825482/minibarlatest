@@ -12,6 +12,7 @@ let zimmetStoklar = {};
 let modalData = {};
 let acikAkordiyonlar = new Set(); // Açık akordiyonları takip et
 let mevcutGorevDetayId = null; // Görev detay ID (görev listesinden gelirse)
+let katDetayGeriDonUrl = null; // Kat detaylarından gelindiyse geri dönüş URL'i
 
 // Sayfa yüklendiğinde
 document.addEventListener("DOMContentLoaded", function () {
@@ -34,6 +35,18 @@ document.addEventListener("DOMContentLoaded", function () {
   const qrOdaId = urlParams.get("oda_id");
   const gorevOdaId = urlParams.get("gorev_oda_id");
   const gorevDetayId = urlParams.get("gorev_detay_id");
+  const fromKatDetay = urlParams.get("from_kat_detay");
+
+  // Kat detaylarından gelindiyse geri dön URL'ini kaydet
+  if (fromKatDetay === "1" && qrKatId) {
+    katDetayGeriDonUrl = "/doluluk/kat-doluluk/" + qrKatId;
+    const katGeriButonu = document.getElementById("kat_gorunumu_geri_butonu");
+    const katGeriLink = document.getElementById("kat_gorunumu_link");
+    if (katGeriButonu && katGeriLink) {
+      katGeriLink.href = katDetayGeriDonUrl;
+      katGeriButonu.classList.remove("hidden");
+    }
+  }
 
   if (qrKatId && qrOdaId) {
     console.log(`🔍 QR parametreleri bulundu: Kat=${qrKatId}, Oda=${qrOdaId}`);
@@ -120,7 +133,13 @@ async function odaSecildi() {
 
 // Oda seçimine geri dön
 function odaSecimineGeriDon() {
-  // Formu göster, geri butonunu gizle
+  // Kat detaylarından gelindiyse oraya geri dön
+  if (katDetayGeriDonUrl) {
+    window.location.href = katDetayGeriDonUrl;
+    return;
+  }
+
+  // Normal akış - formu göster, geri butonunu gizle
   const odaSecimFormu = document.getElementById("oda_secim_formu");
   const geriButonu = document.getElementById("geri_butonu");
   if (odaSecimFormu) odaSecimFormu.classList.remove("hidden");
@@ -841,6 +860,13 @@ async function qrParametreleriIsle(katId, odaId) {
 // Oda setup durumunu yükle (QR için özel fonksiyon)
 async function odaSetupDurumuYukle(odaId) {
   mevcutOdaId = odaId;
+
+  // Oda seçim formunu gizle, geri butonunu göster
+  const odaSecimFormu = document.getElementById("oda_secim_formu");
+  const geriButonu = document.getElementById("geri_butonu");
+  if (odaSecimFormu) odaSecimFormu.classList.add("hidden");
+  if (geriButonu) geriButonu.classList.remove("hidden");
+
   await setupListesiYukle(odaId);
   // Görev işlemleri panelini göster
   gorevIslemleriGoster();

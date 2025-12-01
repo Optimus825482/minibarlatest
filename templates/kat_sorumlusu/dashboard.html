@@ -77,12 +77,57 @@ block content %}
   <!-- Günlük Doluluk Özeti -->
   {% if doluluk_raporu %}
   <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-    <div class="flex items-center justify-between mb-4">
+    <!-- Kat Bazlı Doluluk - ÜST KISIM (Tablet Uyumlu Büyük Kartlar) -->
+    {% if doluluk_raporu.kat_bazli %}
+    <div class="mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+          <i class="fas fa-building mr-2 text-indigo-600 dark:text-indigo-400"></i>
+          Kat Bazlı Doluluk
+        </h3>
+        <span class="text-xs text-slate-500 dark:text-slate-400">Detay için tıklayın</span>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        {% for kat_id, kat_info in doluluk_raporu.kat_bazli.items() %}
+        {% set doluluk_orani = ((kat_info.dolu_oda_sayisi / kat_info.toplam_oda_sayisi) * 100) | int if kat_info.toplam_oda_sayisi > 0 else 0 %}
+        <a href="{{ url_for('doluluk.kat_doluluk_detay', kat_id=kat_info.kat.id) }}"
+          class="group relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-700 dark:to-slate-800 rounded-xl p-4 border-2 border-slate-200 dark:border-slate-600 transition-all duration-200 active:scale-95">
+          <div class="text-center mb-3">
+            <span class="text-lg font-bold text-slate-900 dark:text-white">{{ kat_info.kat.kat_adi }}</span>
+          </div>
+          <div class="flex items-center justify-center mb-2">
+            <div class="relative w-16 h-16">
+              <svg class="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+                <path class="text-slate-200 dark:text-slate-600" stroke="currentColor" stroke-width="3" fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                <path class="{% if doluluk_orani >= 80 %}text-red-500{% elif doluluk_orani >= 50 %}text-yellow-500{% else %}text-green-500{% endif %}" 
+                  stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"
+                  stroke-dasharray="{{ doluluk_orani }}, 100"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+              </svg>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-sm font-bold {% if doluluk_orani >= 80 %}text-red-600 dark:text-red-400{% elif doluluk_orani >= 50 %}text-yellow-600 dark:text-yellow-400{% else %}text-green-600 dark:text-green-400{% endif %}">%{{ doluluk_orani }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-center space-y-1">
+            <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ kat_info.dolu_oda_sayisi }}</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">/ {{ kat_info.toplam_oda_sayisi }} oda</div>
+          </div>
+          <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <i class="fas fa-arrow-right text-indigo-500 text-sm"></i>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="flex items-center justify-between mb-4 pt-4 border-t border-slate-200 dark:border-slate-700">
       <h3 class="text-lg font-medium text-slate-900 dark:text-white">
         <i class="fas fa-calendar-check mr-2 text-slate-600 dark:text-slate-400"></i>
-        {% set gun_adlari = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe',
-        'Cuma', 'Cumartesi', 'Pazar'] %} {{ now().strftime('%d.%m.%y') }} - {{
-        gun_adlari[now().weekday()] }} - Doluluk Durumu
+        {% set gun_adlari = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'] %}
+        {{ now().strftime('%d.%m.%y') }} - {{ gun_adlari[now().weekday()] }} - Doluluk Durumu
       </h3>
       <a href="{{ url_for('doluluk.gunluk_doluluk') }}"
         class="text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
@@ -91,71 +136,26 @@ block content %}
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <!-- Toplam Oda -->
       <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-        <div class="text-slate-500 dark:text-slate-400 text-sm mb-1">
-          Toplam Oda
-        </div>
-        <div class="text-3xl font-bold text-slate-900 dark:text-white">
-          {{ doluluk_raporu.toplam_oda }}
-        </div>
+        <div class="text-slate-500 dark:text-slate-400 text-sm mb-1">Toplam Oda</div>
+        <div class="text-3xl font-bold text-slate-900 dark:text-white">{{ doluluk_raporu.toplam_oda }}</div>
       </div>
-
-      <!-- Dolu Oda -->
       <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
         <div class="text-red-600 dark:text-red-400 text-sm mb-1">Dolu Oda</div>
-        <div class="text-3xl font-bold text-red-700 dark:text-red-300">
-          {{ doluluk_raporu.dolu_oda }}
-        </div>
-        <div class="text-xs text-red-600 dark:text-red-400 mt-1">
-          Doluluk: {{ doluluk_raporu.doluluk_orani }}%
-        </div>
+        <div class="text-3xl font-bold text-red-700 dark:text-red-300">{{ doluluk_raporu.dolu_oda }}</div>
+        <div class="text-xs text-red-600 dark:text-red-400 mt-1">Doluluk: {{ doluluk_raporu.doluluk_orani }}%</div>
       </div>
-
-      <!-- Bugün Giriş -->
       <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
-        <div class="text-green-600 dark:text-green-400 text-sm mb-1">
-          Bugün Giriş
-        </div>
-        <div class="text-3xl font-bold text-green-700 dark:text-green-300">
-          {{ doluluk_raporu.giris_sayisi }}
-        </div>
-        <div class="text-xs text-green-600 dark:text-green-400 mt-1">
-          Misafir
-        </div>
+        <div class="text-green-600 dark:text-green-400 text-sm mb-1">Bugün Giriş</div>
+        <div class="text-3xl font-bold text-green-700 dark:text-green-300">{{ doluluk_raporu.giris_sayisi }}</div>
+        <div class="text-xs text-green-600 dark:text-green-400 mt-1">Misafir</div>
       </div>
-
-      <!-- Bugün Çıkış -->
       <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
-        <div class="text-orange-600 dark:text-orange-400 text-sm mb-1">
-          Bugün Çıkış
-        </div>
-        <div class="text-3xl font-bold text-orange-700 dark:text-orange-300">
-          {{ doluluk_raporu.cikis_sayisi }}
-        </div>
-        <div class="text-xs text-orange-600 dark:text-orange-400 mt-1">
-          Misafir
-        </div>
+        <div class="text-orange-600 dark:text-orange-400 text-sm mb-1">Bugün Çıkış</div>
+        <div class="text-3xl font-bold text-orange-700 dark:text-orange-300">{{ doluluk_raporu.cikis_sayisi }}</div>
+        <div class="text-xs text-orange-600 dark:text-orange-400 mt-1">Misafir</div>
       </div>
     </div>
-
-    <!-- Kat Bazlı Özet -->
-    {% if doluluk_raporu.kat_bazli %}
-    <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-      <div class="text-sm text-slate-600 dark:text-slate-400 mb-2">
-        Kat Bazlı Doluluk (Detay için tıklayın):
-      </div>
-      <div class="flex flex-wrap gap-2">
-        {% for kat_id, kat_info in doluluk_raporu.kat_bazli.items() %}
-        <a href="{{ url_for('doluluk.kat_doluluk_detay', kat_id=kat_info.kat.id) }}"
-          class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded px-3 py-1 text-sm border border-slate-200 dark:border-slate-600 transition-colors cursor-pointer">
-          <span class="font-semibold text-slate-900 dark:text-white">{{ kat_info.kat.kat_adi }}:</span>
-          <span class="text-red-600 dark:text-red-400">{{ kat_info.dolu_oda_sayisi }} dolu</span>
-        </a>
-        {% endfor %}
-      </div>
-    </div>
-    {% endif %}
   </div>
   {% endif %}
 

@@ -348,12 +348,20 @@ class DolulukUyariService:
                     YuklemeGorev.dosya_tipi == 'arrivals'
                 ).first()
                 
+                departures_gorev = YuklemeGorev.query.filter(
+                    YuklemeGorev.otel_id == otel.id,
+                    YuklemeGorev.gorev_tarihi == bugun,
+                    YuklemeGorev.dosya_tipi == 'departures'
+                ).first()
+                
                 # Eksik yüklemeleri belirle
                 eksik_yuklemeler = []
                 if not inhouse_gorev or inhouse_gorev.durum == 'pending':
                     eksik_yuklemeler.append('In House')
                 if not arrivals_gorev or arrivals_gorev.durum == 'pending':
                     eksik_yuklemeler.append('Arrivals')
+                if not departures_gorev or departures_gorev.durum == 'pending':
+                    eksik_yuklemeler.append('Departures')
                 
                 if not eksik_yuklemeler:
                     continue  # Bu otel için yükleme tamamlanmış

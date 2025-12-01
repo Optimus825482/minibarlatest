@@ -153,7 +153,7 @@ Doluluk Detayı{% endblock %} {% block content %}
         </div>
         {% else %}
         <!-- Dolu Oda -->
-        <a href="{{ url_for('doluluk.oda_doluluk_detay', oda_id=oda_detay.oda.id) }}" class="block h-full min-h-[160px] p-4 border-2 rounded-lg transition-colors flex flex-col
+        <a href="{{ url_for('oda_kontrol') }}?kat_id={{ kat.id }}&oda_id={{ oda_detay.oda.id }}&from_kat_detay=1 }}" class="block h-full min-h-[160px] p-4 border-2 rounded-lg transition-colors flex flex-col
           {% if oda_detay.gorev_durumu == 'completed' %} border-green-500 dark:border-green-400 bg-green-200 dark:bg-green-800
           {% elif oda_detay.gorev_durumu == 'dnd_pending' %} border-orange-600 dark:border-orange-400 bg-orange-300 dark:bg-orange-700
           {% elif oda_detay.durum == 'bugun_giris' %} border-emerald-400 dark:border-emerald-500 bg-emerald-100 dark:bg-emerald-900/40
@@ -277,15 +277,19 @@ Doluluk Detayı{% endblock %} {% block content %}
 
     // Kartları filtrele
     cards.forEach((card) => {
+      const cardDurum = card.dataset.durum;
+      let goster = false;
+      
       if (durum === "all") {
-        card.style.display = "block";
+        goster = true;
+      } else if (durum === "dolu") {
+        // Dolu = bos olmayan tüm odalar (dolu, bugun_giris, bugun_cikis)
+        goster = cardDurum !== "bos";
       } else {
-        if (card.dataset.durum === durum) {
-          card.style.display = "block";
-        } else {
-          card.style.display = "none";
-        }
+        goster = cardDurum === durum;
       }
+      
+      card.style.display = goster ? "block" : "none";
     });
   }
 

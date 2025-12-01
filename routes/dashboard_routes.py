@@ -307,12 +307,20 @@ def register_dashboard_routes(app):
                                 YuklemeGorev.dosya_tipi == 'arrivals'
                             ).first()
                             
-                            # Eksik yüklemeleri belirle
+                            departures_gorev = YuklemeGorev.query.filter(
+                                YuklemeGorev.otel_id == otel.id,
+                                db.func.date(YuklemeGorev.gorev_tarihi) == bugun,
+                                YuklemeGorev.dosya_tipi == 'departures'
+                            ).first()
+                            
+                            # Eksik yüklemeleri belirle (In House, Arrivals, Departures)
                             otel_eksikler = []
                             if not inhouse_gorev or inhouse_gorev.durum == 'pending':
                                 otel_eksikler.append('In House')
                             if not arrivals_gorev or arrivals_gorev.durum == 'pending':
                                 otel_eksikler.append('Arrivals')
+                            if not departures_gorev or departures_gorev.durum == 'pending':
+                                otel_eksikler.append('Departures')
                             
                             if otel_eksikler:
                                 # Depo sorumlularını bul
