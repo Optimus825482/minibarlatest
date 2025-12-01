@@ -14,8 +14,8 @@
         <div class="px-4 py-5 sm:p-6">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg leading-6 font-medium text-slate-900">Kullanıcı Yönetimi</h3>
-                <button onclick="yeniKullaniciModal()" 
-                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <button onclick="yeniKullaniciModal()"
+                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
@@ -85,7 +85,8 @@
                                 </span>
                             </td>
                             <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm text-slate-500 hidden lg:table-cell">
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                <span
+                                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                                     🏨 {{ item.otel_bilgisi }}
                                 </span>
                             </td>
@@ -101,23 +102,29 @@
                                     <!-- Düzenle Butonu -->
                                     <a href="{{ url_for('personel_duzenle', personel_id=personel.id) }}"
                                         class="inline-flex items-center px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                                        <svg class="h-3.5 w-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        <svg class="h-3.5 w-3.5 mr-1" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                            </path>
                                         </svg>
                                         Düzenle
                                     </a>
-                                    
+
                                     <!-- Aktif/Pasif Butonu -->
                                     {% if personel.aktif %}
                                     <form method="POST"
                                         action="{{ url_for('personel_pasif_yap', personel_id=personel.id) }}"
                                         class="inline">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                                        <button type="submit" 
+                                        <button type="submit"
                                             class="inline-flex items-center px-3 py-1.5 border border-red-300 dark:border-red-600 rounded-md text-xs font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                                             onclick="return confirm('Bu kullanıcıyı pasif yapmak istediğinizden emin misiniz?')">
-                                            <svg class="h-3.5 w-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                                            <svg class="h-3.5 w-3.5 mr-1" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636">
+                                                </path>
                                             </svg>
                                             Pasif Yap
                                         </button>
@@ -129,8 +136,10 @@
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                                         <button type="submit"
                                             class="inline-flex items-center px-3 py-1.5 border border-green-300 dark:border-green-600 rounded-md text-xs font-medium text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
-                                            <svg class="h-3.5 w-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            <svg class="h-3.5 w-3.5 mr-1" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                             </svg>
                                             Aktif Yap
                                         </button>
@@ -161,165 +170,177 @@
 <!-- Yeni Kullanıcı Ekle Modal -->
 <div id="yeniKullaniciModal" class="modal p-4 sm:p-6 md:p-8">
     <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full mx-auto max-h-[90vh] overflow-y-auto">
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between sticky top-0">
+        <div
+            class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-between sticky top-0">
             <h5 class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center">
-                <svg class="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                <svg class="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
                 </svg>
                 Yeni Kullanıcı Ekle
             </h5>
             <a href="#" rel="modal:close" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
                 </svg>
             </a>
         </div>
         <form id="yeniKullaniciForm">
             <div class="p-6">
-                    <!-- CSRF Token -->
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                    
-                    <!-- Alert Mesajları -->
-                    <div id="yeniKullaniciAlert" style="display:none;"></div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Kullanıcı Adı -->
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Kullanıcı Adı <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" 
-                                   id="yeniKullaniciAdi" 
-                                   class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                                   required 
-                                   placeholder="Kullanıcı adı">
-                        </div>
-                        
-                        <!-- Şifre -->
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Şifre <span class="text-red-500">*</span>
-                            </label>
-                            <input type="password" 
-                                   id="yeniSifre" 
-                                   autocomplete="new-password"
-                                   class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                                   required 
-                                   placeholder="Güçlü şifre">
-                        </div>
-                        
-                        <!-- Ad -->
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Ad <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" 
-                                   id="yeniAd" 
-                                   class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                                   required 
-                                   placeholder="Ad">
-                        </div>
-                        
-                        <!-- Soyad -->
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Soyad <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" 
-                                   id="yeniSoyad" 
-                                   class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                                   required 
-                                   placeholder="Soyad">
-                        </div>
-                        
-                        <!-- Rol -->
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Rol <span class="text-red-500">*</span>
-                            </label>
-                            <select id="yeniRol" 
-                                    class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                                    required>
-                                <option value="">Rol seçiniz...</option>
-                                <option value="sistem_yoneticisi">Sistem Yöneticisi</option>
-                                <option value="depo_sorumlusu">Depo Sorumlusu</option>
-                                <option value="kat_sorumlusu">Kat Sorumlusu</option>
-                            </select>
-                            <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                                <strong>Sistem Yöneticisi:</strong> Tüm sistem yetkileri | 
-                                <strong>Depo Sorumlusu:</strong> Stok yönetimi | 
-                                <strong>Kat Sorumlusu:</strong> Minibar işlemleri
-                            </p>
-                        </div>
-                        
-                        <!-- Otel Seçimi (Depo Sorumlusu için - çoklu) -->
-                        <div id="depoOtelBolumu" class="md:col-span-2" style="display:none;">
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Otel(ler) <span class="text-red-500">*</span>
-                            </label>
-                            {% if oteller %}
-                            <select id="depoOtelIds" 
-                                    multiple
-                                    class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" 
-                                    style="min-height: 120px;">
-                                {% for otel in oteller %}
-                                <option value="{{ otel.id }}" class="py-2 bg-white dark:bg-slate-800">{{ otel.ad }}</option>
-                                {% endfor %}
-                            </select>
-                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">💡 Ctrl tuşu ile birden fazla otel seçebilirsiniz ({{ oteller|length }} otel mevcut)</p>
-                            {% else %}
-                            <p class="text-red-500">⚠️ Henüz otel tanımlanmamış!</p>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- Otel Seçimi (Kat Sorumlusu için - tekli) -->
-                        <div id="katOtelBolumu" class="md:col-span-2" style="display:none;">
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Otel <span class="text-red-500">*</span>
-                            </label>
-                            {% if oteller %}
-                            <select id="katOtelId" 
-                                    class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
-                                <option value="">🏨 Otel seçiniz...</option>
-                                {% for otel in oteller %}
-                                <option value="{{ otel.id }}">{{ otel.ad }}</option>
-                                {% endfor %}
-                            </select>
-                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ oteller|length }} otel mevcut</p>
-                            {% else %}
-                            <p class="text-red-500">⚠️ Henüz otel tanımlanmamış!</p>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- Depo Sorumlusu Seçimi (Kat Sorumlusu için) -->
-                        <div id="depoSorumlusuBolumu" class="md:col-span-2" style="display:none;">
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Bağlı Olduğu Depo Sorumlusu
-                            </label>
-                            <select id="depoSorumlusuId" 
-                                    class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    disabled>
-                                <option value="">👤 Önce otel seçin...</option>
-                            </select>
-                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">💡 Opsiyonel - Kat sorumlusunun zimmet alacağı depo sorumlusu</p>
-                        </div>
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+                <!-- Alert Mesajları -->
+                <div id="yeniKullaniciAlert" style="display:none;"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Kullanıcı Adı -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Kullanıcı Adı <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="yeniKullaniciAdi"
+                            class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            required placeholder="Kullanıcı adı">
+                    </div>
+
+                    <!-- Şifre -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Şifre <span class="text-red-500">*</span>
+                        </label>
+                        <input type="password" id="yeniSifre" autocomplete="new-password"
+                            class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            required placeholder="Güçlü şifre">
+                    </div>
+
+                    <!-- Ad -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Ad <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="yeniAd"
+                            class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            required placeholder="Ad">
+                    </div>
+
+                    <!-- Soyad -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Soyad <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="yeniSoyad"
+                            class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            required placeholder="Soyad">
+                    </div>
+
+                    <!-- Email -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            E-posta Adresi <span class="text-red-500">*</span>
+                        </label>
+                        <input type="email" id="yeniEmail"
+                            class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            required placeholder="ornek@email.com">
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Şifre sıfırlama ve bildirimler için
+                            kullanılacak</p>
+                    </div>
+
+                    <!-- Rol -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Rol <span class="text-red-500">*</span>
+                        </label>
+                        <select id="yeniRol"
+                            class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            required>
+                            <option value="">Rol seçiniz...</option>
+                            <option value="sistem_yoneticisi">Sistem Yöneticisi</option>
+                            <option value="depo_sorumlusu">Depo Sorumlusu</option>
+                            <option value="kat_sorumlusu">Kat Sorumlusu</option>
+                        </select>
+                        <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                            <strong>Sistem Yöneticisi:</strong> Tüm sistem yetkileri |
+                            <strong>Depo Sorumlusu:</strong> Stok yönetimi |
+                            <strong>Kat Sorumlusu:</strong> Minibar işlemleri
+                        </p>
+                    </div>
+
+                    <!-- Otel Seçimi (Depo Sorumlusu için - çoklu) -->
+                    <div id="depoOtelBolumu" class="md:col-span-2" style="display:none;">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Otel(ler) <span class="text-red-500">*</span>
+                        </label>
+                        {% if oteller %}
+                        <select id="depoOtelIds" multiple
+                            class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                            style="min-height: 120px;">
+                            {% for otel in oteller %}
+                            <option value="{{ otel.id }}" class="py-2 bg-white dark:bg-slate-800">{{ otel.ad }}</option>
+                            {% endfor %}
+                        </select>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">💡 Ctrl tuşu ile birden fazla otel
+                            seçebilirsiniz ({{ oteller|length }} otel mevcut)</p>
+                        {% else %}
+                        <p class="text-red-500">⚠️ Henüz otel tanımlanmamış!</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Otel Seçimi (Kat Sorumlusu için - tekli) -->
+                    <div id="katOtelBolumu" class="md:col-span-2" style="display:none;">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Otel <span class="text-red-500">*</span>
+                        </label>
+                        {% if oteller %}
+                        <select id="katOtelId"
+                            class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                            <option value="">🏨 Otel seçiniz...</option>
+                            {% for otel in oteller %}
+                            <option value="{{ otel.id }}">{{ otel.ad }}</option>
+                            {% endfor %}
+                        </select>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ oteller|length }} otel mevcut</p>
+                        {% else %}
+                        <p class="text-red-500">⚠️ Henüz otel tanımlanmamış!</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Depo Sorumlusu Seçimi (Kat Sorumlusu için) -->
+                    <div id="depoSorumlusuBolumu" class="md:col-span-2" style="display:none;">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            Bağlı Olduğu Depo Sorumlusu
+                        </label>
+                        <select id="depoSorumlusuId"
+                            class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled>
+                            <option value="">👤 Önce otel seçin...</option>
+                        </select>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">💡 Opsiyonel - Kat sorumlusunun
+                            zimmet alacağı depo sorumlusu</p>
                     </div>
                 </div>
-                <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3 sticky bottom-0">
-                    <a href="#" rel="modal:close" class="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-600">
-                        İptal
-                    </a>
-                    <button type="submit" 
-                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
-                        <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
-                        </svg>
-                        Kullanıcı Ekle
-                    </button>
-                </div>
-            </form>
-        </div>
+            </div>
+            <div
+                class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex justify-end gap-3 sticky bottom-0">
+                <a href="#" rel="modal:close"
+                    class="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-600">
+                    İptal
+                </a>
+                <button type="submit"
+                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z">
+                        </path>
+                    </svg>
+                    Kullanıcı Ekle
+                </button>
+            </div>
+        </form>
     </div>
+</div>
 </div>
 
 {% endblock %}
@@ -331,56 +352,56 @@
         // Formu sıfırla
         const form = document.getElementById('yeniKullaniciForm');
         if (form) form.reset();
-        
+
         $('#yeniKullaniciAlert').hide();
         $('#depoOtelBolumu').hide();
         $('#katOtelBolumu').hide();
         $('#depoSorumlusuBolumu').hide();
-        
+
         // Modal içindeki TÜM Choices.js instance'larını temizle
         if (window.choicesInstances) {
-            ['yeniRol', 'depoOtelIds', 'katOtelId', 'depoSorumlusuId'].forEach(function(id) {
+            ['yeniRol', 'depoOtelIds', 'katOtelId', 'depoSorumlusuId'].forEach(function (id) {
                 if (window.choicesInstances[id]) {
                     try {
                         window.choicesInstances[id].destroy();
-                    } catch(e) {}
+                    } catch (e) { }
                     delete window.choicesInstances[id];
                 }
             });
         }
-        
+
         // Modal'ı göster
         $('#yeniKullaniciModal').modal({
             fadeDuration: 200,
             fadeDelay: 0.1
         });
     }
-    
+
     // Modal alert gösterme fonksiyonu - Global scope'ta tanımla
     function showModalAlert(alertId, type, message) {
         const alertDiv = $(`#${alertId}`);
-        const alertClass = type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 
-                          type === 'error' ? 'bg-red-50 border-red-200 text-red-800' : 
-                          'bg-blue-50 border-blue-200 text-blue-800';
-        
+        const alertClass = type === 'success' ? 'bg-green-50 border-green-200 text-green-800' :
+            type === 'error' ? 'bg-red-50 border-red-200 text-red-800' :
+                'bg-blue-50 border-blue-200 text-blue-800';
+
         alertDiv.html(`
             <div class="p-4 rounded-md border ${alertClass}">
                 <p class="text-sm font-medium">${message}</p>
             </div>
         `).show();
     }
-    
+
     // Rol değiştiğinde ilgili alanları göster/gizle
-    $(document).ready(function() {
+    $(document).ready(function () {
         // Rol seçimi için event listener
-        $('#yeniRol').on('change', function() {
+        $('#yeniRol').on('change', function () {
             const rol = $(this).val();
-            
+
             // Tüm rol-spesifik alanları gizle
             $('#depoOtelBolumu').hide();
             $('#katOtelBolumu').hide();
             $('#depoSorumlusuBolumu').hide();
-            
+
             // Sistem yöneticisi için hiçbir ek alan gösterme
             if (rol === 'sistem_yoneticisi') {
                 // Hiçbir şey yapma
@@ -391,50 +412,50 @@
                 $('#depoSorumlusuBolumu').show();
             }
         });
-        
+
         // Kat sorumlusu için otel seçildiğinde depo sorumlularını yükle
         const katOtelSelect = document.getElementById('katOtelId');
         if (katOtelSelect) {
-            katOtelSelect.addEventListener('change', function(e) {
+            katOtelSelect.addEventListener('change', function (e) {
                 const otelId = e.target.value;
                 const depoSelect = document.getElementById('depoSorumlusuId');
-                
+
                 if (!otelId) {
                     depoSelect.innerHTML = '<option value="">👤 Önce otel seçin...</option>';
                     depoSelect.disabled = true;
                     return;
                 }
-                
+
                 // Depo sorumlularını yükle
                 depoSelect.innerHTML = '<option value="">⏳ Yükleniyor...</option>';
                 depoSelect.disabled = true;
-                
+
                 $.ajax({
                     url: `/api/oteller/${otelId}/depo-sorumluları`,
                     method: 'GET',
-                    success: function(response) {
+                    success: function (response) {
                         depoSelect.innerHTML = '<option value="">👤 Seçiniz (Opsiyonel)</option>';
-                        
+
                         if (response.length === 0) {
                             depoSelect.innerHTML += '<option value="" disabled>⚠️ Bu otelde depo sorumlusu yok</option>';
                         } else {
-                            response.forEach(function(depo) {
+                            response.forEach(function (depo) {
                                 depoSelect.innerHTML += `<option value="${depo.id}">👤 ${depo.ad} ${depo.soyad}</option>`;
                             });
                         }
                         depoSelect.disabled = false;
                     },
-                    error: function() {
+                    error: function () {
                         depoSelect.innerHTML = '<option value="">❌ Hata oluştu</option>';
                     }
                 });
             });
         }
-        
+
         // Form submit
-        $('#yeniKullaniciForm').on('submit', function(e) {
+        $('#yeniKullaniciForm').on('submit', function (e) {
             e.preventDefault();
-            
+
             const rol = $('#yeniRol').val();
             const formData = {
                 csrf_token: $('input[name="csrf_token"]').val(),
@@ -442,15 +463,23 @@
                 sifre: $('#yeniSifre').val(),
                 ad: $('#yeniAd').val().trim(),
                 soyad: $('#yeniSoyad').val().trim(),
+                email: $('#yeniEmail').val().trim(),
                 rol: rol
             };
-            
+
             // Rol bazlı validasyon
-            if (!formData.kullanici_adi || !formData.sifre || !formData.ad || !formData.soyad || !formData.rol) {
+            if (!formData.kullanici_adi || !formData.sifre || !formData.ad || !formData.soyad || !formData.email || !formData.rol) {
                 showModalAlert('yeniKullaniciAlert', 'error', 'Lütfen zorunlu alanları doldurun');
                 return;
             }
-            
+
+            // Email format kontrolü
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(formData.email)) {
+                showModalAlert('yeniKullaniciAlert', 'error', 'Geçerli bir e-posta adresi girin');
+                return;
+            }
+
             // Depo sorumlusu için otel kontrolü
             if (rol === 'depo_sorumlusu') {
                 const depoOtelSelect = document.getElementById('depoOtelIds');
@@ -461,7 +490,7 @@
                 }
                 formData.otel_ids = selectedOtels;
             }
-            
+
             // Kat sorumlusu için otel kontrolü
             if (rol === 'kat_sorumlusu') {
                 const otelId = document.getElementById('katOtelId').value;
@@ -470,14 +499,14 @@
                     return;
                 }
                 formData.otel_id = otelId;
-                
+
                 // Depo sorumlusu opsiyonel
                 const depoSorumlusuId = $('#depoSorumlusuId').val();
                 if (depoSorumlusuId) {
                     formData.depo_sorumlusu_id = depoSorumlusuId;
                 }
             }
-            
+
             // AJAX ile kaydet
             $.ajax({
                 url: '/personel-tanimla',
@@ -487,26 +516,26 @@
                     'X-CSRFToken': formData.csrf_token
                 },
                 data: JSON.stringify(formData),
-                success: function(response) {
+                success: function (response) {
                     showModalAlert('yeniKullaniciAlert', 'success', 'Kullanıcı başarıyla eklendi');
                     setTimeout(() => {
                         $('#yeniKullaniciModal').modal('hide');
                         location.reload();
                     }, 1500);
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     const message = xhr.responseJSON?.message || 'Kullanıcı eklenirken hata oluştu';
                     showModalAlert('yeniKullaniciAlert', 'error', message);
                 }
             });
         });
     });
-    
+
     // Personel tablosu için gelişmiş arama ve filtreleme
-    document.addEventListener( 'DOMContentLoaded', function () {
-        const personelTable = document.getElementById( 'personel-table' );
-        if ( personelTable ) {
-            window.tableSearchFilter_personel = new TableSearchFilter( 'personel-table', {
+    document.addEventListener('DOMContentLoaded', function () {
+        const personelTable = document.getElementById('personel-table');
+        if (personelTable) {
+            window.tableSearchFilter_personel = new TableSearchFilter('personel-table', {
                 searchPlaceholder: 'Ad, soyad veya kullanıcı adı ara...',
                 defaultItemsPerPage: 25,
                 filters: [

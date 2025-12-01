@@ -55,20 +55,31 @@ def register_admin_routes(app):
                 data = request.get_json()
                 
                 # Validasyon
-                required_fields = ['kullanici_adi', 'sifre', 'ad', 'soyad', 'rol']
+                required_fields = ['kullanici_adi', 'sifre', 'ad', 'soyad', 'email', 'rol']
                 for field in required_fields:
                     if not data.get(field):
                         return jsonify({'success': False, 'message': f'{field} zorunludur'}), 400
                 
+                # Email format kontrolü
+                import re
+                email_regex = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+                if not re.match(email_regex, data['email']):
+                    return jsonify({'success': False, 'message': 'Geçerli bir e-posta adresi girin'}), 400
+                
                 # Kullanıcı adı kontrolü
                 if Kullanici.query.filter_by(kullanici_adi=data['kullanici_adi']).first():
                     return jsonify({'success': False, 'message': 'Bu kullanıcı adı zaten kullanılıyor'}), 400
+                
+                # Email kontrolü
+                if Kullanici.query.filter_by(email=data['email']).first():
+                    return jsonify({'success': False, 'message': 'Bu e-posta adresi zaten kullanılıyor'}), 400
                 
                 # Yeni kullanıcı oluştur
                 yeni_kullanici = Kullanici(
                     kullanici_adi=data['kullanici_adi'],
                     ad=data['ad'],
                     soyad=data['soyad'],
+                    email=data['email'],
                     rol=data['rol'],
                     aktif=True
                 )
