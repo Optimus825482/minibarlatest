@@ -278,6 +278,63 @@ def register_dashboard_routes(app):
             except Exception as e:
                 print(f"Sistem yöneticisi yükleme görev özeti hatası: {str(e)}")
             
+            # Eksik Doluluk Yüklemeleri Kontrolü (Sistem Yöneticisi için - Saat 10:00 sonrası)
+            eksik_doluluk_yuklemeleri = []
+            try:
+                import pytz
+                from models import YuklemeGorev, KullaniciOtel
+                
+                kktc_tz = pytz.timezone('Europe/Nicosia')
+                now_kktc = datetime.now(kktc_tz)
+                
+                # Saat 10:00'dan sonra mı kontrol et
+                if now_kktc.hour >= 10:
+                    kullanici_otelleri = get_kullanici_otelleri()
+                    otel_ids = [o.id for o in kullanici_otelleri] if kullanici_otelleri else []
+                    
+                    if otel_ids:
+                        for otel in kullanici_otelleri:
+                            # Bu otel için bugünkü yükleme görevlerini kontrol et
+                            inhouse_gorev = YuklemeGorev.query.filter(
+                                YuklemeGorev.otel_id == otel.id,
+                                db.func.date(YuklemeGorev.gorev_tarihi) == bugun,
+                                YuklemeGorev.dosya_tipi == 'inhouse'
+                            ).first()
+                            
+                            arrivals_gorev = YuklemeGorev.query.filter(
+                                YuklemeGorev.otel_id == otel.id,
+                                db.func.date(YuklemeGorev.gorev_tarihi) == bugun,
+                                YuklemeGorev.dosya_tipi == 'arrivals'
+                            ).first()
+                            
+                            # Eksik yüklemeleri belirle
+                            otel_eksikler = []
+                            if not inhouse_gorev or inhouse_gorev.durum == 'pending':
+                                otel_eksikler.append('In House')
+                            if not arrivals_gorev or arrivals_gorev.durum == 'pending':
+                                otel_eksikler.append('Arrivals')
+                            
+                            if otel_eksikler:
+                                # Depo sorumlularını bul
+                                depo_sorumlu_atamalari = KullaniciOtel.query.join(Kullanici).filter(
+                                    KullaniciOtel.otel_id == otel.id,
+                                    Kullanici.rol == 'depo_sorumlusu',
+                                    Kullanici.aktif == True
+                                ).all()
+                                
+                                depo_sorumlulari = [
+                                    f"{a.kullanici.ad} {a.kullanici.soyad}" for a in depo_sorumlu_atamalari
+                                ]
+                                
+                                eksik_doluluk_yuklemeleri.append({
+                                    'otel_id': otel.id,
+                                    'otel_ad': otel.ad,
+                                    'eksik_dosyalar': otel_eksikler,
+                                    'depo_sorumlulari': depo_sorumlulari
+                                })
+            except Exception as e:
+                print(f"Eksik doluluk yüklemeleri kontrolü hatası: {str(e)}")
+            
             # Kat Sorumlusu Görevleri Özeti (Sistem Yöneticisi için)
             kat_sorumlusu_gorev_ozeti = None
             try:
@@ -349,7 +406,8 @@ def register_dashboard_routes(app):
                                  bildirim_sayilari=bildirim_sayilari,
                                  istatistikler=istatistikler,
                                  yukleme_gorev_ozeti=yukleme_gorev_ozeti,
-                                 kat_sorumlusu_gorev_ozeti=kat_sorumlusu_gorev_ozeti)
+                                 kat_sorumlusu_gorev_ozeti=kat_sorumlusu_gorev_ozeti,
+                                 eksik_doluluk_yuklemeleri=eksik_doluluk_yuklemeleri)
         except Exception as e:
             print(f"Sistem yöneticisi dashboard hatası: {str(e)}")
             import traceback
@@ -384,7 +442,8 @@ def register_dashboard_routes(app):
                                  bildirim_sayilari={'kritik_stok': 0, 'geciken_siparis': 0, 'onay_bekleyen': 0, 'toplam': 0},
                                  istatistikler={'onaylandi': 0},
                                  yukleme_gorev_ozeti=None,
-                                 kat_sorumlusu_gorev_ozeti=None)
+                                 kat_sorumlusu_gorev_ozeti=None,
+                                 eksik_doluluk_yuklemeleri=[])
 
     
     @app.route('/depo')

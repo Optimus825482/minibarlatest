@@ -182,6 +182,80 @@ def pool_statistics():
         }), 500
 
 
+@health_bp.route('/health/celery', methods=['GET'])
+def celery_health():
+    """
+    Celery worker ve beat durumunu kontrol et
+    Public endpoint - login gerektirmez
+    """
+    try:
+        from celery_app import celery
+        
+        result = {
+            'status': 'unknown',
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'workers': [],
+            'beat': {'status': 'unknown'},
+            'broker': {'status': 'unknown'}
+        }
+        
+        # Broker bağlantısını kontrol et
+        try:
+            celery.control.ping(timeout=2)
+            result['broker']['status'] = 'connected'
+        except Exception as e:
+            result['broker']['status'] = 'disconnected'
+            result['broker']['error'] = str(e)
+        
+        # Worker durumunu kontrol et
+        try:
+            inspect = celery.control.inspect(timeout=3)
+            active_workers = inspect.active()
+            
+            if active_workers:
+                result['workers'] = list(active_workers.keys())
+                result['worker_count'] = len(active_workers)
+                result['status'] = 'healthy'
+            else:
+                result['worker_count'] = 0
+                result['status'] = 'no_workers'
+        except Exception as e:
+            result['status'] = 'error'
+            result['error'] = str(e)
+        
+        # Zamanlanmış görevleri kontrol et (Beat çalışıyor mu?)
+        try:
+            inspect = celery.control.inspect(timeout=3)
+            scheduled = inspect.scheduled()
+            
+            if scheduled:
+                result['beat']['status'] = 'active'
+                result['beat']['scheduled_tasks'] = sum(len(tasks) for tasks in scheduled.values())
+            else:
+                # Beat çalışıyor olabilir ama henüz zamanlanmış görev yok
+                result['beat']['status'] = 'no_scheduled_tasks'
+        except Exception as e:
+            result['beat']['error'] = str(e)
+        
+        # Genel durum belirleme
+        if result['broker']['status'] == 'connected' and result.get('worker_count', 0) > 0:
+            result['status'] = 'healthy'
+        elif result['broker']['status'] == 'connected':
+            result['status'] = 'degraded'  # Broker var ama worker yok
+        else:
+            result['status'] = 'unhealthy'
+        
+        status_code = 200 if result['status'] == 'healthy' else 503
+        return jsonify(result), status_code
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e),
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        }), 500
+
+
 @health_bp.route('/health/routes', methods=['GET'])
 def list_routes():
     """

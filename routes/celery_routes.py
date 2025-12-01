@@ -368,6 +368,128 @@ def get_active_tasks():
         }), 500
 
 
+@celery_bp.route('/task/doluluk-uyari', methods=['POST'])
+@login_required
+@role_required(['sistem_yoneticisi', 'admin'])
+def start_doluluk_uyari_task():
+    """
+    Doluluk yükleme uyarı kontrolü task'ını manuel başlat
+    Depo sorumlularına hatırlatıcı mail, sistem yöneticilerine bildirim maili gönderir
+    
+    Returns:
+        {
+            "success": bool,
+            "task_id": str,
+            "message": str
+        }
+    """
+    try:
+        from celery_app import doluluk_yukleme_uyari_kontrolu_task
+        
+        # Task'ı başlat
+        task = doluluk_yukleme_uyari_kontrolu_task.delay()
+        
+        logger.info(f"Doluluk uyarı kontrolü task başlatıldı - Task ID: {task.id}")
+        
+        return jsonify({
+            'success': True,
+            'task_id': task.id,
+            'message': 'Doluluk uyarı kontrolü başlatıldı. Eksik yüklemeler için mail gönderilecek.'
+        }), 202
+        
+    except Exception as e:
+        logger.error(f"Doluluk uyarı task başlatma hatası: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Hata: {str(e)}'
+        }), 500
+
+
+@celery_bp.route('/task/doluluk-uyari/check', methods=['GET'])
+@login_required
+@role_required(['sistem_yoneticisi', 'admin'])
+def check_doluluk_uyari_status():
+    """
+    Bugünkü doluluk yükleme durumunu kontrol et (mail göndermeden)
+    
+    Returns:
+        {
+            "success": bool,
+            "eksik_yuklemeler": list,
+            "toplam_otel": int,
+            "eksik_otel_sayisi": int
+        }
+    """
+    try:
+        from models import db, Otel, Kullanici, KullaniciOtel, YuklemeGorev
+        from datetime import date
+        
+        bugun = date.today()
+        eksik_yuklemeler = []
+        
+        # Tüm aktif otelleri al
+        oteller = Otel.query.filter_by(aktif=True).all()
+        
+        for otel in oteller:
+            # Bu otel için bugünkü yükleme görevlerini kontrol et
+            inhouse_gorev = YuklemeGorev.query.filter(
+                YuklemeGorev.otel_id == otel.id,
+                YuklemeGorev.gorev_tarihi == bugun,
+                YuklemeGorev.dosya_tipi == 'inhouse'
+            ).first()
+            
+            arrivals_gorev = YuklemeGorev.query.filter(
+                YuklemeGorev.otel_id == otel.id,
+                YuklemeGorev.gorev_tarihi == bugun,
+                YuklemeGorev.dosya_tipi == 'arrivals'
+            ).first()
+            
+            # Eksik yüklemeleri belirle
+            otel_eksikler = []
+            if not inhouse_gorev or inhouse_gorev.durum == 'pending':
+                otel_eksikler.append('In House')
+            if not arrivals_gorev or arrivals_gorev.durum == 'pending':
+                otel_eksikler.append('Arrivals')
+            
+            if otel_eksikler:
+                # Depo sorumlularını bul
+                depo_sorumlu_atamalari = KullaniciOtel.query.join(Kullanici).filter(
+                    KullaniciOtel.otel_id == otel.id,
+                    Kullanici.rol == 'depo_sorumlusu',
+                    Kullanici.aktif == True
+                ).all()
+                
+                depo_sorumlulari = [
+                    {
+                        'ad': a.kullanici.ad,
+                        'soyad': a.kullanici.soyad,
+                        'email': a.kullanici.email
+                    } for a in depo_sorumlu_atamalari
+                ]
+                
+                eksik_yuklemeler.append({
+                    'otel_id': otel.id,
+                    'otel_ad': otel.ad,
+                    'eksik_dosyalar': otel_eksikler,
+                    'depo_sorumlulari': depo_sorumlulari
+                })
+        
+        return jsonify({
+            'success': True,
+            'tarih': bugun.strftime('%d.%m.%Y'),
+            'toplam_otel': len(oteller),
+            'eksik_otel_sayisi': len(eksik_yuklemeler),
+            'eksik_yuklemeler': eksik_yuklemeler
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Doluluk durum kontrolü hatası: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Hata: {str(e)}'
+        }), 500
+
+
 @celery_bp.route('/tasks/scheduled', methods=['GET'])
 @login_required
 @role_required(['sistem_yoneticisi', 'admin'])

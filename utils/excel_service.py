@@ -1,22 +1,35 @@
 """
 Excel İşleme Servisi
 Otel doluluk Excel dosyalarını işler ve veritabanına kaydeder
+
+Desteklenen formatlar:
+1. Standart format: Header 1. satırda (Room no, Arrival, Departure, Adult)
+2. P4001 formatı (Depo yöneticisi): Header 8. satırda (R.No, Arrival, Departure, Adl)
 """
 
 import openpyxl
+import pandas as pd
 from datetime import datetime, date, time
 from models import db, MisafirKayit, DosyaYukleme, Oda, Kat
 from sqlalchemy import and_
 import traceback
+import re
 
 
 class ExcelProcessingService:
     """Excel dosyalarını işleyen servis sınıfı"""
     
-    # Beklenen sütun adları
+    # Beklenen sütun adları - Standart format
     IN_HOUSE_COLUMNS = ['Name', 'Room no', 'R.Type', 'Arrival', 'Departure', 'Adult']
     ARRIVALS_COLUMNS = ['Name', 'Room no', 'R.Type', 'Hsk.St.', 'Arr.Time', 'Arrival', 'Departure', 'Adult']
     DEPARTURES_COLUMNS = ['Name', 'Room no', 'R.Type', 'Arrival', 'Departure', 'Dep.Time', 'Source', 'Adults']
+    
+    # P4001 formatı (Depo yöneticisi) - dosya tipi algılama pattern'leri
+    P4001_TYPE_PATTERNS = {
+        'arrivals': r'Arrival\s*:\s*(\d{1,2}\.\d{1,2}\.\d{4})',
+        'departures': r'Departure\s*(?:date)?\s*:\s*(\d{1,2}\.\d{1,2}\.\d{4})',
+        'in_house': r'Date:\s*(\d{1,2}\.\d{1,2}\.\d{4})'
+    }
     
     @staticmethod
     def detect_file_type(headers):
@@ -58,6 +71,10 @@ class ExcelProcessingService:
         """
         Excel dosyasını işler ve veritabanına kaydeder
         
+        Desteklenen formatlar:
+        1. Standart format: Header 1. satırda
+        2. P4001 formatı (Depo yöneticisi): Header 8. satırda
+        
         Args:
             file_path: Dosya yolu
             islem_kodu: Benzersiz işlem kodu
@@ -75,7 +92,16 @@ class ExcelProcessingService:
             }
         """
         try:
-            # Excel dosyasını aç
+            # Önce P4001 (depo yöneticisi) formatını kontrol et
+            p4001_info = ExcelProcessingService._detect_p4001_format(file_path)
+            
+            if p4001_info.get('is_p4001'):
+                print(f"📋 P4001 formatı tespit edildi, özel işleme başlıyor...")
+                return ExcelProcessingService._process_p4001_file(
+                    file_path, islem_kodu, user_id, otel_id, p4001_info
+                )
+            
+            # Standart format - Excel dosyasını aç
             workbook = openpyxl.load_workbook(file_path, data_only=True)
             sheet = workbook.active
             
@@ -491,3 +517,307 @@ class ExcelProcessingService:
             
         except Exception as e:
             print(f"⚠️ Görev oluşturma hatası: {str(e)}")
+
+    # ==================== P4001 FORMAT (DEPO YÖNETİCİSİ) ====================
+    
+    @staticmethod
+    def _detect_p4001_format(file_path):
+        """
+        P4001 (Depo yöneticisi) formatını algılar
+        
+        P4001 formatı özellikleri:
+        - İlk satırda otel adı (örn: MERIT ROYAL DIAMOND)
+        - 2. satırda rapor tipi (P4001 Guests in house, P4001 Arrivals)
+        - 8. satırda (index 7) header: R.No, R.Typ, Arrival, Departure, Adl
+        - 9. satırda (index 8) tarih bilgisi: "Arrival :01.12.2025", "Date: 01.12.2025"
+        - 10. satırdan (index 9) itibaren veri
+        - Aralarda "(continued)" satırları olabilir
+        
+        Returns:
+            dict: {'is_p4001': bool, 'dosya_tipi': str, 'rapor_tarihi': date, ...}
+        """
+        try:
+            # pandas ile oku (xls desteği için)
+            df = pd.read_excel(file_path, header=None, nrows=15)
+            
+            if len(df) < 10:
+                return {'is_p4001': False}
+            
+            # Satır 8'de (index 7) P4001 header'ları var mı kontrol et
+            row7 = df.iloc[7].tolist()
+            row7_str = [str(x).strip() if pd.notna(x) else '' for x in row7]
+            
+            # P4001 header kontrolü - R.No ve Adl sütunları var mı?
+            has_rno = 'R.No' in row7_str
+            has_adl = 'Adl' in row7_str
+            
+            if not (has_rno and has_adl):
+                return {'is_p4001': False}
+            
+            # Satır 9'dan (index 8) dosya tipini ve rapor tarihini al
+            row8 = df.iloc[8].tolist()
+            row8_str = ' '.join([str(x) for x in row8 if pd.notna(x)])
+            
+            dosya_tipi = None
+            rapor_tarihi = None
+            
+            for tip, pattern in ExcelProcessingService.P4001_TYPE_PATTERNS.items():
+                match = re.search(pattern, row8_str, re.IGNORECASE)
+                if match:
+                    dosya_tipi = tip
+                    tarih_str = match.group(1)
+                    try:
+                        rapor_tarihi = datetime.strptime(tarih_str, '%d.%m.%Y').date()
+                    except ValueError:
+                        pass
+                    break
+            
+            print(f"📋 P4001 Format algılandı: {dosya_tipi}, Rapor tarihi: {rapor_tarihi}")
+            
+            return {
+                'is_p4001': True,
+                'dosya_tipi': dosya_tipi or 'in_house',
+                'rapor_tarihi': rapor_tarihi,
+                'header_row': 7,
+                'data_start_row': 9
+            }
+            
+        except Exception as e:
+            print(f"P4001 format algılama hatası: {str(e)}")
+            return {'is_p4001': False}
+    
+    @staticmethod
+    def _parse_p4001_date(date_value, rapor_tarihi=None):
+        """
+        P4001 formatındaki tarihi parse eder
+        
+        Formatlar: "1.12. 8:59:", "24.11 03:16", "3.12. 2:00:"
+        
+        Args:
+            date_value: Tarih değeri
+            rapor_tarihi: Rapor tarihi (yıl için referans)
+            
+        Returns:
+            date: Parse edilmiş tarih veya None
+        """
+        if not date_value or pd.isna(date_value):
+            return None
+        
+        # Zaten date/datetime ise
+        if isinstance(date_value, date):
+            return date_value if not isinstance(date_value, datetime) else date_value.date()
+        
+        if isinstance(date_value, datetime):
+            return date_value.date()
+        
+        # String ise parse et
+        date_str = str(date_value).strip()
+        
+        # Yılı belirle
+        yil = rapor_tarihi.year if rapor_tarihi else datetime.now().year
+        
+        # P4001 formatları: "1.12. 8:59:", "24.11 03:16", "3.12. 2:00:"
+        patterns = [
+            r'(\d{1,2})\.(\d{1,2})\.\s*\d{1,2}:\d{1,2}',  # 1.12. 8:59:
+            r'(\d{1,2})\.(\d{1,2})\s+\d{1,2}:\d{1,2}',    # 24.11 03:16
+            r'(\d{1,2})\.(\d{1,2})\.',                     # 1.12.
+        ]
+        
+        for pattern in patterns:
+            match = re.match(pattern, date_str)
+            if match:
+                gun = int(match.group(1))
+                ay = int(match.group(2))
+                
+                # Yıl geçişi kontrolü (Aralık -> Ocak)
+                if rapor_tarihi:
+                    if rapor_tarihi.month == 12 and ay == 1:
+                        yil = rapor_tarihi.year + 1
+                    elif rapor_tarihi.month == 1 and ay == 12:
+                        yil = rapor_tarihi.year - 1
+                
+                try:
+                    return date(yil, ay, gun)
+                except ValueError:
+                    continue
+        
+        # Standart formatları dene
+        return ExcelProcessingService.parse_date(date_value)
+    
+    @staticmethod
+    def _process_p4001_file(file_path, islem_kodu, user_id, otel_id, p4001_info):
+        """
+        P4001 (depo yöneticisi) formatındaki Excel dosyasını işler
+        
+        Args:
+            file_path: Dosya yolu
+            islem_kodu: Benzersiz işlem kodu
+            user_id: Yükleyen kullanıcı ID
+            otel_id: Otel ID
+            p4001_info: Format bilgileri
+            
+        Returns:
+            dict: İşlem sonucu
+        """
+        try:
+            dosya_tipi = p4001_info['dosya_tipi']
+            rapor_tarihi = p4001_info['rapor_tarihi']
+            
+            # Kayıt tipini belirle
+            if dosya_tipi == 'arrivals':
+                kayit_tipi = 'arrival'
+            elif dosya_tipi == 'departures':
+                kayit_tipi = 'departure'
+            else:
+                kayit_tipi = 'in_house'
+            
+            # pandas ile oku - header satır 8 (index 7)
+            df = pd.read_excel(file_path, header=7)
+            
+            # İlk satırı atla (rapor tarihi satırı)
+            df = df.iloc[1:].reset_index(drop=True)
+            
+            # Gerekli sütunlar var mı kontrol et
+            required_cols = ['R.No', 'Arrival', 'Departure', 'Adl']
+            missing_cols = [col for col in required_cols if col not in df.columns]
+            
+            if missing_cols:
+                return {
+                    'success': False,
+                    'error': f'Gerekli sütunlar bulunamadı: {missing_cols}',
+                    'dosya_tipi': dosya_tipi,
+                    'toplam_satir': 0,
+                    'basarili_satir': 0,
+                    'hatali_satir': 0,
+                    'hatalar': []
+                }
+            
+            toplam_satir = 0
+            basarili_satir = 0
+            hatali_satir = 0
+            hatalar = []
+            
+            for idx, row in df.iterrows():
+                # Oda numarası boşsa atla (2. misafir adı satırları)
+                oda_no = row.get('R.No')
+                if pd.isna(oda_no) or str(oda_no).strip() == '':
+                    continue
+                
+                # "(continued)" ve tarih satırlarını atla
+                first_col = str(df.iloc[idx, 0]) if pd.notna(df.iloc[idx, 0]) else ''
+                if 'continued' in first_col.lower():
+                    continue
+                if re.search(r'(Arrival|Departure|Date)\s*:', first_col, re.IGNORECASE):
+                    continue
+                
+                toplam_satir += 1
+                excel_row = idx + 10  # Excel satır numarası
+                
+                try:
+                    oda_no_str = str(int(oda_no) if isinstance(oda_no, float) else oda_no).strip()
+                    
+                    # Tarihleri parse et
+                    giris_raw = row.get('Arrival')
+                    cikis_raw = row.get('Departure')
+                    
+                    giris_tarihi = ExcelProcessingService._parse_p4001_date(giris_raw, rapor_tarihi)
+                    cikis_tarihi = ExcelProcessingService._parse_p4001_date(cikis_raw, rapor_tarihi)
+                    
+                    if not giris_tarihi:
+                        hatali_satir += 1
+                        hatalar.append(f"Satır {excel_row}: Geçersiz giriş tarihi '{giris_raw}'")
+                        continue
+                    
+                    if not cikis_tarihi:
+                        hatali_satir += 1
+                        hatalar.append(f"Satır {excel_row}: Geçersiz çıkış tarihi '{cikis_raw}'")
+                        continue
+                    
+                    # Misafir sayısı
+                    misafir_sayisi_raw = row.get('Adl')
+                    try:
+                        misafir_sayisi = int(misafir_sayisi_raw) if pd.notna(misafir_sayisi_raw) else 1
+                        if misafir_sayisi <= 0:
+                            misafir_sayisi = 1
+                    except (ValueError, TypeError):
+                        misafir_sayisi = 1
+                    
+                    # Tarih sırası kontrolü
+                    if giris_tarihi >= cikis_tarihi:
+                        hatali_satir += 1
+                        hatalar.append(f"Satır {excel_row}: Giriş tarihi çıkış tarihinden önce olmalı")
+                        continue
+                    
+                    # Odayı bul
+                    oda = ExcelProcessingService.get_or_create_oda(oda_no_str, otel_id)
+                    
+                    if not oda:
+                        hatali_satir += 1
+                        hatalar.append(f"Satır {excel_row}: Oda '{oda_no_str}' bulunamadı")
+                        continue
+                    
+                    # Duplicate kontrolü
+                    mevcut_kayit = MisafirKayit.query.filter(
+                        MisafirKayit.oda_id == oda.id,
+                        db.func.date(MisafirKayit.giris_tarihi) == giris_tarihi,
+                        db.func.date(MisafirKayit.cikis_tarihi) == cikis_tarihi
+                    ).first()
+                    
+                    if mevcut_kayit:
+                        hatalar.append(f"Satır {excel_row}: Oda {oda_no_str} için kayıt zaten mevcut (Duplicate)")
+                        continue
+                    
+                    # MisafirKayit oluştur
+                    misafir_kayit = MisafirKayit(
+                        oda_id=oda.id,
+                        islem_kodu=islem_kodu,
+                        misafir_sayisi=misafir_sayisi,
+                        giris_tarihi=giris_tarihi,
+                        cikis_tarihi=cikis_tarihi,
+                        kayit_tipi=kayit_tipi,
+                        olusturan_id=user_id
+                    )
+                    
+                    db.session.add(misafir_kayit)
+                    basarili_satir += 1
+                    
+                except Exception as e:
+                    hatali_satir += 1
+                    hatalar.append(f"Satır {excel_row}: {str(e)}")
+                    continue
+            
+            # Toplu kaydet
+            db.session.commit()
+            
+            # Görevlendirme hook'u
+            try:
+                ExcelProcessingService._create_tasks_after_upload(
+                    otel_id=otel_id,
+                    dosya_tipi=dosya_tipi,
+                    basarili_satir=basarili_satir
+                )
+            except Exception as hook_error:
+                print(f"Görev oluşturma hook hatası: {str(hook_error)}")
+            
+            return {
+                'success': True,
+                'dosya_tipi': dosya_tipi,
+                'format': 'P4001',
+                'rapor_tarihi': rapor_tarihi.strftime('%d.%m.%Y') if rapor_tarihi else None,
+                'toplam_satir': toplam_satir,
+                'basarili_satir': basarili_satir,
+                'hatali_satir': hatali_satir,
+                'hatalar': hatalar[:50]
+            }
+            
+        except Exception as e:
+            db.session.rollback()
+            return {
+                'success': False,
+                'error': f'P4001 Excel işleme hatası: {str(e)}',
+                'dosya_tipi': p4001_info.get('dosya_tipi'),
+                'toplam_satir': 0,
+                'basarili_satir': 0,
+                'hatali_satir': 0,
+                'hatalar': [str(e), traceback.format_exc()]
+            }
