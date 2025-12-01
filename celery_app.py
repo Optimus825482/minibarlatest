@@ -13,6 +13,21 @@ import os
 # Logging
 logger = logging.getLogger(__name__)
 
+# Flask app ve db için lazy loading cache
+_flask_app = None
+_db = None
+
+def get_flask_app():
+    """Flask app'i lazy loading ile al - Celery worker'lar için"""
+    global _flask_app, _db
+    if _flask_app is None:
+        # app.py'den Flask app'i import et
+        from app import app as flask_app, db as flask_db
+        _flask_app = flask_app
+        _db = flask_db
+    return _flask_app, _db
+
+
 # Celery instance oluştur
 def make_celery(app=None):
     """Flask app ile entegre Celery instance oluştur"""
@@ -39,6 +54,7 @@ def make_celery(app=None):
         task_soft_time_limit=3000,  # 50 dakika soft limit
         worker_prefetch_multiplier=1,
         worker_max_tasks_per_child=1000,
+        broker_connection_retry_on_startup=True,  # Celery 6.0 uyarısını kaldır
     )
     
     # Flask app context'i varsa ekle
@@ -84,7 +100,7 @@ def donemsel_kar_hesapla_async(self, otel_id, baslangic_tarihi, bitis_tarihi, do
     """
     try:
         # Flask app context'i gerekli
-        from app import app, db
+        app, db = get_flask_app()
         from models import DonemselKarAnalizi, MinibarIslemDetay, MinibarIslem
         from sqlalchemy import func
         from datetime import datetime
@@ -199,7 +215,7 @@ def tuketim_trendi_guncelle_async(self, otel_id=None, donem='aylik'):
         }
     """
     try:
-        from app import app, db
+        app, db = get_flask_app()
         from models import Urun, MinibarIslemDetay, MinibarIslem
         from sqlalchemy import func
         from datetime import datetime, timedelta
@@ -324,7 +340,7 @@ def stok_devir_guncelle_async(self, otel_id=None):
         }
     """
     try:
-        from app import app, db
+        app, db = get_flask_app()
         from models import UrunStok, StokHareket
         from sqlalchemy import func
         from datetime import datetime, timedelta
@@ -405,7 +421,7 @@ def gunluk_kar_analizi_task():
     Her gün gece yarısı tüm oteller için önceki günün kar analizini yapar
     """
     try:
-        from app import app, db
+        app, db = get_flask_app()
         from models import Otel
         from datetime import datetime, timedelta
         
@@ -450,7 +466,7 @@ def haftalik_trend_analizi_task():
     Her Pazartesi sabahı tüm oteller için haftalık trend analizi yapar
     """
     try:
-        from app import app, db
+        app, db = get_flask_app()
         from models import Otel
         
         with app.app_context():
@@ -488,7 +504,7 @@ def aylik_stok_devir_analizi_task():
     Her ayın ilk günü tüm oteller için stok devir hızını günceller
     """
     try:
-        from app import app, db
+        app, db = get_flask_app()
         from models import Otel
         
         with app.app_context():
@@ -527,7 +543,7 @@ def gunluk_yukleme_gorevleri_olustur_task():
     Tüm depo sorumluları için In House ve Arrivals yükleme görevleri oluşturur
     """
     try:
-        from app import app
+        app, db = get_flask_app()
         from utils.yukleme_gorev_service import YuklemeGorevService
         from datetime import date
         
@@ -557,7 +573,7 @@ def eksik_yukleme_uyarisi_task():
     Yükleme yapılmamış otelleri tespit eder ve uyarı gönderir
     """
     try:
-        from app import app
+        app, db = get_flask_app()
         from utils.yukleme_gorev_service import YuklemeGorevService
         from utils.bildirim_service import BildirimService
         from models import YuklemeGorev
@@ -603,7 +619,7 @@ def doluluk_yukleme_uyari_kontrolu_task():
     Sistem yöneticilerine bilgi maili gönderir
     """
     try:
-        from app import app
+        app, db = get_flask_app()
         from utils.email_service import DolulukUyariService
         
         with app.app_context():
@@ -632,7 +648,7 @@ def dnd_tamamlanmayan_kontrol_task():
     Ertesi gün depo sorumlusu ve sistem yöneticisine uyarı gönderir
     """
     try:
-        from app import app, db
+        app, db = get_flask_app()
         from models import GorevDetay, GunlukGorev, GorevDurumLog
         from utils.bildirim_service import BildirimService
         from datetime import date
@@ -700,7 +716,7 @@ def gunluk_gorev_raporu_task():
     Kat sorumlularının görev tamamlanma raporlarını depo sorumlusu ve sistem yöneticisine gönderir
     """
     try:
-        from app import app
+        app, db = get_flask_app()
         from models import Kullanici, Otel
         from utils.rapor_email_service import RaporEmailService
         from datetime import date, timedelta
@@ -760,7 +776,7 @@ def gunluk_minibar_sarfiyat_raporu_task():
     Oda bazlı ürün sarfiyatı ve stok durumlarını depo sorumlusu ve sistem yöneticisine gönderir
     """
     try:
-        from app import app
+        app, db = get_flask_app()
         from models import Otel
         from utils.rapor_email_service import RaporEmailService
         from datetime import date, timedelta
@@ -820,7 +836,7 @@ def ml_veri_toplama_task():
     Stok, tüketim, dolum, zimmet, doluluk, talep ve QR metriklerini toplar
     """
     try:
-        from app import app, db
+        app, db = get_flask_app()
         from utils.ml.data_collector import DataCollector
         
         with app.app_context():
@@ -849,7 +865,7 @@ def ml_anomali_tespiti_task():
     Stok, tüketim, dolum, zimmet, doluluk ve talep anomalilerini tespit eder
     """
     try:
-        from app import app, db
+        app, db = get_flask_app()
         from utils.ml.anomaly_detector import AnomalyDetector
         from utils.ml.alert_manager import AlertManager
         
@@ -914,7 +930,7 @@ def ml_model_egitimi_task():
     Yeterli veri varsa modelleri otomatik eğitir
     """
     try:
-        from app import app, db
+        app, db = get_flask_app()
         from utils.ml.model_trainer import ModelTrainer
         from utils.ml.data_collector import DataCollector
         from models import MLMetric
@@ -993,7 +1009,7 @@ def ml_eski_verileri_temizle_task():
     90 günden eski metrikleri ve alertleri temizler
     """
     try:
-        from app import app, db
+        app, db = get_flask_app()
         from utils.ml.data_collector import DataCollector
         from utils.ml.alert_manager import AlertManager
         
@@ -1030,7 +1046,7 @@ def ml_gunluk_alert_ozeti_task():
     Son 24 saatteki kritik alertlerin özetini sistem yöneticilerine gönderir
     """
     try:
-        from app import app, db
+        app, db = get_flask_app()
         from utils.ml.alert_manager import AlertManager
         
         with app.app_context():
@@ -1059,7 +1075,7 @@ def ml_stok_bitis_kontrolu_task():
     Stok bitiş tahminlerini hesaplar ve uyarı oluşturur
     """
     try:
-        from app import app, db
+        app, db = get_flask_app()
         from utils.ml.metrics_calculator import MetricsCalculator
         from utils.ml.alert_manager import AlertManager
         from models import MLAlert
@@ -1109,7 +1125,7 @@ def otomatik_yedekleme_task():
     Ayarlar sistem_ayarlari tablosundan okunur
     """
     try:
-        from app import app
+        app, db = get_flask_app()
         from utils.backup_service import BackupService
         
         with app.app_context():
@@ -1162,7 +1178,7 @@ def eski_yedekleri_temizle_task():
     Eski yedekleri temizle - Her gün 00:30'da çalışır
     """
     try:
-        from app import app
+        app, db = get_flask_app()
         from utils.backup_service import BackupService
         
         with app.app_context():
