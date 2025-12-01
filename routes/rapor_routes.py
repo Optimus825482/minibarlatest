@@ -30,6 +30,11 @@ from utils.authorization import get_kullanici_otelleri
 raporlar_bp = Blueprint('raporlar', __name__, url_prefix='/raporlar')
 
 
+def register_rapor_routes(app):
+    """Rapor route'larını register et"""
+    app.register_blueprint(raporlar_bp)
+
+
 @raporlar_bp.route('/doluluk-raporlari')
 @login_required
 @role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
