@@ -300,7 +300,7 @@ Mesaj:
 {alert.suggested_action or 'Belirtilmemiş'}
 
 Metrik Değeri: {alert.metric_value:.2f}
-Beklenen Değer: {alert.expected_value:.2f if alert.expected_value else 'N/A'}
+Beklenen Değer: {f'{alert.expected_value:.2f}' if alert.expected_value else 'N/A'}
 Sapma Oranı: %{abs(alert.deviation_percent):.1f if alert.deviation_percent else 0}
 
 ---
@@ -331,7 +331,7 @@ Minibar Takip ML Sistemi
             </tr>
             <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;"><strong>Beklenen Değer:</strong></td>
-                <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">{alert.expected_value:.2f if alert.expected_value else 'N/A'}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">{f'{alert.expected_value:.2f}' if alert.expected_value else 'N/A'}</td>
             </tr>
             <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;"><strong>Sapma Oranı:</strong></td>

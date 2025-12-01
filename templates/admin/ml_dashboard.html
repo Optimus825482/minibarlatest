@@ -920,6 +920,36 @@
     }
 });
 
+    // Yardımcı fonksiyonlar
+    function showConfirm(message, title = 'Onay') {
+        return new Promise((resolve) => {
+            if (confirm(message)) {
+                resolve({ isConfirmed: true });
+            } else {
+                resolve({ isConfirmed: false });
+            }
+        });
+    }
+
+    function showLoading(message = 'Yükleniyor...') {
+        // Basit loading gösterimi
+        console.log(message);
+    }
+
+    function hideLoading() {
+        // Loading gizle
+    }
+
+    function showToast(message, type = 'info') {
+        // Toast bildirimi
+        if (typeof Toast !== 'undefined' && Toast.show) {
+            Toast.show(message, type);
+        } else {
+            alert(message);
+        }
+        return Promise.resolve();
+    }
+
     // Alert filtreleme
     function filterAlerts(severity) {
         const alerts = document.querySelectorAll('.alert-item');
