@@ -40,7 +40,8 @@
                             class="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                             <option value="">Kat seçiniz...</option>
                             {% for kat in katlar %}
-                            <option value="{{ kat.id }}">{{ kat.kat_adi }}</option>
+                            <option value="{{ kat.id }}">{{ kat.kat_adi }} - {{ kat.otel.ad if kat.otel else 'Otel Yok'
+                                }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -159,7 +160,8 @@
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-lg leading-6 font-medium text-slate-900">Ürün Bazlı Toplam Tüketim</h3>
                     <div class="flex items-center gap-2 text-sm text-slate-600">
-                        <span id="urun-count-badge" class="font-medium" data-stats-for="urun-ozeti-table" data-stat="total">0 ürün</span>
+                        <span id="urun-count-badge" class="font-medium" data-stats-for="urun-ozeti-table"
+                            data-stat="total">0 ürün</span>
                     </div>
                 </div>
                 <div class="table-wrapper">
@@ -213,60 +215,60 @@
 </div>
 
 <script>
-    document.addEventListener( 'DOMContentLoaded', function () {
-        document.getElementById( 'rapor_getir_btn' ).addEventListener( 'click', raporGetir );
-    } );
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('rapor_getir_btn').addEventListener('click', raporGetir);
+    });
 
     async function raporGetir() {
-        const katId = document.getElementById( 'kat_id' ).value;
-        const baslangicTarih = document.getElementById( 'baslangic_tarih' ).value;
-        const bitisTarih = document.getElementById( 'bitis_tarih' ).value;
+        const katId = document.getElementById('kat_id').value;
+        const baslangicTarih = document.getElementById('baslangic_tarih').value;
+        const bitisTarih = document.getElementById('bitis_tarih').value;
 
-        if ( !katId ) {
-            alert( 'Lütfen bir kat seçiniz!' );
+        if (!katId) {
+            alert('Lütfen bir kat seçiniz!');
             return;
         }
 
         // Loading göster - Null kontrolü ile
-        const loadingIndicator = document.getElementById( 'loading_indicator' );
-        const raporSonuclari = document.getElementById( 'rapor_sonuclari' );
+        const loadingIndicator = document.getElementById('loading_indicator');
+        const raporSonuclari = document.getElementById('rapor_sonuclari');
 
-        if ( loadingIndicator ) loadingIndicator.classList.remove( 'hidden' );
-        if ( raporSonuclari ) raporSonuclari.classList.add( 'hidden' );
+        if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+        if (raporSonuclari) raporSonuclari.classList.add('hidden');
 
         try {
             let url = `/api/kat-rapor-veri?kat_id=${katId}`;
-            if ( baslangicTarih ) url += `&baslangic_tarih=${baslangicTarih}`;
-            if ( bitisTarih ) url += `&bitis_tarih=${bitisTarih}`;
+            if (baslangicTarih) url += `&baslangic_tarih=${baslangicTarih}`;
+            if (bitisTarih) url += `&bitis_tarih=${bitisTarih}`;
 
-            const response = await fetch( url );
+            const response = await fetch(url);
             const data = await response.json();
 
-            if ( data.success ) {
+            if (data.success) {
                 // Özet kartları güncelle - Null kontrolü ile
-                const ozetKatAdi = document.getElementById( 'ozet_kat_adi' );
-                const ozetOdaSayisi = document.getElementById( 'ozet_oda_sayisi' );
-                const ozetUrunCesidi = document.getElementById( 'ozet_urun_cesidi' );
-                const urunCountBadge = document.getElementById( 'urun-count-badge' );
+                const ozetKatAdi = document.getElementById('ozet_kat_adi');
+                const ozetOdaSayisi = document.getElementById('ozet_oda_sayisi');
+                const ozetUrunCesidi = document.getElementById('ozet_urun_cesidi');
+                const urunCountBadge = document.getElementById('urun-count-badge');
 
-                if ( ozetKatAdi ) ozetKatAdi.textContent = data.kat_adi;
-                if ( ozetOdaSayisi ) ozetOdaSayisi.textContent = data.oda_sayisi;
-                if ( ozetUrunCesidi ) ozetUrunCesidi.textContent = data.urun_ozeti.length;
-                if ( urunCountBadge ) urunCountBadge.textContent = `${data.urun_ozeti.length} ürün`;
+                if (ozetKatAdi) ozetKatAdi.textContent = data.kat_adi;
+                if (ozetOdaSayisi) ozetOdaSayisi.textContent = data.oda_sayisi;
+                if (ozetUrunCesidi) ozetUrunCesidi.textContent = data.urun_ozeti.length;
+                if (urunCountBadge) urunCountBadge.textContent = `${data.urun_ozeti.length} ürün`;
 
                 // Ürün özeti tablosunu doldur
-                const urunTbody = document.getElementById( 'urun_ozeti_tbody' );
-                if ( !urunTbody ) {
-                    console.error( 'urun_ozeti_tbody elementi bulunamadı!' );
+                const urunTbody = document.getElementById('urun_ozeti_tbody');
+                if (!urunTbody) {
+                    console.error('urun_ozeti_tbody elementi bulunamadı!');
                     return;
                 }
                 urunTbody.innerHTML = '';
 
-                if ( data.urun_ozeti.length === 0 ) {
+                if (data.urun_ozeti.length === 0) {
                     urunTbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-slate-500">Veri bulunamadı</td></tr>';
                 } else {
-                    data.urun_ozeti.forEach( ( urun, index ) => {
-                        const tr = document.createElement( 'tr' );
+                    data.urun_ozeti.forEach((urun, index) => {
+                        const tr = document.createElement('tr');
                         tr.className = 'hover:bg-slate-50 transition-colors duration-150';
                         tr.innerHTML = `
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${index + 1}</td>
@@ -284,27 +286,27 @@
                             </span>
                         </td>
                     `;
-                        urunTbody.appendChild( tr );
-                    } );
+                        urunTbody.appendChild(tr);
+                    });
                 }
 
                 // Oda detaylarını doldur
-                const odaDetaylari = document.getElementById( 'oda_detaylari' );
-                if ( !odaDetaylari ) {
-                    console.error( 'oda_detaylari elementi bulunamadı!' );
+                const odaDetaylari = document.getElementById('oda_detaylari');
+                if (!odaDetaylari) {
+                    console.error('oda_detaylari elementi bulunamadı!');
                     return;
                 }
                 odaDetaylari.innerHTML = '';
 
-                if ( data.odalar.length === 0 ) {
+                if (data.odalar.length === 0) {
                     odaDetaylari.innerHTML = '<p class="text-center text-slate-500">Bu katta oda bulunamadı</p>';
                 } else {
-                    data.odalar.forEach( oda => {
-                        const odaDiv = document.createElement( 'div' );
+                    data.odalar.forEach(oda => {
+                        const odaDiv = document.createElement('div');
                         odaDiv.className = 'border border-slate-200 rounded-lg p-4';
 
                         let urunlerHTML = '';
-                        if ( oda.urunler.length === 0 ) {
+                        if (oda.urunler.length === 0) {
                             urunlerHTML = '<p class="text-sm text-slate-500 mt-2">Bu odada henüz minibar işlemi yapılmamış</p>';
                         } else {
                             urunlerHTML = `
@@ -320,7 +322,7 @@
                                     <tbody class="divide-y divide-slate-200">
                         `;
 
-                            oda.urunler.forEach( urun => {
+                            oda.urunler.forEach(urun => {
                                 urunlerHTML += `
                                 <tr>
                                     <td class="px-3 py-2">${urun.urun_adi}</td>
@@ -328,7 +330,7 @@
                                     <td class="px-3 py-2 font-semibold ${urun.tuketim > 0 ? 'text-red-600' : 'text-green-600'}">${urun.tuketim} ${urun.birim}</td>
                                 </tr>
                             `;
-                            } );
+                            });
 
                             urunlerHTML += `
                                     </tbody>
@@ -351,23 +353,23 @@
                         ${urunlerHTML}
                     `;
 
-                        odaDetaylari.appendChild( odaDiv );
-                    } );
+                        odaDetaylari.appendChild(odaDiv);
+                    });
                 }
 
                 // Sonuçları göster
-                if ( loadingIndicator ) loadingIndicator.classList.add( 'hidden' );
-                if ( raporSonuclari ) raporSonuclari.classList.remove( 'hidden' );
+                if (loadingIndicator) loadingIndicator.classList.add('hidden');
+                if (raporSonuclari) raporSonuclari.classList.remove('hidden');
 
             } else {
-                alert( 'Hata: ' + data.error );
-                if ( loadingIndicator ) loadingIndicator.classList.add( 'hidden' );
+                alert('Hata: ' + data.error);
+                if (loadingIndicator) loadingIndicator.classList.add('hidden');
             }
 
-        } catch ( error ) {
-            console.error( 'Rapor yüklenirken hata:', error );
-            alert( 'Rapor yüklenirken bir hata oluştu!' );
-            if ( loadingIndicator ) loadingIndicator.classList.add( 'hidden' );
+        } catch (error) {
+            console.error('Rapor yüklenirken hata:', error);
+            alert('Rapor yüklenirken bir hata oluştu!');
+            if (loadingIndicator) loadingIndicator.classList.add('hidden');
         }
     }
 </script>
@@ -411,22 +413,22 @@
         await originalRaporGetir();
 
         // Eğer tablo doluysa TableSearchFilter'ı init et
-        setTimeout( () => {
-            const tbody = document.getElementById( 'urun_ozeti_tbody' );
-            if ( tbody && tbody.children.length > 0 && tbody.children[0].cells.length > 1 ) {
+        setTimeout(() => {
+            const tbody = document.getElementById('urun_ozeti_tbody');
+            if (tbody && tbody.children.length > 0 && tbody.children[0].cells.length > 1) {
                 // Önceki instance'ı temizle
-                if ( tableSearchInstance ) {
+                if (tableSearchInstance) {
                     tableSearchInstance = null;
                 }
 
                 // Yeni instance oluştur
-                tableSearchInstance = new TableSearchFilter( 'urun-ozeti-table', {
+                tableSearchInstance = new TableSearchFilter('urun-ozeti-table', {
                     searchPlaceholder: 'Ürünlerde ara (ürün adı, birim)...',
                     defaultItemsPerPage: 25,
                     skipTableReload: true // Dinamik tablo olduğu için yeniden yükleme atla
-                } );
+                });
             }
-        }, 100 );
+        }, 100);
     };
 </script>
 {% endblock %}

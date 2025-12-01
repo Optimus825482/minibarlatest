@@ -55,8 +55,8 @@ def register_admin_minibar_routes(app):
             # Otel seçilmeden stok listesi gösterme
             stok_listesi = []
             if otel_id:
-                # Stok durumlarını getir (depo + zimmet)
-                stok_listesi = get_depo_stok_durumu(grup_id=grup_id, depo_sorumlusu_id=depo_id)
+                # Stok durumlarını getir (depo + zimmet) - Otel bazlı
+                stok_listesi = get_depo_stok_durumu(grup_id=grup_id, depo_sorumlusu_id=depo_id, otel_id=otel_id)
                 
                 # Excel export
                 if export_format == 'excel':
@@ -101,6 +101,237 @@ def register_admin_minibar_routes(app):
             log_hata(e, modul='admin_minibar')
             flash('Depo stokları yüklenirken hata oluştu.', 'danger')
             return redirect(url_for('sistem_yoneticisi_dashboard'))
+
+    # ============================================================================
+    # İLK STOK YÜKLEME
+    # ============================================================================
+
+    @app.route('/admin/ilk-stok-yukleme/<int:otel_id>', methods=['GET', 'POST'])
+    @login_required
+    @role_required('sistem_yoneticisi')
+    def ilk_stok_yukleme(otel_id):
+        """İlk stok yükleme - Excel'den ürün ve adet bilgisi alarak stok girişi yapar"""
+        from models import Otel, Urun, SatinAlmaIslem, SatinAlmaIslemDetay, UrunStok, Tedarikci
+        from datetime import datetime, timezone
+        import pandas as pd
+        import io
+        
+        try:
+            otel = Otel.query.get_or_404(otel_id)
+            
+            # Zaten yükleme yapılmış mı kontrol et
+            if otel.ilk_stok_yuklendi:
+                return jsonify({
+                    'success': False,
+                    'message': f'{otel.ad} için ilk stok yüklemesi zaten yapılmış.'
+                }), 400
+            
+            if request.method == 'POST':
+                # Excel dosyasını al
+                if 'excel_file' not in request.files:
+                    return jsonify({'success': False, 'message': 'Excel dosyası seçilmedi.'}), 400
+                
+                file = request.files['excel_file']
+                if file.filename == '':
+                    return jsonify({'success': False, 'message': 'Dosya seçilmedi.'}), 400
+                
+                # Dosya uzantısı kontrolü
+                if not file.filename.endswith(('.xlsx', '.xls')):
+                    return jsonify({'success': False, 'message': 'Sadece Excel dosyaları (.xlsx, .xls) kabul edilir.'}), 400
+                
+                # Önizleme mi yoksa kayıt mı?
+                action = request.form.get('action', 'preview')
+                
+                try:
+                    # Excel'i oku
+                    df = pd.read_excel(io.BytesIO(file.read()))
+                    
+                    # Sütun kontrolü
+                    required_columns = ['urun_adi', 'adet']
+                    df.columns = df.columns.str.lower().str.strip()
+                    
+                    missing_cols = [col for col in required_columns if col not in df.columns]
+                    if missing_cols:
+                        return jsonify({
+                            'success': False,
+                            'message': f'Eksik sütunlar: {", ".join(missing_cols)}. Excel dosyasında "urun_adi" ve "adet" sütunları olmalıdır.'
+                        }), 400
+                    
+                    # Boş satırları temizle
+                    df = df.dropna(subset=['urun_adi', 'adet'])
+                    df['adet'] = pd.to_numeric(df['adet'], errors='coerce').fillna(0).astype(int)
+                    df = df[df['adet'] > 0]
+                    
+                    if df.empty:
+                        return jsonify({'success': False, 'message': 'Excel dosyasında geçerli ürün bulunamadı.'}), 400
+                    
+                    # Ürünleri eşleştir
+                    urunler = Urun.query.filter_by(aktif=True).all()
+                    urun_map = {u.urun_adi.lower().strip(): u for u in urunler}
+                    
+                    eslesen_urunler = []
+                    eslesmeyen_urunler = []
+                    
+                    for _, row in df.iterrows():
+                        urun_adi = str(row['urun_adi']).strip()
+                        adet = int(row['adet'])
+                        
+                        # Tam eşleşme dene
+                        urun = urun_map.get(urun_adi.lower())
+                        
+                        if urun:
+                            eslesen_urunler.append({
+                                'urun_id': urun.id,
+                                'urun_adi': urun.urun_adi,
+                                'excel_urun_adi': urun_adi,
+                                'adet': adet,
+                                'birim': urun.birim
+                            })
+                        else:
+                            eslesmeyen_urunler.append({
+                                'excel_urun_adi': urun_adi,
+                                'adet': adet
+                            })
+                    
+                    # Önizleme modunda sonuçları döndür
+                    if action == 'preview':
+                        return jsonify({
+                            'success': True,
+                            'preview': True,
+                            'eslesen_urunler': eslesen_urunler,
+                            'eslesmeyen_urunler': eslesmeyen_urunler,
+                            'toplam_eslesen': len(eslesen_urunler),
+                            'toplam_eslesmeyen': len(eslesmeyen_urunler)
+                        })
+                    
+                    # Kayıt modunda işlemi gerçekleştir
+                    if action == 'confirm':
+                        if not eslesen_urunler:
+                            return jsonify({'success': False, 'message': 'Eşleşen ürün bulunamadı.'}), 400
+                        
+                        # Tedarikçi ID=1 kontrolü
+                        tedarikci = Tedarikci.query.get(1)
+                        if not tedarikci:
+                            return jsonify({'success': False, 'message': 'Varsayılan tedarikçi (ID=1) bulunamadı.'}), 400
+                        
+                        # Satın alma işlemi oluştur
+                        islem_no = f"ILK-{otel_id}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+                        
+                        satin_alma = SatinAlmaIslem(
+                            islem_no=islem_no,
+                            tedarikci_id=1,  # Varsayılan tedarikçi
+                            otel_id=otel_id,
+                            fatura_no=f'ILK-STOK-{otel_id}',
+                            fatura_tarihi=datetime.now(timezone.utc).date(),
+                            odeme_sekli='diger',
+                            odeme_durumu='odendi',
+                            toplam_tutar=0,  # 0 TL
+                            kdv_tutari=0,
+                            genel_toplam=0,
+                            aciklama=f'{otel.ad} için ilk stok yüklemesi',
+                            durum='aktif',
+                            olusturan_id=session['kullanici_id']
+                        )
+                        db.session.add(satin_alma)
+                        db.session.flush()
+                        
+                        # Detayları ve stokları ekle
+                        for item in eslesen_urunler:
+                            # Satın alma detayı
+                            detay = SatinAlmaIslemDetay(
+                                islem_id=satin_alma.id,
+                                urun_id=item['urun_id'],
+                                miktar=item['adet'],
+                                birim_fiyat=0,  # 0 TL
+                                kdv_orani=0,
+                                kdv_tutari=0,
+                                toplam_fiyat=0
+                            )
+                            db.session.add(detay)
+                            
+                            # Stok girişi - UrunStok tablosuna
+                            urun_stok = UrunStok.query.filter_by(
+                                urun_id=item['urun_id'],
+                                otel_id=otel_id
+                            ).first()
+                            
+                            if urun_stok:
+                                urun_stok.mevcut_stok += item['adet']
+                                urun_stok.son_giris_tarihi = datetime.now(timezone.utc)
+                                urun_stok.son_guncelleme_tarihi = datetime.now(timezone.utc)
+                                urun_stok.son_guncelleyen_id = session['kullanici_id']
+                            else:
+                                urun_stok = UrunStok(
+                                    urun_id=item['urun_id'],
+                                    otel_id=otel_id,
+                                    mevcut_stok=item['adet'],
+                                    son_giris_tarihi=datetime.now(timezone.utc),
+                                    son_guncelleme_tarihi=datetime.now(timezone.utc),
+                                    son_guncelleyen_id=session['kullanici_id']
+                                )
+                                db.session.add(urun_stok)
+                            
+                            # Stok hareketi kaydet
+                            stok_hareket = StokHareket(
+                                urun_id=item['urun_id'],
+                                hareket_tipi='giris',
+                                miktar=item['adet'],
+                                aciklama=f'İlk stok yüklemesi - {otel.ad}',
+                                islem_yapan_id=session['kullanici_id']
+                            )
+                            db.session.add(stok_hareket)
+                        
+                        # Oteli güncelle - ilk stok yüklendi olarak işaretle
+                        otel.ilk_stok_yuklendi = True
+                        otel.ilk_stok_yukleme_tarihi = datetime.now(timezone.utc)
+                        otel.ilk_stok_yukleyen_id = session['kullanici_id']
+                        
+                        db.session.commit()
+                        
+                        # Log kaydı
+                        log_islem('ilk_stok_yukleme', 'depo_stoklari', {
+                            'otel_id': otel_id,
+                            'otel_adi': otel.ad,
+                            'urun_sayisi': len(eslesen_urunler),
+                            'toplam_adet': sum(u['adet'] for u in eslesen_urunler),
+                            'islem_no': islem_no
+                        })
+                        
+                        return jsonify({
+                            'success': True,
+                            'message': f'{len(eslesen_urunler)} ürün başarıyla stoka eklendi.',
+                            'islem_no': islem_no
+                        })
+                    
+                except Exception as e:
+                    db.session.rollback()
+                    log_hata(e, modul='ilk_stok_yukleme')
+                    return jsonify({'success': False, 'message': f'Excel işlenirken hata: {str(e)}'}), 500
+            
+            return jsonify({'success': False, 'message': 'Geçersiz istek.'}), 400
+            
+        except Exception as e:
+            log_hata(e, modul='ilk_stok_yukleme')
+            return jsonify({'success': False, 'message': f'Hata: {str(e)}'}), 500
+
+    @app.route('/api/otel-ilk-stok-durumu/<int:otel_id>')
+    @login_required
+    @role_required('sistem_yoneticisi')
+    def otel_ilk_stok_durumu(otel_id):
+        """Otelin ilk stok yükleme durumunu döndürür"""
+        from models import Otel
+        
+        try:
+            otel = Otel.query.get_or_404(otel_id)
+            return jsonify({
+                'success': True,
+                'otel_id': otel.id,
+                'otel_adi': otel.ad,
+                'ilk_stok_yuklendi': otel.ilk_stok_yuklendi,
+                'ilk_stok_yukleme_tarihi': otel.ilk_stok_yukleme_tarihi.isoformat() if otel.ilk_stok_yukleme_tarihi else None
+            })
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
 
     # ============================================================================
     # ODA MİNİBAR YÖNETİMİ

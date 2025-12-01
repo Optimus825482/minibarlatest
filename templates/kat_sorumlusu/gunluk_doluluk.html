@@ -28,12 +28,12 @@
                             Otel
                         </label>
                         <div class="mt-1">
-                            <select id="otel_id" name="otel_id"
+                            <select id="otel_id" name="otel_id" onchange="this.form.submit()"
                                 class="appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md placeholder-slate-400 focus:outline-none focus:ring-slate-500 focus:border-slate-500 sm:text-sm dark:bg-slate-700 dark:text-slate-100">
                                 <option value="">Tüm Oteller</option>
                                 {% for otel in otel_secenekleri %}
-                                <option value="{{ otel.id }}" {% if secili_otel_id == otel.id %}selected{% endif %}>
-                                    {{ otel.otel_adi }}
+                                <option value="{{ otel.id }}" {% if secili_otel_id==otel.id %}selected{% endif %}>
+                                    {{ otel.ad }}
                                 </option>
                                 {% endfor %}
                             </select>
@@ -70,13 +70,15 @@
                         {{ haftalik_ozet.toplam_oda or 0 }}
                     </div>
                 </div>
-                <div class="bg-green-100 dark:bg-green-900/40 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                <div
+                    class="bg-green-100 dark:bg-green-900/40 rounded-lg p-4 border border-green-200 dark:border-green-800">
                     <div class="text-sm font-bold text-green-700 dark:text-green-300">Dolu Oda</div>
                     <div class="mt-1 text-3xl font-bold text-green-900 dark:text-white">
                         {{ haftalik_ozet.dolu_oda or 0 }}
                     </div>
                 </div>
-                <div class="bg-purple-100 dark:bg-purple-900/40 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+                <div
+                    class="bg-purple-100 dark:bg-purple-900/40 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
                     <div class="text-sm font-bold text-purple-700 dark:text-purple-300">Doluluk Oranı</div>
                     <div class="mt-1 text-3xl font-bold text-purple-900 dark:text-white">
                         {{ "%.1f"|format(haftalik_ozet.doluluk_orani or 0) }}%
@@ -94,23 +96,27 @@
             <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4">
                 <i class="fas fa-building mr-2 text-indigo-500"></i>
                 Kat Bazlı Doluluk
-                <i class="fas fa-info-circle ml-2 text-slate-400 text-sm cursor-help" title="Kat detaylarını görmek için ilgili kata tıklayın"></i>
+                <i class="fas fa-info-circle ml-2 text-slate-400 text-sm cursor-help"
+                    title="Kat detaylarını görmek için ilgili kata tıklayın"></i>
             </h3>
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {% for kat in kat_bazli_ozet %}
                 <a href="{{ url_for('doluluk.kat_doluluk_detay', kat_id=kat.kat_id) }}?tarih={{ secili_tarih.strftime('%Y-%m-%d') if secili_tarih else '' }}"
-                   class="block bg-slate-50 dark:bg-slate-700 rounded-lg p-3 border border-slate-200 dark:border-slate-600 transition-all duration-200 cursor-pointer"
-                   title="Detayları görmek için tıklayın"
-                   style="border-left: 3px solid {% if kat.oran >= 70 %}#22c55e{% elif kat.oran >= 40 %}#eab308{% else %}#ef4444{% endif %};">
+                    class="block bg-slate-50 dark:bg-slate-700 rounded-lg p-3 border border-slate-200 dark:border-slate-600 transition-all duration-200 cursor-pointer"
+                    title="Detayları görmek için tıklayın"
+                    style="border-left: 3px solid {% if kat.oran >= 70 %}#22c55e{% elif kat.oran >= 40 %}#eab308{% else %}#ef4444{% endif %};">
                     <div class="text-xs font-bold text-slate-600 dark:text-slate-300 truncate">{{ kat.kat_adi }}</div>
                     <div class="mt-1 flex items-baseline justify-between">
-                        <span class="text-lg font-bold text-slate-900 dark:text-white">{{ kat.dolu }}/{{ kat.toplam }}</span>
-                        <span class="text-xs font-semibold {% if kat.oran >= 70 %}text-green-600 dark:text-green-400{% elif kat.oran >= 40 %}text-yellow-600 dark:text-yellow-400{% else %}text-red-600 dark:text-red-400{% endif %}">
+                        <span class="text-lg font-bold text-slate-900 dark:text-white">{{ kat.dolu }}/{{ kat.toplam
+                            }}</span>
+                        <span
+                            class="text-xs font-semibold {% if kat.oran >= 70 %}text-green-600 dark:text-green-400{% elif kat.oran >= 40 %}text-yellow-600 dark:text-yellow-400{% else %}text-red-600 dark:text-red-400{% endif %}">
                             {{ "%.0f"|format(kat.oran) }}%
                         </span>
                     </div>
                     <div class="mt-2 w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5">
-                        <div class="h-1.5 rounded-full {% if kat.oran >= 70 %}bg-green-500{% elif kat.oran >= 40 %}bg-yellow-500{% else %}bg-red-500{% endif %}" style="width: {{ kat.oran }}%"></div>
+                        <div class="h-1.5 rounded-full {% if kat.oran >= 70 %}bg-green-500{% elif kat.oran >= 40 %}bg-yellow-500{% else %}bg-red-500{% endif %}"
+                            style="width: {{ kat.oran }}%"></div>
                     </div>
                 </a>
                 {% endfor %}
@@ -128,7 +134,7 @@
                     <i class="fas fa-door-open mr-2 text-slate-500"></i>
                     Oda Detayları - {{ secili_tarih.strftime('%d.%m.%Y') if secili_tarih else '' }}
                     {% if secili_otel %}
-                    <span class="text-sm text-slate-500 dark:text-slate-400">({{ secili_otel.otel_adi }})</span>
+                    <span class="text-sm text-slate-500 dark:text-slate-400">({{ secili_otel.ad }})</span>
                     {% endif %}
                 </h3>
                 <button type="button" onclick="openPrintDialog()"
@@ -142,22 +148,28 @@
                 <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
                     <thead class="bg-slate-50 dark:bg-slate-700">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
                                 Oda No
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
                                 Kat
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
                                 Durum
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider hidden md:table-cell">
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider hidden md:table-cell">
                                 Misafir
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider hidden lg:table-cell">
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider hidden lg:table-cell">
                                 Giriş Tarihi
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider hidden lg:table-cell">
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider hidden lg:table-cell">
                                 Çıkış Tarihi
                             </th>
                         </tr>
@@ -176,7 +188,8 @@
                                 {% else %}text-slate-900 dark:text-slate-100{% endif %}">
                                 🚪 {{ oda_bilgi.oda_no }}
                                 {% if oda_bilgi.gorev_durumu == 'completed' %}
-                                <i class="fas fa-check-circle text-green-700 dark:text-green-200 ml-1" title="Kontrol edildi"></i>
+                                <i class="fas fa-check-circle text-green-700 dark:text-green-200 ml-1"
+                                    title="Kontrol edildi"></i>
                                 {% elif oda_bilgi.gorev_durumu == 'dnd_pending' %}
                                 <i class="fas fa-door-closed text-orange-700 dark:text-orange-200 ml-1" title="DND"></i>
                                 {% elif oda_bilgi.gorev_durumu == 'pending' and oda_bilgi.durum == 'dolu' %}
@@ -192,11 +205,13 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 {% if oda_bilgi.durum == 'dolu' %}
-                                <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                <span
+                                    class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                                     ✓ Dolu
                                 </span>
                                 {% else %}
-                                <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300">
+                                <span
+                                    class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300">
                                     ○ Boş
                                 </span>
                                 {% endif %}
@@ -258,9 +273,10 @@
     <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
         <!-- Overlay -->
         <div class="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity" onclick="closePrintDialog()"></div>
-        
+
         <!-- Dialog -->
-        <div class="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl transform transition-all sm:max-w-md sm:w-full">
+        <div
+            class="relative bg-white dark:bg-slate-800 rounded-lg shadow-xl transform transition-all sm:max-w-md sm:w-full">
             <div class="px-6 py-5">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
@@ -271,21 +287,21 @@
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                
+
                 <div class="space-y-4">
                     <p class="text-sm text-slate-600 dark:text-slate-400">
                         Yazdırılacak raporda boş odalar dahil edilsin mi?
                     </p>
-                    
+
                     <div class="flex items-center space-x-3">
-                        <input type="checkbox" id="bosOdalarDahil" 
+                        <input type="checkbox" id="bosOdalarDahil"
                             class="h-4 w-4 text-slate-600 focus:ring-slate-500 border-slate-300 rounded">
                         <label for="bosOdalarDahil" class="text-sm font-medium text-slate-700 dark:text-slate-300">
                             Boş odaları da listele
                         </label>
                     </div>
                 </div>
-                
+
                 <div class="mt-6 flex justify-end space-x-3">
                     <button type="button" onclick="closePrintDialog()"
                         class="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md">
@@ -303,26 +319,26 @@
 </div>
 
 <script>
-function openPrintDialog() {
-    document.getElementById('printDialog').classList.remove('hidden');
-}
-
-function closePrintDialog() {
-    document.getElementById('printDialog').classList.add('hidden');
-}
-
-function doPrint() {
-    const bosOdalarDahil = document.getElementById('bosOdalarDahil').checked;
-    const tarih = '{{ secili_tarih.strftime("%Y-%m-%d") if secili_tarih else "" }}';
-    const otelId = '{{ secili_otel_id or "" }}';
-    
-    let url = '{{ url_for("doluluk.gunluk_doluluk_yazdir") }}?tarih=' + tarih + '&otel_id=' + otelId;
-    if (bosOdalarDahil) {
-        url += '&bos_odalar=1';
+    function openPrintDialog() {
+        document.getElementById('printDialog').classList.remove('hidden');
     }
-    
-    window.open(url, '_blank');
-    closePrintDialog();
-}
+
+    function closePrintDialog() {
+        document.getElementById('printDialog').classList.add('hidden');
+    }
+
+    function doPrint() {
+        const bosOdalarDahil = document.getElementById('bosOdalarDahil').checked;
+        const tarih = '{{ secili_tarih.strftime("%Y-%m-%d") if secili_tarih else "" }}';
+        const otelId = '{{ secili_otel_id or "" }}';
+
+        let url = '{{ url_for("doluluk.gunluk_doluluk_yazdir") }}?tarih=' + tarih + '&otel_id=' + otelId;
+        if (bosOdalarDahil) {
+            url += '&bos_odalar=1';
+        }
+
+        window.open(url, '_blank');
+        closePrintDialog();
+    }
 </script>
 {% endblock %}

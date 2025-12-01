@@ -382,10 +382,12 @@ def register_kat_sorumlusu_routes(app):
         otel_idleri = [otel.id for otel in kullanici_otelleri]
         
         if otel_idleri:
-            katlar = Kat.query.filter(
+            katlar = Kat.query.options(
+                db.joinedload(Kat.otel)
+            ).filter(
                 Kat.otel_id.in_(otel_idleri),
                 Kat.aktif == True
-            ).order_by(Kat.kat_no).all()
+            ).order_by(Kat.otel_id, Kat.kat_no).all()
         else:
             katlar = []
             if kullanici_rol == 'kat_sorumlusu':

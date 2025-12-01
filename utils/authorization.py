@@ -159,7 +159,6 @@ def get_otel_filtreleme_secenekleri(kullanici_id=None):
         kullanici_id: Kullanıcı ID (None ise session'dan alınır)
         
     Returns:
-        List[Tuple]: (otel_id, otel_adi) tuple'ları
+        List[Otel]: Otel objeleri listesi
     """
-    oteller = get_kullanici_otelleri(kullanici_id)
-    return [(o.id, o.ad) for o in oteller]
+    return get_kullanici_otelleri(kullanici_id)

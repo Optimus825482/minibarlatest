@@ -2,13 +2,50 @@
 
 {% block title %}Depo Stokları - Minibar Takip Sistemi{% endblock %}
 {% block page_title %} <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">📦 Depo Stokları</h1>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">Tüm ürünlerin depo stok durumlarını görüntüleyin</p>
-        </div>{% endblock %}
+    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">📦 Depo Stokları</h1>
+    <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">Tüm ürünlerin depo stok durumlarını görüntüleyin</p>
+</div>{% endblock %}
 
 {% block content %}
 <div class="space-y-4 md:space-y-6">
- 
+
+    <!-- İlk Stok Yükleme Butonları - Her otel için ayrı -->
+    {% set ilk_stok_bekleyen_oteller = oteller|selectattr('ilk_stok_yuklendi', 'false')|list %}
+    {% if ilk_stok_bekleyen_oteller %}
+    <div
+        class="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800 shadow rounded-lg p-4">
+        <div class="flex items-start gap-3">
+            <div class="flex-shrink-0">
+                <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                    </path>
+                </svg>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-sm font-semibold text-emerald-800 dark:text-emerald-300 mb-2">İlk Stok Yükleme</h3>
+                <p class="text-xs text-emerald-700 dark:text-emerald-400 mb-3">Aşağıdaki oteller için henüz ilk stok
+                    yüklemesi yapılmamış. Excel dosyası ile toplu stok girişi yapabilirsiniz.</p>
+                <div class="flex flex-wrap gap-2">
+                    {% for otel in oteller %}
+                    {% if not otel.ilk_stok_yuklendi %}
+                    <button type="button" onclick="openIlkStokModal({{ otel.id }}, '{{ otel.ad }}')"
+                        class="inline-flex items-center px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors text-sm font-medium">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                        </svg>
+                        {{ otel.ad }}
+                    </button>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Filtre Bölümü -->
     <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
         <form id="filtreForm" method="GET" action="{{ url_for('admin_depo_stoklari') }}">
@@ -17,42 +54,43 @@
                     <label for="otel_id" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                         Otel
                     </label>
-                    <select name="otel_id" id="filtre_otel_id" 
-                            class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200">
+                    <select name="otel_id" id="filtre_otel_id"
+                        class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200">
                         <option value="">Tüm Oteller</option>
                         {% for otel in oteller %}
-                        <option value="{{ otel.id }}" {% if secili_otel_id == otel.id %}selected{% endif %}>
+                        <option value="{{ otel.id }}" {% if secili_otel_id==otel.id %}selected{% endif %}>
                             {{ otel.ad }}
                         </option>
                         {% endfor %}
                     </select>
                 </div>
                 <div>
-                    <label for="depo_sorumlusu_id" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label for="depo_sorumlusu_id"
+                        class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                         Depo Sorumlusu
                     </label>
-                    <select name="depo_sorumlusu_id" id="filtre_depo_sorumlusu_id" 
-                            class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
-                            disabled>
+                    <select name="depo_sorumlusu_id" id="filtre_depo_sorumlusu_id"
+                        class="no-choices w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
+                        disabled>
                         <option value="">Önce otel seçin</option>
                     </select>
                 </div>
                 <div class="flex items-end gap-2">
                     <button type="submit" id="filtreButton"
-                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
                         Filtrele
                     </button>
                     {% if secili_otel_id or secili_depo_id %}
-                    <a href="{{ url_for('admin_depo_stoklari') }}" 
-                       class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-colors">
+                    <a href="{{ url_for('admin_depo_stoklari') }}"
+                        class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-colors">
                         Temizle
                     </a>
                     {% endif %}
-                    <a href="{{ url_for('admin_depo_stoklari', format='excel') }}" 
-                       class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                    <a href="{{ url_for('admin_depo_stoklari', format='excel') }}"
+                        class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
                             </path>
                         </svg>
                         Excel İndir
@@ -68,9 +106,10 @@
         <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 rounded-lg p-3">
-                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                     </svg>
                 </div>
                 <div class="ml-4">
@@ -84,7 +123,9 @@
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-red-100 dark:bg-red-900/30 rounded-lg p-3">
                     <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        <path fill-rule="evenodd"
+                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                            clip-rule="evenodd" />
                     </svg>
                 </div>
                 <div class="ml-4">
@@ -100,7 +141,9 @@
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg p-3">
                     <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        <path fill-rule="evenodd"
+                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                            clip-rule="evenodd" />
                     </svg>
                 </div>
                 <div class="ml-4">
@@ -117,20 +160,25 @@
     <!-- Stok Tablosu -->
     <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
         <div class="px-4 py-5 sm:p-6">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                 <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100">Stok Listesi</h3>
-                <div class="text-sm text-slate-600 dark:text-slate-400">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    Yeni stok girişi için <a href="{{ url_for('satin_alma_siparis') }}" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">Satın Alma</a> modülünü kullanın
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="text-sm text-slate-600 dark:text-slate-400">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Yeni stok girişi için <a href="{{ url_for('satin_alma_siparis') }}"
+                            class="text-blue-600 dark:text-blue-400 hover:underline font-medium">Satın Alma</a> modülünü
+                        kullanın
+                    </div>
                 </div>
             </div>
-            
+
             {% if not secili_otel_id %}
             <!-- Otel seçilmemiş uyarısı -->
             <div class="text-center py-16">
-                <svg class="mx-auto h-16 w-16 text-blue-400 dark:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                <svg class="mx-auto h-16 w-16 text-blue-400 dark:text-blue-500" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
                 <h3 class="mt-4 text-lg font-medium text-slate-900 dark:text-slate-100">Otel Seçimi Gerekli</h3>
                 <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
@@ -142,28 +190,36 @@
                 <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
                     <thead class="bg-slate-50 dark:bg-slate-900">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Ürün Adı
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Grup
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Birim
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Depo Stok
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Zimmet Stok
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Toplam Stok
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Kritik Seviye
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Durum
                             </th>
                         </tr>
@@ -171,7 +227,8 @@
                     <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
                         {% for item in stok_listesi %}
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">
+                            <td
+                                class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">
                                 {{ item.urun_adi }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">
@@ -196,7 +253,8 @@
                                 {{ item.kritik_stok }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ item.badge_class }}">
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ item.badge_class }}">
                                     {{ item.badge_text }}
                                 </span>
                             </td>
@@ -207,11 +265,14 @@
             </div>
             {% else %}
             <div class="text-center py-12">
-                <svg class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                <svg class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                    </path>
                 </svg>
-                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Seçilen filtreye uygun stok kaydı bulunamadı</p>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Seçilen filtreye uygun stok kaydı bulunamadı
+                </p>
             </div>
             {% endif %}
         </div>
@@ -219,40 +280,36 @@
 </div>
 
 <script>
-// Filtre - Otel değiştiğinde depo sorumlularını yükle
-document.addEventListener('DOMContentLoaded', function() {
-    const otelSelect = document.getElementById('filtre_otel_id');
-    const depoSelect = document.getElementById('filtre_depo_sorumlusu_id');
-    const filtreForm = document.getElementById('filtreForm');
-    
-    // Sayfa yüklendiğinde eğer otel seçiliyse depo sorumlularını yükle
-    {% if secili_depo_id %}
-    const seciliDepoId = {{ secili_depo_id }};
-    {% else %}
-    const seciliDepoId = null;
-    {% endif %}
+    // Filtre - Otel değiştiğinde depo sorumlularını yükle
+    document.addEventListener('DOMContentLoaded', function () {
+        const otelSelect = document.getElementById('filtre_otel_id');
+        const depoSelect = document.getElementById('filtre_depo_sorumlusu_id');
+        const filtreForm = document.getElementById('filtreForm');
+
+        // Sayfa yüklendiğinde eğer otel seçiliyse depo sorumlularını yükle
+        var seciliDepoId = {% if secili_depo_id %}{{ secili_depo_id }}{% else %}null{% endif %};
     if (otelSelect.value) {
         loadDepoSorumluları(otelSelect.value, seciliDepoId);
     }
-    
+
     // Otel değiştiğinde
-    otelSelect.addEventListener('change', async function() {
+    otelSelect.addEventListener('change', async function () {
         const otelId = this.value;
-        
+
         if (!otelId) {
             depoSelect.innerHTML = '<option value="">Önce otel seçin</option>';
             depoSelect.disabled = true;
             return;
         }
-        
+
         // Depo sorumlularını yükle
         await loadDepoSorumluları(otelId);
     });
-    
+
     // Tablo scroll indicator
     const tableWrapper = document.querySelector('.table-wrapper');
     if (tableWrapper) {
-        tableWrapper.addEventListener('scroll', function() {
+        tableWrapper.addEventListener('scroll', function () {
             if (this.scrollLeft + this.clientWidth >= this.scrollWidth - 10) {
                 this.classList.add('scrolled-end');
             } else {
@@ -260,79 +317,81 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
+    });
 
-// Depo sorumlularını yükle
-async function loadDepoSorumluları(otelId, seciliDepoId = null) {
-    const depoSelect = document.getElementById('filtre_depo_sorumlusu_id');
-    
-    try {
-        depoSelect.innerHTML = '<option value="">Yükleniyor...</option>';
-        depoSelect.disabled = true;
-        
-        const response = await fetch(`/api/oteller/${otelId}/depo-sorumluları`);
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('API Hatası:', response.status, errorText);
-            throw new Error(`HTTP ${response.status}: Depo sorumluları yüklenemedi`);
-        }
-        
-        const depoSorumlular = await response.json();
-        
-        depoSelect.innerHTML = '<option value="">Tüm Depo Sorumluları</option>';
-        
-        if (depoSorumlular.length === 0) {
-            depoSelect.innerHTML = '<option value="">Bu otelde depo sorumlusu yok</option>';
+    // Depo sorumlularını yükle
+    async function loadDepoSorumluları(otelId, seciliDepoId = null) {
+        const depoSelect = document.getElementById('filtre_depo_sorumlusu_id');
+
+        try {
+            depoSelect.innerHTML = '<option value="">Yükleniyor...</option>';
             depoSelect.disabled = true;
-            return;
-        }
-        
-        depoSorumlular.forEach(depo => {
-            const option = document.createElement('option');
-            option.value = depo.id;
-            option.textContent = `${depo.ad} ${depo.soyad}`;
-            
-            // Eğer bu depo sorumlusu seçiliyse işaretle
-            if (seciliDepoId && depo.id === seciliDepoId) {
-                option.selected = true;
+
+            const response = await fetch(`/api/oteller/${otelId}/depo-sorumluları`);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Hatası:', response.status, errorText);
+                throw new Error(`HTTP ${response.status}: Depo sorumluları yüklenemedi`);
             }
-            
-            depoSelect.appendChild(option);
-        });
-        
-        // Eğer tek sorumlu varsa otomatik seç
-        if (depoSorumlular.length === 1 && !seciliDepoId) {
-            depoSelect.selectedIndex = 1; // İlk gerçek seçeneği seç (0. index "Tüm Depo Sorumluları")
-        }
-        
-        depoSelect.disabled = false;
-        
-    } catch (error) {
-        console.error('Depo sorumluları yüklenirken hata:', error);
-        depoSelect.innerHTML = '<option value="">Hata oluştu - Lütfen tekrar deneyin</option>';
-        depoSelect.disabled = true;
-        
-        // Kullanıcıya bildirim göster
-        if (typeof showError === 'function') {
-            showError('Depo sorumluları yüklenirken hata oluştu');
+
+            const depoSorumlular = await response.json();
+
+            depoSelect.innerHTML = '<option value="">Tüm Depo Sorumluları</option>';
+
+            if (depoSorumlular.length === 0) {
+                depoSelect.innerHTML = '<option value="">Bu otelde depo sorumlusu yok</option>';
+                depoSelect.disabled = true;
+                return;
+            }
+
+            depoSorumlular.forEach(depo => {
+                const option = document.createElement('option');
+                option.value = depo.id;
+                option.textContent = `${depo.ad} ${depo.soyad}`;
+
+                // Eğer bu depo sorumlusu seçiliyse işaretle
+                if (seciliDepoId && depo.id === seciliDepoId) {
+                    option.selected = true;
+                }
+
+                depoSelect.appendChild(option);
+            });
+
+            // Eğer tek sorumlu varsa otomatik seç
+            if (depoSorumlular.length === 1 && !seciliDepoId) {
+                depoSelect.selectedIndex = 1; // İlk gerçek seçeneği seç (0. index "Tüm Depo Sorumluları")
+            }
+
+            depoSelect.disabled = false;
+
+        } catch (error) {
+            console.error('Depo sorumluları yüklenirken hata:', error);
+            depoSelect.innerHTML = '<option value="">Hata oluştu - Lütfen tekrar deneyin</option>';
+            depoSelect.disabled = true;
+
+            // Kullanıcıya bildirim göster
+            if (typeof showError === 'function') {
+                showError('Depo sorumluları yüklenirken hata oluştu');
+            }
         }
     }
-}
 </script>
 
 <!-- Stok Giriş Modal - jQuery Modal -->
 <div id="stokGirisModal" class="modal bg-white dark:bg-slate-800 shadow-2xl">
     <!-- Header -->
-    <div class="px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800">
+    <div
+        class="px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800">
         <h5 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
-            <svg class="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none"
+                stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
             </svg>
             <span class="truncate">Yeni Stok Girişi</span>
         </h5>
     </div>
-    
+
     <!-- Body -->
     <div class="p-4 sm:p-6 md:p-8 overflow-y-auto" style="max-height: calc(90vh - 180px);">
         <form id="stokGirisForm" class="space-y-4 sm:space-y-6">
@@ -349,7 +408,7 @@ async function loadDepoSorumluları(otelId, seciliDepoId = null) {
                     {% endfor %}
                 </select>
             </div>
-            
+
             <!-- Depo Sorumlusu -->
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -360,7 +419,7 @@ async function loadDepoSorumluları(otelId, seciliDepoId = null) {
                     <option value="">Önce otel seçin</option>
                 </select>
             </div>
-            
+
             <!-- Ürün Grubu -->
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -371,7 +430,7 @@ async function loadDepoSorumluları(otelId, seciliDepoId = null) {
                     <option value="">Ürün Grubu Seçin</option>
                 </select>
             </div>
-            
+
             <!-- Ürün -->
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -382,7 +441,7 @@ async function loadDepoSorumluları(otelId, seciliDepoId = null) {
                     <option value="">Önce ürün grubu seçin</option>
                 </select>
             </div>
-            
+
             <!-- Miktar -->
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -392,7 +451,7 @@ async function loadDepoSorumluları(otelId, seciliDepoId = null) {
                     class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
                     placeholder="Giriş miktarını girin">
             </div>
-            
+
             <!-- Açıklama -->
             <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -402,15 +461,14 @@ async function loadDepoSorumluları(otelId, seciliDepoId = null) {
                     class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-200"
                     placeholder="İsteğe bağlı açıklama"></textarea>
             </div>
-            
+
             <!-- Butonlar -->
             <div class="flex justify-end space-x-4 pt-4">
                 <button type="button" onclick="closeStokGirisModal()"
                     class="px-6 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
                     İptal
                 </button>
-                <button type="submit"
-                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                     Stok Girişi Yap
                 </button>
             </div>
@@ -627,5 +685,341 @@ document.getElementById('stokGirisForm').addEventListener('submit', async functi
 </script>
 -->
 <!-- Modal JavaScript SONU -->
+
+<!-- İlk Stok Yükleme Modal -->
+<div id="ilkStokModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+        <div class="fixed inset-0 transition-opacity bg-slate-500 bg-opacity-75 dark:bg-slate-900 dark:bg-opacity-75"
+            onclick="closeIlkStokModal()"></div>
+
+        <div
+            class="relative inline-block w-full max-w-2xl overflow-hidden text-left align-bottom transition-all transform bg-white dark:bg-slate-800 rounded-lg shadow-xl sm:my-8 sm:align-middle">
+            <!-- Header -->
+            <div
+                class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-slate-900 dark:to-slate-800">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-emerald-600 dark:text-emerald-400" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                            </path>
+                        </svg>
+                        İlk Stok Yükleme
+                    </h3>
+                    <button onclick="closeIlkStokModal()"
+                        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400" id="ilkStokOtelAdi"></p>
+            </div>
+
+            <!-- Body -->
+            <div class="px-6 py-4">
+                <!-- Adım 1: Dosya Yükleme -->
+                <div id="ilkStokStep1">
+                    <div class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <p class="text-sm text-blue-800 dark:text-blue-300">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            Excel dosyanızda <strong>urun_adi</strong> ve <strong>adet</strong> sütunları olmalıdır.
+                        </p>
+                    </div>
+
+                    <div class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-8 text-center"
+                        id="dropZone">
+                        <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                            </path>
+                        </svg>
+                        <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Excel dosyasını sürükleyip bırakın
+                            veya</p>
+                        <label
+                            class="mt-2 inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg cursor-pointer hover:bg-emerald-700 transition-colors">
+                            <span>Dosya Seç</span>
+                            <input type="file" id="ilkStokFile" accept=".xlsx,.xls" class="hidden"
+                                onchange="handleFileSelect(this)">
+                        </label>
+                        <p class="mt-2 text-xs text-slate-500 dark:text-slate-500" id="selectedFileName"></p>
+                    </div>
+
+                    <div class="mt-4 flex justify-end">
+                        <button type="button" onclick="previewIlkStok()" id="previewBtn" disabled
+                            class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                            <i class="fas fa-eye mr-2"></i>Önizle
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Adım 2: Önizleme -->
+                <div id="ilkStokStep2" class="hidden">
+                    <div class="mb-4 grid grid-cols-2 gap-4">
+                        <div class="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                            <p class="text-sm text-green-800 dark:text-green-300">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                Eşleşen: <strong id="eslesenSayisi">0</strong> ürün
+                            </p>
+                        </div>
+                        <div class="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                            <p class="text-sm text-yellow-800 dark:text-yellow-300">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                Eşleşmeyen: <strong id="eslesmeyenSayisi">0</strong> ürün
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Eşleşen Ürünler Tablosu -->
+                    <div class="max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg">
+                        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                            <thead class="bg-slate-50 dark:bg-slate-900 sticky top-0">
+                                <tr>
+                                    <th
+                                        class="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                                        Ürün Adı</th>
+                                    <th
+                                        class="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                                        Adet</th>
+                                    <th
+                                        class="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                                        Birim</th>
+                                </tr>
+                            </thead>
+                            <tbody id="eslesenUrunlerBody"
+                                class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Eşleşmeyen Ürünler -->
+                    <div id="eslesmeyenContainer" class="mt-4 hidden">
+                        <p class="text-sm font-medium text-yellow-700 dark:text-yellow-400 mb-2">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>Eşleşmeyen Ürünler (Yüklenmeyecek):
+                        </p>
+                        <div class="max-h-32 overflow-y-auto bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3">
+                            <ul id="eslesmeyenList" class="text-sm text-yellow-800 dark:text-yellow-300 space-y-1"></ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex justify-between">
+                        <button type="button" onclick="backToStep1()"
+                            class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                            <i class="fas fa-arrow-left mr-2"></i>Geri
+                        </button>
+                        <button type="button" onclick="confirmIlkStok()" id="confirmBtn"
+                            class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+                            <i class="fas fa-check mr-2"></i>Onayla ve Yükle
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading -->
+                <div id="ilkStokLoading" class="hidden text-center py-8">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
+                    <p class="mt-4 text-slate-600 dark:text-slate-400">İşleniyor...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // İlk Stok Yükleme JavaScript
+    let selectedFile = null;
+    let previewData = null;
+    let currentOtelId = null;
+
+    // Modal aç
+    function openIlkStokModal(otelId, otelAdi) {
+        currentOtelId = otelId;
+        document.getElementById('ilkStokOtelAdi').textContent = otelAdi + ' için ilk stok yüklemesi';
+        document.getElementById('ilkStokModal').classList.remove('hidden');
+        resetModal();
+    }
+
+    // Modal kapat
+    function closeIlkStokModal() {
+        document.getElementById('ilkStokModal').classList.add('hidden');
+        resetModal();
+    }
+
+    // Modal sıfırla
+    function resetModal() {
+        selectedFile = null;
+        previewData = null;
+        document.getElementById('ilkStokFile').value = '';
+        document.getElementById('selectedFileName').textContent = '';
+        document.getElementById('previewBtn').disabled = true;
+        document.getElementById('ilkStokStep1').classList.remove('hidden');
+        document.getElementById('ilkStokStep2').classList.add('hidden');
+        document.getElementById('ilkStokLoading').classList.add('hidden');
+    }
+
+    // Dosya seçimi
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            selectedFile = input.files[0];
+            document.getElementById('selectedFileName').textContent = selectedFile.name;
+            document.getElementById('previewBtn').disabled = false;
+        }
+    }
+
+    // Önizleme
+    async function previewIlkStok() {
+        if (!selectedFile || !currentOtelId) return;
+
+        showLoading();
+
+        const formData = new FormData();
+        formData.append('excel_file', selectedFile);
+        formData.append('action', 'preview');
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+        try {
+            const response = await fetch(`/admin/ilk-stok-yukleme/${currentOtelId}`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.preview) {
+                previewData = data;
+                showPreview(data);
+            } else {
+                hideLoading();
+                showError(data.message || 'Önizleme oluşturulamadı');
+            }
+        } catch (error) {
+            hideLoading();
+            showError('Bir hata oluştu: ' + error.message);
+        }
+    }
+
+    // Önizleme göster
+    function showPreview(data) {
+        document.getElementById('eslesenSayisi').textContent = data.toplam_eslesen;
+        document.getElementById('eslesmeyenSayisi').textContent = data.toplam_eslesmeyen;
+
+        // Eşleşen ürünler tablosu
+        const tbody = document.getElementById('eslesenUrunlerBody');
+        tbody.innerHTML = '';
+        data.eslesen_urunler.forEach(urun => {
+            tbody.innerHTML += `<tr><td class="px-4 py-2 text-sm text-slate-900 dark:text-slate-100">${urun.urun_adi}</td><td class="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">${urun.adet}</td><td class="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">${urun.birim}</td></tr>`;
+        });
+
+        // Eşleşmeyen ürünler
+        const eslesmeyenContainer = document.getElementById('eslesmeyenContainer');
+        const eslesmeyenList = document.getElementById('eslesmeyenList');
+        if (data.eslesmeyen_urunler.length > 0) {
+            eslesmeyenContainer.classList.remove('hidden');
+            eslesmeyenList.innerHTML = '';
+            data.eslesmeyen_urunler.forEach(urun => {
+                eslesmeyenList.innerHTML += `<li>• ${urun.excel_urun_adi} (${urun.adet} adet)</li>`;
+            });
+        } else {
+            eslesmeyenContainer.classList.add('hidden');
+        }
+
+        // Confirm butonu durumu
+        document.getElementById('confirmBtn').disabled = data.toplam_eslesen === 0;
+
+        hideLoading();
+        document.getElementById('ilkStokStep1').classList.add('hidden');
+        document.getElementById('ilkStokStep2').classList.remove('hidden');
+    }
+
+    // Geri dön
+    function backToStep1() {
+        document.getElementById('ilkStokStep1').classList.remove('hidden');
+        document.getElementById('ilkStokStep2').classList.add('hidden');
+    }
+
+    // Onayla ve yükle
+    async function confirmIlkStok() {
+        if (!selectedFile || !currentOtelId) return;
+
+        showLoading();
+
+        const formData = new FormData();
+        formData.append('excel_file', selectedFile);
+        formData.append('action', 'confirm');
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+        try {
+            const response = await fetch(`/admin/ilk-stok-yukleme/${currentOtelId}`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                closeIlkStokModal();
+                showSuccess(data.message);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                hideLoading();
+                showError(data.message || 'Yükleme başarısız');
+            }
+        } catch (error) {
+            hideLoading();
+            showError('Bir hata oluştu: ' + error.message);
+        }
+    }
+
+    function showLoading() {
+        document.getElementById('ilkStokStep1').classList.add('hidden');
+        document.getElementById('ilkStokStep2').classList.add('hidden');
+        document.getElementById('ilkStokLoading').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+        document.getElementById('ilkStokLoading').classList.add('hidden');
+    }
+
+    // Drag & Drop
+    const dropZone = document.getElementById('dropZone');
+    if (dropZone) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/20'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/20'), false);
+        });
+
+        dropZone.addEventListener('drop', function (e) {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                    selectedFile = file;
+                    document.getElementById('selectedFileName').textContent = file.name;
+                    document.getElementById('previewBtn').disabled = false;
+                } else {
+                    showWarning('Sadece Excel dosyaları (.xlsx, .xls) kabul edilir.');
+                }
+            }
+        }, false);
+    }
+</script>
 
 {% endblock %}

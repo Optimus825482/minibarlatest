@@ -20,7 +20,8 @@ def doluluk_yonetimi():
         kullanici_otelleri = get_kullanici_otelleri()
         otel_secenekleri = get_otel_filtreleme_secenekleri()
         secili_otel_id = request.args.get("otel_id", type=int)
-        if not secili_otel_id and kullanici_otelleri:
+        # Sadece tek otel varsa otomatik seç, birden fazla varsa kullanıcı seçmeli
+        if not secili_otel_id and kullanici_otelleri and len(kullanici_otelleri) == 1:
             secili_otel_id = kullanici_otelleri[0].id
         # Silinen kayıtları gösterme
         yukleme_gecmisi = DosyaYukleme.query.filter(

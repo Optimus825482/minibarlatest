@@ -595,13 +595,14 @@ def hata_cozuldu_isaretle(hata_id, cozum_notu=None):
 # ADMIN MINIBAR YÖNETİMİ HELPER FONKSIYONLARI
 # ============================================
 
-def get_depo_stok_durumu(grup_id=None, depo_sorumlusu_id=None):
+def get_depo_stok_durumu(grup_id=None, depo_sorumlusu_id=None, otel_id=None):
     """
     Depo stok durumlarını hesaplar (Depo + Kat Sorumlusu Zimmetleri)
     
     Args:
         grup_id (int, optional): Ürün grubu filtresi
         depo_sorumlusu_id (int, optional): Depo sorumlusu filtresi
+        otel_id (int, optional): Otel filtresi - Otel bazlı stok takibi için
     
     Returns:
         list: [
@@ -622,7 +623,7 @@ def get_depo_stok_durumu(grup_id=None, depo_sorumlusu_id=None):
         ]
     """
     try:
-        from models import UrunGrup, PersonelZimmet, PersonelZimmetDetay, Kullanici
+        from models import UrunGrup, PersonelZimmet, PersonelZimmetDetay, Kullanici, UrunStok
         
         # Ürünleri getir
         query = Urun.query.filter_by(aktif=True)
@@ -631,8 +632,16 @@ def get_depo_stok_durumu(grup_id=None, depo_sorumlusu_id=None):
         
         urunler = query.all()
         
-        # Depo stok durumlarını hesapla
-        depo_stok_map = get_stok_toplamlari([urun.id for urun in urunler])
+        # Otel bazlı stok durumlarını hesapla (UrunStok tablosundan)
+        depo_stok_map = {}
+        if otel_id:
+            # Otel bazlı stok - UrunStok tablosundan
+            stok_query = UrunStok.query.filter_by(otel_id=otel_id)
+            for stok in stok_query.all():
+                depo_stok_map[stok.urun_id] = stok.mevcut_stok
+        else:
+            # Eski yöntem - tüm stoklar (geriye uyumluluk)
+            depo_stok_map = get_stok_toplamlari([urun.id for urun in urunler])
         
         # Kat sorumlusu zimmet stoklarını hesapla
         zimmet_query = db.session.query(
@@ -648,10 +657,14 @@ def get_depo_stok_durumu(grup_id=None, depo_sorumlusu_id=None):
             Kullanici.aktif == True
         )
         
+        # Otel filtresi varsa, o oteldeki kat sorumlularının zimmetlerini filtrele
+        if otel_id:
+            zimmet_query = zimmet_query.filter(Kullanici.otel_id == otel_id)
+        
         # Depo sorumlusu filtresi varsa, onun zimmet verdiği kat sorumlularını filtrele
         if depo_sorumlusu_id:
             zimmet_query = zimmet_query.filter(
-                PersonelZimmet.depo_sorumlusu_id == depo_sorumlusu_id
+                PersonelZimmet.teslim_eden_id == depo_sorumlusu_id
             )
         
         zimmet_query = zimmet_query.group_by(PersonelZimmetDetay.urun_id)

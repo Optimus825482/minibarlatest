@@ -126,11 +126,11 @@ class QRKodService:
     @staticmethod
     def validate_token(token):
         """
-        Token'dan oda bilgisini parse et (validasyon yok, direkt parse)
+        Token'ı doğrula ve oda bilgisini döndür
         Args:
-            token (str): Parse edilecek token (URL veya token string)
+            token (str): Doğrulanacak token (URL veya token string)
         Returns:
-            Oda | None: Oda instance veya None
+            Oda | None: Geçerli ise Oda instance, değilse None
         """
         try:
             # Eğer URL formatındaysa token'ı çıkar
@@ -141,23 +141,13 @@ class QRKodService:
                 if len(parts) == 2:
                     token = parts[1]
             
-            # MINIBAR_ODA_{oda_id}_KAT_{kat_id} formatını parse et
-            if token.startswith('MINIBAR_ODA_'):
-                try:
-                    parts = token.split('_')
-                    if len(parts) >= 5 and parts[0] == 'MINIBAR' and parts[1] == 'ODA' and parts[3] == 'KAT':
-                        oda_id = int(parts[2])
-                        # Direkt oda ID ile getir
-                        return Oda.query.filter_by(id=oda_id, aktif=True).first()
-                except (ValueError, IndexError):
-                    pass
+            # Veritabanında token ara
+            oda = Oda.query.filter_by(
+                qr_kod_token=token,
+                aktif=True
+            ).first()
             
-            # Sayısal token ise direkt oda ID olarak dene
-            if token.isdigit():
-                return Oda.query.filter_by(id=int(token), aktif=True).first()
-            
-            # Son çare: veritabanında token ara
-            return Oda.query.filter_by(qr_kod_token=token, aktif=True).first()
+            return oda
             
         except Exception:
             return None

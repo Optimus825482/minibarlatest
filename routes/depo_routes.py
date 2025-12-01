@@ -2103,9 +2103,10 @@ def register_depo_routes(app):
     @login_required
     @role_required('depo_sorumlusu')
     def depo_stoklarim():
-        """Depo sorumlusu stok takip sayfası"""
+        """Depo sorumlusu stok takip sayfası - Otel bazlı"""
         try:
             from utils.authorization import get_kullanici_otelleri, get_otel_filtreleme_secenekleri
+            from models import UrunStok
             
             # Kullanıcının erişebileceği oteller
             kullanici_otelleri = get_kullanici_otelleri()
@@ -2116,17 +2117,23 @@ def register_depo_routes(app):
             if not secili_otel_id and kullanici_otelleri:
                 secili_otel_id = kullanici_otelleri[0].id
             
-            # Tüm ürünleri ve stok durumlarını getir
+            # Tüm ürünleri getir
             urunler = Urun.query.filter_by(aktif=True).order_by(Urun.urun_adi).all()
+            
+            # Otel bazlı stok bilgilerini getir (UrunStok tablosundan)
+            otel_stok_map = {}
+            if secili_otel_id:
+                otel_stoklar = UrunStok.query.filter_by(otel_id=secili_otel_id).all()
+                otel_stok_map = {stok.urun_id: stok.mevcut_stok for stok in otel_stoklar}
             
             # Her ürün için stok bilgilerini hesapla
             stok_bilgileri = []
             for urun in urunler:
-                stok_toplam = get_stok_toplamlari([urun.id])
-                mevcut_stok = stok_toplam.get(urun.id, 0)
+                # Otel bazlı stok
+                mevcut_stok = otel_stok_map.get(urun.id, 0)
                 
-                # Kritik seviye kontrolü (varsayılan 10)
-                kritik_seviye = 10
+                # Kritik seviye kontrolü
+                kritik_seviye = urun.kritik_stok_seviyesi or 10
                 durum = 'yeterli'
                 if mevcut_stok == 0:
                     durum = 'tukendi'
