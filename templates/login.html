@@ -25,6 +25,47 @@
       })();
     </script>
 
+    <!-- Cache Temizleme Script - Login sayfasında cache'i temizle -->
+    <script>
+      (function() {
+        async function clearBrowserCache() {
+          try {
+            // Service Worker cache'lerini temizle
+            if ('caches' in window) {
+              const cacheNames = await caches.keys();
+              await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
+              console.log('Service Worker cache temizlendi');
+            }
+            // Session storage temizle (tema hariç)
+            const keysToKeep = ['minibar-theme'];
+            const sessionKeys = Object.keys(sessionStorage);
+            sessionKeys.forEach(key => {
+              if (!keysToKeep.includes(key)) sessionStorage.removeItem(key);
+            });
+            // LocalStorage'dan minibar verilerini temizle (tema hariç)
+            const localKeysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && !keysToKeep.includes(key) && key.startsWith('minibar-')) {
+                localKeysToRemove.push(key);
+              }
+            }
+            localKeysToRemove.forEach(key => localStorage.removeItem(key));
+            console.log('Browser cache temizlendi');
+          } catch (error) {
+            console.warn('Cache temizleme hatası:', error);
+          }
+        }
+        clearBrowserCache();
+      })();
+    </script>
+
+    <!-- Cache Control Meta Tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+
     <script src="{{url_for('static', filename='js/browser@4.js')}}"></script>
     <!-- Form Validation Module -->
     <script src="/static/js/form-validation.js"></script>
