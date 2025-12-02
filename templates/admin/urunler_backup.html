@@ -88,7 +88,7 @@ endblock %} {% block page_title %}Ürünler{% endblock %} {% block content %}
           </thead>
           <tbody class="bg-white divide-y divide-slate-200">
             {% for urun in urunler %}
-            <tr class="hover:bg-slate-50 transition-colors" data-urun-id="{{ urun.id }}">
+            <tr class="hover:bg-slate-50 transition-colors">
               <td
                 class="px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium text-slate-900"
               >
@@ -548,105 +548,50 @@ endblock %} {% block page_title %}Ürünler{% endblock %} {% block content %}
     });
   }
 
-  // Bildirim gosterme
-  function gosterBildirim(mesaj, tip) {
-    const renk = tip === 'success' ? 'bg-green-500' : 'bg-red-500';
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 ' + renk + ' text-white px-6 py-3 rounded-lg shadow-lg z-50';
-    notification.textContent = mesaj;
-    document.body.appendChild(notification);
-    setTimeout(() => {
-      notification.style.opacity = '0';
-      notification.style.transition = 'opacity 0.3s';
-      setTimeout(() => notification.remove(), 300);
-    }, 3000);
-  }
-
-  // Tablodaki urun satirini guncelle
-  function guncelleUrunSatiri(urun) {
-    const row = document.querySelector('tr[data-urun-id="' + urun.id + '"]');
-    if (row) {
-      // Aktif filtreyi kontrol et (TableSearchFilter badge'leri)
-      const aktifFiltreBadge = document.querySelector('#urunler-table-active-filters span.bg-slate-600');
-      if (aktifFiltreBadge) {
-        // Filtre aktif - urunun yeni grubu filtreyle eslesiyor mu?
-        const badgeText = aktifFiltreBadge.querySelector('span')?.textContent || '';
-        const grupMatch = badgeText.match(/Grup:\s*(.+)/);
-        const filtreGrup = grupMatch ? grupMatch[1].trim() : '';
-        if (filtreGrup && filtreGrup !== urun.grup_adi) {
-          // Urun artik bu filtrede degil, satiri kaldir
-          row.style.transition = 'opacity 0.3s, transform 0.3s';
-          row.style.opacity = '0';
-          row.style.transform = 'translateX(-20px)';
-          setTimeout(() => {
-            row.remove();
-            // Toplam sayiyi guncelle
-            const totalSpan = document.querySelector('[data-stat="total"]');
-            if (totalSpan) {
-              const currentTotal = parseInt(totalSpan.textContent) || 0;
-              totalSpan.textContent = Math.max(0, currentTotal - 1);
-            }
-          }, 300);
-          return;
-        }
-      }
-      
-      // Filtre yok veya urun hala filtrede - satiri guncelle
-      const cells = row.querySelectorAll('td');
-      cells[0].textContent = urun.urun_adi;
-      cells[1].textContent = urun.grup_adi;
-      cells[2].textContent = urun.birim;
-      cells[3].textContent = urun.kritik_stok_seviyesi;
-      const duzenleBtn = row.querySelector('button[onclick^="urunDuzenleModal"]');
-      if (duzenleBtn) {
-        const escapedName = urun.urun_adi.replace(/'/g, "\\'");
-        duzenleBtn.setAttribute('onclick', 'urunDuzenleModal(' + urun.id + ', ' + urun.grup_id + ', \'' + escapedName + '\', \'' + (urun.barkod || '') + '\', \'' + urun.birim + '\', ' + urun.kritik_stok_seviyesi + ')');
-      }
-      row.classList.add('bg-green-50', 'dark:bg-green-900/20');
-      setTimeout(() => row.classList.remove('bg-green-50', 'dark:bg-green-900/20'), 2000);
-    }
-  }
-
-  function urunDuzenleModal(urunId, grupId, urunAdi, barkod, birim, kritikStok) {
+  function urunDuzenleModal(
+    urunId,
+    grupId,
+    urunAdi,
+    barkod,
+    birim,
+    kritikStok
+  ) {
     document.getElementById("duzenle_grup_id").value = grupId;
     document.getElementById("duzenle_urun_adi").value = urunAdi;
     document.getElementById("duzenle_barkod").value = barkod || "";
     document.getElementById("duzenle_birim").value = birim;
     document.getElementById("duzenle_kritik_stok").value = kritikStok;
 
+    // Form action'ı güncelle
     const form = document.getElementById("urunDuzenleForm");
-    form.action = '/urun-duzenle/' + urunId;
+    form.action = `/urun-duzenle/${urunId}`;
 
+    // Form submit event'ini override et
     form.onsubmit = function (e) {
       e.preventDefault();
+
       const formData = new FormData(form);
-      const submitBtn = form.querySelector('button[type="submit"]');
-      const originalText = submitBtn.textContent;
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Güncelleniyor...';
 
       fetch(form.action, {
         method: "POST",
         body: formData,
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        redirect: "follow",
       })
-        .then((response) => response.json().then(data => ({status: response.status, data})))
-        .then(({status, data}) => {
-          if (data.success) {
-            guncelleUrunSatiri(data.urun);
+        .then((response) => {
+          console.log("Response status:", response.status);
+          if (response.ok || response.redirected) {
             $.modal.close();
-            gosterBildirim(data.message, 'success');
+            location.reload();
           } else {
-            gosterBildirim(data.message || 'Güncelleme başarısız oldu', 'error');
+            return response.text().then((text) => {
+              console.error("Server response:", text);
+              alert("Güncelleme başarısız oldu");
+            });
           }
         })
         .catch((error) => {
           console.error("Hata:", error);
-          gosterBildirim('Güncelleme sırasında bir hata oluştu', 'error');
-        })
-        .finally(() => {
-          submitBtn.disabled = false;
-          submitBtn.textContent = originalText;
+          alert("Güncelleme sırasında bir hata oluştu");
         });
     };
 
@@ -700,3 +645,4 @@ endblock %} {% block page_title %}Ürünler{% endblock %} {% block content %}
   });
 </script>
 {% endblock %}
+

@@ -24,7 +24,7 @@ Roller:
 - admin
 """
 
-from flask import render_template, request, redirect, url_for, flash, session
+from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from models import db, Kullanici, UrunGrup, Urun, StokHareket
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem, log_hata
@@ -608,6 +608,9 @@ def register_admin_routes(app):
         form = UrunForm(obj=urun)
         form.grup_id.choices = grup_choices
 
+        # AJAX isteği kontrolü
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
         if form.validate_on_submit():
             try:
                 # Eski değerleri kaydet
@@ -633,6 +636,25 @@ def register_admin_routes(app):
                     'barkod': urun.barkod
                 })
 
+                # AJAX isteği ise JSON döndür
+                if is_ajax:
+                    # Grup adını al
+                    grup = UrunGrup.query.get(urun.grup_id)
+                    return jsonify({
+                        'success': True,
+                        'message': 'Ürün başarıyla güncellendi.',
+                        'urun': {
+                            'id': urun.id,
+                            'urun_adi': urun.urun_adi,
+                            'grup_id': urun.grup_id,
+                            'grup_adi': grup.grup_adi if grup else '',
+                            'barkod': urun.barkod or '',
+                            'birim': urun.birim,
+                            'kritik_stok_seviyesi': urun.kritik_stok_seviyesi,
+                            'aktif': urun.aktif
+                        }
+                    })
+
                 flash('Ürün başarıyla güncellendi.', 'success')
                 return redirect(url_for('urunler'))
 
@@ -640,15 +662,30 @@ def register_admin_routes(app):
                 db.session.rollback()
                 error_msg = str(e)
                 if 'barkod' in error_msg:
-                    flash('Bu barkod numarası zaten kullanılıyor. Lütfen farklı bir barkod girin veya boş bırakın.', 'danger')
+                    hata_mesaji = 'Bu barkod numarası zaten kullanılıyor. Lütfen farklı bir barkod girin veya boş bırakın.'
                 else:
-                    flash('Güncelleme sırasında bir hata oluştu.', 'danger')
+                    hata_mesaji = 'Güncelleme sırasında bir hata oluştu.'
+                
+                if is_ajax:
+                    return jsonify({'success': False, 'message': hata_mesaji}), 400
+                
+                flash(hata_mesaji, 'danger')
                 log_hata(e, modul='urun_duzenle')
 
             except Exception as e:
                 db.session.rollback()
-                flash('Beklenmeyen bir hata oluştu. Lütfen sistem yöneticisine başvurun.', 'danger')
+                hata_mesaji = 'Beklenmeyen bir hata oluştu. Lütfen sistem yöneticisine başvurun.'
+                
+                if is_ajax:
+                    return jsonify({'success': False, 'message': hata_mesaji}), 500
+                
+                flash(hata_mesaji, 'danger')
                 log_hata(e, modul='urun_duzenle')
+
+        # AJAX form validation hatası
+        if is_ajax and request.method == 'POST':
+            errors = {field.name: field.errors for field in form if field.errors}
+            return jsonify({'success': False, 'message': 'Form doğrulama hatası', 'errors': errors}), 400
 
         return render_template('admin/urun_duzenle.html', form=form, urun=urun, gruplar=gruplar)
 

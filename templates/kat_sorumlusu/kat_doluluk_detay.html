@@ -155,9 +155,7 @@ Doluluk Detayı{% endblock %} {% block content %}
       {% for oda_detay in oda_detaylari %}
       <div class="oda-card h-full" data-durum="{{ oda_detay.durum }}">
         {% if oda_detay.durum == 'bos' %}
-        <!-- Boş Oda -->
-        <div
-          class="h-full min-h-[160px] p-4 border-2 border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-900 flex flex-col justify-center">
+        <!-- Boş Oda - Tıklanabilir --><a href="{{ url_for('oda_kontrol') }}?kat_id={{ kat.id }}&oda_id={{ oda_detay.oda.id }}&from_kat_detay=1" class="block h-full min-h-[160px] p-4 border-2 border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-900 flex flex-col justify-center transition-colors">
           <div class="text-center">
             <div class="text-xl font-bold text-slate-900 dark:text-white mb-2">
               {{ oda_detay.oda.oda_no }}
@@ -166,7 +164,7 @@ Doluluk Detayı{% endblock %} {% block content %}
               <i class="fas fa-door-open mr-1"></i>Boş
             </div>
           </div>
-        </div>
+        </a>
         {% else %}
         <!-- Dolu Oda -->
         <a href="{{ url_for('oda_kontrol') }}?kat_id={{ kat.id }}&oda_id={{ oda_detay.oda.id }}&from_kat_detay=1" class="block h-full min-h-[160px] p-4 border-2 rounded-lg transition-colors flex flex-col

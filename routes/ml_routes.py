@@ -64,7 +64,7 @@ def dashboard():
         
         return render_template('admin/ml_dashboard.html',
                              dashboard_metrics=dashboard_metrics,
-                             active_alerts=active_alerts,
+                             alerts=active_alerts,
                              alert_stats=alert_stats,
                              models=models)
     
@@ -77,7 +77,7 @@ def dashboard():
             pass
         return render_template('admin/ml_dashboard.html',
                              dashboard_metrics={},
-                             active_alerts=[],
+                             alerts=[],
                              alert_stats={},
                              models=[])
 

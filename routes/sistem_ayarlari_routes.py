@@ -15,7 +15,7 @@ Roller:
 """
 
 from flask import render_template, request, redirect, url_for, flash, session, jsonify, send_file
-from models import db, EmailAyarlari, EmailLog, Kullanici, BackupHistory
+from models import db, EmailAyarlari, EmailLog, Kullanici, BackupHistory, Otel
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem
 from utils.email_service import EmailService
@@ -385,4 +385,82 @@ def register_sistem_ayarlari_routes(app):
                 return jsonify({'success': True, 'message': 'Silinecek eski yedek yok'})
                 
         except Exception as e:
+            return jsonify({'success': False, 'message': str(e)})
+    
+    # ============================================
+    # BİLDİRİM AYARLARI (Otel Bazında)
+    # ============================================
+    
+    @app.route('/sistem-ayarlari/bildirimler', methods=['GET', 'POST'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def sistem_ayarlari_bildirimler():
+        """Otel bazında e-posta bildirim ayarları"""
+        
+        if request.method == 'POST':
+            try:
+                # Tüm otellerin bildirim ayarlarını güncelle
+                oteller = Otel.query.filter_by(aktif=True).all()
+                
+                for otel in oteller:
+                    otel_id = str(otel.id)
+                    otel.email_bildirim_aktif = request.form.get(f'bildirim_aktif_{otel_id}') == 'on'
+                    otel.email_uyari_aktif = request.form.get(f'uyari_aktif_{otel_id}') == 'on'
+                    otel.email_rapor_aktif = request.form.get(f'rapor_aktif_{otel_id}') == 'on'
+                    otel.email_sistem_aktif = request.form.get(f'sistem_aktif_{otel_id}') == 'on'
+                
+                db.session.commit()
+                
+                log_islem('guncelleme', 'bildirim_ayarlari', {
+                    'guncellenen_otel_sayisi': len(oteller)
+                })
+                
+                flash('Bildirim ayarları başarıyla kaydedildi.', 'success')
+                
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Hata oluştu: {str(e)}', 'danger')
+            
+            return redirect(url_for('sistem_ayarlari_bildirimler'))
+        
+        # Tüm aktif otelleri getir
+        oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
+        
+        return render_template('sistem_yoneticisi/sistem_ayarlari.html',
+                             active_tab='bildirimler',
+                             oteller=oteller)
+    
+    @app.route('/api/otel-bildirim-ayarlari/<int:otel_id>', methods=['POST'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def otel_bildirim_ayarlari_guncelle(otel_id):
+        """Tek bir otelin bildirim ayarlarını güncelle (AJAX)"""
+        try:
+            otel = Otel.query.get_or_404(otel_id)
+            data = request.get_json()
+            
+            if 'email_bildirim_aktif' in data:
+                otel.email_bildirim_aktif = data['email_bildirim_aktif']
+            if 'email_uyari_aktif' in data:
+                otel.email_uyari_aktif = data['email_uyari_aktif']
+            if 'email_rapor_aktif' in data:
+                otel.email_rapor_aktif = data['email_rapor_aktif']
+            if 'email_sistem_aktif' in data:
+                otel.email_sistem_aktif = data['email_sistem_aktif']
+            
+            db.session.commit()
+            
+            log_islem('guncelleme', 'bildirim_ayarlari', {
+                'otel_id': otel_id,
+                'otel_ad': otel.ad,
+                'ayarlar': data
+            })
+            
+            return jsonify({
+                'success': True,
+                'message': f'{otel.ad} bildirim ayarları güncellendi'
+            })
+            
+        except Exception as e:
+            db.session.rollback()
             return jsonify({'success': False, 'message': str(e)})

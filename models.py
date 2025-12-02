@@ -86,6 +86,12 @@ class Otel(db.Model):
     ilk_stok_yukleme_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
     ilk_stok_yukleyen_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
     
+    # E-posta Bildirim Ayarları - Otel bazında açılıp kapatılabilir
+    email_bildirim_aktif = db.Column(db.Boolean, default=False)  # Varsayılan kapalı
+    email_uyari_aktif = db.Column(db.Boolean, default=False)  # Uyarı e-postaları
+    email_rapor_aktif = db.Column(db.Boolean, default=False)  # Rapor e-postaları
+    email_sistem_aktif = db.Column(db.Boolean, default=False)  # Sistem bildirimleri
+    
     # İlişkiler
     katlar = db.relationship('Kat', backref='otel', lazy=True, cascade='all, delete-orphan')
     kullanici_atamalari = db.relationship('KullaniciOtel', backref='otel', lazy=True, cascade='all, delete-orphan')

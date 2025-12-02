@@ -23,6 +23,43 @@ class EmailService:
     """Email gönderim servisi"""
     
     @staticmethod
+    def is_otel_bildirim_aktif(otel_id: int, bildirim_tipi: str = 'genel') -> bool:
+        """
+        Otel için e-posta bildirimi aktif mi kontrol et
+        
+        Args:
+            otel_id: Otel ID
+            bildirim_tipi: 'genel', 'uyari', 'rapor', 'sistem'
+        
+        Returns:
+            bool: Bildirim aktif mi
+        """
+        try:
+            from models import Otel
+            
+            otel = Otel.query.get(otel_id)
+            if not otel:
+                return False
+            
+            # Ana anahtar kapalıysa hiçbir bildirim gönderilmez
+            if not otel.email_bildirim_aktif:
+                return False
+            
+            # Bildirim tipine göre kontrol
+            if bildirim_tipi == 'uyari':
+                return otel.email_uyari_aktif
+            elif bildirim_tipi == 'rapor':
+                return otel.email_rapor_aktif
+            elif bildirim_tipi == 'sistem':
+                return otel.email_sistem_aktif
+            else:
+                return otel.email_bildirim_aktif
+                
+        except Exception as e:
+            logger.error(f"Otel bildirim kontrolü hatası: {str(e)}")
+            return False
+    
+    @staticmethod
     def get_email_settings() -> Optional[Dict[str, Any]]:
         """
         Aktif email ayarlarını veritabanından al
@@ -335,6 +372,11 @@ class DolulukUyariService:
             oteller = Otel.query.filter_by(aktif=True).all()
             
             for otel in oteller:
+                # Otel için e-posta bildirimi aktif mi kontrol et
+                if not EmailService.is_otel_bildirim_aktif(otel.id, 'uyari'):
+                    logger.info(f"Otel {otel.ad} için e-posta bildirimi kapalı, atlanıyor")
+                    continue
+                
                 # Bu otel için bugünkü yükleme görevlerini kontrol et
                 inhouse_gorev = YuklemeGorev.query.filter(
                     YuklemeGorev.otel_id == otel.id,
@@ -480,8 +522,9 @@ Minibar Takip Sistemi
                         'email_gonderildi': result['success']
                     })
                 
-                # Sistem yöneticilerine bilgi maili gönder
-                DolulukUyariService._send_admin_notification(otel, eksik_yuklemeler, bugun)
+                # Sistem yöneticilerine bilgi maili gönder (otel için sistem bildirimi aktifse)
+                if EmailService.is_otel_bildirim_aktif(otel.id, 'sistem'):
+                    DolulukUyariService._send_admin_notification(otel, eksik_yuklemeler, bugun)
             
             db.session.commit()
             

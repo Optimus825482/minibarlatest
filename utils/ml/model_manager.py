@@ -391,7 +391,9 @@ class ModelManager:
         metric_type: str,
         accuracy: float,
         precision: float,
-        recall: float
+        recall: float,
+        scaler=None,
+        feature_list=None
     ) -> str:
         """
         Modeli dosyaya kaydet ve metadata'yı veritabanına yaz
@@ -401,6 +403,8 @@ class ModelManager:
             model_type: 'isolation_forest' veya 'z_score'
             metric_type: 'stok_seviye', 'tuketim_miktar', vb.
             accuracy, precision, recall: Model performans metrikleri
+            scaler: StandardScaler (opsiyonel - model ile birlikte kaydedilir)
+            feature_list: Feature listesi (opsiyonel - metadata olarak kaydedilir)
             
         Returns:
             str: Kaydedilen dosyanın path'i
@@ -430,12 +434,20 @@ class ModelManager:
                 # Acil temizlik yap
                 self.cleanup_old_models(keep_versions=1)
             
-            # Model'i pickle ile serialize et
+            # Model'i pickle ile serialize et (scaler ve feature_list ile birlikte)
             self.logger.info(f"💾 [MODEL_SAVE_START] Model kaydediliyor: {filename}")
             serialize_start = time.time()
             
+            # Model paketi oluştur (model + scaler + feature_list)
+            model_package = {
+                'model': model,
+                'scaler': scaler,
+                'feature_list': feature_list,
+                'saved_at': datetime.now(timezone.utc).isoformat()
+            }
+            
             with open(filepath, 'wb') as f:
-                pickle.dump(model, f)
+                pickle.dump(model_package, f)
             
             serialize_time_ms = (time.time() - serialize_start) * 1000
             
@@ -462,15 +474,18 @@ class ModelManager:
             recall_val = float(recall) if recall is not None else None
             
             # Yeni model kaydı
+            # NOT NULL constraint için boş bytes gönder (model dosyada saklanıyor)
             new_model = MLModel(
                 model_type=model_type,
                 metric_type=metric_type,
                 model_path=str(filepath),
-                model_data=None,  # NULL (dosya sisteminde)
+                model_data=b'FILE_BASED',  # Dosya sisteminde saklandığını belirtir
                 parameters={
                     'contamination': 0.1,
                     'n_estimators': 100,
-                    'random_state': 42
+                    'random_state': 42,
+                    'feature_list': feature_list,
+                    'has_scaler': scaler is not None
                 },
                 training_date=datetime.now(timezone.utc),
                 accuracy=accuracy_val,
@@ -506,7 +521,8 @@ class ModelManager:
                 success=True
             )
             
-            return str(filepath)
+            # Model ID döndür (MLTrainingLog için gerekli)
+            return new_model.id
             
         except Exception as e:
             total_time_ms = (time.time() - start_time) * 1000

@@ -781,6 +781,13 @@ class RaporEmailService:
             from models import Kullanici, KullaniciOtel
             from utils.email_service import EmailService
             
+            # Kat sorumlusunun otelini bul ve bildirim kontrolü yap
+            kat_sorumlusu = Kullanici.query.get(kat_sorumlusu_id)
+            if kat_sorumlusu and kat_sorumlusu.otel_id:
+                if not EmailService.is_otel_bildirim_aktif(kat_sorumlusu.otel_id, 'rapor'):
+                    logger.info(f"Kat sorumlusu {kat_sorumlusu_id} oteli için rapor bildirimi kapalı, atlanıyor")
+                    return {'success': False, 'message': 'Bu otel için rapor bildirimi kapalı'}
+            
             # Rapor oluştur
             rapor_data = RaporEmailService.generate_gorev_tamamlanma_raporu(kat_sorumlusu_id, rapor_tarihi)
             
@@ -873,6 +880,11 @@ class RaporEmailService:
         try:
             from models import Kullanici, KullaniciOtel
             from utils.email_service import EmailService
+            
+            # Otel için rapor bildirimi aktif mi kontrol et
+            if not EmailService.is_otel_bildirim_aktif(otel_id, 'rapor'):
+                logger.info(f"Otel ID {otel_id} için rapor bildirimi kapalı, atlanıyor")
+                return {'success': False, 'message': 'Bu otel için rapor bildirimi kapalı'}
             
             # Rapor oluştur
             rapor_data = RaporEmailService.generate_minibar_sarfiyat_raporu(otel_id, rapor_tarihi)

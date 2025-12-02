@@ -158,7 +158,7 @@ class ModelTrainer:
                 feature_list=feature_list
             )
             
-            logger.info(f"✅ Model kaydedildi: {model_path}")
+            logger.info(f"✅ Model kaydedildi: ID={model_path}")
             return model_path
             
         except Exception as e:
