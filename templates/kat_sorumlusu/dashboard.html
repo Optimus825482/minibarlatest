@@ -666,5 +666,5 @@ block content %}
 </script>
 <!-- Akıllı Öncelik Planı Modal -->
 {% include 'kat_sorumlusu/gorev_oncelik_modal.html' %}
-<script src="{{ url_for('static', filename='js/gorev_oncelik.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gorev_oncelik.js') }}"?v={{ cache_version | default('1.0') }}></script>
 {% endblock %}

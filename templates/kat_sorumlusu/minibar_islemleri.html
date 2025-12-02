@@ -227,5 +227,5 @@ block page_title %}Minibar İşlemlerim{% endblock %} {% block content %}
   </div>
 </div>
 {% endblock %} {% block extra_scripts %}
-<script src="{{ url_for('static', filename='js/minibar_islemleri.js') }}"></script>
+<script src="{{ url_for('static', filename='js/minibar_islemleri.js') }}"?v={{ cache_version | default('1.0') }}></script>
 {% endblock %}

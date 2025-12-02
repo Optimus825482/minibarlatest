@@ -809,5 +809,5 @@
   }
 </style>
 {% endblock %} {% block extra_scripts %}
-<script src="{{ url_for('static', filename='js/oda_kontrol.js') }}"></script>
+<script src="{{ url_for('static', filename='js/oda_kontrol.js') }}?v={{ cache_version | default('1.2') }}"></script>
 {% endblock %}

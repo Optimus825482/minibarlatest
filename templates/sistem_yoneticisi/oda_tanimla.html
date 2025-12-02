@@ -1381,7 +1381,7 @@ Minibar Takip Sistemi{% endblock %} {% block page_title %}Oda Tanımla{% endbloc
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
 <!-- Admin QR JS -->
-<script src="{{ url_for('static', filename='js/admin_qr.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_qr.js') }}"?v={{ cache_version | default('1.0') }}></script>
 
 <!-- Oda Form Dynamic Loading JS -->
 <script src="{{ url_for('static', filename='js/oda_form.js') }}?v={{ config.get('CACHE_VERSION', '1.0') }}"></script>

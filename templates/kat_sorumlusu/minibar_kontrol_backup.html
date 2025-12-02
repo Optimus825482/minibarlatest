@@ -1362,7 +1362,7 @@ function toastGoster(mesaj, tip = 'info') {
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <!-- QR Scanner JS -->
-<script src="{{ url_for('static', filename='js/qr_scanner.js') }}"></script>
+<script src="{{ url_for('static', filename='js/qr_scanner.js') }}"?v={{ cache_version | default('1.0') }}></script>
 
 {% endblock %}
 {% endblock %}
