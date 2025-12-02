@@ -245,6 +245,19 @@ def inject_otel_info():
     return dict(kullanici_otel=otel_bilgi)
 
 # ============================================
+# CACHE CONTROL - Template ve HTML cache'ini devre dışı bırak
+# ============================================
+@app.after_request
+def add_no_cache_headers(response):
+    """HTML response'larına no-cache header'ları ekle"""
+    # Sadece HTML sayfaları için cache'i devre dışı bırak
+    if response.content_type and 'text/html' in response.content_type:
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
+
+# ============================================
 # PWA SUPPORT - Service Worker
 # ============================================
 @app.route('/sw.js')

@@ -5,10 +5,14 @@ class Config:
     """Flask uygulama yapılandırması - GÜVENLİK İYİLEŞTİRMELERİ"""
 
     # Cache Busting Version - Her değişiklikte artır
-    CACHE_VERSION = '1.1.84'
+    CACHE_VERSION = '1.1.85'
 
     ENV = os.getenv('FLASK_ENV', os.getenv('ENV', 'production')).lower()
     IS_DEVELOPMENT = ENV in {'development', 'dev', 'local'}
+    
+    # Template Caching - Production'da bile template değişikliklerini algıla
+    TEMPLATES_AUTO_RELOAD = True
+    SEND_FILE_MAX_AGE_DEFAULT = 0  # Static dosyalar için cache'i devre dışı bırak
 
     # Database Configuration - PostgreSQL Only (MySQL support removed)
     DATABASE_URL = os.getenv('DATABASE_URL')
