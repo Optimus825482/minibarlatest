@@ -22,10 +22,14 @@ block content %}
           </p>
         </div>
       </div>
-      <a href="{{ url_for('kat_sorumlusu_gorev_listesi') }}"
-        class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors font-medium text-sm">
-        <i class="fas fa-arrow-right mr-2"></i>Tümünü Gör
-      </a>
+      <div class="flex items-center space-x-2">
+        <button onclick="openOncelikModal()" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-colors font-medium text-sm">
+          <i class="fas fa-brain mr-2"></i>Öncelik Planı
+        </button>
+        <a href="{{ url_for('kat_sorumlusu_gorev_listesi') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors font-medium text-sm">
+          <i class="fas fa-arrow-right mr-2"></i>Tümünü Gör
+        </a>
+      </div>
     </div>
 
     <!-- İlerleme Çubuğu -->
@@ -660,4 +664,7 @@ block content %}
   }
   {% endif %}
 </script>
+<!-- Akıllı Öncelik Planı Modal -->
+{% include 'kat_sorumlusu/gorev_oncelik_modal.html' %}
+<script src="{{ url_for('static', filename='js/gorev_oncelik.js') }}"></script>
 {% endblock %}

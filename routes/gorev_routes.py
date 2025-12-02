@@ -935,3 +935,117 @@ def api_gorev_detay(gorev_detay_id):
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================
+# AKILLI GÖREV ÖNCELİKLENDİRME API'LERİ
+# ============================================
+
+@gorev_bp.route('/api/oncelik-plani')
+@login_required
+@rol_gerekli('kat_sorumlusu', 'depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+def api_oncelik_plani():
+    """
+    Akıllı görev öncelik planı API
+    GET /gorevler/api/oncelik-plani?tarih=2025-12-01
+    
+    Öncelik Kriterleri:
+    1. Departure-Arrival Çakışması (En kritik)
+    2. Arrival odaları (15dk önce hazır)
+    3. Departure odaları (1 saat içinde kontrol)
+    4. In-House odaları
+    5. DND odaları (2 saat sonra tekrar)
+    """
+    try:
+        from utils.gorev_oncelik_service import GorevOncelikService
+        
+        kullanici = get_current_user()
+        tarih_str = request.args.get('tarih', date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
+        
+        # Kullanıcının otel ID'sini al
+        otel_id = kullanici.otel_id if kullanici.otel_id else None
+        
+        plan = GorevOncelikService.get_oncelikli_gorev_plani(
+            kullanici.id, tarih, otel_id
+        )
+        
+        return jsonify(plan)
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@gorev_bp.route('/api/kat-oncelik-plani/<int:kat_id>')
+@login_required
+@rol_gerekli('kat_sorumlusu', 'depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+def api_kat_oncelik_plani(kat_id):
+    """
+    Belirli bir kat için öncelik planı API
+    GET /gorevler/api/kat-oncelik-plani/<kat_id>?tarih=2025-12-01
+    """
+    try:
+        from utils.gorev_oncelik_service import GorevOncelikService
+        
+        kullanici = get_current_user()
+        tarih_str = request.args.get('tarih', date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
+        
+        plan = GorevOncelikService.get_kat_oncelik_plani(
+            kullanici.id, kat_id, tarih
+        )
+        
+        return jsonify(plan)
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@gorev_bp.route('/api/cakisma-kontrol')
+@login_required
+@rol_gerekli('kat_sorumlusu', 'depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+def api_cakisma_kontrol():
+    """
+    Departure-Arrival çakışma kontrolü API
+    GET /gorevler/api/cakisma-kontrol?tarih=2025-12-01
+    """
+    try:
+        from utils.gorev_oncelik_service import GorevOncelikService
+        
+        kullanici = get_current_user()
+        tarih_str = request.args.get('tarih', date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
+        
+        otel_id = kullanici.otel_id if kullanici.otel_id else None
+        
+        cakismalar = GorevOncelikService._tespit_cakismalar(tarih, otel_id)
+        
+        # Oda bilgilerini ekle
+        from models import Oda
+        sonuc = []
+        for oda_id, cakisma in cakismalar.items():
+            oda = Oda.query.get(oda_id)
+            if oda:
+                sonuc.append({
+                    'oda_id': oda_id,
+                    'oda_no': oda.oda_no,
+                    'kat_adi': oda.kat.kat_adi if oda.kat else '-',
+                    'departure_saati': cakisma['departure_saati'].strftime('%H:%M'),
+                    'arrival_saati': cakisma['arrival_saati'].strftime('%H:%M'),
+                    'aradaki_sure_dakika': cakisma['aradaki_sure_dakika'],
+                    'kritik': cakisma['kritik']
+                })
+        
+        # Kritik olanları önce göster
+        sonuc.sort(key=lambda x: (not x['kritik'], x['aradaki_sure_dakika']))
+        
+        return jsonify({
+            'success': True,
+            'tarih': tarih.isoformat(),
+            'toplam_cakisma': len(sonuc),
+            'kritik_cakisma': sum(1 for c in sonuc if c['kritik']),
+            'cakismalar': sonuc
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
