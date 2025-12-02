@@ -21,7 +21,10 @@ COPY requirements.txt .
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r requirements.txt
 
-# Uygulama dosyalarını kopyala
+# Cache busting - her deploy'da template'leri yenile
+ARG CACHEBUST=1
+
+# Uygulama dosyalarını kopyala (cache bypass)
 COPY . .
 
 # Supervisor config

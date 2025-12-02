@@ -13,8 +13,12 @@ workers = int(os.getenv('GUNICORN_WORKERS', '1'))  # 1 worker (was 2)
 worker_class = 'sync'  # sync worker (not gevent/eventlet)
 threads = int(os.getenv('GUNICORN_THREADS', '2'))  # 2 threads per worker (was 4)
 worker_connections = 1000
-max_requests = int(os.getenv('MAX_REQUESTS', '500'))  # Restart worker after 500 requests
-max_requests_jitter = int(os.getenv('MAX_REQUESTS_JITTER', '50'))  # Add randomness to prevent thundering herd
+max_requests = int(os.getenv('MAX_REQUESTS', '100'))  # Her 100 request'te worker restart (cache temizlenir)
+max_requests_jitter = int(os.getenv('MAX_REQUESTS_JITTER', '20'))  # Add randomness to prevent thundering herd
+
+# Template Reload - Production'da bile template değişikliklerini algıla
+reload = os.getenv('GUNICORN_RELOAD', 'false').lower() == 'true'
+reload_extra_files = []  # Template dosyaları için (isteğe bağlı)
 
 # Timeouts
 timeout = int(os.getenv('GUNICORN_TIMEOUT', '120'))
