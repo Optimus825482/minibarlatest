@@ -4,6 +4,14 @@ from flask_wtf.csrf import CSRFProtect, CSRFError
 # from flask_limiter import Limiter
 # from flask_limiter.util import get_remote_address
 from datetime import datetime, timedelta, timezone
+import pytz
+
+# KKTC Timezone (Kıbrıs - Europe/Nicosia)
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 # SqlAlchemy integration artık otomatik yükleniyor (Sentry 2.0+)
@@ -332,7 +340,7 @@ def zimmet_iptal(zimmet_id):
         
         # Zimmet durumunu güncelle
         zimmet.durum = 'iptal'
-        zimmet.iade_tarihi = datetime.now(timezone.utc)
+        zimmet.iade_tarihi = get_kktc_now()
         
         db.session.commit()
         flash(f'{zimmet.personel.ad} {zimmet.personel.soyad} adlı personelin zimmeti iptal edildi ve kullanılmayan ürünler depoya iade edildi.', 'success')
@@ -1519,7 +1527,7 @@ def api_son_aktiviteler():
                     # Date objesi ise datetime'a çevir
                     islem_tarihi = datetime.combine(log.islem_tarihi, datetime.min.time()).replace(tzinfo=timezone.utc)
                 
-                zaman_farki = datetime.now(timezone.utc) - islem_tarihi
+                zaman_farki = get_kktc_now() - islem_tarihi
 
                 if zaman_farki < timedelta(minutes=1):
                     zaman_str = "Az önce"
@@ -1592,8 +1600,8 @@ def api_kampanya_istatistikler():
         
         # Aktif kampanya sayısı
         aktif_kampanyalar = Kampanya.query.filter_by(aktif=True).filter(
-            Kampanya.baslangic_tarihi <= datetime.now(timezone.utc),
-            Kampanya.bitis_tarihi >= datetime.now(timezone.utc)
+            Kampanya.baslangic_tarihi <= get_kktc_now(),
+            Kampanya.bitis_tarihi >= get_kktc_now()
         ).count()
         
         # Toplam kampanya sayısı
@@ -1601,13 +1609,13 @@ def api_kampanya_istatistikler():
         
         # Süresi dolan kampanyalar
         suresi_dolan = Kampanya.query.filter(
-            Kampanya.bitis_tarihi < datetime.now(timezone.utc)
+            Kampanya.bitis_tarihi < get_kktc_now()
         ).count()
         
         # Yaklaşan kampanyalar (7 gün içinde başlayacak)
         yaklasan = Kampanya.query.filter(
-            Kampanya.baslangic_tarihi > datetime.now(timezone.utc),
-            Kampanya.baslangic_tarihi <= datetime.now(timezone.utc) + timedelta(days=7)
+            Kampanya.baslangic_tarihi > get_kktc_now(),
+            Kampanya.baslangic_tarihi <= get_kktc_now() + timedelta(days=7)
         ).count()
         
         return jsonify({
@@ -1635,8 +1643,8 @@ def api_kampanya_performans():
     try:
         # Aktif kampanyaları al
         kampanyalar = Kampanya.query.filter_by(aktif=True).filter(
-            Kampanya.baslangic_tarihi <= datetime.now(timezone.utc),
-            Kampanya.bitis_tarihi >= datetime.now(timezone.utc)
+            Kampanya.baslangic_tarihi <= get_kktc_now(),
+            Kampanya.bitis_tarihi >= get_kktc_now()
         ).all()
         
         performans_data = []
@@ -1678,7 +1686,7 @@ def api_kampanya_tumu():
         kampanya_listesi = []
         for kampanya in kampanyalar:
             # Durum kontrolü
-            simdi = datetime.now(timezone.utc)
+            simdi = get_kktc_now()
             if kampanya.bitis_tarihi < simdi:
                 durum = 'Süresi Doldu'
             elif kampanya.baslangic_tarihi > simdi:
@@ -1725,7 +1733,7 @@ def api_tuketim_trendleri():
         gun_sayisi = request.args.get('gun', 7, type=int)  # Varsayılan 7 gün
 
         # Son N günün tüketim verilerini al
-        baslangic = datetime.now(timezone.utc) - timedelta(days=gun_sayisi)
+        baslangic = get_kktc_now() - timedelta(days=gun_sayisi)
 
         # Günlük tüketim toplamı (MinibarIslemDetay'dan)
         gunluk_tuketim = db.session.query(
@@ -1741,7 +1749,7 @@ def api_tuketim_trendleri():
         # Tüm günleri doldur (veri olmayan günler için 0)
         tum_gunler = {}
         for i in range(gun_sayisi):
-            tarih = (datetime.now(timezone.utc) - timedelta(days=gun_sayisi-i-1)).date()
+            tarih = (get_kktc_now() - timedelta(days=gun_sayisi-i-1)).date()
             tum_gunler[str(tarih)] = {'tuketim': 0, 'islem_sayisi': 0}
 
         # Veri olanları güncelle
@@ -2180,7 +2188,7 @@ def system_backup_login():
         # Sabit şifre kontrolü
         if access_code == '518518Erkan':
             session['super_admin_logged_in'] = True
-            session['super_admin_login_time'] = datetime.now(timezone.utc).isoformat()
+            session['super_admin_login_time'] = get_kktc_now().isoformat()
             # LOG KAYDEDILMEZ - Gizli erişim
             return redirect(url_for('system_backup_panel'))
         else:
@@ -3078,7 +3086,7 @@ def cleanup_old_models():
                     deviation_percent=(disk_info['percent'] - 80.0) / 80.0 * 100,
                     message=f"ML model dizini disk kullanımı kritik seviyede: {disk_info['percent']:.1f}%",
                     suggested_action="Eski model dosyalarını manuel olarak temizleyin veya disk alanını artırın",
-                    created_at=datetime.now(timezone.utc)
+                    created_at=get_kktc_now()
                 )
                 db.session.add(alert)
                 db.session.commit()
@@ -3250,12 +3258,12 @@ def health_check():
         return jsonify({
             'status': 'healthy',
             'database': 'connected',
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            'timestamp': get_kktc_now().isoformat()
         }), 200
     except Exception as e:
         return jsonify({
             'status': 'unhealthy',
             'database': 'disconnected',
             'error': str(e),
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            'timestamp': get_kktc_now().isoformat()
         }), 503

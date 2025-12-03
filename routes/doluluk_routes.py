@@ -4,6 +4,12 @@ from utils.decorators import login_required, role_required
 from utils.helpers import log_hata
 from utils.occupancy_service import OccupancyService
 from datetime import date, datetime
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 
 doluluk_bp = Blueprint("doluluk", __name__)
 
@@ -576,6 +582,12 @@ def doluluk_yukle():
             try:
                 from models import YuklemeGorev
                 from datetime import date, datetime, timezone
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
                 
                 # Dosya tipini YuklemeGorev formatına çevir
                 dosya_tipi_map = {
@@ -596,7 +608,7 @@ def doluluk_yukle():
                 if yukleme_gorev:
                     # Mevcut görevi güncelle
                     yukleme_gorev.durum = 'completed'
-                    yukleme_gorev.yukleme_zamani = datetime.now(timezone.utc)
+                    yukleme_gorev.yukleme_zamani = get_kktc_now()
                     yukleme_gorev.dosya_yukleme_id = dosya_yukleme.id if dosya_yukleme else None
                 else:
                     # Görev yoksa yeni oluştur
@@ -606,7 +618,7 @@ def doluluk_yukle():
                         gorev_tarihi=date.today(),
                         dosya_tipi=yukleme_dosya_tipi,
                         durum='completed',
-                        yukleme_zamani=datetime.now(timezone.utc),
+                        yukleme_zamani=get_kktc_now(),
                         dosya_yukleme_id=dosya_yukleme.id if dosya_yukleme else None
                     )
                     db.session.add(yukleme_gorev)
@@ -703,3 +715,4 @@ def doluluk_durum(islem_kodu):
     except Exception as e:
         log_hata("doluluk_durum", str(e), session.get("kullanici_id"))
         return jsonify({"success": False, "error": str(e)}), 500
+

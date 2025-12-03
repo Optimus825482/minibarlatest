@@ -27,6 +27,12 @@ Roller:
 from flask import render_template, request, redirect, url_for, flash, session, jsonify, make_response
 from flask_wtf.csrf import CSRFProtect
 from datetime import datetime, timedelta, timezone
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 import io
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
@@ -685,6 +691,12 @@ def register_kat_sorumlusu_routes(app):
                 try:
                     from models import GorevDetay, GorevDurumLog, GunlukGorev
                     from datetime import date
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
                     
                     bugun = date.today()
                     detay = GorevDetay.query.join(GunlukGorev).filter(
@@ -697,7 +709,7 @@ def register_kat_sorumlusu_routes(app):
                     if detay:
                         onceki_durum = detay.durum
                         detay.durum = 'completed'
-                        detay.kontrol_zamani = datetime.now(timezone.utc)
+                        detay.kontrol_zamani = get_kktc_now()
                         detay.notlar = f'Ürün eklendi: {urun.urun_adi} x{eklenen_miktar}'
                         
                         log = GorevDurumLog(
@@ -714,7 +726,7 @@ def register_kat_sorumlusu_routes(app):
                             tamamlanan = sum(1 for d in gorev.detaylar if d.durum == 'completed')
                             if tamamlanan == len(gorev.detaylar):
                                 gorev.durum = 'completed'
-                                gorev.tamamlanma_tarihi = datetime.now(timezone.utc)
+                                gorev.tamamlanma_tarihi = get_kktc_now()
                             elif tamamlanan > 0:
                                 gorev.durum = 'in_progress'
                         
@@ -1033,6 +1045,12 @@ def register_kat_sorumlusu_routes(app):
         """Kat sorumlusunun yaptığı minibar işlemlerini listele"""
         try:
             from datetime import date, datetime
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
             
             kullanici_id = session.get('kullanici_id')
             
@@ -1113,6 +1131,12 @@ def register_kat_sorumlusu_routes(app):
         """Minibar işlemini sil (sadece aynı gün)"""
         try:
             from datetime import date
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
             
             kullanici_id = session.get('kullanici_id')
             
@@ -1316,7 +1340,7 @@ def register_kat_sorumlusu_routes(app):
                     oda_id=oda_id,
                     personel_id=kullanici_id,
                     islem_tipi='setup_kontrol',
-                    islem_tarihi=datetime.now(timezone.utc),
+                    islem_tarihi=get_kktc_now(),
                     aciklama=f'{urun.urun_adi} tüketim ikamesi'
                 )
                 db.session.add(islem)
@@ -1461,7 +1485,7 @@ def register_kat_sorumlusu_routes(app):
                     oda_id=oda_id,
                     personel_id=kullanici_id,
                     islem_tipi='ekstra_ekleme',
-                    islem_tarihi=datetime.now(timezone.utc),
+                    islem_tarihi=get_kktc_now(),
                     aciklama=f'{urun.urun_adi} ekstra ekleme'
                 )
                 db.session.add(islem)
@@ -1532,6 +1556,12 @@ def register_kat_sorumlusu_routes(app):
         """
         try:
             from datetime import date
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
             
             data = request.get_json()
             
@@ -1565,7 +1595,7 @@ def register_kat_sorumlusu_routes(app):
                 oda_id=oda_id,
                 personel_id=kullanici_id,
                 islem_tipi='kontrol',
-                islem_tarihi=datetime.now(timezone.utc),
+                islem_tarihi=get_kktc_now(),
                 aciklama='Sarfiyat yok - Kontrol tamamlandı'
             )
             db.session.add(islem)
@@ -1581,7 +1611,7 @@ def register_kat_sorumlusu_routes(app):
                     if detay and detay.durum != 'completed':
                         onceki_durum = detay.durum
                         detay.durum = 'completed'
-                        detay.kontrol_zamani = datetime.now(timezone.utc)
+                        detay.kontrol_zamani = get_kktc_now()
                         detay.notlar = 'Sarfiyat yok - Oda kontrol ile tamamlandı'
                         
                         # Log kaydı
@@ -1600,7 +1630,7 @@ def register_kat_sorumlusu_routes(app):
                             tamamlanan = sum(1 for d in gorev.detaylar if d.durum == 'completed')
                             if tamamlanan == len(gorev.detaylar):
                                 gorev.durum = 'completed'
-                                gorev.tamamlanma_tarihi = datetime.now(timezone.utc)
+                                gorev.tamamlanma_tarihi = get_kktc_now()
                             elif tamamlanan > 0:
                                 gorev.durum = 'in_progress'
                         
@@ -1623,7 +1653,7 @@ def register_kat_sorumlusu_routes(app):
                     if detay:
                         onceki_durum = detay.durum
                         detay.durum = 'completed'
-                        detay.kontrol_zamani = datetime.now(timezone.utc)
+                        detay.kontrol_zamani = get_kktc_now()
                         detay.notlar = 'Sarfiyat yok - Oda kontrol ile tamamlandı'
                         
                         log = GorevDurumLog(
@@ -1640,7 +1670,7 @@ def register_kat_sorumlusu_routes(app):
                             tamamlanan = sum(1 for d in gorev.detaylar if d.durum == 'completed')
                             if tamamlanan == len(gorev.detaylar):
                                 gorev.durum = 'completed'
-                                gorev.tamamlanma_tarihi = datetime.now(timezone.utc)
+                                gorev.tamamlanma_tarihi = get_kktc_now()
                             elif tamamlanan > 0:
                                 gorev.durum = 'in_progress'
                         
@@ -1692,6 +1722,12 @@ def register_kat_sorumlusu_routes(app):
         try:
             from models import OdaKontrolKaydi
             from datetime import date
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
             
             data = request.get_json()
             if not data:
@@ -1703,7 +1739,7 @@ def register_kat_sorumlusu_routes(app):
             
             kullanici_id = session.get('kullanici_id')
             bugun = date.today()
-            simdi = datetime.now(timezone.utc)
+            simdi = get_kktc_now()
             
             # Tamamlanmamış (bitis_zamani NULL) kayıtları sil
             tamamlanmamis = OdaKontrolKaydi.query.filter(
@@ -1747,6 +1783,12 @@ def register_kat_sorumlusu_routes(app):
         try:
             from models import OdaKontrolKaydi
             from datetime import date
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
             
             data = request.get_json()
             if not data:
@@ -1760,7 +1802,7 @@ def register_kat_sorumlusu_routes(app):
             
             kullanici_id = session.get('kullanici_id')
             bugun = date.today()
-            simdi = datetime.now(timezone.utc)
+            simdi = get_kktc_now()
             
             # Bugünkü tamamlanmamış kaydı bul
             kayit = OdaKontrolKaydi.query.filter(
@@ -1811,6 +1853,12 @@ def register_kat_sorumlusu_routes(app):
         try:
             from models import GorevDetay, GunlukGorev, DNDKontrol, GorevDurumLog
             from datetime import date
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
             
             data = request.get_json()
             if not data:
@@ -1824,7 +1872,7 @@ def register_kat_sorumlusu_routes(app):
             
             kullanici_id = session.get('kullanici_id')
             bugun = date.today()
-            simdi = datetime.now(timezone.utc)
+            simdi = get_kktc_now()
             
             # Oda bilgisini al
             oda = db.session.get(Oda, oda_id)
@@ -1933,6 +1981,12 @@ def register_kat_sorumlusu_routes(app):
         """
         try:
             from datetime import date
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
             from sqlalchemy import func
             
             kullanici_id = session.get('kullanici_id')
@@ -1984,6 +2038,12 @@ def register_kat_sorumlusu_routes(app):
         try:
             from utils.gorev_service import GorevService
             from datetime import date
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
             
             kullanici_id = session.get('kullanici_id')
             kullanici = Kullanici.query.get(kullanici_id)
@@ -2029,3 +2089,4 @@ def register_kat_sorumlusu_routes(app):
             log_hata(e, modul='kat_sorumlusu_gorev_listesi')
             flash(f'Görev listesi yüklenirken hata oluştu: {str(e)}', 'danger')
             return redirect(url_for('dashboard'))
+

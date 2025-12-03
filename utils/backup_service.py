@@ -23,6 +23,12 @@ import subprocess
 import gzip
 import shutil
 from datetime import datetime, timezone, timedelta
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 from pathlib import Path
 import logging
 import uuid
@@ -222,7 +228,7 @@ class BackupService:
         try:
             from models import db, BackupHistory
             
-            cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+            cutoff_date = get_kktc_now() - timedelta(days=days)
             
             # Eski yedekleri bul
             old_backups = BackupHistory.query.filter(
@@ -514,3 +520,4 @@ class BackupService:
                 'last_backup': None,
                 'last_backup_filename': None
             }
+

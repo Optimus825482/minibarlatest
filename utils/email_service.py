@@ -14,6 +14,12 @@ import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timezone
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 from typing import Optional, Dict, Any, List
 
 logger = logging.getLogger(__name__)
@@ -281,7 +287,7 @@ class EmailService:
             email_log = EmailLog.query.filter_by(tracking_id=tracking_id).first()
             if email_log and not email_log.okundu:
                 email_log.okundu = True
-                email_log.okunma_tarihi = datetime.now(timezone.utc)
+                email_log.okunma_tarihi = get_kktc_now()
                 db.session.commit()
                 logger.info(f"Email okundu olarak işaretlendi: {tracking_id}")
                 return True
@@ -356,6 +362,12 @@ class DolulukUyariService:
         try:
             from models import db, Otel, Kullanici, KullaniciOtel, YuklemeGorev, DolulukUyariLog
             from datetime import date
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
             import pytz
             
             # KKTC timezone (UTC+2)
@@ -592,3 +604,4 @@ Minibar Takip Sistemi
                     
         except Exception as e:
             logger.error(f"Admin bildirim hatası: {str(e)}")
+

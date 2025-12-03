@@ -9,6 +9,14 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 import logging
 import os
+import pytz
+
+# KKTC Timezone (Kıbrıs - Europe/Nicosia)
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 
 # Logging
 logger = logging.getLogger(__name__)
@@ -184,7 +192,7 @@ def donemsel_kar_hesapla_async(self, otel_id, baslangic_tarihi, bitis_tarihi, do
                     MinibarIslem.otel_id == otel_id,
                     MinibarIslem.islem_tarihi.between(baslangic, bitis)
                 ).scalar() > 0 else 0,
-                'hesaplama_tarihi': datetime.now(timezone.utc).isoformat()
+                'hesaplama_tarihi': get_kktc_now().isoformat()
             }
             
             # Veritabanına kaydet
@@ -253,7 +261,7 @@ def tuketim_trendi_guncelle_async(self, otel_id=None, donem='aylik'):
             logger.info(f"Tüketim trendi güncelleme başladı - Otel: {otel_id}, Dönem: {donem}")
             
             # Dönem aralığını belirle
-            bugun = datetime.now(timezone.utc)
+            bugun = get_kktc_now()
             if donem == 'haftalik':
                 baslangic = bugun - timedelta(days=7)
                 onceki_baslangic = baslangic - timedelta(days=7)
@@ -378,7 +386,7 @@ def stok_devir_guncelle_async(self, otel_id=None):
             logger.info(f"Stok devir hızı güncelleme başladı - Otel: {otel_id}")
             
             # Son 30 günlük dönem
-            bugun = datetime.now(timezone.utc)
+            bugun = get_kktc_now()
             baslangic = bugun - timedelta(days=30)
             
             # Stok kayıtlarını al
@@ -458,7 +466,7 @@ def gunluk_kar_analizi_task():
             logger.info("Günlük kar analizi başladı")
             
             # Dün
-            bugun = datetime.now(timezone.utc).date()
+            bugun = get_kktc_now().date()
             dun = bugun - timedelta(days=1)
             
             # Tüm aktif oteller
@@ -686,7 +694,7 @@ def dnd_tamamlanmayan_kontrol_task():
             logger.info("DND tamamlanmayan görev kontrolü yapılıyor...")
             
             tarih = date.today()
-            simdi = datetime.now(timezone.utc)
+            simdi = get_kktc_now()
             
             # Bugün için 3 kez kontrol edilmemiş DND görevlerini bul
             tamamlanmayan_dnd = GorevDetay.query.join(GunlukGorev).filter(
@@ -923,7 +931,7 @@ def ml_anomali_tespiti_task():
                 from models import MLAlert
                 
                 # Son 5 dakikadaki kritik alertleri al
-                son_5_dk = datetime.now(timezone.utc) - timedelta(minutes=5)
+                son_5_dk = get_kktc_now() - timedelta(minutes=5)
                 kritik_alertler = MLAlert.query.filter(
                     MLAlert.created_at >= son_5_dk,
                     MLAlert.severity.in_(['kritik', 'yuksek']),
@@ -1119,7 +1127,7 @@ def ml_stok_bitis_kontrolu_task():
             
             # Kritik stok alertleri için email gönder
             if alert_count > 0:
-                son_1_saat = datetime.now(timezone.utc) - timedelta(hours=1)
+                son_1_saat = get_kktc_now() - timedelta(hours=1)
                 kritik_alertler = MLAlert.query.filter(
                     MLAlert.alert_type == 'stok_bitis_uyari',
                     MLAlert.created_at >= son_1_saat,

@@ -4,8 +4,17 @@ from datetime import datetime, timezone
 from sqlalchemy import Numeric
 from sqlalchemy.dialects.postgresql import JSONB
 import enum
+import pytz
 
 db = SQLAlchemy()
+
+# KKTC Timezone (Kıbrıs - Europe/Nicosia)
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 
 # PostgreSQL Only - MySQL support removed
 JSONType = JSONB
@@ -78,7 +87,7 @@ class Otel(db.Model):
     email = db.Column(db.String(100))
     vergi_no = db.Column(db.String(50))
     logo = db.Column(db.Text, nullable=True)  # Base64 encoded logo
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     aktif = db.Column(db.Boolean, default=True)
     
     # İlk stok yükleme durumu - Her otel için 1 kez kullanılabilir
@@ -129,7 +138,7 @@ class KullaniciOtel(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     kullanici_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='CASCADE'), nullable=False)
     otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=False)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     
     # NOT: 'otel' ilişkisi Otel modelinde backref ile tanımlı (satır 93)
     # Burada tekrar tanımlamaya gerek yok
@@ -157,7 +166,7 @@ class Kullanici(db.Model):
     telefon = db.Column(db.String(20))
     rol = db.Column(db.Enum('sistem_yoneticisi', 'admin', 'depo_sorumlusu', 'kat_sorumlusu', name='kullanici_rol'), nullable=False)
     aktif = db.Column(db.Boolean, default=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     son_giris = db.Column(db.DateTime(timezone=True))
     
     # YENİ: Kat sorumlusu için tek otel ilişkisi
@@ -205,7 +214,7 @@ class Kat(db.Model):
     kat_no = db.Column(db.Integer, nullable=False)
     aciklama = db.Column(db.Text)
     aktif = db.Column(db.Boolean, default=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     
     # İlişkiler
     odalar = db.relationship('Oda', backref='kat', lazy=True, cascade='all, delete-orphan')
@@ -223,7 +232,7 @@ class Setup(db.Model):
     aciklama = db.Column(db.String(500))
     dolap_ici = db.Column(db.Boolean, default=True)  # True: Dolap İçi, False: Dolap Dışı
     aktif = db.Column(db.Boolean, default=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     
     # İlişkiler
     icerikler = db.relationship('SetupIcerik', backref='setup', lazy=True, cascade='all, delete-orphan')
@@ -240,7 +249,7 @@ class SetupIcerik(db.Model):
     setup_id = db.Column(db.Integer, db.ForeignKey('setuplar.id'), nullable=False)
     urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id'), nullable=False)
     adet = db.Column(db.Integer, nullable=False, default=1)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     
     # İlişkiler
     urun = db.relationship('Urun', backref='setup_icerikler')
@@ -253,7 +262,7 @@ class SetupIcerik(db.Model):
 oda_tipi_setup = db.Table('oda_tipi_setup',
     db.Column('oda_tipi_id', db.Integer, db.ForeignKey('oda_tipleri.id'), primary_key=True),
     db.Column('setup_id', db.Integer, db.ForeignKey('setuplar.id'), primary_key=True),
-    db.Column('olusturma_tarihi', db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    db.Column('olusturma_tarihi', db.DateTime(timezone=True), default=lambda: get_kktc_now())
 )
 
 
@@ -265,7 +274,7 @@ class OdaTipi(db.Model):
     ad = db.Column(db.String(100), nullable=False, unique=True)
     dolap_sayisi = db.Column(db.Integer, default=0)
     aktif = db.Column(db.Boolean, default=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     
     # Many-to-Many ilişki
     setuplar = db.relationship('Setup', secondary=oda_tipi_setup, backref=db.backref('oda_tipleri', lazy='dynamic'))
@@ -287,7 +296,7 @@ class Oda(db.Model):
     oda_tipi_id = db.Column(db.Integer, db.ForeignKey('oda_tipleri.id'), nullable=True)  # Oda tipi referansı
     kapasite = db.Column(db.Integer)
     aktif = db.Column(db.Boolean, default=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     
     # QR Kod Alanları
     qr_kod_token = db.Column(db.String(64), unique=True, nullable=True)
@@ -320,7 +329,7 @@ class UrunGrup(db.Model):
     grup_adi = db.Column(db.String(100), nullable=False, unique=True)
     aciklama = db.Column(db.Text)
     aktif = db.Column(db.Boolean, default=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     
     # İlişkiler
     urunler = db.relationship('Urun', backref='grup', lazy=True)
@@ -341,7 +350,7 @@ class Urun(db.Model):
     birim = db.Column(db.String(20), default='Adet')
     kritik_stok_seviyesi = db.Column(db.Integer, default=10)
     aktif = db.Column(db.Boolean, default=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     
     # Fiyatlandırma Kolonları
     satis_fiyati = db.Column(Numeric(10, 2), nullable=True)
@@ -368,7 +377,7 @@ class StokHareket(db.Model):
     miktar = db.Column(db.Integer, nullable=False)
     aciklama = db.Column(db.Text)
     islem_yapan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'))
-    islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     
     # İlişki
     islem_yapan = db.relationship('Kullanici', foreign_keys=[islem_yapan_id])
@@ -383,7 +392,7 @@ class PersonelZimmet(db.Model):
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     personel_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'), nullable=False)
-    zimmet_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    zimmet_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     iade_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
     teslim_eden_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'))
     durum = db.Column(db.Enum('aktif', 'iade_edildi', 'iptal', name='zimmet_durum'), default='aktif')
@@ -428,7 +437,7 @@ class MinibarIslem(db.Model):
     oda_id = db.Column(db.Integer, db.ForeignKey('odalar.id'), nullable=False)
     personel_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'), nullable=False)
     islem_tipi = db.Column(db.Enum('ilk_dolum', 'yeniden_dolum', 'eksik_tamamlama', 'sayim', 'duzeltme', 'kontrol', 'doldurma', 'ek_dolum', 'setup_kontrol', 'ekstra_ekleme', 'ekstra_tuketim', name='minibar_islem_tipi'), nullable=False)
-    islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     aciklama = db.Column(db.Text)
     
     # İlişkiler
@@ -493,7 +502,7 @@ class SistemLog(db.Model):
     islem_detay = db.Column(JSONB, nullable=True)  # İşlem detayları (JSONB formatında - PostgreSQL)
     ip_adresi = db.Column(db.String(50))
     tarayici = db.Column(db.String(200))
-    islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     
     # İlişki
     kullanici = db.relationship('Kullanici', foreign_keys=[kullanici_id], backref='log_kayitlari')
@@ -516,7 +525,7 @@ class HataLog(db.Model):
     method = db.Column(db.String(10))  # HTTP method (GET, POST, etc.)
     ip_adresi = db.Column(db.String(50))
     tarayici = db.Column(db.String(200))
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     cozuldu = db.Column(db.Boolean, default=False)  # Hata çözüldü mü?
     cozum_notu = db.Column(db.Text)  # Çözüm notu
     
@@ -566,7 +575,7 @@ class AuditLog(db.Model):
     user_agent = db.Column(db.String(500))  # Tarayıcı bilgisi
     
     # Zaman Bilgisi
-    islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     
     # Ek Bilgiler
     aciklama = db.Column(db.Text)  # Ek açıklama
@@ -607,7 +616,7 @@ class OtomatikRapor(db.Model):
     
     # Ek Bilgiler
     olusturan = db.Column(db.String(100), default='Sistem')  # Sistem veya kullanıcı adı
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     
     def __repr__(self):
         return f'<OtomatikRapor {self.rapor_tipi} - {self.olusturma_tarihi}>'
@@ -624,7 +633,7 @@ class MinibarDolumTalebi(db.Model):
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     oda_id = db.Column(db.Integer, db.ForeignKey('odalar.id'), nullable=False)
-    talep_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    talep_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     durum = db.Column(db.Enum('beklemede', 'onaylandi', 'reddedildi', 'tamamlandi', 'iptal', name='dolum_talep_durum'), default='beklemede', nullable=False)
     tamamlanma_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
     notlar = db.Column(db.Text, nullable=True)
@@ -645,7 +654,7 @@ class QRKodOkutmaLog(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     oda_id = db.Column(db.Integer, db.ForeignKey('odalar.id'), nullable=False)
     kullanici_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'), nullable=True)
-    okutma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    okutma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     okutma_tipi = db.Column(db.Enum('misafir_okutma', 'personel_kontrol', 'sistem_kontrol', name='qr_okutma_tipi'), nullable=False)
     ip_adresi = db.Column(db.String(50))
     user_agent = db.Column(db.String(500))
@@ -686,7 +695,7 @@ class MisafirKayit(db.Model):
     kayit_tipi = db.Column(db.String(20), nullable=False)  # in_house, arrival, departure
     
     # Sistem Bilgileri
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     olusturan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'))
     
     # İlişkiler
@@ -720,7 +729,7 @@ class DosyaYukleme(db.Model):
     dosya_boyutu = db.Column(db.Integer)  # bytes
     
     # İşlem Bilgileri
-    yukleme_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    yukleme_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     silme_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)  # Otomatik silme için
     durum = db.Column(db.String(20), default='yuklendi', nullable=False)  # yuklendi, isleniyor, tamamlandi, hata, silindi
     
@@ -858,7 +867,7 @@ class MLMetric(db.Model):
     )
     entity_id = db.Column(db.Integer, nullable=False)
     metric_value = db.Column(db.Float, nullable=False)
-    timestamp = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    timestamp = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     extra_data = db.Column(JSONB, nullable=True)  # Ek bilgiler (JSONB formatında)
     
     def __repr__(self):
@@ -878,7 +887,7 @@ class MLModel(db.Model):
     model_data = db.Column(db.LargeBinary, nullable=True)  # Pickle serialized model (opsiyonel - dosya sisteminde ise NULL)
     model_path = db.Column(db.String(255), nullable=True)  # Dosya yolu (opsiyonel - DB'de ise NULL)
     parameters = db.Column(JSONB, nullable=True)  # Model parametreleri
-    training_date = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    training_date = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     accuracy = db.Column(db.Float)
     precision = db.Column(db.Float)
     recall = db.Column(db.Float)
@@ -921,7 +930,7 @@ class MLAlert(db.Model):
     deviation_percent = db.Column(db.Float)
     message = db.Column(db.Text, nullable=False)
     suggested_action = db.Column(db.Text)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     is_read = db.Column(db.Boolean, default=False, nullable=False)
     is_false_positive = db.Column(db.Boolean, default=False, nullable=False)
     resolved_at = db.Column(db.DateTime(timezone=True), nullable=True)
@@ -943,7 +952,7 @@ class MLTrainingLog(db.Model):
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     model_id = db.Column(db.Integer, db.ForeignKey('ml_models.id'), nullable=True)
-    training_start = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    training_start = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     training_end = db.Column(db.DateTime(timezone=True), nullable=True)
     data_points = db.Column(db.Integer)
     success = db.Column(db.Boolean, default=False, nullable=False)
@@ -966,7 +975,7 @@ class MLFeature(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     metric_type = db.Column(db.String(50), nullable=False)
     entity_id = db.Column(db.Integer, nullable=False)
-    timestamp = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    timestamp = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     
     # Statistical Features
     mean_value = db.Column(db.Float)
@@ -1009,7 +1018,7 @@ class MLFeature(db.Model):
     # Metadata
     feature_version = db.Column(db.String(20), default='1.0')
     extra_features = db.Column(JSONB, nullable=True)  # Ek feature'lar
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     
     def __repr__(self):
         return f'<MLFeature {self.metric_type} - #{self.entity_id}>'
@@ -1031,7 +1040,7 @@ class QueryLog(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     query_text = db.Column(db.Text, nullable=False)
     execution_time = db.Column(db.Float, nullable=False)  # Saniye cinsinden
-    timestamp = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    timestamp = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     endpoint = db.Column(db.String(255))
     user_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'))
     parameters = db.Column(JSONB)
@@ -1066,7 +1075,7 @@ class BackgroundJob(db.Model):
     error_message = db.Column(db.Text)
     stack_trace = db.Column(db.Text)
     job_metadata = db.Column(JSONB)  # metadata yerine job_metadata
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     
     def __repr__(self):
         return f'<BackgroundJob {self.job_name} - {self.status}>'
@@ -1085,7 +1094,7 @@ class BackupHistory(db.Model):
     filename = db.Column(db.String(255), nullable=False)
     file_size = db.Column(db.BigInteger)  # Bytes
     description = db.Column(db.Text)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     created_by = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'))
     status = db.Column(
         db.Enum('in_progress', 'completed', 'failed', name='backup_status'),
@@ -1114,7 +1123,7 @@ class ConfigAudit(db.Model):
     old_content = db.Column(db.Text)
     new_content = db.Column(db.Text)
     changed_by = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'))
-    changed_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    changed_at = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     change_reason = db.Column(db.Text)
     
     # İlişki
@@ -1153,7 +1162,7 @@ class UrunStok(db.Model):
     # Güncelleme Bilgileri
     son_giris_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
     son_cikis_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
-    son_guncelleme_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    son_guncelleme_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     son_guncelleyen_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'), nullable=True)
 
     # Sayım Bilgileri
@@ -1191,18 +1200,18 @@ class UrunStok(db.Model):
         try:
             if islem_tipi in ['giris', 'devir']:
                 self.mevcut_stok += miktar
-                self.son_giris_tarihi = datetime.now(timezone.utc)
+                self.son_giris_tarihi = get_kktc_now()
             elif islem_tipi in ['cikis', 'fire']:
                 self.mevcut_stok -= miktar
-                self.son_cikis_tarihi = datetime.now(timezone.utc)
+                self.son_cikis_tarihi = get_kktc_now()
                 self.son_30gun_cikis += miktar
             elif islem_tipi == 'sayim':
                 self.sayim_farki = self.mevcut_stok - miktar
                 self.mevcut_stok = miktar
-                self.son_sayim_tarihi = datetime.now(timezone.utc)
+                self.son_sayim_tarihi = get_kktc_now()
                 self.son_sayim_miktari = miktar
 
-            self.son_guncelleme_tarihi = datetime.now(timezone.utc)
+            self.son_guncelleme_tarihi = get_kktc_now()
             self.son_guncelleyen_id = kullanici_id
             
             # Toplam değeri güncelle
@@ -1229,7 +1238,7 @@ class Kampanya(db.Model):
     max_kullanim_sayisi = db.Column(db.Integer, nullable=True)
     kullanilan_sayisi = db.Column(db.Integer, default=0)
     aktif = db.Column(db.Boolean, default=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     olusturan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'), nullable=False)
 
     # İlişkiler
@@ -1258,7 +1267,7 @@ class BedelsizLimit(db.Model):
     limit_tipi = db.Column(db.Enum(BedelsizLimitTipi), nullable=False)
     kampanya_id = db.Column(db.Integer, db.ForeignKey('kampanyalar.id', ondelete='SET NULL'), nullable=True)
     aktif = db.Column(db.Boolean, default=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
 
     # İlişkiler
     oda = db.relationship('Oda', backref='bedelsiz_limitler')
@@ -1282,7 +1291,7 @@ class BedelsizKullanimLog(db.Model):
     urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=False)
     miktar = db.Column(db.Integer, nullable=False)
     islem_id = db.Column(db.Integer, db.ForeignKey('minibar_islemleri.id', ondelete='CASCADE'), nullable=False)
-    kullanilma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    kullanilma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     limit_id = db.Column(db.Integer, db.ForeignKey('bedelsiz_limitler.id', ondelete='SET NULL'), nullable=True)
 
     # İlişkiler
@@ -1313,7 +1322,7 @@ class DonemselKarAnalizi(db.Model):
     net_kar = db.Column(Numeric(12, 2), default=0)
     kar_marji = db.Column(Numeric(5, 2), default=0)  # Yüzde
     analiz_verisi = db.Column(JSONB, nullable=True)  # Detaylı analiz verileri
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
 
     # İlişkiler
     otel = db.relationship('Otel', backref='kar_analizleri')
@@ -1339,7 +1348,7 @@ class FiyatGuncellemeKurali(db.Model):
     max_fiyat = db.Column(Numeric(10, 2), nullable=True)
     aktif = db.Column(db.Boolean, default=True)
     son_uygulama = db.Column(db.DateTime(timezone=True), nullable=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
 
     # İlişkiler
     urun = db.relationship('Urun', backref='fiyat_kurallari')
@@ -1361,8 +1370,8 @@ class Tedarikci(db.Model):
     iletisim_bilgileri = db.Column(JSONB, nullable=True)  # {telefon, email, adres}
     vergi_no = db.Column(db.String(50))
     aktif = db.Column(db.Boolean, default=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
+    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: get_kktc_now())
 
     # İlişkiler
     urun_fiyatlari = db.relationship('UrunTedarikciFiyat', backref='tedarikci', lazy=True)
@@ -1387,7 +1396,7 @@ class UrunTedarikciFiyat(db.Model):
     baslangic_tarihi = db.Column(db.DateTime(timezone=True), nullable=False)
     bitis_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
     aktif = db.Column(db.Boolean, default=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     olusturan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'), nullable=False)
 
     # İlişkiler
@@ -1412,7 +1421,7 @@ class UrunFiyatGecmisi(db.Model):
     eski_fiyat = db.Column(Numeric(10, 2))
     yeni_fiyat = db.Column(Numeric(10, 2), nullable=False)
     degisiklik_tipi = db.Column(db.Enum(FiyatDegisiklikTipi, name='fiyat_degisiklik_tipi', native_enum=True, values_callable=lambda x: [e.value for e in x]), nullable=False)
-    degisiklik_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    degisiklik_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     degisiklik_sebebi = db.Column(db.Text)
     olusturan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'), nullable=False)
 
@@ -1439,7 +1448,7 @@ class OdaTipiSatisFiyati(db.Model):
     baslangic_tarihi = db.Column(db.DateTime(timezone=True), nullable=False)
     bitis_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
     aktif = db.Column(db.Boolean, default=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
 
     # İlişkiler
     oda_tipi_rel = db.relationship('OdaTipi', foreign_keys=[oda_tipi_id], backref='satis_fiyatlari')
@@ -1464,7 +1473,7 @@ class SezonFiyatlandirma(db.Model):
     urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=True)
     fiyat_carpani = db.Column(Numeric(4, 2), default=1.0)  # 0.50 - 3.00 arası
     aktif = db.Column(db.Boolean, default=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
 
     # İlişkiler
     urun = db.relationship('Urun', backref='sezon_fiyatlari')
@@ -1491,7 +1500,7 @@ class SatinAlmaSiparisi(db.Model):
     otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=False)
     
     # Tarih Bilgileri
-    siparis_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    siparis_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     tahmini_teslimat_tarihi = db.Column(db.Date, nullable=False)
     gerceklesen_teslimat_tarihi = db.Column(db.Date, nullable=True)
     
@@ -1508,8 +1517,8 @@ class SatinAlmaSiparisi(db.Model):
     onay_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
     
     # Sistem Bilgileri
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
+    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: get_kktc_now())
 
     # İlişkiler
     tedarikci = db.relationship('Tedarikci', backref='siparisler')
@@ -1546,7 +1555,7 @@ class SatinAlmaSiparisDetay(db.Model):
     teslim_alinan_miktar = db.Column(db.Integer, default=0, nullable=False)
     
     # Sistem Bilgileri
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
 
     # İlişkiler
     urun = db.relationship('Urun', backref='siparis_detaylari')
@@ -1600,9 +1609,9 @@ class SatinAlmaIslem(db.Model):
     olusturan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
     
     # Sistem Bilgileri
-    islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+    islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
+    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: get_kktc_now())
 
     # İlişkiler
     tedarikci = db.relationship('Tedarikci', backref='satin_alma_islemleri')
@@ -1642,7 +1651,7 @@ class SatinAlmaIslemDetay(db.Model):
     stok_hareket_id = db.Column(db.Integer, db.ForeignKey('stok_hareketleri.id', ondelete='SET NULL'), nullable=True)
     
     # Sistem Bilgileri
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
 
     # İlişkiler
     urun = db.relationship('Urun', backref='satin_alma_detaylari')
@@ -1678,8 +1687,8 @@ class TedarikciPerformans(db.Model):
     performans_skoru = db.Column(Numeric(5, 2), nullable=True)  # 0-100 arası
     
     # Sistem Bilgileri
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
+    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: get_kktc_now())
 
     # İlişkiler
     tedarikci = db.relationship('Tedarikci', backref='performans_kayitlari')
@@ -1704,7 +1713,7 @@ class TedarikciIletisim(db.Model):
     siparis_id = db.Column(db.Integer, db.ForeignKey('satin_alma_siparisleri.id', ondelete='SET NULL'), nullable=True)
     
     # İletişim Bilgileri
-    iletisim_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    iletisim_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     konu = db.Column(db.String(200), nullable=False)
     aciklama = db.Column(db.Text, nullable=False)
     
@@ -1712,7 +1721,7 @@ class TedarikciIletisim(db.Model):
     kullanici_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
     
     # Sistem Bilgileri
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
 
     # İlişkiler
     tedarikci = db.relationship('Tedarikci', backref='iletisim_kayitlari')
@@ -1747,7 +1756,7 @@ class TedarikciDokuman(db.Model):
     yuklenen_kullanici_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
     
     # Sistem Bilgileri
-    yuklenme_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    yuklenme_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
 
     # İlişkiler
     tedarikci = db.relationship('Tedarikci', backref='dokumanlar')
@@ -1781,7 +1790,7 @@ class KatSorumlusuSiparisTalebi(db.Model):
     depo_sorumlusu_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
     
     # Tarih Bilgileri
-    talep_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    talep_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     onay_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
     teslim_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
     
@@ -1793,8 +1802,8 @@ class KatSorumlusuSiparisTalebi(db.Model):
     red_nedeni = db.Column(db.Text, nullable=True)
     
     # Sistem Bilgileri
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
+    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: get_kktc_now())
 
     # İlişkiler
     kat_sorumlusu = db.relationship('Kullanici', foreign_keys=[kat_sorumlusu_id], backref='siparis_talepleri')
@@ -1829,7 +1838,7 @@ class KatSorumlusuSiparisTalepDetay(db.Model):
     aciliyet = db.Column(db.String(10), default='normal', nullable=False)
     
     # Sistem Bilgileri
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
 
     # İlişkiler
     urun = db.relationship('Urun', backref='talep_detaylari')
@@ -1887,7 +1896,7 @@ class GunlukGorev(db.Model):
         default='pending',
         nullable=False
     )
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     tamamlanma_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
     notlar = db.Column(db.Text, nullable=True)
     
@@ -1952,7 +1961,7 @@ class DNDKontrol(db.Model):
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     gorev_detay_id = db.Column(db.Integer, db.ForeignKey('gorev_detaylari.id', ondelete='CASCADE'), nullable=False)
-    kontrol_zamani = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    kontrol_zamani = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     kontrol_eden_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
     notlar = db.Column(db.Text, nullable=True)
     
@@ -1984,7 +1993,7 @@ class YuklemeGorev(db.Model):
     )
     yukleme_zamani = db.Column(db.DateTime(timezone=True), nullable=True)
     dosya_yukleme_id = db.Column(db.Integer, db.ForeignKey('dosya_yuklemeleri.id', ondelete='SET NULL'), nullable=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     
     # İlişkiler
     otel = db.relationship('Otel', backref='yukleme_gorevleri')
@@ -2016,7 +2025,7 @@ class GorevDurumLog(db.Model):
         db.Enum('pending', 'in_progress', 'completed', 'dnd_pending', 'incomplete', name='gorev_durum_enum'),
         nullable=False
     )
-    degisiklik_zamani = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    degisiklik_zamani = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     degistiren_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
     aciklama = db.Column(db.Text, nullable=True)
     
@@ -2053,7 +2062,7 @@ class OdaKontrolKaydi(db.Model):
     kontrol_tipi = db.Column(db.String(20), default='sarfiyat_yok', nullable=False)
     
     # Sistem bilgileri
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     
     # İlişkiler
     oda = db.relationship('Oda', backref='kontrol_kayitlari')
@@ -2087,8 +2096,8 @@ class EmailAyarlari(db.Model):
     sender_email = db.Column(db.String(255), nullable=False)
     sender_name = db.Column(db.String(255), default='Minibar Takip Sistemi')
     aktif = db.Column(db.Boolean, default=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
+    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: get_kktc_now())
     guncelleyen_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
     
     # İlişkiler
@@ -2110,7 +2119,7 @@ class EmailLog(db.Model):
     email_tipi = db.Column(db.String(50), nullable=False)  # uyari, bilgi, sistem
     durum = db.Column(db.String(20), default='gonderildi')  # gonderildi, hata, beklemede
     hata_mesaji = db.Column(db.Text, nullable=True)
-    gonderim_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    gonderim_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     okundu = db.Column(db.Boolean, default=False)
     okunma_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
     tracking_id = db.Column(db.String(100), unique=True, nullable=True)
@@ -2145,7 +2154,7 @@ class DolulukUyariLog(db.Model):
     email_gonderildi = db.Column(db.Boolean, default=False)
     email_log_id = db.Column(db.Integer, db.ForeignKey('email_loglari.id', ondelete='SET NULL'), nullable=True)
     sistem_yoneticisi_bilgilendirildi = db.Column(db.Boolean, default=False)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     
     # İlişkiler
     otel = db.relationship('Otel', backref='doluluk_uyarilari')
@@ -2180,8 +2189,8 @@ class ZimmetSablon(db.Model):
     olusturan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
     otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=True)  # NULL ise tüm oteller için geçerli
     aktif = db.Column(db.Boolean, default=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
+    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: get_kktc_now())
     
     # İlişkiler
     olusturan = db.relationship('Kullanici', backref='zimmet_sablonlari')

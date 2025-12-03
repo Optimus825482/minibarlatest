@@ -4,6 +4,12 @@ Günlük minibar kontrol görevlerinin oluşturulması ve yönetimi
 """
 
 from datetime import datetime, date, time, timezone, timedelta
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 from typing import List, Dict, Optional, Tuple
 from sqlalchemy import and_, or_, func
 from sqlalchemy.orm import joinedload, subqueryload
@@ -319,7 +325,7 @@ class GorevService:
             
             # Durumu güncelle
             detay.durum = 'completed'
-            detay.kontrol_zamani = datetime.now(timezone.utc)
+            detay.kontrol_zamani = get_kktc_now()
             if notlar:
                 detay.notlar = notlar
             
@@ -370,7 +376,7 @@ class GorevService:
             
             # DND sayısını artır
             detay.dnd_sayisi += 1
-            detay.son_dnd_zamani = datetime.now(timezone.utc)
+            detay.son_dnd_zamani = get_kktc_now()
             
             # DND kontrol kaydı oluştur
             dnd_kontrol = DNDKontrol(
@@ -428,7 +434,7 @@ class GorevService:
         if not varis_saati:
             return {'saat': 0, 'dakika': 0, 'saniye': 0, 'uyari': False, 'gecmis': True}
         
-        now = datetime.now(timezone.utc)
+        now = get_kktc_now()
         today = now.date()
         
         # Varış zamanını bugünün tarihiyle birleştir
@@ -660,7 +666,7 @@ class GorevService:
             
             if tamamlanan == toplam:
                 gorev.durum = 'completed'
-                gorev.tamamlanma_tarihi = datetime.now(timezone.utc)
+                gorev.tamamlanma_tarihi = get_kktc_now()
             elif tamamlanan > 0:
                 gorev.durum = 'in_progress'
             else:
@@ -872,3 +878,4 @@ class GorevService:
             
         except Exception as e:
             raise Exception(f"MisafirKayit silme görev yönetimi hatası: {str(e)}")
+

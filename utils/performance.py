@@ -7,6 +7,12 @@ import time
 import hashlib
 from functools import wraps
 from datetime import datetime, timezone
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 from flask import request
 from models import db
 
@@ -52,7 +58,7 @@ class PerformanceMonitor:
                 self.query_stats.append({
                     'function': func.__name__,
                     'execution_time': execution_time,
-                    'timestamp': datetime.now(timezone.utc).isoformat()
+                    'timestamp': get_kktc_now().isoformat()
                 })
                 
                 return result
@@ -122,3 +128,4 @@ class PerformanceMonitor:
 
 # Global monitor instance
 monitor = PerformanceMonitor(slow_query_threshold=1.0)
+

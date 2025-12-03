@@ -4,6 +4,12 @@ Depo sorumluları için günlük doluluk yükleme görevlerinin yönetimi
 """
 
 from datetime import datetime, date, timezone, timedelta
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 from typing import List, Dict, Optional
 from sqlalchemy import and_, or_, func
 from sqlalchemy.orm import joinedload
@@ -184,7 +190,7 @@ class YuklemeGorevService:
                         gorev_tarihi=tarih,
                         dosya_tipi=normalized_dosya_tipi,
                         durum='completed',
-                        yukleme_zamani=datetime.now(timezone.utc),
+                        yukleme_zamani=get_kktc_now(),
                         dosya_yukleme_id=dosya_yukleme_id
                     )
                     db.session.add(gorev)
@@ -194,7 +200,7 @@ class YuklemeGorevService:
             
             # Görevi güncelle
             gorev.durum = 'completed'
-            gorev.yukleme_zamani = datetime.now(timezone.utc)
+            gorev.yukleme_zamani = get_kktc_now()
             gorev.dosya_yukleme_id = dosya_yukleme_id
             
             db.session.commit()
@@ -435,3 +441,4 @@ class YuklemeGorevService:
             
         except Exception as e:
             raise Exception(f"Yükleme istatistikleri getirme hatası: {str(e)}")
+

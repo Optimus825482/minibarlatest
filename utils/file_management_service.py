@@ -6,6 +6,12 @@ Excel dosyalarının yüklenmesi, silinmesi ve temizlenmesi işlemlerini yöneti
 import os
 import uuid
 from datetime import datetime, timedelta, timezone
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 from typing import Tuple, Dict
 from werkzeug.utils import secure_filename
 from models import db, DosyaYukleme, MisafirKayit
@@ -77,7 +83,7 @@ class FileManagementService:
                 dosya_yolu=file_path,
                 dosya_tipi='in_house',  # Başlangıçta varsayılan, sonra güncellenecek
                 dosya_boyutu=file_size,
-                yukleme_tarihi=datetime.now(timezone.utc),
+                yukleme_tarihi=get_kktc_now(),
                 durum='yuklendi',
                 yuklenen_kullanici_id=user_id,
                 otel_id=otel_id  # Otel ID eklendi
@@ -160,6 +166,12 @@ class FileManagementService:
             try:
                 from models import YuklemeGorev
                 from datetime import date
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
                 
                 # Dosya tipini YuklemeGorev formatına çevir
                 dosya_tipi_map = {
@@ -282,7 +294,7 @@ class FileManagementService:
         """
         try:
             # 4 gün önceki tarih
-            cutoff_date = datetime.now(timezone.utc) - timedelta(days=FileManagementService.FILE_RETENTION_DAYS)
+            cutoff_date = get_kktc_now() - timedelta(days=FileManagementService.FILE_RETENTION_DAYS)
             
             # Eski dosyaları bul
             old_uploads = DosyaYukleme.query.filter(
@@ -305,7 +317,7 @@ class FileManagementService:
                 
                 # Durumu güncelle
                 upload.durum = 'silindi'
-                upload.silme_tarihi = datetime.now(timezone.utc)
+                upload.silme_tarihi = get_kktc_now()
             
             db.session.commit()
             
@@ -388,3 +400,4 @@ class FileManagementService:
             db.session.rollback()
             print(f"Durum güncelleme hatası: {str(e)}")
             return False
+

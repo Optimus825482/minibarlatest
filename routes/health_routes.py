@@ -5,6 +5,12 @@ PostgreSQL migration için health check ve database monitoring endpoint'leri
 
 from flask import Blueprint, jsonify, request
 from datetime import datetime, timezone
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 from sqlalchemy import text
 from models import db
 import os
@@ -41,7 +47,7 @@ def health_check():
         
         response = {
             'status': 'healthy',
-            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'timestamp': get_kktc_now().isoformat(),
             'database': {
                 'status': db_status,
                 'type': db_type,
@@ -57,7 +63,7 @@ def health_check():
         return jsonify({
             'status': 'unhealthy',
             'error': str(e),
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            'timestamp': get_kktc_now().isoformat()
         }), 503
 
 
@@ -141,14 +147,14 @@ def database_health():
             'database_type': db_type,
             'connection_pool': pool_stats,
             'metrics': metrics,
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            'timestamp': get_kktc_now().isoformat()
         }), 200
         
     except Exception as e:
         return jsonify({
             'status': 'error',
             'error': str(e),
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            'timestamp': get_kktc_now().isoformat()
         }), 500
 
 
@@ -170,7 +176,7 @@ def pool_statistics():
             'recycle': pool._recycle,
             'usage_percent': round((pool.checkedout() / pool.size() * 100), 2) if pool.size() > 0 else 0,
             'status': 'healthy' if pool.checkedout() < pool.size() * 0.8 else 'warning',
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            'timestamp': get_kktc_now().isoformat()
         }
         
         return jsonify(stats), 200
@@ -178,7 +184,7 @@ def pool_statistics():
     except Exception as e:
         return jsonify({
             'error': str(e),
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            'timestamp': get_kktc_now().isoformat()
         }), 500
 
 
@@ -193,7 +199,7 @@ def celery_health():
         
         result = {
             'status': 'unknown',
-            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'timestamp': get_kktc_now().isoformat(),
             'workers': [],
             'beat': {'status': 'unknown'},
             'broker': {'status': 'unknown'}
@@ -252,7 +258,7 @@ def celery_health():
         return jsonify({
             'status': 'error',
             'error': str(e),
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            'timestamp': get_kktc_now().isoformat()
         }), 500
 
 
@@ -278,11 +284,12 @@ def list_routes():
         return jsonify({
             'total_routes': len(routes),
             'routes': routes,
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            'timestamp': get_kktc_now().isoformat()
         }), 200
         
     except Exception as e:
         return jsonify({
             'error': str(e),
-            'timestamp': datetime.now(timezone.utc).isoformat()
+            'timestamp': get_kktc_now().isoformat()
         }), 500
+

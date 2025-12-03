@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from reportlab.lib import colors
@@ -15,6 +15,72 @@ from sqlalchemy import case
 import json
 import traceback
 import logging
+import pytz
+
+# Logging yapılandırması
+logging.basicConfig(
+    filename='minibar_errors.log',
+    level=logging.ERROR,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# KKTC Timezone (Kıbrıs - Europe/Nicosia)
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+
+def get_kktc_now():
+    """
+    Kıbrıs saat diliminde şu anki zamanı döndürür.
+    Tüm sistemde saat kaydı için bu fonksiyon kullanılmalıdır.
+    
+    Returns:
+        datetime: KKTC timezone'unda şu anki zaman
+    """
+    return datetime.now(KKTC_TZ)
+
+
+def get_kktc_today():
+    """
+    Kıbrıs saat diliminde bugünün tarihini döndürür.
+    
+    Returns:
+        date: KKTC timezone'unda bugünün tarihi
+    """
+    return datetime.now(KKTC_TZ).date()
+
+
+def utc_to_kktc(utc_datetime):
+    """
+    UTC datetime'ı KKTC timezone'una çevirir.
+    
+    Args:
+        utc_datetime: UTC timezone'unda datetime
+        
+    Returns:
+        datetime: KKTC timezone'unda datetime
+    """
+    if utc_datetime is None:
+        return None
+    if utc_datetime.tzinfo is None:
+        utc_datetime = utc_datetime.replace(tzinfo=timezone.utc)
+    return utc_datetime.astimezone(KKTC_TZ)
+
+
+def kktc_to_utc(kktc_datetime):
+    """
+    KKTC datetime'ı UTC timezone'una çevirir.
+    
+    Args:
+        kktc_datetime: KKTC timezone'unda datetime
+        
+    Returns:
+        datetime: UTC timezone'unda datetime
+    """
+    if kktc_datetime is None:
+        return None
+    if kktc_datetime.tzinfo is None:
+        kktc_datetime = KKTC_TZ.localize(kktc_datetime)
+    return kktc_datetime.astimezone(timezone.utc)
 
 # Logging yapılandırması
 logging.basicConfig(

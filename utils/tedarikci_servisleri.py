@@ -4,6 +4,12 @@ Tedarikçi CRUD, performans hesaplama ve en uygun tedarikçi bulma
 """
 
 from datetime import datetime, timezone, date, timedelta
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 from decimal import Decimal
 from typing import Dict, List, Optional, Tuple
 from sqlalchemy import and_, or_, func, desc
@@ -625,7 +631,7 @@ class TedarikciServisi:
             float: Zamanında teslimat oranı (0-100)
         """
         try:
-            baslangic_tarihi = datetime.now(timezone.utc) - timedelta(days=gun_sayisi)
+            baslangic_tarihi = get_kktc_now() - timedelta(days=gun_sayisi)
 
             siparisler = SatinAlmaSiparisi.query.filter(
                 SatinAlmaSiparisi.tedarikci_id == tedarikci_id,
@@ -1301,3 +1307,4 @@ class TedarikciServisi:
                 'tamamlandi': 0,
                 'iptal': 0
             }
+

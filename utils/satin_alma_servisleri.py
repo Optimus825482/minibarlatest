@@ -4,6 +4,12 @@ Sipariş oluşturma, takip, stok entegrasyonu ve otomatik sipariş önerileri
 """
 
 from datetime import datetime, timezone, date, timedelta
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 from decimal import Decimal
 from typing import Dict, List, Optional, Tuple
 from sqlalchemy import and_, or_, func, desc
@@ -36,7 +42,7 @@ class SatinAlmaServisi:
             str: Sipariş numarası
         """
         try:
-            bugun = datetime.now(timezone.utc)
+            bugun = get_kktc_now()
             tarih_str = bugun.strftime('%Y%m%d')
             
             # Bugün oluşturulan son sipariş numarasını bul
@@ -58,7 +64,7 @@ class SatinAlmaServisi:
         except Exception as e:
             logger.error(f"Sipariş no üretme hatası: {str(e)}")
             # Fallback: timestamp bazlı
-            return f'SA-{datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")}'
+            return f'SA-{get_kktc_now().strftime("%Y%m%d%H%M%S")}'
 
     @staticmethod
     def siparis_olustur(siparis_data: Dict, kullanici_id: int) -> Dict:
@@ -132,7 +138,7 @@ class SatinAlmaServisi:
                 siparis_no=siparis_no,
                 tedarikci_id=tedarikci_id,  # None olabilir
                 otel_id=siparis_data['otel_id'],
-                siparis_tarihi=datetime.now(timezone.utc),
+                siparis_tarihi=get_kktc_now(),
                 tahmini_teslimat_tarihi=siparis_data.get('tahmini_teslimat_tarihi'),
                 durum='beklemede',
                 toplam_tutar=toplam_tutar,
@@ -558,7 +564,7 @@ class SatinAlmaServisi:
                 return []
             
             oneriler = []
-            baslangic_tarihi = datetime.now(timezone.utc) - timedelta(days=gun_sayisi)
+            baslangic_tarihi = get_kktc_now() - timedelta(days=gun_sayisi)
             
             for stok in kritik_stoklar:
                 try:
@@ -880,7 +886,7 @@ class SatinAlmaServisi:
                     miktar=teslim_miktar,
                     aciklama=f'Satın alma siparişi: {siparis.siparis_no}',
                     islem_yapan_id=kullanici_id,
-                    islem_tarihi=datetime.now(timezone.utc)
+                    islem_tarihi=get_kktc_now()
                 )
                 
                 db.session.add(stok_hareket)
@@ -1830,3 +1836,4 @@ class SatinAlmaServisi:
         except Exception as e:
             logger.error(f"Fiyat trend analizi hatası: {str(e)}")
             return []
+

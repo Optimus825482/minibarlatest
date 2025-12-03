@@ -20,6 +20,12 @@ Roller:
 
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from datetime import datetime, date
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 from models import db, Otel, Kat, Oda, OdaTipi, Kullanici, SistemLog
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem, log_hata
@@ -331,6 +337,12 @@ def register_sistem_yoneticisi_routes(app):
         from models import Otel
         from flask import send_file
         from datetime import datetime
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
         import io
         
         # Excel export kontrolü
@@ -867,6 +879,12 @@ def register_sistem_yoneticisi_routes(app):
         from forms import UrunTedarikciFiyatForm
         from models import UrunTedarikciFiyat, Urun, Tedarikci
         from datetime import date
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
         from flask import session
         
         form = UrunTedarikciFiyatForm()
@@ -1016,6 +1034,12 @@ def register_sistem_yoneticisi_routes(app):
         """Ürün için satın alma geçmişi"""
         from models import Urun, SatinAlmaSiparisi, SatinAlmaSiparisDetay
         from datetime import date, timedelta
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
         
         try:
             # Ürün bilgisini getir
@@ -1142,6 +1166,12 @@ def register_sistem_yoneticisi_routes(app):
         from models import Tedarikci, SatinAlmaSiparisi
         from utils.tedarikci_servisleri import TedarikciServisi
         from datetime import date, timedelta
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
         
         try:
             # Tedarikçi bilgisini getir
@@ -1220,6 +1250,12 @@ def register_sistem_yoneticisi_routes(app):
         from models import Tedarikci
         from utils.tedarikci_servisleri import TedarikciServisi
         from datetime import date, timedelta
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
         
         try:
             # Dönem parametreleri (varsayılan: son 6 ay)
@@ -1659,7 +1695,7 @@ def register_sistem_yoneticisi_routes(app):
             
             # İşlemi iptal et
             islem.durum = 'iptal'
-            islem.iptal_tarihi = datetime.now(timezone.utc)
+            islem.iptal_tarihi = get_kktc_now()
             islem.iptal_eden_id = current_user.id
             islem.iptal_aciklama = request.form.get('iptal_aciklama', 'Sistem yöneticisi tarafından iptal edildi')
             
@@ -2614,3 +2650,4 @@ def register_sistem_yoneticisi_routes(app):
             db.session.rollback()
             log_hata(e, 'api_fiyat_guncelle')
             return jsonify({'success': False, 'error': str(e)}), 500
+

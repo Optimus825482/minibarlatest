@@ -10,6 +10,12 @@ from models import (
     PersonelZimmet
 )
 from datetime import datetime, timezone
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 from sqlalchemy import desc
 import logging
 
@@ -445,7 +451,7 @@ def tuketim_kaydet(oda_id, urun_id, miktar, personel_id, islem_tipi='setup_kontr
             oda_id=oda_id,
             personel_id=personel_id,
             islem_tipi=islem_tipi,
-            islem_tarihi=datetime.now(timezone.utc),
+            islem_tarihi=get_kktc_now(),
             aciklama=f"{islem_tipi} işlemi"
         )
         db.session.add(islem)
@@ -471,3 +477,4 @@ def tuketim_kaydet(oda_id, urun_id, miktar, personel_id, islem_tipi='setup_kontr
         db.session.rollback()
         logger.error(f"Tüketim kaydetme hatası: {e}")
         raise
+

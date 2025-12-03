@@ -4,6 +4,12 @@ Görev bildirimleri ve uyarıların yönetimi
 """
 
 from datetime import datetime, date, timezone, timedelta
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 from typing import List, Dict, Optional
 from sqlalchemy import and_, or_, func
 from sqlalchemy.orm import joinedload
@@ -58,7 +64,7 @@ class BildirimService:
                     'mesaj': mesaj,
                     'ilgili_id': ilgili_id,
                     'okundu': False,
-                    'olusturma_zamani': datetime.now(timezone.utc).isoformat()
+                    'olusturma_zamani': get_kktc_now().isoformat()
                 }
             )
             db.session.add(log)
@@ -247,7 +253,7 @@ class BildirimService:
                 bildirim.islem_detay = {
                     **bildirim.islem_detay,
                     'okundu': True,
-                    'okunma_zamani': datetime.now(timezone.utc).isoformat()
+                    'okunma_zamani': get_kktc_now().isoformat()
                 }
                 db.session.commit()
             
@@ -306,3 +312,4 @@ class BildirimService:
             
         except Exception as e:
             raise Exception(f"Görev oluşturuldu bildirimi hatası: {str(e)}")
+

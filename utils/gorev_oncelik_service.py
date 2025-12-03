@@ -17,6 +17,12 @@ KAT OPTİMİZASYONU:
 """
 
 from datetime import datetime, date, time, timezone, timedelta
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
 from enum import IntEnum
@@ -79,7 +85,7 @@ class GorevOncelikService:
             Dict: Önceliklendirilmiş görev planı
         """
         try:
-            simdi = datetime.now(timezone.utc)
+            simdi = get_kktc_now()
             bugun = simdi.date()
             
             # Tüm görevleri al
@@ -487,3 +493,4 @@ class GorevOncelikService:
             
         except Exception as e:
             return {'success': False, 'error': str(e)}
+

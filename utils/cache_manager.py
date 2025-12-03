@@ -6,6 +6,12 @@ Fiyatlandırma ve Karlılık sistemleri için cache stratejileri
 from functools import wraps
 from flask import current_app
 from datetime import datetime, timezone
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 import logging
 import json
 
@@ -254,7 +260,7 @@ class FiyatCache:
     @staticmethod
     def get_urun_fiyat_key(urun_id, oda_id=None, tarih=None):
         """Ürün fiyat cache key'i oluştur"""
-        tarih_str = tarih.strftime('%Y-%m-%d') if tarih else datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        tarih_str = tarih.strftime('%Y-%m-%d') if tarih else get_kktc_now().strftime('%Y-%m-%d')
         oda_str = str(oda_id) if oda_id else 'default'
         return f"fiyat:urun:{urun_id}:oda:{oda_str}:tarih:{tarih_str}"
     
@@ -657,3 +663,4 @@ class CacheStats:
         except Exception as e:
             logger.error(f"❌ Cache temizleme hatası: {e}")
             return False
+

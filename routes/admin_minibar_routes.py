@@ -63,6 +63,12 @@ def register_admin_minibar_routes(app):
                     excel_buffer = export_depo_stok_excel(stok_listesi)
                     if excel_buffer:
                         from datetime import datetime
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
                         filename = f'depo_stoklari_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
                         
                         # Log kaydı
@@ -113,6 +119,12 @@ def register_admin_minibar_routes(app):
         """İlk stok yükleme - Excel'den ürün ve adet bilgisi alarak stok girişi yapar"""
         from models import Otel, Urun, SatinAlmaIslem, SatinAlmaIslemDetay, UrunStok, Tedarikci
         from datetime import datetime, timezone
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
         import pandas as pd
         import io
         
@@ -215,14 +227,14 @@ def register_admin_minibar_routes(app):
                             return jsonify({'success': False, 'message': 'Varsayılan tedarikçi (ID=1) bulunamadı.'}), 400
                         
                         # Satın alma işlemi oluştur
-                        islem_no = f"ILK-{otel_id}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+                        islem_no = f"ILK-{otel_id}-{get_kktc_now().strftime('%Y%m%d%H%M%S')}"
                         
                         satin_alma = SatinAlmaIslem(
                             islem_no=islem_no,
                             tedarikci_id=1,  # Varsayılan tedarikçi
                             otel_id=otel_id,
                             fatura_no=f'ILK-STOK-{otel_id}',
-                            fatura_tarihi=datetime.now(timezone.utc).date(),
+                            fatura_tarihi=get_kktc_now().date(),
                             odeme_sekli='diger',
                             odeme_durumu='odendi',
                             toplam_tutar=0,  # 0 TL
@@ -257,16 +269,16 @@ def register_admin_minibar_routes(app):
                             
                             if urun_stok:
                                 urun_stok.mevcut_stok += item['adet']
-                                urun_stok.son_giris_tarihi = datetime.now(timezone.utc)
-                                urun_stok.son_guncelleme_tarihi = datetime.now(timezone.utc)
+                                urun_stok.son_giris_tarihi = get_kktc_now()
+                                urun_stok.son_guncelleme_tarihi = get_kktc_now()
                                 urun_stok.son_guncelleyen_id = session['kullanici_id']
                             else:
                                 urun_stok = UrunStok(
                                     urun_id=item['urun_id'],
                                     otel_id=otel_id,
                                     mevcut_stok=item['adet'],
-                                    son_giris_tarihi=datetime.now(timezone.utc),
-                                    son_guncelleme_tarihi=datetime.now(timezone.utc),
+                                    son_giris_tarihi=get_kktc_now(),
+                                    son_guncelleme_tarihi=get_kktc_now(),
                                     son_guncelleyen_id=session['kullanici_id']
                                 )
                                 db.session.add(urun_stok)
@@ -283,7 +295,7 @@ def register_admin_minibar_routes(app):
                         
                         # Oteli güncelle - ilk stok yüklendi olarak işaretle
                         otel.ilk_stok_yuklendi = True
-                        otel.ilk_stok_yukleme_tarihi = datetime.now(timezone.utc)
+                        otel.ilk_stok_yukleme_tarihi = get_kktc_now()
                         otel.ilk_stok_yukleyen_id = session['kullanici_id']
                         
                         db.session.commit()
@@ -738,3 +750,4 @@ def register_admin_minibar_routes(app):
                 'success': False,
                 'message': 'Bir hata oluştu'
             }), 500
+

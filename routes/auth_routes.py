@@ -16,6 +16,12 @@ Roller:
 
 from flask import render_template, request, redirect, url_for, flash, session
 from datetime import datetime, timezone
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from models import db, Otel, Kullanici, SistemAyar
@@ -143,7 +149,7 @@ def register_auth_routes(app):
 
                 # Son giriş tarihini güncelle
                 try:
-                    kullanici.son_giris = datetime.now(timezone.utc)
+                    kullanici.son_giris = get_kktc_now()
                     db.session.commit()
                 except Exception as e:
                     # Son giriş güncelleme hatası login'i engellemez
@@ -203,3 +209,4 @@ def register_auth_routes(app):
         session.clear()
         flash('Başarıyla çıkış yaptınız.', 'info')
         return redirect(url_for('login'))
+

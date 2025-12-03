@@ -6,6 +6,12 @@ Migration başarısız olduğunda geri alma işlemleri
 import json
 import os
 from datetime import datetime, timezone
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 import subprocess
@@ -194,7 +200,7 @@ echo "Restarting application..."
 
 echo "✅ Rollback completed"
 echo "⚠️  Please verify application functionality"
-""".format(timestamp=datetime.now(timezone.utc).isoformat())
+""".format(timestamp=get_kktc_now().isoformat())
         
         with open(output_file, 'w') as f:
             f.write(script_content)
@@ -208,3 +214,4 @@ echo "⚠️  Please verify application functionality"
         """Bağlantıları kapat"""
         self.postgres_session.close()
         self.postgres_engine.dispose()
+

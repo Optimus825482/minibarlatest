@@ -4,6 +4,12 @@ Dinamik fiyat hesaplama, kampanya yönetimi ve karlılık analizi
 """
 
 from datetime import datetime, timezone, date
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 from decimal import Decimal
 from typing import Dict, List, Optional, Tuple
 from sqlalchemy import and_, or_, func
@@ -63,7 +69,7 @@ class FiyatYonetimServisi:
         """
         try:
             if tarih is None:
-                tarih = datetime.now(timezone.utc)
+                tarih = get_kktc_now()
             
             # Cache kontrolü - Bedelsiz hariç (oda bazlı değişir)
             if miktar == 1:  # Sadece birim fiyat için cache kullan
@@ -166,7 +172,7 @@ class FiyatYonetimServisi:
             Decimal: Alış fiyatı veya None
         """
         try:
-            simdi = datetime.now(timezone.utc)
+            simdi = get_kktc_now()
             
             query = UrunTedarikciFiyat.query.filter(
                 UrunTedarikciFiyat.urun_id == urun_id,
@@ -205,7 +211,7 @@ class FiyatYonetimServisi:
             dict: Tedarikçi bilgileri veya None
         """
         try:
-            simdi = datetime.now(timezone.utc)
+            simdi = get_kktc_now()
             
             fiyat_kaydi = UrunTedarikciFiyat.query.filter(
                 UrunTedarikciFiyat.urun_id == urun_id,
@@ -316,7 +322,7 @@ class FiyatYonetimServisi:
         """
         try:
             if tarih is None:
-                tarih = datetime.now(timezone.utc)
+                tarih = get_kktc_now()
             
             fiyat_kaydi = OdaTipiSatisFiyati.query.filter(
                 OdaTipiSatisFiyati.urun_id == urun_id,
@@ -472,7 +478,7 @@ class FiyatYonetimServisi:
             tuple: (bedelsiz_miktar, ucretli_miktar)
         """
         try:
-            simdi = datetime.now(timezone.utc)
+            simdi = get_kktc_now()
             
             # Aktif bedelsiz limiti bul
             limit = BedelsizLimit.query.filter(
@@ -606,7 +612,7 @@ class KampanyaServisi:
                 raise ValueError("Kampanya aktif değil")
             
             # Tarih kontrolü
-            simdi = datetime.now(timezone.utc)
+            simdi = get_kktc_now()
             if not (kampanya.baslangic_tarihi <= simdi <= kampanya.bitis_tarihi):
                 raise ValueError("Kampanya tarihi geçerli değil")
             
@@ -688,7 +694,7 @@ class KampanyaServisi:
         """
         try:
             if tarih is None:
-                tarih = datetime.now(timezone.utc)
+                tarih = get_kktc_now()
             
             query = Kampanya.query.filter(
                 Kampanya.aktif == True,
@@ -820,7 +826,7 @@ class BedelsizServisi:
             tuple: (bedelsiz_miktar, ucretli_miktar)
         """
         try:
-            simdi = datetime.now(timezone.utc)
+            simdi = get_kktc_now()
             
             # Aktif bedelsiz limiti bul
             limit = BedelsizLimit.query.filter(
@@ -873,7 +879,7 @@ class BedelsizServisi:
             dict: Kullanım bilgileri
         """
         try:
-            simdi = datetime.now(timezone.utc)
+            simdi = get_kktc_now()
             
             # Aktif limiti bul
             limit = BedelsizLimit.query.filter(
@@ -1043,7 +1049,7 @@ class BedelsizServisi:
             query = BedelsizLimit.query.filter_by(oda_id=oda_id)
             
             if aktif_mi:
-                simdi = datetime.now(timezone.utc)
+                simdi = get_kktc_now()
                 query = query.filter(
                     BedelsizLimit.aktif == True,
                     BedelsizLimit.baslangic_tarihi <= simdi
@@ -1689,7 +1695,7 @@ class StokYonetimServisi:
                         otel_id=otel_id,
                         urun_id=urun_id,
                         mevcut_stok=sayilan_miktar,
-                        son_sayim_tarihi=datetime.now(timezone.utc),
+                        son_sayim_tarihi=get_kktc_now(),
                         son_sayim_miktari=sayilan_miktar,
                         sayim_farki=0,
                         son_guncelleyen_id=kullanici_id
@@ -2156,6 +2162,12 @@ class MLEntegrasyonServisi:
             from models import MinibarIslem, MinibarIslemDetay
             import numpy as np
             from datetime import timedelta
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
             
             # Dönem aralığını hesapla
             bugun = date.today()
@@ -2325,3 +2337,4 @@ class MLEntegrasyonServisi:
             
         except Exception as e:
             raise Exception(f"Fiyat optimizasyon önerisi hatası: {str(e)}")
+

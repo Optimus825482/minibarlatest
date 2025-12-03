@@ -10,6 +10,12 @@ from utils.ml.alert_manager import AlertManager
 from utils.ml.metrics_calculator import MetricsCalculator
 from models import db, MLAlert, MLModel, MLMetric, MLTrainingLog
 from datetime import datetime, timezone, timedelta
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+def get_kktc_now():
+    return datetime.now(KKTC_TZ)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -216,7 +222,7 @@ def api_get_metrics():
         days = request.args.get('days', 7, type=int)
         metric_type = request.args.get('type')
         
-        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+        cutoff_date = get_kktc_now() - timedelta(days=days)
         
         query = MLMetric.query.filter(MLMetric.timestamp >= cutoff_date)
         
@@ -510,3 +516,4 @@ def api_train_models():
 def register_ml_routes(app):
     """ML routes'ları app'e kaydet"""
     app.register_blueprint(ml_bp)
+
