@@ -1659,3 +1659,654 @@ def register_api_routes(app):
                 'success': False,
                 'error': str(e)
             }), 500
+
+    # ============================================================================
+    # ZİMMET ŞABLON API'LERİ
+    # ============================================================================
+    
+    @app.route('/api/zimmet-sablonlar', methods=['GET'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_zimmet_sablonlar():
+        """Zimmet şablonlarını listele"""
+        try:
+            from models import ZimmetSablon, ZimmetSablonDetay
+            from utils.authorization import get_kullanici_otelleri
+            
+            oteller = get_kullanici_otelleri()
+            otel_ids = [o.id for o in oteller]  # Otel objelerinden ID listesi çıkar
+            
+            # Kullanıcının erişebildiği otellerin şablonları + genel şablonlar
+            sablonlar = ZimmetSablon.query.filter(
+                ZimmetSablon.aktif == True,
+                db.or_(
+                    ZimmetSablon.otel_id.in_(otel_ids) if otel_ids else False,
+                    ZimmetSablon.otel_id == None
+                )
+            ).order_by(ZimmetSablon.sablon_adi).all()
+            
+            result = []
+            for sablon in sablonlar:
+                detaylar = []
+                for detay in sablon.detaylar:
+                    detaylar.append({
+                        'urun_id': detay.urun_id,
+                        'urun_adi': detay.urun.urun_adi if detay.urun else '',
+                        'grup_adi': detay.urun.grup.grup_adi if detay.urun and detay.urun.grup else '',
+                        'varsayilan_miktar': detay.varsayilan_miktar,
+                        'birim': detay.urun.birim if detay.urun else 'adet'
+                    })
+                
+                result.append({
+                    'id': sablon.id,
+                    'sablon_adi': sablon.sablon_adi,
+                    'aciklama': sablon.aciklama,
+                    'urun_sayisi': len(sablon.detaylar),
+                    'detaylar': detaylar
+                })
+            
+            return jsonify(result)
+            
+        except Exception as e:
+            log_hata(e, modul='api_zimmet_sablonlar')
+            return jsonify({'error': str(e)}), 500
+    
+    @app.route('/api/zimmet-sablon-kaydet', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_zimmet_sablon_kaydet():
+        """Yeni zimmet şablonu oluştur veya güncelle"""
+        try:
+            from models import ZimmetSablon, ZimmetSablonDetay
+            
+            data = request.get_json()
+            sablon_id = data.get('sablon_id')
+            sablon_adi = data.get('sablon_adi', '').strip()
+            aciklama = data.get('aciklama', '').strip()
+            otel_id = data.get('otel_id')
+            urunler = data.get('urunler', [])  # [{urun_id, miktar}, ...]
+            
+            if not sablon_adi:
+                return jsonify({'success': False, 'error': 'Şablon adı gerekli'}), 400
+            
+            if not urunler:
+                return jsonify({'success': False, 'error': 'En az bir ürün ekleyin'}), 400
+            
+            if sablon_id:
+                # Güncelleme
+                sablon = db.session.get(ZimmetSablon, sablon_id)
+                if not sablon:
+                    return jsonify({'success': False, 'error': 'Şablon bulunamadı'}), 404
+                
+                sablon.sablon_adi = sablon_adi
+                sablon.aciklama = aciklama
+                sablon.otel_id = otel_id if otel_id else None
+                
+                # Mevcut detayları sil
+                ZimmetSablonDetay.query.filter_by(sablon_id=sablon.id).delete()
+            else:
+                # Yeni oluştur
+                sablon = ZimmetSablon(
+                    sablon_adi=sablon_adi,
+                    aciklama=aciklama,
+                    otel_id=otel_id if otel_id else None,
+                    olusturan_id=session.get('kullanici_id')
+                )
+                db.session.add(sablon)
+                db.session.flush()
+            
+            # Detayları ekle
+            for urun in urunler:
+                detay = ZimmetSablonDetay(
+                    sablon_id=sablon.id,
+                    urun_id=urun['urun_id'],
+                    varsayilan_miktar=urun.get('miktar', 1)
+                )
+                db.session.add(detay)
+            
+            db.session.commit()
+            
+            log_islem('sablon_kaydet', 'zimmet_sablon', {
+                'sablon_id': sablon.id,
+                'sablon_adi': sablon_adi,
+                'urun_sayisi': len(urunler)
+            })
+            
+            return jsonify({
+                'success': True,
+                'sablon_id': sablon.id,
+                'message': 'Şablon başarıyla kaydedildi'
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='api_zimmet_sablon_kaydet')
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    @app.route('/api/zimmet-sablon-sil/<int:sablon_id>', methods=['DELETE'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_zimmet_sablon_sil(sablon_id):
+        """Zimmet şablonunu sil (soft delete)"""
+        try:
+            from models import ZimmetSablon
+            
+            sablon = db.session.get(ZimmetSablon, sablon_id)
+            if not sablon:
+                return jsonify({'success': False, 'error': 'Şablon bulunamadı'}), 404
+            
+            sablon.aktif = False
+            db.session.commit()
+            
+            log_islem('sablon_sil', 'zimmet_sablon', {'sablon_id': sablon_id})
+            
+            return jsonify({'success': True, 'message': 'Şablon silindi'})
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='api_zimmet_sablon_sil')
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    @app.route('/api/zimmet-tum-urunler', methods=['GET'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_zimmet_tum_urunler():
+        """Tüm ürünleri stok bilgisiyle birlikte getir (Grid ve Hızlı Giriş için)"""
+        try:
+            from models import UrunStok
+            from utils.authorization import get_kullanici_otelleri
+            
+            oteller = get_kullanici_otelleri()
+            otel_ids = [o.id for o in oteller]
+            secili_otel_id = request.args.get('otel_id', type=int)
+            
+            if secili_otel_id and secili_otel_id in otel_ids:
+                otel_id = secili_otel_id
+            elif otel_ids:
+                otel_id = otel_ids[0]
+            else:
+                return jsonify([])
+            
+            # Tüm aktif ürünleri gruplarıyla birlikte getir
+            urunler = Urun.query.filter_by(aktif=True).join(UrunGrup).order_by(
+                UrunGrup.grup_adi, Urun.urun_adi
+            ).all()
+            
+            # Bugün atanan miktarları al (tüm personeller için)
+            from models import PersonelZimmet, PersonelZimmetDetay
+            from datetime import date
+            bugun = date.today()
+            
+            # Bugünkü zimmetlerdeki ürün miktarlarını topla
+            bugun_atananlar = db.session.query(
+                PersonelZimmetDetay.urun_id,
+                db.func.sum(PersonelZimmetDetay.miktar).label('toplam')
+            ).join(PersonelZimmet).filter(
+                db.func.date(PersonelZimmet.zimmet_tarihi) == bugun,
+                PersonelZimmet.durum == 'aktif'
+            ).group_by(PersonelZimmetDetay.urun_id).all()
+            
+            bugun_map = {item.urun_id: item.toplam for item in bugun_atananlar}
+            
+            result = []
+            for urun in urunler:
+                # Stok bilgisini al
+                stok = UrunStok.query.filter_by(urun_id=urun.id, otel_id=otel_id).first()
+                mevcut_stok = stok.mevcut_stok if stok else 0
+                
+                result.append({
+                    'id': urun.id,
+                    'urun_adi': urun.urun_adi,
+                    'grup_id': urun.grup_id,
+                    'grup_adi': urun.grup.grup_adi if urun.grup else '',
+                    'birim': urun.birim or 'adet',
+                    'mevcut_stok': mevcut_stok,
+                    'stok_durumu': 'Yeterli' if mevcut_stok > 10 else ('Kritik' if mevcut_stok > 0 else 'Yok'),
+                    'bugun_atanan': bugun_map.get(urun.id, 0)
+                })
+            
+            return jsonify(result)
+            
+        except Exception as e:
+            log_hata(e, modul='api_zimmet_tum_urunler')
+            return jsonify({'error': str(e)}), 500
+    
+    @app.route('/api/zimmet-hizli-ata', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu')
+    def api_zimmet_hizli_ata():
+        """Hızlı zimmet atama (Grid, Şablon, Hızlı Giriş için ortak endpoint)"""
+        try:
+            from models import UrunStok
+            from utils.authorization import get_kullanici_otelleri
+            from utils.audit import audit_create
+            
+            data = request.get_json()
+            personel_id = data.get('personel_id')
+            aciklama = data.get('aciklama', '')
+            urunler = data.get('urunler', [])  # [{urun_id, miktar}, ...]
+            
+            if not personel_id:
+                return jsonify({'success': False, 'error': 'Kat sorumlusu seçiniz'}), 400
+            
+            if not urunler:
+                return jsonify({'success': False, 'error': 'En az bir ürün seçiniz'}), 400
+            
+            oteller = get_kullanici_otelleri()
+            otel_ids = [o.id for o in oteller]
+            secili_otel_id = data.get('otel_id')
+            
+            if secili_otel_id and secili_otel_id in otel_ids:
+                otel_id = secili_otel_id
+            elif otel_ids:
+                otel_id = otel_ids[0]
+            else:
+                return jsonify({'success': False, 'error': 'Otel bulunamadı'}), 400
+            
+            # Stok kontrolü
+            stok_hatasi = []
+            for urun_data in urunler:
+                urun_id = urun_data['urun_id']
+                miktar = urun_data['miktar']
+                
+                stok = UrunStok.query.filter_by(urun_id=urun_id, otel_id=otel_id).first()
+                mevcut = stok.mevcut_stok if stok else 0
+                
+                if miktar > mevcut:
+                    urun = db.session.get(Urun, urun_id)
+                    stok_hatasi.append(f"{urun.urun_adi}: İstenen {miktar}, Mevcut {mevcut}")
+            
+            if stok_hatasi:
+                return jsonify({
+                    'success': False,
+                    'error': 'Stok yetersiz',
+                    'detay': stok_hatasi
+                }), 400
+            
+            # Bugün aynı personele zimmet var mı kontrol et
+            from datetime import date
+            bugun = date.today()
+            
+            mevcut_zimmet = PersonelZimmet.query.filter(
+                PersonelZimmet.personel_id == personel_id,
+                PersonelZimmet.durum == 'aktif',
+                db.func.date(PersonelZimmet.zimmet_tarihi) == bugun
+            ).first()
+            
+            if mevcut_zimmet:
+                # Mevcut zimmete ekle
+                zimmet = mevcut_zimmet
+                if aciklama:
+                    zimmet.aciklama = (zimmet.aciklama or '') + ' | ' + aciklama
+            else:
+                # Yeni zimmet oluştur
+                zimmet = PersonelZimmet(
+                    personel_id=personel_id,
+                    teslim_eden_id=session['kullanici_id'],
+                    aciklama=aciklama
+                )
+                db.session.add(zimmet)
+                db.session.flush()
+            
+            # Detayları ekle ve stok düş
+            for urun_data in urunler:
+                urun_id = urun_data['urun_id']
+                miktar = urun_data['miktar']
+                
+                # Aynı üründen zimmet detayı var mı kontrol et
+                mevcut_detay = PersonelZimmetDetay.query.filter_by(
+                    zimmet_id=zimmet.id,
+                    urun_id=urun_id
+                ).first()
+                
+                if mevcut_detay:
+                    # Mevcut detaya miktar ekle
+                    mevcut_detay.miktar += miktar
+                    mevcut_detay.kalan_miktar += miktar
+                else:
+                    # Yeni zimmet detay oluştur
+                    detay = PersonelZimmetDetay(
+                        zimmet_id=zimmet.id,
+                        urun_id=urun_id,
+                        miktar=miktar,
+                        kalan_miktar=miktar
+                    )
+                    db.session.add(detay)
+                
+                # Stok düş
+                stok = UrunStok.query.filter_by(urun_id=urun_id, otel_id=otel_id).first()
+                if stok:
+                    stok.mevcut_stok -= miktar
+                
+                # Stok hareket kaydı
+                hareket = StokHareket(
+                    urun_id=urun_id,
+                    hareket_tipi='cikis',
+                    miktar=miktar,
+                    aciklama=f'Zimmet atama - {aciklama}',
+                    islem_yapan_id=session['kullanici_id']
+                )
+                db.session.add(hareket)
+            
+            db.session.commit()
+            
+            audit_create('personel_zimmet', zimmet.id, zimmet)
+            
+            log_islem('zimmet_ata', 'personel_zimmet', {
+                'zimmet_id': zimmet.id,
+                'personel_id': personel_id,
+                'urun_sayisi': len(urunler)
+            })
+            
+            return jsonify({
+                'success': True,
+                'zimmet_id': zimmet.id,
+                'message': 'Zimmet başarıyla atandı'
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='api_zimmet_hizli_ata')
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    @app.route('/api/zimmet-tek-urun-ata', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu')
+    def api_zimmet_tek_urun_ata():
+        """Tek ürün zimmet atama - anında kaydet"""
+        try:
+            from models import UrunStok, PersonelZimmet, PersonelZimmetDetay
+            from utils.authorization import get_kullanici_otelleri
+            
+            data = request.get_json()
+            personel_id = data.get('personel_id')
+            urun_id = data.get('urun_id')
+            miktar = data.get('miktar', 1)
+            zimmet_id = data.get('zimmet_id')  # Mevcut zimmet varsa
+            otel_id = data.get('otel_id')
+            
+            if not personel_id or not urun_id:
+                return jsonify({'success': False, 'error': 'Personel ve ürün gerekli'}), 400
+            
+            # Otel kontrolü
+            oteller = get_kullanici_otelleri()
+            otel_ids = [o.id for o in oteller]
+            if otel_id and otel_id in otel_ids:
+                secili_otel = otel_id
+            elif otel_ids:
+                secili_otel = otel_ids[0]
+            else:
+                return jsonify({'success': False, 'error': 'Otel bulunamadı'}), 400
+            
+            # Stok kontrolü
+            stok = UrunStok.query.filter_by(urun_id=urun_id, otel_id=secili_otel).first()
+            mevcut = stok.mevcut_stok if stok else 0
+            if miktar > mevcut:
+                return jsonify({'success': False, 'error': f'Yetersiz stok! Mevcut: {mevcut}'}), 400
+            
+            # Bugünkü tarihe göre mevcut zimmet var mı kontrol et
+            from datetime import date
+            bugun = date.today()
+            
+            # Önce bugünkü zimmet var mı bak
+            zimmet = PersonelZimmet.query.filter(
+                PersonelZimmet.personel_id == personel_id,
+                db.func.date(PersonelZimmet.zimmet_tarihi) == bugun,
+                PersonelZimmet.durum == 'aktif'
+            ).first()
+            
+            if zimmet:
+                zimmet_id = zimmet.id
+            else:
+                # Bugün için yeni zimmet oluştur
+                zimmet = PersonelZimmet(
+                    personel_id=personel_id,
+                    teslim_eden_id=session['kullanici_id'],
+                    aciklama='Hızlı zimmet atama'
+                )
+                db.session.add(zimmet)
+                db.session.flush()
+                zimmet_id = zimmet.id
+            
+            # Mevcut detay var mı kontrol et
+            detay = PersonelZimmetDetay.query.filter_by(zimmet_id=zimmet_id, urun_id=urun_id).first()
+            if detay:
+                detay.miktar += miktar
+                detay.kalan_miktar += miktar
+            else:
+                detay = PersonelZimmetDetay(
+                    zimmet_id=zimmet_id,
+                    urun_id=urun_id,
+                    miktar=miktar,
+                    kalan_miktar=miktar
+                )
+                db.session.add(detay)
+            
+            # Stok düş
+            if stok:
+                stok.mevcut_stok -= miktar
+            
+            # Stok hareket kaydı
+            hareket = StokHareket(
+                urun_id=urun_id,
+                hareket_tipi='cikis',
+                miktar=miktar,
+                aciklama=f'Hızlı zimmet atama',
+                islem_yapan_id=session['kullanici_id']
+            )
+            db.session.add(hareket)
+            
+            db.session.commit()
+            
+            # Ürün bilgisi
+            urun = db.session.get(Urun, urun_id)
+            yeni_stok = stok.mevcut_stok if stok else 0
+            
+            return jsonify({
+                'success': True,
+                'zimmet_id': zimmet_id,
+                'detay_miktar': detay.miktar,
+                'yeni_stok': yeni_stok,
+                'urun_adi': urun.urun_adi if urun else ''
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='api_zimmet_tek_urun_ata')
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    @app.route('/api/zimmet-detay/<int:zimmet_id>', methods=['GET'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_zimmet_detay(zimmet_id):
+        """Zimmet detaylarını getir"""
+        try:
+            from models import PersonelZimmet, PersonelZimmetDetay
+            
+            zimmet = db.session.get(PersonelZimmet, zimmet_id)
+            if not zimmet:
+                return jsonify({'success': False, 'error': 'Zimmet bulunamadı'}), 404
+            
+            detaylar = []
+            for d in zimmet.detaylar:
+                detaylar.append({
+                    'detay_id': d.id,
+                    'urun_id': d.urun_id,
+                    'urun_adi': d.urun.urun_adi if d.urun else '',
+                    'miktar': d.miktar,
+                    'kalan': d.kalan_miktar
+                })
+            
+            return jsonify({
+                'success': True,
+                'zimmet_id': zimmet.id,
+                'personel': f"{zimmet.personel.ad} {zimmet.personel.soyad}" if zimmet.personel else '',
+                'tarih': zimmet.zimmet_tarihi.strftime('%d.%m.%Y %H:%M') if zimmet.zimmet_tarihi else '',
+                'durum': zimmet.durum,
+                'detaylar': detaylar
+            })
+            
+        except Exception as e:
+            log_hata(e, modul='api_zimmet_detay')
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    @app.route('/api/zimmet-iptal/<int:zimmet_id>', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_zimmet_iptal(zimmet_id):
+        """Zimmet iptal et - kullanılmamışsa"""
+        try:
+            from models import PersonelZimmet, PersonelZimmetDetay, UrunStok
+            
+            zimmet = db.session.get(PersonelZimmet, zimmet_id)
+            if not zimmet:
+                return jsonify({'success': False, 'error': 'Zimmet bulunamadı'}), 404
+            
+            if zimmet.durum != 'aktif':
+                return jsonify({'success': False, 'error': 'Bu zimmet zaten iptal edilmiş'}), 400
+            
+            # Kullanım kontrolü
+            for d in zimmet.detaylar:
+                if d.kalan_miktar < d.miktar:
+                    return jsonify({'success': False, 'error': 'Bu zimmet kullanıldığı için iptal edilemez!'}), 400
+            
+            # Stokları geri ekle
+            for d in zimmet.detaylar:
+                stok = UrunStok.query.filter_by(urun_id=d.urun_id, otel_id=zimmet.personel.otel_id if zimmet.personel else None).first()
+                if stok:
+                    stok.mevcut_stok += d.miktar
+            
+            # Zimmeti iptal et
+            zimmet.durum = 'iptal'
+            db.session.commit()
+            
+            return jsonify({'success': True, 'message': 'Zimmet iptal edildi'})
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='api_zimmet_iptal')
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    @app.route('/api/zimmet-detay-iptal/<int:detay_id>', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_zimmet_detay_iptal(detay_id):
+        """Tek ürün zimmet detayını iptal et"""
+        try:
+            from models import PersonelZimmetDetay, UrunStok
+            
+            detay = db.session.get(PersonelZimmetDetay, detay_id)
+            if not detay:
+                return jsonify({'success': False, 'error': 'Detay bulunamadı'}), 404
+            
+            # Kullanım kontrolü
+            if detay.kalan_miktar < detay.miktar:
+                return jsonify({'success': False, 'error': 'Bu ürün kullanıldığı için iptal edilemez!'}), 400
+            
+            # Stoku geri ekle
+            zimmet = detay.zimmet
+            otel_id = zimmet.personel.otel_id if zimmet and zimmet.personel else None
+            stok = UrunStok.query.filter_by(urun_id=detay.urun_id, otel_id=otel_id).first()
+            if stok:
+                stok.mevcut_stok += detay.miktar
+            
+            # Detayı sil
+            db.session.delete(detay)
+            db.session.commit()
+            
+            return jsonify({'success': True, 'message': 'Ürün zimmet listesinden çıkarıldı'})
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='api_zimmet_detay_iptal')
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    @app.route('/api/zimmet-listesi', methods=['GET'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_zimmet_listesi():
+        """Aktif zimmetleri listele"""
+        try:
+            from models import PersonelZimmet
+            from utils.authorization import get_kullanici_otelleri
+            
+            oteller = get_kullanici_otelleri()
+            otel_ids = [o.id for o in oteller]
+            otel_id = request.args.get('otel_id', type=int)
+            
+            if otel_id and otel_id in otel_ids:
+                secili_otel = otel_id
+            elif otel_ids:
+                secili_otel = otel_ids[0]
+            else:
+                return jsonify({'success': True, 'zimmetler': []})
+            
+            zimmetler = PersonelZimmet.query.filter(
+                PersonelZimmet.durum == 'aktif',
+                PersonelZimmet.personel.has(otel_id=secili_otel)
+            ).order_by(PersonelZimmet.zimmet_tarihi.desc()).all()
+            
+            result = []
+            for z in zimmetler:
+                result.append({
+                    'id': z.id,
+                    'personel': f"{z.personel.ad} {z.personel.soyad}" if z.personel else '',
+                    'tarih': z.zimmet_tarihi.strftime('%d.%m.%Y') if z.zimmet_tarihi else '',
+                    'urun_sayisi': len(z.detaylar),
+                    'durum': z.durum
+                })
+            
+            return jsonify({'success': True, 'zimmetler': result})
+            
+        except Exception as e:
+            log_hata(e, modul='api_zimmet_listesi')
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    @app.route('/api/zimmet-urun-ara', methods=['GET'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_zimmet_urun_ara():
+        """Ürün arama (Hızlı Giriş autocomplete için)"""
+        try:
+            from models import UrunStok
+            from utils.authorization import get_kullanici_otelleri
+            
+            q = request.args.get('q', '').strip().lower()
+            otel_id = request.args.get('otel_id', type=int)
+            
+            if len(q) < 2:
+                return jsonify([])
+            
+            oteller = get_kullanici_otelleri()
+            otel_ids = [o.id for o in oteller]
+            if otel_id and otel_id in otel_ids:
+                secili_otel = otel_id
+            elif otel_ids:
+                secili_otel = otel_ids[0]
+            else:
+                return jsonify([])
+            
+            # Ürün adında arama yap
+            urunler = Urun.query.filter(
+                Urun.aktif == True,
+                Urun.urun_adi.ilike(f'%{q}%')
+            ).join(UrunGrup).order_by(Urun.urun_adi).limit(15).all()
+            
+            result = []
+            for urun in urunler:
+                stok = UrunStok.query.filter_by(urun_id=urun.id, otel_id=secili_otel).first()
+                mevcut_stok = stok.mevcut_stok if stok else 0
+                
+                result.append({
+                    'id': urun.id,
+                    'urun_adi': urun.urun_adi,
+                    'grup_adi': urun.grup.grup_adi if urun.grup else '',
+                    'birim': urun.birim or 'adet',
+                    'mevcut_stok': mevcut_stok
+                })
+            
+            return jsonify(result)
+            
+        except Exception as e:
+            log_hata(e, modul='api_zimmet_urun_ara')
+            return jsonify({'error': str(e)}), 500

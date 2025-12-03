@@ -2154,3 +2154,61 @@ class DolulukUyariLog(db.Model):
     
     def __repr__(self):
         return f'<DolulukUyariLog #{self.id} - Otel {self.otel_id} - {self.uyari_tarihi}>'
+
+
+# ============================================
+# ZİMMET ŞABLON SİSTEMİ
+# ==========================
+
+
+# ============================================
+# ZİMMET ŞABLON SİSTEMİ
+# ============================================
+
+class ZimmetSablon(db.Model):
+    """Zimmet şablonları - Önceden tanımlanmış ürün setleri"""
+    __tablename__ = 'zimmet_sablonlari'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    sablon_adi = db.Column(db.String(100), nullable=False)
+    aciklama = db.Column(db.Text, nullable=True)
+    olusturan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=True)  # NULL ise tüm oteller için geçerli
+    aktif = db.Column(db.Boolean, default=True)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+    
+    # İlişkiler
+    olusturan = db.relationship('Kullanici', backref='zimmet_sablonlari')
+    otel = db.relationship('Otel', backref='zimmet_sablonlari')
+    detaylar = db.relationship('ZimmetSablonDetay', backref='sablon', lazy=True, cascade='all, delete-orphan')
+    
+    __table_args__ = (
+        db.Index('idx_zimmet_sablon_otel', 'otel_id'),
+        db.Index('idx_zimmet_sablon_aktif', 'aktif'),
+    )
+    
+    def __repr__(self):
+        return f'<ZimmetSablon #{self.id} - {self.sablon_adi}>'
+
+
+class ZimmetSablonDetay(db.Model):
+    """Zimmet şablon detayları - Şablondaki ürünler ve miktarlar"""
+    __tablename__ = 'zimmet_sablon_detaylari'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    sablon_id = db.Column(db.Integer, db.ForeignKey('zimmet_sablonlari.id', ondelete='CASCADE'), nullable=False)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=False)
+    varsayilan_miktar = db.Column(db.Integer, nullable=False, default=1)
+    
+    # İlişkiler
+    urun = db.relationship('Urun', backref='sablon_detaylari')
+    
+    __table_args__ = (
+        db.Index('idx_zimmet_sablon_detay_sablon', 'sablon_id'),
+        db.Index('idx_zimmet_sablon_detay_urun', 'urun_id'),
+        db.UniqueConstraint('sablon_id', 'urun_id', name='uq_sablon_urun'),
+    )
+    
+    def __repr__(self):
+        return f'<ZimmetSablonDetay sablon={self.sablon_id} urun={self.urun_id}>'

@@ -1,0 +1,11 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "liveServer.settings.port": 5633,
+    "html.autoClosingTags": false
+  }
+}
