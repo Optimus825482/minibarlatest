@@ -20,10 +20,19 @@ Roller:
 """
 
 from flask import render_template, request, redirect, url_for, flash, session, jsonify, send_file
+from datetime import datetime, timezone
+import pytz
 from models import db, Kullanici, Oda, Kat, MinibarIslem, MinibarIslemDetay, StokHareket, UrunGrup
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem, log_hata
 from utils.audit import serialize_model
+
+# KKTC Timezone (Kıbrıs - Europe/Nicosia)
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 
 
 def register_admin_minibar_routes(app):
@@ -63,12 +72,6 @@ def register_admin_minibar_routes(app):
                     excel_buffer = export_depo_stok_excel(stok_listesi)
                     if excel_buffer:
                         from datetime import datetime
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
                         filename = f'depo_stoklari_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
                         
                         # Log kaydı
@@ -119,12 +122,6 @@ def get_kktc_now():
         """İlk stok yükleme - Excel'den ürün ve adet bilgisi alarak stok girişi yapar"""
         from models import Otel, Urun, SatinAlmaIslem, SatinAlmaIslemDetay, UrunStok, Tedarikci
         from datetime import datetime, timezone
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
         import pandas as pd
         import io
         
@@ -750,4 +747,3 @@ def get_kktc_now():
                 'success': False,
                 'message': 'Bir hata oluştu'
             }), 500
-

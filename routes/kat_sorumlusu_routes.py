@@ -27,15 +27,10 @@ Roller:
 from flask import render_template, request, redirect, url_for, flash, session, jsonify, make_response
 from flask_wtf.csrf import CSRFProtect
 from datetime import datetime, timedelta, timezone
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
 import io
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
+import pytz
 
 from models import (
     db, Kat, Oda, UrunGrup, Urun, PersonelZimmet, PersonelZimmetDetay,
@@ -44,6 +39,13 @@ from models import (
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem, log_hata
 from utils.audit import audit_create
+
+# KKTC Timezone (Kıbrıs - Europe/Nicosia)
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 
 def register_kat_sorumlusu_routes(app):
     """Kat sorumlusu route'larını kaydet"""
@@ -691,12 +693,6 @@ def register_kat_sorumlusu_routes(app):
                 try:
                     from models import GorevDetay, GorevDurumLog, GunlukGorev
                     from datetime import date
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
                     
                     bugun = date.today()
                     detay = GorevDetay.query.join(GunlukGorev).filter(
@@ -1045,12 +1041,6 @@ def get_kktc_now():
         """Kat sorumlusunun yaptığı minibar işlemlerini listele"""
         try:
             from datetime import date, datetime
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
             
             kullanici_id = session.get('kullanici_id')
             
@@ -1131,12 +1121,6 @@ def get_kktc_now():
         """Minibar işlemini sil (sadece aynı gün)"""
         try:
             from datetime import date
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
             
             kullanici_id = session.get('kullanici_id')
             
@@ -1556,12 +1540,6 @@ def get_kktc_now():
         """
         try:
             from datetime import date
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
             
             data = request.get_json()
             
@@ -1722,12 +1700,6 @@ def get_kktc_now():
         try:
             from models import OdaKontrolKaydi
             from datetime import date
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
             
             data = request.get_json()
             if not data:
@@ -1783,12 +1755,6 @@ def get_kktc_now():
         try:
             from models import OdaKontrolKaydi
             from datetime import date
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
             
             data = request.get_json()
             if not data:
@@ -1853,12 +1819,6 @@ def get_kktc_now():
         try:
             from models import GorevDetay, GunlukGorev, DNDKontrol, GorevDurumLog
             from datetime import date
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
             
             data = request.get_json()
             if not data:
@@ -1981,12 +1941,6 @@ def get_kktc_now():
         """
         try:
             from datetime import date
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
             from sqlalchemy import func
             
             kullanici_id = session.get('kullanici_id')
@@ -2038,12 +1992,6 @@ def get_kktc_now():
         try:
             from utils.gorev_service import GorevService
             from datetime import date
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
             
             kullanici_id = session.get('kullanici_id')
             kullanici = Kullanici.query.get(kullanici_id)
@@ -2089,4 +2037,3 @@ def get_kktc_now():
             log_hata(e, modul='kat_sorumlusu_gorev_listesi')
             flash(f'Görev listesi yüklenirken hata oluştu: {str(e)}', 'danger')
             return redirect(url_for('dashboard'))
-

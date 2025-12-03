@@ -166,12 +166,6 @@ class FileManagementService:
             try:
                 from models import YuklemeGorev
                 from datetime import date
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
                 
                 # Dosya tipini YuklemeGorev formatına çevir
                 dosya_tipi_map = {

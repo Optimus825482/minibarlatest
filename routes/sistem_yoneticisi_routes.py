@@ -19,17 +19,19 @@ Roller:
 """
 
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
 from models import db, Otel, Kat, Oda, OdaTipi, Kullanici, SistemLog
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem, log_hata
 from utils.audit import audit_create, audit_update, audit_delete, serialize_model
+
+# KKTC Timezone (Kıbrıs - Europe/Nicosia)
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 
 
 def register_sistem_yoneticisi_routes(app):
@@ -337,12 +339,6 @@ def register_sistem_yoneticisi_routes(app):
         from models import Otel
         from flask import send_file
         from datetime import datetime
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
         import io
         
         # Excel export kontrolü
@@ -879,12 +875,6 @@ def get_kktc_now():
         from forms import UrunTedarikciFiyatForm
         from models import UrunTedarikciFiyat, Urun, Tedarikci
         from datetime import date
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
         from flask import session
         
         form = UrunTedarikciFiyatForm()
@@ -1034,12 +1024,6 @@ def get_kktc_now():
         """Ürün için satın alma geçmişi"""
         from models import Urun, SatinAlmaSiparisi, SatinAlmaSiparisDetay
         from datetime import date, timedelta
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
         
         try:
             # Ürün bilgisini getir
@@ -1166,12 +1150,6 @@ def get_kktc_now():
         from models import Tedarikci, SatinAlmaSiparisi
         from utils.tedarikci_servisleri import TedarikciServisi
         from datetime import date, timedelta
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
         
         try:
             # Tedarikçi bilgisini getir
@@ -1250,12 +1228,6 @@ def get_kktc_now():
         from models import Tedarikci
         from utils.tedarikci_servisleri import TedarikciServisi
         from datetime import date, timedelta
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
         
         try:
             # Dönem parametreleri (varsayılan: son 6 ay)
@@ -2650,4 +2622,3 @@ def get_kktc_now():
             db.session.rollback()
             log_hata(e, 'api_fiyat_guncelle')
             return jsonify({'success': False, 'error': str(e)}), 500
-

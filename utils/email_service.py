@@ -362,12 +362,6 @@ class DolulukUyariService:
         try:
             from models import db, Otel, Kullanici, KullaniciOtel, YuklemeGorev, DolulukUyariLog
             from datetime import date
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
             import pytz
             
             # KKTC timezone (UTC+2)

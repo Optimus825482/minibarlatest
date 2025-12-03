@@ -10,13 +10,15 @@ from utils.ml.alert_manager import AlertManager
 from utils.ml.metrics_calculator import MetricsCalculator
 from models import db, MLAlert, MLModel, MLMetric, MLTrainingLog
 from datetime import datetime, timezone, timedelta
+import logging
 import pytz
 
-# KKTC Timezone
+# KKTC Timezone (Kıbrıs - Europe/Nicosia)
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
 def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
     return datetime.now(KKTC_TZ)
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -516,4 +518,3 @@ def api_train_models():
 def register_ml_routes(app):
     """ML routes'ları app'e kaydet"""
     app.register_blueprint(ml_bp)
-

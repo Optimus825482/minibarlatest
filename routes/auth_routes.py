@@ -16,15 +16,17 @@ Roller:
 
 from flask import render_template, request, redirect, url_for, flash, session
 from datetime import datetime, timezone
+from sqlalchemy.exc import IntegrityError, OperationalError
 import pytz
 
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
-from sqlalchemy.exc import IntegrityError, OperationalError
-
 from models import db, Otel, Kullanici, SistemAyar
+
+# KKTC Timezone (Kıbrıs - Europe/Nicosia)
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 from utils.decorators import setup_not_completed, setup_required
 from utils.helpers import log_islem, log_hata
 from utils.audit import audit_login, audit_logout
@@ -209,4 +211,3 @@ def register_auth_routes(app):
         session.clear()
         flash('Başarıyla çıkış yaptınız.', 'info')
         return redirect(url_for('login'))
-

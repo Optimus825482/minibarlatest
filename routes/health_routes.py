@@ -5,15 +5,17 @@ PostgreSQL migration için health check ve database monitoring endpoint'leri
 
 from flask import Blueprint, jsonify, request
 from datetime import datetime, timezone
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
 from sqlalchemy import text
 from models import db
 import os
+import pytz
+
+# KKTC Timezone (Kıbrıs - Europe/Nicosia)
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 
 health_bp = Blueprint('health', __name__)
 
@@ -292,4 +294,3 @@ def list_routes():
             'error': str(e),
             'timestamp': get_kktc_now().isoformat()
         }), 500
-

@@ -3,12 +3,14 @@ from models import DosyaYukleme, db
 from utils.decorators import login_required, role_required
 from utils.helpers import log_hata
 from utils.occupancy_service import OccupancyService
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 import pytz
 
-# KKTC Timezone
+# KKTC Timezone (Kıbrıs - Europe/Nicosia)
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
 def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
     return datetime.now(KKTC_TZ)
 
 doluluk_bp = Blueprint("doluluk", __name__)
@@ -582,12 +584,6 @@ def doluluk_yukle():
             try:
                 from models import YuklemeGorev
                 from datetime import date, datetime, timezone
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
                 
                 # Dosya tipini YuklemeGorev formatına çevir
                 dosya_tipi_map = {
@@ -715,4 +711,3 @@ def doluluk_durum(islem_kodu):
     except Exception as e:
         log_hata("doluluk_durum", str(e), session.get("kullanici_id"))
         return jsonify({"success": False, "error": str(e)}), 500
-
