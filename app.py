@@ -883,6 +883,13 @@ def depo_raporlar():
                          urunler=urunler,
                          personeller=personeller)
 
+# Kullanım Kılavuzu Sayfası
+@app.route('/kullanim-kilavuzu/personel-zimmet')
+@login_required
+def kullanim_kilavuzu_personel_zimmet():
+    """Personel zimmet kullanım kılavuzu sayfası"""
+    return render_template('kullanim_kilavuzu/personel_zimmet_kilavuzu.html')
+
 # Dolum Talepleri Rotaları
 # ============================================================================
 # TOPLU İŞLEM ÖZELLİKLERİ

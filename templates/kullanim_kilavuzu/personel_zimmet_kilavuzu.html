@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Personel Zimmet Sayfası - Kullanım Kılavuzu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      .feature-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .feature-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      }
+      .step-number {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen text-white"
+  >
+    <!-- Header -->
+    <header
+      class="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50"
+    >
+      <div class="max-w-6xl mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center"
+            >
+              <i class="fas fa-box-open text-white"></i>
+            </div>
+            <div>
+              <h1 class="text-xl font-bold">Personel Zimmet Sayfası</h1>
+              <p class="text-xs text-slate-400">Kullanım Kılavuzu</p>
+            </div>
+          </div>
+          <nav class="hidden md:flex gap-4 text-sm">
+            <a href="#ozellikler" class="text-slate-300 hover:text-white"
+              >Özellikler</a
+            >
+            <a href="#akilli-grid" class="text-slate-300 hover:text-white"
+              >Akıllı Grid</a
+            >
+            <a href="#sablon" class="text-slate-300 hover:text-white">Şablon</a>
+            <a href="#hizli-giris" class="text-slate-300 hover:text-white"
+              >Hızlı Giriş</a
+            >
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="py-12 md:py-20 px-4">
+      <div class="max-w-4xl mx-auto text-center">
+        <div
+          class="inline-flex items-center gap-2 bg-blue-600/20 text-blue-400 px-4 py-2 rounded-full text-sm mb-6"
+        >
+          <i class="fas fa-sparkles"></i>
+          <span>Yeni Özellikler</span>
+        </div>
+        <h2 class="text-3xl md:text-5xl font-bold mb-6">
+          Zimmet Atama İşlemlerini<br />
+          <span class="text-blue-500">Kolayca Yönetin</span>
+        </h2>
+        <p class="text-lg text-slate-400 max-w-2xl mx-auto">
+          Kat sorumlularına ürün zimmetleme işlemlerini 3 farklı yöntemle hızlı
+          ve güvenli şekilde gerçekleştirin.
+        </p>
+      </div>
+    </section>
+
+    <!-- Özellikler -->
+    <section id="ozellikler" class="py-12 px-4">
+      <div class="max-w-6xl mx-auto">
+        <h3 class="text-2xl font-bold text-center mb-8">Temel Özellikler</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div
+            class="feature-card bg-slate-800/50 rounded-xl p-6 border border-slate-700"
+          >
+            <div
+              class="w-12 h-12 bg-green-600/20 rounded-lg flex items-center justify-center mb-4"
+            >
+              <i class="fas fa-calendar-check text-green-500 text-xl"></i>
+            </div>
+            <h4 class="font-semibold mb-2">Tarih Bazlı Birleştirme</h4>
+            <p class="text-sm text-slate-400">
+              Aynı gün aynı personele yapılan zimmetler otomatik olarak tek
+              kayıtta birleştirilir.
+            </p>
+          </div>
+          <div
+            class="feature-card bg-slate-800/50 rounded-xl p-6 border border-slate-700"
+          >
+            <div
+              class="w-12 h-12 bg-blue-600/20 rounded-lg flex items-center justify-center mb-4"
+            >
+              <i class="fas fa-warehouse text-blue-500 text-xl"></i>
+            </div>
+            <h4 class="font-semibold mb-2">Anlık Stok Kontrolü</h4>
+            <p class="text-sm text-slate-400">
+              Her işlemde stok miktarı kontrol edilir, yetersiz stokta uyarı
+              verilir.
+            </p>
+          </div>
+          <div
+            class="feature-card bg-slate-800/50 rounded-xl p-6 border border-slate-700"
+          >
+            <div
+              class="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mb-4"
+            >
+              <i class="fas fa-copy text-purple-500 text-xl"></i>
+            </div>
+            <h4 class="font-semibold mb-2">Şablon Sistemi</h4>
+            <p class="text-sm text-slate-400">
+              Sık kullanılan ürün setlerini şablon olarak kaydedin, tek tıkla
+              uygulayın.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab Açıklamaları -->
+    <section class="py-12 px-4 bg-slate-800/30">
+      <div class="max-w-6xl mx-auto">
+        <h3 class="text-2xl font-bold text-center mb-2">
+          3 Farklı Zimmet Atama Yöntemi
+        </h3>
+        <p class="text-center text-slate-400 mb-8">
+          İhtiyacınıza göre en uygun yöntemi seçin
+        </p>
+
+        <div class="flex flex-wrap justify-center gap-4 mb-8">
+          <button
+            onclick="showTab('grid')"
+            id="btn-grid"
+            class="tab-btn px-6 py-3 rounded-lg font-medium bg-blue-600 text-white"
+          >
+            <i class="fas fa-th-large mr-2"></i>Akıllı Grid
+          </button>
+          <button
+            onclick="showTab('sablon')"
+            id="btn-sablon"
+            class="tab-btn px-6 py-3 rounded-lg font-medium bg-slate-700 text-slate-300"
+          >
+            <i class="fas fa-copy mr-2"></i>Şablon
+          </button>
+          <button
+            onclick="showTab('hizli')"
+            id="btn-hizli"
+            class="tab-btn px-6 py-3 rounded-lg font-medium bg-slate-700 text-slate-300"
+          >
+            <i class="fas fa-bolt mr-2"></i>Hızlı Giriş
+          </button>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
+
+            <!-- Akıllı Grid Tab -->
+            <div id="tab-grid" class="tab-content">
+                <div class="bg-slate-800/50 rounded-xl p-6 md:p-8 border border-slate-700">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-th-large text-white"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-bold">Akıllı Grid</h4>
+                            <p class="text-sm text-slate-400">Görsel ürün seçimi ile hızlı zimmet atama</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h5 class="font-semibold mb-4 text-blue-400"><i class="fas fa-info-circle mr-2"></i>Ne İşe Yarar?</h5>
+                            <p class="text-slate-300 mb-4">
+                                Tüm ürünleri görsel kartlar halinde görüntüleyerek, tıklama ile hızlıca seçim yapmanızı sağlar. 
+                                Özellikle çok sayıda ürün zimmetlerken idealdir.
+                            </p>
+                            <div class="bg-slate-900/50 rounded-lg p-4 mb-4">
+                                <h6 class="text-sm font-medium text-green-400 mb-2"><i class="fas fa-check-circle mr-1"></i>Avantajları</h6>
+                                <ul class="text-sm text-slate-400 space-y-1">
+                                    <li>• Ürünleri gruplara göre filtreleme</li>
+                                    <li>• Stokta olmayanları gizleme/gösterme</li>
+                                    <li>• Ürün arama özelliği</li>
+                                    <li>• Anlık stok bilgisi görüntüleme</li>
+                                    <li>• Çoklu ürün seçimi</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div>
+                            <h5 class="font-semibold mb-4 text-blue-400"><i class="fas fa-list-ol mr-2"></i>Nasıl Kullanılır?</h5>
+                            <div class="space-y-3">
+                                <div class="flex gap-3">
+                                    <div class="step-number bg-blue-600 text-white text-sm">1</div>
+                                    <div>
+                                        <p class="font-medium">Kat Sorumlusu Seçin</p>
+                                        <p class="text-sm text-slate-400">Dropdown'dan zimmet atanacak personeli seçin</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <div class="step-number bg-blue-600 text-white text-sm">2</div>
+                                    <div>
+                                        <p class="font-medium">Ürün Kartına Tıklayın</p>
+                                        <p class="text-sm text-slate-400">İstediğiniz ürünün kartına tıklayarak miktar girin</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <div class="step-number bg-blue-600 text-white text-sm">3</div>
+                                    <div>
+                                        <p class="font-medium">Seçilen Ürünleri Kontrol Edin</p>
+                                        <p class="text-sm text-slate-400">Alt kısımda seçilen ürünler listesini görün</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <div class="step-number bg-green-600 text-white text-sm">4</div>
+                                    <div>
+                                        <p class="font-medium">Zimmet Ata Butonuna Basın</p>
+                                        <p class="text-sm text-slate-400">İşlemi tamamlayın</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Şablon Tab -->
+            <div id="tab-sablon" class="tab-content hidden">
+                <div class="bg-slate-800/50 rounded-xl p-6 md:p-8 border border-slate-700">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-copy text-white"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-bold">Şablon Sistemi</h4>
+                            <p class="text-sm text-slate-400">Hazır ürün setleri ile tek tıkla zimmet atama</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h5 class="font-semibold mb-4 text-purple-400"><i class="fas fa-info-circle mr-2"></i>Ne İşe Yarar?</h5>
+                            <p class="text-slate-300 mb-4">
+                                Sık kullandığınız ürün kombinasyonlarını şablon olarak kaydedip, tek tıkla uygulayabilirsiniz.
+                                Örneğin "Standart Oda Seti" veya "Premium Minibar" gibi şablonlar oluşturabilirsiniz.
+                            </p>
+                            <div class="bg-slate-900/50 rounded-lg p-4 mb-4">
+                                <h6 class="text-sm font-medium text-green-400 mb-2"><i class="fas fa-check-circle mr-1"></i>Avantajları</h6>
+                                <ul class="text-sm text-slate-400 space-y-1">
+                                    <li>• Tekrarlayan işlemlerde zaman tasarrufu</li>
+                                    <li>• Standart ürün setleri tanımlama</li>
+                                    <li>• Otomatik stok kontrolü</li>
+                                    <li>• Şablon düzenleme ve silme</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div>
+                            <h5 class="font-semibold mb-4 text-purple-400"><i class="fas fa-list-ol mr-2"></i>Şablon Oluşturma</h5>
+                            <div class="space-y-3 mb-6">
+                                <div class="flex gap-3">
+                                    <div class="step-number bg-purple-600 text-white text-sm">1</div>
+                                    <div>
+                                        <p class="font-medium">"+ Yeni" Butonuna Tıklayın</p>
+                                        <p class="text-sm text-slate-400">Yeni şablon oluşturma modalı açılır</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <div class="step-number bg-purple-600 text-white text-sm">2</div>
+                                    <div>
+                                        <p class="font-medium">Şablon Adı Girin</p>
+                                        <p class="text-sm text-slate-400">Örn: "Standart Oda Seti"</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <div class="step-number bg-purple-600 text-white text-sm">3</div>
+                                    <div>
+                                        <p class="font-medium">Ürün Ekleyin</p>
+                                        <p class="text-sm text-slate-400">En az 3 harf yazarak ürün arayın ve seçin</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <div class="step-number bg-green-600 text-white text-sm">4</div>
+                                    <div>
+                                        <p class="font-medium">Kaydet</p>
+                                        <p class="text-sm text-slate-400">Şablon kaydedilir ve listeye eklenir</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h5 class="font-semibold mb-4 text-purple-400"><i class="fas fa-play mr-2"></i>Şablon Uygulama</h5>
+                            <div class="space-y-3">
+                                <div class="flex gap-3">
+                                    <div class="step-number bg-purple-600 text-white text-sm">1</div>
+                                    <div>
+                                        <p class="font-medium">Şablona Tıklayın</p>
+                                        <p class="text-sm text-slate-400">Detay modalı açılır, stok durumu gösterilir</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <div class="step-number bg-green-600 text-white text-sm">2</div>
+                                    <div>
+                                        <p class="font-medium">"Zimmet Atama İşlemini Tamamla"</p>
+                                        <p class="text-sm text-slate-400">Stok uygunsa buton aktif olur</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 p-4 bg-amber-900/20 border border-amber-700/50 rounded-lg">
+                        <p class="text-sm text-amber-400">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <strong>Önemli:</strong> Şablondaki ürünlerden herhangi birinin stoğu yetersizse, "Zimmet Atama İşlemini Tamamla" butonu devre dışı kalır.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hızlı Giriş Tab -->
+            <div id="tab-hizli" class="tab-content hidden">
+                <div class="bg-slate-800/50 rounded-xl p-6 md:p-8 border border-slate-700">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-bolt text-white"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-bold">Hızlı Giriş</h4>
+                            <p class="text-sm text-slate-400">Tek ürün için anında zimmet atama</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h5 class="font-semibold mb-4 text-amber-400"><i class="fas fa-info-circle mr-2"></i>Ne İşe Yarar?</h5>
+                            <p class="text-slate-300 mb-4">
+                                Tek bir ürünü hızlıca zimmetlemek istediğinizde kullanılır. 
+                                Ürün adını yazarak arama yaparsınız ve "Ekle" butonuna bastığınızda direkt zimmet atanır.
+                            </p>
+                            <div class="bg-slate-900/50 rounded-lg p-4 mb-4">
+                                <h6 class="text-sm font-medium text-green-400 mb-2"><i class="fas fa-check-circle mr-1"></i>Avantajları</h6>
+                                <ul class="text-sm text-slate-400 space-y-1">
+                                    <li>• En hızlı zimmet atama yöntemi</li>
+                                    <li>• Tek ürün için ideal</li>
+                                    <li>• Autocomplete ile kolay ürün bulma</li>
+                                    <li>• Anında işlem tamamlama</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div>
+                            <h5 class="font-semibold mb-4 text-amber-400"><i class="fas fa-list-ol mr-2"></i>Nasıl Kullanılır?</h5>
+                            <div class="space-y-3">
+                                <div class="flex gap-3">
+                                    <div class="step-number bg-amber-600 text-white text-sm">1</div>
+                                    <div>
+                                        <p class="font-medium">Kat Sorumlusu Seçin</p>
+                                        <p class="text-sm text-slate-400">Önce personel seçimi yapılmalı</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <div class="step-number bg-amber-600 text-white text-sm">2</div>
+                                    <div>
+                                        <p class="font-medium">Ürün Adını Yazın (min 3 harf)</p>
+                                        <p class="text-sm text-slate-400">Öneriler otomatik olarak çıkar</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <div class="step-number bg-amber-600 text-white text-sm">3</div>
+                                    <div>
+                                        <p class="font-medium">Listeden Ürün Seçin</p>
+                                        <p class="text-sm text-slate-400">Stok bilgisi ile birlikte gösterilir</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <div class="step-number bg-amber-600 text-white text-sm">4</div>
+                                    <div>
+                                        <p class="font-medium">Miktar Girin</p>
+                                        <p class="text-sm text-slate-400">Varsayılan: 100</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <div class="step-number bg-green-600 text-white text-sm">5</div>
+                                    <div>
+                                        <p class="font-medium">"Ekle" Butonuna Basın</p>
+                                        <p class="text-sm text-slate-400">Zimmet anında atanır!</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 p-4 bg-green-900/20 border border-green-700/50 rounded-lg">
+                        <p class="text-sm text-green-400">
+                            <i class="fas fa-bolt mr-2"></i>
+                            <strong>Fark:</strong> Diğer yöntemlerden farklı olarak, "Ekle" butonuna bastığınızda zimmet direkt atanır. Onay adımı yoktur.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Önemli Bilgiler -->
+    <section class="py-12 px-4">
+        <div class="max-w-6xl mx-auto">
+            <h3 class="text-2xl font-bold text-center mb-8">Önemli Bilgiler</h3>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-blue-900/20 border border-blue-700/50 rounded-xl p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fas fa-calendar-day text-blue-400 text-2xl"></i>
+                        <h4 class="font-semibold text-lg">Tarih Bazlı Birleştirme</h4>
+                    </div>
+                    <p class="text-slate-300 text-sm">
+                        Aynı gün içinde aynı personele yapılan tüm zimmet atamaları otomatik olarak tek bir kayıtta birleştirilir. 
+                        Bu sayede zimmet listesi daha düzenli kalır ve takip kolaylaşır.
+                    </p>
+                    <div class="mt-4 p-3 bg-slate-900/50 rounded-lg">
+                        <p class="text-xs text-slate-400">
+                            <strong>Örnek:</strong> Sabah 10:00'da 5 ürün, öğlen 14:00'da 3 ürün zimmetlerseniz, 
+                            toplam 8 ürün tek bir zimmet kaydında görünür.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="bg-red-900/20 border border-red-700/50 rounded-xl p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fas fa-warehouse text-red-400 text-2xl"></i>
+                        <h4 class="font-semibold text-lg">Stok Kontrolü</h4>
+                    </div>
+                    <p class="text-slate-300 text-sm">
+                        Her zimmet atama işleminde stok kontrolü yapılır. Yetersiz stok durumunda işlem engellenir 
+                        ve kullanıcıya uyarı gösterilir.
+                    </p>
+                    <div class="mt-4 p-3 bg-slate-900/50 rounded-lg">
+                        <p class="text-xs text-slate-400">
+                            <strong>Dikkat:</strong> Şablon kullanırken, şablondaki tüm ürünlerin stoğu yeterli olmalıdır. 
+                            Tek bir ürün bile yetersizse işlem yapılamaz.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="bg-green-900/20 border border-green-700/50 rounded-xl p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fas fa-undo text-green-400 text-2xl"></i>
+                        <h4 class="font-semibold text-lg">Zimmet İptali</h4>
+                    </div>
+                    <p class="text-slate-300 text-sm">
+                        Atanan zimmetler "Atanan Zimmetler" tablosundan görüntülenebilir ve iptal edilebilir. 
+                        İptal edilen zimmetlerin stokları otomatik olarak geri eklenir.
+                    </p>
+                    <div class="mt-4 p-3 bg-slate-900/50 rounded-lg">
+                        <p class="text-xs text-slate-400">
+                            <strong>Not:</strong> Kullanılmış (tüketilmiş) zimmetler iptal edilemez. 
+                            Sadece henüz kullanılmamış zimmetler iptal edilebilir.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="bg-purple-900/20 border border-purple-700/50 rounded-xl p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fas fa-hotel text-purple-400 text-2xl"></i>
+                        <h4 class="font-semibold text-lg">Otel Bazlı Çalışma</h4>
+                    </div>
+                    <p class="text-slate-300 text-sm">
+                        Sistem otel bazlı çalışır. Seçili otelin stokları ve personelleri görüntülenir. 
+                        Şablonlar da otel bazlı kaydedilir.
+                    </p>
+                    <div class="mt-4 p-3 bg-slate-900/50 rounded-lg">
+                        <p class="text-xs text-slate-400">
+                            <strong>İpucu:</strong> Birden fazla otele erişiminiz varsa, sağ üst köşeden otel değiştirebilirsiniz.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Karşılaştırma Tablosu -->
+    <section class="py-12 px-4 bg-slate-800/30">
+        <div class="max-w-4xl mx-auto">
+            <h3 class="text-2xl font-bold text-center mb-8">Hangi Yöntemi Kullanmalıyım?</h3>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-slate-700">
+                            <th class="text-left py-3 px-4">Durum</th>
+                            <th class="text-center py-3 px-4">Önerilen Yöntem</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-slate-300">
+                        <tr class="border-b border-slate-700/50">
+                            <td class="py-3 px-4">Çok sayıda farklı ürün zimmetleyeceğim</td>
+                            <td class="text-center py-3 px-4">
+                                <span class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full text-xs">Akıllı Grid</span>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-slate-700/50">
+                            <td class="py-3 px-4">Her gün aynı ürün setini zimmetliyorum</td>
+                            <td class="text-center py-3 px-4">
+                                <span class="bg-purple-600/20 text-purple-400 px-3 py-1 rounded-full text-xs">Şablon</span>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-slate-700/50">
+                            <td class="py-3 px-4">Sadece 1-2 ürün zimmetleyeceğim</td>
+                            <td class="text-center py-3 px-4">
+                                <span class="bg-amber-600/20 text-amber-400 px-3 py-1 rounded-full text-xs">Hızlı Giriş</span>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-slate-700/50">
+                            <td class="py-3 px-4">Ürün adını biliyorum, hızlıca bulmak istiyorum</td>
+                            <td class="text-center py-3 px-4">
+                                <span class="bg-amber-600/20 text-amber-400 px-3 py-1 rounded-full text-xs">Hızlı Giriş</span>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-slate-700/50">
+                            <td class="py-3 px-4">Ürünleri görsel olarak seçmek istiyorum</td>
+                            <td class="text-center py-3 px-4">
+                                <span class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full text-xs">Akıllı Grid</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4">Standart oda/suite setleri var</td>
+                            <td class="text-center py-3 px-4">
+                                <span class="bg-purple-600/20 text-purple-400 px-3 py-1 rounded-full text-xs">Şablon</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 px-4 border-t border-slate-800">
+        <div class="max-w-6xl mx-auto text-center">
+            <p class="text-slate-500 text-sm">
+                Minibar Takip Sistemi - Personel Zimmet Modülü Kullanım Kılavuzu
+            </p>
+            <p class="text-slate-600 text-xs mt-2">
+                Son Güncelleme: Aralık 2025
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            // Show selected tab
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+            
+            // Update button styles
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('bg-slate-700', 'text-slate-300');
+            });
+            document.getElementById('btn-' + tabName).classList.remove('bg-slate-700', 'text-slate-300');
+            document.getElementById('btn-' + tabName).classList.add('bg-blue-600', 'text-white');
+        }
+    </script>
+</body>
+</html>
