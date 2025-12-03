@@ -21,7 +21,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Cache busting - her deploy'da template'leri yenile
-ARG CACHEBUST=1
+ARG CACHEBUST=2
 
 # Uygulama dosyalarını kopyala (cache bypass)
 COPY . .
