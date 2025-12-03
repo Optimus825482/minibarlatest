@@ -432,12 +432,16 @@ class DolulukUyariService:
                         continue
                     
                     # Uyarı tipi belirle
-                    if len(eksik_yuklemeler) == 2:
-                        uyari_tipi = 'her_ikisi_eksik'
+                    if len(eksik_yuklemeler) == 3:
+                        uyari_tipi = 'tumu_eksik'
+                    elif len(eksik_yuklemeler) == 2:
+                        uyari_tipi = 'iki_eksik'
                     elif 'In House' in eksik_yuklemeler:
                         uyari_tipi = 'inhouse_eksik'
-                    else:
+                    elif 'Arrivals' in eksik_yuklemeler:
                         uyari_tipi = 'arrivals_eksik'
+                    else:
+                        uyari_tipi = 'departures_eksik'
                     
                     # Email içeriği oluştur
                     subject = f"⚠️ Günlük Doluluk Yüklemesi Eksik - {otel.ad}"

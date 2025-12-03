@@ -2310,3 +2310,274 @@ def register_api_routes(app):
         except Exception as e:
             log_hata(e, modul='api_zimmet_urun_ara')
             return jsonify({'error': str(e)}), 500
+
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    # ==================== SATIN ALMA API'LERİ ====================
+    
+    @app.route('/api/urunler-stok')
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_urunler_stok():
+        """Tüm ürünleri stok bilgisiyle getir - Satın Alma Grid için"""
+        try:
+            from models import UrunStok
+            from utils.authorization import get_kullanici_otelleri
+            
+            oteller = get_kullanici_otelleri()
+            otel_ids = [o.id for o in oteller]
+            otel_id = request.args.get('otel_id', type=int)
+            
+            if otel_id and otel_id in otel_ids:
+                secili_otel = otel_id
+            elif otel_ids:
+                secili_otel = otel_ids[0]
+            else:
+                return jsonify({'success': True, 'urunler': []})
+            
+            urunler = Urun.query.filter_by(aktif=True).join(UrunGrup).order_by(UrunGrup.grup_adi, Urun.urun_adi).all()
+            
+            result = []
+            for urun in urunler:
+                stok = UrunStok.query.filter_by(urun_id=urun.id, otel_id=secili_otel).first()
+                mevcut_stok = stok.mevcut_stok if stok else 0
+                
+                result.append({
+                    'id': urun.id,
+                    'urun_adi': urun.urun_adi,
+                    'grup_id': urun.grup_id,
+                    'grup_adi': urun.grup.grup_adi if urun.grup else 'Genel',
+                    'birim': urun.birim or 'adet',
+                    'stok': mevcut_stok
+                })
+            
+            return jsonify({'success': True, 'urunler': result})
+            
+        except Exception as e:
+            log_hata(e, modul='api_urunler_stok')
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/satin-alma/siparis-olustur', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_satin_alma_siparis_olustur():
+        """Yeni satın alma siparişi oluştur - Akıllı Grid'den"""
+        try:
+            from models import SatinAlmaSiparisi, SatinAlmaSiparisDetay
+            from utils.authorization import get_kullanici_otelleri
+            from decimal import Decimal
+            from datetime import date
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({'success': False, 'message': 'Geçersiz veri'}), 400
+            
+            urunler = data.get('urunler', [])
+            aciklama = data.get('aciklama', '')
+            
+            if not urunler:
+                return jsonify({'success': False, 'message': 'En az bir ürün seçmelisiniz'}), 400
+            
+            # Otel ID
+            oteller = get_kullanici_otelleri()
+            if not oteller:
+                return jsonify({'success': False, 'message': 'Otel bulunamadı'}), 400
+            otel_id = oteller[0].id
+            
+            # Sipariş numarası üret
+            bugun = datetime.now()
+            tarih_str = bugun.strftime('%Y%m%d')
+            son_siparis = SatinAlmaSiparisi.query.filter(
+                SatinAlmaSiparisi.siparis_no.like(f'SA-{tarih_str}-%')
+            ).order_by(SatinAlmaSiparisi.siparis_no.desc()).first()
+            
+            if son_siparis:
+                son_no = int(son_siparis.siparis_no.split('-')[-1])
+                yeni_no = son_no + 1
+            else:
+                yeni_no = 1
+            
+            siparis_no = f'SA-{tarih_str}-{yeni_no:04d}'
+            
+            # Sipariş oluştur
+            siparis = SatinAlmaSiparisi(
+                siparis_no=siparis_no,
+                tedarikci_id=None,
+                otel_id=otel_id,
+                tahmini_teslimat_tarihi=date.today(),
+                durum='beklemede',
+                toplam_tutar=Decimal('0'),
+                aciklama=aciklama,
+                olusturan_id=session['kullanici_id']
+            )
+            db.session.add(siparis)
+            db.session.flush()
+            
+            # Detayları ekle
+            for urun_data in urunler:
+                urun_id = urun_data.get('urun_id')
+                miktar = urun_data.get('miktar', 0)
+                
+                if miktar > 0:
+                    detay = SatinAlmaSiparisDetay(
+                        siparis_id=siparis.id,
+                        urun_id=urun_id,
+                        miktar=miktar,
+                        birim_fiyat=Decimal('0'),
+                        toplam_fiyat=Decimal('0'),
+                        teslim_alinan_miktar=0
+                    )
+                    db.session.add(detay)
+            
+            db.session.commit()
+            
+            # Audit log
+            audit_create('satin_alma_siparisleri', siparis.id, serialize_model(siparis))
+            
+            log_islem('ekleme', 'satin_alma_siparis', {
+                'siparis_id': siparis.id,
+                'siparis_no': siparis_no,
+                'urun_sayisi': len(urunler)
+            })
+            
+            return jsonify({
+                'success': True,
+                'siparis_id': siparis.id,
+                'siparis_no': siparis_no,
+                'message': 'Sipariş başarıyla oluşturuldu'
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='api_satin_alma_siparis_olustur')
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    @app.route('/api/siparis-detay/<int:siparis_id>')
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_siparis_detay(siparis_id):
+        """Sipariş detaylarını getir"""
+        try:
+            from models import SatinAlmaSiparisi, SatinAlmaSiparisDetay
+            
+            siparis = SatinAlmaSiparisi.query.get_or_404(siparis_id)
+            
+            detaylar = []
+            for d in siparis.detaylar:
+                detaylar.append({
+                    'id': d.id,
+                    'urun_id': d.urun_id,
+                    'urun_adi': d.urun.urun_adi if d.urun else 'Bilinmeyen',
+                    'miktar': d.miktar,
+                    'birim_fiyat': float(d.birim_fiyat) if d.birim_fiyat else 0,
+                    'toplam_fiyat': float(d.toplam_fiyat) if d.toplam_fiyat else 0,
+                    'teslim_alinan_miktar': d.teslim_alinan_miktar
+                })
+            
+            return jsonify({
+                'success': True,
+                'siparis': {
+                    'id': siparis.id,
+                    'siparis_no': siparis.siparis_no,
+                    'durum': siparis.durum,
+                    'siparis_tarihi': siparis.siparis_tarihi.strftime('%d.%m.%Y %H:%M') if siparis.siparis_tarihi else '-',
+                    'tedarikci': siparis.tedarikci.tedarikci_adi if siparis.tedarikci else None,
+                    'tedarikci_id': siparis.tedarikci_id,
+                    'aciklama': siparis.aciklama,
+                    'toplam_tutar': float(siparis.toplam_tutar) if siparis.toplam_tutar else 0,
+                    'detaylar': detaylar
+                }
+            })
+        except Exception as e:
+            log_hata(e, modul='api_siparis_detay')
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+    @app.route('/api/satin-alma/tedarik-tamamla', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_tedarik_tamamla():
+        """Onaylanan siparişin tedarik işlemini tamamla ve stok girişi yap"""
+        try:
+            from models import SatinAlmaSiparisi, SatinAlmaSiparisDetay, StokHareket, UrunStok
+            from decimal import Decimal
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({'success': False, 'message': 'Geçersiz veri'}), 400
+            
+            siparis_id = data.get('siparis_id')
+            tedarikci_id = data.get('tedarikci_id')
+            tedarik_tarihi = data.get('tedarik_tarihi')
+            fiyatlar = data.get('fiyatlar', {})
+            stok_giris_yap = data.get('stok_giris_yap', True)
+            
+            siparis = SatinAlmaSiparisi.query.get_or_404(siparis_id)
+            
+            if siparis.durum != 'onaylandi':
+                return jsonify({'success': False, 'message': 'Sadece onaylanmış siparişler için tedarik girişi yapılabilir'}), 400
+            
+            # Tedarikçi ve tarihi güncelle
+            siparis.tedarikci_id = tedarikci_id
+            siparis.gerceklesen_teslimat_tarihi = datetime.strptime(tedarik_tarihi, '%Y-%m-%d').date()
+            siparis.durum = 'teslim_alindi'
+            
+            toplam_tutar = Decimal('0')
+            
+            # Detay fiyatlarını güncelle
+            for detay in siparis.detaylar:
+                detay_id_str = str(detay.id)
+                if detay_id_str in fiyatlar:
+                    birim_fiyat = Decimal(str(fiyatlar[detay_id_str]))
+                    detay.birim_fiyat = birim_fiyat
+                    detay.toplam_fiyat = birim_fiyat * detay.miktar
+                    detay.teslim_alinan_miktar = detay.miktar
+                    toplam_tutar += detay.toplam_fiyat
+                    
+                    # Stok girişi yap
+                    if stok_giris_yap:
+                        stok_hareket = StokHareket(
+                            urun_id=detay.urun_id,
+                            otel_id=siparis.otel_id,
+                            hareket_tipi='giris',
+                            miktar=detay.miktar,
+                            aciklama=f'Satın alma girişi - {siparis.siparis_no}',
+                            islem_yapan_id=session['kullanici_id']
+                        )
+                        db.session.add(stok_hareket)
+                        
+                        # UrunStok güncelle
+                        urun_stok = UrunStok.query.filter_by(
+                            urun_id=detay.urun_id,
+                            otel_id=siparis.otel_id
+                        ).first()
+                        
+                        if urun_stok:
+                            urun_stok.miktar += detay.miktar
+                        else:
+                            urun_stok = UrunStok(
+                                urun_id=detay.urun_id,
+                                otel_id=siparis.otel_id,
+                                miktar=detay.miktar
+                            )
+                            db.session.add(urun_stok)
+            
+            siparis.toplam_tutar = toplam_tutar
+            db.session.commit()
+            
+            log_islem('guncelleme', 'satin_alma_siparis', {
+                'siparis_id': siparis.id,
+                'siparis_no': siparis.siparis_no,
+                'islem': 'tedarik_tamamlandi',
+                'stok_giris': stok_giris_yap
+            })
+            
+            return jsonify({
+                'success': True,
+                'message': 'Tedarik işlemi tamamlandı',
+                'stok_giris': stok_giris_yap
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='api_tedarik_tamamla')
+            return jsonify({'success': False, 'message': str(e)}), 500

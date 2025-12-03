@@ -1063,196 +1063,75 @@ def register_depo_routes(app):
 
     # ==================== DİREKT SATIN ALMA İŞLEMLERİ ROUTE'LARI ====================
     
-    @app.route('/satin-alma', methods=['GET', 'POST'])
+    @app.route('/satin-alma', methods=['GET'])
     @login_required
     @role_required('depo_sorumlusu', 'sistem_yoneticisi')
     def satin_alma():
-        """Direkt satın alma işlemi - Redirect to list page with modal"""
-        # Satın alma listesi sayfasına yönlendir (modal sistemi orada)
-        if request.method == 'GET':
-            return redirect(url_for('satin_alma_listesi'))
-        
-        # POST işlemi için devam et
+        """Satın Alma Ana Sayfası - Liste ve Sipariş Oluşturma"""
         from utils.authorization import get_kullanici_otelleri, get_otel_filtreleme_secenekleri
         
         try:
-            # Kullanıcının erişebileceği oteller
             kullanici_otelleri = get_kullanici_otelleri()
             otel_secenekleri = get_otel_filtreleme_secenekleri()
             
-            # Seçili otel
             secili_otel_id = request.args.get('otel_id', type=int)
             if not secili_otel_id and kullanici_otelleri:
                 secili_otel_id = kullanici_otelleri[0].id
             
-            if request.method == 'POST':
-                try:
-                    # Form verilerini al
-                    tedarikci_id = int(request.form['tedarikci_id'])
-                    otel_id = int(request.form['otel_id'])
-                    satin_alma_tarihi_str = request.form.get('satin_alma_tarihi')
-                    fatura_no = request.form.get('fatura_no', '')
-                    fatura_tarihi_str = request.form.get('fatura_tarihi')
-                    aciklama = request.form.get('aciklama', '')
-                    
-                    # Tarih dönüşümleri
-                    satin_alma_tarihi = datetime.now()
-                    if satin_alma_tarihi_str:
-                        satin_alma_tarihi = datetime.strptime(satin_alma_tarihi_str, '%Y-%m-%d')
-                    
-                    fatura_tarihi = None
-                    if fatura_tarihi_str:
-                        fatura_tarihi = datetime.strptime(fatura_tarihi_str, '%Y-%m-%d').date()
-                    
-                    # Ürün listesini al
-                    urun_ids = request.form.getlist('urun_ids[]')
-                    miktarlar = request.form.getlist('miktarlar[]')
-                    birim_fiyatlar = request.form.getlist('birim_fiyatlar[]')
-                    kdv_oranlari = request.form.getlist('kdv_oranlari[]')
-                    
-                    if not urun_ids:
-                        flash('En az bir ürün eklemelisiniz.', 'warning')
-                        return redirect(url_for('satin_alma', otel_id=otel_id))
-                    
-                    # İşlem numarası oluştur
-                    from datetime import datetime
-                    islem_no = f"SA-{datetime.now().strftime('%Y%m%d%H%M%S')}"
-                    
-                    # Satın alma işlemi oluştur
-                    satin_alma_islem = SatinAlmaIslem(
-                        islem_no=islem_no,
-                        tedarikci_id=tedarikci_id,
-                        otel_id=otel_id,
-                        islem_tarihi=satin_alma_tarihi,
-                        fatura_no=fatura_no,
-                        fatura_tarihi=fatura_tarihi,
-                        odeme_sekli=odeme_sekli,
-                        odeme_durumu=odeme_durumu,
-                        aciklama=aciklama,
-                        olusturan_id=session['kullanici_id']
-                    )
-                    
-                    db.session.add(satin_alma_islem)
-                    db.session.flush()  # ID'yi almak için
-                    
-                    # Toplam tutarları hesapla
-                    toplam_tutar = 0
-                    toplam_kdv = 0
-                    
-                    # Ürün detaylarını ekle ve stok girişi yap
-                    for i in range(len(urun_ids)):
-                        try:
-                            urun_id = int(urun_ids[i])
-                            miktar = int(miktarlar[i])
-                            birim_fiyat = float(birim_fiyatlar[i])
-                            kdv_orani = float(kdv_oranlari[i]) if i < len(kdv_oranlari) else 0
-                            
-                            # Hesaplamalar
-                            ara_toplam = miktar * birim_fiyat
-                            kdv_tutari = ara_toplam * (kdv_orani / 100)
-                            toplam_fiyat = ara_toplam + kdv_tutari
-                            
-                            toplam_tutar += ara_toplam
-                            toplam_kdv += kdv_tutari
-                            
-                            # Stok hareketi oluştur
-                            stok_hareket = StokHareket(
-                                urun_id=urun_id,
-                                hareket_tipi='giris',
-                                miktar=miktar,
-                                aciklama=f'Satın alma - {islem_no} - Fatura: {fatura_no}',
-                                islem_yapan_id=session['kullanici_id']
-                            )
-                            db.session.add(stok_hareket)
-                            db.session.flush()
-                            
-                            # Satın alma detayı oluştur
-                            detay = SatinAlmaIslemDetay(
-                                islem_id=satin_alma_islem.id,
-                                urun_id=urun_id,
-                                miktar=miktar,
-                                birim_fiyat=birim_fiyat,
-                                kdv_orani=kdv_orani,
-                                kdv_tutari=kdv_tutari,
-                                toplam_fiyat=toplam_fiyat,
-                                stok_hareket_id=stok_hareket.id
-                            )
-                            db.session.add(detay)
-                            
-                        except (ValueError, IndexError) as e:
-                            flash(f'Ürün bilgilerinde hata: {str(e)}', 'danger')
-                            db.session.rollback()
-                            return redirect(url_for('satin_alma', otel_id=otel_id))
-                    
-                    # Toplam tutarları güncelle
-                    satin_alma_islem.toplam_tutar = toplam_tutar
-                    satin_alma_islem.kdv_tutari = toplam_kdv
-                    satin_alma_islem.genel_toplam = toplam_tutar + toplam_kdv
-                    
-                    db.session.commit()
-                    
-                    # Audit Trail
-                    audit_create('satin_alma_islem', satin_alma_islem.id, satin_alma_islem)
-                    
-                    # Log kaydı
-                    log_islem('ekleme', 'satin_alma', {
-                        'islem_no': islem_no,
-                        'tedarikci_id': tedarikci_id,
-                        'otel_id': otel_id,
-                        'urun_sayisi': len(urun_ids),
-                        'toplam_tutar': float(toplam_tutar + toplam_kdv)
-                    })
-                    
-                    flash(f'Satın alma işlemi başarıyla kaydedildi. İşlem No: {islem_no}', 'success')
-                    return redirect(url_for('satin_alma_listesi', otel_id=otel_id))
-                    
-                except ValueError as e:
-                    flash(f'Geçersiz veri formatı: {str(e)}', 'danger')
-                except Exception as e:
-                    db.session.rollback()
-                    log_hata(e, 'satin_alma')
-                    flash(f'Satın alma işlemi sırasında hata oluştu: {str(e)}', 'danger')
+            durum_filtre = request.args.get('durum')
             
-            # Aktif tedarikçileri getir
+            # Siparişleri getir
+            query = SatinAlmaSiparisi.query.options(
+                db.joinedload(SatinAlmaSiparisi.tedarikci),
+                db.joinedload(SatinAlmaSiparisi.otel),
+                db.joinedload(SatinAlmaSiparisi.olusturan),
+                db.joinedload(SatinAlmaSiparisi.detaylar)
+            )
+            
+            if secili_otel_id:
+                query = query.filter_by(otel_id=secili_otel_id)
+            
+            if durum_filtre:
+                query = query.filter_by(durum=durum_filtre)
+            
+            siparisler = query.order_by(desc(SatinAlmaSiparisi.siparis_tarihi)).all()
+            
+            # İstatistikler
+            istatistikler = {
+                'toplam': len(siparisler),
+                'beklemede': sum(1 for s in siparisler if s.durum == 'beklemede'),
+                'onaylandi': sum(1 for s in siparisler if s.durum == 'onaylandi'),
+                'teslim_alindi': sum(1 for s in siparisler if s.durum == 'teslim_alindi'),
+                'iptal': sum(1 for s in siparisler if s.durum == 'iptal')
+            }
+            
+            # Ürün grupları (sipariş oluşturma için)
+            urun_gruplari = UrunGrup.query.filter_by(aktif=True).order_by(UrunGrup.grup_adi).all()
+            
+            # Kritik stok önerileri
+            siparis_onerileri = []
+            if secili_otel_id:
+                try:
+                    siparis_onerileri = SatinAlmaServisi.otomatik_siparis_onerisi_olustur(secili_otel_id)
+                except Exception as e:
+                    log_hata(e, 'satin_alma_onerileri')
+            
+            # Tedarikçiler (tedarik girişi için)
             tedarikciler = Tedarikci.query.filter_by(aktif=True).order_by(Tedarikci.tedarikci_adi).all()
             
-            # Aktif ürünleri getir
-            urunler_query = Urun.query.filter_by(aktif=True).order_by(Urun.urun_adi).all()
-            
-            # Ürünleri JSON-serializable formata çevir
-            urunler = []
-            for urun in urunler_query:
-                urunler.append({
-                    'id': urun.id,
-                    'urun_adi': urun.urun_adi,
-                    'birim': urun.birim,
-                    'grup_id': urun.grup_id,
-                    'grup_adi': urun.grup.grup_adi if urun.grup else None
-                })
-            
-            # Tedarikçi fiyatlarını hazırla
-            from models import UrunTedarikciFiyat
-            tedarikci_fiyatlar = {}
-            for tedarikci in tedarikciler:
-                tedarikci_fiyatlar[tedarikci.id] = {}
-                tedarikci_urunler = UrunTedarikciFiyat.query.filter_by(
-                    tedarikci_id=tedarikci.id,
-                    aktif=True
-                ).all()
-                for tu in tedarikci_urunler:
-                    tedarikci_fiyatlar[tedarikci.id][tu.urun_id] = float(tu.birim_fiyat)
-            
-            return render_template('depo_sorumlusu/satin_alma.html',
-                                 tedarikciler=tedarikciler,
-                                 urunler=urunler,
-                                 tedarikci_fiyatlar=tedarikci_fiyatlar,
+            return render_template('depo_sorumlusu/satin_alma_ana.html',
+                                 siparisler=siparisler,
+                                 istatistikler=istatistikler,
+                                 urun_gruplari=urun_gruplari,
+                                 siparis_onerileri=siparis_onerileri,
                                  otel_secenekleri=otel_secenekleri,
-                                 secili_otel_id=secili_otel_id)
-                                 
+                                 secili_otel_id=secili_otel_id,
+                                 durum_filtre=durum_filtre,
+                                 tedarikciler=tedarikciler)
         except Exception as e:
             log_hata(e, 'satin_alma')
             flash(f'Sayfa yüklenirken hata oluştu: {str(e)}', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('depo_dashboard'))
     
     @app.route('/satin-alma-listesi')
     @login_required

@@ -23,13 +23,14 @@ class FileManagementService:
     FILE_RETENTION_DAYS = 4
     
     @staticmethod
-    def save_uploaded_file(file, user_id):
+    def save_uploaded_file(file, user_id, otel_id=None):
         """
         Yüklenen dosyayı kaydeder
         
         Args:
             file: Werkzeug FileStorage objesi
             user_id: Yükleyen kullanıcı ID
+            otel_id: Otel ID (hangi otele ait olduğu)
             
         Returns:
             tuple: (success, file_path, islem_kodu, error_message)
@@ -78,7 +79,8 @@ class FileManagementService:
                 dosya_boyutu=file_size,
                 yukleme_tarihi=datetime.now(timezone.utc),
                 durum='yuklendi',
-                yuklenen_kullanici_id=user_id
+                yuklenen_kullanici_id=user_id,
+                otel_id=otel_id  # Otel ID eklendi
             )
             
             db.session.add(dosya_yukleme)

@@ -704,10 +704,14 @@ class DosyaYukleme(db.Model):
         db.Index('idx_dosya_islem_kodu', 'islem_kodu'),
         db.Index('idx_dosya_yukleme_tarihi', 'yukleme_tarihi'),
         db.Index('idx_dosya_silme_tarihi', 'silme_tarihi'),
+        db.Index('idx_dosya_otel_id', 'otel_id'),
     )
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     islem_kodu = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    
+    # Otel Bilgisi - Hangi otele ait olduğu
+    otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=True)
     
     # Dosya Bilgileri
     dosya_adi = db.Column(db.String(255), nullable=False)
@@ -731,6 +735,7 @@ class DosyaYukleme(db.Model):
     
     # İlişkiler
     yuklenen_kullanici = db.relationship('Kullanici', foreign_keys=[yuklenen_kullanici_id])
+    otel = db.relationship('Otel', backref='dosya_yuklemeleri')
     
     def __repr__(self):
         return f'<DosyaYukleme #{self.id} - {self.islem_kodu} - {self.durum}>'

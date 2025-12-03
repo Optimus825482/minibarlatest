@@ -550,8 +550,8 @@ def doluluk_yukle():
             if kullanici_otelleri:
                 otel_id = kullanici_otelleri[0].id
 
-        # 1. Dosyayı kaydet
-        success, file_path, islem_kodu, error = FileManagementService.save_uploaded_file(file, user_id)
+        # 1. Dosyayı kaydet (otel_id ile birlikte)
+        success, file_path, islem_kodu, error = FileManagementService.save_uploaded_file(file, user_id, otel_id)
         
         if not success:
             flash(f"Dosya kaydedilemedi: {error}", "danger")
@@ -586,9 +586,9 @@ def doluluk_yukle():
                 yukleme_dosya_tipi = dosya_tipi_map.get(result['dosya_tipi'], result['dosya_tipi'])
                 dosya_yukleme = DosyaYukleme.query.filter_by(islem_kodu=islem_kodu).first()
                 
-                # Bugünkü görevi bul ve güncelle
+                # Bugünkü görevi bul ve güncelle - otel_id ile ara
                 yukleme_gorev = YuklemeGorev.query.filter(
-                    YuklemeGorev.depo_sorumlusu_id == user_id,
+                    YuklemeGorev.otel_id == otel_id,
                     YuklemeGorev.gorev_tarihi == date.today(),
                     YuklemeGorev.dosya_tipi == yukleme_dosya_tipi
                 ).first()

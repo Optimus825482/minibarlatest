@@ -1,0 +1,910 @@
+{% extends "base.html" %}
+{% block title %}Satın Alma - Minibar Takip Sistemi{% endblock %}
+{% block page_title %}Satın Alma{% endblock %}
+
+{% block content %}
+<style>
+.tab-btn { transition: all 0.2s; }
+.tab-btn.active { border-bottom: 3px solid #3b82f6; color: #3b82f6; font-weight: 600; }
+.urun-card { min-height: 100px; transition: transform 0.15s, box-shadow 0.15s; cursor: pointer; }
+.urun-card:active { transform: scale(0.98); }
+.line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.sepet-badge { position: fixed; bottom: 20px; right: 20px; z-index: 50; }
+.stok-toggle-wrapper { display: inline-block; }
+.stok-toggle-wrapper input[type="checkbox"] { display: none; }
+.stok-toggle { position: relative; display: inline-flex; align-items: center; width: 100px; height: 32px; background: linear-gradient(to bottom, #64748b 0%, #475569 100%); border-radius: 16px; cursor: pointer; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+.stok-toggle .toggle-handler { position: absolute; left: 2px; width: 28px; height: 28px; background: linear-gradient(to bottom, #f8fafc 0%, #e2e8f0 100%); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3); transition: left 0.3s ease; z-index: 3; }
+.stok-toggle .toggle-on, .stok-toggle .toggle-off { position: absolute; font-size: 11px; font-weight: 600; transition: opacity 0.3s; color: white; }
+.stok-toggle .toggle-on { left: 10px; opacity: 0; }
+.stok-toggle .toggle-off { right: 10px; opacity: 1; }
+.stok-toggle-wrapper input:checked + .stok-toggle { background: linear-gradient(to bottom, #22c55e 0%, #16a34a 100%); }
+.stok-toggle-wrapper input:checked + .stok-toggle .toggle-handler { left: 70px; }
+.stok-toggle-wrapper input:checked + .stok-toggle .toggle-on { opacity: 1; }
+.stok-toggle-wrapper input:checked + .stok-toggle .toggle-off { opacity: 0; }
+</style>
+
+<div class="space-y-6">
+  <!-- Tab Navigasyonu -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="border-b border-slate-200 dark:border-slate-700">
+      <nav class="flex -mb-px">
+        <button type="button" onclick="showTab('liste')" id="tab_liste" class="tab-btn active flex-1 py-4 px-6 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
+          <i class="fas fa-list mr-2"></i>Satın Alma Listesi
+        </button>
+        <button type="button" onclick="showTab('siparis')" id="tab_siparis" class="tab-btn flex-1 py-4 px-6 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
+          <i class="fas fa-cart-plus mr-2"></i>Sipariş Oluştur
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- TAB 1: Satın Alma Listesi -->
+  <div id="content_liste" class="tab-content">
+    <!-- İstatistik Kartları -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+            <i class="fas fa-clipboard-list text-blue-600 dark:text-blue-400"></i>
+          </div>
+          <div class="ml-3">
+            <p class="text-xs text-slate-500 dark:text-slate-400">Toplam</p>
+            <p class="text-xl font-bold text-slate-900 dark:text-white">{{ istatistikler.toplam }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
+            <i class="fas fa-clock text-yellow-600 dark:text-yellow-400"></i>
+          </div>
+          <div class="ml-3">
+            <p class="text-xs text-slate-500 dark:text-slate-400">Beklemede</p>
+            <p class="text-xl font-bold text-slate-900 dark:text-white">{{ istatistikler.beklemede }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+            <i class="fas fa-check text-green-600 dark:text-green-400"></i>
+          </div>
+          <div class="ml-3">
+            <p class="text-xs text-slate-500 dark:text-slate-400">Onaylı</p>
+            <p class="text-xl font-bold text-slate-900 dark:text-white">{{ istatistikler.onaylandi }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+            <i class="fas fa-truck text-purple-600 dark:text-purple-400"></i>
+          </div>
+          <div class="ml-3">
+            <p class="text-xs text-slate-500 dark:text-slate-400">Teslim</p>
+            <p class="text-xl font-bold text-slate-900 dark:text-white">{{ istatistikler.teslim_alindi }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hızlı İşlemler -->
+    <div class="flex justify-between items-center mb-4">
+      <div class="flex gap-2">
+        <button type="button" onclick="showTab('siparis')" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">
+          <i class="fas fa-plus mr-2"></i>Sipariş Oluştur
+        </button>
+        <select id="durum_filtre" onchange="filtreleListeyi()" class="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm dark:bg-slate-700 dark:text-white">
+          <option value="">Tüm Durumlar</option>
+          <option value="beklemede" {% if durum_filtre == 'beklemede' %}selected{% endif %}>Beklemede</option>
+          <option value="onaylandi" {% if durum_filtre == 'onaylandi' %}selected{% endif %}>Onaylandı</option>
+          <option value="teslim_alindi" {% if durum_filtre == 'teslim_alindi' %}selected{% endif %}>Teslim Alındı</option>
+          <option value="iptal" {% if durum_filtre == 'iptal' %}selected{% endif %}>İptal</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Sipariş Listesi Tablosu -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+      {% if siparisler %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+          <thead class="bg-slate-50 dark:bg-slate-900">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Sipariş No</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Tarih</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Ürün/Miktar</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Durum</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Tedarikçi</th>
+              <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">İşlemler</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+            {% for siparis in siparisler %}
+            <tr class="siparis-row" data-durum="{{ siparis.durum }}">
+              <td class="px-4 py-3">
+                <span class="font-medium text-slate-900 dark:text-white">{{ siparis.siparis_no }}</span>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+                {{ siparis.siparis_tarihi.strftime('%d.%m.%Y %H:%M') if siparis.siparis_tarihi else '-' }}
+              </td>
+              <td class="px-4 py-3 text-sm">
+                <span class="text-slate-900 dark:text-white">{{ siparis.detaylar|length }} ürün</span>
+                <span class="text-slate-500 dark:text-slate-400">/ {{ siparis.detaylar|sum(attribute='miktar') }} adet</span>
+              </td>
+              <td class="px-4 py-3">
+                {% if siparis.durum == 'beklemede' %}
+                <span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">Onay Bekliyor</span>
+                {% elif siparis.durum == 'onaylandi' %}
+                <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">Onaylandı</span>
+                {% elif siparis.durum == 'teslim_alindi' %}
+                <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Teslim Alındı</span>
+                {% elif siparis.durum == 'iptal' %}
+                <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">İptal</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+                {{ siparis.tedarikci.tedarikci_adi if siparis.tedarikci else '-' }}
+              </td>
+              <td class="px-4 py-3 text-center">
+                <div class="flex justify-center gap-2">
+                  <button type="button" onclick="siparisDetayGoster({{ siparis.id }})" class="p-2 text-blue-600 dark:text-blue-400" title="Detay">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  {% if siparis.durum == 'onaylandi' %}
+                  <button type="button" onclick="tedarikGirisAc({{ siparis.id }})" class="p-2 text-green-600 dark:text-green-400" title="Tedarik Girişi">
+                    <i class="fas fa-truck-loading"></i>
+                  </button>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-12">
+        <i class="fas fa-clipboard-list text-4xl text-slate-300 dark:text-slate-600 mb-4"></i>
+        <p class="text-slate-500 dark:text-slate-400">Henüz sipariş bulunmuyor</p>
+        <button type="button" onclick="showTab('siparis')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">
+          <i class="fas fa-plus mr-2"></i>İlk Siparişi Oluştur
+        </button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+
+  <!-- TAB 2: Sipariş Oluştur -->
+  <div id="content_siparis" class="tab-content hidden">
+    <!-- Kritik Stok Önerileri -->
+    {% if siparis_onerileri %}
+    <div class="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-lg shadow-md border border-red-200 dark:border-red-800 mb-6">
+      <div class="px-4 py-4">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle text-red-500 mr-3 text-xl"></i>
+            <h3 class="text-base font-medium text-slate-900 dark:text-slate-100">Kritik Stok Uyarısı</h3>
+          </div>
+          <span class="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">{{ siparis_onerileri|length }} Ürün</span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          {% for oneri in siparis_onerileri[:6] %}
+          <button type="button" onclick="kritikUrunEkle({{ oneri.urun_id }}, {{ oneri.onerilen_miktar }})" class="px-3 py-2 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-700 rounded-lg text-sm font-medium text-red-700 dark:text-red-300">
+            <i class="fas fa-plus mr-1"></i>{{ oneri.urun_adi }} ({{ oneri.mevcut_stok }}/{{ oneri.kritik_seviye }})
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Ürün Seçim Alanı -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <!-- Grup Filtreleri -->
+        <div id="grup_butonlari" class="flex flex-wrap items-center gap-2 mb-4">
+          <button type="button" data-grup-id="" class="grup-btn px-4 py-2 rounded-lg text-sm font-medium ring-2 ring-offset-2 ring-slate-400" style="background: linear-gradient(135deg, #475569, #334155); color: white;">Tümü</button>
+          {% for grup in urun_gruplari %}
+          <button type="button" data-grup-id="{{ grup.id }}" data-renk-idx="{{ loop.index0 }}" class="grup-btn px-4 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">{{ grup.grup_adi }}</button>
+          {% endfor %}
+          
+          <!-- Stokta Olmayanlar Toggle -->
+          <div class="flex items-center gap-2 ml-auto">
+            <span class="text-sm font-medium text-slate-600 dark:text-slate-300">Stoksuz:</span>
+            <div class="stok-toggle-wrapper">
+              <input type="checkbox" id="stoksuz_gizle" checked onchange="renderGrid()">
+              <label for="stoksuz_gizle" class="stok-toggle">
+                <span class="toggle-handler"></span>
+                <span class="toggle-on">Göster</span>
+                <span class="toggle-off">Gizle</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arama -->
+        <div class="mb-4">
+          <input type="text" id="grid_arama" placeholder="Ürün ara..." oninput="renderGrid()" class="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm w-64 dark:bg-slate-700 dark:text-white">
+        </div>
+
+        <!-- Ürün Grid -->
+        <div id="urun_grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 max-h-[450px] overflow-y-auto p-1">
+          <div class="text-center py-8 text-slate-500 col-span-full">
+            <i class="fas fa-spinner fa-spin text-2xl"></i>
+            <p>Yükleniyor...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sepet Paneli -->
+    <div id="sepet_panel" class="hidden bg-white dark:bg-slate-800 shadow rounded-lg mt-6">
+      <div class="px-4 py-5 sm:p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-medium text-slate-900 dark:text-white">
+            <i class="fas fa-shopping-cart text-blue-600 mr-2"></i>Sipariş Sepeti (<span id="sepet_adet">0</span> ürün)
+          </h3>
+          <button type="button" onclick="sepetiTemizle()" class="text-sm text-red-600 dark:text-red-400">
+            <i class="fas fa-trash mr-1"></i>Temizle
+          </button>
+        </div>
+        
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+            <thead class="bg-slate-50 dark:bg-slate-900">
+              <tr>
+                <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400">Ürün</th>
+                <th class="px-4 py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400">Miktar</th>
+                <th class="px-4 py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400">Mevcut Stok</th>
+                <th class="px-4 py-2 text-center text-xs font-medium text-slate-500 dark:text-slate-400">Sil</th>
+              </tr>
+            </thead>
+            <tbody id="sepet_tbody" class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"></tbody>
+          </table>
+        </div>
+
+        <!-- Açıklama -->
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Açıklama (Opsiyonel)</label>
+          <textarea id="siparis_aciklama" rows="2" placeholder="Sipariş hakkında not..." class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm dark:bg-slate-700 dark:text-white"></textarea>
+        </div>
+
+        <!-- Butonlar -->
+        <div class="flex justify-end gap-3 mt-4">
+          <button type="button" onclick="sepetiTemizle()" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium">
+            <i class="fas fa-times mr-2"></i>İptal
+          </button>
+          <button type="button" onclick="siparisOlustur()" id="siparis_olustur_btn" disabled class="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+            <i class="fas fa-paper-plane mr-2"></i>Onaya Gönder
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Sepet Butonu -->
+  <div id="sepet_badge" class="sepet-badge hidden">
+    <button type="button" onclick="scrollToSepet()" class="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-full shadow-lg font-medium">
+      <i class="fas fa-shopping-cart"></i>
+      <span id="sepet_badge_adet">0</span> Ürün
+    </button>
+  </div>
+</div>
+
+
+<!-- Miktar Modal -->
+<div id="miktar_modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+  <div class="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-sm mx-4 shadow-2xl">
+    <div id="modal_urun_bilgi" class="mb-4 p-3 rounded-lg border-2">
+      <p class="font-semibold text-lg text-white drop-shadow-md" id="modal_urun_adi"></p>
+      <p class="text-sm text-white/80" id="modal_urun_grup"></p>
+      <p class="text-sm font-bold mt-1 text-white" id="modal_urun_stok"></p>
+    </div>
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Sipariş Miktarı:</label>
+      <input type="number" id="modal_miktar" min="1" value="100" class="w-full px-4 py-3 text-xl text-center border-2 border-slate-300 dark:border-slate-600 rounded-lg focus:border-blue-500 dark:bg-slate-700 dark:text-white">
+    </div>
+    <div class="grid grid-cols-4 gap-2 mb-4">
+      <button type="button" class="miktar-btn px-3 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg font-medium text-sm" data-miktar="10">+10</button>
+      <button type="button" class="miktar-btn px-3 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg font-medium text-sm" data-miktar="25">+25</button>
+      <button type="button" class="miktar-btn px-3 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg font-medium text-sm" data-miktar="50">+50</button>
+      <button type="button" class="miktar-btn px-3 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg font-medium text-sm" data-miktar="100">+100</button>
+      <button type="button" class="miktar-btn px-3 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg font-medium text-sm" data-miktar="200">+200</button>
+      <button type="button" class="miktar-btn px-3 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg font-medium text-sm" data-miktar="500">+500</button>
+      <button type="button" class="miktar-btn px-3 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg font-medium text-sm" data-miktar="1000">+1000</button>
+      <button type="button" onclick="document.getElementById('modal_miktar').value=0" class="px-3 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium text-sm">Sıfırla</button>
+    </div>
+    <div class="flex gap-2">
+      <button type="button" onclick="modalKapat()" class="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium">İptal</button>
+      <button type="button" onclick="sepeteEkle()" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium"><i class="fas fa-cart-plus mr-2"></i>Sepete Ekle</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sipariş Detay Modal -->
+<div id="siparis_detay_modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+  <div class="bg-white dark:bg-slate-800 rounded-lg w-full max-w-2xl mx-4 shadow-2xl max-h-[90vh] overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+      <h3 class="text-lg font-medium text-slate-900 dark:text-white"><i class="fas fa-clipboard-list mr-2 text-blue-600"></i>Sipariş Detayı</h3>
+      <button type="button" onclick="siparisDetayKapat()" class="text-slate-400"><i class="fas fa-times text-xl"></i></button>
+    </div>
+    <div id="siparis_detay_icerik" class="p-6 overflow-y-auto max-h-[70vh]">
+      <div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-slate-400"></i></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Tedarik Giriş Modal -->
+<div id="tedarik_modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+  <div class="bg-white dark:bg-slate-800 rounded-lg w-full max-w-3xl mx-4 shadow-2xl max-h-[90vh] overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-green-50 dark:bg-green-900/20">
+      <h3 class="text-lg font-medium text-green-800 dark:text-green-200"><i class="fas fa-truck-loading mr-2"></i>Tedarik Girişi</h3>
+      <button type="button" onclick="tedarikModalKapat()" class="text-slate-400"><i class="fas fa-times text-xl"></i></button>
+    </div>
+    <div id="tedarik_modal_icerik" class="p-6 overflow-y-auto max-h-[70vh]">
+      <div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-slate-400"></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- Özel Alert/Confirm Dialog -->
+<div id="custom_dialog" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center">
+  <div class="bg-white dark:bg-slate-800 rounded-xl w-full max-w-md mx-4 shadow-2xl overflow-hidden transform transition-all">
+    <div id="dialog_header" class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center">
+      <div id="dialog_icon" class="w-10 h-10 rounded-full flex items-center justify-center mr-3"></div>
+      <h3 id="dialog_title" class="text-lg font-semibold text-slate-900 dark:text-white"></h3>
+    </div>
+    <div class="px-6 py-5">
+      <p id="dialog_message" class="text-slate-600 dark:text-slate-300 whitespace-pre-line"></p>
+    </div>
+    <div id="dialog_buttons" class="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 flex justify-end gap-3"></div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Özel Dialog Fonksiyonları
+function showDialog(options) {
+  const dialog = document.getElementById('custom_dialog');
+  const icon = document.getElementById('dialog_icon');
+  const title = document.getElementById('dialog_title');
+  const message = document.getElementById('dialog_message');
+  const buttons = document.getElementById('dialog_buttons');
+  
+  // İkon ve renk ayarla
+  const types = {
+    success: { icon: 'fa-check', bg: 'bg-green-100 dark:bg-green-900/30', color: 'text-green-600 dark:text-green-400' },
+    error: { icon: 'fa-times', bg: 'bg-red-100 dark:bg-red-900/30', color: 'text-red-600 dark:text-red-400' },
+    warning: { icon: 'fa-exclamation-triangle', bg: 'bg-yellow-100 dark:bg-yellow-900/30', color: 'text-yellow-600 dark:text-yellow-400' },
+    info: { icon: 'fa-info', bg: 'bg-blue-100 dark:bg-blue-900/30', color: 'text-blue-600 dark:text-blue-400' },
+    confirm: { icon: 'fa-question', bg: 'bg-purple-100 dark:bg-purple-900/30', color: 'text-purple-600 dark:text-purple-400' }
+  };
+  
+  const type = types[options.type] || types.info;
+  icon.className = `w-10 h-10 rounded-full flex items-center justify-center ${type.bg}`;
+  icon.innerHTML = `<i class="fas ${type.icon} ${type.color} text-lg"></i>`;
+  
+  title.textContent = options.title || 'Bilgi';
+  message.textContent = options.message || '';
+  
+  // Butonları oluştur
+  buttons.innerHTML = '';
+  if (options.showCancel) {
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors';
+    cancelBtn.textContent = options.cancelText || 'İptal';
+    cancelBtn.onclick = () => { hideDialog(); if (options.onCancel) options.onCancel(); };
+    buttons.appendChild(cancelBtn);
+  }
+  
+  const okBtn = document.createElement('button');
+  const btnColors = {
+    success: 'bg-green-600 hover:bg-green-700',
+    error: 'bg-red-600 hover:bg-red-700',
+    warning: 'bg-yellow-600 hover:bg-yellow-700',
+    info: 'bg-blue-600 hover:bg-blue-700',
+    confirm: 'bg-purple-600 hover:bg-purple-700'
+  };
+  okBtn.className = `px-4 py-2 ${btnColors[options.type] || btnColors.info} text-white rounded-lg text-sm font-medium transition-colors`;
+  okBtn.textContent = options.okText || 'Tamam';
+  okBtn.onclick = () => { hideDialog(); if (options.onOk) options.onOk(); };
+  buttons.appendChild(okBtn);
+  
+  dialog.classList.remove('hidden');
+  okBtn.focus();
+}
+
+function hideDialog() {
+  document.getElementById('custom_dialog').classList.add('hidden');
+}
+
+// Alert yerine kullanılacak
+function showAlert(message, title = 'Bilgi', type = 'info', callback = null) {
+  showDialog({ type, title, message, okText: 'Tamam', onOk: callback });
+}
+
+// Confirm yerine kullanılacak
+function showConfirm(message, title = 'Onay', onConfirm = null, onCancel = null) {
+  showDialog({ type: 'confirm', title, message, showCancel: true, okText: 'Evet', cancelText: 'Hayır', onOk: onConfirm, onCancel });
+}
+
+// Dialog dışına tıklayınca kapat
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('custom_dialog').addEventListener('click', function(e) { if (e.target === this) hideDialog(); });
+});
+
+const grupRenkleri = [
+  {bg: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', text: 'white'},
+  {bg: 'linear-gradient(135deg, #22c55e, #16a34a)', text: 'white'},
+  {bg: 'linear-gradient(135deg, #f59e0b, #d97706)', text: 'white'},
+  {bg: 'linear-gradient(135deg, #ef4444, #dc2626)', text: 'white'},
+  {bg: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', text: 'white'},
+  {bg: 'linear-gradient(135deg, #ec4899, #db2777)', text: 'white'},
+  {bg: 'linear-gradient(135deg, #06b6d4, #0891b2)', text: 'white'},
+  {bg: 'linear-gradient(135deg, #84cc16, #65a30d)', text: 'white'}
+];
+
+let tumUrunler = [];
+let sepet = {};
+let aktifGrup = '';
+let seciliUrun = null;
+let aktifTab = 'liste';
+let grupRenkMap = {}; // grup_id -> renk index mapping
+
+document.addEventListener('DOMContentLoaded', function() {
+  grupRenkMapOlustur();
+  grupButonlariniAyarla();
+  miktarButonlariniAyarla();
+  
+  // URL'de tab parametresi varsa o tab'ı aç
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('tab') === 'siparis') {
+    showTab('siparis');
+  }
+});
+
+// Grup ID -> Renk Index mapping oluştur ve butonlara renk ata
+function grupRenkMapOlustur() {
+  document.querySelectorAll('.grup-btn[data-grup-id]').forEach((btn, idx) => {
+    const grupId = btn.dataset.grupId;
+    if (grupId) {
+      grupRenkMap[grupId] = idx % grupRenkleri.length;
+      // Butona renk ata
+      const renk = grupRenkleri[grupRenkMap[grupId]];
+      btn.style.background = renk.bg;
+      btn.style.color = renk.text;
+    }
+  });
+}
+
+
+// Tab değiştirme
+function showTab(tabName) {
+  aktifTab = tabName;
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  
+  document.getElementById('content_' + tabName).classList.remove('hidden');
+  document.getElementById('tab_' + tabName).classList.add('active');
+  
+  if (tabName === 'siparis' && tumUrunler.length === 0) {
+    urunleriYukle();
+  }
+}
+
+// Ürünleri API'den yükle
+async function urunleriYukle() {
+  try {
+    const response = await fetch('/api/urunler-stok');
+    const data = await response.json();
+    if (data.success) {
+      tumUrunler = data.urunler;
+      renderGrid();
+    }
+  } catch (error) {
+    console.error('Ürün yükleme hatası:', error);
+    document.getElementById('urun_grid').innerHTML = '<div class="col-span-full text-center py-8 text-red-500"><i class="fas fa-exclamation-circle text-2xl"></i><p>Ürünler yüklenemedi</p></div>';
+  }
+}
+
+// Grid render
+function renderGrid() {
+  const container = document.getElementById('urun_grid');
+  const aramaText = document.getElementById('grid_arama').value.toLowerCase();
+  const stoksuzGizle = document.getElementById('stoksuz_gizle').checked;
+  
+  let filtrelenmis = tumUrunler.filter(u => {
+    if (aktifGrup && u.grup_id != aktifGrup) return false;
+    if (aramaText && !u.urun_adi.toLowerCase().includes(aramaText)) return false;
+    if (!stoksuzGizle && u.stok <= 0) return false;
+    return true;
+  });
+  
+  if (filtrelenmis.length === 0) {
+    container.innerHTML = '<div class="col-span-full text-center py-8 text-slate-500"><i class="fas fa-search text-2xl mb-2"></i><p>Ürün bulunamadı</p></div>';
+    return;
+  }
+  
+  let html = '';
+  filtrelenmis.forEach(urun => {
+    // Grup ID'ye göre renk al (mapping kullan)
+    const renkIdx = grupRenkMap[urun.grup_id] !== undefined ? grupRenkMap[urun.grup_id] : 0;
+    const renk = grupRenkleri[renkIdx];
+    const sepette = sepet[urun.id];
+    
+    html += `<div class="urun-card rounded-lg p-3 border-2 ${sepette ? 'border-blue-500 ring-2 ring-blue-300' : 'border-slate-200 dark:border-slate-700'}" style="background: ${renk.bg};" onclick="urunSec(${urun.id})">
+      <p class="font-semibold text-sm line-clamp-2 mb-1" style="color: ${renk.text}">${urun.urun_adi}</p>
+      <p class="text-xs opacity-80" style="color: ${renk.text}">${urun.grup_adi || 'Genel'}</p>
+      <div class="flex justify-between items-center mt-2">
+        <span class="text-xs font-bold px-2 py-1 rounded ${urun.stok > 0 ? 'bg-white/20' : 'bg-red-500'}" style="color: ${renk.text}">Stok: ${urun.stok}</span>
+        ${sepette ? `<span class="text-xs font-bold px-2 py-1 rounded bg-white text-blue-600"><i class="fas fa-cart-plus mr-1"></i>${sepette.miktar}</span>` : ''}
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+
+// Grup butonları
+function grupButonlariniAyarla() {
+  document.querySelectorAll('.grup-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      aktifGrup = this.dataset.grupId;
+      
+      // Tüm butonlardan ring'i kaldır ve renkleri yeniden ata
+      document.querySelectorAll('.grup-btn').forEach(b => {
+        b.classList.remove('ring-2', 'ring-offset-2', 'ring-slate-400', 'ring-white');
+        const bGrupId = b.dataset.grupId;
+        if (bGrupId && grupRenkMap[bGrupId] !== undefined) {
+          const renk = grupRenkleri[grupRenkMap[bGrupId]];
+          b.style.background = renk.bg;
+          b.style.color = renk.text;
+        } else if (!bGrupId) {
+          b.style.background = 'linear-gradient(135deg, #475569, #334155)';
+          b.style.color = 'white';
+        }
+      });
+      
+      // Seçili butona ring ekle
+      this.classList.add('ring-2', 'ring-offset-2', 'ring-white');
+      renderGrid();
+    });
+  });
+}
+
+// Miktar butonları
+function miktarButonlariniAyarla() {
+  document.querySelectorAll('.miktar-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const miktar = parseInt(this.dataset.miktar);
+      const input = document.getElementById('modal_miktar');
+      input.value = parseInt(input.value || 0) + miktar;
+    });
+  });
+}
+
+// Ürün seçimi - Modal aç
+function urunSec(urunId) {
+  const urun = tumUrunler.find(u => u.id === urunId);
+  if (!urun) return;
+  
+  seciliUrun = urun;
+  const renkIdx = grupRenkMap[urun.grup_id] !== undefined ? grupRenkMap[urun.grup_id] : 0;
+  const renk = grupRenkleri[renkIdx];
+  
+  document.getElementById('modal_urun_adi').textContent = urun.urun_adi;
+  document.getElementById('modal_urun_grup').textContent = urun.grup_adi || 'Genel';
+  document.getElementById('modal_urun_stok').textContent = 'Mevcut Stok: ' + urun.stok;
+  document.getElementById('modal_urun_bilgi').style.background = renk.bg;
+  
+  const sepette = sepet[urunId];
+  document.getElementById('modal_miktar').value = sepette ? sepette.miktar : 100;
+  document.getElementById('miktar_modal').classList.remove('hidden');
+}
+
+function modalKapat() {
+  document.getElementById('miktar_modal').classList.add('hidden');
+  seciliUrun = null;
+}
+
+function sepeteEkle() {
+  if (!seciliUrun) return;
+  const miktar = parseInt(document.getElementById('modal_miktar').value) || 0;
+  if (miktar <= 0) {
+    delete sepet[seciliUrun.id];
+  } else {
+    const renkIdx = grupRenkMap[seciliUrun.grup_id] !== undefined ? grupRenkMap[seciliUrun.grup_id] : 0;
+    sepet[seciliUrun.id] = {
+      urun_adi: seciliUrun.urun_adi,
+      grup_adi: seciliUrun.grup_adi || 'Genel',
+      miktar: miktar,
+      stok: seciliUrun.stok,
+      renk: grupRenkleri[renkIdx]
+    };
+  }
+  modalKapat();
+  renderGrid();
+  sepetiGuncelle();
+}
+
+
+function kritikUrunEkle(urunId, miktar) {
+  const urun = tumUrunler.find(u => u.id === urunId);
+  if (!urun) return;
+  const renkIdx = grupRenkMap[urun.grup_id] !== undefined ? grupRenkMap[urun.grup_id] : 0;
+  sepet[urunId] = { urun_adi: urun.urun_adi, grup_adi: urun.grup_adi || 'Genel', miktar: miktar, stok: urun.stok, renk: grupRenkleri[renkIdx] };
+  renderGrid();
+  sepetiGuncelle();
+}
+
+function sepetiGuncelle() {
+  const keys = Object.keys(sepet);
+  const adet = keys.length;
+  document.getElementById('sepet_adet').textContent = adet;
+  document.getElementById('sepet_badge_adet').textContent = adet;
+  
+  if (adet > 0) {
+    document.getElementById('sepet_panel').classList.remove('hidden');
+    document.getElementById('sepet_badge').classList.remove('hidden');
+    document.getElementById('siparis_olustur_btn').disabled = false;
+  } else {
+    document.getElementById('sepet_panel').classList.add('hidden');
+    document.getElementById('sepet_badge').classList.add('hidden');
+    document.getElementById('siparis_olustur_btn').disabled = true;
+  }
+  
+  let html = '';
+  keys.forEach(urunId => {
+    const item = sepet[urunId];
+    html += `<tr>
+      <td class="px-4 py-3"><div class="flex items-center"><div class="w-3 h-3 rounded-full mr-2" style="background: ${item.renk.bg}"></div><div><p class="text-sm font-medium text-slate-900 dark:text-white">${item.urun_adi}</p><p class="text-xs text-slate-500 dark:text-slate-400">${item.grup_adi}</p></div></div></td>
+      <td class="px-4 py-3 text-center"><input type="number" value="${item.miktar}" min="1" onchange="sepetMiktarGuncelle(${urunId}, this.value)" class="w-20 px-2 py-1 text-center border border-slate-300 dark:border-slate-600 rounded text-sm dark:bg-slate-700 dark:text-white"></td>
+      <td class="px-4 py-3 text-center text-sm text-slate-600 dark:text-slate-400">${item.stok}</td>
+      <td class="px-4 py-3 text-center"><button type="button" onclick="sepettenCikar(${urunId})" class="text-red-500 p-1"><i class="fas fa-trash"></i></button></td>
+    </tr>`;
+  });
+  document.getElementById('sepet_tbody').innerHTML = html || '<tr><td colspan="4" class="text-center py-4 text-slate-500">Sepet boş</td></tr>';
+}
+
+function sepetMiktarGuncelle(urunId, miktar) {
+  miktar = parseInt(miktar) || 0;
+  if (miktar <= 0) { delete sepet[urunId]; } else { sepet[urunId].miktar = miktar; }
+  renderGrid();
+  sepetiGuncelle();
+}
+
+function sepettenCikar(urunId) { delete sepet[urunId]; renderGrid(); sepetiGuncelle(); }
+function sepetiTemizle() { sepet = {}; renderGrid(); sepetiGuncelle(); }
+function scrollToSepet() { document.getElementById('sepet_panel').scrollIntoView({ behavior: 'smooth' }); }
+
+
+// Sipariş oluştur
+async function siparisOlustur() {
+  const keys = Object.keys(sepet);
+  if (keys.length === 0) { showAlert('Sepette ürün yok!', 'Uyarı', 'warning'); return; }
+  
+  const aciklama = document.getElementById('siparis_aciklama').value;
+  const urunler = keys.map(urunId => ({ urun_id: parseInt(urunId), miktar: sepet[urunId].miktar }));
+  
+  const btn = document.getElementById('siparis_olustur_btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Gönderiliyor...';
+  
+  try {
+    const response = await fetch('/api/satin-alma/siparis-olustur', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content },
+      body: JSON.stringify({ urunler: urunler, aciklama: aciklama })
+    });
+    const data = await response.json();
+    
+    if (data.success) {
+      showAlert('Sipariş başarıyla oluşturuldu!\nSipariş No: ' + data.siparis_no + '\n\nSistem yöneticisi onayı bekleniyor.', 'Başarılı', 'success', function() {
+        sepet = {};
+        sepetiGuncelle();
+        renderGrid();
+        document.getElementById('siparis_aciklama').value = '';
+        window.location.reload();
+      });
+    } else {
+      showAlert('Hata: ' + data.message, 'Hata', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Onaya Gönder';
+    }
+  } catch (error) {
+    console.error('Sipariş hatası:', error);
+    showAlert('Sipariş oluşturulurken bir hata oluştu!', 'Hata', 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Onaya Gönder';
+  }
+}
+
+// Liste filtreleme
+function filtreleListeyi() {
+  const durum = document.getElementById('durum_filtre').value;
+  document.querySelectorAll('.siparis-row').forEach(row => {
+    if (!durum || row.dataset.durum === durum) {
+      row.classList.remove('hidden');
+    } else {
+      row.classList.add('hidden');
+    }
+  });
+}
+
+
+// Sipariş detay göster
+async function siparisDetayGoster(siparisId) {
+  document.getElementById('siparis_detay_modal').classList.remove('hidden');
+  document.getElementById('siparis_detay_icerik').innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-slate-400"></i></div>';
+  
+  try {
+    const response = await fetch(`/api/siparis-detay/${siparisId}`);
+    const data = await response.json();
+    
+    if (data.success) {
+      const s = data.siparis;
+      let durumBadge = '';
+      if (s.durum === 'beklemede') durumBadge = '<span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">Onay Bekliyor</span>';
+      else if (s.durum === 'onaylandi') durumBadge = '<span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">Onaylandı</span>';
+      else if (s.durum === 'teslim_alindi') durumBadge = '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Teslim Alındı</span>';
+      else if (s.durum === 'iptal') durumBadge = '<span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">İptal</span>';
+      
+      let detaylarHtml = '';
+      s.detaylar.forEach(d => {
+        detaylarHtml += `<tr><td class="px-4 py-2 text-sm">${d.urun_adi}</td><td class="px-4 py-2 text-sm text-center">${d.miktar}</td><td class="px-4 py-2 text-sm text-right">${d.birim_fiyat ? d.birim_fiyat.toFixed(2) + ' ₺' : '-'}</td></tr>`;
+      });
+      
+      document.getElementById('siparis_detay_icerik').innerHTML = `
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div><p class="text-xs text-slate-500">Sipariş No</p><p class="font-medium">${s.siparis_no}</p></div>
+          <div><p class="text-xs text-slate-500">Durum</p>${durumBadge}</div>
+          <div><p class="text-xs text-slate-500">Tarih</p><p class="font-medium">${s.siparis_tarihi}</p></div>
+          <div><p class="text-xs text-slate-500">Tedarikçi</p><p class="font-medium">${s.tedarikci || '-'}</p></div>
+        </div>
+        <h4 class="font-medium mb-2">Ürünler</h4>
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+          <thead class="bg-slate-50 dark:bg-slate-900"><tr><th class="px-4 py-2 text-left text-xs font-medium text-slate-500">Ürün</th><th class="px-4 py-2 text-center text-xs font-medium text-slate-500">Miktar</th><th class="px-4 py-2 text-right text-xs font-medium text-slate-500">Birim Fiyat</th></tr></thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-700">${detaylarHtml}</tbody>
+        </table>
+        ${s.aciklama ? `<div class="mt-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg"><p class="text-xs text-slate-500 mb-1">Açıklama</p><p class="text-sm">${s.aciklama}</p></div>` : ''}
+      `;
+    } else {
+      document.getElementById('siparis_detay_icerik').innerHTML = '<div class="text-center py-8 text-red-500">Detaylar yüklenemedi</div>';
+    }
+  } catch (error) {
+    document.getElementById('siparis_detay_icerik').innerHTML = '<div class="text-center py-8 text-red-500">Bir hata oluştu</div>';
+  }
+}
+
+function siparisDetayKapat() { document.getElementById('siparis_detay_modal').classList.add('hidden'); }
+
+
+// Tedarik giriş modal
+async function tedarikGirisAc(siparisId) {
+  document.getElementById('tedarik_modal').classList.remove('hidden');
+  document.getElementById('tedarik_modal_icerik').innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-slate-400"></i></div>';
+  
+  try {
+    const response = await fetch(`/api/siparis-detay/${siparisId}`);
+    const data = await response.json();
+    
+    if (data.success) {
+      const s = data.siparis;
+      let detaylarHtml = '';
+      s.detaylar.forEach(d => {
+        detaylarHtml += `<tr>
+          <td class="px-3 py-2 text-sm">${d.urun_adi}</td>
+          <td class="px-3 py-2 text-sm text-center">${d.miktar}</td>
+          <td class="px-3 py-2"><input type="number" name="fiyat_${d.id}" step="0.01" min="0" placeholder="0.00" class="w-24 px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded dark:bg-slate-700 dark:text-white text-right"></td>
+        </tr>`;
+      });
+      
+      document.getElementById('tedarik_modal_icerik').innerHTML = `
+        <form id="tedarik_form" onsubmit="tedarikKaydet(event, ${siparisId})">
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tedarikçi</label>
+              <select name="tedarikci_id" required class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm dark:bg-slate-700 dark:text-white">
+                <option value="">Seçiniz...</option>
+                {% for t in tedarikciler %}<option value="{{ t.id }}">{{ t.tedarikci_adi }}</option>{% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tedarik Tarihi</label>
+              <input type="date" name="tedarik_tarihi" required value="${new Date().toISOString().split('T')[0]}" class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm dark:bg-slate-700 dark:text-white">
+            </div>
+          </div>
+          
+          <h4 class="font-medium mb-2">Ürün Fiyatları</h4>
+          <div class="overflow-x-auto mb-4">
+            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+              <thead class="bg-slate-50 dark:bg-slate-900"><tr><th class="px-3 py-2 text-left text-xs font-medium text-slate-500">Ürün</th><th class="px-3 py-2 text-center text-xs font-medium text-slate-500">Miktar</th><th class="px-3 py-2 text-left text-xs font-medium text-slate-500">Birim Fiyat (₺)</th></tr></thead>
+              <tbody class="divide-y divide-slate-200 dark:divide-slate-700">${detaylarHtml}</tbody>
+            </table>
+          </div>
+          
+          <div class="flex items-center gap-2 mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <input type="checkbox" id="stok_giris_yap" name="stok_giris_yap" checked class="w-4 h-4 text-blue-600 rounded">
+            <label for="stok_giris_yap" class="text-sm text-blue-800 dark:text-blue-200">Stok girişi otomatik yapılsın</label>
+          </div>
+          
+          <div class="flex justify-end gap-3">
+            <button type="button" onclick="tedarikModalKapat()" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium">İptal</button>
+            <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg text-sm font-medium"><i class="fas fa-check mr-2"></i>Tedarik Tamamla</button>
+          </div>
+        </form>
+      `;
+    }
+  } catch (error) {
+    document.getElementById('tedarik_modal_icerik').innerHTML = '<div class="text-center py-8 text-red-500">Bir hata oluştu</div>';
+  }
+}
+
+function tedarikModalKapat() { document.getElementById('tedarik_modal').classList.add('hidden'); }
+
+
+// Tedarik kaydet
+async function tedarikKaydet(event, siparisId) {
+  event.preventDefault();
+  const form = event.target;
+  const formData = new FormData(form);
+  
+  const fiyatlar = {};
+  formData.forEach((value, key) => {
+    if (key.startsWith('fiyat_')) {
+      const detayId = key.replace('fiyat_', '');
+      fiyatlar[detayId] = parseFloat(value) || 0;
+    }
+  });
+  
+  const payload = {
+    siparis_id: siparisId,
+    tedarikci_id: parseInt(formData.get('tedarikci_id')),
+    tedarik_tarihi: formData.get('tedarik_tarihi'),
+    fiyatlar: fiyatlar,
+    stok_giris_yap: formData.get('stok_giris_yap') === 'on'
+  };
+  
+  try {
+    const response = await fetch('/api/satin-alma/tedarik-tamamla', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    
+    if (data.success) {
+      tedarikModalKapat();
+      showAlert('Tedarik işlemi başarıyla tamamlandı!' + (data.stok_giris ? '\nStok girişi yapıldı.' : ''), 'Başarılı', 'success', function() {
+        window.location.reload();
+      });
+    } else {
+      showAlert('Hata: ' + data.message, 'Hata', 'error');
+    }
+  } catch (error) {
+    console.error('Tedarik hatası:', error);
+    showAlert('Bir hata oluştu!', 'Hata', 'error');
+  }
+}
+
+// Modal dışına tıklayınca kapat
+document.getElementById('miktar_modal').addEventListener('click', function(e) { if (e.target === this) modalKapat(); });
+document.getElementById('siparis_detay_modal').addEventListener('click', function(e) { if (e.target === this) siparisDetayKapat(); });
+document.getElementById('tedarik_modal').addEventListener('click', function(e) { if (e.target === this) tedarikModalKapat(); });
+
+// ESC tuşu ile modal kapat
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    hideDialog();
+    modalKapat();
+    siparisDetayKapat();
+    tedarikModalKapat();
+  }
+});
+</script>
+{% endblock %}

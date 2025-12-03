@@ -21,7 +21,7 @@ class YuklemeGorevService:
     def create_daily_upload_tasks(tarih: date) -> List[Dict]:
         """
         Tüm depo sorumluları için günlük yükleme görevleri oluşturur.
-        Her depo sorumlusu için In House ve Arrivals yükleme görevleri oluşturur.
+        Her depo sorumlusu için In House, Arrivals ve Departures yükleme görevleri oluşturur.
         
         Args:
             tarih: Görev tarihi
@@ -75,6 +75,21 @@ class YuklemeGorevService:
                             'otel_id': otel_id,
                             'depo_sorumlusu_id': depo_sorumlusu.id,
                             'dosya_tipi': 'arrivals'
+                        })
+                    
+                    # Departures yükleme görevi
+                    departures_gorev = YuklemeGorevService._create_upload_task(
+                        otel_id=otel_id,
+                        depo_sorumlusu_id=depo_sorumlusu.id,
+                        tarih=tarih,
+                        dosya_tipi='departures'
+                    )
+                    if departures_gorev:
+                        result.append({
+                            'gorev_id': departures_gorev.id,
+                            'otel_id': otel_id,
+                            'depo_sorumlusu_id': depo_sorumlusu.id,
+                            'dosya_tipi': 'departures'
                         })
             
             db.session.commit()
