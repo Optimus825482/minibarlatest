@@ -465,8 +465,10 @@ def register_depo_routes(app):
             kullanici_otelleri = get_kullanici_otelleri()
             otel_secenekleri = get_otel_filtreleme_secenekleri()
             
-            # Seçili otel
+            # Seçili otel - yoksa ilk oteli seç
             secili_otel_id = request.args.get('otel_id', type=int)
+            if not secili_otel_id and kullanici_otelleri:
+                secili_otel_id = kullanici_otelleri[0].id
             durum_filtre = request.args.get('durum')
             
             # Siparişleri getir - Direkt query ile obje listesi
@@ -1264,8 +1266,10 @@ def register_depo_routes(app):
             kullanici_otelleri = get_kullanici_otelleri()
             otel_secenekleri = get_otel_filtreleme_secenekleri()
             
-            # Seçili otel
+            # Seçili otel - yoksa ilk oteli seç
             secili_otel_id = request.args.get('otel_id', type=int)
+            if not secili_otel_id and kullanici_otelleri:
+                secili_otel_id = kullanici_otelleri[0].id
             
             # Satın alma işlemlerini getir
             query = SatinAlmaIslem.query.options(

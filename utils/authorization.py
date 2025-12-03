@@ -22,7 +22,7 @@ def get_depo_sorumlusu_oteller(kullanici_id):
     oteller = db.session.query(Otel).join(KullaniciOtel).filter(
         KullaniciOtel.kullanici_id == kullanici_id,
         Otel.aktif == True
-    ).all()
+    ).order_by(Otel.id).all()
     
     return oteller
 
@@ -106,7 +106,7 @@ def get_kullanici_otelleri(kullanici_id=None):
     
     # Sistem yöneticisi ve admin tüm otellere erişebilir
     if kullanici.rol in ['sistem_yoneticisi', 'admin']:
-        return Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
+        return Otel.query.filter_by(aktif=True).order_by(Otel.id).all()
     
     # Depo sorumlusu - atandığı oteller
     elif kullanici.rol == 'depo_sorumlusu':
