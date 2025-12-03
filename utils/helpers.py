@@ -1037,7 +1037,7 @@ def sifirla_minibar_stoklari(kullanici_id):
                 'silinen_islem': silinen_islem,
                 'silinen_detay': silinen_detay,
                 'toplam_sifirlanan_stok': toplam_sifirlanan,
-                'tarih': datetime.now().isoformat()
+                'tarih': get_kktc_now().isoformat()
             }
         )
         
@@ -1500,7 +1500,7 @@ def kaydet_siparis_talebi(personel_id, siparis_listesi, aciklama=None):
             }
         
         # Talep numarası oluştur: KST-YYYYMMDD-XXXX
-        tarih_str = datetime.now().strftime('%Y%m%d')
+        tarih_str = get_kktc_now().strftime('%Y%m%d')
         son_talep = KatSorumlusuSiparisTalebi.query.filter(
             KatSorumlusuSiparisTalebi.talep_no.like(f'KST-{tarih_str}-%')
         ).order_by(KatSorumlusuSiparisTalebi.id.desc()).first()
@@ -1615,7 +1615,7 @@ def get_zimmet_urun_gecmisi(personel_id, urun_id, gun_sayisi=30):
             return None
         
         # Tarih aralığı
-        bugun = datetime.now()
+        bugun = get_kktc_now()
         baslangic_tarihi = bugun - timedelta(days=gun_sayisi)
         
         # Minibar işlemlerinden ürün hareketlerini getir

@@ -338,7 +338,7 @@ class FileManagementService:
         Returns:
             str: Benzersiz işlem kodu
         """
-        now = datetime.now()
+        now = get_kktc_now()
         date_part = now.strftime('%Y%m%d')
         time_part = now.strftime('%H%M%S')
         random_part = str(uuid.uuid4())[:8].upper()

@@ -407,7 +407,7 @@ def register_sistem_yoneticisi_routes(app):
                 wb.save(excel_buffer)
                 excel_buffer.seek(0)
                 
-                filename = f'odalar_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+                filename = f'odalar_{get_kktc_now().strftime("%Y%m%d_%H%M%S")}.xlsx'
                 
                 # Log kaydı
                 log_islem('export', 'odalar', {
@@ -1502,7 +1502,7 @@ def register_sistem_yoneticisi_routes(app):
                         db.session.add(stok_hareket)
                     
                     # Satın alma işlemini pasif yap veya işaretle
-                    satin_alma.aciklama = (satin_alma.aciklama or '') + f'\n\n[İPTAL EDİLDİ - {datetime.now().strftime("%d.%m.%Y %H:%M")}]'
+                    satin_alma.aciklama = (satin_alma.aciklama or '') + f'\n\n[İPTAL EDİLDİ - {get_kktc_now().strftime("%d.%m.%Y %H:%M")}]'
                 
                 flash('Sipariş iptal edildi ve stok hareketleri geri alındı.', 'success')
             

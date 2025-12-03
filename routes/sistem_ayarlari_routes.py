@@ -23,6 +23,14 @@ from utils.backup_service import BackupService
 from datetime import datetime, timezone
 from pathlib import Path
 import io
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 
 
 def register_sistem_ayarlari_routes(app):
@@ -105,7 +113,7 @@ def register_sistem_ayarlari_routes(app):
                     test_result = EmailService.send_email(
                         to_email=kullanici.email,
                         subject='🧪 Minibar Takip - Email Test',
-                        body=f'Bu bir test emailidir.\n\nEmail sistemi başarıyla yapılandırılmıştır.\n\nTest Tarihi: {datetime.now().strftime("%d.%m.%Y %H:%M")}',
+                        body=f'Bu bir test emailidir.\n\nEmail sistemi başarıyla yapılandırılmıştır.\n\nTest Tarihi: {get_kktc_now().strftime("%d.%m.%Y %H:%M")}',
                         email_tipi='sistem',
                         kullanici_id=kullanici.id,
                         html_body=f'''
@@ -117,7 +125,7 @@ def register_sistem_ayarlari_routes(app):
         </div>
         <div style="padding: 20px; background: #f9fafb; border-radius: 0 0 10px 10px;">
             <p>Email sistemi başarıyla yapılandırılmıştır.</p>
-            <p style="color: #6b7280; font-size: 14px;">Test Tarihi: {datetime.now().strftime("%d.%m.%Y %H:%M")}</p>
+            <p style="color: #6b7280; font-size: 14px;">Test Tarihi: {get_kktc_now().strftime("%d.%m.%Y %H:%M")}</p>
         </div>
     </div>
 </body>
@@ -266,7 +274,7 @@ def register_sistem_ayarlari_routes(app):
     def yedek_olustur():
         """Manuel yedek oluştur"""
         try:
-            aciklama = request.form.get('aciklama', f'Manuel yedek - {datetime.now().strftime("%d.%m.%Y %H:%M")}')
+            aciklama = request.form.get('aciklama', f'Manuel yedek - {get_kktc_now().strftime("%d.%m.%Y %H:%M")}')
             
             result = BackupService.create_backup(
                 kullanici_id=session.get('kullanici_id'),

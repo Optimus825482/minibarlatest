@@ -11,6 +11,14 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 import os
 from werkzeug.utils import secure_filename
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 from models import (
     db, SatinAlmaSiparisi, SatinAlmaSiparisDetay, Tedarikci,
     Urun, UrunTedarikciFiyat, UrunStok, SiparisDurum
@@ -114,7 +122,7 @@ class SatinAlmaExcelServisi:
                 "6. Sipariş vermek istemediğiniz ürünlerin miktarını boş bırakın",
                 "7. Dosyayı kaydedin ve sisteme yükleyin",
                 "",
-                f"Şablon Oluşturma Tarihi: {datetime.now().strftime('%d.%m.%Y %H:%M')}",
+                f"Şablon Oluşturma Tarihi: {get_kktc_now().strftime('%d.%m.%Y %H:%M')}",
                 f"Otel ID: {otel_id}"
             ]
             
@@ -251,7 +259,7 @@ class SatinAlmaExcelServisi:
                         tedarikci_id=tedarikci_id,
                         olusturan_id=kullanici_id,
                         detaylar=siparis_data['detaylar'],
-                        aciklama=f"Excel toplu yükleme - {datetime.now().strftime('%d.%m.%Y %H:%M')}"
+                        aciklama=f"Excel toplu yükleme - {get_kktc_now().strftime('%d.%m.%Y %H:%M')}"
                     )
                     
                     if siparis_result['success']:
@@ -460,7 +468,7 @@ class SatinAlmaExcelServisi:
             
             # Genel bilgiler
             ws['A3'] = 'Rapor Tarihi:'
-            ws['B3'] = datetime.now().strftime('%d.%m.%Y %H:%M')
+            ws['B3'] = get_kktc_now().strftime('%d.%m.%Y %H:%M')
             
             if 'genel_ozet' in rapor_data:
                 ozet = rapor_data['genel_ozet']

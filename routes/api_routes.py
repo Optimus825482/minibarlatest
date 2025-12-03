@@ -36,6 +36,15 @@ Roller:
 
 from flask import jsonify, request, session
 from datetime import datetime, timedelta
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
+
 from models import (
     db, Oda, Kat, OdaTipi, UrunGrup, Urun, StokHareket, 
     PersonelZimmet, PersonelZimmetDetay, MinibarIslem, MinibarIslemDetay,
@@ -2385,7 +2394,7 @@ def register_api_routes(app):
             otel_id = oteller[0].id
             
             # Sipariş numarası üret
-            bugun = datetime.now()
+            bugun = get_kktc_now()
             tarih_str = bugun.strftime('%Y%m%d')
             son_siparis = SatinAlmaSiparisi.query.filter(
                 SatinAlmaSiparisi.siparis_no.like(f'SA-{tarih_str}-%')

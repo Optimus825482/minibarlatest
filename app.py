@@ -856,7 +856,7 @@ def depo_raporlar():
             aktif_zimmet = PersonelZimmet.query.filter_by(durum='aktif').count()
             
             # Bugünkü stok hareketleri
-            bugun = datetime.now().date()
+            bugun = get_kktc_now().date()
             bugun_baslangic = datetime.combine(bugun, datetime.min.time())
             bugun_bitis = datetime.combine(bugun, datetime.max.time())
             
@@ -871,7 +871,7 @@ def depo_raporlar():
             ).count()
             
             # Bu ayki zimmet sayısı
-            ay_baslangic = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            ay_baslangic = get_kktc_now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             ay_zimmet = PersonelZimmet.query.filter(PersonelZimmet.zimmet_tarihi >= ay_baslangic).count()
             
             rapor_verisi = {
@@ -938,7 +938,7 @@ def excel_export(rapor_tipi):
         ws['A1'].font = Font(size=16, bold=True)
         
         # Tarih bilgisi
-        ws['A2'] = f"Rapor Tarihi: {datetime.now().strftime('%d.%m.%Y %H:%M')}"
+        ws['A2'] = f"Rapor Tarihi: {get_kktc_now().strftime('%d.%m.%Y %H:%M')}"
         ws['A2'].font = Font(size=10)
         
         row_num = 4
@@ -1164,7 +1164,7 @@ def excel_export(rapor_tipi):
         
         response = make_response(output.getvalue())
         response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        response.headers['Content-Disposition'] = f'attachment; filename={rapor_tipi}_raporu_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        response.headers['Content-Disposition'] = f'attachment; filename={rapor_tipi}_raporu_{get_kktc_now().strftime("%Y%m%d_%H%M%S")}.xlsx'
         
         return response
         
@@ -1227,7 +1227,7 @@ def pdf_export(rapor_tipi):
         story.append(Spacer(1, 12))
         
         # Tarih
-        date_text = f"Rapor Tarihi: {datetime.now().strftime('%d.%m.%Y %H:%M')}"
+        date_text = f"Rapor Tarihi: {get_kktc_now().strftime('%d.%m.%Y %H:%M')}"
         date_para = Paragraph(date_text, styles['Normal'])
         story.append(date_para)
         story.append(Spacer(1, 20))
@@ -1414,7 +1414,7 @@ def pdf_export(rapor_tipi):
             kritik_urunler = get_kritik_stok_urunler()
             aktif_zimmet = PersonelZimmet.query.filter_by(durum='aktif').count()
             
-            bugun = datetime.now().date()
+            bugun = get_kktc_now().date()
             bugun_baslangic = datetime.combine(bugun, datetime.min.time())
             bugun_bitis = datetime.combine(bugun, datetime.max.time())
             
@@ -1428,7 +1428,7 @@ def pdf_export(rapor_tipi):
                 StokHareket.islem_tarihi.between(bugun_baslangic, bugun_bitis)
             ).count()
             
-            ay_baslangic = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            ay_baslangic = get_kktc_now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             ay_zimmet = PersonelZimmet.query.filter(PersonelZimmet.zimmet_tarihi >= ay_baslangic).count()
             
             data = [
@@ -1470,7 +1470,7 @@ def pdf_export(rapor_tipi):
         # Response oluştur
         response = make_response(buffer.getvalue())
         response.headers['Content-Type'] = 'application/pdf'
-        response.headers['Content-Disposition'] = f'attachment; filename={rapor_tipi}_raporu_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename={rapor_tipi}_raporu_{get_kktc_now().strftime("%Y%m%d_%H%M%S")}.pdf'
         
         return response
         
@@ -1842,7 +1842,7 @@ def audit_trail():
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     
     # İstatistikler
-    bugun = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    bugun = get_kktc_now().replace(hour=0, minute=0, second=0, microsecond=0)
     bu_hafta = bugun - timedelta(days=bugun.weekday())
     bu_ay = bugun.replace(day=1)
     
@@ -1983,7 +1983,7 @@ def audit_trail_export():
     wb.save(output)
     output.seek(0)
     
-    filename = f"audit_trail_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    filename = f"audit_trail_{get_kktc_now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     
     # Audit export işlemini logla
     from utils.audit import audit_export
@@ -2221,7 +2221,7 @@ def system_backup_panel():
             'stok_hareket_count': StokHareket.query.count(),
             'minibar_kontrol_count': MinibarIslem.query.count(),
             'database_name': app.config['SQLALCHEMY_DATABASE_URI'].split('/')[-1].split('?')[0],
-            'current_time': datetime.now().strftime('%d.%m.%Y %H:%M:%S'),
+            'current_time': get_kktc_now().strftime('%d.%m.%Y %H:%M:%S'),
             'last_backup': session.get('last_backup_time'),
         }
         
@@ -2266,7 +2266,7 @@ def system_backup_download():
         sql_dump = StringIO()
         
         # Header
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = get_kktc_now().strftime('%Y-%m-%d %H:%M:%S')
         sql_dump.write("-- Minibar Takip Sistemi Database Backup\n")
         sql_dump.write(f"-- Backup Date: {timestamp}\n")
         sql_dump.write(f"-- Backup Type: {backup_type}\n")
@@ -2329,10 +2329,10 @@ def system_backup_download():
         sql_bytes = io.BytesIO(sql_content.encode('utf-8'))
         
         # Son backup zamanını kaydet
-        session['last_backup_time'] = datetime.now().strftime('%d.%m.%Y %H:%M:%S')
+        session['last_backup_time'] = get_kktc_now().strftime('%d.%m.%Y %H:%M:%S')
         
         # Dosya adı
-        filename = f'minibar_backup_{backup_type}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.sql'
+        filename = f'minibar_backup_{backup_type}_{get_kktc_now().strftime("%Y%m%d_%H%M%S")}.sql'
         
         # Dosyayı gönder
         return send_file(
@@ -2532,7 +2532,7 @@ def kat_sorumlusu_zimmet_export():
             'format': 'excel'
         })
         
-        filename = f'zimmet_stoklari_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        filename = f'zimmet_stoklari_{get_kktc_now().strftime("%Y%m%d_%H%M%S")}.xlsx'
         
         return send_file(
             excel_buffer,

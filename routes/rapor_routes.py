@@ -25,6 +25,14 @@ from models import db, Otel, Kat, Oda, Urun, StokHareket, MinibarIslem, MinibarI
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem, log_hata
 from utils.authorization import get_kullanici_otelleri
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 
 # Blueprint oluştur
 raporlar_bp = Blueprint('raporlar', __name__, url_prefix='/raporlar')
@@ -497,7 +505,7 @@ def stok_excel():
             ws['A1'].alignment = Alignment(horizontal='center')
             
             ws.merge_cells('A2:F2')
-            ws['A2'] = f'Rapor Tarihi: {datetime.now().strftime("%d.%m.%Y %H:%M")}'
+            ws['A2'] = f'Rapor Tarihi: {get_kktc_now().strftime("%d.%m.%Y %H:%M")}'
             ws['A2'].alignment = Alignment(horizontal='center')
             
             # Tablo başlıkları
@@ -549,7 +557,7 @@ def stok_excel():
                 
                 row += 1
             
-            filename = f'mevcut_stok_{datetime.now().strftime("%Y%m%d_%H%M")}.xlsx'
+            filename = f'mevcut_stok_{get_kktc_now().strftime("%Y%m%d_%H%M")}.xlsx'
             
         else:
             # Stok hareketleri
@@ -1111,7 +1119,7 @@ def zimmet_excel():
         wb.save(excel_buffer)
         excel_buffer.seek(0)
         
-        filename = f'zimmet_raporu_{datetime.now().strftime("%Y%m%d_%H%M")}.xlsx'
+        filename = f'zimmet_raporu_{get_kktc_now().strftime("%Y%m%d_%H%M")}.xlsx'
         
         log_islem('export', 'zimmet_raporu', {'personel_id': personel_id, 'durum': durum})
         

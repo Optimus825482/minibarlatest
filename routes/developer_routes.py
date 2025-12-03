@@ -10,6 +10,14 @@ from datetime import datetime, timedelta
 from sqlalchemy import func, text
 from models import db, Kullanici, Otel, Oda, MisafirKayit, MinibarIslem
 import logging
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 
 # CSRF protection
 try:
@@ -87,7 +95,7 @@ def system_health():
     try:
         # Uptime hesapla (boot time'dan beri)
         boot_time = psutil.boot_time()
-        uptime_seconds = datetime.now().timestamp() - boot_time
+        uptime_seconds = get_kktc_now().timestamp() - boot_time
         
         health = {
             'database': check_database_health(),
@@ -95,7 +103,7 @@ def system_health():
             'memory': check_memory_health(),
             'cpu': check_cpu_health(),
             'uptime': int(uptime_seconds),
-            'timestamp': datetime.now().isoformat()
+            'timestamp': get_kktc_now().isoformat()
         }
         return jsonify(health)
     except Exception as e:
@@ -107,12 +115,12 @@ def metrics_summary():
     """Sistem metrikleri özeti"""
     try:
         # Aktif kullanıcı sayısı (son 15 dakikada işlem yapan)
-        fifteen_min_ago = datetime.now() - timedelta(minutes=15)
+        fifteen_min_ago = get_kktc_now() - timedelta(minutes=15)
         active_users = db.session.query(func.count(func.distinct(MinibarIslem.personel_id)))\
             .filter(MinibarIslem.islem_tarihi >= fifteen_min_ago).scalar() or 0
         
         # Son 1 saatteki işlem sayısı
-        one_hour_ago = datetime.now() - timedelta(hours=1)
+        one_hour_ago = get_kktc_now() - timedelta(hours=1)
         total_requests = db.session.query(func.count(MinibarIslem.id))\
             .filter(MinibarIslem.islem_tarihi >= one_hour_ago).scalar() or 0
         
@@ -158,7 +166,7 @@ def metrics_summary():
         # Performance history (son 10 dakika)
         performance_history = []
         for i in range(10, 0, -1):
-            time_point = datetime.now() - timedelta(minutes=i)
+            time_point = get_kktc_now() - timedelta(minutes=i)
             cpu = psutil.cpu_percent(interval=0.1)
             memory = psutil.virtual_memory().percent
             performance_history.append({
@@ -285,7 +293,7 @@ def get_database_stats():
         }
         
         # Son 24 saat aktivite
-        yesterday = datetime.now() - timedelta(days=1)
+        yesterday = get_kktc_now() - timedelta(days=1)
         try:
             stats['new_rezervasyons_24h'] = MinibarIslem.query.filter(
                 MinibarIslem.islem_tarihi >= yesterday
@@ -426,7 +434,7 @@ def get_product_stats():
         grup_stats.sort(key=lambda x: x['toplam_stok'], reverse=True)
         
         # Son 24 saat stok hareketleri
-        yesterday = datetime.now() - timedelta(days=1)
+        yesterday = get_kktc_now() - timedelta(days=1)
         recent_movements = StokHareket.query.filter(
             StokHareket.islem_tarihi >= yesterday
         ).count()

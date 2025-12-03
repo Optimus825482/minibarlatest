@@ -192,7 +192,7 @@ def gunluk_doluluk_yazdir():
         return render_template("kat_sorumlusu/gunluk_doluluk_yazdir.html",
             rapor=rapor,
             secili_tarih=secili_tarih,
-            simdi=datetime.now(),
+            simdi=get_kktc_now(),
             bos_odalar_dahil=bos_odalar_dahil
         )
         

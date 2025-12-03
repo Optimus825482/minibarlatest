@@ -14,6 +14,14 @@ from models import db, MisafirKayit, DosyaYukleme, Oda, Kat
 from sqlalchemy import and_
 import traceback
 import re
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 
 
 class ExcelProcessingService:
@@ -614,7 +622,7 @@ class ExcelProcessingService:
         date_str = str(date_value).strip()
         
         # Yılı belirle
-        yil = rapor_tarihi.year if rapor_tarihi else datetime.now().year
+        yil = rapor_tarihi.year if rapor_tarihi else get_kktc_now().year
         
         # P4001 formatları: "1.12. 8:59:", "24.11 03:16", "3.12. 2:00:"
         patterns = [

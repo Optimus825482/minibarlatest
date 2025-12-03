@@ -18,6 +18,14 @@ from io import BytesIO
 from datetime import datetime, date, timedelta, timezone
 from typing import Dict, Any, List, Optional
 from decimal import Decimal
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 
 logger = logging.getLogger(__name__)
 
@@ -566,7 +574,7 @@ class RaporEmailService:
         <!-- Footer -->
         <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 12px;">
             <p>Bu rapor otomatik olarak oluşturulmuştur.</p>
-            <p>Minibar Takip Sistemi © {datetime.now().year}</p>
+            <p>Minibar Takip Sistemi © {get_kktc_now().year}</p>
         </div>
     </div>
 </body>
@@ -757,7 +765,7 @@ class RaporEmailService:
         <!-- Footer -->
         <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 12px;">
             <p>Bu rapor otomatik olarak oluşturulmuştur.</p>
-            <p>Minibar Takip Sistemi © {datetime.now().year}</p>
+            <p>Minibar Takip Sistemi © {get_kktc_now().year}</p>
         </div>
     </div>
 </body>

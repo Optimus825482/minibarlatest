@@ -8,6 +8,14 @@ from datetime import datetime, timedelta
 from typing import Any, Optional
 import hashlib
 import json
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 
 
 class QueryCache:
@@ -27,7 +35,7 @@ class QueryCache:
             value, timestamp = self.cache[key]
             
             # Check if expired
-            if datetime.now() - timestamp < timedelta(seconds=self.ttl):
+            if get_kktc_now() - timestamp < timedelta(seconds=self.ttl):
                 return value
             
             # Expired, remove from cache
@@ -37,7 +45,7 @@ class QueryCache:
     
     def set(self, key: str, value: Any):
         """Set value in cache"""
-        self.cache[key] = (value, datetime.now())
+        self.cache[key] = (value, get_kktc_now())
     
     def invalidate(self, pattern: Optional[str] = None):
         """

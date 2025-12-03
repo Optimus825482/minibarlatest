@@ -13,6 +13,14 @@ import bleach
 import zipfile
 import io
 from datetime import datetime
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 
 
 def register_admin_qr_routes(app):
@@ -308,7 +316,7 @@ def register_admin_qr_routes(app):
             })
             
             # Dosya adı
-            filename = f'QR_Kodlari_{datetime.now().strftime("%Y%m%d_%H%M%S")}.zip'
+            filename = f'QR_Kodlari_{get_kktc_now().strftime("%Y%m%d_%H%M%S")}.zip'
             
             return send_file(
                 zip_buffer,

@@ -37,6 +37,14 @@ from utils.satin_alma_servisleri import SatinAlmaServisi
 from utils.tedarikci_servisleri import TedarikciServisi
 from datetime import datetime, date, timedelta
 import os
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 
 
 def register_depo_routes(app):
@@ -860,7 +868,7 @@ def register_depo_routes(app):
                     if iletisim_tarihi_str:
                         iletisim_tarihi = datetime.strptime(iletisim_tarihi_str, '%Y-%m-%dT%H:%M')
                     else:
-                        iletisim_tarihi = datetime.now()
+                        iletisim_tarihi = get_kktc_now()
                     
                     # İletişim kaydı oluştur
                     iletisim = TedarikciIletisim(
@@ -973,7 +981,7 @@ def register_depo_routes(app):
             
             # Güvenli dosya adı oluştur
             filename = secure_filename(dosya.filename)
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            timestamp = get_kktc_now().strftime('%Y%m%d_%H%M%S')
             unique_filename = f"{tedarikci_id}_{timestamp}_{filename}"
             
             # Yükleme klasörünü oluştur
@@ -992,7 +1000,7 @@ def register_depo_routes(app):
                 dosya_adi=filename,
                 dosya_yolu=dosya_yolu,
                 dosya_boyutu=dosya_boyutu,
-                yuklenme_tarihi=datetime.now(),
+                yuklenme_tarihi=get_kktc_now(),
                 yuklenen_kullanici_id=session['kullanici_id']
             )
             
@@ -1165,7 +1173,7 @@ def register_depo_routes(app):
             # İstatistikleri hesapla
             istatistikler = {
                 'toplam': len(islemler),
-                'bu_ay': sum(1 for i in islemler if i.islem_tarihi.month == datetime.now().month),
+                'bu_ay': sum(1 for i in islemler if i.islem_tarihi.month == get_kktc_now().month),
                 'toplam_tutar': sum(float(i.genel_toplam) for i in islemler)
             }
             
@@ -1266,7 +1274,7 @@ def register_depo_routes(app):
                     return redirect(url_for('satin_alma', otel_id=otel_id))
                 
                 # İşlem numarası oluştur
-                islem_no = f"SA-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+                islem_no = f"SA-{get_kktc_now().strftime('%Y%m%d%H%M%S')}"
                 
                 # Satın alma işlemi oluştur
                 satin_alma_islem = SatinAlmaIslem(
@@ -1623,7 +1631,7 @@ def register_depo_routes(app):
                     
                     # İşlem numarası üret
                     def islem_no_uret():
-                        bugun = datetime.now()
+                        bugun = get_kktc_now()
                         tarih_str = bugun.strftime('%Y%m%d')
                         
                         # Bugün oluşturulan son işlem numarasını bul
@@ -2202,7 +2210,7 @@ def register_depo_routes(app):
             
             # Sipariş durumunu iptal et
             zimmet.durum = 'iptal'
-            zimmet.iade_tarihi = datetime.now()
+            zimmet.iade_tarihi = get_kktc_now()
             
             db.session.commit()
             

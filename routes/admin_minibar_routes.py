@@ -72,7 +72,7 @@ def register_admin_minibar_routes(app):
                     excel_buffer = export_depo_stok_excel(stok_listesi)
                     if excel_buffer:
                         from datetime import datetime
-                        filename = f'depo_stoklari_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+                        filename = f'depo_stoklari_{get_kktc_now().strftime("%Y%m%d_%H%M%S")}.xlsx'
                         
                         # Log kaydı
                         log_islem('export', 'depo_stoklari', {

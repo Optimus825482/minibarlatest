@@ -19,6 +19,14 @@ Roller:
 
 from flask import render_template, redirect, url_for, flash, session
 from datetime import datetime, timedelta
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 
 from models import db, Kat, Oda, Kullanici, UrunGrup, Urun, StokHareket, PersonelZimmet, PersonelZimmetDetay, MinibarIslem, MinibarIslemDetay
 from utils.decorators import login_required, role_required
@@ -200,7 +208,7 @@ def register_dashboard_routes(app):
             urun_labels = []
             urun_tuketim_miktarlari = []
             try:
-                bugun = datetime.now().date()
+                bugun = get_kktc_now().date()
                 otuz_gun_once = bugun - timedelta(days=30)
             
                 # Minibar işlemlerinden en çok tüketilen ürünleri al
@@ -471,7 +479,7 @@ def register_dashboard_routes(app):
         
         # Her otel için bugünkü doluluk bilgilerini al
         otel_doluluk_bilgileri = []
-        bugun = datetime.now().date()
+        bugun = get_kktc_now().date()
         
         for otel in atanan_oteller:
             doluluk_raporu = OccupancyService.get_gunluk_doluluk_raporu(bugun, otel.id)
@@ -519,7 +527,7 @@ def register_dashboard_routes(app):
         ).scalar() or 0
         
         # Bu ay yapılan iade işlemleri
-        ay_basi = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        ay_basi = get_kktc_now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         bu_ay_iadeler = StokHareket.query.filter(
             StokHareket.hareket_tipi == 'giris',
             StokHareket.aciklama.like('%Zimmet iadesi%'),
@@ -558,7 +566,7 @@ def register_dashboard_routes(app):
                 grup_stok_miktarlari.append(toplam_stok)
         
         # Son 7 günün stok hareket istatistikleri
-        bugun = datetime.now().date()
+        bugun = get_kktc_now().date()
         gun_labels = []
         giris_verileri = []
         cikis_verileri = []
@@ -829,7 +837,7 @@ def register_dashboard_routes(app):
         stokout_sayisi = kritik_stoklar['istatistik']['stokout_sayisi']
         
         # Bugünkü kullanım (son 24 saat)
-        bugun_baslangic = datetime.now() - timedelta(days=1)
+        bugun_baslangic = get_kktc_now() - timedelta(days=1)
         bugunun_kullanimi = db.session.query(
             db.func.sum(MinibarIslemDetay.eklenen_miktar)
         ).join(MinibarIslem).filter(
@@ -843,7 +851,7 @@ def register_dashboard_routes(app):
         ).order_by(MinibarIslem.islem_tarihi.desc()).limit(10).all()
         
         # Grafik verileri - En çok kullanılan 5 ürün (son 7 gün)
-        yedi_gun_once = datetime.now() - timedelta(days=7)
+        yedi_gun_once = get_kktc_now() - timedelta(days=7)
         en_cok_kullanilan = db.session.query(
             Urun.urun_adi,
             db.func.sum(MinibarIslemDetay.eklenen_miktar).label('toplam')
@@ -880,7 +888,7 @@ def register_dashboard_routes(app):
         gunluk_tuketim = []
         gunluk_labels = []
         for i in range(6, -1, -1):
-            gun = datetime.now() - timedelta(days=i)
+            gun = get_kktc_now() - timedelta(days=i)
             gun_baslangic = gun.replace(hour=0, minute=0, second=0, microsecond=0)
             gun_bitis = gun_baslangic + timedelta(days=1)
             

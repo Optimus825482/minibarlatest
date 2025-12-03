@@ -115,7 +115,7 @@ class BackupService:
             db_config = BackupService.get_db_config()
             
             # Benzersiz backup ID oluştur
-            backup_id = f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+            backup_id = f"backup_{get_kktc_now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
             filename = f"{backup_id}.sql.gz"
             filepath = BACKUP_DIR / filename
             temp_filepath = BACKUP_DIR / f"{backup_id}.sql"
@@ -173,7 +173,7 @@ class BackupService:
                 backup_id=backup_id,
                 filename=filename,
                 file_size=file_size,
-                description=aciklama or f"Otomatik yedek - {datetime.now().strftime('%d.%m.%Y %H:%M')}",
+                description=aciklama or f"Otomatik yedek - {get_kktc_now().strftime('%d.%m.%Y %H:%M')}",
                 created_by=kullanici_id,
                 status='completed'
             )

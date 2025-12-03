@@ -1178,7 +1178,7 @@ def otomatik_yedekleme_task():
             # Yedek al
             result = BackupService.create_backup(
                 kullanici_id=None,
-                aciklama=f"Otomatik günlük yedek - {datetime.now().strftime('%d.%m.%Y')}"
+                aciklama=f"Otomatik günlük yedek - {get_kktc_now().strftime('%d.%m.%Y')}"
             )
             
             if result['success']:

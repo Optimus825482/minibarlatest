@@ -8,6 +8,14 @@ from flask_mail import Message
 from app import mail, app
 from datetime import datetime
 import logging
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +81,7 @@ class EmailServisi:
                 return False
 
             # Gecikme süresi hesapla
-            gecikme_gun = (datetime.now().date() - siparis.tahmini_teslimat_tarihi).days
+            gecikme_gun = (get_kktc_now().date() - siparis.tahmini_teslimat_tarihi).days
             
             # Email içeriği
             subject = f"⚠️ Sipariş Gecikme Uyarısı - {siparis.siparis_no}"

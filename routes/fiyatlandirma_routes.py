@@ -7,6 +7,14 @@ from functools import wraps
 from datetime import datetime, date
 from decimal import Decimal
 from models import db, Kullanici
+import pytz
+
+# KKTC Timezone
+KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
+def get_kktc_now():
+    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
+    return datetime.now(KKTC_TZ)
 from utils.fiyatlandirma_servisler import (
     FiyatYonetimServisi,
     KampanyaServisi,
@@ -192,7 +200,7 @@ def tedarikci_fiyatlari(tedarikci_id):
         query = UrunTedarikciFiyat.query.filter_by(tedarikci_id=tedarikci_id)
         
         if aktif:
-            simdi = datetime.now()
+            simdi = get_kktc_now()
             query = query.filter(
                 UrunTedarikciFiyat.aktif == True,
                 UrunTedarikciFiyat.baslangic_tarihi <= simdi
@@ -540,7 +548,7 @@ def guncel_fiyatlar_listesi():
         from sqlalchemy import and_
         
         otel_id = request.args.get('otel_id', type=int)
-        simdi = datetime.now()
+        simdi = get_kktc_now()
         
         # Aktif alış fiyatlarını getir
         query = db.session.query(
