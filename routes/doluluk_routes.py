@@ -545,8 +545,8 @@ def doluluk_yukle():
             flash("Dosya seçilmedi", "danger")
             return redirect(url_for("doluluk.doluluk_yonetimi"))
 
-        if not file.filename.lower().endswith(('.xlsx', '.xls')):
-            flash("Sadece Excel dosyaları (.xlsx, .xls) yüklenebilir", "danger")
+        if not file.filename.lower().endswith(('.xlsx', '.xls', '.xlsm')):
+            flash("Sadece Excel dosyaları (.xlsx, .xls, .xlsm) yüklenebilir", "danger")
             return redirect(url_for("doluluk.doluluk_yonetimi"))
 
         user_id = session.get("kullanici_id")

@@ -1236,7 +1236,7 @@ class TopluSiparisForm(BaseForm):
         'Excel Dosyası',
         validators=[
             DataRequired(message='Excel dosyası seçimi zorunludur.'),
-            FileAllowed(['xlsx', 'xls'], 'Sadece Excel dosyaları yüklenebilir.')
+            FileAllowed(['xlsx', 'xls', 'xlsm'], 'Sadece Excel dosyaları yüklenebilir.')
         ]
     )
     

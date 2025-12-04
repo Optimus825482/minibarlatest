@@ -106,7 +106,7 @@ class Config:
     # Dosya yükleme ayarları - GÜVENLİK
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB - Optimized (was 100MB)
     UPLOAD_FOLDER = 'uploads'
-    ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'pdf', 'sql'}  # SQL backup için eklendi
+    ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'xlsm', 'pdf', 'sql'}  # xlsm ve SQL backup için eklendi
     
     # GÜVENLİK HEADERS - Production için önerilen
     SECURITY_HEADERS = {
