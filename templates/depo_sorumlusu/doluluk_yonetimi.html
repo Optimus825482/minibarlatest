@@ -70,7 +70,7 @@ block content %}
                       name="excel_file"
                       type="file"
                       class="sr-only"
-                      accept=".xlsx,.xls"
+                      accept=".xlsx,.xls,.xlsm"
                       multiple
                       required
                     />
@@ -78,7 +78,7 @@ block content %}
                   <p class="pl-1">veya sürükleyip bırakın</p>
                 </div>
                 <p class="text-xs text-slate-500 dark:text-slate-400">
-                  XLSX veya XLS (Birden fazla dosya seçebilirsiniz)
+                  XLSX, XLS veya XLSM (Birden fazla dosya seçebilirsiniz)
                 </p>
               </div>
             </div>
@@ -545,6 +545,58 @@ block content %}
   </div>
 </div>
 
+<!-- Geçersiz Dosya Uyarı Modal -->
+<div id="invalidFileModal" class="hidden fixed inset-0 overflow-y-auto z-50">
+  <div
+    class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center"
+  >
+    <div
+      class="fixed inset-0 bg-slate-900 bg-opacity-75 transition-opacity"
+      onclick="closeInvalidFileModal()"
+    ></div>
+    <div
+      class="relative bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-md sm:w-full"
+    >
+      <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6">
+        <div
+          class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 dark:bg-red-900/30 rounded-full mb-4"
+        >
+          <i
+            class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 text-xl"
+          ></i>
+        </div>
+        <h3
+          class="text-lg leading-6 font-medium text-slate-900 dark:text-white text-center mb-2"
+        >
+          Geçersiz Dosya Formatı
+        </h3>
+        <p class="text-sm text-slate-600 dark:text-slate-400 text-center mb-4">
+          Aşağıdaki dosyalar desteklenmeyen formatta olduğu için yüklenemez:
+        </p>
+        <div
+          id="invalidFilesList"
+          class="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 max-h-40 overflow-y-auto"
+        ></div>
+        <div class="mt-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+          <p class="text-xs text-blue-800 dark:text-blue-200">
+            <i class="fas fa-info-circle mr-1"></i>
+            <strong>Desteklenen formatlar:</strong> .xlsx, .xls, .xlsm
+          </p>
+        </div>
+      </div>
+      <div class="bg-slate-50 dark:bg-slate-900 px-4 py-3 sm:px-6">
+        <button
+          type="button"
+          onclick="closeInvalidFileModal()"
+          class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white sm:text-sm"
+        >
+          Anladım
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Hata Detayları Modal -->
 <div id="errorModal" class="hidden fixed inset-0 overflow-y-auto z-50">
   <div
@@ -630,11 +682,26 @@ block content %}
   dropZone.addEventListener(
     "drop",
     (e) => {
-      const files = Array.from(e.dataTransfer.files).filter(
-        (f) => f.name.endsWith(".xlsx") || f.name.endsWith(".xls")
+      const allFiles = Array.from(e.dataTransfer.files);
+      const validFiles = allFiles.filter(
+        (f) =>
+          f.name.toLowerCase().endsWith(".xlsx") ||
+          f.name.toLowerCase().endsWith(".xls") ||
+          f.name.toLowerCase().endsWith(".xlsm")
       );
-      if (files.length > 0) {
-        addFiles(files, true); // Otomatik önizleme aç
+      const invalidFiles = allFiles.filter(
+        (f) =>
+          !f.name.toLowerCase().endsWith(".xlsx") &&
+          !f.name.toLowerCase().endsWith(".xls") &&
+          !f.name.toLowerCase().endsWith(".xlsm")
+      );
+
+      if (invalidFiles.length > 0) {
+        showInvalidFileModal(invalidFiles);
+      }
+
+      if (validFiles.length > 0) {
+        addFiles(validFiles, invalidFiles.length === 0); // Geçersiz dosya yoksa otomatik önizleme
       }
     },
     false
@@ -648,7 +715,28 @@ block content %}
 
   fileInput.addEventListener("change", (e) => {
     if (e.target.files.length > 0) {
-      addFiles(Array.from(e.target.files), true); // Otomatik önizleme aç
+      const allFiles = Array.from(e.target.files);
+      const validFiles = allFiles.filter(
+        (f) =>
+          f.name.toLowerCase().endsWith(".xlsx") ||
+          f.name.toLowerCase().endsWith(".xls") ||
+          f.name.toLowerCase().endsWith(".xlsm")
+      );
+      const invalidFiles = allFiles.filter(
+        (f) =>
+          !f.name.toLowerCase().endsWith(".xlsx") &&
+          !f.name.toLowerCase().endsWith(".xls") &&
+          !f.name.toLowerCase().endsWith(".xlsm")
+      );
+
+      if (invalidFiles.length > 0) {
+        showInvalidFileModal(invalidFiles);
+        e.target.value = ""; // Input'u temizle
+      }
+
+      if (validFiles.length > 0) {
+        addFiles(validFiles, invalidFiles.length === 0);
+      }
     }
   });
 
@@ -785,6 +873,28 @@ block content %}
 
   function closeErrorModal() {
     document.getElementById("errorModal").classList.add("hidden");
+  }
+
+  // Geçersiz dosya modal fonksiyonları
+  function showInvalidFileModal(invalidFiles) {
+    const listContainer = document.getElementById("invalidFilesList");
+    listContainer.innerHTML = invalidFiles
+      .map((file) => {
+        const ext = file.name.split(".").pop().toLowerCase();
+        return `
+        <div class="flex items-center gap-2 py-1 text-sm text-red-700 dark:text-red-300">
+          <i class="fas fa-file text-red-500"></i>
+          <span class="truncate flex-1">${file.name}</span>
+          <span class="text-xs bg-red-200 dark:bg-red-800 px-2 py-0.5 rounded">.${ext}</span>
+        </div>
+      `;
+      })
+      .join("");
+    document.getElementById("invalidFileModal").classList.remove("hidden");
+  }
+
+  function closeInvalidFileModal() {
+    document.getElementById("invalidFileModal").classList.add("hidden");
   }
 
   // Çoklu dosya önizleme
