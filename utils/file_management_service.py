@@ -25,7 +25,7 @@ class FileManagementService:
     # Konfigürasyon
     UPLOAD_FOLDER = 'uploads/doluluk/'
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
-    ALLOWED_EXTENSIONS = {'xlsx', 'xls'}
+    ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'xlsm'}
     FILE_RETENTION_DAYS = 4
     
     @staticmethod
@@ -48,7 +48,7 @@ class FileManagementService:
             
             # Dosya uzantısı kontrolü
             if not FileManagementService._allowed_file(file.filename):
-                return False, None, None, 'Geçersiz dosya formatı. Sadece .xlsx ve .xls dosyaları kabul edilir'
+                return False, None, None, 'Geçersiz dosya formatı. Sadece .xlsx, .xls ve .xlsm dosyaları kabul edilir'
             
             # Dosya boyutu kontrolü (stream'den okumadan önce)
             file.seek(0, os.SEEK_END)
