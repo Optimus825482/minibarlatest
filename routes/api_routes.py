@@ -2163,9 +2163,9 @@ def register_api_routes(app):
     @login_required
     @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
     def api_zimmet_iptal(zimmet_id):
-        """Zimmet iptal et - kullanılmamışsa"""
+        """Zimmet sil - kullanılmamışsa, FIFO kayıtlarını geri al ve kaydı sil"""
         try:
-            from models import PersonelZimmet, PersonelZimmetDetay, UrunStok
+            from models import PersonelZimmet, PersonelZimmetDetay, UrunStok, StokFifoKayit, StokFifoKullanim, StokHareket
             
             zimmet = db.session.get(PersonelZimmet, zimmet_id)
             if not zimmet:
@@ -2174,22 +2174,55 @@ def register_api_routes(app):
             if zimmet.durum != 'aktif':
                 return jsonify({'success': False, 'error': 'Bu zimmet zaten iptal edilmiş'}), 400
             
-            # Kullanım kontrolü
-            for d in zimmet.detaylar:
-                if d.kalan_miktar < d.miktar:
-                    return jsonify({'success': False, 'error': 'Bu zimmet kullanıldığı için iptal edilemez!'}), 400
+            otel_id = zimmet.personel.otel_id if zimmet.personel else None
             
-            # Stokları geri ekle
+            # Stokları geri ekle ve FIFO kayıtlarını geri al
             for d in zimmet.detaylar:
-                stok = UrunStok.query.filter_by(urun_id=d.urun_id, otel_id=zimmet.personel.otel_id if zimmet.personel else None).first()
-                if stok:
-                    stok.mevcut_stok += d.miktar
+                # Geri alınacak miktar hesapla (kullanılmamış + iade edilmemiş)
+                geri_alinacak = d.miktar - getattr(d, 'kullanilan_miktar', 0) - getattr(d, 'iade_edilen_miktar', 0)
+                
+                if geri_alinacak > 0:
+                    # UrunStok güncelle
+                    stok = UrunStok.query.filter_by(urun_id=d.urun_id, otel_id=otel_id).first()
+                    if stok:
+                        stok.mevcut_stok += geri_alinacak
+                        stok.son_giris_tarihi = get_kktc_now()
+                        stok.son_guncelleyen_id = session.get('kullanici_id')
+                    
+                    # Stok hareketi kaydet
+                    stok_hareket = StokHareket(
+                        urun_id=d.urun_id,
+                        hareket_tipi='giris',
+                        miktar=geri_alinacak,
+                        aciklama=f'Zimmet Silme İadesi - Zimmet #{zimmet_id}',
+                        islem_yapan_id=session.get('kullanici_id')
+                    )
+                    db.session.add(stok_hareket)
+                
+                # FIFO kullanım kayıtlarını geri al ve sil
+                fifo_kullanimlar = StokFifoKullanim.query.filter_by(
+                    referans_id=d.id,
+                    islem_tipi='zimmet'
+                ).all()
+                
+                for kullanim in fifo_kullanimlar:
+                    fifo_kayit = db.session.get(StokFifoKayit, kullanim.fifo_kayit_id)
+                    if fifo_kayit:
+                        fifo_kayit.kalan_miktar += kullanim.miktar
+                        fifo_kayit.kullanilan_miktar -= kullanim.miktar
+                        fifo_kayit.tukendi = False
+                    db.session.delete(kullanim)
+                
+                # Detay kaydını sil
+                db.session.delete(d)
             
-            # Zimmeti iptal et
-            zimmet.durum = 'iptal'
+            # Zimmet kaydını sil
+            db.session.delete(zimmet)
             db.session.commit()
             
-            return jsonify({'success': True, 'message': 'Zimmet iptal edildi'})
+            log_islem('silme', 'zimmet', {'zimmet_id': zimmet_id})
+            
+            return jsonify({'success': True, 'message': 'Zimmet silindi, stoklar geri eklendi'})
             
         except Exception as e:
             db.session.rollback()
@@ -2200,30 +2233,61 @@ def register_api_routes(app):
     @login_required
     @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
     def api_zimmet_detay_iptal(detay_id):
-        """Tek ürün zimmet detayını iptal et"""
+        """Tek ürün zimmet detayını iptal et - FIFO kayıtlarını geri al"""
         try:
-            from models import PersonelZimmetDetay, UrunStok
+            from models import PersonelZimmetDetay, UrunStok, StokFifoKayit, StokFifoKullanim, StokHareket
             
             detay = db.session.get(PersonelZimmetDetay, detay_id)
             if not detay:
                 return jsonify({'success': False, 'error': 'Detay bulunamadı'}), 404
             
-            # Kullanım kontrolü
-            if detay.kalan_miktar < detay.miktar:
-                return jsonify({'success': False, 'error': 'Bu ürün kullanıldığı için iptal edilemez!'}), 400
-            
-            # Stoku geri ekle
             zimmet = detay.zimmet
             otel_id = zimmet.personel.otel_id if zimmet and zimmet.personel else None
+            
+            # Geri alınacak miktar hesapla
+            geri_alinacak = detay.miktar - getattr(detay, 'kullanilan_miktar', 0) - getattr(detay, 'iade_edilen_miktar', 0)
+            
+            if geri_alinacak <= 0:
+                return jsonify({'success': False, 'error': 'Bu ürün tamamen kullanılmış, iptal edilemez!'}), 400
+            
+            # UrunStok güncelle
             stok = UrunStok.query.filter_by(urun_id=detay.urun_id, otel_id=otel_id).first()
             if stok:
-                stok.mevcut_stok += detay.miktar
+                stok.mevcut_stok += geri_alinacak
+                stok.son_giris_tarihi = get_kktc_now()
+                stok.son_guncelleyen_id = session.get('kullanici_id')
+            
+            # FIFO kullanım kayıtlarını geri al
+            fifo_kullanimlar = StokFifoKullanim.query.filter_by(
+                referans_id=detay.id,
+                islem_tipi='zimmet'
+            ).all()
+            
+            for kullanim in fifo_kullanimlar:
+                fifo_kayit = db.session.get(StokFifoKayit, kullanim.fifo_kayit_id)
+                if fifo_kayit:
+                    fifo_kayit.kalan_miktar += kullanim.miktar
+                    fifo_kayit.kullanilan_miktar -= kullanim.miktar
+                    fifo_kayit.tukendi = False
+                db.session.delete(kullanim)
+            
+            # Stok hareketi kaydet
+            stok_hareket = StokHareket(
+                urun_id=detay.urun_id,
+                hareket_tipi='giris',
+                miktar=geri_alinacak,
+                aciklama=f'Zimmet Detay İptal İadesi - Detay #{detay_id}',
+                islem_yapan_id=session.get('kullanici_id')
+            )
+            db.session.add(stok_hareket)
             
             # Detayı sil
             db.session.delete(detay)
             db.session.commit()
             
-            return jsonify({'success': True, 'message': 'Ürün zimmet listesinden çıkarıldı'})
+            log_islem('iptal', 'zimmet_detay', {'detay_id': detay_id})
+            
+            return jsonify({'success': True, 'message': 'Ürün zimmet listesinden çıkarıldı, stok geri eklendi'})
             
         except Exception as e:
             db.session.rollback()
@@ -2590,3 +2654,229 @@ def register_api_routes(app):
             db.session.rollback()
             log_hata(e, modul='api_tedarik_tamamla')
             return jsonify({'success': False, 'message': str(e)}), 500
+
+    @app.route('/api/zimmet-listesi-filtreli', methods=['GET'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_zimmet_listesi_filtreli():
+        """Ay/Yıl bazlı zimmet listesi"""
+        try:
+            from models import PersonelZimmet
+            from utils.authorization import get_kullanici_otelleri
+            from sqlalchemy import extract
+            
+            ay = request.args.get('ay', type=int) or datetime.now().month
+            yil = request.args.get('yil', type=int) or datetime.now().year
+            
+            oteller = get_kullanici_otelleri()
+            otel_ids = [o.id for o in oteller]
+            
+            if not otel_ids:
+                return jsonify({'success': True, 'zimmetler': []})
+            
+            # Sadece aktif zimmetleri getir (iptal edilenler silindiği için zaten gelmez)
+            zimmetler = PersonelZimmet.query.filter(
+                PersonelZimmet.personel.has(Kullanici.otel_id.in_(otel_ids)),
+                PersonelZimmet.durum == 'aktif',
+                extract('month', PersonelZimmet.zimmet_tarihi) == ay,
+                extract('year', PersonelZimmet.zimmet_tarihi) == yil
+            ).order_by(PersonelZimmet.zimmet_tarihi.desc()).all()
+            
+            result = []
+            for z in zimmetler:
+                # İptal edilebilirlik kontrolü - hiçbir ürün kullanılmadıysa iptal edilebilir
+                iptal_edilebilir = all(d.kalan_miktar == d.miktar for d in z.detaylar) if z.detaylar else False
+                
+                result.append({
+                    'id': z.id,
+                    'personel_adi': f"{z.personel.ad} {z.personel.soyad}" if z.personel else 'Bilinmiyor',
+                    'tarih': z.zimmet_tarihi.strftime('%d.%m.%Y %H:%M') if z.zimmet_tarihi else '',
+                    'urun_sayisi': len(z.detaylar),
+                    'durum': z.durum,
+                    'iptal_edilebilir': iptal_edilebilir and z.durum == 'aktif'
+                })
+            
+            return jsonify({'success': True, 'zimmetler': result})
+            
+        except Exception as e:
+            log_hata(e, modul='api_zimmet_listesi_filtreli')
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/urunler-stoklu', methods=['GET'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_urunler_stoklu():
+        """Stok bilgisiyle birlikte ürün listesi - personel zimmet miktarı dahil"""
+        try:
+            from models import UrunStok, UrunGrup, PersonelZimmet, PersonelZimmetDetay
+            from utils.authorization import get_kullanici_otelleri
+            
+            oteller = get_kullanici_otelleri()
+            otel_id = oteller[0].id if oteller else None
+            personel_id = request.args.get('personel_id', type=int)
+            
+            if not otel_id:
+                return jsonify({'success': True, 'urunler': []})
+            
+            # Tüm ürünleri getir
+            urunler = Urun.query.filter_by(aktif=True).order_by(Urun.urun_adi).all()
+            
+            # Stok bilgilerini al
+            stoklar = {s.urun_id: s.mevcut_stok for s in UrunStok.query.filter_by(otel_id=otel_id).all()}
+            
+            # Personel zimmet miktarlarını al (eğer personel_id varsa)
+            personel_zimmetleri = {}
+            if personel_id:
+                # Aktif zimmetlerdeki kalan miktarları topla
+                zimmetler = PersonelZimmet.query.filter_by(
+                    personel_id=personel_id, 
+                    durum='aktif'
+                ).all()
+                
+                for zimmet in zimmetler:
+                    detaylar = PersonelZimmetDetay.query.filter_by(zimmet_id=zimmet.id).all()
+                    for d in detaylar:
+                        # Kalan miktar hesapla (iade edilmemiş ve kullanılmamış)
+                        kalan = d.miktar - (d.kullanilan_miktar or 0) - (d.iade_edilen_miktar or 0)
+                        if kalan > 0:
+                            personel_zimmetleri[d.urun_id] = personel_zimmetleri.get(d.urun_id, 0) + kalan
+            
+            result = []
+            for u in urunler:
+                grup = db.session.get(UrunGrup, u.grup_id) if u.grup_id else None
+                result.append({
+                    'id': u.id,
+                    'urun_adi': u.urun_adi,
+                    'birim': u.birim or 'Adet',
+                    'grup_id': u.grup_id or 0,
+                    'grup_adi': grup.grup_adi if grup else 'Genel',
+                    'stok': stoklar.get(u.id, 0),
+                    'personel_zimmet': personel_zimmetleri.get(u.id, 0)
+                })
+            
+            return jsonify({'success': True, 'urunler': result})
+            
+        except Exception as e:
+            log_hata(e, modul='api_urunler_stoklu')
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/zimmet-ata', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_zimmet_ata():
+        """Zimmet atama - Aynı gün birleştirme mantığıyla"""
+        try:
+            from models import PersonelZimmet, PersonelZimmetDetay, UrunStok
+            from utils.fifo_servisler import FifoStokServisi
+            from utils.authorization import get_kullanici_otelleri
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({'success': False, 'error': 'Geçersiz veri'}), 400
+            
+            personel_id = data.get('personel_id')
+            urunler = data.get('urunler', [])
+            
+            if not personel_id or not urunler:
+                return jsonify({'success': False, 'error': 'Personel ve ürün bilgisi gerekli'}), 400
+            
+            personel = db.session.get(Kullanici, personel_id)
+            if not personel or not personel.otel_id:
+                return jsonify({'success': False, 'error': 'Personel bulunamadı'}), 404
+            
+            otel_id = personel.otel_id
+            bugun = get_kktc_now().date()
+            
+            # Bugün aynı personele yapılmış aktif zimmet var mı?
+            mevcut_zimmet = PersonelZimmet.query.filter(
+                PersonelZimmet.personel_id == personel_id,
+                PersonelZimmet.durum == 'aktif',
+                db.func.date(PersonelZimmet.zimmet_tarihi) == bugun
+            ).first()
+            
+            if mevcut_zimmet:
+                zimmet = mevcut_zimmet
+                yeni_kayit = False
+            else:
+                zimmet = PersonelZimmet(
+                    personel_id=personel_id,
+                    teslim_eden_id=session['kullanici_id']
+                )
+                db.session.add(zimmet)
+                db.session.flush()
+                yeni_kayit = True
+            
+            # Stok kontrolü - UrunStok tablosundan (ekrandaki ile aynı kaynak)
+            urun_ids = [u['urun_id'] for u in urunler]
+            stoklar = {s.urun_id: s.mevcut_stok for s in UrunStok.query.filter(
+                UrunStok.otel_id == otel_id,
+                UrunStok.urun_id.in_(urun_ids)
+            ).all()}
+            
+            yetersiz = []
+            for u in urunler:
+                mevcut = stoklar.get(u['urun_id'], 0)
+                if u['miktar'] > mevcut:
+                    urun = db.session.get(Urun, u['urun_id'])
+                    yetersiz.append(f"{urun.urun_adi if urun else 'Bilinmiyor'}: istenen {u['miktar']}, mevcut {mevcut}")
+            
+            if yetersiz:
+                return jsonify({'success': False, 'error': f"Stok yetersiz: {', '.join(yetersiz)}"}), 400
+            
+            # Ürünleri ekle
+            for u in urunler:
+                # Mevcut zimmet varsa, aynı ürün var mı kontrol et
+                mevcut_detay = None
+                if not yeni_kayit:
+                    mevcut_detay = PersonelZimmetDetay.query.filter_by(
+                        zimmet_id=zimmet.id,
+                        urun_id=u['urun_id']
+                    ).first()
+                
+                if mevcut_detay:
+                    # Mevcut detaya ekle
+                    mevcut_detay.miktar += u['miktar']
+                    mevcut_detay.kalan_miktar += u['miktar']
+                    detay_id = mevcut_detay.id
+                else:
+                    # Yeni detay oluştur
+                    detay = PersonelZimmetDetay(
+                        zimmet_id=zimmet.id,
+                        urun_id=u['urun_id'],
+                        miktar=u['miktar'],
+                        kalan_miktar=u['miktar']
+                    )
+                    db.session.add(detay)
+                    db.session.flush()
+                    detay_id = detay.id
+                
+                # FIFO stok çıkışı (FIFO kaydı yoksa otomatik oluşturur)
+                fifo_sonuc = FifoStokServisi.fifo_stok_cikis(
+                    otel_id=otel_id,
+                    urun_id=u['urun_id'],
+                    miktar=u['miktar'],
+                    islem_tipi='zimmet',
+                    referans_id=detay_id,
+                    kullanici_id=session['kullanici_id']
+                )
+                
+                if not fifo_sonuc['success']:
+                    raise Exception(f"Stok hatası: {fifo_sonuc['message']}")
+            
+            db.session.commit()
+            
+            mesaj = 'Zimmet başarıyla atandı!' if yeni_kayit else 'Mevcut zimmete eklendi!'
+            
+            log_islem('ekleme', 'personel_zimmet', {
+                'zimmet_id': zimmet.id,
+                'personel_id': personel_id,
+                'urun_sayisi': len(urunler),
+                'yeni_kayit': yeni_kayit
+            })
+            
+            return jsonify({'success': True, 'message': mesaj, 'zimmet_id': zimmet.id})
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='api_zimmet_ata')
+            return jsonify({'success': False, 'error': str(e)}), 500

@@ -207,8 +207,8 @@ def gunluk_doluluk_yazdir():
 def kat_doluluk_detay(kat_id):
     """Kat bazlı detaylı doluluk raporu"""
     try:
-        from models import Kat, Oda, MisafirKayit, GorevDetay, GunlukGorev
-        from sqlalchemy import and_, or_
+        from models import Kat, Oda, MisafirKayit, GorevDetay, GunlukGorev, MinibarIslem, DNDKontrol
+        from sqlalchemy import and_, or_, func
         
         # Tarihi al
         tarih_str = request.args.get("tarih")
@@ -225,6 +225,7 @@ def kat_doluluk_detay(kat_id):
         
         # Kat'a ait tüm odaları al
         odalar = Oda.query.filter_by(kat_id=kat_id, aktif=True).order_by(Oda.oda_no).all()
+        oda_ids = [oda.id for oda in odalar]
         
         # Görev durumlarını ve detaylarını al (varış/çıkış saatleri için)
         gorev_durumlari = {}
@@ -238,6 +239,41 @@ def kat_doluluk_detay(kat_id):
                 'varis_saati': str(detay.varis_saati) if detay.varis_saati else None,
                 'cikis_saati': str(detay.cikis_saati) if detay.cikis_saati else None
             }
+        
+        # Bugün kontrol edilen odaları bul (MinibarIslem tablosundan)
+        # islem_tipi='kontrol' veya herhangi bir minibar işlemi yapılmışsa kontrol edilmiş sayılır
+        bugun_baslangic = datetime.combine(secili_tarih, datetime.min.time())
+        bugun_bitis = datetime.combine(secili_tarih, datetime.max.time())
+        
+        kontrol_edilen_odalar = {}  # oda_id -> kontrol_tipi ('completed' veya 'dnd')
+        
+        # MinibarIslem tablosundan bugünkü kontrolleri al
+        minibar_kontroller = db.session.query(
+            MinibarIslem.oda_id,
+            MinibarIslem.islem_tipi,
+            MinibarIslem.aciklama
+        ).filter(
+            MinibarIslem.oda_id.in_(oda_ids),
+            MinibarIslem.islem_tarihi >= bugun_baslangic,
+            MinibarIslem.islem_tarihi <= bugun_bitis
+        ).all()
+        
+        for kontrol in minibar_kontroller:
+            # DND kontrolü mü yoksa normal kontrol mü?
+            if kontrol.aciklama and 'DND' in kontrol.aciklama.upper():
+                kontrol_edilen_odalar[kontrol.oda_id] = 'dnd'
+            else:
+                # Zaten DND olarak işaretlenmemişse completed olarak işaretle
+                if kontrol.oda_id not in kontrol_edilen_odalar or kontrol_edilen_odalar[kontrol.oda_id] != 'dnd':
+                    kontrol_edilen_odalar[kontrol.oda_id] = 'completed'
+        
+        # GorevDetay'dan da kontrol durumlarını al (dolu odalar için)
+        for oda_id, durum in gorev_durumlari.items():
+            if oda_id in oda_ids:
+                if durum == 'dnd_pending':
+                    kontrol_edilen_odalar[oda_id] = 'dnd'
+                elif durum == 'completed':
+                    kontrol_edilen_odalar[oda_id] = 'completed'
         
         # Her oda için doluluk durumunu kontrol et
         oda_detaylari = []
@@ -305,11 +341,15 @@ def kat_doluluk_detay(kat_id):
             else:
                 bos_sayisi += 1
             
+            # Kontrol durumunu belirle (hem dolu hem boş odalar için)
+            kontrol_durumu = kontrol_edilen_odalar.get(oda.id, None)
+            
             oda_detaylari.append({
                 'oda': oda,
                 'durum': durum,
                 'misafir': misafir_info,
                 'gorev_durumu': gorev_durumlari.get(oda.id, 'pending') if misafir else None,
+                'kontrol_durumu': kontrol_durumu,  # 'completed', 'dnd' veya None
                 'varis_saati': varis_saati,
                 'cikis_saati': cikis_saati
             })

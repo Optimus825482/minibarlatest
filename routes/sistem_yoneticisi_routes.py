@@ -2622,3 +2622,232 @@ def register_sistem_yoneticisi_routes(app):
             db.session.rollback()
             log_hata(e, 'api_fiyat_guncelle')
             return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    
+    # ============================================================================
+    # İLK STOK YÜKLEME ROUTE'LARI
+    # ============================================================================
+    
+    @app.route('/otel-ilk-stok-yukleme', methods=['GET'])
+    @login_required
+    @role_required('sistem_yoneticisi')
+    def otel_ilk_stok_yukleme():
+        """İlk stok yükleme sayfası - Her otel için 1 kez (FIFO)"""
+        from models import Urun, UrunGrup
+        
+        try:
+            # Otelleri getir
+            oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
+            
+            # Otel durumlarını hazırla
+            otel_durumlari = []
+            for otel in oteller:
+                # Yükleyen kullanıcı bilgisini al
+                yukleyen_adi = None
+                if otel.ilk_stok_yukleyen_id:
+                    yukleyen = db.session.get(Kullanici, otel.ilk_stok_yukleyen_id)
+                    if yukleyen:
+                        yukleyen_adi = f"{yukleyen.ad} {yukleyen.soyad}"
+                
+                otel_durumlari.append({
+                    'id': otel.id,
+                    'ad': otel.ad,
+                    'ilk_stok_yuklendi': otel.ilk_stok_yuklendi,
+                    'yukleme_tarihi': otel.ilk_stok_yukleme_tarihi.strftime('%d.%m.%Y %H:%M') if otel.ilk_stok_yukleme_tarihi else None,
+                    'yukleyen': yukleyen_adi
+                })
+            
+            # Ürün grupları ve ürünler
+            gruplar = UrunGrup.query.filter_by(aktif=True).order_by(UrunGrup.grup_adi).all()
+            urunler = Urun.query.filter_by(aktif=True).order_by(Urun.urun_adi).all()
+            
+            return render_template('sistem_yoneticisi/ilk_stok_yukleme.html',
+                                 otel_durumlari=otel_durumlari,
+                                 gruplar=gruplar,
+                                 urunler=urunler)
+                                 
+        except Exception as e:
+            log_hata(e, 'ilk_stok_yukleme')
+            flash('Sayfa yüklenirken hata oluştu.', 'danger')
+            return redirect(url_for('sistem_yoneticisi_dashboard'))
+    
+    
+    @app.route('/otel-ilk-stok-yukleme-kaydet', methods=['POST'])
+    @login_required
+    @role_required('sistem_yoneticisi')
+    def otel_ilk_stok_yukleme_kaydet():
+        """İlk stok yükleme işlemini kaydet (FIFO)"""
+        from utils.fifo_servisler import FifoStokServisi
+        
+        try:
+            data = request.get_json()
+            
+            if not data:
+                return jsonify({'success': False, 'error': 'Veri bulunamadı'}), 400
+            
+            otel_id = data.get('otel_id')
+            stok_verileri = data.get('stok_verileri', [])
+            
+            if not otel_id:
+                return jsonify({'success': False, 'error': 'Otel seçilmedi'}), 400
+            
+            if not stok_verileri:
+                return jsonify({'success': False, 'error': 'Stok verisi girilmedi'}), 400
+            
+            # Otel kontrolü
+            otel = db.session.get(Otel, otel_id)
+            if not otel:
+                return jsonify({'success': False, 'error': 'Otel bulunamadı'}), 404
+            
+            if otel.ilk_stok_yuklendi:
+                return jsonify({
+                    'success': False, 
+                    'error': f'Bu otel için ilk stok yüklemesi zaten yapılmış ({otel.ilk_stok_yukleme_tarihi.strftime("%d.%m.%Y")})'
+                }), 400
+            
+            # İlk stok yükle
+            sonuc = FifoStokServisi.ilk_stok_yukle(
+                otel_id=otel_id,
+                stok_verileri=stok_verileri,
+                kullanici_id=session['kullanici_id']
+            )
+            
+            if sonuc['success']:
+                return jsonify({
+                    'success': True,
+                    'message': sonuc['message'],
+                    'yuklenen_urun_sayisi': sonuc.get('yuklenen_urun_sayisi', 0)
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': sonuc['message'],
+                    'hatalar': sonuc.get('hatalar', [])
+                }), 400
+                
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, 'ilk_stok_yukleme_kaydet')
+            return jsonify({'success': False, 'error': f'Kayıt hatası: {str(e)}'}), 500
+    
+    
+    @app.route('/api/otel-stok-durumu/<int:otel_id>')
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
+    def api_otel_stok_durumu(otel_id):
+        """Otel bazlı FIFO stok durumunu getir"""
+        from utils.fifo_servisler import FifoStokServisi
+        
+        try:
+            otel = db.session.get(Otel, otel_id)
+            if not otel:
+                return jsonify({'success': False, 'error': 'Otel bulunamadı'}), 404
+            
+            stok_durumu = FifoStokServisi.fifo_stok_durumu(otel_id)
+            
+            return jsonify({
+                'success': True,
+                'otel_id': otel_id,
+                'otel_adi': otel.ad,
+                'ilk_stok_yuklendi': otel.ilk_stok_yuklendi,
+                'stok_durumu': stok_durumu
+            })
+            
+        except Exception as e:
+            log_hata(e, 'api_otel_stok_durumu')
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+
+    # ==================== ANA DEPO TEDARİK GEÇMİŞİ ====================
+    
+    @app.route('/admin/ana-depo-tedarik-gecmisi')
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def admin_ana_depo_tedarik_gecmisi():
+        """Sistem yöneticisi için tüm otellerin ana depo tedarik geçmişi"""
+        from models import AnaDepoTedarik, AnaDepoTedarikDetay, Urun
+        from datetime import datetime
+        
+        try:
+            # Filtreler
+            otel_id = request.args.get('otel_id', type=int)
+            ay = request.args.get('ay', type=int, default=datetime.now().month)
+            yil = request.args.get('yil', type=int, default=datetime.now().year)
+            durum = request.args.get('durum', '')
+            
+            # Tedarik sorgusu
+            query = AnaDepoTedarik.query
+            
+            # Otel filtresi
+            if otel_id:
+                query = query.filter(AnaDepoTedarik.otel_id == otel_id)
+            
+            # Ay/Yıl filtresi
+            from sqlalchemy import extract
+            query = query.filter(
+                extract('month', AnaDepoTedarik.islem_tarihi) == ay,
+                extract('year', AnaDepoTedarik.islem_tarihi) == yil
+            )
+            
+            # Durum filtresi
+            if durum:
+                query = query.filter(AnaDepoTedarik.durum == durum)
+            
+            # Sıralama ve sonuçlar
+            tedarikler = query.order_by(AnaDepoTedarik.islem_tarihi.desc()).all()
+            
+            # Oteller listesi (filtre için)
+            oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
+            
+            # İstatistikler
+            toplam_tedarik = len(tedarikler)
+            aktif_sayi = sum(1 for t in tedarikler if t.durum == 'aktif')
+            iptal_sayi = sum(1 for t in tedarikler if t.durum == 'iptal')
+            
+            # Tedarik detayları
+            tedarik_listesi = []
+            for tedarik in tedarikler:
+                detaylar = AnaDepoTedarikDetay.query.filter_by(tedarik_id=tedarik.id).all()
+                toplam_urun = sum(d.miktar for d in detaylar)
+                
+                # Otel bilgisi
+                otel = db.session.get(Otel, tedarik.otel_id)
+                
+                # Kullanıcı bilgisi (depo sorumlusu)
+                kullanici = db.session.get(Kullanici, tedarik.depo_sorumlusu_id) if tedarik.depo_sorumlusu_id else None
+                
+                tedarik_listesi.append({
+                    'id': tedarik.id,
+                    'otel_adi': otel.ad if otel else 'Bilinmiyor',
+                    'tarih': tedarik.islem_tarihi,
+                    'durum': tedarik.durum,
+                    'toplam_urun': toplam_urun,
+                    'detay_sayisi': len(detaylar),
+                    'kullanici': f"{kullanici.ad} {kullanici.soyad}" if kullanici else 'Bilinmiyor',
+                    'aciklama': tedarik.aciklama,
+                    'detaylar': [{
+                        'urun_adi': db.session.get(Urun, d.urun_id).urun_adi if db.session.get(Urun, d.urun_id) else 'Bilinmiyor',
+                        'miktar': d.miktar
+                    } for d in detaylar]
+                })
+            
+            return render_template(
+                'sistem_yoneticisi/ana_depo_tedarik_gecmisi.html',
+                tedarikler=tedarik_listesi,
+                oteller=oteller,
+                secili_otel_id=otel_id,
+                secili_ay=ay,
+                secili_yil=yil,
+                secili_durum=durum,
+                istatistikler={
+                    'toplam': toplam_tedarik,
+                    'aktif': aktif_sayi,
+                    'iptal': iptal_sayi
+                }
+            )
+            
+        except Exception as e:
+            log_hata(e, 'admin_ana_depo_tedarik_gecmisi')
+            flash('Tedarik geçmişi yüklenirken hata oluştu.', 'error')
+            return redirect(url_for('sistem_yoneticisi_dashboard'))

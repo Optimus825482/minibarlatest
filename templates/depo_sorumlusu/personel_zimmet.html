@@ -1,1713 +1,580 @@
-{% extends "base.html" %} {% block title %}Personel Zimmet{% endblock %} {%
-block page_title %}Personel Zimmet{% endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}Personel Zimmet{% endblock %}
+{% block page_title %}Personel Zimmet Atama{% endblock %}
+
+{% block content %}
 <style>
-  /* Ürün kartları için stiller */
-  .urun-card {
-    min-height: 110px;
-  }
-  .urun-card:active {
-    transform: scale(0.98);
-  }
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* Alert Modal Stilleri */
-  .alert-modal-content {
-    text-align: center;
-    padding: 20px 10px;
-  }
-  .alert-modal-icon {
-    font-size: 48px;
-    margin-bottom: 15px;
-  }
-  .alert-modal-icon.success {
-    color: #22c55e;
-  }
-  .alert-modal-icon.error {
-    color: #ef4444;
-  }
-  .alert-modal-icon.warning {
-    color: #f59e0b;
-  }
-  .alert-modal-icon.info {
-    color: #3b82f6;
-  }
-  .alert-modal-title {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 10px;
-  }
-  .alert-modal-message {
-    font-size: 14px;
-    color: #64748b;
-  }
-  .dark .alert-modal-message {
-    color: #94a3b8;
-  }
-
-  .stok-toggle-wrapper {
-    display: inline-block;
-  }
-  .stok-toggle-wrapper input[type="checkbox"] {
-    display: none;
-  }
-  .stok-toggle {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    width: 100px;
-    height: 32px;
-    background: linear-gradient(to bottom, #64748b 0%, #475569 100%);
-    border-radius: 16px;
-    cursor: pointer;
-    overflow: hidden;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-  }
-  .stok-toggle .toggle-handler {
-    position: absolute;
-    left: 2px;
-    width: 28px;
-    height: 28px;
-    background: linear-gradient(to bottom, #f8fafc 0%, #e2e8f0 100%);
-    border-radius: 50%;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    transition: left 0.3s ease;
-    z-index: 3;
-  }
-  .stok-toggle .toggle-on,
-  .stok-toggle .toggle-off {
-    position: absolute;
-    font-size: 11px;
-    font-weight: 600;
-    transition: opacity 0.3s;
-    color: white;
-  }
-  .stok-toggle .toggle-on {
-    left: 10px;
-    opacity: 0;
-  }
-  .stok-toggle .toggle-off {
-    right: 10px;
-    opacity: 1;
-  }
-  .stok-toggle-wrapper input:checked + .stok-toggle {
-    background: linear-gradient(to bottom, #22c55e 0%, #16a34a 100%);
-  }
-  .stok-toggle-wrapper input:checked + .stok-toggle .toggle-handler {
-    left: 70px;
-  }
-  .stok-toggle-wrapper input:checked + .stok-toggle .toggle-on {
-    opacity: 1;
-  }
-  .stok-toggle-wrapper input:checked + .stok-toggle .toggle-off {
-    opacity: 0;
-  }
+    .urun-card { min-height: 130px; cursor: pointer; transition: transform 0.1s; border-radius: 8px; display: flex; flex-direction: column; }
+    .urun-card:active { transform: scale(0.98); }
+    .urun-card-header { padding: 6px 10px; border-radius: 8px 8px 0 0; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center; }
+    .urun-card-body { flex: 1; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; background: #fff; border-radius: 0 0 8px 8px; }
+    .urun-card-name { font-size: 13px; font-weight: 600; color: #1e293b; text-align: center; line-height: 1.3; margin-bottom: 8px; }
+    .urun-card-footer { display: flex; justify-content: space-between; font-size: 13px; margin-top: auto; padding-top: 8px; border-top: 1px solid #e2e8f0; }
+    .urun-card-footer span { display: flex; flex-direction: column; }
+    .urun-card-footer .label { color: #64748b; font-weight: 600; font-size: 11px; }
+    .urun-card-footer .value { font-weight: 800; font-size: 16px; }
+    .grup-btn { padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; border: 2px solid transparent; transition: all 0.2s; }
+    .grup-btn.aktif { box-shadow: 0 0 0 3px rgba(255,255,255,0.5); }
 </style>
+
 <div class="space-y-6">
-  {% if not otel_secenekleri or otel_secenekleri|length <= 1 or secili_otel_id
-  %}
-
-  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-    <div class="px-4 py-5 sm:p-6">
-      <!-- Tab Başlıkları - Üstte -->
-      <div class="border-b border-slate-200 dark:border-slate-700 mb-6">
-        <nav class="-mb-px flex space-x-2">
-          <button
-            type="button"
-            data-tab="grid"
-            class="tab-btn py-3 px-6 border-b-3 text-base font-semibold transition-all duration-200 border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-t-lg"
-          >
-            <i class="fas fa-th-large mr-2"></i>Akıllı Grid
-          </button>
-          <button
-            type="button"
-            data-tab="sablon"
-            class="tab-btn py-3 px-6 border-b-3 text-base font-semibold transition-all duration-200 border-transparent text-slate-500 dark:text-slate-400"
-          >
-            <i class="fas fa-copy mr-2"></i>Şablon
-          </button>
-          <button
-            type="button"
-            data-tab="hizli"
-            class="tab-btn py-3 px-6 border-b-3 text-base font-semibold transition-all duration-200 border-transparent text-slate-500 dark:text-slate-400"
-          >
-            <i class="fas fa-bolt mr-2"></i>Hızlı Giriş
-          </button>
-        </nav>
-      </div>
-
-      <!-- Kat Sorumlusu Seçimi - Tab'ların altında -->
-      <div class="mb-6">
-        <label
-          for="personel_id_global"
-          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-          >Kat Sorumlusu <span class="text-red-500">*</span></label
-        >
-        <select
-          id="personel_id_global"
-          required
-          class="block w-full max-w-md px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md sm:text-sm dark:bg-slate-700 dark:text-white"
-        >
-          <option value="">Kat sorumlusu seçiniz...</option>
-          {% for personel in kat_sorumlulari %}
-          <option value="{{ personel.id }}">
-            {{ personel.ad }} {{ personel.soyad }}
-          </option>
-          {% endfor %}
-        </select>
-      </div>
-      <div id="tab-grid" class="tab-content">
-        <div id="grup_butonlari" class="flex flex-wrap items-center gap-2 mb-4">
-          <button
-            type="button"
-            data-grup-id=""
-            class="grup-btn px-4 py-2 rounded-lg text-sm font-medium ring-2 ring-offset-2 ring-slate-400"
-            style="
-              background: linear-gradient(135deg, #475569, #334155);
-              color: white;
-            "
-          >
-            Tumu
-          </button>
-          {% for grup in urun_gruplari %}
-          <button
-            type="button"
-            data-grup-id="{{ grup.id }}"
-            data-renk-idx="{{ loop.index0 }}"
-            class="grup-btn px-4 py-2 rounded-lg text-sm font-medium"
-          >
-            {{ grup.grup_adi }}
-          </button>
-          {% endfor %}
-          <!-- Stokta Olmayanlar Toggle -->
-          <div class="flex items-center gap-2 ml-2">
-            <span class="text-sm font-medium text-slate-600 dark:text-slate-300"
-              >Stokta Olmayanlar:</span
-            >
-            <div class="stok-toggle-wrapper">
-              <input
-                type="checkbox"
-                id="stoksuz_gizle"
-                checked
-                onchange="renderGridFromToggle()"
-              />
-              <label for="stoksuz_gizle" class="stok-toggle">
-                <span class="toggle-handler"></span>
-                <span class="toggle-on">Goster</span>
-                <span class="toggle-off">Gizle</span>
-              </label>
-            </div>
-          </div>
+    <!-- Kat Sorumlusu Seçimi -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+            <i class="fas fa-user-plus mr-2 text-blue-500"></i>Zimmet Atama
+        </h3>
+        <div class="max-w-md">
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Kat Sorumlusu Seçin <span class="text-red-500">*</span>
+            </label>
+            <select id="kat_sorumlusu_select" class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg text-base dark:bg-slate-700 dark:text-white">
+                <option value="">-- Kat Sorumlusu Seçiniz --</option>
+                {% for personel in kat_sorumlulari %}
+                <option value="{{ personel.id }}" data-ad="{{ personel.ad }} {{ personel.soyad }}">{{ personel.ad }} {{ personel.soyad }}</option>
+                {% endfor %}
+            </select>
         </div>
-        <!-- Arama Inputu - Alt Satir -->
-        <div class="mb-4">
-          <input
-            type="text"
-            id="grid_arama"
-            placeholder="Urun ara..."
-            class="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm w-64 dark:bg-slate-700 dark:text-white"
-          />
-        </div>
-        <div
-          id="urun_grid"
-          class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 max-h-[500px] overflow-y-auto p-1"
-        >
-          <div class="text-center py-8 text-slate-500 col-span-full">
-            <i class="fas fa-spinner fa-spin text-2xl"></i>
-            <p>Yukleniyor...</p>
-          </div>
-        </div>
-
-        <!-- Zimmet Modal -->
-        <div id="zimmet_modal" title="Zimmet Ata" style="display: none">
-          <div class="p-2">
-            <div id="modal_urun_bilgi" class="mb-4 p-3 rounded-lg border-2">
-              <p
-                class="font-semibold text-lg text-white drop-shadow-md"
-                id="modal_urun_adi"
-              ></p>
-              <p class="text-sm text-white/80" id="modal_urun_grup"></p>
-              <p
-                class="text-sm font-bold mt-1 text-white"
-                id="modal_urun_stok"
-              ></p>
-            </div>
-            <div class="mb-4">
-              <label class="block text-sm font-medium mb-2">Miktar:</label>
-              <input
-                type="number"
-                id="modal_miktar"
-                min="0"
-                value="0"
-                class="w-full px-4 py-3 text-xl text-center border-2 border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-              />
-            </div>
-            <div class="grid grid-cols-4 gap-2 mb-4">
-              <button
-                type="button"
-                class="miktar-btn px-3 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium text-sm"
-                data-miktar="5"
-              >
-                +5
-              </button>
-              <button
-                type="button"
-                class="miktar-btn px-3 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium text-sm"
-                data-miktar="10"
-              >
-                +10
-              </button>
-              <button
-                type="button"
-                class="miktar-btn px-3 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium text-sm"
-                data-miktar="20"
-              >
-                +20
-              </button>
-              <button
-                type="button"
-                class="miktar-btn px-3 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium text-sm"
-                data-miktar="30"
-              >
-                +30
-              </button>
-              <button
-                type="button"
-                class="miktar-btn px-3 py-2 bg-green-100 text-green-700 rounded-lg font-medium text-sm"
-                data-miktar="50"
-              >
-                +50
-              </button>
-              <button
-                type="button"
-                class="miktar-btn px-3 py-2 bg-green-100 text-green-700 rounded-lg font-medium text-sm"
-                data-miktar="100"
-              >
-                +100
-              </button>
-              <button
-                type="button"
-                class="miktar-btn px-3 py-2 bg-purple-100 text-purple-700 rounded-lg font-medium text-sm"
-                data-miktar="200"
-              >
-                +200
-              </button>
-              <button
-                type="button"
-                class="miktar-btn px-3 py-2 bg-purple-100 text-purple-700 rounded-lg font-medium text-sm"
-                data-miktar="500"
-              >
-                +500
-              </button>
-            </div>
-            <button
-              type="button"
-              class="miktar-sifirla w-full px-3 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium text-sm mb-2"
-            >
-              Sıfırla
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Alert Modal -->
-      <div id="alert_modal" title="Bilgi" style="display: none">
-        <div class="alert-modal-content">
-          <div class="alert-modal-icon"><i class="fas fa-info-circle"></i></div>
-          <div class="alert-modal-title"></div>
-          <div class="alert-modal-message"></div>
-        </div>
-      </div>
-
-      <!-- Zimmet Detay Modal -->
-      <div
-        id="zimmet_detay_modal"
-        title="Zimmet Detayları"
-        style="display: none"
-      >
-        <div
-          id="zimmet_detay_icerik"
-          class="max-h-[400px] overflow-y-auto"
-        ></div>
-      </div>
-
-      <!-- Zimmet İptal Onay Modal -->
-      <div id="zimmet_iptal_modal" title="Zimmet İptali" style="display: none">
-        <div class="text-center mb-4">
-          <i class="fas fa-exclamation-triangle text-4xl text-amber-500"></i>
-          <p class="mt-2 font-semibold text-lg">
-            Bu zimmeti iptal etmek istediğinize emin misiniz?
-          </p>
-        </div>
-        <div
-          id="zimmet_iptal_icerik"
-          class="max-h-[300px] overflow-y-auto"
-        ></div>
-        <div
-          id="zimmet_iptal_uyari"
-          class="hidden mt-3 p-3 bg-red-100 text-red-700 rounded-lg text-sm"
-        >
-          <i class="fas fa-ban mr-2"></i>Bu zimmet kullanıldığı için iptal
-          edilemez!
-        </div>
-      </div>
-
-      <div id="tab-sablon" class="tab-content hidden">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <div class="flex items-center justify-between mb-3">
-              <h4 class="text-sm font-medium text-slate-900">Sablonlar</h4>
-              <button
-                type="button"
-                id="yeni_sablon_btn"
-                class="text-sm text-blue-600"
-              >
-                <i class="fas fa-plus mr-1"></i>Yeni
-              </button>
-            </div>
-            <div
-              id="sablon_listesi"
-              class="space-y-2 max-h-64 overflow-y-auto"
-            ></div>
-          </div>
-          <!-- Şablon Modal - Sayfa ortasında (tab dışında) -->
-          <div
-            id="sablon_modal_overlay"
-            class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center"
-          >
-            <div
-              class="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-lg mx-4 shadow-2xl"
-            >
-              <div class="flex justify-between items-center mb-4">
-                <h4
-                  id="sablon_panel_baslik"
-                  class="text-lg font-semibold text-slate-900 dark:text-white"
-                >
-                  Yeni Zimmet Şablonu Oluştur
-                </h4>
-                <button
-                  type="button"
-                  id="sablon_panel_kapat"
-                  class="text-slate-500 text-xl"
-                >
-                  <i class="fas fa-times"></i>
-                </button>
-              </div>
-
-              <div id="sablon_form_container" class="hidden mb-4">
-                <input type="hidden" id="sablon_edit_id" />
-                <label
-                  class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                  >Şablon Adı</label
-                >
-                <input
-                  type="text"
-                  id="sablon_adi_input"
-                  placeholder="Örn: Standart Oda Seti"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm dark:bg-slate-700 dark:text-white"
-                />
-              </div>
-
-              <!-- Ürün Ekleme Alanı -->
-              <div id="sablon_urun_ekle_container" class="hidden mb-4">
-                <label
-                  class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                  >Ürün Ekle</label
-                >
-                <div class="flex gap-2">
-                  <div class="flex-1 relative">
-                    <input
-                      type="text"
-                      id="sablon_urun_input"
-                      placeholder="Ürün adı yazın (min 3 harf)..."
-                      autocomplete="off"
-                      class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm dark:bg-slate-700 dark:text-white"
-                    />
-                    <div
-                      id="sablon_urun_dropdown"
-                      class="hidden absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-lg max-h-48 overflow-y-auto"
-                    ></div>
-                    <input type="hidden" id="sablon_urun_id" />
-                  </div>
-                  <input
-                    type="number"
-                    id="sablon_urun_miktar"
-                    min="1"
-                    value="100"
-                    class="w-20 px-2 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm dark:bg-slate-700 dark:text-white"
-                  />
-                  <button
-                    type="button"
-                    id="sablon_urun_ekle_btn"
-                    class="px-3 py-2 bg-blue-600 text-white rounded-md"
-                  >
-                    <i class="fas fa-plus"></i>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Eklenen Ürünler Listesi - Ürün ekleme alanının ALTINDA -->
-              <div
-                id="sablon_urunler_listesi"
-                class="space-y-2 max-h-48 overflow-y-auto mb-4"
-              ></div>
-
-              <!-- Stok uyarısı -->
-              <div
-                id="sablon_stok_uyari"
-                class="hidden mb-3 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg text-sm"
-              >
-                <i class="fas fa-exclamation-triangle mr-2"></i>
-                <span id="sablon_stok_uyari_mesaj"
-                  >Bazı ürünlerde stok yetersiz!</span
-                >
-              </div>
-
-              <!-- Zimmet atama uyarısı -->
-              <div
-                id="sablon_zimmet_uyari"
-                class="hidden mb-3 p-3 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-lg text-xs"
-              >
-                <i class="fas fa-info-circle mr-2"></i>
-                Aşağıdaki butona bastığınız takdirde yukarıda listelenen ürünler
-                seçilen personele zimmet olarak atanacaktır.
-              </div>
-
-              <div class="flex gap-2">
-                <button
-                  type="button"
-                  id="sablon_kaydet_btn"
-                  class="hidden flex-1 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium"
-                >
-                  <i class="fas fa-save mr-2"></i>Kaydet
-                </button>
-                <button
-                  type="button"
-                  id="sablon_uygula_btn"
-                  class="flex-1 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <i class="fas fa-check-double mr-2"></i>Zimmet Atama İşlemini
-                  Tamamla
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Şablon Silme Onay Modal -->
-          <div
-            id="sablon_sil_modal"
-            class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
-          >
-            <div
-              class="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-sm mx-4 shadow-2xl"
-            >
-              <div class="text-center">
-                <div class="text-5xl text-red-500 mb-4">
-                  <i class="fas fa-trash-alt"></i>
-                </div>
-                <h4
-                  class="text-lg font-semibold text-slate-900 dark:text-white mb-2"
-                >
-                  Şablonu Sil
-                </h4>
-                <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                  <span id="sablon_sil_adi" class="font-medium"></span>
-                  şablonunu silmek istediğinize emin misiniz?
-                </p>
-                <p class="text-xs text-slate-500 dark:text-slate-500 mb-4">
-                  Bu işlem geri alınamaz.
-                </p>
-                <input type="hidden" id="sablon_sil_id" />
-                <div class="flex gap-3">
-                  <button
-                    type="button"
-                    id="sablon_sil_iptal"
-                    class="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-md text-sm font-medium"
-                  >
-                    Vazgeç
-                  </button>
-                  <button
-                    type="button"
-                    id="sablon_sil_onayla"
-                    class="flex-1 px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium"
-                  >
-                    <i class="fas fa-trash mr-2"></i>Sil
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="tab-hizli" class="tab-content hidden">
-          <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">
-            Ürün adının en az 3 harfini yazın, listeden seçin ve miktar girin.
-          </p>
-          <div class="flex gap-3 max-w-xl">
-            <div class="flex-1 relative">
-              <label
-                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                >Ürün Ara</label
-              >
-              <input
-                type="text"
-                id="hizli_urun_ara"
-                placeholder="Ürün adı yazın (min 3 harf)..."
-                autocomplete="off"
-                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm dark:bg-slate-700 dark:text-white"
-              />
-              <div
-                id="hizli_autocomplete"
-                class="hidden absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md shadow-lg max-h-48 overflow-y-auto"
-              ></div>
-            </div>
-            <div>
-              <label
-                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-                >Miktar</label
-              >
-              <input
-                type="number"
-                id="hizli_miktar"
-                min="1"
-                value="100"
-                class="w-24 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md text-sm dark:bg-slate-700 dark:text-white"
-              />
-            </div>
-            <div class="self-end">
-              <button
-                type="button"
-                id="hizli_ekle_btn"
-                disabled
-                class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm disabled:opacity-50 h-[38px]"
-              >
-                <i class="fas fa-plus mr-1"></i>Ekle
-              </button>
-            </div>
-          </div>
-          <p id="hizli_secilen_urun" class="hidden mt-2 text-sm">
-            Secilen: <span class="font-medium"></span>
-          </p>
-        </div>
-        <div id="secilen_urunler_container" class="hidden mt-6 pt-6 border-t">
-          <div class="flex justify-between mb-3">
-            <h5 class="text-sm font-medium">
-              Secilen Urunler (<span id="secilen_urun_sayisi">0</span>)
-            </h5>
-            <button
-              type="button"
-              id="listeyi_temizle_btn"
-              class="text-sm text-red-600"
-            >
-              Temizle
-            </button>
-          </div>
-          <table class="min-w-full divide-y divide-slate-200">
-            <thead class="bg-slate-50">
-              <tr>
-                <th
-                  class="px-4 py-2 text-left text-xs font-medium text-slate-500"
-                >
-                  Urun
-                </th>
-                <th
-                  class="px-4 py-2 text-left text-xs font-medium text-slate-500"
-                >
-                  Grup
-                </th>
-                <th
-                  class="px-4 py-2 text-left text-xs font-medium text-slate-500"
-                >
-                  Miktar
-                </th>
-                <th
-                  class="px-4 py-2 text-left text-xs font-medium text-slate-500"
-                >
-                  Stok
-                </th>
-                <th
-                  class="px-4 py-2 text-left text-xs font-medium text-slate-500"
-                >
-                  Sil
-                </th>
-              </tr>
-            </thead>
-            <tbody
-              id="secilen_urunler_tbody"
-              class="bg-white divide-y divide-slate-200"
-            ></tbody>
-          </table>
-          <div class="flex justify-end mt-4">
-            <button
-              type="button"
-              id="zimmet_ata_btn"
-              class="px-6 py-2 bg-slate-600 text-white rounded-md text-sm"
-            >
-              <i class="fas fa-check mr-2"></i>Zimmet Ata
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <!-- Zimmetler Listesi -->
-    <div class="bg-white shadow rounded-lg">
-      <div class="px-4 py-5 sm:p-6">
-        <div class="flex justify-between mb-4">
-          <h3 class="text-lg font-medium text-slate-900">Atanan Zimmetler</h3>
-          <span class="text-sm text-slate-600"
-            >{{ aktif_zimmetler|length }} Aktif</span
-          >
+    <!-- Zimmet İşlemleri Listesi -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+                <i class="fas fa-list mr-2 text-green-500"></i>Zimmet Atama İşlemleri
+            </h3>
+            <div class="flex items-center gap-3">
+                <select id="filtre_ay" class="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm dark:bg-slate-700 dark:text-white">
+                    {% for i in range(1, 13) %}
+                    <option value="{{ i }}" {% if i == current_month %}selected{% endif %}>{{ ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'][i-1] }}</option>
+                    {% endfor %}
+                </select>
+                <select id="filtre_yil" class="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm dark:bg-slate-700 dark:text-white">
+                    {% for y in range(current_year - 2, current_year + 1) %}
+                    <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" onclick="zimmetListesiYukle()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"><i class="fas fa-filter mr-1"></i>Filtrele</button>
+            </div>
         </div>
-        {% if aktif_zimmetler %}
-        <table class="min-w-full divide-y divide-slate-200">
-          <thead class="bg-slate-50">
-            <tr>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-slate-500"
-              >
-                Personel
-              </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-slate-500 hidden md:table-cell"
-              >
-                Tarih
-              </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-slate-500"
-              >
-                Urun
-              </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-slate-500"
-              >
-                Islem
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-200">
-            {% for zimmet in aktif_zimmetler %}
-            <tr>
-              <td class="px-4 py-3 text-sm">
-                {{ zimmet.personel.ad }} {{ zimmet.personel.soyad }}
-              </td>
-              <td class="px-4 py-3 text-sm hidden md:table-cell">
-                {{ zimmet.zimmet_tarihi.strftime('%d.%m.%Y') }}
-              </td>
-              <td class="px-4 py-3 text-sm">
-                <span
-                  class="px-3 py-1.5 bg-blue-600 text-white rounded-full text-xs font-bold"
-                  >{{ zimmet.detaylar|length }} ürün</span
-                >
-              </td>
-              <td class="px-4 py-3 text-sm space-x-2">
-                <button
-                  type="button"
-                  onclick="zimmetDetayGoster({{ zimmet.id }})"
-                  class="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-medium"
-                >
-                  <i class="fas fa-eye mr-1"></i>Detay
-                </button>
-                {% if zimmet.durum == 'aktif' %}
-                <button
-                  type="button"
-                  onclick="zimmetIptalOnay({{ zimmet.id }})"
-                  class="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-medium"
-                >
-                  <i class="fas fa-times mr-1"></i>İptal
-                </button>
-                {% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        {% else %}
-        <div class="text-center py-8 text-slate-500">Henuz zimmet yok</div>
-        {% endif %}
-      </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                <thead class="bg-slate-50 dark:bg-slate-700">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Tarih</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Kat Sorumlusu</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Ürün Sayısı</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Durum</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="zimmet_listesi_tbody" class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                    <tr><td colspan="5" class="px-4 py-8 text-center text-slate-500"><i class="fas fa-spinner fa-spin mr-2"></i>Yükleniyor...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-    {% endif %}
-  </div>
-  {% endblock %} {% block extra_css %}
-  <style>
-    .bos-oda-toggle-wrapper {
-      display: inline-block;
-    }
-    .bos-oda-toggle-wrapper input[type="checkbox"] {
-      display: none;
-    }
-    .bos-oda-toggle {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      width: 100px;
-      height: 32px;
-      background: linear-gradient(to bottom, #64748b 0%, #475569 100%);
-      border-radius: 16px;
-      cursor: pointer;
-      overflow: hidden;
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-    }
-    .toggle-handler {
-      position: absolute;
-      left: 2px;
-      width: 28px;
-      height: 28px;
-      background: linear-gradient(to bottom, #f8fafc 0%, #e2e8f0 100%);
-      border-radius: 50%;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-      transition: left 0.3s ease;
-      z-index: 3;
-    }
-    .toggle-on,
-    .toggle-off {
-      position: absolute;
-      font-size: 11px;
-      font-weight: 600;
-      transition: opacity 0.3s;
-    }
-    .toggle-on {
-      left: 10px;
-      color: white;
-      opacity: 0;
-    }
-    .toggle-off {
-      right: 10px;
-      color: white;
-      opacity: 1;
-    }
-    .bos-oda-toggle-wrapper input:checked + .bos-oda-toggle {
-      background: linear-gradient(to bottom, #22c55e 0%, #16a34a 100%);
-    }
-    .bos-oda-toggle-wrapper input:checked + .bos-oda-toggle .toggle-handler {
-      left: 70px;
-    }
-    .bos-oda-toggle-wrapper input:checked + .bos-oda-toggle .toggle-on {
-      opacity: 1;
-    }
-    .bos-oda-toggle-wrapper input:checked + .bos-oda-toggle .toggle-off {
-      opacity: 0;
-    }
-  </style>
-  {% endblock %} {% block extra_scripts %}
-  <script>
-    // Profesyonel Alert Modal Fonksiyonu
-    function showAlert(message, type = 'info', title = null) {
-        const icons = {
-            success: 'fa-check-circle',
-            error: 'fa-times-circle',
-            warning: 'fa-exclamation-triangle',
-            info: 'fa-info-circle'
-        };
-        const titles = {
-            success: 'Başarılı!',
-            error: 'Hata!',
-            warning: 'Dikkat!',
-            info: 'Bilgi'
-        };
-        const colors = {
-            success: '#22c55e',
-            error: '#ef4444',
-            warning: '#f59e0b',
-            info: '#3b82f6'
-        };
-
-        $('#alert_modal .alert-modal-icon').html('<i class="fas ' + icons[type] + '"></i>').css('color', colors[type]);
-        $('#alert_modal .alert-modal-title').text(title || titles[type]).css('color', colors[type]);
-        $('#alert_modal .alert-modal-message').text(message);
-
-        $('#alert_modal').dialog({
-            modal: true,
-            width: 350,
-            draggable: false,
-            resizable: false,
-            closeOnEscape: true,
-            dialogClass: 'alert-dialog-' + type,
-            buttons: {
-                'Tamam': function() {
-                    $(this).dialog('close');
-                }
-            }
-        });
-    }
-
-    // Zimmet Detay Modal - Ürün bazlı iptal butonlu
-    let aktifDetayZimmetId = null;
-    async function zimmetDetayGoster(zimmetId) {
-        try {
-            aktifDetayZimmetId = zimmetId;
-            const response = await fetch('/api/zimmet-detay/' + zimmetId);
-            const data = await response.json();
-
-            if (data.success) {
-                let html = '<table class="w-full text-sm">';
-                html += '<thead class="bg-slate-100"><tr><th class="px-3 py-2 text-left">Ürün</th><th class="px-3 py-2 text-center">Miktar</th><th class="px-3 py-2 text-center">Kalan</th><th class="px-3 py-2 text-center">İşlem</th></tr></thead>';
-                html += '<tbody>';
-                data.detaylar.forEach(d => {
-                    const kullanildi = d.kalan < d.miktar;
-                    const durum = d.kalan > 0 ? 'text-green-600' : 'text-slate-400';
-                    html += '<tr class="border-b" id="detay-row-' + d.detay_id + '"><td class="px-3 py-2">' + d.urun_adi + '</td>';
-                    html += '<td class="px-3 py-2 text-center font-bold">' + d.miktar + '</td>';
-                    html += '<td class="px-3 py-2 text-center font-bold ' + durum + '">' + d.kalan + '</td>';
-                    html += '<td class="px-3 py-2 text-center">';
-                    if (kullanildi) {
-                        html += '<span class="text-xs text-slate-400">Kullanıldı</span>';
-                    } else {
-                        html += '<button type="button" onclick="urunIptalOnay(' + d.detay_id + ', \'' + d.urun_adi.replace(/'/g, "\\'") + '\', ' + d.miktar + ')" class="px-2 py-1 bg-red-500 text-white rounded text-xs"><i class="fas fa-times"></i></button>';
-                    }
-                    html += '</td></tr>';
-                });
-                html += '</tbody></table>';
-                html += '<div class="mt-3 pt-3 border-t text-sm text-slate-600">';
-                html += '<p><strong>Personel:</strong> ' + data.personel + '</p>';
-                html += '<p><strong>Tarih:</strong> ' + data.tarih + '</p>';
-                html += '</div>';
-
-                $('#zimmet_detay_icerik').html(html);
-                $('#zimmet_detay_modal').dialog({
-                    modal: true,
-                    width: 500,
-                    draggable: false,
-                    resizable: false,
-                    buttons: { 'Kapat': function() { $(this).dialog('close'); } }
-                });
-            } else {
-                showAlert(data.error || 'Detaylar yüklenemedi!', 'error');
-            }
-        } catch (e) {
-            showAlert('Hata: ' + e.message, 'error');
-        }
-    }
-
-    // Ürün bazlı iptal onay
-    let iptalEdilecekDetayId = null;
-    function urunIptalOnay(detayId, urunAdi, miktar) {
-        iptalEdilecekDetayId = detayId;
-        $('#alert_modal .alert-modal-icon').html('<i class="fas fa-exclamation-triangle"></i>').css('color', '#f59e0b');
-        $('#alert_modal .alert-modal-title').text('Ürün İptali').css('color', '#f59e0b');
-        $('#alert_modal .alert-modal-message').html('<strong>' + urunAdi + '</strong> x' + miktar + '<br>Bu ürünü zimmet listesinden çıkarmak istiyor musunuz?');
-
-        $('#alert_modal').dialog({
-            modal: true,
-            width: 380,
-            draggable: false,
-            resizable: false,
-            buttons: {
-                'İptal Et': function() {
-                    $(this).dialog('close');
-                    urunIptalEt(iptalEdilecekDetayId);
-                },
-                'Vazgeç': function() {
-                    $(this).dialog('close');
-                }
-            }
-        });
-    }
-
-    // Ürün bazlı iptal işlemi
-    async function urunIptalEt(detayId) {
-        try {
-            const response = await fetch('/api/zimmet-detay-iptal/' + detayId, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': '{{ csrf_token() }}' }
-            });
-            const data = await response.json();
-            if (data.success) {
-                showAlert('Ürün zimmet listesinden çıkarıldı!', 'success');
-                // Detay modal'ı yenile
-                if (aktifDetayZimmetId) {
-                    setTimeout(() => zimmetDetayGoster(aktifDetayZimmetId), 500);
-                }
-                // Zimmet listesini güncelle
-                zimmetListesiniGuncelle();
-            } else {
-                showAlert(data.error || 'İptal işlemi başarısız!', 'error');
-            }
-        } catch (e) {
-            showAlert('Hata: ' + e.message, 'error');
-        }
-    }
-
-    // Zimmet İptal Onay Modal
-    let iptalEdilecekZimmetId = null;
-    async function zimmetIptalOnay(zimmetId) {
-        try {
-            const response = await fetch('/api/zimmet-detay/' + zimmetId);
-            const data = await response.json();
-
-            if (data.success) {
-                iptalEdilecekZimmetId = zimmetId;
-
-                // Kullanım kontrolü - kalan < miktar ise kullanılmış demek
-                const kullanilmis = data.detaylar.some(d => d.kalan < d.miktar);
-
-                let html = '<table class="w-full text-sm">';
-                html += '<thead class="bg-slate-100"><tr><th class="px-3 py-2 text-left">Ürün</th><th class="px-3 py-2 text-center">Miktar</th><th class="px-3 py-2 text-center">Kullanılan</th></tr></thead>';
-                html += '<tbody>';
-                data.detaylar.forEach(d => {
-                    const kullanilan = d.miktar - d.kalan;
-                    const renk = kullanilan > 0 ? 'text-red-600 font-bold' : 'text-slate-500';
-                    html += '<tr class="border-b"><td class="px-3 py-2">' + d.urun_adi + '</td>';
-                    html += '<td class="px-3 py-2 text-center font-bold">' + d.miktar + '</td>';
-                    html += '<td class="px-3 py-2 text-center ' + renk + '">' + kullanilan + '</td></tr>';
-                });
-                html += '</tbody></table>';
-
-                $('#zimmet_iptal_icerik').html(html);
-
-                if (kullanilmis) {
-                    $('#zimmet_iptal_uyari').removeClass('hidden');
-                    $('#zimmet_iptal_modal').dialog({
-                        modal: true,
-                        width: 450,
-                        draggable: false,
-                        resizable: false,
-                        buttons: { 'Kapat': function() { $(this).dialog('close'); } }
-                    });
-                } else {
-                    $('#zimmet_iptal_uyari').addClass('hidden');
-                    $('#zimmet_iptal_modal').dialog({
-                        modal: true,
-                        width: 450,
-                        draggable: false,
-                        resizable: false,
-                        buttons: {
-                            'İptal Et': function() {
-                                zimmetIptalEt(iptalEdilecekZimmetId);
-                                $(this).dialog('close');
-                            },
-                            'Vazgeç': function() { $(this).dialog('close'); }
-                        }
-                    });
-                }
-            } else {
-                showAlert(data.error || 'Detaylar yüklenemedi!', 'error');
-            }
-        } catch (e) {
-            showAlert('Hata: ' + e.message, 'error');
-        }
-    }
-
-    // Zimmet İptal İşlemi
-    async function zimmetIptalEt(zimmetId) {
-        try {
-            const response = await fetch('/api/zimmet-iptal/' + zimmetId, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': '{{ csrf_token() }}' }
-            });
-            const data = await response.json();
-            if (data.success) {
-                showAlert('Zimmet başarıyla iptal edildi!', 'success');
-                zimmetListesiniGuncelle();
-            } else {
-                showAlert(data.error || 'İptal işlemi başarısız!', 'error');
-            }
-        } catch (e) {
-            showAlert('Hata: ' + e.message, 'error');
-        }
-    }
-
-    // Zimmet listesini AJAX ile güncelle
-    async function zimmetListesiniGuncelle() {
-        try {
-            const response = await fetch('/api/zimmet-listesi?otel_id=' + (window.otelId || ''));
-            const data = await response.json();
-
-            if (data.success) {
-                const container = document.querySelector('.bg-white.shadow.rounded-lg:last-of-type .px-4.py-5');
-                if (!container) return;
-
-                // Başlık güncelle
-                const baslik = container.querySelector('span.text-sm');
-                if (baslik) baslik.textContent = data.zimmetler.length + ' Aktif';
-
-                // Tablo güncelle
-                const tbody = container.querySelector('tbody');
-                if (tbody && data.zimmetler.length > 0) {
-                    tbody.innerHTML = data.zimmetler.map(z => `
-                        <tr>
-                            <td class="px-4 py-3 text-sm">${z.personel}</td>
-                            <td class="px-4 py-3 text-sm hidden md:table-cell">${z.tarih}</td>
-                            <td class="px-4 py-3 text-sm">
-                                <span class="px-3 py-1.5 bg-blue-600 text-white rounded-full text-xs font-bold">${z.urun_sayisi} ürün</span>
-                            </td>
-                            <td class="px-4 py-3 text-sm space-x-2">
-                                <button type="button" onclick="zimmetDetayGoster(${z.id})" class="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-medium">
-                                    <i class="fas fa-eye mr-1"></i>Detay
-                                </button>
-                                ${z.durum === 'aktif' ? `<button type="button" onclick="zimmetIptalOnay(${z.id})" class="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-medium">
-                                    <i class="fas fa-times mr-1"></i>İptal
-                                </button>` : ''}
-                            </td>
-                        </tr>
-                    `).join('');
-                } else if (data.zimmetler.length === 0) {
-                    const table = container.querySelector('table');
-                    if (table) table.outerHTML = '<div class="text-center py-8 text-slate-500">Henüz zimmet yok</div>';
-                }
-            }
-        } catch (e) {
-            console.error('Zimmet listesi güncellenemedi:', e);
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        let secilenUrunler = [];
-        let tumUrunler = [];
-        let sablonlar = [];
-        let hizliSecilenUrun = null;
-        let sablonEditMode = false;
-        let aktifZimmetId = null;  // Session bazlı zimmet ID
-        let modalUrun = null;      // Modal'da açık olan ürün
-        let sablonUrunleri = [];
-        window.otelId = {{ secili_otel_id or 'null' }};  // Global yap - dış fonksiyonlar erişebilsin
-        const otelId = window.otelId;
-
-        // Kat sorumlusu seçimi - her sayfa yüklendiğinde yeniden seçilmeli
-        const personelSelect = document.getElementById('personel_id_global');
-        // Grup renkleri - Birbirine yakın renkler YOK
-        const grupRenkleri = [
-            {bg: '#dbeafe', border: '#3b82f6', text: '#1e3a8a', subtext: '#1d4ed8'},    // 1. Blue (Alkollü)
-            {bg: '#ffedd5', border: '#f97316', text: '#7c2d12', subtext: '#ea580c'},    // 2. Orange (Alkolsüz)
-            {bg: '#ede9fe', border: '#8b5cf6', text: '#4c1d95', subtext: '#6d28d9'},    // 3. Violet (Atıştırmalık)
-            {bg: '#fee2e2', border: '#ef4444', text: '#7f1d1d', subtext: '#dc2626'},    // 4. Red
-            {bg: '#cffafe', border: '#06b6d4', text: '#164e63', subtext: '#0891b2'},    // 5. Cyan
-            {bg: '#e0e7ff', border: '#6366f1', text: '#312e81', subtext: '#4338ca'},    // 6. Indigo
-            {bg: '#fef3c7', border: '#f59e0b', text: '#78350f', subtext: '#b45309'},    // 7. Amber
-            {bg: '#e2e8f0', border: '#64748b', text: '#1e293b', subtext: '#475569'},    // 8. Slate
-            {bg: '#fef9c3', border: '#eab308', text: '#713f12', subtext: '#a16207'}     // 9. Yellow
-        ];
-
-        const grupRenkMap = {};
-
-        // Buton renkleri - sırayla eşleşmeli
-        const butonRenkleri = ['#3b82f6', '#f97316', '#8b5cf6', '#ef4444', '#06b6d4', '#6366f1', '#f59e0b', '#64748b', '#eab308'];
-
-    // Butonlara inline style ile renk ata
-    document.querySelectorAll('.grup-btn[data-renk-idx]').forEach(btn => {
-        const idx = parseInt(btn.dataset.renkIdx) % butonRenkleri.length;
-        btn.style.backgroundColor = butonRenkleri[idx];
-        btn.style.color = 'white';
-    });
-
-
-        // Tab yonetimi
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.tab-btn').forEach(b => {
-                    b.classList.remove('border-blue-500', 'text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-blue-900/20');
-                    b.classList.add('border-transparent', 'text-slate-500', 'dark:text-slate-400');
-                });
-                this.classList.remove('border-transparent', 'text-slate-500', 'dark:text-slate-400');
-                this.classList.add('border-blue-500', 'text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-blue-900/20');
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-                document.getElementById('tab-' + this.dataset.tab).classList.remove('hidden');
-                if (this.dataset.tab === 'sablon' && sablonlar.length === 0) loadSablonlar();
-            });
-        });
-
-        // Grup butonlari - aktif/pasif toggle
-        document.querySelectorAll('.grup-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                // Tum butonlari normale dondur
-                document.querySelectorAll('.grup-btn').forEach(b => {
-                    b.classList.remove('ring-2', 'ring-offset-2', 'ring-slate-500');
-                    if (!b.dataset.grupId) {
-                        b.classList.remove('bg-slate-800');
-                        b.classList.add('bg-slate-600');
-                    }
-                });
-                // Aktif butona ring ekle
-                this.classList.add('ring-2', 'ring-offset-2', 'ring-slate-500');
-                if (!this.dataset.grupId) {
-                    this.classList.remove('bg-slate-600');
-                    this.classList.add('bg-slate-800');
-                }
-                renderGrid(document.getElementById('grid_arama').value, this.dataset.grupId);
-            });
-        });
-
-        document.getElementById('grid_arama').addEventListener('input', function() {
-            const aktifGrup = document.querySelector('.grup-btn.ring-2');
-            renderGrid(this.value, aktifGrup ? aktifGrup.dataset.grupId : '');
-        });
-
-        // Toggle fonksiyonu (global)
-        window.renderGridFromToggle = function() {
-            const aktifGrup = document.querySelector('.grup-btn.ring-2');
-            renderGrid(document.getElementById('grid_arama').value, aktifGrup ? aktifGrup.dataset.grupId : '');
-        };
-
-        loadTumUrunler();
-
-        async function loadTumUrunler() {
-            try {
-                const url = otelId ? '/api/zimmet-tum-urunler?otel_id=' + otelId : '/api/zimmet-tum-urunler';
-                const response = await fetch(url);
-                tumUrunler = await response.json();
-                // Grup renklerini ata - butonlardaki siraya gore
-                document.querySelectorAll('.grup-btn[data-renk-idx]').forEach(btn => {
-                    const gid = parseInt(btn.dataset.grupId);
-                    if (gid) {
-                        const idx = parseInt(btn.dataset.renkIdx) % grupRenkleri.length;
-                        grupRenkMap[gid] = {bg: grupRenkleri[idx].bg, border: grupRenkleri[idx].border, text: grupRenkleri[idx].text, subtext: grupRenkleri[idx].subtext};
-                    }
-                });
-                renderGrid();
-            } catch (e) {
-                document.getElementById('urun_grid').innerHTML = '<div class="col-span-full text-center py-8 text-red-500">Yuklenemedi!</div>';
-            }
-        }
-
-        function renderGrid(filter = '', grupId = '') {
-            const grid = document.getElementById('urun_grid');
-            const stoksuzGoster = document.getElementById('stoksuz_gizle').checked;
-            let filtered = tumUrunler;
-            if (filter) filtered = filtered.filter(u => u.urun_adi.toLowerCase().includes(filter.toLowerCase()));
-            if (grupId) filtered = filtered.filter(u => u.grup_id == grupId);
-            if (!stoksuzGoster) filtered = filtered.filter(u => u.mevcut_stok > 0);
-            if (filtered.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-8 text-slate-500">Urun bulunamadi</div>'; return; }
-
-            grid.innerHTML = filtered.map(urun => {
-                const secili = secilenUrunler.find(s => s.id == urun.id);
-                const renk = grupRenkMap[parseInt(urun.grup_id)] || {bg: '#ffffff', border: '#e2e8f0', text: '#1e293b', subtext: '#475569'};
-                const stokColor = urun.mevcut_stok > 10 ? '#15803d' : (urun.mevcut_stok > 0 ? '#a16207' : '#dc2626');
-                const bugunAtanan = urun.bugun_atanan || 0;
-
-                return '<div class="urun-card group border-2 rounded-xl cursor-pointer relative transition-all duration-200 shadow-sm flex flex-col overflow-hidden" style="background:' + renk.bg + ';border-color:' + renk.border + ';" data-id="' + urun.id + '">' +
-                    // ÜST - Grup etiketi (ortalı, koyu arka plan, beyaz yazı)
-                    '<div class="text-center py-1.5" style="background-color:' + renk.border + '">' +
-                    '<span class="text-[11px] font-bold uppercase tracking-wide text-white">' + urun.grup_adi + '</span>' +
-                    '</div>' +
-                    // ORTA - Ürün adı (yatay/dikey ortalı)
-                    '<div class="flex-1 flex items-center justify-center p-2 min-h-[50px]">' +
-                    '<p class="text-sm font-bold leading-tight line-clamp-2 text-center" style="color:' + renk.text + '" title="' + urun.urun_adi + '">' + urun.urun_adi + '</p>' +
-                    '</div>' +
-                    // ALT - Stok (sol) ve Atanan (sağ) - grubun rengiyle
-                    '<div class="flex items-center justify-between px-3 py-2 border-t" style="background-color:' + renk.border + '15;border-color:' + renk.border + '40">' +
-                    '<span class="text-lg font-bold" style="color:' + stokColor + '">' + urun.mevcut_stok + '</span>' +
-                    (bugunAtanan > 0 ? '<span class="text-xs font-bold px-2 py-1 rounded-full text-white" style="background-color:' + renk.border + '">+' + bugunAtanan + '</span>' : '') +
-                    '</div>' +
-                    '</div>';
-            }).join('');
-
-            grid.querySelectorAll('.urun-card').forEach(card => {
-                card.addEventListener('click', function() {
-                    const urun = tumUrunler.find(u => u.id == this.dataset.id);
-                    if (urun) showMiktarModal(urun);
-                });
-            });
-        }
-
-        function showMiktarModal(urun) {
-            // Personel seçili mi kontrol et
-            const personelId = document.getElementById('personel_id_global').value;
-            if (!personelId) {
-                showAlert('Önce kat sorumlusu seçin!', 'warning');
-                return;
-            }
-
-            modalUrun = urun;
-            const renk = grupRenkMap[parseInt(urun.grup_id)] || {bg: '#ffffff', border: '#e2e8f0', text: '#1e293b', subtext: '#475569'};
-
-            // Modal içeriğini doldur - kartlardaki gibi koyu renkler
-            $('#modal_urun_adi').text(urun.urun_adi).css('color', renk.text);
-            $('#modal_urun_grup').text(urun.grup_adi).css('color', renk.subtext);
-            $('#modal_urun_stok').html('Stok: <span style="color:' + (urun.mevcut_stok > 0 ? '#15803d' : '#dc2626') + '">' + urun.mevcut_stok + '</span>').css('color', renk.text);
-            $('#modal_urun_bilgi').css({'background-color': renk.bg, 'border-color': renk.border});
-            $('#modal_miktar').val(0).attr('max', urun.mevcut_stok);
-
-            // Mevcut atanmış miktar varsa göster
-            const mevcut = secilenUrunler.find(s => s.id == urun.id);
-            if (mevcut) {
-                $('#modal_miktar').val(mevcut.miktar);
-            }
-
-            // jQuery UI Dialog aç
-            $('#zimmet_modal').dialog({
-                modal: true,
-                width: 400,
-                draggable: false,
-                resizable: false,
-                closeOnEscape: true,
-                buttons: {
-                    'Zimmet Ata': function() {
-                        zimmetAtaFromModal();
-                    },
-                    'İptal': function() {
-                        $(this).dialog('close');
-                    }
-                }
-            });
-        }
-
-        // Miktar butonları
-        $(document).on('click', '.miktar-btn', function() {
-            const ekle = parseInt($(this).data('miktar'));
-            const input = $('#modal_miktar');
-            const yeni = (parseInt(input.val()) || 0) + ekle;
-            const max = modalUrun ? modalUrun.mevcut_stok : 99999;
-            input.val(Math.min(yeni, max));
-        });
-
-        $(document).on('click', '.miktar-sifirla', function() {
-            $('#modal_miktar').val(0);
-        });
-
-        // Modal'dan zimmet ata
-        async function zimmetAtaFromModal() {
-            const miktar = parseInt($('#modal_miktar').val()) || 1;
-            const personelId = document.getElementById('personel_id_global').value;
-
-            if (miktar < 1) { showAlert('Geçerli miktar girin!', 'warning'); return; }
-            if (miktar > modalUrun.mevcut_stok) { showAlert('Yetersiz stok! Mevcut: ' + modalUrun.mevcut_stok, 'error'); return; }
-
-            try {
-                const response = await fetch('/api/zimmet-tek-urun-ata', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        personel_id: parseInt(personelId),
-                        urun_id: modalUrun.id,
-                        miktar: miktar,
-                        zimmet_id: aktifZimmetId,
-                        otel_id: otelId
-                    })
-                });
-
-                const result = await response.json();
-                if (result.success) {
-                    aktifZimmetId = result.zimmet_id;
-
-                    // Ürün stokunu ve bugün atanan miktarı güncelle
-                    const urunIdx = tumUrunler.findIndex(u => u.id == modalUrun.id);
-                    if (urunIdx >= 0) {
-                        tumUrunler[urunIdx].mevcut_stok = result.yeni_stok;
-                        // Bugün atanan miktarı güncelle (mevcut + yeni eklenen)
-                        tumUrunler[urunIdx].bugun_atanan = (tumUrunler[urunIdx].bugun_atanan || 0) + miktar;
-                    }
-
-                    // Grid'i güncelle ve modal'ı kapat
-                    renderGrid(document.getElementById('grid_arama').value, document.querySelector('.grup-btn.ring-2')?.dataset.grupId || '');
-                    $('#zimmet_modal').dialog('close');
-
-                    // Başarı bildirimi
-                    showAlert(modalUrun.urun_adi + ' x' + miktar + ' zimmet atandı!', 'success');
-
-                    // Atanan Zimmetler listesini güncelle
-                    zimmetListesiniGuncelle();
-                } else {
-                    showAlert(result.error || 'Hata oluştu!', 'error');
-                }
-            } catch (e) {
-                showAlert('Hata: ' + e.message, 'error');
-            }
-        }
-
-        function urunEkleVeyaGuncelle(urun, miktar) {
-            const mevcut = secilenUrunler.find(s => s.id == urun.id);
-            if (mevcut) { mevcut.miktar = miktar; }
-            else { secilenUrunler.push({ id: urun.id, urun_adi: urun.urun_adi, grup_adi: urun.grup_adi, birim: urun.birim, miktar: miktar, mevcut_stok: urun.mevcut_stok }); }
-            updateSecilenTable();
-        }
-
-        function updateSecilenTable() {
-            const container = document.getElementById('secilen_urunler_container');
-            const tbody = document.getElementById('secilen_urunler_tbody');
-            document.getElementById('secilen_urun_sayisi').textContent = secilenUrunler.length;
-            if (secilenUrunler.length === 0) { container.classList.add('hidden'); return; }
-            container.classList.remove('hidden');
-            tbody.innerHTML = secilenUrunler.map((u, i) => '<tr><td class="px-4 py-2 text-sm">' + u.urun_adi + '</td><td class="px-4 py-2 text-sm">' + u.grup_adi + '</td><td class="px-4 py-2"><input type="number" min="1" max="' + u.mevcut_stok + '" value="' + u.miktar + '" class="miktar-input w-16 px-2 py-1 border rounded text-sm" data-idx="' + i + '"></td><td class="px-4 py-2 text-sm">' + u.mevcut_stok + '</td><td class="px-4 py-2"><button class="urun-sil text-red-600" data-idx="' + i + '"><i class="fas fa-trash"></i></button></td></tr>').join('');
-            tbody.querySelectorAll('.miktar-input').forEach(inp => inp.addEventListener('change', function() { secilenUrunler[this.dataset.idx].miktar = parseInt(this.value) || 1; }));
-            tbody.querySelectorAll('.urun-sil').forEach(btn => btn.addEventListener('click', function() { secilenUrunler.splice(this.dataset.idx, 1); updateSecilenTable(); renderGrid(); }));
-        }
-
-        document.getElementById('listeyi_temizle_btn').addEventListener('click', function() { secilenUrunler = []; updateSecilenTable(); renderGrid(); });
-
-        // Sablon
-        async function loadSablonlar() {
-            const response = await fetch('/api/zimmet-sablonlar');
-            sablonlar = await response.json();
-            const container = document.getElementById('sablon_listesi');
-            if (sablonlar.length === 0) { container.innerHTML = '<p class="text-slate-500">Sablon yok</p>'; return; }
-            container.innerHTML = sablonlar.map(s => '<div class="sablon-item p-3 bg-white border rounded-lg cursor-pointer flex justify-between" data-id="' + s.id + '"><div><p class="font-medium text-sm">' + s.sablon_adi + '</p><p class="text-xs text-slate-500">' + s.urun_sayisi + ' urun</p></div><div><button class="sablon-sil text-red-500 ml-2" data-id="' + s.id + '"><i class="fas fa-trash"></i></button></div></div>').join('');
-            container.querySelectorAll('.sablon-item').forEach(item => item.addEventListener('click', function(e) { if (e.target.closest('.sablon-sil')) return; showSablonDetay(sablonlar.find(s => s.id == this.dataset.id)); }));
-            container.querySelectorAll('.sablon-sil').forEach(btn => btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const sablon = sablonlar.find(s => s.id == this.dataset.id);
-                document.getElementById('sablon_sil_id').value = this.dataset.id;
-                document.getElementById('sablon_sil_adi').textContent = sablon ? sablon.sablon_adi : '';
-                document.getElementById('sablon_sil_modal').classList.remove('hidden');
-            }));
-        }
-
-        async function showSablonDetay(sablon) {
-            // Önce stok bilgilerini al
-            if (tumUrunler.length === 0) await loadTumUrunler();
-
-            sablonUrunleri = sablon.detaylar.map(d => {
-                const stokBilgi = tumUrunler.find(u => u.id == d.urun_id);
-                return {
-                    id: d.urun_id,
-                    urun_adi: d.urun_adi,
-                    grup_adi: d.grup_adi,
-                    miktar: d.varsayilan_miktar,
-                    birim: d.birim,
-                    mevcut_stok: stokBilgi ? stokBilgi.mevcut_stok : 0
-                };
-            });
-
-            document.getElementById('sablon_modal_overlay').classList.remove('hidden');
-            document.getElementById('sablon_panel_baslik').textContent = sablon.sablon_adi;
-            document.getElementById('sablon_form_container').classList.add('hidden');
-            document.getElementById('sablon_urun_ekle_container').classList.add('hidden');
-            document.getElementById('sablon_kaydet_btn').classList.add('hidden');
-            document.getElementById('sablon_uygula_btn').classList.remove('hidden');
-            document.getElementById('sablon_zimmet_uyari').classList.remove('hidden');
-
-            // Stok kontrolü
-            let stokYetersiz = false;
-            let yetersizUrunler = [];
-
-            const listHtml = sablonUrunleri.map(u => {
-                const stokDurumu = u.mevcut_stok >= u.miktar;
-                if (!stokDurumu) {
-                    stokYetersiz = true;
-                    yetersizUrunler.push(u.urun_adi);
-                }
-                const stokClass = stokDurumu ? 'text-green-600' : 'text-red-600 font-bold';
-                const bgClass = stokDurumu ? 'bg-white dark:bg-slate-700' : 'bg-red-50 dark:bg-red-900/20';
-                return '<div class="p-2 ' + bgClass + ' border dark:border-slate-600 rounded">' +
-                    '<div class="flex justify-between items-center">' +
-                    '<span class="text-sm">' + u.urun_adi + '</span>' +
-                    '<span class="text-sm font-medium">' + u.miktar + '</span>' +
-                    '</div>' +
-                    '<div class="text-xs mt-1 ' + stokClass + '">' +
-                    '<i class="fas fa-box mr-1"></i>Stok: ' + u.mevcut_stok +
-                    (stokDurumu ? '' : ' <i class="fas fa-exclamation-triangle ml-1"></i>Yetersiz!') +
-                    '</div></div>';
-            }).join('');
-
-            document.getElementById('sablon_urunler_listesi').innerHTML = listHtml;
-
-            // Stok uyarısı ve buton durumu
-            const uyariDiv = document.getElementById('sablon_stok_uyari');
-            const uygulaBtn = document.getElementById('sablon_uygula_btn');
-
-            if (stokYetersiz) {
-                uyariDiv.classList.remove('hidden');
-                document.getElementById('sablon_stok_uyari_mesaj').textContent =
-                    'Stok yetersiz: ' + yetersizUrunler.join(', ');
-                uygulaBtn.disabled = true;
-            } else {
-                uyariDiv.classList.add('hidden');
-                uygulaBtn.disabled = false;
-            }
-        }
-
-        document.getElementById('sablon_panel_kapat').addEventListener('click', () => document.getElementById('sablon_modal_overlay').classList.add('hidden'));
-        document.getElementById('sablon_uygula_btn').addEventListener('click', async function() {
-            const personelId = document.getElementById('personel_id_global').value;
-            if (!personelId) {
-                showAlert('Lütfen önce kat sorumlusu seçin!', 'warning');
-                return;
-            }
-            if (sablonUrunleri.length === 0) {
-                showAlert('Şablonda ürün yok!', 'warning');
-                return;
-            }
-
-            this.disabled = true;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>İşleniyor...';
-
-            try {
-                const response = await fetch('/api/zimmet-hizli-ata', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        personel_id: parseInt(personelId),
-                        otel_id: otelId,
-                        urunler: sablonUrunleri.map(u => ({urun_id: u.id, miktar: u.miktar}))
-                    })
-                });
-                const result = await response.json();
-
-                if (result.success) {
-                    document.getElementById('sablon_modal_overlay').classList.add('hidden');
-                    showAlert('Zimmet başarıyla atandı!', 'success');
-                    setTimeout(() => window.location.reload(), 1500);
-                } else {
-                    showAlert(result.error || 'Zimmet atama hatası!', 'error');
-                    this.disabled = false;
-                    this.innerHTML = '<i class="fas fa-check-double mr-2"></i>Zimmet Atama İşlemini Tamamla';
-                }
-            } catch (e) {
-                showAlert('Hata: ' + e.message, 'error');
-                this.disabled = false;
-                this.innerHTML = '<i class="fas fa-check-double mr-2"></i>Zimmet Atama İşlemini Tamamla';
-            }
-        });
-
-        // Şablon silme modal event'leri
-        document.getElementById('sablon_sil_iptal').addEventListener('click', () => {
-            document.getElementById('sablon_sil_modal').classList.add('hidden');
-        });
-        document.getElementById('sablon_sil_onayla').addEventListener('click', async function() {
-            const sablonId = document.getElementById('sablon_sil_id').value;
-            try {
-                await fetch('/api/zimmet-sablon-sil/' + sablonId, {
-                    method: 'DELETE',
-                    headers: { 'X-CSRFToken': '{{ csrf_token() }}' }
-                });
-                document.getElementById('sablon_sil_modal').classList.add('hidden');
-                showAlert('Şablon silindi!', 'success');
-                await loadSablonlar();
-            } catch (e) {
-                showAlert('Silme hatası: ' + e.message, 'error');
-            }
-        });
-        document.getElementById('yeni_sablon_btn').addEventListener('click', function() {
-            document.getElementById('sablon_modal_overlay').classList.remove('hidden');
-            document.getElementById('sablon_panel_baslik').textContent = 'Yeni Zimmet Şablonu Oluştur';
-            document.getElementById('sablon_form_container').classList.remove('hidden');
-            document.getElementById('sablon_urun_ekle_container').classList.remove('hidden');
-            document.getElementById('sablon_kaydet_btn').classList.remove('hidden');
-            document.getElementById('sablon_uygula_btn').classList.add('hidden');
-            document.getElementById('sablon_stok_uyari').classList.add('hidden');
-            document.getElementById('sablon_zimmet_uyari').classList.add('hidden');
-            document.getElementById('sablon_adi_input').value = '';
-            document.getElementById('sablon_edit_id').value = '';
-            sablonUrunleri = [];
-            document.getElementById('sablon_urunler_listesi').innerHTML = '';
-            loadUrunSelect();
-        });
-        // Datalist için ürün arama fonksiyonu
-        async function loadUrunSelect() {
-            if (tumUrunler.length === 0) await loadTumUrunler();
-        }
-
-        // Şablon ürün input - 3 harf yazınca öneriler (custom dropdown)
-        let sablonAramaTimeout;
-        const sablonInput = document.getElementById('sablon_urun_input');
-        const sablonDropdown = document.getElementById('sablon_urun_dropdown');
-
-        sablonInput.addEventListener('input', function() {
-            clearTimeout(sablonAramaTimeout);
-            const q = this.value.trim();
-            document.getElementById('sablon_urun_id').value = '';
-
-            if (q.length < 3) {
-                sablonDropdown.innerHTML = '';
-                sablonDropdown.classList.add('hidden');
-                return;
-            }
-
-            sablonAramaTimeout = setTimeout(async () => {
-                if (tumUrunler.length === 0) await loadTumUrunler();
-                const filtered = tumUrunler.filter(u =>
-                    u.urun_adi.toLowerCase().includes(q.toLowerCase())
-                ).slice(0, 15);
-
-                if (filtered.length === 0) {
-                    sablonDropdown.innerHTML = '<div class="p-3 text-slate-500 text-sm">Sonuç bulunamadı</div>';
-                } else {
-                    sablonDropdown.innerHTML = filtered.map(u =>
-                        '<div class="sablon-urun-item p-3 cursor-pointer text-sm border-b border-slate-200 dark:border-slate-700" data-id="' + u.id + '" data-adi="' + u.urun_adi + '">' +
-                        '<span class="font-medium">' + u.urun_adi + '</span>' +
-                        '<span class="text-xs text-slate-500 ml-2">(' + (u.grup_adi || '') + ')</span>' +
-                        '</div>'
-                    ).join('');
-                }
-                sablonDropdown.classList.remove('hidden');
-
-                // Dropdown item click
-                sablonDropdown.querySelectorAll('.sablon-urun-item').forEach(item => {
-                    item.addEventListener('click', function() {
-                        sablonInput.value = this.dataset.adi;
-                        document.getElementById('sablon_urun_id').value = this.dataset.id;
-                        sablonDropdown.classList.add('hidden');
-                    });
-                });
-            }, 150);
-        });
-
-        // Input dışına tıklanınca dropdown'ı kapat
-        document.addEventListener('click', function(e) {
-            if (!sablonInput.contains(e.target) && !sablonDropdown.contains(e.target)) {
-                sablonDropdown.classList.add('hidden');
-            }
-        });
-
-        // Focus olunca tekrar göster
-        sablonInput.addEventListener('focus', function() {
-            if (this.value.length >= 3 && sablonDropdown.innerHTML) {
-                sablonDropdown.classList.remove('hidden');
-            }
-        });
-
-        document.getElementById('sablon_urun_ekle_btn').addEventListener('click', function() {
-            const input = document.getElementById('sablon_urun_input');
-            const urunId = document.getElementById('sablon_urun_id').value;
-
-            if (!urunId) {
-                // Input değerinden ürün bul
-                const urun = tumUrunler.find(u => u.urun_adi === input.value);
-                if (!urun) {
-                    showAlert('Lütfen listeden bir ürün seçin!', 'warning');
-                    return;
-                }
-                document.getElementById('sablon_urun_id').value = urun.id;
-            }
-
-            const urun = tumUrunler.find(u => u.id == document.getElementById('sablon_urun_id').value);
-            if (!urun) return;
-
-            // Aynı ürün zaten eklenmişse uyar
-            if (sablonUrunleri.some(u => u.id == urun.id)) {
-                showAlert('Bu ürün zaten ekli!', 'warning');
-                return;
-            }
-
-            const miktar = parseInt(document.getElementById('sablon_urun_miktar').value) || 100;
-            sablonUrunleri.push({id: urun.id, urun_adi: urun.urun_adi, grup_adi: urun.grup_adi, miktar: miktar, birim: urun.birim});
-            document.getElementById('sablon_urunler_listesi').innerHTML = sablonUrunleri.map((u, idx) => '<div class="p-2 bg-slate-100 dark:bg-slate-700 border dark:border-slate-600 rounded flex justify-between items-center"><span class="text-sm">' + u.urun_adi + '</span><div class="flex items-center gap-2"><span class="text-sm font-medium">' + u.miktar + '</span><button type="button" class="sablon-urun-sil text-red-500 text-xs" data-idx="' + idx + '"><i class="fas fa-times"></i></button></div></div>').join('');
-            // Silme butonları
-            document.querySelectorAll('.sablon-urun-sil').forEach(btn => btn.addEventListener('click', function() {
-                sablonUrunleri.splice(this.dataset.idx, 1);
-                document.getElementById('sablon_urunler_listesi').innerHTML = sablonUrunleri.map((u, idx) => '<div class="p-2 bg-slate-100 dark:bg-slate-700 border dark:border-slate-600 rounded flex justify-between items-center"><span class="text-sm">' + u.urun_adi + '</span><div class="flex items-center gap-2"><span class="text-sm font-medium">' + u.miktar + '</span><button type="button" class="sablon-urun-sil text-red-500 text-xs" data-idx="' + idx + '"><i class="fas fa-times"></i></button></div></div>').join('');
-            }));
-            input.value = '';
-            document.getElementById('sablon_urun_id').value = '';
-        });
-        document.getElementById('sablon_kaydet_btn').addEventListener('click', async function() {
-            const adi = document.getElementById('sablon_adi_input').value.trim();
-            if (!adi || sablonUrunleri.length === 0) { showAlert('Şablon adı ve ürün gerekli!', 'warning'); return; }
-            try {
-                const response = await fetch('/api/zimmet-sablon-kaydet', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({sablon_adi: adi, otel_id: otelId, urunler: sablonUrunleri.map(u => ({urun_id: u.id, miktar: u.miktar}))})
-                });
-                const result = await response.json();
-                if (result.success) {
-                    document.getElementById('sablon_modal_overlay').classList.add('hidden');
-                    showAlert('Şablon başarıyla kaydedildi!', 'success');
-                    await loadSablonlar();
-                } else {
-                    showAlert(result.error || 'Kayıt hatası!', 'error');
-                }
-            } catch (e) {
-                showAlert('Hata: ' + e.message, 'error');
-            }
-        });
-
-        // Hizli giris
-        let aramaTimeout;
-        document.getElementById('hizli_urun_ara').addEventListener('input', function() {
-            clearTimeout(aramaTimeout);
-            const q = this.value.trim();
-            if (q.length < 2) { document.getElementById('hizli_autocomplete').classList.add('hidden'); return; }
-            aramaTimeout = setTimeout(async () => {
-                const response = await fetch('/api/zimmet-urun-ara?q=' + encodeURIComponent(q) + (otelId ? '&otel_id=' + otelId : ''));
-                const urunler = await response.json();
-                const ac = document.getElementById('hizli_autocomplete');
-                if (urunler.length === 0) { ac.innerHTML = '<div class="p-3 text-slate-500">Bulunamadi</div>'; }
-                else { ac.innerHTML = urunler.map(u => '<div class="ac-item p-3 cursor-pointer border-b" data-id="' + u.id + '"><p class="font-medium text-sm">' + u.urun_adi + '</p><p class="text-xs text-slate-500">' + u.grup_adi + ' - Stok: ' + u.mevcut_stok + '</p></div>').join(''); }
-                ac.classList.remove('hidden');
-                ac.querySelectorAll('.ac-item').forEach(item => item.addEventListener('click', function() {
-                    hizliSecilenUrun = urunler.find(u => u.id == this.dataset.id);
-                    document.getElementById('hizli_urun_ara').value = hizliSecilenUrun.urun_adi;
-                    ac.classList.add('hidden');
-                    document.getElementById('hizli_secilen_urun').classList.remove('hidden');
-                    document.getElementById('hizli_secilen_urun').querySelector('span').textContent = hizliSecilenUrun.urun_adi + ' (Stok: ' + hizliSecilenUrun.mevcut_stok + ')';
-                    document.getElementById('hizli_ekle_btn').disabled = false;
-                }));
-            }, 300);
-        });
-        document.getElementById('hizli_ekle_btn').addEventListener('click', async function() {
-            if (!hizliSecilenUrun) return;
-            
-            const personelId = document.getElementById('personel_id_global').value;
-            if (!personelId) { 
-                showAlert('Lütfen önce kat sorumlusu seçin!', 'warning'); 
-                return; 
-            }
-            
-            const miktar = parseInt(document.getElementById('hizli_miktar').value) || 1;
-            if (miktar > hizliSecilenUrun.mevcut_stok) { 
-                showAlert('Yetersiz stok! Mevcut: ' + hizliSecilenUrun.mevcut_stok, 'error'); 
-                return; 
-            }
-            
-            this.disabled = true;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>İşleniyor...';
-            
-            try {
-                const response = await fetch('/api/zimmet-hizli-ata', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        personel_id: parseInt(personelId),
-                        otel_id: otelId,
-                        urunler: [{urun_id: hizliSecilenUrun.id, miktar: miktar}]
-                    })
-                });
-                const result = await response.json();
-                
-                if (result.success) {
-                    showAlert(hizliSecilenUrun.urun_adi + ' x' + miktar + ' zimmet olarak atandı!', 'success');
-                    // Formu temizle
-                    document.getElementById('hizli_urun_ara').value = '';
-                    document.getElementById('hizli_miktar').value = 100;
-                    document.getElementById('hizli_secilen_urun').classList.add('hidden');
-                    hizliSecilenUrun = null;
-                    // Stok bilgisini güncelle
-                    await loadTumUrunler();
-                    renderGrid();
-                } else {
-                    showAlert(result.error || 'Zimmet atama hatası!', 'error');
-                }
-            } catch (e) {
-                showAlert('Hata: ' + e.message, 'error');
-            }
-            
-            this.disabled = true;
-            this.innerHTML = '<i class="fas fa-plus mr-1"></i>Ekle';
-        });
-        document.addEventListener('click', e => { if (!e.target.closest('#hizli_urun_ara') && !e.target.closest('#hizli_autocomplete')) document.getElementById('hizli_autocomplete').classList.add('hidden'); });
-
-        // Zimmet ata
-        document.getElementById('zimmet_ata_btn').addEventListener('click', async function() {
-            const personelId = document.getElementById('personel_id_global').value;
-            if (!personelId) { showAlert('Kat sorumlusu seçin!', 'warning'); return; }
-            if (secilenUrunler.length === 0) { showAlert('Ürün seçin!', 'warning'); return; }
-            if (!confirm(secilenUrunler.length + ' urun atanacak. Onayla?')) return;
-            this.disabled = true;
-            const response = await fetch('/api/zimmet-hizli-ata', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({personel_id: parseInt(personelId), otel_id: otelId, urunler: secilenUrunler.map(u => ({urun_id: u.id, miktar: u.miktar}))})});
-            const result = await response.json();
-            if (result.success) { showAlert('Zimmet başarıyla atandı!', 'success'); setTimeout(() => window.location.reload(), 1500); }
-            else { showAlert(result.error || 'Hata!', 'error'); this.disabled = false; }
-        });
-    });
-
-    // Eski zimmetIptalEt fonksiyonu kaldırıldı - yeni async versiyon kullanılıyor
-  </script>
-  {% endblock %}
 </div>
+
+<!-- Zimmet Atama Modal -->
+<div id="zimmet_modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col" onclick="event.stopPropagation()">
+        <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+            <h3 class="text-xl font-bold text-white"><i class="fas fa-user mr-2"></i><span id="modal_personel_adi">Personel</span> - Zimmet Atama</h3>
+            <button type="button" onclick="modalKapat()" class="text-white text-3xl leading-none">&times;</button>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-6">
+            <!-- Ürün Grupları Butonları -->
+            <div id="grup_butonlari" class="flex flex-wrap gap-2 mb-4"></div>
+            
+            <!-- Arama -->
+            <div class="mb-4">
+                <input type="text" id="urun_ara" placeholder="Ürün ara..." class="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white w-64">
+            </div>
+            
+            <!-- Ürün Kartları -->
+            <div id="urun_kartlari" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-1">
+                <div class="col-span-full text-center py-8 text-slate-400"><i class="fas fa-spinner fa-spin text-2xl"></i><p class="mt-2">Yükleniyor...</p></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Miktar Giriş Modal -->
+<div id="miktar_modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4" style="background: rgba(0,0,0,0.5);">
+    <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-sm" onclick="event.stopPropagation()">
+        <div id="miktar_modal_header" class="px-6 py-4 rounded-t-xl">
+            <h4 id="miktar_urun_adi" class="text-lg font-bold text-white text-center"></h4>
+            <p id="miktar_urun_stok" class="text-sm text-white/80 text-center mt-1"></p>
+        </div>
+        <div class="p-6">
+            <input type="hidden" id="miktar_urun_id">
+            <label class="block text-sm font-medium text-slate-300 mb-2 text-center">Miktar Giriniz</label>
+            <input type="number" id="miktar_input" min="0" value="0" class="w-full px-4 py-4 text-3xl text-center border-2 border-slate-600 rounded-lg bg-slate-700 text-white font-bold">
+            <div class="grid grid-cols-4 gap-2 mt-3">
+                <button type="button" class="miktar-btn px-3 py-2 bg-blue-500 text-white rounded-lg font-bold" data-miktar="5">+5</button>
+                <button type="button" class="miktar-btn px-3 py-2 bg-blue-500 text-white rounded-lg font-bold" data-miktar="10">+10</button>
+                <button type="button" class="miktar-btn px-3 py-2 bg-blue-500 text-white rounded-lg font-bold" data-miktar="20">+20</button>
+                <button type="button" class="miktar-btn px-3 py-2 bg-green-500 text-white rounded-lg font-bold" data-miktar="50">+50</button>
+                <button type="button" class="miktar-btn px-3 py-2 bg-green-500 text-white rounded-lg font-bold" data-miktar="100">+100</button>
+                <button type="button" class="miktar-btn px-3 py-2 bg-purple-500 text-white rounded-lg font-bold" data-miktar="200">+200</button>
+                <button type="button" class="miktar-btn px-3 py-2 bg-purple-500 text-white rounded-lg font-bold" data-miktar="500">+500</button>
+                <button type="button" class="miktar-sifirla px-3 py-2 bg-slate-400 text-white rounded-lg font-bold">0</button>
+            </div>
+            <div class="flex gap-3 mt-4">
+                <button type="button" onclick="miktarModalKapat()" class="flex-1 py-3 bg-slate-500 text-white rounded-lg font-bold text-lg">İptal</button>
+                <button type="button" onclick="miktarOnaylaVeKaydet()" class="flex-1 py-3 bg-green-600 text-white rounded-lg font-bold text-lg">Tamam</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Detay Modal -->
+<div id="detay_modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
+        <div class="px-6 py-4 bg-gradient-to-r from-slate-700 to-slate-800 flex items-center justify-between">
+            <h3 id="detay_baslik" class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-clipboard-list text-blue-400"></i>Zimmet Detayları
+            </h3>
+            <button type="button" onclick="detayModalKapat()" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-600/50 text-white text-xl">&times;</button>
+        </div>
+        <div id="detay_icerik" class="flex-1 overflow-y-auto p-6 text-white"></div>
+        <div id="detay_footer" class="px-6 py-4 border-t border-slate-700 flex items-center justify-between bg-slate-800">
+            <div id="detay_toplamlar" class="flex gap-6 text-sm"></div>
+            <button type="button" onclick="detayModalKapat()" class="px-6 py-2.5 bg-slate-600 text-white rounded-lg font-semibold">
+                <i class="fas fa-times mr-2"></i>Kapat
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Bildirim Modal (Alert yerine) -->
+<div id="bildirim_modal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4" style="background: rgba(0,0,0,0.6);">
+    <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6 text-center">
+        <div id="bildirim_icon" class="text-5xl mb-4"></div>
+        <h4 id="bildirim_baslik" class="text-xl font-bold text-white mb-2"></h4>
+        <p id="bildirim_mesaj" class="text-slate-300 mb-6"></p>
+        <button type="button" onclick="bildirimKapat()" class="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold text-lg">Tamam</button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const csrfToken = '{{ csrf_token() }}';
+let urunListesi = [];
+let grupListesi = [];
+let seciliPersonelId = null;
+let seciliPersonelAdi = '';
+let seciliGrup = '';
+
+// Bildirim Modal Fonksiyonları
+function bildirimGoster(mesaj, tip = 'info', baslik = null) {
+    const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+    const titles = { success: 'Başarılı!', error: 'Hata!', warning: 'Dikkat!', info: 'Bilgi' };
+    
+    document.getElementById('bildirim_icon').textContent = icons[tip] || icons.info;
+    document.getElementById('bildirim_baslik').textContent = baslik || titles[tip] || titles.info;
+    document.getElementById('bildirim_mesaj').textContent = mesaj;
+    document.getElementById('bildirim_modal').classList.remove('hidden');
+}
+
+function bildirimKapat() {
+    document.getElementById('bildirim_modal').classList.add('hidden');
+}
+
+// Binlik ayırıcı fonksiyonu
+function formatSayi(sayi) {
+    return (sayi || 0).toLocaleString('tr-TR');
+}
+
+// Grup renkleri - Ana Depo Tedarik sayfasıyla AYNI (Grup ID bazlı sabit renkler)
+// Her grup ID için sabit renk - her iki sayfada tutarlı
+const GRUP_RENK_PALETI = [
+  {header: '#dc2626', border: '#fca5a5', bg: '#fee2e2', text: '#7f1d1d', subtext: '#dc2626'},  // 0: Kırmızı
+  {header: '#f97316', border: '#fdba74', bg: '#ffedd5', text: '#7c2d12', subtext: '#ea580c'},  // 1: Turuncu
+  {header: '#7c3aed', border: '#c4b5fd', bg: '#ede9fe', text: '#4c1d95', subtext: '#6d28d9'},  // 2: Mor
+  {header: '#0891b2', border: '#67e8f9', bg: '#cffafe', text: '#164e63', subtext: '#0891b2'},  // 3: Cyan
+  {header: '#16a34a', border: '#86efac', bg: '#dcfce7', text: '#166534', subtext: '#15803d'},  // 4: Yeşil
+  {header: '#db2777', border: '#f9a8d4', bg: '#fce7f3', text: '#9d174d', subtext: '#db2777'},  // 5: Pembe
+  {header: '#2563eb', border: '#93c5fd', bg: '#dbeafe', text: '#1e3a8a', subtext: '#1d4ed8'},  // 6: Mavi
+  {header: '#ca8a04', border: '#fde047', bg: '#fef9c3', text: '#713f12', subtext: '#a16207'}   // 7: Sarı
+];
+
+// Grup ID'ye göre renk döndür (her iki sayfada tutarlı)
+function getGrupRenk(grupId) {
+  const idx = (parseInt(grupId) || 0) % GRUP_RENK_PALETI.length;
+  return GRUP_RENK_PALETI[idx];
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    zimmetListesiYukle();
+    
+    document.getElementById('kat_sorumlusu_select').addEventListener('change', function() {
+        if (this.value) {
+            seciliPersonelId = this.value;
+            seciliPersonelAdi = this.options[this.selectedIndex].dataset.ad;
+            modalAc();
+        }
+    });
+    
+    // Miktar butonları
+    document.querySelectorAll('.miktar-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const input = document.getElementById('miktar_input');
+            input.value = parseInt(input.value || 0) + parseInt(this.dataset.miktar);
+        });
+    });
+    
+    // Sıfırla butonu
+    document.querySelector('.miktar-sifirla').addEventListener('click', function() {
+        document.getElementById('miktar_input').value = 0;
+    });
+    
+    // Arama
+    document.getElementById('urun_ara')?.addEventListener('input', function() {
+        const q = this.value.toLowerCase();
+        const filtrelenmis = urunListesi.filter(u => 
+            u.urun_adi.toLowerCase().includes(q) && (seciliGrup === '' || u.grup_id == seciliGrup)
+        );
+        urunleriRenderle(filtrelenmis);
+    });
+});
+
+async function zimmetListesiYukle() {
+    const ay = document.getElementById('filtre_ay').value;
+    const yil = document.getElementById('filtre_yil').value;
+    const tbody = document.getElementById('zimmet_listesi_tbody');
+    
+    tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500"><i class="fas fa-spinner fa-spin mr-2"></i>Yükleniyor...</td></tr>';
+    
+    try {
+        const response = await fetch(`/api/zimmet-listesi-filtreli?ay=${ay}&yil=${yil}`);
+        const data = await response.json();
+        
+        if (data.success && data.zimmetler.length > 0) {
+            tbody.innerHTML = data.zimmetler.map(z => `
+                <tr>
+                    <td class="px-4 py-3 text-sm text-slate-900 dark:text-white">${z.tarih}</td>
+                    <td class="px-4 py-3 text-sm text-slate-900 dark:text-white">${z.personel_adi}</td>
+                    <td class="px-4 py-3"><span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">${z.urun_sayisi} ürün</span></td>
+                    <td class="px-4 py-3"><span class="px-3 py-1 rounded-full text-xs font-bold ${z.durum === 'aktif' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${z.durum === 'aktif' ? 'Aktif' : 'İptal'}</span></td>
+                    <td class="px-4 py-3 text-center space-x-2">
+                        <button onclick="zimmetDetayGoster(${z.id})" class="px-3 py-1.5 bg-blue-500 text-white rounded text-xs font-medium"><i class="fas fa-eye mr-1"></i>Detay</button>
+                        ${z.durum === 'aktif' && z.iptal_edilebilir ? `<button onclick="zimmetIptal(${z.id})" class="px-3 py-1.5 bg-red-500 text-white rounded text-xs font-medium"><i class="fas fa-times mr-1"></i>İptal</button>` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">Bu dönemde zimmet işlemi bulunamadı.</td></tr>';
+        }
+    } catch (error) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-red-500">Yükleme hatası!</td></tr>';
+    }
+}
+
+async function modalAc() {
+    document.getElementById('modal_personel_adi').textContent = seciliPersonelAdi;
+    document.getElementById('zimmet_modal').classList.remove('hidden');
+    await urunleriYukle();
+}
+
+function modalKapat() {
+    document.getElementById('zimmet_modal').classList.add('hidden');
+    document.getElementById('kat_sorumlusu_select').value = '';
+    seciliPersonelId = null;
+    zimmetListesiYukle();
+}
+
+
+async function urunleriYukle() {
+    try {
+        const response = await fetch(`/api/urunler-stoklu?personel_id=${seciliPersonelId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            urunListesi = data.urunler;
+            
+            // Grupları çıkar
+            const grupMap = {};
+            urunListesi.forEach(u => {
+                if (u.grup_id && !grupMap[u.grup_id]) {
+                    grupMap[u.grup_id] = u.grup_adi;
+                }
+            });
+            grupListesi = Object.entries(grupMap).map(([id, adi]) => ({id: parseInt(id), adi}));
+            
+            grupButonlariniRenderle();
+            urunleriRenderle(urunListesi);
+        }
+    } catch (error) {
+        console.error('Ürün yükleme hatası:', error);
+    }
+}
+
+function grupButonlariniRenderle() {
+    const container = document.getElementById('grup_butonlari');
+    let html = `<button type="button" data-grup="" class="grup-btn aktif" style="background: #374151; color: white;">Tümü</button>`;
+    
+    grupListesi.forEach((g) => {
+        const renk = getGrupRenk(g.id);
+        html += `<button type="button" data-grup="${g.id}" class="grup-btn" style="background: ${renk.header}; color: white;">${g.adi}</button>`;
+    });
+    
+    container.innerHTML = html;
+    
+    container.querySelectorAll('.grup-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            container.querySelectorAll('.grup-btn').forEach(b => b.classList.remove('aktif'));
+            this.classList.add('aktif');
+            seciliGrup = this.dataset.grup;
+            
+            if (seciliGrup === '') {
+                urunleriRenderle(urunListesi);
+            } else {
+                urunleriRenderle(urunListesi.filter(u => u.grup_id == seciliGrup));
+            }
+        });
+    });
+}
+
+function urunleriRenderle(urunler) {
+    const container = document.getElementById('urun_kartlari');
+    
+    if (urunler.length === 0) {
+        container.innerHTML = '<div class="col-span-full text-center py-8 text-slate-400">Ürün bulunamadı.</div>';
+        return;
+    }
+    
+    // Personel adının kısa halini al (ilk isim)
+    const kisaAd = seciliPersonelAdi ? seciliPersonelAdi.split(' ')[0] : 'Personel';
+    
+    container.innerHTML = urunler.map(u => {
+        const renk = getGrupRenk(u.grup_id);
+        const stokRenk = u.stok > 0 ? '#16a34a' : '#dc2626';
+        const zimmetRenk = u.personel_zimmet > 0 ? '#2563eb' : '#94a3b8';
+        
+        return `
+            <div class="urun-card" style="border: 3px solid ${renk.border};" onclick="urunSec(event, ${u.id}, '${u.urun_adi.replace(/'/g, "\\'")}', ${u.stok}, '${renk.header}', '${u.grup_adi || 'Genel'}')">
+                <div class="urun-card-header" style="background: ${renk.header}; color: white;">${u.grup_adi || 'GENEL'}</div>
+                <div class="urun-card-body">
+                    <div class="urun-card-name">${u.urun_adi}</div>
+                    <div class="urun-card-footer">
+                        <span><span class="label">Depo:</span><span class="value" style="color: ${stokRenk};">${formatSayi(u.stok)}</span></span>
+                        <span style="text-align: right;"><span class="label">${kisaAd}:</span><span class="value" style="color: ${zimmetRenk};">${formatSayi(u.personel_zimmet)}</span></span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function urunSec(event, urunId, urunAdi, stok, renk, grupAdi) {
+    event.stopPropagation();
+    
+    if (stok <= 0) {
+        bildirimGoster('Bu ürün stokta yok!', 'warning');
+        return;
+    }
+    
+    document.getElementById('miktar_urun_id').value = urunId;
+    document.getElementById('miktar_urun_adi').textContent = urunAdi;
+    document.getElementById('miktar_urun_stok').textContent = `Mevcut Stok: ${stok} | Grup: ${grupAdi}`;
+    document.getElementById('miktar_modal_header').style.background = renk;
+    document.getElementById('miktar_input').value = 0;
+    document.getElementById('miktar_input').max = stok;
+    document.getElementById('miktar_modal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('miktar_input').focus(), 100);
+}
+
+function miktarModalKapat() {
+    document.getElementById('miktar_modal').classList.add('hidden');
+}
+
+// Miktar onaylandığında direkt zimmet ata
+async function miktarOnaylaVeKaydet() {
+    const urunId = document.getElementById('miktar_urun_id').value;
+    const miktar = parseInt(document.getElementById('miktar_input').value) || 0;
+    const maxStok = parseInt(document.getElementById('miktar_input').max);
+    
+    if (miktar <= 0) {
+        bildirimGoster('Geçerli bir miktar giriniz!', 'warning');
+        return;
+    }
+    
+    if (miktar > maxStok) {
+        bildirimGoster(`Stok yetersiz! Maksimum ${maxStok} adet seçebilirsiniz.`, 'error');
+        return;
+    }
+    
+    // Direkt zimmet ata
+    try {
+        const response = await fetch('/api/zimmet-ata', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                personel_id: seciliPersonelId,
+                urunler: [{ urun_id: parseInt(urunId), miktar: miktar }]
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Stok listesini güncelle
+            const urun = urunListesi.find(u => u.id == urunId);
+            const urunAdi = urun ? urun.urun_adi : 'Ürün';
+            if (urun) {
+                urun.stok -= miktar;
+                urun.personel_zimmet = (urun.personel_zimmet || 0) + miktar;
+            }
+            
+            // Kartları yeniden renderle
+            if (seciliGrup === '') {
+                urunleriRenderle(urunListesi);
+            } else {
+                urunleriRenderle(urunListesi.filter(u => u.grup_id == seciliGrup));
+            }
+            
+            miktarModalKapat();
+            bildirimGoster(`${formatSayi(miktar)} adet ${urunAdi} zimmete atandı.`, 'success');
+        } else {
+            bildirimGoster(data.error || 'Bir hata oluştu!', 'error');
+        }
+    } catch (error) {
+        console.error('Zimmet atama hatası:', error);
+        bildirimGoster('Bir hata oluştu!', 'error');
+    }
+}
+
+
+async function zimmetDetayGoster(zimmetId) {
+    try {
+        const response = await fetch(`/api/zimmet-detay/${zimmetId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const toplamMiktar = data.detaylar.reduce((sum, d) => sum + d.miktar, 0);
+            const toplamKalan = data.detaylar.reduce((sum, d) => sum + d.kalan, 0);
+            
+            let html = `
+                <div class="mb-4 p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl text-white">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-lg">${data.personel}</p>
+                            <p class="text-sm text-blue-100"><i class="fas fa-calendar-alt mr-1"></i>${data.tarih}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-slate-700 text-slate-300">
+                                <th class="px-4 py-3 text-left font-semibold rounded-tl-lg">Ürün</th>
+                                <th class="px-4 py-3 text-center font-semibold">Atanan</th>
+                                <th class="px-4 py-3 text-center font-semibold">Kalan</th>
+                                <th class="px-4 py-3 text-center font-semibold rounded-tr-lg w-16"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            data.detaylar.forEach((d, idx) => {
+                const kullanildi = d.kalan < d.miktar;
+                const kullanilan = d.miktar - d.kalan;
+                const yuzde = d.miktar > 0 ? Math.round((kullanilan / d.miktar) * 100) : 0;
+                const durumRenk = kullanildi ? 'text-amber-400' : 'text-emerald-400';
+                const iptalBtn = kullanildi ? 
+                    `<span class="text-xs text-slate-500" title="%${yuzde} kullanıldı"><i class="fas fa-lock"></i></span>` :
+                    `<button onclick="detayIptal(${d.detay_id}, ${zimmetId})" class="w-8 h-8 flex items-center justify-center bg-red-500 text-white rounded-lg text-sm" title="İptal Et"><i class="fas fa-trash"></i></button>`;
+                
+                const rowBg = idx % 2 === 0 ? 'bg-slate-800/50' : 'bg-slate-700/30';
+                
+                html += `
+                    <tr class="${rowBg}">
+                        <td class="px-4 py-3 font-medium">${d.urun_adi}</td>
+                        <td class="px-4 py-3 text-center font-bold">${formatSayi(d.miktar)}</td>
+                        <td class="px-4 py-3 text-center font-bold ${durumRenk}">${formatSayi(d.kalan)}</td>
+                        <td class="px-4 py-3 text-center">${iptalBtn}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table></div>';
+            
+            // Footer toplamları
+            const footerHtml = `
+                <div class="flex gap-6">
+                    <span class="text-slate-400"><i class="fas fa-box mr-1"></i>Ürün: <strong class="text-white">${data.detaylar.length}</strong></span>
+                    <span class="text-slate-400"><i class="fas fa-arrow-down mr-1"></i>Atanan: <strong class="text-blue-400">${formatSayi(toplamMiktar)}</strong></span>
+                    <span class="text-slate-400"><i class="fas fa-warehouse mr-1"></i>Kalan: <strong class="text-emerald-400">${formatSayi(toplamKalan)}</strong></span>
+                </div>
+            `;
+            
+            document.getElementById('detay_baslik').textContent = `Zimmet #${zimmetId} Detayları`;
+            document.getElementById('detay_icerik').innerHTML = html;
+            document.getElementById('detay_toplamlar').innerHTML = footerHtml;
+            document.getElementById('detay_modal').classList.remove('hidden');
+        }
+    } catch (error) {
+        bildirimGoster('Detay yüklenemedi!', 'error');
+    }
+}
+
+function detayModalKapat() {
+    document.getElementById('detay_modal').classList.add('hidden');
+}
+
+async function detayIptal(detayId, zimmetId) {
+    if (!confirm('Bu ürünü zimmet listesinden çıkarmak istediğinize emin misiniz?')) return;
+    
+    try {
+        const response = await fetch(`/api/zimmet-detay-iptal/${detayId}`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            zimmetDetayGoster(zimmetId);
+            zimmetListesiYukle();
+        } else {
+            bildirimGoster(data.error || 'İptal edilemedi!', 'error');
+        }
+    } catch (error) {
+        bildirimGoster('Bir hata oluştu!', 'error');
+    }
+}
+
+async function zimmetIptal(zimmetId) {
+    if (!confirm('Bu zimmet kaydını tamamen iptal etmek istediğinize emin misiniz?\nTüm ürünler depoya geri eklenecektir.')) return;
+    
+    try {
+        const response = await fetch(`/api/zimmet-iptal/${zimmetId}`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            zimmetListesiYukle();
+        } else {
+            bildirimGoster(data.error || 'İptal edilemedi!', 'error');
+        }
+    } catch (error) {
+        bildirimGoster('Bir hata oluştu!', 'error');
+    }
+}
+</script>
+{% endblock %}

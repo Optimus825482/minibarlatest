@@ -2226,3 +2226,186 @@ class ZimmetSablonDetay(db.Model):
     
     def __repr__(self):
         return f'<ZimmetSablonDetay sablon={self.sablon_id} urun={self.urun_id}>'
+
+
+# ============================================
+# ANA DEPO TEDARİK SİSTEMİ
+# ============================================
+
+class AnaDepoTedarikDurum(str, enum.Enum):
+    """Ana depo tedarik durumları"""
+    AKTIF = 'aktif'
+    IPTAL = 'iptal'
+
+
+class AnaDepoTedarik(db.Model):
+    """Ana depodan yapılan tedarik işlemleri - Başlık tablosu"""
+    __tablename__ = 'ana_depo_tedarikleri'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tedarik_no = db.Column(db.String(50), unique=True, nullable=False)  # ADT-20251205-001 formatında
+    otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=False)
+    depo_sorumlusu_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
+    toplam_urun_sayisi = db.Column(db.Integer, default=0)
+    toplam_miktar = db.Column(db.Integer, default=0)
+    aciklama = db.Column(db.Text, nullable=True)
+    
+    # Durum ve iptal bilgileri
+    durum = db.Column(db.String(20), default='aktif')  # aktif, iptal
+    iptal_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    iptal_eden_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    iptal_nedeni = db.Column(db.Text, nullable=True)
+    
+    # Sistem yöneticisi bildirimi
+    sistem_yoneticisi_goruldu = db.Column(db.Boolean, default=False)
+    gorulme_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    
+    # İlişkiler
+    otel = db.relationship('Otel', backref='ana_depo_tedarikleri')
+    depo_sorumlusu = db.relationship('Kullanici', foreign_keys=[depo_sorumlusu_id], backref='ana_depo_tedarikleri')
+    iptal_eden = db.relationship('Kullanici', foreign_keys=[iptal_eden_id])
+    detaylar = db.relationship('AnaDepoTedarikDetay', backref='tedarik', lazy=True, cascade='all, delete-orphan')
+    
+    __table_args__ = (
+        db.Index('idx_ana_depo_tedarik_tarih', 'islem_tarihi'),
+        db.Index('idx_ana_depo_tedarik_otel', 'otel_id'),
+        db.Index('idx_ana_depo_tedarik_depo_sorumlusu', 'depo_sorumlusu_id'),
+        db.Index('idx_ana_depo_tedarik_goruldu', 'sistem_yoneticisi_goruldu'),
+        db.Index('idx_ana_depo_tedarik_durum', 'durum'),
+    )
+    
+    def ayni_gun_mu(self):
+        """İşlem bugün mü yapıldı?"""
+        bugun = get_kktc_now().date()
+        return self.islem_tarihi.date() == bugun
+    
+    def iptal_edilebilir_mi(self, kullanici_rol, kullanici_id):
+        """
+        İşlem iptal edilebilir mi kontrol et
+        
+        Kurallar:
+        - Zaten iptal edilmişse iptal edilemez
+        - Depo sorumlusu sadece kendi işlemlerini iptal edebilir
+        - Aynı gün kuralı kaldırıldı - zimmet kullanılmadıysa her zaman iptal edilebilir
+        """
+        if self.durum == 'iptal':
+            return False, "Bu işlem zaten iptal edilmiş."
+        
+        # Depo sorumlusu sadece kendi işlemlerini iptal edebilir
+        if kullanici_rol == 'depo_sorumlusu':
+            if self.depo_sorumlusu_id != kullanici_id:
+                return False, "Sadece kendi işlemlerinizi iptal edebilirsiniz."
+        
+        return True, None
+    
+    def __repr__(self):
+        return f'<AnaDepoTedarik #{self.id} - {self.tedarik_no}>'
+
+
+class AnaDepoTedarikDetay(db.Model):
+    """Ana depo tedarik detayları - Çekilen ürünler"""
+    __tablename__ = 'ana_depo_tedarik_detaylari'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tedarik_id = db.Column(db.Integer, db.ForeignKey('ana_depo_tedarikleri.id', ondelete='CASCADE'), nullable=False)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=False)
+    miktar = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=True)
+    
+    # İlişkiler
+    urun = db.relationship('Urun', backref='ana_depo_tedarik_detaylari')
+    fifo_kayitlari = db.relationship('StokFifoKayit', backref='tedarik_detay', lazy=True)
+    
+    __table_args__ = (
+        db.Index('idx_ana_depo_tedarik_detay_tedarik', 'tedarik_id'),
+        db.Index('idx_ana_depo_tedarik_detay_urun', 'urun_id'),
+    )
+    
+    def __repr__(self):
+        return f'<AnaDepoTedarikDetay tedarik={self.tedarik_id} urun={self.urun_id} miktar={self.miktar}>'
+
+
+# ============================================
+# FIFO STOK TAKİP SİSTEMİ
+# ============================================
+
+class StokFifoKayit(db.Model):
+    """FIFO kuralına göre stok takibi - Her tedarik partisi ayrı takip edilir"""
+    __tablename__ = 'stok_fifo_kayitlari'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=False)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=False)
+    tedarik_detay_id = db.Column(db.Integer, db.ForeignKey('ana_depo_tedarik_detaylari.id', ondelete='SET NULL'), nullable=True)
+    
+    # Miktar bilgileri
+    giris_miktari = db.Column(db.Integer, nullable=False)  # Tedarik edilen miktar
+    kalan_miktar = db.Column(db.Integer, nullable=False)   # Kullanılmayan miktar
+    kullanilan_miktar = db.Column(db.Integer, default=0)   # Kullanılan miktar
+    
+    # Tarih bilgileri
+    giris_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
+    son_kullanim_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    
+    # Durum
+    tukendi = db.Column(db.Boolean, default=False)  # Parti tamamen kullanıldı mı?
+    
+    # İlişkiler
+    otel = db.relationship('Otel', backref='fifo_kayitlari')
+    urun = db.relationship('Urun', backref='fifo_kayitlari')
+    kullanim_detaylari = db.relationship('StokFifoKullanim', backref='fifo_kayit', lazy=True, cascade='all, delete-orphan')
+    
+    __table_args__ = (
+        db.Index('idx_fifo_otel_urun', 'otel_id', 'urun_id'),
+        db.Index('idx_fifo_giris_tarihi', 'giris_tarihi'),
+        db.Index('idx_fifo_tukendi', 'tukendi'),
+        db.Index('idx_fifo_kalan', 'kalan_miktar'),
+    )
+    
+    def kullan(self, miktar, islem_tipi, referans_id=None):
+        """FIFO kaydından miktar kullan"""
+        if miktar > self.kalan_miktar:
+            raise ValueError(f"Yetersiz stok. Kalan: {self.kalan_miktar}, İstenen: {miktar}")
+        
+        self.kalan_miktar -= miktar
+        self.kullanilan_miktar += miktar
+        self.son_kullanim_tarihi = get_kktc_now()
+        
+        if self.kalan_miktar == 0:
+            self.tukendi = True
+        
+        # Kullanım kaydı oluştur
+        kullanim = StokFifoKullanim(
+            fifo_kayit_id=self.id,
+            miktar=miktar,
+            islem_tipi=islem_tipi,
+            referans_id=referans_id
+        )
+        db.session.add(kullanim)
+        
+        return kullanim
+    
+    def __repr__(self):
+        return f'<StokFifoKayit urun={self.urun_id} kalan={self.kalan_miktar}/{self.giris_miktari}>'
+
+
+class StokFifoKullanim(db.Model):
+    """FIFO stok kullanım detayları - Hangi parti ne zaman nerede kullanıldı"""
+    __tablename__ = 'stok_fifo_kullanimlari'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    fifo_kayit_id = db.Column(db.Integer, db.ForeignKey('stok_fifo_kayitlari.id', ondelete='CASCADE'), nullable=False)
+    miktar = db.Column(db.Integer, nullable=False)
+    islem_tipi = db.Column(db.String(50), nullable=False)  # zimmet, minibar_dolum, setup_kontrol, iade, iptal
+    referans_id = db.Column(db.Integer, nullable=True)  # İlgili işlemin ID'si
+    islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
+    
+    __table_args__ = (
+        db.Index('idx_fifo_kullanim_kayit', 'fifo_kayit_id'),
+        db.Index('idx_fifo_kullanim_tarih', 'islem_tarihi'),
+        db.Index('idx_fifo_kullanim_tip', 'islem_tipi'),
+    )
+    
+    def __repr__(self):
+        return f'<StokFifoKullanim fifo={self.fifo_kayit_id} miktar={self.miktar} tip={self.islem_tipi}>'

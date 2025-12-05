@@ -101,6 +101,13 @@
       <span class="sidebar-text">Depo Stokları</span>
     </a>
     <a
+      href="{{ url_for('otel_ilk_stok_yukleme') }}"
+      class="sidebar-item {% if request.endpoint == 'otel_ilk_stok_yukleme' %}active{% endif %}"
+    >
+      <i class="fas fa-cloud-upload-alt sidebar-icon text-emerald-500"></i>
+      <span class="sidebar-text">İlk Stok Yükleme (FIFO)</span>
+    </a>
+    <a
       href="{{ url_for('admin_stok_hareketleri') }}"
       class="sidebar-item {% if request.endpoint == 'admin_stok_hareketleri' %}active{% endif %}"
     >
@@ -113,6 +120,13 @@
     >
       <i class="fas fa-clipboard-check sidebar-icon"></i>
       <span class="sidebar-text">Zimmetler</span>
+    </a>
+    <a
+      href="{{ url_for('admin_ana_depo_tedarik_gecmisi') }}"
+      class="sidebar-item {% if request.endpoint == 'admin_ana_depo_tedarik_gecmisi' %}active{% endif %}"
+    >
+      <i class="fas fa-truck-loading sidebar-icon text-blue-500"></i>
+      <span class="sidebar-text">Ana Depo Tedarik Geçmişi</span>
     </a>
   </div>
 </div>
@@ -161,41 +175,6 @@
     >
       <i class="fas fa-robot sidebar-icon"></i>
       <span class="sidebar-text">ML Analiz Sistemi</span>
-    </a>
-  </div>
-</div>
-
-<!-- Satın Alma & Tedarik -->
-<div class="sidebar-section" data-section="satin-alma">
-  <button class="sidebar-section-header" onclick="toggleSection('satin-alma')">
-    <div class="flex items-center">
-      <i class="fas fa-shopping-cart text-xs mr-2"></i>
-      <span>Satın Alma</span>
-    </div>
-    <i class="fas fa-chevron-down section-arrow"></i>
-  </button>
-  <div class="sidebar-section-content" id="section-satin-alma">
-    <a
-      href="{{ url_for('yonetici_siparis_listesi') }}"
-      class="sidebar-item {% if request.endpoint == 'yonetici_siparis_listesi' %}active{% endif %}"
-    >
-      <i class="fas fa-list sidebar-icon"></i>
-      <span class="sidebar-text">Sipariş Listesi</span>
-    </a>
-    <a
-      href="{{ url_for('yonetici_satin_alma_islemleri') }}"
-      class="sidebar-item {% if request.endpoint == 'yonetici_satin_alma_islemleri' or request.endpoint == 'yonetici_satin_alma_detay' %}active{% endif %}"
-    >
-      <i class="fas fa-shopping-bag sidebar-icon"></i>
-      <span class="sidebar-text">Satın Alma İşlemleri</span>
-    </a>
-
-    <a
-      href="{{ url_for('tedarikci_yonetimi') }}"
-      class="sidebar-item {% if request.endpoint == 'tedarikci_yonetimi' %}active{% endif %}"
-    >
-      <i class="fas fa-truck sidebar-icon"></i>
-      <span class="sidebar-text">Tedarikçiler</span>
     </a>
   </div>
 </div>
@@ -502,7 +481,7 @@
       }
     }
 
-    // Dolum talepleri badge'ini güncelle (örnek)
+    // Dolum talepleri badge'ini güncelle
     updateDolumBadge();
   });
 
@@ -530,6 +509,6 @@
     }
   }
 
-  // Her 30 saniyede bir badge'i güncelle
+  // Her 30 saniyede bir badge'leri güncelle
   setInterval(updateDolumBadge, 30000);
 </script>

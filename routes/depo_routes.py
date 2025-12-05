@@ -28,7 +28,8 @@ from werkzeug.utils import secure_filename
 from models import (db, StokHareket, Urun, UrunGrup, Kullanici, PersonelZimmet, PersonelZimmetDetay,
                    SatinAlmaSiparisi, SatinAlmaSiparisDetay, SatinAlmaIslem, SatinAlmaIslemDetay,
                    Tedarikci, TedarikciIletisim, TedarikciDokuman, UrunStok,
-                   KatSorumlusuSiparisTalebi, KatSorumlusuSiparisTalepDetay)
+                   KatSorumlusuSiparisTalebi, KatSorumlusuSiparisTalepDetay,
+                   AnaDepoTedarik, AnaDepoTedarikDetay, StokFifoKayit, StokFifoKullanim)
 from sqlalchemy import desc
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem, log_hata, get_stok_toplamlari
@@ -202,8 +203,9 @@ def register_depo_routes(app):
     @login_required
     @role_required('depo_sorumlusu')
     def personel_zimmet():
-        """Personel zimmet atama"""
+        """Personel zimmet atama - FIFO entegrasyonlu"""
         from utils.authorization import get_kullanici_otelleri, get_otel_filtreleme_secenekleri
+        from utils.fifo_servisler import FifoStokServisi
         
         # Kullanıcının erişebileceği oteller
         kullanici_otelleri = get_kullanici_otelleri()
@@ -219,6 +221,14 @@ def register_depo_routes(app):
                 personel_id = int(request.form['personel_id'])
                 aciklama = request.form.get('aciklama', '')
                 urun_ids = request.form.getlist('urun_ids')
+                
+                # Otel ID'yi personelden al
+                personel = db.session.get(Kullanici, personel_id)
+                if not personel or not personel.otel_id:
+                    flash('Personel veya otel bilgisi bulunamadı.', 'danger')
+                    return redirect(url_for('personel_zimmet'))
+                
+                otel_id = personel.otel_id
 
                 if not urun_ids:
                     flash('En az bir ürün seçmelisiniz.', 'warning')
@@ -240,15 +250,15 @@ def register_depo_routes(app):
                     flash('Seçilen ürünler için geçerli bir miktar giriniz.', 'warning')
                     return redirect(url_for('personel_zimmet'))
 
-                # Stok uygunluğunu kontrol et
-                stok_map = get_stok_toplamlari(list(urun_miktarlari.keys()))
+                # FIFO bazlı stok kontrolü
+                fifo_stoklar = FifoStokServisi.toplu_stok_getir(otel_id, list(urun_miktarlari.keys()))
                 urun_kayitlari = {
                     urun.id: urun for urun in Urun.query.filter(Urun.id.in_(urun_miktarlari.keys())).all()
                 }
 
                 yetersiz_stok = []
                 for uid, talep_miktari in urun_miktarlari.items():
-                    mevcut = stok_map.get(uid, 0)
+                    mevcut = fifo_stoklar.get(uid, 0)
                     if talep_miktari > mevcut:
                         urun = urun_kayitlari.get(uid)
                         urun_adi = f"{urun.urun_adi} ({urun.birim})" if urun else f'ID {uid}'
@@ -258,7 +268,7 @@ def register_depo_routes(app):
                     detay_mesaji = '; '.join(
                         f"{urun_adi}: istenen {talep}, mevcut {mevcut}" for urun_adi, talep, mevcut in yetersiz_stok
                     )
-                    flash(f'Stok yetersiz: {detay_mesaji}', 'danger')
+                    flash(f'Otel deposunda stok yetersiz: {detay_mesaji}', 'danger')
                     return redirect(url_for('personel_zimmet'))
 
                 # Zimmet başlık oluştur
@@ -270,7 +280,7 @@ def register_depo_routes(app):
                 db.session.add(zimmet)
                 db.session.flush()  # ID'yi almak için
 
-                # Zimmet detayları oluştur
+                # Zimmet detayları oluştur ve FIFO'dan düş
                 for uid, miktar in urun_miktarlari.items():
                     detay = PersonelZimmetDetay(
                         zimmet_id=zimmet.id,
@@ -279,23 +289,27 @@ def register_depo_routes(app):
                         kalan_miktar=miktar
                     )
                     db.session.add(detay)
+                    db.session.flush()  # Detay ID'si için
 
-                    # Stok çıkışı kaydet
-                    stok_hareket = StokHareket(
+                    # FIFO'dan stok çıkışı yap
+                    fifo_sonuc = FifoStokServisi.fifo_stok_cikis(
+                        otel_id=otel_id,
                         urun_id=uid,
-                        hareket_tipi='cikis',
                         miktar=miktar,
-                        aciklama=f'Zimmet atama - {aciklama}',
-                        islem_yapan_id=session['kullanici_id']
+                        islem_tipi='zimmet',
+                        referans_id=detay.id,
+                        kullanici_id=session['kullanici_id']
                     )
-                    db.session.add(stok_hareket)
+                    
+                    if not fifo_sonuc['success']:
+                        raise Exception(f"FIFO stok çıkışı hatası: {fifo_sonuc['message']}")
                 
                 db.session.commit()
                 
                 # Audit Trail
                 audit_create('personel_zimmet', zimmet.id, zimmet)
                 
-                flash('Zimmet başarıyla atandı.', 'success')
+                flash('Zimmet başarıyla atandı (FIFO ile stok düşüldü).', 'success')
                 return redirect(url_for('personel_zimmet'))
                 
             except Exception as e:
@@ -319,7 +333,9 @@ def register_depo_routes(app):
                              urun_gruplari=urun_gruplari, 
                              aktif_zimmetler=aktif_zimmetler,
                              otel_secenekleri=otel_secenekleri,
-                             secili_otel_id=secili_otel_id)
+                             secili_otel_id=secili_otel_id,
+                             current_month=get_kktc_now().month,
+                             current_year=get_kktc_now().year)
 
     # ==================== SATIN ALMA SİPARİŞ ROUTE'LARI ====================
     
@@ -2522,3 +2538,593 @@ def register_depo_routes(app):
                 'success': False,
                 'message': f'Hata oluştu: {str(e)}'
             }), 500
+
+    # ==================== ANA DEPO TEDARİK ROUTE'LARI ====================
+    
+    @app.route('/ana-depo-tedarik')
+    @login_required
+    @role_required('depo_sorumlusu')
+    def ana_depo_tedarik():
+        """Ana depo tedarik listesi - Ay/Yıl filtreli"""
+        from models import AnaDepoTedarik, AnaDepoTedarikDetay, StokFifoKayit
+        from utils.authorization import get_kullanici_otelleri, get_otel_filtreleme_secenekleri
+        from utils.helpers import get_stok_toplamlari
+        from calendar import monthrange
+        
+        try:
+            kullanici_otelleri = get_kullanici_otelleri()
+            otel_secenekleri = get_otel_filtreleme_secenekleri()
+            
+            secili_otel_id = request.args.get('otel_id', type=int)
+            if not secili_otel_id and kullanici_otelleri:
+                secili_otel_id = kullanici_otelleri[0].id
+            
+            # Ay/Yıl filtresi
+            bugun = get_kktc_now()
+            secili_ay = request.args.get('ay', type=int, default=bugun.month)
+            secili_yil = request.args.get('yil', type=int, default=bugun.year)
+            tum_islemler = request.args.get('tum', type=int, default=0)
+            
+            # Query oluştur
+            query = AnaDepoTedarik.query.options(
+                db.joinedload(AnaDepoTedarik.otel),
+                db.joinedload(AnaDepoTedarik.depo_sorumlusu),
+                db.joinedload(AnaDepoTedarik.detaylar).joinedload(AnaDepoTedarikDetay.urun)
+            )
+            
+            # Otel filtresi
+            otel_ids = [o.id for o in kullanici_otelleri]
+            query = query.filter(AnaDepoTedarik.otel_id.in_(otel_ids))
+            
+            if secili_otel_id:
+                query = query.filter(AnaDepoTedarik.otel_id == secili_otel_id)
+            
+            # Ay/Yıl filtresi (tüm işlemler seçili değilse)
+            if not tum_islemler:
+                ay_basi = datetime(secili_yil, secili_ay, 1, tzinfo=KKTC_TZ)
+                _, son_gun = monthrange(secili_yil, secili_ay)
+                ay_sonu = datetime(secili_yil, secili_ay, son_gun, 23, 59, 59, tzinfo=KKTC_TZ)
+                query = query.filter(AnaDepoTedarik.islem_tarihi >= ay_basi)
+                query = query.filter(AnaDepoTedarik.islem_tarihi <= ay_sonu)
+            
+            tedarikler = query.order_by(desc(AnaDepoTedarik.islem_tarihi)).all()
+            
+            # Ürün grupları ve ürünler (modal için)
+            urun_gruplari = UrunGrup.query.filter_by(aktif=True).order_by(UrunGrup.grup_adi).all()
+            urunler = Urun.query.filter_by(aktif=True).order_by(Urun.urun_adi).all()
+            
+            urun_ids = [u.id for u in urunler]
+            stok_map = get_stok_toplamlari(urun_ids) if urun_ids else {}
+            
+            urunler_json = []
+            for urun in urunler:
+                urunler_json.append({
+                    'id': urun.id,
+                    'urun_adi': urun.urun_adi,
+                    'birim': urun.birim,
+                    'grup_id': urun.grup_id,
+                    'grup_adi': urun.grup.grup_adi if urun.grup else None,
+                    'mevcut_stok': stok_map.get(urun.id, 0),
+                    'kritik_stok': urun.kritik_stok_seviyesi or 0
+                })
+            
+            # Ay listesi
+            aylar = [
+                (1, 'Ocak'), (2, 'Şubat'), (3, 'Mart'), (4, 'Nisan'),
+                (5, 'Mayıs'), (6, 'Haziran'), (7, 'Temmuz'), (8, 'Ağustos'),
+                (9, 'Eylül'), (10, 'Ekim'), (11, 'Kasım'), (12, 'Aralık')
+            ]
+            
+            # Yıl listesi (son 3 yıl)
+            yillar = list(range(bugun.year - 2, bugun.year + 1))
+            
+            return render_template('depo_sorumlusu/ana_depo_tedarik.html',
+                                 tedarikler=tedarikler,
+                                 urun_gruplari=urun_gruplari,
+                                 urunler=urunler,
+                                 urunler_json=urunler_json,
+                                 stok_map=stok_map,
+                                 otel_secenekleri=otel_secenekleri,
+                                 secili_otel_id=secili_otel_id,
+                                 aylar=aylar,
+                                 yillar=yillar,
+                                 secili_ay=secili_ay,
+                                 secili_yil=secili_yil,
+                                 tum_islemler=tum_islemler,
+                                 bugun=bugun)
+                                 
+        except Exception as e:
+            log_hata(e, 'ana_depo_tedarik')
+            flash(f'Sayfa yüklenirken hata oluştu: {str(e)}', 'danger')
+            return redirect(url_for('depo_dashboard'))
+    
+    @app.route('/ana-depo-tedarik-tamamla', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu')
+    def ana_depo_tedarik_tamamla():
+        """
+        Ana depodan tedarik işlemini tamamla - FIFO ile
+        
+        Aynı gün yapılan tedarik işlemleri tek bir kayıt altında birleştirilir.
+        Eğer bugün aktif bir tedarik varsa, yeni ürünler ona eklenir.
+        """
+        from models import AnaDepoTedarik, AnaDepoTedarikDetay, StokFifoKayit
+        from utils.authorization import get_kullanici_otelleri
+        from sqlalchemy import func
+        
+        try:
+            data = request.get_json()
+            if not data:
+                return jsonify({'success': False, 'error': 'Veri bulunamadı'}), 400
+            
+            urunler = data.get('urunler', [])
+            aciklama = data.get('aciklama', '')
+            otel_id = data.get('otel_id')
+            
+            if not urunler:
+                return jsonify({'success': False, 'error': 'En az bir ürün seçmelisiniz'}), 400
+            
+            # Otel kontrolü
+            kullanici_otelleri = get_kullanici_otelleri()
+            otel_ids = [o.id for o in kullanici_otelleri]
+            
+            if not otel_id:
+                otel_id = otel_ids[0] if otel_ids else None
+            
+            if not otel_id or otel_id not in otel_ids:
+                return jsonify({'success': False, 'error': 'Geçersiz otel seçimi'}), 400
+            
+            # Bugünün başlangıç ve bitiş zamanları
+            bugun = get_kktc_now().date()
+            bugun_baslangic = datetime.combine(bugun, datetime.min.time())
+            bugun_bitis = datetime.combine(bugun, datetime.max.time())
+            
+            # Bugün aynı kullanıcı ve otel için aktif tedarik var mı kontrol et
+            mevcut_tedarik = AnaDepoTedarik.query.filter(
+                AnaDepoTedarik.otel_id == otel_id,
+                AnaDepoTedarik.depo_sorumlusu_id == session['kullanici_id'],
+                AnaDepoTedarik.durum == 'aktif',
+                AnaDepoTedarik.islem_tarihi >= bugun_baslangic,
+                AnaDepoTedarik.islem_tarihi <= bugun_bitis
+            ).first()
+            
+            yeni_kayit = False
+            
+            if mevcut_tedarik:
+                # Mevcut tedarike ürün ekle
+                tedarik = mevcut_tedarik
+                tedarik_no = tedarik.tedarik_no
+            else:
+                # Yeni tedarik kaydı oluştur
+                yeni_kayit = True
+                tarih_str = get_kktc_now().strftime('%Y%m%d')
+                
+                # Bugünkü son tedarik numarasını bul
+                son_tedarik = AnaDepoTedarik.query.filter(
+                    AnaDepoTedarik.tedarik_no.like(f'ADT-{tarih_str}-%'),
+                    AnaDepoTedarik.otel_id == otel_id
+                ).order_by(desc(AnaDepoTedarik.tedarik_no)).first()
+                
+                if son_tedarik:
+                    son_no = int(son_tedarik.tedarik_no.split('-')[-1])
+                    yeni_no = son_no + 1
+                else:
+                    yeni_no = 1
+                
+                tedarik_no = f'ADT-{tarih_str}-{yeni_no:03d}'
+                
+                tedarik = AnaDepoTedarik(
+                    tedarik_no=tedarik_no,
+                    otel_id=otel_id,
+                    depo_sorumlusu_id=session['kullanici_id'],
+                    aciklama=aciklama,
+                    toplam_urun_sayisi=0,
+                    toplam_miktar=0,
+                    durum='aktif'
+                )
+                db.session.add(tedarik)
+                db.session.flush()
+            
+            # Detayları, stok girişlerini ve FIFO kayıtlarını oluştur
+            eklenen_urun_sayisi = 0
+            eklenen_miktar = 0
+            
+            for urun_data in urunler:
+                urun_id = urun_data.get('urun_id')
+                miktar = urun_data.get('miktar', 0)
+                
+                if not urun_id or miktar <= 0:
+                    continue
+                
+                # Aynı üründen mevcut detay var mı kontrol et
+                mevcut_detay = AnaDepoTedarikDetay.query.filter_by(
+                    tedarik_id=tedarik.id,
+                    urun_id=urun_id
+                ).first()
+                
+                if mevcut_detay:
+                    # Mevcut detaya miktar ekle
+                    mevcut_detay.miktar += miktar
+                    detay = mevcut_detay
+                    
+                    # Mevcut FIFO kaydını güncelle
+                    mevcut_fifo = StokFifoKayit.query.filter_by(tedarik_detay_id=detay.id).first()
+                    if mevcut_fifo:
+                        mevcut_fifo.giris_miktari += miktar
+                        mevcut_fifo.kalan_miktar += miktar
+                else:
+                    # Yeni tedarik detayı
+                    detay = AnaDepoTedarikDetay(
+                        tedarik_id=tedarik.id,
+                        urun_id=urun_id,
+                        miktar=miktar
+                    )
+                    db.session.add(detay)
+                    db.session.flush()
+                    
+                    # Yeni FIFO kaydı oluştur
+                    fifo_kayit = StokFifoKayit(
+                        otel_id=otel_id,
+                        urun_id=urun_id,
+                        tedarik_detay_id=detay.id,
+                        giris_miktari=miktar,
+                        kalan_miktar=miktar,
+                        kullanilan_miktar=0,
+                        tukendi=False
+                    )
+                    db.session.add(fifo_kayit)
+                    eklenen_urun_sayisi += 1
+                
+                # Stok girişi (her zaman yeni kayıt)
+                stok_hareket = StokHareket(
+                    urun_id=urun_id,
+                    hareket_tipi='giris',
+                    miktar=miktar,
+                    aciklama=f'Ana Depo Tedarik - {tedarik_no}',
+                    islem_yapan_id=session['kullanici_id']
+                )
+                db.session.add(stok_hareket)
+                
+                # UrunStok tablosunu güncelle (Stoklarım sayfası için)
+                from models import UrunStok
+                urun_stok = UrunStok.query.filter_by(otel_id=otel_id, urun_id=urun_id).first()
+                if urun_stok:
+                    urun_stok.mevcut_stok += miktar
+                    urun_stok.son_giris_tarihi = get_kktc_now()
+                    urun_stok.son_guncelleme_tarihi = get_kktc_now()
+                    urun_stok.son_guncelleyen_id = session['kullanici_id']
+                else:
+                    # Yeni UrunStok kaydı oluştur
+                    urun_stok = UrunStok(
+                        otel_id=otel_id,
+                        urun_id=urun_id,
+                        mevcut_stok=miktar,
+                        son_giris_tarihi=get_kktc_now(),
+                        son_guncelleme_tarihi=get_kktc_now(),
+                        son_guncelleyen_id=session['kullanici_id']
+                    )
+                    db.session.add(urun_stok)
+                
+                eklenen_miktar += miktar
+            
+            # Tedarik toplamlarını güncelle
+            tedarik.toplam_urun_sayisi = AnaDepoTedarikDetay.query.filter_by(tedarik_id=tedarik.id).count()
+            tedarik.toplam_miktar = db.session.query(func.sum(AnaDepoTedarikDetay.miktar)).filter_by(tedarik_id=tedarik.id).scalar() or 0
+            
+            db.session.commit()
+            
+            if yeni_kayit:
+                audit_create('ana_depo_tedarik', tedarik.id, tedarik)
+                mesaj = f'Tedarik işlemi başarıyla tamamlandı. Tedarik No: {tedarik_no}'
+            else:
+                audit_update('ana_depo_tedarik', tedarik.id, {}, tedarik)
+                mesaj = f'Mevcut tedarike ({tedarik_no}) ürünler eklendi. +{eklenen_miktar} adet'
+            
+            log_islem('ekleme', 'ana_depo_tedarik', {
+                'tedarik_no': tedarik_no,
+                'otel_id': otel_id,
+                'yeni_kayit': yeni_kayit,
+                'eklenen_urun_sayisi': eklenen_urun_sayisi,
+                'eklenen_miktar': eklenen_miktar
+            })
+            
+            return jsonify({
+                'success': True,
+                'message': mesaj,
+                'tedarik_no': tedarik_no,
+                'tedarik_id': tedarik.id,
+                'mevcut_tedarike_eklendi': not yeni_kayit
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, 'ana_depo_tedarik_tamamla')
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    @app.route('/ana-depo-tedarik-iptal/<int:tedarik_id>', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi')
+    def ana_depo_tedarik_iptal(tedarik_id):
+        """
+        Ana depo tedarik işlemini iptal et
+        
+        Kurallar:
+        1. Tedarik edilen ürün zimmetlenmemişse → Direkt iptal, stoktan düş
+        2. Tedarik edilen ürün zimmetlenmişse → Önce zimmet iptal, sonra tedarik iptal
+        3. Depo sorumlusu sadece aynı gün iptal edebilir
+        """
+        from models import AnaDepoTedarik, StokFifoKayit, StokFifoKullanim, PersonelZimmet, PersonelZimmetDetay
+        
+        try:
+            tedarik = db.session.get(AnaDepoTedarik, tedarik_id)
+            if not tedarik:
+                return jsonify({'success': False, 'error': 'Tedarik bulunamadı'}), 404
+            
+            # İptal edilebilirlik kontrolü
+            kullanici_rol = session.get('rol')
+            kullanici_id = session.get('kullanici_id')
+            
+            iptal_edilebilir, hata_mesaji = tedarik.iptal_edilebilir_mi(kullanici_rol, kullanici_id)
+            if not iptal_edilebilir:
+                return jsonify({'success': False, 'error': hata_mesaji}), 400
+            
+            data = request.get_json() or {}
+            iptal_nedeni = data.get('neden', 'Kullanıcı tarafından iptal edildi')
+            
+            iptal_edilen_zimmetler = []
+            
+            # Her detay için zimmet kontrolü yap
+            for detay in tedarik.detaylar:
+                fifo = StokFifoKayit.query.filter_by(tedarik_detay_id=detay.id).first()
+                
+                if fifo and fifo.kullanilan_miktar > 0:
+                    # FIFO kullanımlarını kontrol et - zimmet mi?
+                    kullanim_kayitlari = StokFifoKullanim.query.filter_by(
+                        fifo_kayit_id=fifo.id,
+                        islem_tipi='zimmet'
+                    ).all()
+                    
+                    for kullanim in kullanim_kayitlari:
+                        # Zimmet detayını bul
+                        zimmet_detay = db.session.get(PersonelZimmetDetay, kullanim.referans_id)
+                        if zimmet_detay:
+                            zimmet = db.session.get(PersonelZimmet, zimmet_detay.zimmet_id)
+                            
+                            if zimmet and zimmet.durum == 'aktif':
+                                # Zimmet kullanılmış mı kontrol et (minibar'da kullanıldı mı)
+                                if zimmet_detay.kullanilan_miktar > 0:
+                                    return jsonify({
+                                        'success': False,
+                                        'error': f'Tedarik edilen ürünler minibar işlemlerinde kullanılmış. İptal edilemez.'
+                                    }), 400
+                                
+                                # Zimmeti iptal et
+                                zimmet.durum = 'iptal'
+                                zimmet.aciklama = f'Ana Depo Tedarik İptali nedeniyle otomatik iptal - {tedarik.tedarik_no}'
+                                
+                                # Zimmet detaylarını geri al - stoka ekle
+                                for zd in zimmet.detaylar:
+                                    # Depo stokuna geri ekle
+                                    stok_iade = StokHareket(
+                                        urun_id=zd.urun_id,
+                                        hareket_tipi='giris',
+                                        miktar=zd.miktar,
+                                        aciklama=f'Zimmet İptal İadesi - Tedarik İptali: {tedarik.tedarik_no}',
+                                        islem_yapan_id=kullanici_id
+                                    )
+                                    db.session.add(stok_iade)
+                                    
+                                    # FIFO kullanımını geri al
+                                    fifo_kullanim = StokFifoKullanim.query.filter_by(
+                                        referans_id=zd.id,
+                                        islem_tipi='zimmet'
+                                    ).first()
+                                    if fifo_kullanim:
+                                        # FIFO kaydındaki kullanılan miktarı düş
+                                        ilgili_fifo = db.session.get(StokFifoKayit, fifo_kullanim.fifo_kayit_id)
+                                        if ilgili_fifo:
+                                            ilgili_fifo.kullanilan_miktar -= fifo_kullanim.miktar
+                                        db.session.delete(fifo_kullanim)
+                                
+                                iptal_edilen_zimmetler.append(zimmet.id)
+                                
+                                log_islem('iptal', 'personel_zimmet', {
+                                    'zimmet_id': zimmet.id,
+                                    'neden': f'Ana Depo Tedarik İptali: {tedarik.tedarik_no}'
+                                })
+            
+            # Tedarik numarasını sakla (silmeden önce)
+            tedarik_no = tedarik.tedarik_no
+            
+            # Stok çıkışı yap (tedarik iptali - ters işlem)
+            from models import UrunStok
+            for detay in tedarik.detaylar:
+                stok_hareket = StokHareket(
+                    urun_id=detay.urun_id,
+                    hareket_tipi='cikis',
+                    miktar=detay.miktar,
+                    aciklama=f'Ana Depo Tedarik Silme - {tedarik_no}',
+                    islem_yapan_id=kullanici_id
+                )
+                db.session.add(stok_hareket)
+                
+                # UrunStok tablosunu güncelle
+                urun_stok = UrunStok.query.filter_by(otel_id=tedarik.otel_id, urun_id=detay.urun_id).first()
+                if urun_stok:
+                    urun_stok.mevcut_stok = max(0, urun_stok.mevcut_stok - detay.miktar)
+                    urun_stok.son_cikis_tarihi = get_kktc_now()
+                    urun_stok.son_guncelleme_tarihi = get_kktc_now()
+                    urun_stok.son_guncelleyen_id = kullanici_id
+                
+                # FIFO kaydını sil
+                StokFifoKayit.query.filter_by(tedarik_detay_id=detay.id).delete()
+            
+            # Tedarik kaydını tamamen sil (cascade ile detaylar da silinir)
+            db.session.delete(tedarik)
+            
+            db.session.commit()
+            
+            mesaj = 'Tedarik işlemi silindi.'
+            if iptal_edilen_zimmetler:
+                mesaj += f' {len(iptal_edilen_zimmetler)} adet zimmet de otomatik iptal edildi.'
+            
+            log_islem('silme', 'ana_depo_tedarik', {
+                'tedarik_no': tedarik_no,
+                'iptal_nedeni': iptal_nedeni,
+                'iptal_edilen_zimmetler': iptal_edilen_zimmetler
+            })
+            
+            return jsonify({'success': True, 'message': mesaj})
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, 'ana_depo_tedarik_iptal')
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    @app.route('/ana-depo-tedarik-detay-sil/<int:detay_id>', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu')
+    def ana_depo_tedarik_detay_sil(detay_id):
+        """
+        Ana depo tedarik detayından tek ürün sil/iptal et
+        
+        Kurallar:
+        - Sadece kendi işlemlerinden ürün silebilir
+        - Ürün zimmetlenmişse (FIFO kullanılmışsa) silinemez
+        - Aynı gün kuralı kaldırıldı
+        """
+        from models import AnaDepoTedarik, AnaDepoTedarikDetay, StokFifoKayit, UrunStok
+        
+        try:
+            detay = db.session.get(AnaDepoTedarikDetay, detay_id)
+            if not detay:
+                return jsonify({'success': False, 'error': 'Detay bulunamadı'}), 404
+            
+            tedarik = detay.tedarik
+            
+            # Tedarik aktif mi kontrolü
+            if tedarik.durum != 'aktif':
+                return jsonify({'success': False, 'error': 'Bu tedarik zaten iptal edilmiş'}), 400
+            
+            # Sahiplik kontrolü
+            if tedarik.depo_sorumlusu_id != session.get('kullanici_id'):
+                return jsonify({'success': False, 'error': 'Sadece kendi işlemlerinizden ürün silebilirsiniz'}), 400
+            
+            # FIFO kullanım kontrolü - zimmetlenmiş mi?
+            fifo = StokFifoKayit.query.filter_by(tedarik_detay_id=detay.id).first()
+            if fifo and fifo.kullanilan_miktar > 0:
+                return jsonify({'success': False, 'error': 'Bu ürün zimmetlenmiş, silinemez. Önce zimmeti iptal edin.'}), 400
+            
+            # Stok çıkışı
+            stok_hareket = StokHareket(
+                urun_id=detay.urun_id,
+                hareket_tipi='cikis',
+                miktar=detay.miktar,
+                aciklama=f'Ana Depo Tedarik Detay Silme - {tedarik.tedarik_no}',
+                islem_yapan_id=session.get('kullanici_id')
+            )
+            db.session.add(stok_hareket)
+            
+            # UrunStok tablosunu güncelle
+            urun_stok = UrunStok.query.filter_by(otel_id=tedarik.otel_id, urun_id=detay.urun_id).first()
+            if urun_stok:
+                urun_stok.mevcut_stok = max(0, urun_stok.mevcut_stok - detay.miktar)
+                urun_stok.son_cikis_tarihi = get_kktc_now()
+                urun_stok.son_guncelleme_tarihi = get_kktc_now()
+                urun_stok.son_guncelleyen_id = session.get('kullanici_id')
+            
+            # FIFO kaydını sil
+            if fifo:
+                db.session.delete(fifo)
+            
+            # Tedarik toplamlarını güncelle
+            tedarik.toplam_urun_sayisi -= 1
+            tedarik.toplam_miktar -= detay.miktar
+            
+            # Detayı sil
+            db.session.delete(detay)
+            
+            tedarik_silindi = False
+            tedarik_no = tedarik.tedarik_no
+            
+            # Eğer hiç detay kalmadıysa tedariki tamamen sil
+            if tedarik.toplam_urun_sayisi <= 0:
+                db.session.delete(tedarik)
+                tedarik_silindi = True
+            
+            db.session.commit()
+            
+            log_islem('silme', 'ana_depo_tedarik_detay', {
+                'detay_id': detay_id,
+                'tedarik_no': tedarik_no,
+                'tedarik_silindi': tedarik_silindi
+            })
+            
+            return jsonify({
+                'success': True, 
+                'message': 'Ürün silindi',
+                'tedarik_silindi': tedarik_silindi
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, 'ana_depo_tedarik_detay_sil')
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    @app.route('/api/ana-depo-tedarik-detay/<int:tedarik_id>')
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi')
+    def ana_depo_tedarik_detay_api(tedarik_id):
+        """Tedarik detaylarını JSON olarak döndür"""
+        from models import AnaDepoTedarik
+        
+        try:
+            tedarik = db.session.get(AnaDepoTedarik, tedarik_id)
+            if not tedarik:
+                return jsonify({'success': False, 'error': 'Tedarik bulunamadı'}), 404
+            
+            detaylar = []
+            for d in tedarik.detaylar:
+                # created_at varsa kullan, yoksa tedarik tarihini kullan
+                detay_tarihi = d.created_at if d.created_at else tedarik.islem_tarihi
+                detaylar.append({
+                    'id': d.id,
+                    'urun_id': d.urun_id,
+                    'urun_adi': d.urun.urun_adi if d.urun else 'Bilinmeyen',
+                    'birim': d.urun.birim if d.urun else '',
+                    'miktar': d.miktar,
+                    'created_at': detay_tarihi.strftime('%d.%m.%Y %H:%M') if detay_tarihi else '-'
+                })
+            
+            return jsonify({
+                'success': True,
+                'tedarik': {
+                    'id': tedarik.id,
+                    'tedarik_no': tedarik.tedarik_no,
+                    'islem_tarihi': tedarik.islem_tarihi.strftime('%d.%m.%Y %H:%M'),
+                    'durum': tedarik.durum,
+                    'toplam_urun_sayisi': tedarik.toplam_urun_sayisi,
+                    'toplam_miktar': tedarik.toplam_miktar,
+                    'aciklama': tedarik.aciklama,
+                    'ayni_gun': tedarik.ayni_gun_mu()
+                },
+                'detaylar': detaylar
+            })
+            
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+
+    
+    @app.route('/api/ana-depo-tedarik-bildirim-sayisi')
+    @login_required
+    @role_required('sistem_yoneticisi')
+    def ana_depo_tedarik_bildirim_sayisi():
+        """Sistem yöneticisi için görülmemiş tedarik sayısı"""
+        from models import AnaDepoTedarik
+        
+        try:
+            sayi = AnaDepoTedarik.query.filter_by(sistem_yoneticisi_goruldu=False).count()
+            return jsonify({'success': True, 'sayi': sayi})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500

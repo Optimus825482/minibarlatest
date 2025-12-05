@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Ana Depo Tedarik Geçmişi - Sistem Yönetimi{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Başlık -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
+                <i class="fas fa-truck-loading mr-2 text-blue-500"></i>
+                Ana Depo Tedarik Geçmişi
+            </h1>
+            <p class="text-slate-600 dark:text-slate-400 mt-1">Tüm otellerin tedarik işlemlerini görüntüleyin</p>
+        </div>
+    </div>
+
+    <!-- İstatistik Kartları -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Toplam</p>
+                    <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ istatistikler.toplam }}</p>
+                </div>
+                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                    <i class="fas fa-list text-blue-500"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Aktif</p>
+                    <p class="text-2xl font-bold text-green-600">{{ istatistikler.aktif }}</p>
+                </div>
+                <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check text-green-500"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">İptal</p>
+                    <p class="text-2xl font-bold text-red-600">{{ istatistikler.iptal }}</p>
+                </div>
+                <div class="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                    <i class="fas fa-times text-red-500"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtreler -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 p-4 mb-6">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Otel</label>
+                <select name="otel_id" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                    <option value="">Tüm Oteller</option>
+                    {% for otel in oteller %}
+                    <option value="{{ otel.id }}" {% if secili_otel_id == otel.id %}selected{% endif %}>{{ otel.ad }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Ay</label>
+                <select name="ay" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                    {% for i in range(1, 13) %}
+                    <option value="{{ i }}" {% if secili_ay == i %}selected{% endif %}>
+                        {{ ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'][i-1] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Yıl</label>
+                <select name="yil" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                    {% for y in range(2024, 2030) %}
+                    <option value="{{ y }}" {% if secili_yil == y %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Durum</label>
+                <select name="durum" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                    <option value="">Tümü</option>
+                    <option value="aktif" {% if secili_durum == 'aktif' %}selected{% endif %}>Aktif</option>
+                    <option value="iptal" {% if secili_durum == 'iptal' %}selected{% endif %}>İptal</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium">
+                    <i class="fas fa-filter mr-2"></i>Filtrele
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tedarik Listesi -->
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
+        {% if tedarikler %}
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-slate-50 dark:bg-slate-700">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Tarih</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Otel</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Ürün Sayısı</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Toplam Miktar</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">İşlemi Yapan</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Durum</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Detay</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                    {% for tedarik in tedarikler %}
+                    <tr class="transition-colors">
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span class="text-sm font-medium text-slate-900 dark:text-white">
+                                {{ tedarik.tarih.strftime('%d.%m.%Y') }}
+                            </span>
+                            <span class="block text-xs text-slate-500 dark:text-slate-400">
+                                {{ tedarik.tarih.strftime('%H:%M') }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span class="text-sm text-slate-900 dark:text-white">{{ tedarik.otel_adi }}</span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span class="text-sm text-slate-600 dark:text-slate-300">{{ tedarik.detay_sayisi }} çeşit</span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span class="text-sm font-medium text-slate-900 dark:text-white">{{ tedarik.toplam_urun }} adet</span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span class="text-sm text-slate-600 dark:text-slate-300">{{ tedarik.kullanici }}</span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            {% if tedarik.durum == 'aktif' %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                <i class="fas fa-check mr-1"></i>Aktif
+                            </span>
+                            {% elif tedarik.durum == 'iptal' %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                <i class="fas fa-times mr-1"></i>İptal
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <button onclick='showTedarikDetay({{ tedarik.id }}, {{ tedarik.detaylar | tojson }})' 
+                                    class="px-3 py-1 text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg">
+                                <i class="fas fa-eye mr-1"></i>Detay
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-8 text-center">
+            <i class="fas fa-inbox text-4xl text-slate-300 dark:text-slate-600 mb-4"></i>
+            <p class="text-slate-500 dark:text-slate-400">Bu kriterlere uygun tedarik kaydı bulunamadı.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Detay Modal -->
+<div id="detayModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-hidden">
+        <div class="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+                <i class="fas fa-list mr-2 text-blue-500"></i>Tedarik Detayları
+            </h3>
+            <button onclick="closeDetayModal()" class="text-slate-400 dark:text-slate-500">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="p-4 overflow-y-auto max-h-[60vh]" id="detayContent">
+            <!-- Detaylar buraya yüklenecek -->
+        </div>
+    </div>
+</div>
+
+<script>
+function showTedarikDetay(tedarikId, detaylar) {
+    const content = document.getElementById('detayContent');
+    
+    if (detaylar.length === 0) {
+        content.innerHTML = '<p class="text-slate-500 dark:text-slate-400 text-center">Detay bulunamadı.</p>';
+    } else {
+        let html = '<div class="space-y-2">';
+        detaylar.forEach(function(d) {
+            html += '<div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">';
+            html += '<span class="text-sm text-slate-900 dark:text-white">' + d.urun_adi + '</span>';
+            html += '<span class="text-sm font-medium text-blue-600 dark:text-blue-400">' + d.miktar + ' adet</span>';
+            html += '</div>';
+        });
+        html += '</div>';
+        content.innerHTML = html;
+    }
+    
+    document.getElementById('detayModal').classList.remove('hidden');
+    document.getElementById('detayModal').classList.add('flex');
+}
+
+function closeDetayModal() {
+    document.getElementById('detayModal').classList.add('hidden');
+    document.getElementById('detayModal').classList.remove('flex');
+}
+
+// Modal dışına tıklayınca kapat
+document.getElementById('detayModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDetayModal();
+    }
+});
+</script>
+{% endblock %}

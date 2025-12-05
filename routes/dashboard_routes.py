@@ -194,7 +194,7 @@ def register_dashboard_routes(app):
                     db.session.rollback()  # Transaction'ı temizle
         
             # Sipariş istatistikleri
-            from models import SatinAlmaSiparisi
+            from models import SatinAlmaSiparisi, AnaDepoTedarik
             istatistikler = {
                 'onaylandi': 0
             }
@@ -202,6 +202,14 @@ def register_dashboard_routes(app):
                 istatistikler['onaylandi'] = SatinAlmaSiparisi.query.filter_by(durum='onaylandi').count()
             except Exception as e:
                 print(f"Sipariş istatistikleri hatası: {str(e)}")
+                db.session.rollback()
+            
+            # Ana Depo Tedarik bildirimleri (görülmemiş tedarikler)
+            ana_depo_tedarik_sayisi = 0
+            try:
+                ana_depo_tedarik_sayisi = AnaDepoTedarik.query.filter_by(sistem_yoneticisi_goruldu=False).count()
+            except Exception as e:
+                print(f"Ana depo tedarik sayısı hatası: {str(e)}")
                 db.session.rollback()
         
             # Ürün bazlı tüketim verileri (Son 30 günün en çok tüketilen ürünleri)
@@ -427,7 +435,8 @@ def register_dashboard_routes(app):
                                  istatistikler=istatistikler,
                                  yukleme_gorev_ozeti=yukleme_gorev_ozeti,
                                  kat_sorumlusu_gorev_ozeti=kat_sorumlusu_gorev_ozeti,
-                                 eksik_doluluk_yuklemeleri=eksik_doluluk_yuklemeleri)
+                                 eksik_doluluk_yuklemeleri=eksik_doluluk_yuklemeleri,
+                                 ana_depo_tedarik_sayisi=ana_depo_tedarik_sayisi)
         except Exception as e:
             print(f"Sistem yöneticisi dashboard hatası: {str(e)}")
             import traceback

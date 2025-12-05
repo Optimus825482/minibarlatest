@@ -63,10 +63,7 @@
             <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 Stok Hareketleri ({{ hareketler.total }} kayıt)
             </h3>
-            <div class="text-sm text-slate-500 dark:text-slate-400 bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-200 dark:border-blue-800">
-                <i class="fas fa-info-circle mr-1"></i>
-                Stok girişleri <a href="{{ url_for('satin_alma_siparis') }}" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">Satın Alma</a> modülünden otomatik yapılır
-            </div>
+      
         </div>
         
         {% if hareketler.items %}

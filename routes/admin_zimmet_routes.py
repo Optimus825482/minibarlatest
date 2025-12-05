@@ -178,8 +178,10 @@ def register_admin_zimmet_routes(app):
     @login_required
     @role_required('sistem_yoneticisi', 'admin')
     def admin_zimmet_iptal(zimmet_id):
-        """Zimmet kaydını iptal et"""
+        """Zimmet kaydını iptal et - FIFO kayıtlarını geri al"""
         try:
+            from models import UrunStok, StokFifoKayit, StokFifoKullanim
+            
             zimmet = db.session.get(PersonelZimmet, zimmet_id)
             if not zimmet:
                 return jsonify({'success': False, 'message': 'Zimmet bulunamadı'}), 404
@@ -189,12 +191,14 @@ def register_admin_zimmet_routes(app):
             
             # Eski değeri sakla
             eski_deger = serialize_model(zimmet)
+            otel_id = zimmet.personel.otel_id if zimmet.personel else None
             
-            # Stok hareketlerini geri al
+            # Stok hareketlerini ve FIFO kayıtlarını geri al
             for detay in zimmet.detaylar:
                 # Kullanılmayan miktarı depoya geri ekle
                 geri_alinacak = detay.miktar - detay.kullanilan_miktar - detay.iade_edilen_miktar
                 if geri_alinacak > 0:
+                    # Stok hareketi
                     hareket = StokHareket(
                         urun_id=detay.urun_id,
                         hareket_tipi='giris',
@@ -203,6 +207,27 @@ def register_admin_zimmet_routes(app):
                         islem_yapan_id=session['kullanici_id']
                     )
                     db.session.add(hareket)
+                    
+                    # UrunStok güncelle
+                    urun_stok = UrunStok.query.filter_by(otel_id=otel_id, urun_id=detay.urun_id).first()
+                    if urun_stok:
+                        urun_stok.mevcut_stok += geri_alinacak
+                        urun_stok.son_giris_tarihi = get_kktc_now()
+                        urun_stok.son_guncelleyen_id = session['kullanici_id']
+                
+                # FIFO kullanım kayıtlarını geri al
+                fifo_kullanimlar = StokFifoKullanim.query.filter_by(
+                    referans_id=detay.id,
+                    islem_tipi='zimmet'
+                ).all()
+                
+                for kullanim in fifo_kullanimlar:
+                    fifo_kayit = db.session.get(StokFifoKayit, kullanim.fifo_kayit_id)
+                    if fifo_kayit:
+                        fifo_kayit.kalan_miktar += kullanim.miktar
+                        fifo_kayit.kullanilan_miktar -= kullanim.miktar
+                        fifo_kayit.tukendi = False
+                    db.session.delete(kullanim)
             
             # Zimmet durumunu iptal et
             zimmet.durum = 'iptal'
@@ -224,7 +249,7 @@ def register_admin_zimmet_routes(app):
             })
             
             flash('Zimmet kaydı başarıyla iptal edildi.', 'success')
-            return jsonify({'success': True, 'message': 'Zimmet iptal edildi'})
+            return jsonify({'success': True, 'message': 'Zimmet iptal edildi, stoklar geri eklendi'})
             
         except Exception as e:
             db.session.rollback()
