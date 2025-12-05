@@ -9,19 +9,12 @@
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍷</text></svg>"
     />
 
-    <!-- Dark Mode Script - FOUC önleme -->
+    <!-- Dark Mode Script - GEÇİCİ OLARAK SADECE DARK MODE AKTİF -->
     <script>
       (function () {
-        const savedTheme = localStorage.getItem("minibar-theme");
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-          .matches
-          ? "dark"
-          : "light";
-        const theme = savedTheme || systemTheme;
-
-        if (theme === "dark") {
-          document.documentElement.classList.add("dark");
-        }
+        // Dark mode zorunlu - Light mode geçici olarak devre dışı
+        document.documentElement.classList.add("dark");
+        localStorage.setItem("minibar-theme", "dark");
       })();
     </script>
 

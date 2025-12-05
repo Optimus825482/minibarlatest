@@ -118,8 +118,34 @@ class ExcelProcessingService:
             for cell in sheet[1]:
                 headers.append(cell.value)
             
-            # Dosya tipini algıla
-            dosya_tipi = ExcelProcessingService.detect_file_type(headers)
+            # Önce header bazlı dosya tipini algıla
+            header_dosya_tipi = ExcelProcessingService.detect_file_type(headers)
+            
+            # Tarih bazlı akıllı algılama için verileri oku
+            try:
+                df_std = pd.read_excel(file_path, header=0)
+                
+                # Arrival ve Departure sütun adlarını bul
+                arrival_col = 'Arrival' if 'Arrival' in df_std.columns else None
+                departure_col = 'Departure' if 'Departure' in df_std.columns else None
+                
+                if arrival_col and departure_col:
+                    smart_dosya_tipi = ExcelProcessingService._detect_file_type_by_dates_standard(
+                        df_std, arrival_col, departure_col
+                    )
+                    
+                    if smart_dosya_tipi:
+                        dosya_tipi = smart_dosya_tipi
+                        print(f"✅ Standart format - Tarih bazlı akıllı algılama: {dosya_tipi}")
+                    else:
+                        dosya_tipi = header_dosya_tipi
+                        print(f"✅ Standart format - Header bazlı algılama: {dosya_tipi}")
+                else:
+                    dosya_tipi = header_dosya_tipi
+            except Exception as e:
+                print(f"⚠️ Standart format akıllı algılama hatası: {str(e)}")
+                dosya_tipi = header_dosya_tipi
+            
             # Kayıt tipini belirle
             if dosya_tipi == 'arrivals':
                 kayit_tipi = 'arrival'
@@ -175,19 +201,22 @@ class ExcelProcessingService:
                         hatalar.append(f"Satır {row_idx}: Oda '{row_data['oda_no']}' bulunamadı veya oluşturulamadı")
                         continue
                     
-                    # DUPLICATE KONTROLÜ - Aynı oda + giriş + çıkış tarihi var mı?
+                    # DUPLICATE KONTROLÜ - Aynı oda + giriş + çıkış tarihi + kayıt tipi var mı?
+                    # NOT: Aynı oda için farklı kayıt tipleri olabilir (örn: sabah departure, akşam arrival)
                     giris_date = row_data['giris_tarihi'].date() if isinstance(row_data['giris_tarihi'], datetime) else row_data['giris_tarihi']
                     cikis_date = row_data['cikis_tarihi'].date() if isinstance(row_data['cikis_tarihi'], datetime) else row_data['cikis_tarihi']
                     
                     mevcut_kayit = MisafirKayit.query.filter(
                         MisafirKayit.oda_id == oda.id,
                         db.func.date(MisafirKayit.giris_tarihi) == giris_date,
-                        db.func.date(MisafirKayit.cikis_tarihi) == cikis_date
+                        db.func.date(MisafirKayit.cikis_tarihi) == cikis_date,
+                        MisafirKayit.kayit_tipi == kayit_tipi  # Kayıt tipini de kontrol et
                     ).first()
                     
                     if mevcut_kayit:
                         # Kayıt zaten var, atla (duplicate)
-                        hatalar.append(f"Satır {row_idx}: Oda {row_data['oda_no']} için bu tarih aralığında kayıt zaten mevcut (Duplicate - atlandı)")
+                        hatali_satir += 1
+                        hatalar.append(f"Satır {row_idx}: Oda {row_data['oda_no']} için bu tarih aralığında {kayit_tipi} kaydı zaten mevcut (Duplicate - atlandı)")
                         continue
                     
                     # MisafirKayit oluştur
@@ -526,7 +555,194 @@ class ExcelProcessingService:
         except Exception as e:
             print(f"⚠️ Görev oluşturma hatası: {str(e)}")
 
+    # ==================== TARİH BAZLI AKILLI ALGILAMA ====================
+    
+    @staticmethod
+    def _detect_file_type_by_dates_standard(df, arrival_col, departure_col):
+        """
+        Standart format için dosya tipini tarihlere göre akıllı algılar
+        
+        Mantık:
+        - Departure = Bugün (tüm odalar için aynı) → DEPARTURES
+        - Arrival < Bugün VE Departure > Bugün → IN HOUSE
+        - Arrival = Bugün VE Departure > Bugün → ARRIVALS
+        
+        Args:
+            df: DataFrame
+            arrival_col: Arrival sütun adı
+            departure_col: Departure sütun adı
+            
+        Returns:
+            str: 'arrivals', 'departures', 'in_house' veya None
+        """
+        try:
+            bugun = get_kktc_now().date()
+            
+            # İlk 20 satırı analiz et
+            sample_size = min(20, len(df))
+            
+            arrivals_list = []
+            departures_list = []
+            
+            for idx in range(sample_size):
+                try:
+                    row = df.iloc[idx]
+                    
+                    # Oda numarası boşsa atla
+                    oda_no = row.get('Room no')
+                    if pd.isna(oda_no) or str(oda_no).strip() == '':
+                        continue
+                    
+                    arrival_raw = row.get(arrival_col)
+                    departure_raw = row.get(departure_col)
+                    
+                    # Tarihleri parse et (standart format)
+                    arrival_date = ExcelProcessingService.parse_date(arrival_raw)
+                    departure_date = ExcelProcessingService.parse_date(departure_raw)
+                    
+                    if arrival_date:
+                        arrivals_list.append(arrival_date)
+                    if departure_date:
+                        departures_list.append(departure_date)
+                        
+                except Exception:
+                    continue
+            
+            if not arrivals_list or not departures_list:
+                return None
+            
+            # Analiz yap - ÖNCELİK SIRASI ÖNEMLİ!
+            
+            # 1. DEPARTURES: Çıkış tarihi = Bugün (en az %70)
+            departure_count = 0
+            for d in departures_list:
+                if d == bugun:
+                    departure_count += 1
+            
+            if departure_count >= len(departures_list) * 0.7:
+                print(f"📊 Standart format - Tarih analizi: Çıkış = Bugün ({departure_count}/{len(departures_list)}) → DEPARTURES")
+                return 'departures'
+            
+            # 2. ARRIVALS: Giriş tarihi = Bugün (en az %70)
+            arrival_count = 0
+            for a in arrivals_list:
+                if a == bugun:
+                    arrival_count += 1
+            
+            if arrival_count >= len(arrivals_list) * 0.7:
+                print(f"📊 Standart format - Tarih analizi: Giriş = Bugün ({arrival_count}/{len(arrivals_list)}) → ARRIVALS")
+                return 'arrivals'
+            
+            # 3. IN HOUSE: Giriş < Bugün VE Çıkış > Bugün (en az %70)
+            inhouse_count = 0
+            for i in range(min(len(arrivals_list), len(departures_list))):
+                if arrivals_list[i] < bugun and departures_list[i] > bugun:
+                    inhouse_count += 1
+            
+            if inhouse_count >= len(arrivals_list) * 0.7:
+                print(f"📊 Standart format - Tarih analizi: Giriş < Bugün VE Çıkış > Bugün ({inhouse_count}/{len(arrivals_list)}) → IN HOUSE")
+                return 'in_house'
+            
+            return None
+            
+        except Exception as e:
+            print(f"⚠️ Standart format tarih bazlı algılama hatası: {str(e)}")
+            return None
+    
     # ==================== P4001 FORMAT (DEPO YÖNETİCİSİ) ====================
+    
+    @staticmethod
+    def _detect_file_type_by_dates(df, arrival_col, departure_col, rapor_tarihi=None):
+        """
+        Dosya tipini tarihlere göre akıllı algılar
+        
+        Mantık:
+        - Departure = Bugün (tüm odalar için aynı) → DEPARTURES
+        - Arrival < Bugün VE Departure > Bugün → IN HOUSE
+        - Arrival = Bugün VE Departure > Bugün → ARRIVALS
+        
+        Args:
+            df: DataFrame
+            arrival_col: Arrival sütun adı
+            departure_col: Departure sütun adı
+            rapor_tarihi: Rapor tarihi (yıl referansı için)
+            
+        Returns:
+            str: 'arrivals', 'departures' veya 'in_house'
+        """
+        try:
+            bugun = get_kktc_now().date()
+            
+            # İlk 20 satırı analiz et (yeterli örnek)
+            sample_size = min(20, len(df))
+            
+            arrivals_list = []
+            departures_list = []
+            
+            for idx in range(sample_size):
+                try:
+                    row = df.iloc[idx]
+                    
+                    # Oda numarası boşsa atla
+                    oda_no = row.get('R.No') if 'R.No' in df.columns else row.get('Room no')
+                    if pd.isna(oda_no) or str(oda_no).strip() == '':
+                        continue
+                    
+                    arrival_raw = row.get(arrival_col)
+                    departure_raw = row.get(departure_col)
+                    
+                    # Tarihleri parse et
+                    arrival_date = ExcelProcessingService._parse_p4001_date(arrival_raw, rapor_tarihi)
+                    departure_date = ExcelProcessingService._parse_p4001_date(departure_raw, rapor_tarihi)
+                    
+                    if arrival_date:
+                        arrivals_list.append(arrival_date)
+                    if departure_date:
+                        departures_list.append(departure_date)
+                        
+                except Exception:
+                    continue
+            
+            if not arrivals_list or not departures_list:
+                return None  # Yeterli veri yok, header bazlı algılamaya devam et
+            
+            # Analiz yap - ÖNCELİK SIRASI ÖNEMLİ!
+            
+            # 1. DEPARTURES: Çıkış tarihi = Bugün (en az %70)
+            departure_count = 0
+            for d in departures_list:
+                if d == bugun:
+                    departure_count += 1
+            
+            if departure_count >= len(departures_list) * 0.7:
+                print(f"📊 P4001 - Tarih analizi: Çıkış = Bugün ({departure_count}/{len(departures_list)}) → DEPARTURES")
+                return 'departures'
+            
+            # 2. ARRIVALS: Giriş tarihi = Bugün (en az %70)
+            arrival_count = 0
+            for a in arrivals_list:
+                if a == bugun:
+                    arrival_count += 1
+            
+            if arrival_count >= len(arrivals_list) * 0.7:
+                print(f"📊 P4001 - Tarih analizi: Giriş = Bugün ({arrival_count}/{len(arrivals_list)}) → ARRIVALS")
+                return 'arrivals'
+            
+            # 3. IN HOUSE: Giriş < Bugün VE Çıkış > Bugün (en az %70)
+            inhouse_count = 0
+            for i in range(min(len(arrivals_list), len(departures_list))):
+                if arrivals_list[i] < bugun and departures_list[i] > bugun:
+                    inhouse_count += 1
+            
+            if inhouse_count >= len(arrivals_list) * 0.7:
+                print(f"📊 P4001 - Tarih analizi: Giriş < Bugün VE Çıkış > Bugün ({inhouse_count}/{len(arrivals_list)}) → IN HOUSE")
+                return 'in_house'
+            
+            return None  # Belirlenemedi, header bazlı algılamaya devam et
+            
+        except Exception as e:
+            print(f"⚠️ Tarih bazlı dosya tipi algılama hatası: {str(e)}")
+            return None
     
     @staticmethod
     def _detect_p4001_format(file_path):
@@ -540,6 +756,10 @@ class ExcelProcessingService:
         - 9. satırda (index 8) tarih bilgisi: "Arrival :01.12.2025", "Date: 01.12.2025"
         - 10. satırdan (index 9) itibaren veri
         - Aralarda "(continued)" satırları olabilir
+        
+        Dosya tipi algılama önceliği:
+        1. Önce verilerdeki tarihlere göre akıllı algılama
+        2. Eğer belirlenemezse header pattern'lerine göre algılama
         
         Returns:
             dict: {'is_p4001': bool, 'dosya_tipi': str, 'rapor_tarihi': date, ...}
@@ -562,23 +782,44 @@ class ExcelProcessingService:
             if not (has_rno and has_adl):
                 return {'is_p4001': False}
             
-            # Satır 9'dan (index 8) dosya tipini ve rapor tarihini al
+            # Satır 9'dan (index 8) rapor tarihini al (header pattern'den)
             row8 = df.iloc[8].tolist()
             row8_str = ' '.join([str(x) for x in row8 if pd.notna(x)])
             
-            dosya_tipi = None
+            header_dosya_tipi = None
             rapor_tarihi = None
             
             for tip, pattern in ExcelProcessingService.P4001_TYPE_PATTERNS.items():
                 match = re.search(pattern, row8_str, re.IGNORECASE)
                 if match:
-                    dosya_tipi = tip
+                    header_dosya_tipi = tip
                     tarih_str = match.group(1)
                     try:
                         rapor_tarihi = datetime.strptime(tarih_str, '%d.%m.%Y').date()
                     except ValueError:
                         pass
                     break
+            
+            # Veri satırlarını oku ve tarih bazlı akıllı algılama yap
+            try:
+                df_data = pd.read_excel(file_path, header=7)
+                df_data = df_data.iloc[1:].reset_index(drop=True)  # İlk satırı atla (rapor tarihi)
+                
+                # Tarih bazlı akıllı algılama
+                smart_dosya_tipi = ExcelProcessingService._detect_file_type_by_dates(
+                    df_data, 'Arrival', 'Departure', rapor_tarihi
+                )
+                
+                if smart_dosya_tipi:
+                    dosya_tipi = smart_dosya_tipi
+                    print(f"✅ Tarih bazlı akıllı algılama: {dosya_tipi}")
+                else:
+                    dosya_tipi = header_dosya_tipi
+                    print(f"✅ Header bazlı algılama: {dosya_tipi}")
+                    
+            except Exception as e:
+                print(f"⚠️ Akıllı algılama hatası, header bazlı devam: {str(e)}")
+                dosya_tipi = header_dosya_tipi
             
             print(f"📋 P4001 Format algılandı: {dosya_tipi}, Rapor tarihi: {rapor_tarihi}")
             
@@ -764,15 +1005,17 @@ class ExcelProcessingService:
                         hatalar.append(f"Satır {excel_row}: Oda '{oda_no_str}' bulunamadı")
                         continue
                     
-                    # Duplicate kontrolü
+                    # Duplicate kontrolü - kayıt tipini de kontrol et
                     mevcut_kayit = MisafirKayit.query.filter(
                         MisafirKayit.oda_id == oda.id,
                         db.func.date(MisafirKayit.giris_tarihi) == giris_tarihi,
-                        db.func.date(MisafirKayit.cikis_tarihi) == cikis_tarihi
+                        db.func.date(MisafirKayit.cikis_tarihi) == cikis_tarihi,
+                        MisafirKayit.kayit_tipi == kayit_tipi  # Kayıt tipini de kontrol et
                     ).first()
                     
                     if mevcut_kayit:
-                        hatalar.append(f"Satır {excel_row}: Oda {oda_no_str} için kayıt zaten mevcut (Duplicate)")
+                        hatali_satir += 1
+                        hatalar.append(f"Satır {excel_row}: Oda {oda_no_str} için {kayit_tipi} kaydı zaten mevcut (Duplicate)")
                         continue
                     
                     # MisafirKayit oluştur

@@ -64,7 +64,7 @@ class Config:
         # PostgreSQL Specific Options
         'connect_args': {
             'connect_timeout': 10,          # 10 saniye connection timeout
-            'options': '-c timezone=utc -c statement_timeout=30000',  # 30 saniye query timeout
+            'options': '-c timezone=Europe/Nicosia -c statement_timeout=30000',  # KKTC timezone (GMT+2)
             'application_name': 'minibar_takip',
             
             # Keep-alive settings

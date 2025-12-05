@@ -275,6 +275,27 @@ def kat_doluluk_detay(kat_id):
                 elif durum == 'completed':
                     kontrol_edilen_odalar[oda_id] = 'completed'
         
+        # DND bilgilerini al (DND odaları için sayı ve son DND zamanı)
+        dnd_bilgileri = {}  # oda_id -> {'dnd_sayisi': int, 'son_dnd_zamani': datetime}
+        
+        # Bugünkü görev detaylarından DND bilgilerini al
+        for detay in gorev_detaylari_db:
+            if detay.oda_id in oda_ids and detay.durum == 'dnd_pending':
+                # DNDKontrol tablosundan bu görev için DND kayıtlarını say
+                dnd_kayitlari = DNDKontrol.query.filter_by(gorev_detay_id=detay.id).order_by(DNDKontrol.kontrol_zamani.desc()).all()
+                
+                if dnd_kayitlari:
+                    dnd_bilgileri[detay.oda_id] = {
+                        'dnd_sayisi': len(dnd_kayitlari),
+                        'son_dnd_zamani': dnd_kayitlari[0].kontrol_zamani  # En son DND kaydı
+                    }
+                elif detay.dnd_sayisi and detay.dnd_sayisi > 0:
+                    # DNDKontrol kaydı yoksa GorevDetay'daki dnd_sayisi'nı kullan
+                    dnd_bilgileri[detay.oda_id] = {
+                        'dnd_sayisi': detay.dnd_sayisi,
+                        'son_dnd_zamani': detay.son_dnd_zamani
+                    }
+        
         # Her oda için doluluk durumunu kontrol et
         oda_detaylari = []
         dolu_sayisi = 0
@@ -344,6 +365,9 @@ def kat_doluluk_detay(kat_id):
             # Kontrol durumunu belirle (hem dolu hem boş odalar için)
             kontrol_durumu = kontrol_edilen_odalar.get(oda.id, None)
             
+            # DND bilgilerini al
+            dnd_info = dnd_bilgileri.get(oda.id, None)
+            
             oda_detaylari.append({
                 'oda': oda,
                 'durum': durum,
@@ -351,7 +375,9 @@ def kat_doluluk_detay(kat_id):
                 'gorev_durumu': gorev_durumlari.get(oda.id, 'pending') if misafir else None,
                 'kontrol_durumu': kontrol_durumu,  # 'completed', 'dnd' veya None
                 'varis_saati': varis_saati,
-                'cikis_saati': cikis_saati
+                'cikis_saati': cikis_saati,
+                'dnd_sayisi': dnd_info['dnd_sayisi'] if dnd_info else None,
+                'son_dnd_zamani': dnd_info['son_dnd_zamani'].isoformat() if dnd_info and dnd_info['son_dnd_zamani'] else None
             })
         
         return render_template("kat_sorumlusu/kat_doluluk_detay.html",
@@ -432,12 +458,32 @@ def doluluk_onizle():
 
         # Excel'i analiz et (veritabanına yazmadan)
         import openpyxl
+        import pandas as pd
         workbook = openpyxl.load_workbook(temp_path, data_only=True)
         sheet = workbook.active
 
         # Başlıkları al
         headers = [cell.value for cell in sheet[1]]
-        dosya_tipi = ExcelProcessingService.detect_file_type(headers)
+        header_dosya_tipi = ExcelProcessingService.detect_file_type(headers)
+        
+        # Tarih bazlı akıllı algılama
+        try:
+            df_preview = pd.read_excel(temp_path, header=0)
+            if 'Arrival' in df_preview.columns and 'Departure' in df_preview.columns:
+                smart_dosya_tipi = ExcelProcessingService._detect_file_type_by_dates_standard(
+                    df_preview, 'Arrival', 'Departure'
+                )
+                if smart_dosya_tipi:
+                    dosya_tipi = smart_dosya_tipi
+                    print(f"✅ Önizleme - Tarih bazlı akıllı algılama: {dosya_tipi}")
+                else:
+                    dosya_tipi = header_dosya_tipi
+                    print(f"✅ Önizleme - Header bazlı algılama: {dosya_tipi}")
+            else:
+                dosya_tipi = header_dosya_tipi
+        except Exception as e:
+            print(f"⚠️ Önizleme akıllı algılama hatası: {str(e)}")
+            dosya_tipi = header_dosya_tipi
 
         # Sütun indekslerini bul
         col_indices = {}
@@ -736,8 +782,15 @@ def doluluk_durum(islem_kodu):
         hata_detaylari = None
         if yukleme.hata_detaylari:
             try:
-                hata_detaylari = json.loads(yukleme.hata_detaylari) if isinstance(yukleme.hata_detaylari, str) else yukleme.hata_detaylari
-            except:
+                # İlk parse
+                parsed = json.loads(yukleme.hata_detaylari) if isinstance(yukleme.hata_detaylari, str) else yukleme.hata_detaylari
+                # Eğer hala string ise (çift encode durumu) tekrar parse et
+                if isinstance(parsed, str):
+                    hata_detaylari = json.loads(parsed)
+                else:
+                    hata_detaylari = parsed
+            except Exception as parse_err:
+                print(f"Hata detayları parse hatası: {parse_err}")
                 hata_detaylari = [yukleme.hata_detaylari]
 
         return jsonify({

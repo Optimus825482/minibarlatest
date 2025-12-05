@@ -256,8 +256,11 @@ Doluluk Detayı{% endblock %} {% block content %}
           'dnd_pending' %}
           <span
             class="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-orange-500 text-white"
+            title="DND Sayısı: {{ oda_detay.dnd_sayisi or 1 }}"
           >
-            <i class="fas fa-exclamation text-xs"></i>
+            <span class="text-xs font-bold"
+              >{{ oda_detay.dnd_sayisi or 1 }}</span
+            >
           </span>
           {% endif %}
           <div class="text-center flex-1 flex flex-col justify-between">
@@ -290,7 +293,22 @@ Doluluk Detayı{% endblock %} {% block content %}
                 oda_detay.misafir.misafir_sayisi }} Misafir
               </div>
 
-              {% if oda_detay.durum == 'bugun_giris' %}
+              {% if oda_detay.gorev_durumu == 'dnd_pending' and
+              oda_detay.son_dnd_zamani %}
+              <div
+                class="text-xs font-semibold text-orange-700 dark:text-orange-300 mb-1"
+              >
+                <i class="fas fa-ban mr-1"></i>DND ({{ oda_detay.dnd_sayisi or 1
+                }}x)
+              </div>
+              <div
+                data-dnd-zaman="{{ oda_detay.son_dnd_zamani }}"
+                class="dnd-timer inline-block px-2 py-1 rounded text-xs font-mono font-bold bg-orange-600 text-white mb-1"
+                title="Son DND'den bu yana geçen süre"
+              >
+                --:--:--
+              </div>
+              {% elif oda_detay.durum == 'bugun_giris' %}
               <div
                 class="text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-1"
               >
@@ -537,10 +555,54 @@ Doluluk Detayı{% endblock %} {% block content %}
     });
   }
 
+  // DND süre sayaçları - Son DND'den bu yana geçen süre (GMT+2 KKTC)
+  function updateDndTimers() {
+    const timers = document.querySelectorAll(".dnd-timer");
+    // KKTC saati (GMT+2) - şu anki zaman
+    const now = new Date();
+
+    timers.forEach((timer) => {
+      const dndZamanStr = timer.dataset.dndZaman;
+      if (!dndZamanStr) return;
+
+      // ISO formatındaki tarihi parse et
+      const dndZaman = new Date(dndZamanStr);
+
+      // Geçen süreyi hesapla (milisaniye)
+      const gecenSure = now - dndZaman;
+
+      if (gecenSure < 0) {
+        timer.textContent = "00:00:00";
+        return;
+      }
+
+      // Geçen süreyi saat:dakika:saniye formatında göster
+      const saat = Math.floor(gecenSure / (1000 * 60 * 60));
+      const dakika = Math.floor((gecenSure % (1000 * 60 * 60)) / (1000 * 60));
+      const saniye = Math.floor((gecenSure % (1000 * 60)) / 1000);
+
+      timer.textContent = `${String(saat).padStart(2, "0")}:${String(
+        dakika
+      ).padStart(2, "0")}:${String(saniye).padStart(2, "0")}`;
+
+      // 1 saatten fazla geçtiyse kırmızı uyarı
+      if (gecenSure > 60 * 60 * 1000) {
+        timer.classList.remove("bg-orange-600");
+        timer.classList.add("bg-red-500", "animate-pulse");
+      } else if (gecenSure > 30 * 60 * 1000) {
+        // 30 dakikadan fazla geçtiyse sarı uyarı
+        timer.classList.remove("bg-orange-600");
+        timer.classList.add("bg-yellow-500");
+      }
+    });
+  }
+
   // Sayfa yüklendiğinde ve her saniye güncelle
   document.addEventListener("DOMContentLoaded", function () {
     updateCountdowns();
+    updateDndTimers();
     setInterval(updateCountdowns, 1000);
+    setInterval(updateDndTimers, 1000);
   });
 </script>
 

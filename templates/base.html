@@ -6,21 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Minibar Takip Sistemi{% endblock %}</title>
 
-  <!-- CRITICAL: Dark Mode - Sayfa yüklenmeden önce temayı uygula (FOUC önleme) -->
+  <!-- CRITICAL: Dark Mode - GEÇİCİ OLARAK SADECE DARK MODE AKTİF -->
   <script>
-    // LocalStorage'dan temayı al ve hemen uygula - Varsayılan: DARK
+    // Dark mode zorunlu - Light mode geçici olarak devre dışı
     (function () {
-      const savedTheme = localStorage.getItem("minibar-theme");
-      // Varsayılan tema dark olarak ayarlandı
-      const theme = savedTheme || "dark";
-
-      if (theme === "dark") {
-        document.documentElement.classList.add("dark");
-      }
-      // İlk kez giren kullanıcılar için dark temayı kaydet
-      if (!savedTheme) {
-        localStorage.setItem("minibar-theme", "dark");
-      }
+      // Her zaman dark mode uygula
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("minibar-theme", "dark");
     })();
   </script>
 
@@ -1592,7 +1584,8 @@
             </select>
             {% endif %}
             
-            <!-- Theme Toggle -->
+            <!-- Theme Toggle - GEÇİCİ OLARAK GİZLENDİ (Sadece Dark Mode aktif) -->
+            <!-- 
             <button id="theme-toggle"
               class="p-2 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors">
               <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -1604,6 +1597,7 @@
                   clip-rule="evenodd"></path>
               </svg>
             </button>
+            -->
 
             <!-- Logout -->
             {% if current_user %}

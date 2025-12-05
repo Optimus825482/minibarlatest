@@ -550,12 +550,27 @@ def personel_gorev_detay(personel_id):
         gorevler = []
         for ag in ana_gorevler:
             for detay in ag.detaylar:
+                # Misafir sayısını al - önce ilişkiden, yoksa direkt sorgu ile
+                misafir_sayisi = 0
+                if detay.misafir_kayit:
+                    misafir_sayisi = detay.misafir_kayit.misafir_sayisi or 0
+                elif detay.oda_id:
+                    # İlişki kopuksa, oda ve tarih ile misafir kaydını bul
+                    from models import MisafirKayit
+                    misafir_kayit = MisafirKayit.query.filter(
+                        MisafirKayit.oda_id == detay.oda_id,
+                        MisafirKayit.giris_tarihi <= tarih,
+                        MisafirKayit.cikis_tarihi > tarih
+                    ).first()
+                    if misafir_kayit:
+                        misafir_sayisi = misafir_kayit.misafir_sayisi or 0
+                
                 gorevler.append({
                     'id': detay.id,
                     'oda_no': detay.oda.oda_no if detay.oda else '-',
                     'gorev_tipi': ag.gorev_tipi,
                     'durum': detay.durum,
-                    'misafir_sayisi': detay.misafir_kayit.misafir_sayisi if detay.misafir_kayit else 0,
+                    'misafir_sayisi': misafir_sayisi,
                     'kontrol_zamani': detay.kontrol_zamani
                 })
         
