@@ -562,10 +562,10 @@ class ExcelProcessingService:
         """
         Standart format için dosya tipini tarihlere göre akıllı algılar
         
-        Mantık:
-        - Departure = Bugün (tüm odalar için aynı) → DEPARTURES
-        - Arrival < Bugün VE Departure > Bugün → IN HOUSE
-        - Arrival = Bugün VE Departure > Bugün → ARRIVALS
+        Mantık (öncelik sırasıyla):
+        1. IN HOUSE: Giriş < Bugün VE Çıkış > Bugün (misafir otelde kalıyor)
+        2. DEPARTURES: Çıkış = Bugün (bugün çıkış yapacaklar)
+        3. ARRIVALS: Giriş = Bugün (bugün giriş yapacaklar)
         
         Args:
             df: DataFrame
@@ -596,58 +596,126 @@ class ExcelProcessingService:
                     arrival_raw = row.get(arrival_col)
                     departure_raw = row.get(departure_col)
                     
-                    # Tarihleri parse et (standart format)
-                    arrival_date = ExcelProcessingService.parse_date(arrival_raw)
-                    departure_date = ExcelProcessingService.parse_date(departure_raw)
+                    # Tarihleri parse et - pandas datetime64 desteği
+                    arrival_date = ExcelProcessingService._safe_parse_date(arrival_raw)
+                    departure_date = ExcelProcessingService._safe_parse_date(departure_raw)
                     
                     if arrival_date:
                         arrivals_list.append(arrival_date)
                     if departure_date:
                         departures_list.append(departure_date)
                         
-                except Exception:
+                except Exception as e:
+                    print(f"⚠️ Satır {idx} parse hatası: {str(e)}")
                     continue
             
             if not arrivals_list or not departures_list:
+                print(f"⚠️ Tarih listesi boş - arrivals: {len(arrivals_list)}, departures: {len(departures_list)}")
                 return None
             
-            # Analiz yap - ÖNCELİK SIRASI ÖNEMLİ!
+            # Debug: İlk birkaç tarihi göster
+            print(f"📊 Tarih analizi - Bugün: {bugun}")
+            print(f"📊 İlk 3 Arrival: {arrivals_list[:3]}")
+            print(f"📊 İlk 3 Departure: {departures_list[:3]}")
             
-            # 1. DEPARTURES: Çıkış tarihi = Bugün (en az %70)
-            departure_count = 0
-            for d in departures_list:
-                if d == bugun:
+            # Sayaçlar
+            inhouse_count = 0  # Giriş < Bugün VE Çıkış > Bugün
+            departure_count = 0  # Çıkış = Bugün
+            arrival_count = 0  # Giriş = Bugün
+            
+            for i in range(min(len(arrivals_list), len(departures_list))):
+                arr = arrivals_list[i]
+                dep = departures_list[i]
+                
+                # IN HOUSE: Giriş < Bugün VE Çıkış > Bugün (misafir şu an otelde)
+                if arr < bugun and dep > bugun:
+                    inhouse_count += 1
+                # DEPARTURES: Çıkış = Bugün
+                elif dep == bugun:
                     departure_count += 1
-            
-            if departure_count >= len(departures_list) * 0.7:
-                print(f"📊 Standart format - Tarih analizi: Çıkış = Bugün ({departure_count}/{len(departures_list)}) → DEPARTURES")
-                return 'departures'
-            
-            # 2. ARRIVALS: Giriş tarihi = Bugün (en az %70)
-            arrival_count = 0
-            for a in arrivals_list:
-                if a == bugun:
+                # ARRIVALS: Giriş = Bugün
+                elif arr == bugun:
                     arrival_count += 1
             
-            if arrival_count >= len(arrivals_list) * 0.7:
-                print(f"📊 Standart format - Tarih analizi: Giriş = Bugün ({arrival_count}/{len(arrivals_list)}) → ARRIVALS")
+            total_valid = min(len(arrivals_list), len(departures_list))
+            print(f"📊 Sonuçlar - IN HOUSE: {inhouse_count}, DEPARTURES: {departure_count}, ARRIVALS: {arrival_count} / Toplam: {total_valid}")
+            
+            # ÖNCELİK SIRASI VE EŞİKLER:
+            # - DEPARTURES: %100 (tüm çıkışlar bugün olmalı)
+            # - ARRIVALS: %100 (tüm girişler bugün olmalı)
+            # - IN HOUSE: %50 (çoğunluk otelde kalıyor olmalı)
+            
+            # 1. DEPARTURES: Çıkış = Bugün (%100 - tüm kayıtlar)
+            if departure_count == total_valid and total_valid > 0:
+                print(f"📊 Standart format - Tarih analizi: Çıkış = Bugün ({departure_count}/{total_valid}) → DEPARTURES")
+                return 'departures'
+            
+            # 2. ARRIVALS: Giriş = Bugün (%100 - tüm kayıtlar)
+            if arrival_count == total_valid and total_valid > 0:
+                print(f"📊 Standart format - Tarih analizi: Giriş = Bugün ({arrival_count}/{total_valid}) → ARRIVALS")
                 return 'arrivals'
             
-            # 3. IN HOUSE: Giriş < Bugün VE Çıkış > Bugün (en az %70)
-            inhouse_count = 0
-            for i in range(min(len(arrivals_list), len(departures_list))):
-                if arrivals_list[i] < bugun and departures_list[i] > bugun:
-                    inhouse_count += 1
-            
-            if inhouse_count >= len(arrivals_list) * 0.7:
-                print(f"📊 Standart format - Tarih analizi: Giriş < Bugün VE Çıkış > Bugün ({inhouse_count}/{len(arrivals_list)}) → IN HOUSE")
+            # 3. IN HOUSE: Giriş < Bugün VE Çıkış > Bugün (%70)
+            if inhouse_count >= total_valid * 0.7:
+                print(f"📊 Standart format - Tarih analizi: Giriş < Bugün VE Çıkış > Bugün ({inhouse_count}/{total_valid}) → IN HOUSE")
                 return 'in_house'
             
-            return None
+            # Hiçbiri eşiği geçmediyse, varsayılan IN HOUSE (en güvenli seçenek)
+            print(f"📊 Standart format - Eşik geçilemedi, varsayılan IN HOUSE")
+            return 'in_house'
             
         except Exception as e:
             print(f"⚠️ Standart format tarih bazlı algılama hatası: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return None
+    
+    @staticmethod
+    def _safe_parse_date(date_value):
+        """
+        Tarihi güvenli şekilde parse eder - pandas datetime64, datetime, date ve string destekler
+        
+        Args:
+            date_value: Tarih değeri (herhangi bir formatta)
+            
+        Returns:
+            date: Parse edilmiş tarih veya None
+        """
+        if date_value is None or (isinstance(date_value, float) and pd.isna(date_value)):
+            return None
+        
+        # pandas Timestamp veya datetime64
+        if hasattr(date_value, 'date'):
+            try:
+                return date_value.date()
+            except Exception:
+                pass
+        
+        # pandas NaT kontrolü
+        if pd.isna(date_value):
+            return None
+        
+        # Zaten date objesi ise
+        if isinstance(date_value, date) and not isinstance(date_value, datetime):
+            return date_value
+        
+        # datetime objesi ise
+        if isinstance(date_value, datetime):
+            return date_value.date()
+        
+        # String ise parse et
+        if isinstance(date_value, str):
+            return ExcelProcessingService.parse_date(date_value)
+        
+        # numpy datetime64
+        try:
+            import numpy as np
+            if isinstance(date_value, np.datetime64):
+                return pd.Timestamp(date_value).date()
+        except Exception:
+            pass
+        
+        return None
     
     # ==================== P4001 FORMAT (DEPO YÖNETİCİSİ) ====================
     
