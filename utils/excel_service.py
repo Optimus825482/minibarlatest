@@ -620,22 +620,22 @@ class ExcelProcessingService:
             
             # Sayaçlar
             inhouse_count = 0  # Giriş < Bugün VE Çıkış > Bugün
-            departure_count = 0  # Çıkış = Bugün
-            arrival_count = 0  # Giriş = Bugün
+            departure_count = 0  # Çıkış = Bugün VE Giriş < Bugün
+            arrival_count = 0  # Giriş = Bugün (çıkış tarihi farklı olabilir, bugün dahil)
             
             for i in range(min(len(arrivals_list), len(departures_list))):
                 arr = arrivals_list[i]
                 dep = departures_list[i]
                 
-                # IN HOUSE: Giriş < Bugün VE Çıkış > Bugün (misafir şu an otelde)
-                if arr < bugun and dep > bugun:
-                    inhouse_count += 1
-                # DEPARTURES: Çıkış = Bugün
-                elif dep == bugun:
-                    departure_count += 1
-                # ARRIVALS: Giriş = Bugün
-                elif arr == bugun:
+                # ARRIVALS: Giriş = Bugün (çıkış tarihi ne olursa olsun - bugün dahil)
+                if arr == bugun:
                     arrival_count += 1
+                # DEPARTURES: Çıkış = Bugün VE Giriş < Bugün (daha önce giriş yapmış, bugün çıkıyor)
+                elif dep == bugun and arr < bugun:
+                    departure_count += 1
+                # IN HOUSE: Giriş < Bugün VE Çıkış > Bugün (misafir şu an otelde)
+                elif arr < bugun and dep > bugun:
+                    inhouse_count += 1
             
             total_valid = min(len(arrivals_list), len(departures_list))
             print(f"📊 Sonuçlar - IN HOUSE: {inhouse_count}, DEPARTURES: {departure_count}, ARRIVALS: {arrival_count} / Toplam: {total_valid}")
