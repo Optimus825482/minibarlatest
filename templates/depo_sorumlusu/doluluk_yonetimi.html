@@ -518,7 +518,7 @@ block content %}
         <div class="flex flex-row-reverse gap-2">
           <button
             type="button"
-            onclick="confirmCurrentUpload()"
+            onclick="confirmCurrentUploadWithApproval()"
             class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white sm:text-sm"
           >
             <i class="fas fa-check mr-2"></i>
@@ -526,7 +526,7 @@ block content %}
           </button>
           <button
             type="button"
-            onclick="confirmAllUploads()"
+            onclick="confirmAllUploadsWithApproval()"
             class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white sm:text-sm"
           >
             <i class="fas fa-upload mr-2"></i>
@@ -627,9 +627,190 @@ block content %}
         <button
           type="button"
           onclick="closeErrorModal()"
-          class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-slate-600 text-base font-medium text-white hover:bg-slate-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+          class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-slate-600 text-base font-medium text-white focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
         >
           Kapat
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dosya Tipi Onay Modal -->
+<div
+  id="fileTypeConfirmModal"
+  class="hidden fixed inset-0 overflow-y-auto z-[60]"
+>
+  <div
+    class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center"
+  >
+    <div
+      class="fixed inset-0 bg-slate-900 bg-opacity-75 transition-opacity"
+    ></div>
+    <div
+      class="relative bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-md sm:w-full"
+    >
+      <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6">
+        <div
+          class="flex items-center justify-center w-16 h-16 mx-auto bg-blue-100 dark:bg-blue-900/30 rounded-full mb-4"
+        >
+          <i
+            class="fas fa-file-alt text-blue-600 dark:text-blue-400 text-2xl"
+          ></i>
+        </div>
+        <h3
+          class="text-lg leading-6 font-medium text-slate-900 dark:text-white text-center mb-2"
+        >
+          Dosya Tipi Onayı
+        </h3>
+        <p class="text-sm text-slate-600 dark:text-slate-400 text-center mb-4">
+          Yüklediğiniz
+          <strong
+            id="confirmFileName"
+            class="text-slate-900 dark:text-white"
+          ></strong>
+          adlı belge sistem tarafından
+        </p>
+        <div
+          class="bg-slate-100 dark:bg-slate-900 rounded-lg p-4 text-center mb-4"
+        >
+          <span
+            id="confirmFileType"
+            class="text-xl font-bold text-blue-600 dark:text-blue-400"
+          ></span>
+        </div>
+        <p class="text-sm text-slate-600 dark:text-slate-400 text-center">
+          olarak tespit edilmiştir ve bu şekilde kaydedilecektir.
+        </p>
+      </div>
+      <div
+        class="bg-slate-50 dark:bg-slate-900 px-4 py-3 sm:px-6 flex flex-col gap-2"
+      >
+        <button
+          type="button"
+          onclick="confirmFileType()"
+          class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white sm:text-sm"
+        >
+          <i class="fas fa-check mr-2"></i> Onaylıyorum
+        </button>
+        <button
+          type="button"
+          onclick="showFileTypeSelectModal()"
+          class="w-full inline-flex justify-center rounded-md border border-slate-300 dark:border-slate-600 shadow-sm px-4 py-2 bg-white dark:bg-slate-800 text-base font-medium text-slate-700 dark:text-slate-300 sm:text-sm"
+        >
+          <i class="fas fa-edit mr-2"></i> Hayır, Farklı Tip Seçeceğim
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dosya Tipi Seçim Modal -->
+<div
+  id="fileTypeSelectModal"
+  class="hidden fixed inset-0 overflow-y-auto z-[70]"
+>
+  <div
+    class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center"
+  >
+    <div
+      class="fixed inset-0 bg-slate-900 bg-opacity-75 transition-opacity"
+    ></div>
+    <div
+      class="relative bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-md sm:w-full"
+    >
+      <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6">
+        <div
+          class="flex items-center justify-center w-16 h-16 mx-auto bg-yellow-100 dark:bg-yellow-900/30 rounded-full mb-4"
+        >
+          <i
+            class="fas fa-list-ul text-yellow-600 dark:text-yellow-400 text-2xl"
+          ></i>
+        </div>
+        <h3
+          class="text-lg leading-6 font-medium text-slate-900 dark:text-white text-center mb-2"
+        >
+          Dosya Tipini Seçin
+        </h3>
+        <p class="text-sm text-slate-600 dark:text-slate-400 text-center mb-4">
+          Lütfen
+          <strong
+            id="selectFileName"
+            class="text-slate-900 dark:text-white"
+          ></strong>
+          adlı belgenin tipini seçiniz:
+        </p>
+        <div class="space-y-2">
+          <label
+            class="flex items-center p-3 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer"
+          >
+            <input
+              type="radio"
+              name="manualFileType"
+              value="in_house"
+              class="mr-3 text-blue-600"
+            />
+            <div>
+              <span class="font-medium text-slate-900 dark:text-white"
+                >IN HOUSE</span
+              >
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                Otelde konaklayan misafirler
+              </p>
+            </div>
+          </label>
+          <label
+            class="flex items-center p-3 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer"
+          >
+            <input
+              type="radio"
+              name="manualFileType"
+              value="arrivals"
+              class="mr-3 text-purple-600"
+            />
+            <div>
+              <span class="font-medium text-slate-900 dark:text-white"
+                >ARRIVALS</span
+              >
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                Bugün giriş yapacak misafirler
+              </p>
+            </div>
+          </label>
+          <label
+            class="flex items-center p-3 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer"
+          >
+            <input
+              type="radio"
+              name="manualFileType"
+              value="departures"
+              class="mr-3 text-orange-600"
+            />
+            <div>
+              <span class="font-medium text-slate-900 dark:text-white"
+                >DEPARTURES</span
+              >
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                Bugün çıkış yapacak misafirler
+              </p>
+            </div>
+          </label>
+        </div>
+      </div>
+      <div class="bg-slate-50 dark:bg-slate-900 px-4 py-3 sm:px-6 flex gap-2">
+        <button
+          type="button"
+          onclick="cancelFileTypeSelect()"
+          class="flex-1 inline-flex justify-center rounded-md border border-slate-300 dark:border-slate-600 shadow-sm px-4 py-2 bg-white dark:bg-slate-800 text-base font-medium text-slate-700 dark:text-slate-300 sm:text-sm"
+        >
+          İptal
+        </button>
+        <button
+          type="button"
+          onclick="applyManualFileType()"
+          class="flex-1 inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white sm:text-sm"
+        >
+          <i class="fas fa-check mr-2"></i> Uygula
         </button>
       </div>
     </div>
@@ -1238,6 +1419,197 @@ block content %}
   // Eski fonksiyon (geriye uyumluluk)
   function confirmUpload() {
     confirmCurrentUpload();
+  }
+
+  // ==================== DOSYA TİPİ ONAY SİSTEMİ ====================
+  let pendingUploadQueue = []; // Yüklenecek dosyalar kuyruğu
+  let currentUploadIndex = 0;
+  let currentFileTypeOverride = null; // Kullanıcının seçtiği dosya tipi
+
+  // Tümünü Yükle butonuna basıldığında onay sürecini başlat
+  async function confirmAllUploadsWithApproval() {
+    const validFiles = allPreviewData.filter((d) => d.success);
+    if (validFiles.length === 0) {
+      alert("Yüklenecek geçerli dosya yok");
+      return;
+    }
+
+    // Kuyruğu hazırla
+    pendingUploadQueue = validFiles.map((data, idx) => ({
+      data: data,
+      originalIndex: allPreviewData.indexOf(data),
+      fileType: data.dosya_tipi,
+      approved: false,
+    }));
+    currentUploadIndex = 0;
+
+    // Önizleme modalını kapat
+    closePreviewModal();
+
+    // İlk dosya için onay iste
+    showFileTypeConfirmation();
+  }
+
+  // Tek dosya yükle butonuna basıldığında onay iste
+  async function confirmCurrentUploadWithApproval() {
+    const data = allPreviewData[currentFileIndex];
+    if (!data || !data.success) {
+      alert("Bu dosya yüklenemez");
+      return;
+    }
+
+    // Kuyruğa sadece bu dosyayı ekle
+    pendingUploadQueue = [
+      {
+        data: data,
+        originalIndex: currentFileIndex,
+        fileType: data.dosya_tipi,
+        approved: false,
+      },
+    ];
+    currentUploadIndex = 0;
+
+    // Önizleme modalını kapat
+    closePreviewModal();
+
+    // Onay iste
+    showFileTypeConfirmation();
+  }
+
+  // Dosya tipi onay modalını göster
+  function showFileTypeConfirmation() {
+    if (currentUploadIndex >= pendingUploadQueue.length) {
+      // Tüm dosyalar işlendi
+      finishUploadProcess();
+      return;
+    }
+
+    const item = pendingUploadQueue[currentUploadIndex];
+    const fileTypeNames = {
+      in_house: "IN HOUSE",
+      arrivals: "ARRIVALS",
+      departures: "DEPARTURES",
+    };
+
+    document.getElementById("confirmFileName").textContent =
+      item.data.fileName || item.data.dosya_adi;
+    document.getElementById("confirmFileType").textContent =
+      fileTypeNames[item.fileType] || item.fileType;
+    currentFileTypeOverride = null;
+
+    document.getElementById("fileTypeConfirmModal").classList.remove("hidden");
+  }
+
+  // Kullanıcı dosya tipini onayladı
+  async function confirmFileType() {
+    document.getElementById("fileTypeConfirmModal").classList.add("hidden");
+
+    const item = pendingUploadQueue[currentUploadIndex];
+    item.approved = true;
+    item.finalFileType = currentFileTypeOverride || item.fileType;
+
+    // Bu dosyayı yükle
+    await uploadFileWithType(item);
+
+    // Sonraki dosyaya geç
+    currentUploadIndex++;
+    showFileTypeConfirmation();
+  }
+
+  // Dosya tipi seçim modalını göster
+  function showFileTypeSelectModal() {
+    document.getElementById("fileTypeConfirmModal").classList.add("hidden");
+
+    const item = pendingUploadQueue[currentUploadIndex];
+    document.getElementById("selectFileName").textContent =
+      item.data.fileName || item.data.dosya_adi;
+
+    // Mevcut tipi seçili yap
+    const radios = document.querySelectorAll('input[name="manualFileType"]');
+    radios.forEach((radio) => {
+      radio.checked = radio.value === item.fileType;
+    });
+
+    document.getElementById("fileTypeSelectModal").classList.remove("hidden");
+  }
+
+  // Dosya tipi seçimini iptal et
+  function cancelFileTypeSelect() {
+    document.getElementById("fileTypeSelectModal").classList.add("hidden");
+    // Onay modalına geri dön
+    showFileTypeConfirmation();
+  }
+
+  // Manuel seçilen dosya tipini uygula
+  function applyManualFileType() {
+    const selectedType = document.querySelector(
+      'input[name="manualFileType"]:checked'
+    );
+    if (!selectedType) {
+      alert("Lütfen bir dosya tipi seçin");
+      return;
+    }
+
+    currentFileTypeOverride = selectedType.value;
+    document.getElementById("fileTypeSelectModal").classList.add("hidden");
+
+    // Onaylama işlemini yap
+    confirmFileType();
+  }
+
+  // Dosyayı belirtilen tipte yükle
+  async function uploadFileWithType(item) {
+    const file = selectedFiles[item.originalIndex];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("excel_file", file);
+    formData.append("otel_id", document.getElementById("otel_id_input").value);
+    formData.append("csrf_token", "{{ csrf_token() }}");
+
+    // Dosya tipini ekle (override)
+    if (item.finalFileType) {
+      formData.append("dosya_tipi", item.finalFileType);
+    }
+
+    try {
+      const response = await fetch('{{ url_for("doluluk.doluluk_yukle") }}', {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      item.uploadSuccess = true;
+    } catch (error) {
+      console.error(`Dosya yükleme hatası (${item.data.fileName}):`, error);
+      item.uploadSuccess = false;
+      item.uploadError = error.message;
+    }
+  }
+
+  // Yükleme sürecini bitir
+  function finishUploadProcess() {
+    const successCount = pendingUploadQueue.filter(
+      (i) => i.uploadSuccess
+    ).length;
+    const errorCount = pendingUploadQueue.filter(
+      (i) => i.approved && !i.uploadSuccess
+    ).length;
+
+    clearSelectedFiles();
+
+    if (successCount > 0 || errorCount > 0) {
+      alert(
+        `Yükleme tamamlandı!\n✓ ${successCount} dosya başarıyla yüklendi${
+          errorCount > 0 ? "\n✗ " + errorCount + " dosya yüklenemedi" : ""
+        }`
+      );
+    }
+
+    location.reload();
   }
 </script>
 {% endif %} {% endblock %}

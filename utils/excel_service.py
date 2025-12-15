@@ -75,7 +75,7 @@ class ExcelProcessingService:
         return 'in_house'
     
     @staticmethod
-    def process_excel_file(file_path, islem_kodu, user_id, otel_id=None):
+    def process_excel_file(file_path, islem_kodu, user_id, otel_id=None, override_dosya_tipi=None):
         """
         Excel dosyasını işler ve veritabanına kaydeder
         
@@ -88,6 +88,7 @@ class ExcelProcessingService:
             islem_kodu: Benzersiz işlem kodu
             user_id: Yükleyen kullanıcı ID
             otel_id: Otel ID (opsiyonel, filtreleme için)
+            override_dosya_tipi: Kullanıcının onayladığı dosya tipi (opsiyonel)
             
         Returns:
             dict: {
@@ -105,6 +106,10 @@ class ExcelProcessingService:
             
             if p4001_info.get('is_p4001'):
                 print(f"📋 P4001 formatı tespit edildi, özel işleme başlıyor...")
+                # Override varsa P4001 info'ya ekle
+                if override_dosya_tipi:
+                    p4001_info['dosya_tipi'] = override_dosya_tipi
+                    print(f"📋 Kullanıcı override: {override_dosya_tipi}")
                 return ExcelProcessingService._process_p4001_file(
                     file_path, islem_kodu, user_id, otel_id, p4001_info
                 )
@@ -118,33 +123,38 @@ class ExcelProcessingService:
             for cell in sheet[1]:
                 headers.append(cell.value)
             
-            # Önce header bazlı dosya tipini algıla
-            header_dosya_tipi = ExcelProcessingService.detect_file_type(headers)
-            
-            # Tarih bazlı akıllı algılama için verileri oku
-            try:
-                df_std = pd.read_excel(file_path, header=0)
+            # Kullanıcı override ettiyse direkt onu kullan
+            if override_dosya_tipi and override_dosya_tipi in ['in_house', 'arrivals', 'departures']:
+                dosya_tipi = override_dosya_tipi
+                print(f"✅ Kullanıcı onaylı dosya tipi: {dosya_tipi}")
+            else:
+                # Önce header bazlı dosya tipini algıla
+                header_dosya_tipi = ExcelProcessingService.detect_file_type(headers)
                 
-                # Arrival ve Departure sütun adlarını bul
-                arrival_col = 'Arrival' if 'Arrival' in df_std.columns else None
-                departure_col = 'Departure' if 'Departure' in df_std.columns else None
-                
-                if arrival_col and departure_col:
-                    smart_dosya_tipi = ExcelProcessingService._detect_file_type_by_dates_standard(
-                        df_std, arrival_col, departure_col
-                    )
+                # Tarih bazlı akıllı algılama için verileri oku
+                try:
+                    df_std = pd.read_excel(file_path, header=0)
                     
-                    if smart_dosya_tipi:
-                        dosya_tipi = smart_dosya_tipi
-                        print(f"✅ Standart format - Tarih bazlı akıllı algılama: {dosya_tipi}")
+                    # Arrival ve Departure sütun adlarını bul
+                    arrival_col = 'Arrival' if 'Arrival' in df_std.columns else None
+                    departure_col = 'Departure' if 'Departure' in df_std.columns else None
+                    
+                    if arrival_col and departure_col:
+                        smart_dosya_tipi = ExcelProcessingService._detect_file_type_by_dates_standard(
+                            df_std, arrival_col, departure_col
+                        )
+                        
+                        if smart_dosya_tipi:
+                            dosya_tipi = smart_dosya_tipi
+                            print(f"✅ Standart format - Tarih bazlı akıllı algılama: {dosya_tipi}")
+                        else:
+                            dosya_tipi = header_dosya_tipi
+                            print(f"✅ Standart format - Header bazlı algılama: {dosya_tipi}")
                     else:
                         dosya_tipi = header_dosya_tipi
-                        print(f"✅ Standart format - Header bazlı algılama: {dosya_tipi}")
-                else:
+                except Exception as e:
+                    print(f"⚠️ Standart format akıllı algılama hatası: {str(e)}")
                     dosya_tipi = header_dosya_tipi
-            except Exception as e:
-                print(f"⚠️ Standart format akıllı algılama hatası: {str(e)}")
-                dosya_tipi = header_dosya_tipi
             
             # Kayıt tipini belirle
             if dosya_tipi == 'arrivals':
@@ -618,21 +628,21 @@ class ExcelProcessingService:
             print(f"📊 İlk 3 Arrival: {arrivals_list[:3]}")
             print(f"📊 İlk 3 Departure: {departures_list[:3]}")
             
-            # Sayaçlar
+            # Sayaçlar - her kayıt için ayrı ayrı say
             inhouse_count = 0  # Giriş < Bugün VE Çıkış > Bugün
-            departure_count = 0  # Çıkış = Bugün VE Giriş < Bugün
-            arrival_count = 0  # Giriş = Bugün (çıkış tarihi farklı olabilir, bugün dahil)
+            departure_count = 0  # Çıkış = Bugün (giriş tarihi önemli değil)
+            arrival_count = 0  # Giriş = Bugün (çıkış tarihi önemli değil)
             
             for i in range(min(len(arrivals_list), len(departures_list))):
                 arr = arrivals_list[i]
                 dep = departures_list[i]
                 
-                # ARRIVALS: Giriş = Bugün (çıkış tarihi ne olursa olsun - bugün dahil)
-                if arr == bugun:
-                    arrival_count += 1
-                # DEPARTURES: Çıkış = Bugün VE Giriş < Bugün (daha önce giriş yapmış, bugün çıkıyor)
-                elif dep == bugun and arr < bugun:
+                # DEPARTURES: Çıkış = Bugün (giriş tarihi ne olursa olsun)
+                if dep == bugun:
                     departure_count += 1
+                # ARRIVALS: Giriş = Bugün (çıkış tarihi ne olursa olsun)
+                elif arr == bugun:
+                    arrival_count += 1
                 # IN HOUSE: Giriş < Bugün VE Çıkış > Bugün (misafir şu an otelde)
                 elif arr < bugun and dep > bugun:
                     inhouse_count += 1

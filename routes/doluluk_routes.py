@@ -615,7 +615,7 @@ def doluluk_onizle():
 @login_required
 @role_required("depo_sorumlusu")
 def doluluk_yukle():
-    """Excel dosyası yükleme endpoint'i"""
+    """Excel dosyası yükleme endpoint'i - Kullanıcı onaylı dosya tipi desteği"""
     try:
         from utils.excel_service import ExcelProcessingService
         from utils.file_management_service import FileManagementService
@@ -644,6 +644,11 @@ def doluluk_yukle():
             if kullanici_otelleri:
                 otel_id = kullanici_otelleri[0].id
 
+        # Kullanıcının onayladığı dosya tipi (override)
+        override_dosya_tipi = request.form.get('dosya_tipi')
+        if override_dosya_tipi and override_dosya_tipi in ['in_house', 'arrivals', 'departures']:
+            print(f"📋 Kullanıcı dosya tipini override etti: {override_dosya_tipi}")
+
         # 1. Dosyayı kaydet (otel_id ile birlikte)
         success, file_path, islem_kodu, error = FileManagementService.save_uploaded_file(file, user_id, otel_id)
         
@@ -651,8 +656,8 @@ def doluluk_yukle():
             flash(f"Dosya kaydedilemedi: {error}", "danger")
             return redirect(url_for("doluluk.doluluk_yonetimi"))
 
-        # 2. Excel'i işle
-        result = ExcelProcessingService.process_excel_file(file_path, islem_kodu, user_id, otel_id)
+        # 2. Excel'i işle (override_dosya_tipi varsa kullan)
+        result = ExcelProcessingService.process_excel_file(file_path, islem_kodu, user_id, otel_id, override_dosya_tipi)
 
         # 3. Durumu güncelle
         if result['success']:
