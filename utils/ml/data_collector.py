@@ -467,9 +467,11 @@ class DataCollector:
             logger.error(f"❌ QR metrik toplama hatası: {str(e)}")
             return 0
     
-    def collect_all_metrics(self):
+    def collect_all_metrics(self, save_features=True):
         """
         Tüm metrikleri topla
+        Args:
+            save_features: Feature'ları da kaydet mi? (varsayılan: True)
         Returns: Toplam toplanan metrik sayısı
         """
         try:
@@ -494,11 +496,48 @@ class DataCollector:
             logger.info(f"   - Talep: {talep_count}")
             logger.info(f"   - QR: {qr_count}")
             
+            # Feature'ları da kaydet (her 4 saatte bir - veri toplama 15 dk'da bir)
+            if save_features:
+                try:
+                    from datetime import datetime
+                    current_hour = datetime.now().hour
+                    # Saat 0, 4, 8, 12, 16, 20'de feature kaydet
+                    if current_hour % 4 == 0:
+                        self._save_features_batch()
+                except Exception as fe:
+                    logger.warning(f"⚠️  Feature kaydetme atlandı: {str(fe)}")
+            
             return total_count
             
         except Exception as e:
             logger.error(f"❌ Veri toplama hatası: {str(e)}")
             return 0
+    
+    def _save_features_batch(self):
+        """Toplu feature kaydetme (stok için)"""
+        try:
+            from utils.ml.feature_engineer import FeatureEngineer
+            from models import Urun
+            
+            engineer = FeatureEngineer(self.db)
+            
+            # Aktif ürünler için feature çıkar ve kaydet
+            urunler = Urun.query.filter_by(aktif=True).limit(100).all()  # Max 100 ürün
+            saved_count = 0
+            
+            for urun in urunler:
+                try:
+                    features = engineer.extract_stok_features(urun.id, lookback_days=30, save_to_db=True)
+                    if features:
+                        saved_count += 1
+                except Exception:
+                    continue
+            
+            if saved_count > 0:
+                logger.info(f"📊 {saved_count} ürün için feature kaydedildi")
+                
+        except Exception as e:
+            logger.warning(f"⚠️  Batch feature kaydetme hatası: {str(e)}")
     
     def cleanup_old_metrics(self, days=90):
         """

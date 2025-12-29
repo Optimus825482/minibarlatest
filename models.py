@@ -392,6 +392,7 @@ class PersonelZimmet(db.Model):
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     personel_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'), nullable=False)
+    otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='SET NULL'), nullable=True)  # Otel bazlı filtreleme
     zimmet_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     iade_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
     teslim_eden_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'))
@@ -399,6 +400,7 @@ class PersonelZimmet(db.Model):
     aciklama = db.Column(db.Text)
     
     # İlişkiler
+    otel = db.relationship('Otel', foreign_keys=[otel_id], backref='zimmetler')
     teslim_eden = db.relationship('Kullanici', 
                                   foreign_keys=[teslim_eden_id],
                                   overlaps="teslim_ettigi_zimmetler")
@@ -1022,6 +1024,29 @@ class MLFeature(db.Model):
     
     def __repr__(self):
         return f'<MLFeature {self.metric_type} - #{self.entity_id}>'
+
+
+class MLPerformanceLog(db.Model):
+    """ML Model işlem performans logları"""
+    __tablename__ = 'ml_performance_logs'
+    __table_args__ = (
+        db.Index('idx_ml_perf_operation', 'operation'),
+        db.Index('idx_ml_perf_timestamp', 'timestamp'),
+        db.Index('idx_ml_perf_success', 'success'),
+    )
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    operation = db.Column(db.String(50), nullable=False)  # 'model_save', 'model_load'
+    model_type = db.Column(db.String(50), nullable=False)
+    metric_type = db.Column(db.String(50), nullable=False)
+    duration_ms = db.Column(db.Float, nullable=False)
+    file_size_mb = db.Column(db.Float)
+    success = db.Column(db.Boolean, default=True)
+    error_message = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
+    
+    def __repr__(self):
+        return f'<MLPerformanceLog {self.operation} - {self.model_type}>'
 
 
 # ============================================
@@ -2409,3 +2434,141 @@ class StokFifoKullanim(db.Model):
     
     def __repr__(self):
         return f'<StokFifoKullanim fifo={self.fifo_kayit_id} miktar={self.miktar} tip={self.islem_tipi}>'
+
+
+# ============================================================================
+# OTEL BAZLI ZİMMET STOK SİSTEMİ
+# ============================================================================
+
+class OtelZimmetStok(db.Model):
+    """
+    Otel bazlı ortak zimmet deposu
+    
+    Tüm kat sorumluları aynı otelin ortak zimmet deposundan kullanır.
+    Bu tablo otel bazında toplam zimmet stoğunu tutar.
+    """
+    __tablename__ = 'otel_zimmet_stok'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=False)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=False)
+    toplam_miktar = db.Column(db.Integer, nullable=False, default=0)
+    kullanilan_miktar = db.Column(db.Integer, nullable=False, default=0)
+    kalan_miktar = db.Column(db.Integer, nullable=False, default=0)
+    kritik_stok_seviyesi = db.Column(db.Integer, default=50)
+    son_guncelleme = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
+    
+    # Unique constraint
+    __table_args__ = (
+        db.UniqueConstraint('otel_id', 'urun_id', name='uq_otel_urun_zimmet'),
+        db.Index('idx_otel_zimmet_stok_otel', 'otel_id'),
+        db.Index('idx_otel_zimmet_stok_urun', 'urun_id'),
+        db.Index('idx_otel_zimmet_stok_kalan', 'kalan_miktar'),
+    )
+    
+    # İlişkiler
+    otel = db.relationship('Otel', backref=db.backref('zimmet_stoklari', lazy='dynamic'))
+    urun = db.relationship('Urun', backref=db.backref('otel_zimmet_stoklari', lazy='dynamic'))
+    kullanimlar = db.relationship('PersonelZimmetKullanim', backref='otel_zimmet_stok', lazy='dynamic')
+    
+    @property
+    def kullanim_yuzdesi(self):
+        """Kullanım yüzdesini hesapla"""
+        if self.toplam_miktar == 0:
+            return 0
+        return round((self.kullanilan_miktar / self.toplam_miktar) * 100, 1)
+    
+    @property
+    def stok_durumu(self):
+        """Stok durumunu belirle: kritik, dikkat, normal"""
+        if self.kalan_miktar == 0:
+            return 'stokout'
+        elif self.kalan_miktar <= self.kritik_stok_seviyesi:
+            return 'kritik'
+        elif self.kalan_miktar <= self.kritik_stok_seviyesi * 1.5:
+            return 'dikkat'
+        return 'normal'
+    
+    def stok_ekle(self, miktar):
+        """Depoya stok ekle"""
+        self.toplam_miktar += miktar
+        self.kalan_miktar += miktar
+        self.son_guncelleme = get_kktc_now()
+    
+    def stok_kullan(self, miktar, personel_id=None, islem_tipi='minibar_kullanim', referans_id=None, aciklama=None):
+        """
+        Depodan stok kullan ve kullanım kaydı oluştur
+        
+        Args:
+            miktar: Kullanılacak miktar
+            personel_id: Kullanan personel ID
+            islem_tipi: İşlem tipi (minibar_kullanim, iade, duzeltme)
+            referans_id: İlgili işlem ID (MinibarIslem ID vb.)
+            aciklama: Açıklama
+            
+        Returns:
+            PersonelZimmetKullanim: Oluşturulan kullanım kaydı
+            
+        Raises:
+            ValueError: Yetersiz stok durumunda
+        """
+        if self.kalan_miktar < miktar:
+            raise ValueError(f"Yetersiz zimmet stoğu. Mevcut: {self.kalan_miktar}, İstenen: {miktar}")
+        
+        self.kullanilan_miktar += miktar
+        self.kalan_miktar -= miktar
+        self.son_guncelleme = get_kktc_now()
+        
+        # Kullanım kaydı oluştur
+        kullanim = PersonelZimmetKullanim(
+            otel_zimmet_stok_id=self.id,
+            personel_id=personel_id,
+            urun_id=self.urun_id,
+            kullanilan_miktar=miktar,
+            islem_tipi=islem_tipi,
+            referans_islem_id=referans_id,
+            aciklama=aciklama
+        )
+        db.session.add(kullanim)
+        
+        return kullanim
+    
+    def __repr__(self):
+        return f'<OtelZimmetStok otel={self.otel_id} urun={self.urun_id} kalan={self.kalan_miktar}>'
+
+
+class PersonelZimmetKullanim(db.Model):
+    """
+    Personel bazlı zimmet kullanım takibi
+    
+    Her personelin otel zimmet deposundan ne kadar kullandığını takip eder.
+    Raporlama ve analiz için kullanılır.
+    """
+    __tablename__ = 'personel_zimmet_kullanim'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    otel_zimmet_stok_id = db.Column(db.Integer, db.ForeignKey('otel_zimmet_stok.id', ondelete='CASCADE'), nullable=False)
+    personel_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='CASCADE'), nullable=False)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=False)
+    kullanilan_miktar = db.Column(db.Integer, nullable=False, default=0)
+    islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
+    islem_tipi = db.Column(db.String(50), default='minibar_kullanim')  # minibar_kullanim, iade, duzeltme
+    referans_islem_id = db.Column(db.Integer, nullable=True)  # MinibarIslem ID referansı
+    aciklama = db.Column(db.Text)
+    olusturan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'), nullable=True)
+    
+    __table_args__ = (
+        db.Index('idx_pzk_otel_zimmet', 'otel_zimmet_stok_id'),
+        db.Index('idx_pzk_personel', 'personel_id'),
+        db.Index('idx_pzk_urun', 'urun_id'),
+        db.Index('idx_pzk_tarih', 'islem_tarihi'),
+    )
+    
+    # İlişkiler
+    personel = db.relationship('Kullanici', foreign_keys=[personel_id], backref='zimmet_kullanimlari')
+    urun = db.relationship('Urun', backref='zimmet_kullanimlari')
+    olusturan = db.relationship('Kullanici', foreign_keys=[olusturan_id])
+    
+    def __repr__(self):
+        return f'<PersonelZimmetKullanim personel={self.personel_id} urun={self.urun_id} miktar={self.kullanilan_miktar}>'

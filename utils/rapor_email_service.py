@@ -973,3 +973,518 @@ class RaporEmailService:
         except Exception as e:
             logger.error(f"Minibar raporu gönderim hatası: {str(e)}")
             return {'success': False, 'message': str(e)}
+
+    # ============================================
+    # TOPLU RAPOR FONKSİYONLARI (TEK MAİL)
+    # ============================================
+    
+    @staticmethod
+    def send_toplu_gorev_raporu(rapor_tarihi: date) -> Dict[str, Any]:
+        """
+        Tüm kat sorumlularının görev tamamlanma raporunu TEK mail olarak gönder
+        
+        Args:
+            rapor_tarihi: Rapor tarihi
+        
+        Returns:
+            dict: Gönderim sonucu
+        """
+        try:
+            from models import Kullanici, KullaniciOtel, Otel
+            from utils.email_service import EmailService
+            
+            # Tüm aktif kat sorumlularını al
+            kat_sorumlulari = Kullanici.query.filter(
+                Kullanici.rol == 'kat_sorumlusu',
+                Kullanici.aktif == True
+            ).all()
+            
+            if not kat_sorumlulari:
+                return {'success': False, 'message': 'Aktif kat sorumlusu bulunamadı'}
+            
+            # Her kat sorumlusu için rapor verisi topla
+            tum_raporlar = []
+            for ks in kat_sorumlulari:
+                rapor_data = RaporEmailService.generate_gorev_tamamlanma_raporu(ks.id, rapor_tarihi)
+                if rapor_data.get('success'):
+                    tum_raporlar.append(rapor_data)
+            
+            if not tum_raporlar:
+                return {'success': False, 'message': 'Rapor verisi oluşturulamadı'}
+            
+            # Toplu HTML oluştur
+            html_content = RaporEmailService._generate_toplu_gorev_html(tum_raporlar, rapor_tarihi)
+            
+            # Alıcıları belirle (depo sorumluları + sistem yöneticileri)
+            alicilar = []
+            
+            # Depo sorumluları
+            depo_sorumlulari = Kullanici.query.filter(
+                Kullanici.rol == 'depo_sorumlusu',
+                Kullanici.aktif == True,
+                Kullanici.email.isnot(None)
+            ).all()
+
+            for ds in depo_sorumlulari:
+                if ds.email:
+                    alicilar.append({
+                        'email': ds.email,
+                        'kullanici_id': ds.id
+                    })
+            
+            # Sistem yöneticileri
+            sistem_yoneticileri = Kullanici.query.filter(
+                Kullanici.rol.in_(['sistem_yoneticisi', 'admin']),
+                Kullanici.aktif == True,
+                Kullanici.email.isnot(None)
+            ).all()
+            
+            for sy in sistem_yoneticileri:
+                if sy.email and sy.email not in [a['email'] for a in alicilar]:
+                    alicilar.append({
+                        'email': sy.email,
+                        'kullanici_id': sy.id
+                    })
+            
+            if not alicilar:
+                return {'success': False, 'message': 'Alıcı bulunamadı'}
+            
+            # Özet istatistikler
+            toplam_gorev = sum(r['istatistikler']['toplam_gorev'] for r in tum_raporlar)
+            toplam_tamamlanan = sum(r['istatistikler']['tamamlanan_gorev'] for r in tum_raporlar)
+            genel_oran = (toplam_tamamlanan / toplam_gorev * 100) if toplam_gorev > 0 else 0
+            
+            # Email gönder
+            subject = f"📋 Günlük Görev Tamamlanma Raporu - {rapor_tarihi.strftime('%d.%m.%Y')} - {len(tum_raporlar)} Personel"
+            body = f"""Günlük görev tamamlanma raporu ekte yer almaktadır.
+
+Tarih: {rapor_tarihi.strftime('%d.%m.%Y')}
+Personel Sayısı: {len(tum_raporlar)}
+Toplam Görev: {toplam_gorev}
+Tamamlanan: {toplam_tamamlanan}
+Genel Tamamlanma Oranı: %{genel_oran:.1f}"""
+            
+            gonderim_sonuclari = []
+            for alici in alicilar:
+                result = EmailService.send_email(
+                    to_email=alici['email'],
+                    subject=subject,
+                    body=body,
+                    email_tipi='rapor',
+                    kullanici_id=alici['kullanici_id'],
+                    ilgili_tablo='gunluk_gorevler',
+                    html_body=html_content,
+                    ek_bilgiler={
+                        'rapor_tipi': 'toplu_gorev_tamamlanma',
+                        'personel_sayisi': len(tum_raporlar),
+                        'rapor_tarihi': rapor_tarihi.isoformat()
+                    },
+                    read_receipt=True  # Okundu bilgisi talep et
+                )
+                gonderim_sonuclari.append({
+                    'email': alici['email'],
+                    'success': result['success']
+                })
+            
+            basarili = len([r for r in gonderim_sonuclari if r['success']])
+            
+            logger.info(f"✅ Toplu görev raporu gönderildi: {basarili}/{len(alicilar)} alıcı, {len(tum_raporlar)} personel")
+            
+            return {
+                'success': basarili > 0,
+                'message': f'{basarili}/{len(alicilar)} alıcıya gönderildi ({len(tum_raporlar)} personel)',
+                'sonuclar': gonderim_sonuclari,
+                'personel_sayisi': len(tum_raporlar)
+            }
+            
+        except Exception as e:
+            logger.error(f"Toplu görev raporu gönderim hatası: {str(e)}")
+            return {'success': False, 'message': str(e)}
+
+    @staticmethod
+    def send_toplu_minibar_raporu(rapor_tarihi: date) -> Dict[str, Any]:
+        """
+        Tüm otellerin minibar sarfiyat raporunu TEK mail olarak gönder
+        
+        Args:
+            rapor_tarihi: Rapor tarihi
+        
+        Returns:
+            dict: Gönderim sonucu
+        """
+        try:
+            from models import Kullanici, KullaniciOtel, Otel
+            from utils.email_service import EmailService
+            
+            # Tüm aktif otelleri al
+            oteller = Otel.query.filter_by(aktif=True).all()
+            
+            if not oteller:
+                return {'success': False, 'message': 'Aktif otel bulunamadı'}
+            
+            # Her otel için rapor verisi topla
+            tum_raporlar = []
+            for otel in oteller:
+                # Otel için rapor bildirimi aktif mi kontrol et
+                if not EmailService.is_otel_bildirim_aktif(otel.id, 'rapor'):
+                    continue
+                    
+                rapor_data = RaporEmailService.generate_minibar_sarfiyat_raporu(otel.id, rapor_tarihi)
+                if rapor_data.get('success'):
+                    tum_raporlar.append(rapor_data)
+            
+            if not tum_raporlar:
+                return {'success': False, 'message': 'Rapor verisi oluşturulamadı'}
+            
+            # Toplu HTML oluştur
+            html_content = RaporEmailService._generate_toplu_minibar_html(tum_raporlar, rapor_tarihi)
+            
+            # Alıcıları belirle
+            alicilar = []
+            
+            # Depo sorumluları
+            depo_sorumlulari = Kullanici.query.filter(
+                Kullanici.rol == 'depo_sorumlusu',
+                Kullanici.aktif == True,
+                Kullanici.email.isnot(None)
+            ).all()
+            
+            for ds in depo_sorumlulari:
+                if ds.email:
+                    alicilar.append({
+                        'email': ds.email,
+                        'kullanici_id': ds.id
+                    })
+
+            # Sistem yöneticileri
+            sistem_yoneticileri = Kullanici.query.filter(
+                Kullanici.rol.in_(['sistem_yoneticisi', 'admin']),
+                Kullanici.aktif == True,
+                Kullanici.email.isnot(None)
+            ).all()
+            
+            for sy in sistem_yoneticileri:
+                if sy.email and sy.email not in [a['email'] for a in alicilar]:
+                    alicilar.append({
+                        'email': sy.email,
+                        'kullanici_id': sy.id
+                    })
+            
+            if not alicilar:
+                return {'success': False, 'message': 'Alıcı bulunamadı'}
+            
+            # Özet istatistikler
+            toplam_tuketim = sum(r['istatistikler']['toplam_tuketim'] for r in tum_raporlar)
+            toplam_tutar = sum(r['istatistikler']['toplam_tutar'] for r in tum_raporlar)
+            
+            # Email gönder
+            subject = f"🍫 Günlük Minibar Sarfiyat Raporu - {rapor_tarihi.strftime('%d.%m.%Y')} - {len(tum_raporlar)} Otel"
+            body = f"""Günlük minibar sarfiyat raporu ekte yer almaktadır.
+
+Tarih: {rapor_tarihi.strftime('%d.%m.%Y')}
+Otel Sayısı: {len(tum_raporlar)}
+Toplam Tüketim: {toplam_tuketim} adet
+Toplam Tutar: ₺{toplam_tutar:,.2f}"""
+            
+            gonderim_sonuclari = []
+            for alici in alicilar:
+                result = EmailService.send_email(
+                    to_email=alici['email'],
+                    subject=subject,
+                    body=body,
+                    email_tipi='rapor',
+                    kullanici_id=alici['kullanici_id'],
+                    ilgili_tablo='minibar_islemleri',
+                    html_body=html_content,
+                    ek_bilgiler={
+                        'rapor_tipi': 'toplu_minibar_sarfiyat',
+                        'otel_sayisi': len(tum_raporlar),
+                        'rapor_tarihi': rapor_tarihi.isoformat()
+                    },
+                    read_receipt=True  # Okundu bilgisi talep et
+                )
+                gonderim_sonuclari.append({
+                    'email': alici['email'],
+                    'success': result['success']
+                })
+
+            basarili = len([r for r in gonderim_sonuclari if r['success']])
+            
+            logger.info(f"✅ Toplu minibar raporu gönderildi: {basarili}/{len(alicilar)} alıcı, {len(tum_raporlar)} otel")
+            
+            return {
+                'success': basarili > 0,
+                'message': f'{basarili}/{len(alicilar)} alıcıya gönderildi ({len(tum_raporlar)} otel)',
+                'sonuclar': gonderim_sonuclari,
+                'otel_sayisi': len(tum_raporlar)
+            }
+            
+        except Exception as e:
+            logger.error(f"Toplu minibar raporu gönderim hatası: {str(e)}")
+            return {'success': False, 'message': str(e)}
+
+    @staticmethod
+    def _generate_toplu_gorev_html(raporlar: List[Dict], rapor_tarihi: date) -> str:
+        """Toplu görev tamamlanma raporu HTML'i oluştur"""
+        
+        # Genel istatistikler
+        toplam_personel = len(raporlar)
+        toplam_gorev = sum(r['istatistikler']['toplam_gorev'] for r in raporlar)
+        toplam_tamamlanan = sum(r['istatistikler']['tamamlanan_gorev'] for r in raporlar)
+        toplam_bekleyen = sum(r['istatistikler']['bekleyen_gorev'] for r in raporlar)
+        genel_oran = (toplam_tamamlanan / toplam_gorev * 100) if toplam_gorev > 0 else 0
+        
+        # Personel satırları
+        personel_rows = ''
+        for i, rapor in enumerate(sorted(raporlar, key=lambda x: x['istatistikler']['tamamlanma_orani'], reverse=True)):
+            stats = rapor['istatistikler']
+            ks = rapor['kat_sorumlusu']
+            oran = stats['tamamlanma_orani']
+            
+            # Renk belirleme
+            if oran >= 90:
+                renk = '#22c55e'
+                bg = '#f0fdf4'
+            elif oran >= 70:
+                renk = '#f59e0b'
+                bg = '#fffbeb'
+            else:
+                renk = '#ef4444'
+                bg = '#fef2f2'
+            
+            personel_rows += f'''
+            <tr style="background: {bg if i % 2 == 0 else 'white'};">
+                <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">{ks['ad_soyad']}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">{ks.get('otel_adi', '-')}</td>
+                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #e5e7eb;">{stats['toplam_gorev']}</td>
+                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #e5e7eb; color: #22c55e; font-weight: bold;">{stats['tamamlanan_gorev']}</td>
+                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #e5e7eb; color: #f59e0b;">{stats['bekleyen_gorev']}</td>
+                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #e5e7eb;">
+                    <span style="background: {renk}; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold;">%{oran:.0f}</span>
+                </td>
+            </tr>'''
+
+        html = f'''
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Toplu Görev Tamamlanma Raporu</title>
+</head>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background: #f3f4f6;">
+    <div style="max-width: 900px; margin: 0 auto; padding: 20px;">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 26px;">📋 Günlük Görev Tamamlanma Raporu</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 18px;">Tüm Personel Özeti</p>
+            <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0 0; font-size: 14px;">{rapor_tarihi.strftime('%d.%m.%Y')}</p>
+        </div>
+        
+        <!-- Genel Özet Kartları -->
+        <div style="background: white; padding: 25px; display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
+            <div style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); padding: 20px 30px; border-radius: 12px; text-align: center; min-width: 120px;">
+                <div style="font-size: 36px; font-weight: bold; color: white;">{toplam_personel}</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 13px;">Personel</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 20px 30px; border-radius: 12px; text-align: center; min-width: 120px;">
+                <div style="font-size: 36px; font-weight: bold; color: white;">{toplam_gorev}</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 13px;">Toplam Görev</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #22c55e, #16a34a); padding: 20px 30px; border-radius: 12px; text-align: center; min-width: 120px;">
+                <div style="font-size: 36px; font-weight: bold; color: white;">{toplam_tamamlanan}</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 13px;">Tamamlanan</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #f59e0b, #d97706); padding: 20px 30px; border-radius: 12px; text-align: center; min-width: 120px;">
+                <div style="font-size: 36px; font-weight: bold; color: white;">{toplam_bekleyen}</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 13px;">Bekleyen</div>
+            </div>
+            <div style="background: linear-gradient(135deg, {'#22c55e' if genel_oran >= 80 else '#f59e0b' if genel_oran >= 60 else '#ef4444'}, {'#16a34a' if genel_oran >= 80 else '#d97706' if genel_oran >= 60 else '#dc2626'}); padding: 20px 30px; border-radius: 12px; text-align: center; min-width: 120px;">
+                <div style="font-size: 36px; font-weight: bold; color: white;">%{genel_oran:.0f}</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 13px;">Genel Oran</div>
+            </div>
+        </div>
+
+        <!-- Personel Detay Tablosu -->
+        <div style="background: white; padding: 25px; border-radius: 0 0 15px 15px;">
+            <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 18px;">👥 Personel Bazlı Detay</h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #f8fafc, #f1f5f9);">
+                            <th style="padding: 14px; text-align: left; border-bottom: 2px solid #e5e7eb; font-weight: 600;">Personel</th>
+                            <th style="padding: 14px; text-align: left; border-bottom: 2px solid #e5e7eb; font-weight: 600;">Otel</th>
+                            <th style="padding: 14px; text-align: center; border-bottom: 2px solid #e5e7eb; font-weight: 600;">Toplam</th>
+                            <th style="padding: 14px; text-align: center; border-bottom: 2px solid #e5e7eb; font-weight: 600;">Tamamlanan</th>
+                            <th style="padding: 14px; text-align: center; border-bottom: 2px solid #e5e7eb; font-weight: 600;">Bekleyen</th>
+                            <th style="padding: 14px; text-align: center; border-bottom: 2px solid #e5e7eb; font-weight: 600;">Oran</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {personel_rows}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: linear-gradient(135deg, #1e40af, #1d4ed8); color: white; font-weight: bold;">
+                            <td style="padding: 14px; border-radius: 0 0 0 10px;">TOPLAM</td>
+                            <td style="padding: 14px;">{toplam_personel} Personel</td>
+                            <td style="padding: 14px; text-align: center;">{toplam_gorev}</td>
+                            <td style="padding: 14px; text-align: center;">{toplam_tamamlanan}</td>
+                            <td style="padding: 14px; text-align: center;">{toplam_bekleyen}</td>
+                            <td style="padding: 14px; text-align: center; border-radius: 0 0 10px 0;">%{genel_oran:.0f}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div style="text-align: center; padding: 25px; color: #6b7280; font-size: 12px;">
+            <p style="margin: 0;">Bu rapor otomatik olarak oluşturulmuştur.</p>
+            <p style="margin: 5px 0 0 0;">Minibar Takip Sistemi © {get_kktc_now().year}</p>
+        </div>
+    </div>
+</body>
+</html>
+        '''
+        return html
+
+    @staticmethod
+    def _generate_toplu_minibar_html(raporlar: List[Dict], rapor_tarihi: date) -> str:
+        """Toplu minibar sarfiyat raporu HTML'i oluştur"""
+        
+        # Genel istatistikler
+        toplam_otel = len(raporlar)
+        toplam_tuketim = sum(r['istatistikler']['toplam_tuketim'] for r in raporlar)
+        toplam_tutar = sum(r['istatistikler']['toplam_tutar'] for r in raporlar)
+        toplam_urun_cesidi = sum(r['istatistikler']['urun_cesidi'] for r in raporlar)
+        toplam_oda = sum(r['istatistikler']['islem_yapilan_oda'] for r in raporlar)
+        
+        # Otel satırları
+        otel_rows = ''
+        for i, rapor in enumerate(sorted(raporlar, key=lambda x: x['istatistikler']['toplam_tutar'], reverse=True)):
+            stats = rapor['istatistikler']
+            otel = rapor['otel']
+            
+            otel_rows += f'''
+            <tr style="background: {'#f8fafc' if i % 2 == 0 else 'white'};">
+                <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 500;">{otel['ad']}</td>
+                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #e5e7eb;">{stats['toplam_tuketim']}</td>
+                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #e5e7eb;">{stats['urun_cesidi']}</td>
+                <td style="padding: 12px; text-align: center; border-bottom: 1px solid #e5e7eb;">{stats['islem_yapilan_oda']}</td>
+                <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #059669;">₺{stats['toplam_tutar']:,.2f}</td>
+            </tr>'''
+
+        # Ürün bazlı özet (tüm oteller birleşik)
+        urun_toplam = {}
+        for rapor in raporlar:
+            for urun in rapor.get('urun_ozeti', []):
+                urun_adi = urun['urun_adi']
+                if urun_adi not in urun_toplam:
+                    urun_toplam[urun_adi] = {'adet': 0, 'tutar': 0}
+                urun_toplam[urun_adi]['adet'] += urun['adet']
+                urun_toplam[urun_adi]['tutar'] += urun['tutar']
+        
+        # En çok tüketilen 10 ürün
+        top_urunler = sorted(urun_toplam.items(), key=lambda x: x[1]['adet'], reverse=True)[:10]
+        
+        urun_rows = ''
+        for urun_adi, data in top_urunler:
+            urun_rows += f'''
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">{urun_adi}</td>
+                <td style="padding: 10px; text-align: center; border-bottom: 1px solid #e5e7eb; font-weight: bold;">{data['adet']}</td>
+                <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e5e7eb;">₺{data['tutar']:,.2f}</td>
+            </tr>'''
+
+        html = f'''
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Toplu Minibar Sarfiyat Raporu</title>
+</head>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background: #f3f4f6;">
+    <div style="max-width: 900px; margin: 0 auto; padding: 20px;">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #f59e0b, #d97706); padding: 30px; border-radius: 15px 15px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 26px;">🍫 Günlük Minibar Sarfiyat Raporu</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 18px;">Tüm Oteller Özeti</p>
+            <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0 0; font-size: 14px;">{rapor_tarihi.strftime('%d.%m.%Y')}</p>
+        </div>
+        
+        <!-- Genel Özet Kartları -->
+        <div style="background: white; padding: 25px; display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
+            <div style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); padding: 20px 30px; border-radius: 12px; text-align: center; min-width: 120px;">
+                <div style="font-size: 36px; font-weight: bold; color: white;">{toplam_otel}</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 13px;">Otel</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 20px 30px; border-radius: 12px; text-align: center; min-width: 120px;">
+                <div style="font-size: 36px; font-weight: bold; color: white;">{toplam_tuketim}</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 13px;">Toplam Tüketim</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #ec4899, #db2777); padding: 20px 30px; border-radius: 12px; text-align: center; min-width: 120px;">
+                <div style="font-size: 36px; font-weight: bold; color: white;">{toplam_oda}</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 13px;">İşlem Yapılan Oda</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #22c55e, #16a34a); padding: 20px 30px; border-radius: 12px; text-align: center; min-width: 140px;">
+                <div style="font-size: 32px; font-weight: bold; color: white;">₺{toplam_tutar:,.0f}</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 13px;">Toplam Tutar</div>
+            </div>
+        </div>
+
+        <!-- Otel Detay Tablosu -->
+        <div style="background: white; padding: 25px;">
+            <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 18px;">🏨 Otel Bazlı Detay</h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #f8fafc, #f1f5f9);">
+                            <th style="padding: 14px; text-align: left; border-bottom: 2px solid #e5e7eb; font-weight: 600;">Otel</th>
+                            <th style="padding: 14px; text-align: center; border-bottom: 2px solid #e5e7eb; font-weight: 600;">Tüketim</th>
+                            <th style="padding: 14px; text-align: center; border-bottom: 2px solid #e5e7eb; font-weight: 600;">Ürün Çeşidi</th>
+                            <th style="padding: 14px; text-align: center; border-bottom: 2px solid #e5e7eb; font-weight: 600;">Oda Sayısı</th>
+                            <th style="padding: 14px; text-align: right; border-bottom: 2px solid #e5e7eb; font-weight: 600;">Tutar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {otel_rows}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: linear-gradient(135deg, #d97706, #b45309); color: white; font-weight: bold;">
+                            <td style="padding: 14px; border-radius: 0 0 0 10px;">TOPLAM</td>
+                            <td style="padding: 14px; text-align: center;">{toplam_tuketim}</td>
+                            <td style="padding: 14px; text-align: center;">-</td>
+                            <td style="padding: 14px; text-align: center;">{toplam_oda}</td>
+                            <td style="padding: 14px; text-align: right; border-radius: 0 0 10px 0;">₺{toplam_tutar:,.2f}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        
+        <!-- En Çok Tüketilen Ürünler -->
+        <div style="background: white; padding: 25px; border-radius: 0 0 15px 15px;">
+            <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 18px;">🏆 En Çok Tüketilen 10 Ürün (Tüm Oteller)</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                <thead>
+                    <tr style="background: #fef3c7;">
+                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #fcd34d;">Ürün</th>
+                        <th style="padding: 12px; text-align: center; border-bottom: 2px solid #fcd34d;">Toplam Adet</th>
+                        <th style="padding: 12px; text-align: right; border-bottom: 2px solid #fcd34d;">Toplam Tutar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {urun_rows if urun_rows else '<tr><td colspan="3" style="padding: 20px; text-align: center; color: #6b7280;">Ürün verisi bulunamadı</td></tr>'}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Footer -->
+        <div style="text-align: center; padding: 25px; color: #6b7280; font-size: 12px;">
+            <p style="margin: 0;">Bu rapor otomatik olarak oluşturulmuştur.</p>
+            <p style="margin: 5px 0 0 0;">Minibar Takip Sistemi © {get_kktc_now().year}</p>
+        </div>
+    </div>
+</body>
+</html>
+        '''
+        return html

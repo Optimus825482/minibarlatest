@@ -110,7 +110,7 @@ class FeatureEngineer:
         Args:
             urun_id: Ürün ID
             lookback_days: Kaç günlük veri kullanılacak
-            save_to_db: Feature'ları veritabanına kaydet mi?
+            save_to_db: Feature'ları veritabanına kaydet mi? (varsayılan: True)
         
         Features:
         - Ortalama stok seviyesi

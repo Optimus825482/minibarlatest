@@ -928,7 +928,7 @@
   {% block extra_head %}{% endblock %}
 </head>
 
-<body class="h-full bg-slate-50 dark:bg-slate-900">
+<body class="h-full bg-slate-50 dark:bg-slate-900" data-endpoint="{{ request.endpoint }}" data-user-role="{{ current_user.rol if current_user else '' }}">
   <!-- Login sonrası cache temizleme -->
   {% if session.get('clear_cache') %}
   <script>
@@ -1311,6 +1311,28 @@
             Raporlar
           </a>
 
+          <!-- Yeni Raporlar -->
+          <a href="{{ url_for('raporlar.otel_zimmet_stok_raporlari') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <i class="fas fa-hotel w-5 h-5 mr-3 text-blue-500"></i>
+            Otel Zimmet Stokları
+          </a>
+          <a href="{{ url_for('raporlar.kat_sorumlusu_kullanim_raporlari') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <i class="fas fa-user-check w-5 h-5 mr-3 text-indigo-500"></i>
+            Kat Sorumlusu Kullanım
+          </a>
+          <a href="{{ url_for('raporlar.oda_bazli_tuketim_raporlari') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <i class="fas fa-door-open w-5 h-5 mr-3 text-teal-500"></i>
+            Oda Bazlı Tüketim
+          </a>
+          <a href="{{ url_for('raporlar.gunluk_gorev_detay_raporlari') }}"
+            class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <i class="fas fa-tasks w-5 h-5 mr-3 text-amber-500"></i>
+            Günlük Görev Detay
+          </a>
+
           <a href="{{ url_for('doluluk.doluluk_yonetimi') }}"
             class="flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
             <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1330,20 +1352,17 @@
             Günlük Doluluk
           </a>
 
-          <!-- Kullanım Kılavuzu -->
+          <!-- Yardım & Rehber -->
           <div class="px-4 py-2 mt-4">
             <h3 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Yardım
             </h3>
           </div>
-          <button onclick="openKilavuzModal()"
-            class="w-full flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
-              </path>
-            </svg>
-            Kullanım Kılavuzu
+          <button onclick="openSystemGuide()"
+            class="w-full flex items-center px-4 py-2 text-slate-700 dark:text-slate-200 rounded-lg bg-gradient-to-r from-indigo-500/10 to-purple-500/10 hover:from-indigo-500/20 hover:to-purple-500/20 border border-indigo-200 dark:border-indigo-800 transition-all">
+            <i class="fas fa-book-open w-5 h-5 mr-3 text-indigo-500"></i>
+            <span class="font-medium text-indigo-700 dark:text-indigo-300">Sistem Rehberi</span>
+            <i class="fas fa-external-link-alt text-xs text-indigo-400 ml-auto"></i>
           </button>
 
           <!-- PWA Install Button - Depo Sorumlusu -->
@@ -2427,6 +2446,43 @@
       if (e.key === 'Escape') closeKilavuzModal();
     });
   </script>
+
+  <!-- Kullanım Kılavuzu Sistemi -->
+  <script src="{{ url_for('static', filename='js/guide-system.js') }}?v={{ cache_version | default('1.0') }}"></script>
+  
+  <!-- Guide System Animasyonları -->
+  <style>
+    /* Scale-in animasyonu */
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    .animate-scale-in {
+      animation: scaleIn 0.3s ease-out;
+    }
+    
+    /* Guide panel pulse animasyonu */
+    @keyframes guidePulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+      }
+      50% {
+        box-shadow: 0 0 0 8px rgba(99, 102, 241, 0);
+      }
+    }
+    #page-guide-btn {
+      animation: guidePulse 2s infinite;
+    }
+    #page-guide-btn:hover {
+      animation: none;
+    }
+  </style>
 
   {% block extra_scripts %}{% endblock %}
 </body>

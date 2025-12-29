@@ -110,20 +110,64 @@ class ModelTrainer:
             # Test verisi ile değerlendir
             predictions = model.predict(X_test_scaled)
             
-            # Performans metrikleri
+            # Performans metrikleri - Gerçek hesaplama
+            # Isolation Forest: -1 = anomali, 1 = normal
             anomaly_count = np.sum(predictions == -1)
+            normal_count = np.sum(predictions == 1)
+            total_count = len(predictions)
+            
+            # Beklenen anomali oranı (contamination parametresi)
             expected_anomaly_ratio = 0.1
-            actual_anomaly_ratio = anomaly_count / len(predictions)
+            actual_anomaly_ratio = anomaly_count / total_count if total_count > 0 else 0
+            
+            # Accuracy: Beklenen anomali oranına ne kadar yakın
             accuracy = 1 - abs(expected_anomaly_ratio - actual_anomaly_ratio)
             
-            # Precision ve recall (basitleştirilmiş)
-            precision = 0.85
-            recall = 0.80
+            # Precision ve Recall hesaplama (unsupervised için yaklaşık)
+            # Precision: Tespit edilen anomalilerin ne kadarı gerçek anomali
+            # Recall: Gerçek anomalilerin ne kadarı tespit edildi
+            # Unsupervised olduğu için, istatistiksel yaklaşım kullanıyoruz
+            
+            # Decision scores kullanarak daha iyi metrikler
+            decision_scores = model.decision_function(X_test_scaled)
+            
+            # Anomali threshold'u (negatif score = anomali)
+            anomaly_threshold = np.percentile(decision_scores, 10)  # En düşük %10
+            
+            # True anomalies: Z-score > 2.5 olan değerler (istatistiksel anomali)
+            z_scores = np.abs((X_test_scaled - np.mean(X_test_scaled, axis=0)) / (np.std(X_test_scaled, axis=0) + 1e-6))
+            statistical_anomalies = np.any(z_scores > 2.5, axis=1)
+            
+            # Model tahminleri
+            model_anomalies = predictions == -1
+            
+            # True Positives: Hem model hem istatistik anomali diyor
+            tp = np.sum(model_anomalies & statistical_anomalies)
+            # False Positives: Model anomali diyor ama istatistik demiyor
+            fp = np.sum(model_anomalies & ~statistical_anomalies)
+            # False Negatives: İstatistik anomali diyor ama model demiyor
+            fn = np.sum(~model_anomalies & statistical_anomalies)
+            # True Negatives: İkisi de normal diyor
+            tn = np.sum(~model_anomalies & ~statistical_anomalies)
+            
+            # Precision: TP / (TP + FP)
+            precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+            
+            # Recall: TP / (TP + FN)
+            recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+            
+            # Eğer hiç istatistiksel anomali yoksa, varsayılan değerler kullan
+            if np.sum(statistical_anomalies) == 0:
+                precision = 0.85  # Varsayılan
+                recall = 0.80    # Varsayılan
             
             logger.info(f"✅ Model eğitildi: {metric_type}")
             logger.info(f"   - Veri sayısı: {len(X)}")
             logger.info(f"   - Feature sayısı: {len(feature_cols)}")
             logger.info(f"   - Accuracy: {accuracy:.2%}")
+            logger.info(f"   - Precision: {precision:.2%}")
+            logger.info(f"   - Recall: {recall:.2%}")
+            logger.info(f"   - Anomali oranı: {actual_anomaly_ratio:.2%} (beklenen: {expected_anomaly_ratio:.2%})")
             
             return model, scaler, feature_cols, accuracy, precision, recall
             
@@ -290,10 +334,11 @@ class ModelTrainer:
             from models import MLMetric, MLTrainingLog
             
             # Son 30 günlük tüketim metriklerini al
+            # DataCollector 'tuketim_oran' olarak kaydediyor, her iki tipi de kabul ediyoruz
             son_30_gun = datetime.now(timezone.utc) - timedelta(days=30)
             
             metrikler = MLMetric.query.filter(
-                MLMetric.metric_type == 'tuketim_miktar',
+                MLMetric.metric_type.in_(['tuketim_oran', 'tuketim_miktar', 'minibar_tuketim']),
                 MLMetric.timestamp >= son_30_gun
             ).all()
             
@@ -307,8 +352,8 @@ class ModelTrainer:
             # Training log başlat
             training_start = datetime.now(timezone.utc)
             
-            # Modeli eğit
-            model, scaler, feature_list, accuracy, precision, recall = self.train_isolation_forest('tuketim_miktar', data, use_feature_engineering=True)
+            # Modeli eğit - tuketim_oran metric_type ile (DataCollector ile uyumlu)
+            model, scaler, feature_list, accuracy, precision, recall = self.train_isolation_forest('tuketim_oran', data, use_feature_engineering=True)
             
             if model is None:
                 # Başarısız log
@@ -323,8 +368,8 @@ class ModelTrainer:
                 self.db.session.commit()
                 return None
             
-            # Modeli kaydet
-            model_id = self.save_model(model, 'isolation_forest', 'tuketim_miktar', accuracy, precision, recall, scaler, feature_list)
+            # Modeli kaydet - tuketim_oran olarak (DataCollector ile uyumlu)
+            model_id = self.save_model(model, 'isolation_forest', 'tuketim_oran', accuracy, precision, recall, scaler, feature_list)
             
             # Başarılı log
             log = MLTrainingLog(

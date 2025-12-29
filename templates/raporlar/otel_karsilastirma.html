@@ -1,0 +1,233 @@
+{% extends "base.html" %} {% block title %}Otel Karşılaştırma Raporu{% endblock
+%} {% block page_title %}Otel Karşılaştırma Raporu{% endblock %} {% block
+content %}
+<div class="space-y-6">
+  <!-- Filtre Formu -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3 class="text-lg font-medium text-slate-900 dark:text-white mb-4">
+        <i class="fas fa-filter mr-2 text-purple-600"></i>Rapor Filtresi
+      </h3>
+      <form
+        method="POST"
+        action="{{ url_for('raporlar.otel_karsilastirma_raporu_olustur') }}"
+        class="space-y-4"
+      >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              >Başlangıç</label
+            >
+            <input
+              type="date"
+              name="baslangic"
+              class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white shadow-sm"
+            />
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              >Bitiş</label
+            >
+            <input
+              type="date"
+              name="bitis"
+              class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white shadow-sm"
+            />
+          </div>
+          <div class="flex items-end">
+            <button
+              type="submit"
+              class="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+            >
+              <i class="fas fa-chart-bar mr-2"></i>Karşılaştır
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% if rapor_verisi %}
+  <!-- Özet -->
+  <div
+    class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-6 text-white"
+  >
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-xl font-bold">Otel Performans Karşılaştırması</h3>
+        <p class="text-purple-100">
+          {{ rapor_verisi.baslangic }} - {{ rapor_verisi.bitis }}
+        </p>
+      </div>
+      <div class="text-right">
+        <p class="text-purple-100 text-sm">Toplam Otel</p>
+        <p class="text-3xl font-bold">{{ rapor_verisi.toplam_otel }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Otel Kartları -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    {% for otel in rapor_verisi.oteller %}
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+      <div
+        class="px-4 py-4 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-900 dark:to-slate-800 border-b border-slate-200 dark:border-slate-700"
+      >
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+            <i class="fas fa-hotel mr-2 text-purple-600"></i>{{ otel.otel_ad }}
+          </h3>
+          <span
+            class="px-3 py-1 {% if otel.gorev.tamamlanma_orani >= 80 %}bg-emerald-100 text-emerald-800{% elif otel.gorev.tamamlanma_orani >= 50 %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %} rounded-full font-semibold text-sm"
+          >
+            %{{ otel.gorev.tamamlanma_orani }} Başarı
+          </span>
+        </div>
+      </div>
+      <div class="p-4 space-y-4">
+        <!-- Genel Bilgiler -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-3 text-center">
+            <p class="text-xs text-slate-500 dark:text-slate-400">Oda Sayısı</p>
+            <p class="text-xl font-bold text-slate-900 dark:text-white">
+              {{ otel.oda_sayisi }}
+            </p>
+          </div>
+          <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-3 text-center">
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              Kat Sorumlusu
+            </p>
+            <p class="text-xl font-bold text-slate-900 dark:text-white">
+              {{ otel.kat_sorumlusu_sayisi }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Zimmet Durumu -->
+        <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
+          <h4
+            class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >
+            <i class="fas fa-boxes mr-1 text-blue-500"></i>Zimmet Durumu
+          </h4>
+          <div class="grid grid-cols-4 gap-2 text-center text-xs">
+            <div>
+              <p class="text-slate-500">Toplam</p>
+              <p class="font-semibold text-slate-900 dark:text-white">
+                {{ otel.zimmet.toplam_stok }}
+              </p>
+            </div>
+            <div>
+              <p class="text-slate-500">Kullanılan</p>
+              <p class="font-semibold text-orange-600">
+                {{ otel.zimmet.kullanilan }}
+              </p>
+            </div>
+            <div>
+              <p class="text-slate-500">Kalan</p>
+              <p class="font-semibold text-green-600">
+                {{ otel.zimmet.kalan }}
+              </p>
+            </div>
+            <div>
+              <p class="text-slate-500">Ürün Çeşidi</p>
+              <p class="font-semibold text-blue-600">
+                {{ otel.zimmet.urun_cesidi }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tüketim -->
+        <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
+          <h4
+            class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >
+            <i class="fas fa-shopping-cart mr-1 text-teal-500"></i>Minibar
+            Tüketimi
+          </h4>
+          <div class="grid grid-cols-3 gap-2 text-center text-xs">
+            <div>
+              <p class="text-slate-500">Toplam</p>
+              <p class="font-semibold text-teal-600">
+                {{ otel.tuketim.toplam }}
+              </p>
+            </div>
+            <div>
+              <p class="text-slate-500">İşlem</p>
+              <p class="font-semibold text-slate-900 dark:text-white">
+                {{ otel.tuketim.islem_sayisi }}
+              </p>
+            </div>
+            <div>
+              <p class="text-slate-500">Aktif Oda</p>
+              <p class="font-semibold text-cyan-600">
+                {{ otel.tuketim.aktif_oda }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Görev Performansı -->
+        <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
+          <h4
+            class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >
+            <i class="fas fa-tasks mr-1 text-indigo-500"></i>Görev Performansı
+          </h4>
+          <div class="flex items-center gap-4">
+            <div class="flex-1">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-slate-500"
+                  >Tamamlanan: {{ otel.gorev.tamamlanan }}/{{ otel.gorev.toplam
+                  }}</span
+                >
+                <span
+                  class="font-semibold {% if otel.gorev.tamamlanma_orani >= 80 %}text-emerald-600{% elif otel.gorev.tamamlanma_orani >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}"
+                  >%{{ otel.gorev.tamamlanma_orani }}</span
+                >
+              </div>
+              <div
+                class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2"
+              >
+                <div
+                  class="{% if otel.gorev.tamamlanma_orani >= 80 %}bg-emerald-500{% elif otel.gorev.tamamlanma_orani >= 50 %}bg-yellow-500{% else %}bg-red-500{% endif %} h-2 rounded-full transition-all"
+                  style="width: {{ otel.gorev.tamamlanma_orani }}%"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if rapor_verisi.oteller|length == 0 %}
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-12 text-center">
+    <i
+      class="fas fa-search text-5xl text-slate-300 dark:text-slate-600 mb-4"
+    ></i>
+    <p class="text-slate-500 dark:text-slate-400">Aktif otel bulunamadı.</p>
+  </div>
+  {% endif %}
+
+  <div class="text-center text-sm text-slate-500 dark:text-slate-400">
+    <i class="fas fa-clock mr-1"></i>Rapor Tarihi: {{ rapor_verisi.rapor_tarihi
+    }}
+  </div>
+  {% else %}
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-12 text-center">
+    <i
+      class="fas fa-chart-bar text-5xl text-slate-300 dark:text-slate-600 mb-4"
+    ></i>
+    <p class="text-slate-500 dark:text-slate-400">
+      Karşılaştırma raporu oluşturmak için yukarıdaki formu kullanın.
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

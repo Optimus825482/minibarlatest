@@ -84,6 +84,9 @@ tests/
 # Claude cache
 .claude/
 
+# Minibar Project Presentation (separate project)
+minibarproject/
+
 # Temporary migration files
 check_*.py
 fix_*.py

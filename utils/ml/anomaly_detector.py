@@ -84,18 +84,18 @@ class AnomalyDetector:
             values: Değerler listesi
             
         Returns:
-            Anomali tespit sonucu
+            tuple: (is_anomaly, z_score, mean, std) - Z-Score ile tutarlı format
         """
         self.total_detections += 1
         
         try:
             # Model yükle (dosyadan)
-            model = self.model_manager.load_model_from_file(
+            model_package = self.model_manager.load_model_from_file(
                 model_type='isolation_forest',
                 metric_type=metric_type
             )
             
-            if model is None:
+            if model_package is None:
                 # Fallback: Z-Score kullan
                 self.fallback_count += 1
                 self.fallback_reasons['file_not_found'] += 1
@@ -110,18 +110,43 @@ class AnomalyDetector:
                 
                 return self.detect_with_zscore(values)
             
-            # Model ile tahmin yap
+            # Model package'dan model ve scaler'ı çıkar
             try:
+                # Yeni format: dict içinde model
+                if isinstance(model_package, dict):
+                    model = model_package.get('model')
+                    scaler = model_package.get('scaler')
+                else:
+                    # Eski format: direkt model
+                    model = model_package
+                    scaler = None
+                
+                if model is None:
+                    raise ValueError("Model package içinde model bulunamadı")
+                
+                # Veriyi hazırla
                 values_array = np.array(values).reshape(-1, 1)
+                
+                # Scaler varsa uygula
+                if scaler is not None:
+                    values_array = scaler.transform(values_array)
+                
+                # Model ile tahmin yap
                 predictions = model.predict(values_array)
                 
+                # İstatistikleri hesapla (Z-Score ile tutarlı return için)
+                mean = float(np.mean(values))
+                std = float(np.std(values))
+                current_value = values[-1]
+                z_score = abs((current_value - mean) / std) if std > 0 else 0
+                
                 # Modeli bellekten temizle
-                del model
+                del model_package
                 
                 # -1: anomali, 1: normal
                 is_anomaly = predictions[-1] == -1
                 
-                return is_anomaly
+                return is_anomaly, z_score, mean, std
                 
             except Exception as pred_error:
                 # Prediction hatası - fallback
@@ -136,7 +161,7 @@ class AnomalyDetector:
                 
                 # Model'i temizle
                 try:
-                    del model
+                    del model_package
                 except:
                     pass
                 
@@ -322,9 +347,9 @@ class AnomalyDetector:
             alert_count = 0
             
             for oda in odalar:
-                # Bu oda için son 7 günlük metrikleri al
+                # Bu oda için son 7 günlük metrikleri al (tuketim_oran - DataCollector ile uyumlu)
                 metrikler = MLMetric.query.filter(
-                    MLMetric.metric_type == 'tuketim_miktar',
+                    MLMetric.metric_type.in_(['tuketim_oran', 'tuketim_miktar', 'minibar_tuketim']),
                     MLMetric.entity_id == oda.id,
                     MLMetric.timestamp >= son_7_gun
                 ).order_by(MLMetric.timestamp).all()

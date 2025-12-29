@@ -237,25 +237,27 @@ def zimmet_stok_kontrol(personel_id, urun_id, miktar):
     """
     Kat sorumlusunun zimmetinde yeterli stok var mı kontrol eder
     
+    YENİ SİSTEM: Otel bazlı ortak zimmet deposundan kontrol eder.
+    Personelin bağlı olduğu otelin zimmet deposunu kullanır.
+    
     Args:
         personel_id (int): Personel ID
         urun_id (int): Ürün ID
         miktar (int): Gereken miktar
         
     Returns:
-        tuple: (bool, int, PersonelZimmetDetay) - (Yeterli mi, Mevcut miktar, Zimmet detay)
+        tuple: (bool, int, OtelZimmetStok) - (Yeterli mi, Mevcut miktar, Otel zimmet stok)
         
     Raises:
         ZimmetStokYetersizError: Stok yetersizse
     """
+    from models import Kullanici, OtelZimmetStok
+    from utils.otel_zimmet_servisleri import OtelZimmetServisi, OtelZimmetStokYetersizError
+    
     try:
-        # Tüm aktif zimmetleri bul
-        aktif_zimmetler = PersonelZimmet.query.filter_by(
-            personel_id=personel_id,
-            durum='aktif'
-        ).all()
-        
-        if not aktif_zimmetler:
+        # Personelin otel_id'sini bul
+        personel = Kullanici.query.get(personel_id)
+        if not personel or not personel.otel_id:
             urun = Urun.query.get(urun_id)
             raise ZimmetStokYetersizError(
                 urun.urun_adi if urun else 'Ürün',
@@ -263,41 +265,15 @@ def zimmet_stok_kontrol(personel_id, urun_id, miktar):
                 miktar
             )
         
-        # Tüm zimmetlerdeki bu ürünün toplam kalan miktarını hesapla
-        toplam_kalan = 0
-        zimmet_detaylar = []
+        otel_id = personel.otel_id
         
-        for aktif_zimmet in aktif_zimmetler:
-            zimmet_detay = PersonelZimmetDetay.query.filter_by(
-                zimmet_id=aktif_zimmet.id,
-                urun_id=urun_id
-            ).first()
-            
-            if zimmet_detay:
-                kalan = zimmet_detay.kalan_miktar if zimmet_detay.kalan_miktar is not None else (zimmet_detay.miktar - zimmet_detay.kullanilan_miktar)
-                toplam_kalan += kalan
-                zimmet_detaylar.append((zimmet_detay, kalan))
-        
-        if toplam_kalan < miktar:
-            urun = Urun.query.get(urun_id)
-            raise ZimmetStokYetersizError(
-                urun.urun_adi if urun else 'Ürün',
-                toplam_kalan,
-                miktar
-            )
-        
-        # En fazla stoku olan zimmet detayını döndür
-        if zimmet_detaylar:
-            zimmet_detaylar.sort(key=lambda x: x[1], reverse=True)
-            return True, toplam_kalan, zimmet_detaylar[0][0]
-        
-        # Hiç zimmet detayı yoksa hata
-        urun = Urun.query.get(urun_id)
-        raise ZimmetStokYetersizError(
-            urun.urun_adi if urun else 'Ürün',
-            0,
-            miktar
-        )
+        # Otel zimmet deposundan kontrol et
+        try:
+            yeterli, mevcut, otel_stok = OtelZimmetServisi.stok_kontrol(otel_id, urun_id, miktar)
+            return yeterli, mevcut, otel_stok
+        except OtelZimmetStokYetersizError as e:
+            # Otel bazlı hatayı mevcut hata tipine çevir
+            raise ZimmetStokYetersizError(e.urun_adi, e.mevcut, e.gereken)
         
     except ZimmetStokYetersizError:
         raise
@@ -306,61 +282,50 @@ def zimmet_stok_kontrol(personel_id, urun_id, miktar):
         raise
 
 
-def zimmet_stok_dusu(personel_id, urun_id, miktar, zimmet_detay_id=None):
+def zimmet_stok_dusu(personel_id, urun_id, miktar, zimmet_detay_id=None, referans_id=None):
     """
     Zimmet stoğundan düşüş yapar
+    
+    YENİ SİSTEM: Otel bazlı ortak zimmet deposundan düşer ve kullanım kaydı oluşturur.
     
     Args:
         personel_id (int): Personel ID
         urun_id (int): Ürün ID
         miktar (int): Düşülecek miktar
-        zimmet_detay_id (int, optional): Zimmet detay ID
+        zimmet_detay_id (int, optional): Eski sistem için - artık kullanılmıyor
+        referans_id (int, optional): MinibarIslem ID referansı
         
     Returns:
-        PersonelZimmetDetay: Güncellenen zimmet detay
+        OtelZimmetStok: Güncellenen otel zimmet stok
         
     Raises:
         ZimmetStokYetersizError: Stok yetersizse
     """
+    from models import Kullanici
+    from utils.otel_zimmet_servisleri import OtelZimmetServisi, OtelZimmetStokYetersizError
+    
     try:
-        # Zimmet detayını bul
-        if zimmet_detay_id:
-            zimmet_detay = PersonelZimmetDetay.query.get(zimmet_detay_id)
-        else:
-            # Aktif zimmetten bul
-            aktif_zimmet = PersonelZimmet.query.filter_by(
-                personel_id=personel_id,
-                durum='aktif'
-            ).first()
-            
-            if not aktif_zimmet:
-                raise ZimmetStokYetersizError('Ürün', 0, miktar)
-            
-            zimmet_detay = PersonelZimmetDetay.query.filter_by(
-                zimmet_id=aktif_zimmet.id,
-                urun_id=urun_id
-            ).first()
-        
-        if not zimmet_detay:
+        # Personelin otel_id'sini bul
+        personel = Kullanici.query.get(personel_id)
+        if not personel or not personel.otel_id:
             raise ZimmetStokYetersizError('Ürün', 0, miktar)
         
-        # Stok kontrolü
-        kalan_miktar = zimmet_detay.miktar - zimmet_detay.kullanilan_miktar
-        if kalan_miktar < miktar:
-            urun = Urun.query.get(urun_id)
-            raise ZimmetStokYetersizError(
-                urun.urun_adi if urun else 'Ürün',
-                kalan_miktar,
-                miktar
+        otel_id = personel.otel_id
+        
+        # Otel zimmet deposundan düş
+        try:
+            otel_stok, kullanim = OtelZimmetServisi.stok_dusu(
+                otel_id=otel_id,
+                urun_id=urun_id,
+                miktar=miktar,
+                personel_id=personel_id,
+                islem_tipi='minibar_kullanim',
+                referans_id=referans_id,
+                aciklama=f"Minibar kullanımı - Personel: {personel.ad} {personel.soyad}"
             )
-        
-        # Kullanılan miktarı güncelle
-        zimmet_detay.kullanilan_miktar += miktar
-        zimmet_detay.kalan_miktar = zimmet_detay.miktar - zimmet_detay.kullanilan_miktar
-        
-        db.session.commit()
-        
-        return zimmet_detay
+            return otel_stok
+        except OtelZimmetStokYetersizError as e:
+            raise ZimmetStokYetersizError(e.urun_adi, e.mevcut, e.gereken)
         
     except ZimmetStokYetersizError:
         raise

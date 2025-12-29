@@ -188,48 +188,4 @@ def otel_erisim_gerekli(f):
 
 
 
-def otel_erisim_gerekli(f):
-    """
-    Kullanıcının otele erişimi olup olmadığını kontrol eder
-    
-    Kullanım:
-        @app.route('/depo/stok/<int:otel_id>')
-        @login_required
-        @otel_erisim_gerekli
-        def stok_listesi(otel_id):
-            ...
-    """
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        from flask import session, abort, request
-        from utils.authorization import kullanici_otel_erisimi
-        
-        # Otel ID'yi al (kwargs, args veya query string'den)
-        otel_id = kwargs.get('otel_id') or request.args.get('otel_id')
-        
-        if not otel_id:
-            # Otel ID belirtilmemişse, devam et (genel sayfalar için)
-            return f(*args, **kwargs)
-        
-        try:
-            otel_id = int(otel_id)
-        except (ValueError, TypeError):
-            abort(400, description='Geçersiz otel ID')
-        
-        kullanici_id = session.get('kullanici_id')
-        kullanici_rol = session.get('kullanici_rol')
-        
-        if not kullanici_id:
-            abort(401, description='Giriş yapmanız gerekiyor')
-        
-        # Sistem yöneticisi ve admin tüm otellere erişebilir
-        if kullanici_rol in ['sistem_yoneticisi', 'admin']:
-            return f(*args, **kwargs)
-        
-        # Diğer roller için otel erişim kontrolü
-        if not kullanici_otel_erisimi(kullanici_id, otel_id):
-            abort(403, description='Bu otele erişim yetkiniz yok')
-        
-        return f(*args, **kwargs)
-    
-    return decorated_function
+# İkinci otel_erisim_gerekli tanımı kaldırıldı - duplicate temizliği (29.12.2025)

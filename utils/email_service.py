@@ -105,7 +105,8 @@ class EmailService:
         ilgili_tablo: Optional[str] = None,
         ilgili_kayit_id: Optional[int] = None,
         ek_bilgiler: Optional[Dict] = None,
-        html_body: Optional[str] = None
+        html_body: Optional[str] = None,
+        read_receipt: bool = False
     ) -> Dict[str, Any]:
         """
         Email gönder ve logla
@@ -120,6 +121,7 @@ class EmailService:
             ilgili_kayit_id: İlişkili kayıt ID (opsiyonel)
             ek_bilgiler: Ek metadata (opsiyonel)
             html_body: HTML içerik (opsiyonel)
+            read_receipt: Okundu bilgisi talep et (opsiyonel)
         
         Returns:
             dict: {success: bool, message: str, email_log_id: int}
@@ -145,6 +147,12 @@ class EmailService:
             msg['From'] = f"{settings['sender_name']} <{settings['sender_email']}>"
             msg['To'] = to_email
             msg['X-Tracking-ID'] = tracking_id
+            
+            # Okundu bilgisi talep et (read receipt)
+            if read_receipt:
+                msg['Disposition-Notification-To'] = settings['sender_email']
+                msg['X-Confirm-Reading-To'] = settings['sender_email']
+                msg['Return-Receipt-To'] = settings['sender_email']
             
             # Plain text part
             text_part = MIMEText(body, 'plain', 'utf-8')

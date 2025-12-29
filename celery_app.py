@@ -750,11 +750,10 @@ def gunluk_gorev_raporu_task():
     """
     Günlük görev tamamlanma raporu - Her sabah 08:00'de (KKTC saati) çalışır
     Bir gün önceki verileri içerir
-    Kat sorumlularının görev tamamlanma raporlarını depo sorumlusu ve sistem yöneticisine gönderir
+    TÜM kat sorumlularının raporunu TEK mail olarak gönderir (okundu bilgisi ile)
     """
     try:
         app, db = get_flask_app()
-        from models import Kullanici, Otel
         from utils.rapor_email_service import RaporEmailService
         from datetime import date, timedelta
         import pytz
@@ -769,35 +768,18 @@ def gunluk_gorev_raporu_task():
             # Bir gün önceki tarih
             rapor_tarihi = date.today() - timedelta(days=1)
             
-            # Tüm aktif kat sorumlularını al
-            kat_sorumlu_list = Kullanici.query.filter(
-                Kullanici.rol == 'kat_sorumlusu',
-                Kullanici.aktif == True
-            ).all()
+            # TOPLU RAPOR GÖNDER (tek mail'de tüm personel)
+            result = RaporEmailService.send_toplu_gorev_raporu(rapor_tarihi)
             
-            gonderilen_rapor = 0
-            hatali_rapor = 0
-            
-            for ks in kat_sorumlu_list:
-                try:
-                    result = RaporEmailService.send_gorev_raporu(ks.id, rapor_tarihi)
-                    if result.get('success'):
-                        gonderilen_rapor += 1
-                        logger.info(f"✅ Görev raporu gönderildi: {ks.ad} {ks.soyad}")
-                    else:
-                        hatali_rapor += 1
-                        logger.warning(f"⚠️ Görev raporu gönderilemedi: {ks.ad} {ks.soyad} - {result.get('message')}")
-                except Exception as e:
-                    hatali_rapor += 1
-                    logger.error(f"❌ Görev raporu hatası ({ks.ad} {ks.soyad}): {str(e)}")
-            
-            logger.info(f"📋 Günlük görev raporu tamamlandı - Gönderilen: {gonderilen_rapor}, Hatalı: {hatali_rapor}")
+            if result.get('success'):
+                logger.info(f"✅ Toplu görev raporu gönderildi: {result.get('message')}")
+            else:
+                logger.warning(f"⚠️ Toplu görev raporu gönderilemedi: {result.get('message')}")
             
             return {
-                'status': 'success',
-                'message': f'{gonderilen_rapor} rapor gönderildi, {hatali_rapor} hata',
-                'gonderilen': gonderilen_rapor,
-                'hatali': hatali_rapor
+                'status': 'success' if result.get('success') else 'error',
+                'message': result.get('message'),
+                'personel_sayisi': result.get('personel_sayisi', 0)
             }
             
     except Exception as e:
@@ -810,11 +792,10 @@ def gunluk_minibar_sarfiyat_raporu_task():
     """
     Günlük minibar sarfiyat raporu - Her sabah 08:00'de (KKTC saati) çalışır
     Bir gün önceki verileri içerir
-    Oda bazlı ürün sarfiyatı ve stok durumlarını depo sorumlusu ve sistem yöneticisine gönderir
+    TÜM otellerin raporunu TEK mail olarak gönderir (okundu bilgisi ile)
     """
     try:
         app, db = get_flask_app()
-        from models import Otel
         from utils.rapor_email_service import RaporEmailService
         from datetime import date, timedelta
         import pytz
@@ -829,32 +810,18 @@ def gunluk_minibar_sarfiyat_raporu_task():
             # Bir gün önceki tarih
             rapor_tarihi = date.today() - timedelta(days=1)
             
-            # Tüm aktif otelleri al
-            oteller = Otel.query.filter_by(aktif=True).all()
+            # TOPLU RAPOR GÖNDER (tek mail'de tüm oteller)
+            result = RaporEmailService.send_toplu_minibar_raporu(rapor_tarihi)
             
-            gonderilen_rapor = 0
-            hatali_rapor = 0
-            
-            for otel in oteller:
-                try:
-                    result = RaporEmailService.send_minibar_raporu(otel.id, rapor_tarihi)
-                    if result.get('success'):
-                        gonderilen_rapor += 1
-                        logger.info(f"✅ Minibar raporu gönderildi: {otel.ad}")
-                    else:
-                        hatali_rapor += 1
-                        logger.warning(f"⚠️ Minibar raporu gönderilemedi: {otel.ad} - {result.get('message')}")
-                except Exception as e:
-                    hatali_rapor += 1
-                    logger.error(f"❌ Minibar raporu hatası ({otel.ad}): {str(e)}")
-            
-            logger.info(f"🍫 Günlük minibar sarfiyat raporu tamamlandı - Gönderilen: {gonderilen_rapor}, Hatalı: {hatali_rapor}")
+            if result.get('success'):
+                logger.info(f"✅ Toplu minibar raporu gönderildi: {result.get('message')}")
+            else:
+                logger.warning(f"⚠️ Toplu minibar raporu gönderilemedi: {result.get('message')}")
             
             return {
-                'status': 'success',
-                'message': f'{gonderilen_rapor} rapor gönderildi, {hatali_rapor} hata',
-                'gonderilen': gonderilen_rapor,
-                'hatali': hatali_rapor
+                'status': 'success' if result.get('success') else 'error',
+                'message': result.get('message'),
+                'otel_sayisi': result.get('otel_sayisi', 0)
             }
             
     except Exception as e:
@@ -1243,6 +1210,270 @@ def eski_yedekleri_temizle_task():
 
 
 # ============================================
+# VERİTABANI TEMİZLİK TASK'LARI
+# ============================================
+
+@celery.task(name='maintenance.query_logs_temizle')
+def query_logs_temizle_task():
+    """
+    query_logs tablosundan 7 günden eski kayıtları temizle
+    Her hafta Pazar gecesi 02:00'de çalışır
+    """
+    try:
+        app, db = get_flask_app()
+        
+        with app.app_context():
+            from sqlalchemy import text
+            
+            logger.info("🗑️ query_logs tablosu temizleniyor (7 günden eski kayıtlar)...")
+            
+            # Silinecek kayıt sayısını öğren
+            count_result = db.session.execute(text(
+                "SELECT COUNT(*) FROM query_logs WHERE timestamp < NOW() - INTERVAL '7 days'"
+            )).scalar()
+            
+            if count_result == 0:
+                logger.info("✅ Silinecek eski query_logs kaydı yok")
+                return {
+                    'status': 'success',
+                    'deleted_count': 0,
+                    'message': 'Silinecek kayıt yok'
+                }
+            
+            # Kayıtları sil
+            db.session.execute(text(
+                "DELETE FROM query_logs WHERE timestamp < NOW() - INTERVAL '7 days'"
+            ))
+            db.session.commit()
+            
+            logger.info(f"✅ {count_result} eski query_logs kaydı silindi")
+            
+            # Tablo boyutunu logla
+            size_result = db.session.execute(text(
+                "SELECT pg_size_pretty(pg_total_relation_size('query_logs'))"
+            )).scalar()
+            logger.info(f"📊 query_logs tablo boyutu: {size_result}")
+            
+            return {
+                'status': 'success',
+                'deleted_count': count_result,
+                'table_size': size_result
+            }
+            
+    except Exception as e:
+        logger.error(f"query_logs temizleme task hatası: {str(e)}")
+        return {'status': 'error', 'message': str(e)}
+
+
+@celery.task(name='maintenance.query_logs_gunluk_temizle')
+def query_logs_gunluk_temizle_task():
+    """
+    query_logs tablosundan 3 günden eski kayıtları temizle
+    Her gün gece 03:00'de çalışır (KKTC saati)
+    
+    Bu tablo günde ~250K kayıt ürettiği için günlük temizlik gerekli.
+    Performans için batch delete kullanılır.
+    """
+    try:
+        app, db = get_flask_app()
+        
+        with app.app_context():
+            from sqlalchemy import text
+            
+            logger.info("🗑️ [GÜNLÜK] query_logs tablosu temizleniyor (3 günden eski kayıtlar)...")
+            
+            # Önce tablo boyutunu al
+            size_before = db.session.execute(text(
+                "SELECT pg_size_pretty(pg_total_relation_size('query_logs'))"
+            )).scalar()
+            
+            # Silinecek kayıt sayısını öğren
+            count_result = db.session.execute(text(
+                "SELECT COUNT(*) FROM query_logs WHERE timestamp < NOW() - INTERVAL '3 days'"
+            )).scalar()
+            
+            if count_result == 0:
+                logger.info("✅ Silinecek eski query_logs kaydı yok")
+                return {
+                    'status': 'success',
+                    'deleted_count': 0,
+                    'message': 'Silinecek kayıt yok',
+                    'table_size': size_before
+                }
+            
+            # Batch delete - Performans için 50K'lık parçalar halinde sil
+            total_deleted = 0
+            batch_size = 50000
+            
+            while True:
+                result = db.session.execute(text(f"""
+                    DELETE FROM query_logs 
+                    WHERE id IN (
+                        SELECT id FROM query_logs 
+                        WHERE timestamp < NOW() - INTERVAL '3 days' 
+                        LIMIT {batch_size}
+                    )
+                """))
+                deleted = result.rowcount
+                db.session.commit()
+                
+                if deleted == 0:
+                    break
+                    
+                total_deleted += deleted
+                logger.info(f"  🔄 {total_deleted} kayıt silindi...")
+                
+                # Her batch sonrası kısa bekleme (DB yükünü azaltmak için)
+                import time
+                time.sleep(0.5)
+            
+            # Sonra tablo boyutunu al
+            size_after = db.session.execute(text(
+                "SELECT pg_size_pretty(pg_total_relation_size('query_logs'))"
+            )).scalar()
+            
+            logger.info(f"✅ [GÜNLÜK] {total_deleted} eski query_logs kaydı silindi")
+            logger.info(f"📊 Tablo boyutu: {size_before} → {size_after}")
+            
+            return {
+                'status': 'success',
+                'deleted_count': total_deleted,
+                'table_size_before': size_before,
+                'table_size_after': size_after
+            }
+            
+    except Exception as e:
+        logger.error(f"query_logs günlük temizleme task hatası: {str(e)}")
+        return {'status': 'error', 'message': str(e)}
+
+
+@celery.task(name='maintenance.ml_metrics_temizle')
+def ml_metrics_temizle_task():
+    """
+    ml_metrics tablosundan 60 günden eski kayıtları temizle
+    Her hafta Pazartesi gece 03:30'da çalışır (KKTC saati)
+    
+    Bu tablo 130 MB civarında ve büyümeye devam ediyor.
+    """
+    try:
+        app, db = get_flask_app()
+        
+        with app.app_context():
+            from sqlalchemy import text
+            
+            logger.info("🗑️ ml_metrics tablosu temizleniyor (60 günden eski kayıtlar)...")
+            
+            # Önce tablo boyutunu al
+            size_before = db.session.execute(text(
+                "SELECT pg_size_pretty(pg_total_relation_size('ml_metrics'))"
+            )).scalar()
+            
+            # Silinecek kayıt sayısını öğren
+            count_result = db.session.execute(text(
+                "SELECT COUNT(*) FROM ml_metrics WHERE created_at < NOW() - INTERVAL '60 days'"
+            )).scalar()
+            
+            if count_result == 0:
+                logger.info("✅ Silinecek eski ml_metrics kaydı yok")
+                return {
+                    'status': 'success',
+                    'deleted_count': 0,
+                    'message': 'Silinecek kayıt yok',
+                    'table_size': size_before
+                }
+            
+            # Kayıtları sil
+            db.session.execute(text(
+                "DELETE FROM ml_metrics WHERE created_at < NOW() - INTERVAL '60 days'"
+            ))
+            db.session.commit()
+            
+            # Sonra tablo boyutunu al
+            size_after = db.session.execute(text(
+                "SELECT pg_size_pretty(pg_total_relation_size('ml_metrics'))"
+            )).scalar()
+            
+            logger.info(f"✅ {count_result} eski ml_metrics kaydı silindi")
+            logger.info(f"📊 Tablo boyutu: {size_before} → {size_after}")
+            
+            return {
+                'status': 'success',
+                'deleted_count': count_result,
+                'table_size_before': size_before,
+                'table_size_after': size_after
+            }
+            
+    except Exception as e:
+        logger.error(f"ml_metrics temizleme task hatası: {str(e)}")
+        return {'status': 'error', 'message': str(e)}
+
+
+@celery.task(name='maintenance.eski_loglari_temizle')
+def eski_loglari_temizle_task():
+    """
+    Eski log tablolarını temizle (hata_loglari, audit_logs vb.)
+    Her hafta Pazar gecesi 02:30'da çalışır
+    """
+    try:
+        app, db = get_flask_app()
+        
+        with app.app_context():
+            from sqlalchemy import text
+            
+            logger.info("🗑️ Eski log tabloları temizleniyor...")
+            
+            temizlik_sonuclari = {}
+            
+            # Temizlenecek tablolar ve saklama süreleri (gün)
+            tablolar = {
+                'hata_loglari': 30,
+                'audit_logs': 90,
+                'email_loglari': 30,
+                'background_jobs': 7,
+            }
+            
+            for tablo, gun in tablolar.items():
+                try:
+                    # Tarih sütununu belirle
+                    tarih_sutunu = 'created_at' if tablo != 'hata_loglari' else 'tarih'
+                    if tablo == 'email_loglari':
+                        tarih_sutunu = 'gonderim_tarihi'
+                    if tablo == 'background_jobs':
+                        tarih_sutunu = 'created_at'
+                    
+                    # Silinecek kayıt sayısı
+                    count_query = text(f"SELECT COUNT(*) FROM {tablo} WHERE {tarih_sutunu} < NOW() - INTERVAL '{gun} days'")
+                    count = db.session.execute(count_query).scalar()
+                    
+                    if count and count > 0:
+                        delete_query = text(f"DELETE FROM {tablo} WHERE {tarih_sutunu} < NOW() - INTERVAL '{gun} days'")
+                        db.session.execute(delete_query)
+                        temizlik_sonuclari[tablo] = count
+                        logger.info(f"  ✅ {tablo}: {count} kayıt silindi ({gun} günden eski)")
+                    else:
+                        temizlik_sonuclari[tablo] = 0
+                        
+                except Exception as table_error:
+                    logger.warning(f"  ⚠️ {tablo} temizlenemedi: {str(table_error)}")
+                    temizlik_sonuclari[tablo] = f"Hata: {str(table_error)}"
+            
+            db.session.commit()
+            
+            toplam_silinen = sum(v for v in temizlik_sonuclari.values() if isinstance(v, int))
+            logger.info(f"✅ Toplam {toplam_silinen} eski log kaydı silindi")
+            
+            return {
+                'status': 'success',
+                'details': temizlik_sonuclari,
+                'total_deleted': toplam_silinen
+            }
+            
+    except Exception as e:
+        logger.error(f"Eski log temizleme task hatası: {str(e)}")
+        return {'status': 'error', 'message': str(e)}
+
+
+# ============================================
 # CELERY BEAT SCHEDULE (Periyodik Task'lar)
 # ============================================
 
@@ -1355,6 +1586,31 @@ celery.conf.beat_schedule = {
     'gunluk-minibar-sarfiyat-raporu': {
         'task': 'rapor.gunluk_minibar_sarfiyat_raporu',
         'schedule': crontab(hour=6, minute=5),  # UTC 06:05 = KKTC 08:05
+    },
+    
+    # ============================================
+    # VERİTABANI TEMİZLİK SCHEDULE
+    # ============================================
+    
+    # Her gün gece 03:00'de (KKTC) query_logs günlük temizliği
+    'query-logs-gunluk-temizle': {
+        'task': 'maintenance.query_logs_gunluk_temizle',
+        'schedule': crontab(hour=1, minute=0),  # UTC 01:00 = KKTC 03:00
+    },
+    # Her Pazar gecesi 02:00'de query_logs haftalık temizliği
+    'query-logs-temizle': {
+        'task': 'maintenance.query_logs_temizle',
+        'schedule': crontab(day_of_week=0, hour=0, minute=0),  # UTC 00:00 Pazar = KKTC 02:00 Pazar
+    },
+    # Her Pazartesi gece 03:30'da (KKTC) ml_metrics temizliği
+    'ml-metrics-temizle': {
+        'task': 'maintenance.ml_metrics_temizle',
+        'schedule': crontab(day_of_week=1, hour=1, minute=30),  # UTC 01:30 Pazartesi = KKTC 03:30 Pazartesi
+    },
+    # Her Pazar gecesi 02:30'da eski logları temizle
+    'eski-loglari-temizle': {
+        'task': 'maintenance.eski_loglari_temizle',
+        'schedule': crontab(day_of_week=0, hour=0, minute=30),  # UTC 00:30 Pazar = KKTC 02:30 Pazar
     },
 }
 

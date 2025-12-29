@@ -31,11 +31,13 @@ from models import (db, StokHareket, Urun, UrunGrup, Kullanici, PersonelZimmet, 
                    KatSorumlusuSiparisTalebi, KatSorumlusuSiparisTalepDetay,
                    AnaDepoTedarik, AnaDepoTedarikDetay, StokFifoKayit, StokFifoKullanim)
 from sqlalchemy import desc
+from sqlalchemy.orm import joinedload
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem, log_hata, get_stok_toplamlari
 from utils.audit import audit_create, audit_update, audit_delete, serialize_model
 from utils.satin_alma_servisleri import SatinAlmaServisi
 from utils.tedarikci_servisleri import TedarikciServisi
+from utils.query_helpers_optimized import get_stok_hareketleri_optimized, get_zimmetler_optimized
 from datetime import datetime, date, timedelta
 import os
 import pytz
@@ -110,8 +112,8 @@ def register_depo_routes(app):
         # Aktif ürünleri grup ile birlikte getir
         urunler = Urun.query.filter_by(aktif=True).order_by(Urun.urun_adi).all()
         
-        # Son stok hareketlerini getir (otel filtrelemesi olmadan - tüm stok hareketleri)
-        stok_hareketleri = StokHareket.query.order_by(StokHareket.islem_tarihi.desc()).limit(50).all()
+        # Son stok hareketlerini getir (optimized - N+1 problemi çözüldü)
+        stok_hareketleri = get_stok_hareketleri_optimized(limit=50)
         
         return render_template('depo_sorumlusu/stok_giris.html', 
                              gruplar=gruplar,
@@ -323,8 +325,12 @@ def register_depo_routes(app):
             kat_sorumlulari = Kullanici.query.filter_by(rol='kat_sorumlusu', aktif=True).all()
         
         urun_gruplari = UrunGrup.query.filter_by(aktif=True).order_by(UrunGrup.grup_adi).all()
-        # Aktif ve iade edilmiş zimmetleri göster (iptal edilenleri gösterme)
-        aktif_zimmetler = PersonelZimmet.query.filter(
+        # Aktif ve iade edilmiş zimmetleri göster (optimized - N+1 problemi çözüldü)
+        aktif_zimmetler = PersonelZimmet.query.options(
+            joinedload(PersonelZimmet.personel),
+            joinedload(PersonelZimmet.teslim_eden),
+            joinedload(PersonelZimmet.detaylar).joinedload(PersonelZimmetDetay.urun)
+        ).filter(
             PersonelZimmet.durum.in_(['aktif', 'iade_edildi'])
         ).order_by(PersonelZimmet.zimmet_tarihi.desc()).all()
         
@@ -2384,7 +2390,7 @@ def register_depo_routes(app):
     @login_required
     @role_required('depo_sorumlusu', 'sistem_yoneticisi')
     def manuel_gorev_raporu_gonder():
-        """Manuel görev tamamlanma raporu gönderimi"""
+        """Manuel görev tamamlanma raporu gönderimi - Tek veya Toplu"""
         try:
             from utils.rapor_email_service import RaporEmailService
             from models import Kullanici
@@ -2393,6 +2399,7 @@ def register_depo_routes(app):
             data = request.get_json() or {}
             rapor_tarihi_str = data.get('tarih')
             kat_sorumlusu_id = data.get('kat_sorumlusu_id')
+            toplu_gonder = data.get('toplu', False)  # Toplu gönderim seçeneği
             
             # Tarih parse
             if rapor_tarihi_str:
@@ -2400,7 +2407,24 @@ def register_depo_routes(app):
             else:
                 rapor_tarihi = date.today() - timedelta(days=1)
             
-            # Kullanıcının erişebileceği oteller
+            # TOPLU GÖNDERİM - Tüm personel tek mail'de
+            if toplu_gonder:
+                result = RaporEmailService.send_toplu_gorev_raporu(rapor_tarihi)
+                
+                log_islem('rapor_gonder', 'toplu_gorev_tamamlanma', {
+                    'tarih': rapor_tarihi.isoformat(),
+                    'personel_sayisi': result.get('personel_sayisi', 0),
+                    'basarili': result.get('success')
+                })
+                
+                return jsonify({
+                    'success': result.get('success'),
+                    'message': result.get('message'),
+                    'toplu': True,
+                    'personel_sayisi': result.get('personel_sayisi', 0)
+                })
+            
+            # TEKİL GÖNDERİM - Eski davranış (geriye uyumluluk)
             kullanici_otelleri = get_kullanici_otelleri()
             otel_ids = [o.id for o in kullanici_otelleri]
             
@@ -2420,7 +2444,7 @@ def register_depo_routes(app):
                         hatali += 1
                         sonuclar.append({'ad': f"{ks.ad} {ks.soyad}", 'durum': result.get('message', 'hata')})
             else:
-                # Tüm kat sorumluları için rapor gönder
+                # Tüm kat sorumluları için ayrı ayrı rapor gönder
                 if session.get('rol') == 'sistem_yoneticisi':
                     kat_sorumlulari = Kullanici.query.filter(
                         Kullanici.rol == 'kat_sorumlusu',
@@ -2467,7 +2491,7 @@ def register_depo_routes(app):
     @login_required
     @role_required('depo_sorumlusu', 'sistem_yoneticisi')
     def manuel_minibar_raporu_gonder():
-        """Manuel minibar sarfiyat raporu gönderimi"""
+        """Manuel minibar sarfiyat raporu gönderimi - Tek veya Toplu"""
         try:
             from utils.rapor_email_service import RaporEmailService
             from models import Otel
@@ -2476,6 +2500,7 @@ def register_depo_routes(app):
             data = request.get_json() or {}
             rapor_tarihi_str = data.get('tarih')
             otel_id = data.get('otel_id')
+            toplu_gonder = data.get('toplu', False)  # Toplu gönderim seçeneği
             
             # Tarih parse
             if rapor_tarihi_str:
@@ -2483,7 +2508,24 @@ def register_depo_routes(app):
             else:
                 rapor_tarihi = date.today() - timedelta(days=1)
             
-            # Kullanıcının erişebileceği oteller
+            # TOPLU GÖNDERİM - Tüm oteller tek mail'de
+            if toplu_gonder:
+                result = RaporEmailService.send_toplu_minibar_raporu(rapor_tarihi)
+                
+                log_islem('rapor_gonder', 'toplu_minibar_sarfiyat', {
+                    'tarih': rapor_tarihi.isoformat(),
+                    'otel_sayisi': result.get('otel_sayisi', 0),
+                    'basarili': result.get('success')
+                })
+                
+                return jsonify({
+                    'success': result.get('success'),
+                    'message': result.get('message'),
+                    'toplu': True,
+                    'otel_sayisi': result.get('otel_sayisi', 0)
+                })
+            
+            # TEKİL GÖNDERİM - Eski davranış (geriye uyumluluk)
             kullanici_otelleri = get_kullanici_otelleri()
             otel_ids = [o.id for o in kullanici_otelleri]
             
@@ -2503,7 +2545,7 @@ def register_depo_routes(app):
                         hatali += 1
                         sonuclar.append({'ad': otel.ad, 'durum': result.get('message', 'hata')})
             else:
-                # Tüm oteller için rapor gönder
+                # Tüm oteller için ayrı ayrı rapor gönder
                 if session.get('rol') == 'sistem_yoneticisi':
                     oteller = Otel.query.filter_by(aktif=True).all()
                 else:

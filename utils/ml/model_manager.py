@@ -676,189 +676,6 @@ class ModelManager:
         
         return None
 
-    def list_available_models(self) -> list:
-        """
-        Mevcut modelleri listele
-        
-        Returns:
-            List of dicts: Model bilgileri
-        """
-        try:
-            from models import MLModel
-            
-            models = MLModel.query.filter_by(is_active=True).all()
-            
-            result = []
-            for model in models:
-                info = {
-                    'model_type': model.model_type,
-                    'metric_type': model.metric_type,
-                    'path': model.model_path,
-                    'size_kb': 0,
-                    'created_at': model.training_date,
-                    'accuracy': model.accuracy
-                }
-                
-                # Dosya boyutu
-                if model.model_path:
-                    filepath = Path(model.model_path)
-                    if filepath.exists():
-                        info['size_kb'] = self._get_file_size_kb(filepath)
-                
-                result.append(info)
-            
-            return result
-            
-        except Exception as e:
-            self.logger.error(f"❌ Model listeleme hatası: {str(e)}")
-            return []
-    
-    def get_model_info(self, model_type: str, metric_type: str) -> dict:
-        """
-        Model bilgilerini getir
-        
-        Returns:
-            Dict veya None
-        """
-        try:
-            from models import MLModel
-            
-            model = MLModel.query.filter_by(
-                model_type=model_type,
-                metric_type=metric_type,
-                is_active=True
-            ).first()
-            
-            if not model:
-                return None
-            
-            info = {
-                'path': model.model_path,
-                'size_kb': 0,
-                'accuracy': model.accuracy,
-                'precision': model.precision,
-                'recall': model.recall,
-                'training_date': model.training_date,
-                'is_active': model.is_active
-            }
-            
-            # Dosya boyutu
-            if model.model_path:
-                filepath = Path(model.model_path)
-                if filepath.exists():
-                    info['size_kb'] = self._get_file_size_kb(filepath)
-            
-            return info
-            
-        except Exception as e:
-            self.logger.error(f"❌ Model bilgi hatası: {str(e)}")
-            return None
-
-    def cleanup_old_models(self, keep_versions: int = 3) -> dict:
-        """
-        Eski model versiyonlarını temizle
-        
-        Args:
-            keep_versions: Her model tipi için kaç versiyon saklanacak
-            
-        Returns:
-            Dict: Temizlik sonuçları
-        """
-        try:
-            from models import MLModel
-            from datetime import timedelta
-            
-            deleted_count = 0
-            freed_space_mb = 0
-            kept_models = []
-            
-            # Her model tipi için
-            model_types = self.db.session.query(
-                MLModel.model_type,
-                MLModel.metric_type
-            ).distinct().all()
-            
-            for model_type, metric_type in model_types:
-                # Bu tip için tüm modelleri al (tarih sıralı)
-                models = MLModel.query.filter_by(
-                    model_type=model_type,
-                    metric_type=metric_type
-                ).order_by(MLModel.training_date.desc()).all()
-                
-                # İlk keep_versions kadarını sakla, diğerlerini sil
-                for i, model in enumerate(models):
-                    if i < keep_versions:
-                        # Sakla
-                        kept_models.append(f"{model_type}_{metric_type}")
-                    else:
-                        # Sil
-                        if model.model_path:
-                            filepath = Path(model.model_path)
-                            if filepath.exists():
-                                size_mb = filepath.stat().st_size / (1024**2)
-                                filepath.unlink()
-                                freed_space_mb += size_mb
-                                deleted_count += 1
-                        
-                        # Veritabanında is_active=false yap
-                        model.is_active = False
-            
-            # 30 günden eski inactive modelleri sil
-            otuz_gun_once = datetime.now(timezone.utc) - timedelta(days=30)
-            old_models = MLModel.query.filter(
-                MLModel.is_active == False,
-                MLModel.training_date < otuz_gun_once
-            ).all()
-            
-            for model in old_models:
-                if model.model_path:
-                    filepath = Path(model.model_path)
-                    if filepath.exists():
-                        size_mb = filepath.stat().st_size / (1024**2)
-                        filepath.unlink()
-                        freed_space_mb += size_mb
-                        deleted_count += 1
-                
-                self.db.session.delete(model)
-            
-            self.db.session.commit()
-            
-            # Disk bilgisi
-            disk_info = self._check_disk_space()
-            
-            result = {
-                'deleted_count': deleted_count,
-                'freed_space_mb': round(freed_space_mb, 2),
-                'kept_models': list(set(kept_models)),
-                'disk_usage_percent': disk_info['percent']
-            }
-            
-            # Detaylı log
-            if deleted_count > 0:
-                self.logger.info(
-                    f"🗑️  [CLEANUP_SUCCESS] Model cleanup tamamlandı | "
-                    f"Deleted: {deleted_count} models | "
-                    f"Freed: {freed_space_mb:.2f}MB | "
-                    f"Kept: {len(set(kept_models))} types | "
-                    f"Disk: {disk_info['percent']:.1f}% ({disk_info['free_gb']:.2f}GB free)"
-                )
-            else:
-                self.logger.info(
-                    f"✅ [CLEANUP_SKIP] Temizlenecek model yok | "
-                    f"Disk: {disk_info['percent']:.1f}%"
-                )
-            
-            return result
-            
-        except Exception as e:
-            self.db.session.rollback()
-            self.logger.error(f"❌ Cleanup hatası: {str(e)}")
-            return {
-                'deleted_count': 0,
-                'freed_space_mb': 0,
-                'kept_models': []
-            }
-
     def _log_performance_metric(
         self,
         operation: str,
@@ -870,43 +687,36 @@ class ModelManager:
         error: str = None
     ):
         """
-        Performance metriklerini ml_metrics tablosuna kaydet
+        Model işlem performans metriğini logla (MLPerformanceLog tablosuna)
         
         Args:
             operation: 'model_save' veya 'model_load'
             model_type: Model tipi
             metric_type: Metrik tipi
-            duration_ms: İşlem süresi (milisaniye)
+            duration_ms: İşlem süresi (ms)
             file_size_mb: Dosya boyutu (MB)
-            success: İşlem başarılı mı?
-            error: Hata mesajı (varsa)
+            success: Başarılı mı
+            error: Hata mesajı (opsiyonel)
         """
         try:
-            from models import MLMetric
+            from models import MLPerformanceLog
             
-            # Metrik kaydı oluştur
-            metric = MLMetric(
-                metric_type='dolum_sure',  # En yakın tip (işlem süresi için)
-                entity_id=0,  # Sistem seviyesi
-                metric_value=duration_ms,
-                timestamp=datetime.now(timezone.utc),
-                extra_data={
-                    'operation': operation,
-                    'model_type': model_type,
-                    'metric_type': metric_type,
-                    'duration_ms': duration_ms,
-                    'file_size_mb': round(file_size_mb, 2),
-                    'success': success,
-                    'error': error
-                }
+            log = MLPerformanceLog(
+                operation=operation,
+                model_type=model_type,
+                metric_type=metric_type,
+                duration_ms=duration_ms,
+                file_size_mb=file_size_mb,
+                success=success,
+                error_message=error
             )
             
-            self.db.session.add(metric)
+            self.db.session.add(log)
             self.db.session.commit()
             
         except Exception as e:
-            # Metrik kaydetme hatası uygulamayı durdurmamalı
-            self.logger.warning(f"⚠️  Performance metrik kaydedilemedi: {str(e)}")
+            # Performance log hatası kritik değil, sadece logla
+            self.logger.warning(f"⚠️  Performance log kaydedilemedi: {str(e)}")
             self.db.session.rollback()
     
     def get_performance_stats(self, hours: int = 24) -> Dict:

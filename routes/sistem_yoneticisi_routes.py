@@ -21,10 +21,14 @@ Roller:
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from datetime import datetime, date, timezone
 import pytz
+import logging
 from models import db, Otel, Kat, Oda, OdaTipi, Kullanici, SistemLog
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem, log_hata
 from utils.audit import audit_create, audit_update, audit_delete, serialize_model
+
+# Logger tanımla
+logger = logging.getLogger(__name__)
 
 # KKTC Timezone (Kıbrıs - Europe/Nicosia)
 KKTC_TZ = pytz.timezone('Europe/Nicosia')

@@ -956,8 +956,8 @@ def minibar_excel():
         return redirect(url_for('raporlar.minibar_raporlari'))
 
 
-def register_rapor_routes(app):
-    app.register_blueprint(raporlar_bp)
+# İkinci register_rapor_routes tanımı kaldırıldı - duplicate temizliği (29.12.2025)
+
 @raporlar_bp.route('/zimmet-raporu-olustur', methods=['POST'])
 @login_required
 @role_required('sistem_yoneticisi', 'admin')
@@ -1318,6 +1318,294 @@ def performans_excel():
         return redirect(url_for('raporlar.performans_raporlari'))
 
 
-def register_rapor_routes(app):
-    """Rapor route'larını kaydet"""
-    app.register_blueprint(raporlar_bp)
+# ============================================================================
+# YENİ RAPORLAR - OTEL BAZLI ZİMMET, KAT SORUMLUSU KULLANIM, ODA BAZLI TÜKETİM
+# ============================================================================
+
+@raporlar_bp.route('/otel-zimmet-stok')
+@login_required
+@role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
+def otel_zimmet_stok_raporlari():
+    """Otel bazlı zimmet stok raporları sayfası"""
+    try:
+        oteller = get_kullanici_otelleri()
+        return render_template('raporlar/otel_zimmet_stok.html', oteller=oteller)
+    except Exception as e:
+        log_hata(e, modul='otel_zimmet_stok_raporlari')
+        flash('Sayfa yüklenirken hata oluştu.', 'danger')
+        return redirect(url_for('raporlar.doluluk_raporlari'))
+
+
+@raporlar_bp.route('/otel-zimmet-stok-raporu-olustur', methods=['POST'])
+@login_required
+@role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
+def otel_zimmet_stok_raporu_olustur():
+    """Otel zimmet stok raporu oluştur"""
+    try:
+        from utils.rapor_servisleri import OtelZimmetRaporServisi
+        
+        otel_id = request.form.get('otel_id', type=int)
+        
+        rapor = OtelZimmetRaporServisi.get_otel_zimmet_stok_raporu(otel_id)
+        
+        if not rapor['success']:
+            flash(rapor.get('message', 'Rapor oluşturulamadı'), 'danger')
+            return redirect(url_for('raporlar.otel_zimmet_stok_raporlari'))
+        
+        oteller = get_kullanici_otelleri()
+        
+        log_islem('view', 'otel_zimmet_stok_raporu', {'otel_id': otel_id})
+        
+        return render_template('raporlar/otel_zimmet_stok.html',
+                             oteller=oteller,
+                             rapor_verisi=rapor)
+        
+    except Exception as e:
+        log_hata(e, modul='otel_zimmet_stok_raporu_olustur')
+        flash('Rapor oluşturulamadı.', 'danger')
+        return redirect(url_for('raporlar.otel_zimmet_stok_raporlari'))
+
+
+@raporlar_bp.route('/kat-sorumlusu-kullanim')
+@login_required
+@role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
+def kat_sorumlusu_kullanim_raporlari():
+    """Kat sorumlusu zimmet kullanım raporları sayfası"""
+    try:
+        oteller = get_kullanici_otelleri()
+        personeller = Kullanici.query.filter(
+            Kullanici.rol == 'kat_sorumlusu',
+            Kullanici.aktif.is_(True)
+        ).order_by(Kullanici.ad, Kullanici.soyad).all()
+        return render_template('raporlar/kat_sorumlusu_kullanim.html', 
+                             oteller=oteller, personeller=personeller)
+    except Exception as e:
+        log_hata(e, modul='kat_sorumlusu_kullanim_raporlari')
+        flash('Sayfa yüklenirken hata oluştu.', 'danger')
+        return redirect(url_for('raporlar.doluluk_raporlari'))
+
+
+@raporlar_bp.route('/kat-sorumlusu-kullanim-raporu-olustur', methods=['POST'])
+@login_required
+@role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
+def kat_sorumlusu_kullanim_raporu_olustur():
+    """Kat sorumlusu kullanım raporu oluştur"""
+    try:
+        from utils.rapor_servisleri import KatSorumlusuKullanimRaporServisi
+        
+        otel_id = request.form.get('otel_id', type=int)
+        personel_id = request.form.get('personel_id', type=int)
+        baslangic = request.form.get('baslangic')
+        bitis = request.form.get('bitis')
+        
+        baslangic_tarihi = datetime.strptime(baslangic, '%Y-%m-%d').date() if baslangic else None
+        bitis_tarihi = datetime.strptime(bitis, '%Y-%m-%d').date() if bitis else None
+        
+        rapor = KatSorumlusuKullanimRaporServisi.get_personel_kullanim_raporu(
+            otel_id=otel_id,
+            personel_id=personel_id,
+            baslangic_tarihi=baslangic_tarihi,
+            bitis_tarihi=bitis_tarihi
+        )
+        
+        if not rapor['success']:
+            flash(rapor.get('message', 'Rapor oluşturulamadı'), 'danger')
+            return redirect(url_for('raporlar.kat_sorumlusu_kullanim_raporlari'))
+        
+        oteller = get_kullanici_otelleri()
+        personeller = Kullanici.query.filter(
+            Kullanici.rol == 'kat_sorumlusu',
+            Kullanici.aktif.is_(True)
+        ).order_by(Kullanici.ad, Kullanici.soyad).all()
+        
+        log_islem('view', 'kat_sorumlusu_kullanim_raporu', {
+            'otel_id': otel_id, 'personel_id': personel_id
+        })
+        
+        return render_template('raporlar/kat_sorumlusu_kullanim.html',
+                             oteller=oteller,
+                             personeller=personeller,
+                             rapor_verisi=rapor)
+        
+    except Exception as e:
+        log_hata(e, modul='kat_sorumlusu_kullanim_raporu_olustur')
+        flash('Rapor oluşturulamadı.', 'danger')
+        return redirect(url_for('raporlar.kat_sorumlusu_kullanim_raporlari'))
+
+
+@raporlar_bp.route('/oda-bazli-tuketim')
+@login_required
+@role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
+def oda_bazli_tuketim_raporlari():
+    """Oda bazlı tüketim raporları sayfası"""
+    try:
+        oteller = get_kullanici_otelleri()
+        return render_template('raporlar/oda_bazli_tuketim.html', oteller=oteller)
+    except Exception as e:
+        log_hata(e, modul='oda_bazli_tuketim_raporlari')
+        flash('Sayfa yüklenirken hata oluştu.', 'danger')
+        return redirect(url_for('raporlar.doluluk_raporlari'))
+
+
+@raporlar_bp.route('/oda-bazli-tuketim-raporu-olustur', methods=['POST'])
+@login_required
+@role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
+def oda_bazli_tuketim_raporu_olustur():
+    """Oda bazlı tüketim raporu oluştur"""
+    try:
+        from utils.rapor_servisleri import OdaBazliTuketimRaporServisi
+        
+        otel_id = request.form.get('otel_id', type=int)
+        baslangic = request.form.get('baslangic')
+        bitis = request.form.get('bitis')
+        
+        if not otel_id:
+            flash('Lütfen otel seçin.', 'warning')
+            return redirect(url_for('raporlar.oda_bazli_tuketim_raporlari'))
+        
+        baslangic_tarihi = datetime.strptime(baslangic, '%Y-%m-%d').date() if baslangic else None
+        bitis_tarihi = datetime.strptime(bitis, '%Y-%m-%d').date() if bitis else None
+        
+        rapor = OdaBazliTuketimRaporServisi.get_oda_bazli_tuketim_raporu(
+            otel_id=otel_id,
+            baslangic_tarihi=baslangic_tarihi,
+            bitis_tarihi=bitis_tarihi
+        )
+        
+        if not rapor['success']:
+            flash(rapor.get('message', 'Rapor oluşturulamadı'), 'danger')
+            return redirect(url_for('raporlar.oda_bazli_tuketim_raporlari'))
+        
+        oteller = get_kullanici_otelleri()
+        
+        log_islem('view', 'oda_bazli_tuketim_raporu', {
+            'otel_id': otel_id, 'baslangic': baslangic, 'bitis': bitis
+        })
+        
+        return render_template('raporlar/oda_bazli_tuketim.html',
+                             oteller=oteller,
+                             rapor_verisi=rapor)
+        
+    except Exception as e:
+        log_hata(e, modul='oda_bazli_tuketim_raporu_olustur')
+        flash('Rapor oluşturulamadı.', 'danger')
+        return redirect(url_for('raporlar.oda_bazli_tuketim_raporlari'))
+
+
+@raporlar_bp.route('/gunluk-gorev-detay')
+@login_required
+@role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
+def gunluk_gorev_detay_raporlari():
+    """Günlük görev detay raporları sayfası"""
+    try:
+        oteller = get_kullanici_otelleri()
+        personeller = Kullanici.query.filter(
+            Kullanici.rol == 'kat_sorumlusu',
+            Kullanici.aktif.is_(True)
+        ).order_by(Kullanici.ad, Kullanici.soyad).all()
+        return render_template('raporlar/gunluk_gorev_detay.html', 
+                             oteller=oteller, personeller=personeller)
+    except Exception as e:
+        log_hata(e, modul='gunluk_gorev_detay_raporlari')
+        flash('Sayfa yüklenirken hata oluştu.', 'danger')
+        return redirect(url_for('raporlar.doluluk_raporlari'))
+
+
+@raporlar_bp.route('/gunluk-gorev-detay-raporu-olustur', methods=['POST'])
+@login_required
+@role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
+def gunluk_gorev_detay_raporu_olustur():
+    """Günlük görev detay raporu oluştur"""
+    try:
+        from utils.rapor_servisleri import GunlukGorevRaporServisi
+        
+        otel_id = request.form.get('otel_id', type=int)
+        personel_id = request.form.get('personel_id', type=int)
+        baslangic = request.form.get('baslangic')
+        bitis = request.form.get('bitis')
+        
+        baslangic_tarihi = datetime.strptime(baslangic, '%Y-%m-%d').date() if baslangic else None
+        bitis_tarihi = datetime.strptime(bitis, '%Y-%m-%d').date() if bitis else None
+        
+        rapor = GunlukGorevRaporServisi.get_gunluk_gorev_raporu(
+            otel_id=otel_id,
+            personel_id=personel_id,
+            baslangic_tarihi=baslangic_tarihi,
+            bitis_tarihi=bitis_tarihi
+        )
+        
+        if not rapor['success']:
+            flash(rapor.get('message', 'Rapor oluşturulamadı'), 'danger')
+            return redirect(url_for('raporlar.gunluk_gorev_detay_raporlari'))
+        
+        oteller = get_kullanici_otelleri()
+        personeller = Kullanici.query.filter(
+            Kullanici.rol == 'kat_sorumlusu',
+            Kullanici.aktif.is_(True)
+        ).order_by(Kullanici.ad, Kullanici.soyad).all()
+        
+        log_islem('view', 'gunluk_gorev_detay_raporu', {
+            'otel_id': otel_id, 'personel_id': personel_id
+        })
+        
+        return render_template('raporlar/gunluk_gorev_detay.html',
+                             oteller=oteller,
+                             personeller=personeller,
+                             rapor_verisi=rapor)
+        
+    except Exception as e:
+        log_hata(e, modul='gunluk_gorev_detay_raporu_olustur')
+        flash('Rapor oluşturulamadı.', 'danger')
+        return redirect(url_for('raporlar.gunluk_gorev_detay_raporlari'))
+
+
+@raporlar_bp.route('/otel-karsilastirma')
+@login_required
+@role_required('sistem_yoneticisi', 'admin')
+def otel_karsilastirma_raporlari():
+    """Otel karşılaştırma raporları sayfası"""
+    try:
+        return render_template('raporlar/otel_karsilastirma.html')
+    except Exception as e:
+        log_hata(e, modul='otel_karsilastirma_raporlari')
+        flash('Sayfa yüklenirken hata oluştu.', 'danger')
+        return redirect(url_for('raporlar.doluluk_raporlari'))
+
+
+@raporlar_bp.route('/otel-karsilastirma-raporu-olustur', methods=['POST'])
+@login_required
+@role_required('sistem_yoneticisi', 'admin')
+def otel_karsilastirma_raporu_olustur():
+    """Otel karşılaştırma raporu oluştur"""
+    try:
+        from utils.rapor_servisleri import OtelKarsilastirmaRaporServisi
+        
+        baslangic = request.form.get('baslangic')
+        bitis = request.form.get('bitis')
+        
+        baslangic_tarihi = datetime.strptime(baslangic, '%Y-%m-%d').date() if baslangic else None
+        bitis_tarihi = datetime.strptime(bitis, '%Y-%m-%d').date() if bitis else None
+        
+        rapor = OtelKarsilastirmaRaporServisi.get_otel_karsilastirma_raporu(
+            baslangic_tarihi=baslangic_tarihi,
+            bitis_tarihi=bitis_tarihi
+        )
+        
+        if not rapor['success']:
+            flash(rapor.get('message', 'Rapor oluşturulamadı'), 'danger')
+            return redirect(url_for('raporlar.otel_karsilastirma_raporlari'))
+        
+        log_islem('view', 'otel_karsilastirma_raporu', {
+            'baslangic': baslangic, 'bitis': bitis
+        })
+        
+        return render_template('raporlar/otel_karsilastirma.html', rapor_verisi=rapor)
+        
+    except Exception as e:
+        log_hata(e, modul='otel_karsilastirma_raporu_olustur')
+        flash('Rapor oluşturulamadı.', 'danger')
+        return redirect(url_for('raporlar.otel_karsilastirma_raporlari'))
+
+
+# Üçüncü register_rapor_routes tanımı kaldırıldı - duplicate temizliği (29.12.2025)
+# Sadece dosya başındaki (satır 41) tanım kullanılıyor

@@ -179,34 +179,6 @@
   </div>
 </div>
 
-<!-- Fiyatlandırma & Karlılık -->
-<div class="sidebar-section" data-section="fiyat">
-  <button class="sidebar-section-header" onclick="toggleSection('fiyat')">
-    <div class="flex items-center">
-      <i class="fas fa-dollar-sign text-xs mr-2"></i>
-      <span>Fiyat & Karlılık</span>
-    </div>
-    <i class="fas fa-chevron-down section-arrow"></i>
-  </button>
-  <div class="sidebar-section-content" id="section-fiyat">
-    <a
-      href="{{ url_for('fiyat_yonetimi') }}"
-      class="sidebar-item {% if request.endpoint == 'fiyat_yonetimi' %}active{% endif %}"
-    >
-      <i class="fas fa-tags sidebar-icon text-blue-500"></i>
-      <span class="sidebar-text font-medium">Fiyat Yönetimi</span>
-    </a>
-
-    <a
-      href="{{ url_for('karlilik_dashboard') }}"
-      class="sidebar-item {% if request.endpoint == 'karlilik_dashboard' %}active{% endif %}"
-    >
-      <i class="fas fa-chart-line sidebar-icon text-green-500"></i>
-      <span class="sidebar-text font-medium">Karlılık Dashboard</span>
-    </a>
-  </div>
-</div>
-
 <!-- Raporlar & Analiz -->
 <div class="sidebar-section" data-section="raporlar">
   <button class="sidebar-section-header" onclick="toggleSection('raporlar')">
@@ -245,6 +217,41 @@
     >
       <i class="fas fa-chart-line sidebar-icon"></i>
       <span class="sidebar-text">Performans Raporları</span>
+    </a>
+    <a
+      href="{{ url_for('raporlar.otel_zimmet_stok_raporlari') }}"
+      class="sidebar-item {% if request.endpoint == 'raporlar.otel_zimmet_stok_raporlari' %}active{% endif %}"
+    >
+      <i class="fas fa-hotel sidebar-icon text-blue-500"></i>
+      <span class="sidebar-text">Otel Zimmet Stokları</span>
+    </a>
+    <a
+      href="{{ url_for('raporlar.kat_sorumlusu_kullanim_raporlari') }}"
+      class="sidebar-item {% if request.endpoint == 'raporlar.kat_sorumlusu_kullanim_raporlari' %}active{% endif %}"
+    >
+      <i class="fas fa-user-check sidebar-icon text-indigo-500"></i>
+      <span class="sidebar-text">Kat Sorumlusu Kullanım</span>
+    </a>
+    <a
+      href="{{ url_for('raporlar.oda_bazli_tuketim_raporlari') }}"
+      class="sidebar-item {% if request.endpoint == 'raporlar.oda_bazli_tuketim_raporlari' %}active{% endif %}"
+    >
+      <i class="fas fa-door-open sidebar-icon text-teal-500"></i>
+      <span class="sidebar-text">Oda Bazlı Tüketim</span>
+    </a>
+    <a
+      href="{{ url_for('raporlar.gunluk_gorev_detay_raporlari') }}"
+      class="sidebar-item {% if request.endpoint == 'raporlar.gunluk_gorev_detay_raporlari' %}active{% endif %}"
+    >
+      <i class="fas fa-tasks sidebar-icon text-amber-500"></i>
+      <span class="sidebar-text">Günlük Görev Detay</span>
+    </a>
+    <a
+      href="{{ url_for('raporlar.otel_karsilastirma_raporlari') }}"
+      class="sidebar-item {% if request.endpoint == 'raporlar.otel_karsilastirma_raporlari' %}active{% endif %}"
+    >
+      <i class="fas fa-balance-scale sidebar-icon text-purple-500"></i>
+      <span class="sidebar-text">Otel Karşılaştırma</span>
     </a>
   </div>
 </div>
@@ -288,6 +295,22 @@
       <span class="sidebar-text">Sistem Logları</span>
     </a>
   </div>
+</div>
+
+<!-- Yardım & Rehber -->
+<div
+  class="sidebar-section mt-4 pt-4 border-t border-slate-200 dark:border-slate-700"
+>
+  <button
+    onclick="openSystemGuide()"
+    class="sidebar-item w-full bg-gradient-to-r from-indigo-500/10 to-purple-500/10 hover:from-indigo-500/20 hover:to-purple-500/20 border border-indigo-200 dark:border-indigo-800"
+  >
+    <i class="fas fa-book-open sidebar-icon text-indigo-500"></i>
+    <span class="sidebar-text font-medium text-indigo-700 dark:text-indigo-300"
+      >Sistem Rehberi</span
+    >
+    <i class="fas fa-external-link-alt text-xs text-indigo-400 ml-auto"></i>
+  </button>
 </div>
 
 <!-- Sidebar Styles -->

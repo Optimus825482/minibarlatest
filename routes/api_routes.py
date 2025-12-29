@@ -642,7 +642,7 @@ def register_api_routes(app):
     @login_required
     @role_required('kat_sorumlusu')
     def api_minibar_doldur():
-        """Tek bir ürünü minibar'a doldur - Gerçek stok girişi ile"""
+        """Tek bir ürünü minibar'a doldur - Otel bazlı zimmet sistemi ile"""
         try:
             data = request.get_json()
             oda_id = data.get('oda_id')
@@ -666,21 +666,23 @@ def register_api_routes(app):
             if not urun:
                 return jsonify({'success': False, 'error': 'Ürün bulunamadı'})
             
-            # Zimmet kontrolü
-            zimmet_detaylar = db.session.query(PersonelZimmetDetay).join(
-                PersonelZimmet, PersonelZimmetDetay.zimmet_id == PersonelZimmet.id
-            ).filter(
-                PersonelZimmet.personel_id == kullanici_id,
-                PersonelZimmet.durum == 'aktif',
-                PersonelZimmetDetay.urun_id == urun_id
-            ).all()
+            # Otel bazlı zimmet kontrolü
+            from utils.otel_zimmet_servisleri import OtelZimmetServisi, OtelZimmetStokYetersizError
             
-            if not zimmet_detaylar:
-                return jsonify({'success': False, 'error': f'Zimmetinizde {urun.urun_adi} bulunmuyor'})
+            personel = Kullanici.query.get(kullanici_id)
+            if not personel or not personel.otel_id:
+                return jsonify({'success': False, 'error': 'Otel atamanız bulunamadı'})
             
-            toplam_kalan = sum(d.miktar - d.kullanilan_miktar for d in zimmet_detaylar)
-            if toplam_kalan < eklenen_miktar:
-                return jsonify({'success': False, 'error': f'Yetersiz zimmet! Kalan: {toplam_kalan} {urun.birim}'})
+            otel_id = personel.otel_id
+            
+            # Otel zimmet stoğunu kontrol et
+            otel_stok = OtelZimmetServisi.get_otel_zimmet_stok(otel_id, urun_id)
+            
+            if not otel_stok:
+                return jsonify({'success': False, 'error': f'Otel zimmet deposunda {urun.urun_adi} bulunmuyor'})
+            
+            if otel_stok.kalan_miktar < eklenen_miktar:
+                return jsonify({'success': False, 'error': f'Yetersiz zimmet! Kalan: {otel_stok.kalan_miktar} {urun.birim}'})
             
             # Son işlemi bul
             son_islem = MinibarIslem.query.filter_by(oda_id=oda_id).order_by(MinibarIslem.id.desc()).first()
@@ -704,6 +706,19 @@ def register_api_routes(app):
             
             # Yeni stok
             yeni_stok = gercek_mevcut_stok + eklenen_miktar
+            
+            # Oda bilgisini al
+            oda = Oda.query.get(oda_id)
+            
+            # Otel zimmet stoğundan düş ve kullanım kaydı oluştur
+            otel_stok_updated, kullanim = OtelZimmetServisi.stok_dusu(
+                otel_id=otel_id,
+                urun_id=urun_id,
+                miktar=int(eklenen_miktar),
+                personel_id=kullanici_id,
+                islem_tipi='minibar_kullanim',
+                aciklama=f'Minibar doldurma - Oda: {oda.oda_no if oda else oda_id}'
+            )
             
             # Yeni işlem oluştur
             islem = MinibarIslem(
@@ -732,24 +747,6 @@ def register_api_routes(app):
                         )
                         db.session.add(yeni_detay)
             
-            # Zimmetten düş (FIFO)
-            kalan_miktar = eklenen_miktar
-            kullanilan_zimmet_id = None
-            
-            for zimmet_detay in zimmet_detaylar:
-                if kalan_miktar <= 0:
-                    break
-                
-                detay_kalan = zimmet_detay.miktar - zimmet_detay.kullanilan_miktar
-                if detay_kalan > 0:
-                    kullanilacak = min(detay_kalan, kalan_miktar)
-                    zimmet_detay.kullanilan_miktar += kullanilacak
-                    zimmet_detay.kalan_miktar = zimmet_detay.miktar - zimmet_detay.kullanilan_miktar
-                    kalan_miktar -= kullanilacak
-                    
-                    if not kullanilan_zimmet_id:
-                        kullanilan_zimmet_id = zimmet_detay.id
-            
             # Eklenen ürün için minibar detayı kaydet
             detay = MinibarIslemDetay(
                 islem_id=islem.id,
@@ -758,7 +755,7 @@ def register_api_routes(app):
                 bitis_stok=yeni_stok,
                 tuketim=tuketim,
                 eklenen_miktar=eklenen_miktar,
-                zimmet_detay_id=kullanilan_zimmet_id
+                zimmet_detay_id=None  # Artık otel bazlı sistem kullanılıyor
             )
             db.session.add(detay)
             db.session.commit()
@@ -837,7 +834,7 @@ def register_api_routes(app):
     @login_required
     @role_required('kat_sorumlusu')
     def api_toplu_oda_doldur():
-        """Seçilen odalara toplu olarak ürün doldur"""
+        """Seçilen odalara toplu olarak ürün doldur - Otel bazlı zimmet sistemi ile"""
         try:
             data = request.get_json()
             
@@ -874,22 +871,25 @@ def register_api_routes(app):
             # Zimmetten toplam gereken miktar
             toplam_gerekli = eklenen_miktar * len(oda_ids)
 
-            # Kullanıcının zimmetini kontrol et
-            zimmet_detaylar = db.session.query(PersonelZimmetDetay).join(
-                PersonelZimmet, PersonelZimmetDetay.zimmet_id == PersonelZimmet.id
-            ).filter(
-                PersonelZimmet.personel_id == kullanici_id,
-                PersonelZimmet.durum == 'aktif',
-                PersonelZimmetDetay.urun_id == urun_id
-            ).order_by(PersonelZimmet.zimmet_tarihi).all()
-
-            # Toplam kalan zimmet
-            toplam_kalan = sum(detay.miktar - detay.kullanilan_miktar for detay in zimmet_detaylar)
-
-            if toplam_kalan < toplam_gerekli:
+            # Otel bazlı zimmet kontrolü
+            from utils.otel_zimmet_servisleri import OtelZimmetServisi, OtelZimmetStokYetersizError
+            
+            personel = Kullanici.query.get(kullanici_id)
+            if not personel or not personel.otel_id:
+                return jsonify({'success': False, 'error': 'Otel atamanız bulunamadı'})
+            
+            otel_id = personel.otel_id
+            
+            # Otel zimmet stoğunu kontrol et
+            otel_stok = OtelZimmetServisi.get_otel_zimmet_stok(otel_id, urun_id)
+            
+            if not otel_stok:
+                return jsonify({'success': False, 'error': f'Otel zimmet deposunda {urun.urun_adi} bulunmuyor'})
+            
+            if otel_stok.kalan_miktar < toplam_gerekli:
                 return jsonify({
                     'success': False,
-                    'error': f'Zimmetinizde yeterli ürün yok! Gereken: {toplam_gerekli} {urun.birim}, Mevcut: {toplam_kalan} {urun.birim}'
+                    'error': f'Otel zimmet deposunda yeterli ürün yok! Gereken: {toplam_gerekli} {urun.birim}, Mevcut: {otel_stok.kalan_miktar} {urun.birim}'
                 })
 
             # Her oda için işlem oluştur
@@ -917,6 +917,16 @@ def register_api_routes(app):
 
                     # Yeni stok
                     yeni_stok = mevcut_stok + eklenen_miktar
+                    
+                    # Otel zimmet stoğundan düş ve kullanım kaydı oluştur
+                    otel_stok_updated, kullanim = OtelZimmetServisi.stok_dusu(
+                        otel_id=otel_id,
+                        urun_id=urun_id,
+                        miktar=int(eklenen_miktar),
+                        personel_id=kullanici_id,
+                        islem_tipi='minibar_kullanim',
+                        aciklama=f'Toplu doldurma - Oda: {oda.oda_no}'
+                    )
 
                     # Yeni işlem oluştur
                     islem = MinibarIslem(
@@ -940,7 +950,7 @@ def register_api_routes(app):
                                     bitis_stok=mevcut,
                                     tuketim=0,
                                     eklenen_miktar=0,
-                                    zimmet_detay_id=son_detay_item.zimmet_detay_id
+                                    zimmet_detay_id=None  # Artık otel bazlı sistem
                                 )
                                 db.session.add(yeni_detay)
 
@@ -952,24 +962,9 @@ def register_api_routes(app):
                         bitis_stok=yeni_stok,
                         tuketim=0,
                         eklenen_miktar=eklenen_miktar,
-                        zimmet_detay_id=None
+                        zimmet_detay_id=None  # Artık otel bazlı sistem
                     )
                     db.session.add(doldurma_detay)
-
-                    # Zimmetten düş (FIFO)
-                    kalan_miktar = eklenen_miktar
-                    for zimmet_detay in zimmet_detaylar:
-                        if kalan_miktar <= 0:
-                            break
-                        detay_kalan = zimmet_detay.miktar - zimmet_detay.kullanilan_miktar
-                        if detay_kalan > 0:
-                            kullanilacak = min(detay_kalan, kalan_miktar)
-                            zimmet_detay.kullanilan_miktar += kullanilacak
-                            zimmet_detay.kalan_miktar = zimmet_detay.miktar - zimmet_detay.kullanilan_miktar
-                            kalan_miktar -= kullanilacak
-
-                            if not doldurma_detay.zimmet_detay_id:
-                                doldurma_detay.zimmet_detay_id = zimmet_detay.id
 
                     basarili_odalar.append({'oda_id': oda_id, 'oda_no': oda.oda_no})
 

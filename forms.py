@@ -249,71 +249,8 @@ class PersonelForm(BaseForm):
         ]
     )
 
-class PersonelForm(BaseForm):
-    """Personel tanımlama formu"""
-    kullanici_adi = StringField(
-        'Kullanıcı Adı',
-        validators=[
-            DataRequired(message='Kullanıcı adı zorunludur.'),
-            Length(min=3, max=50, message='Kullanıcı adı 3-50 karakter arasında olmalıdır.'),
-            pattern_validator(r'^[a-zA-Z0-9_.-]+$', 'Kullanıcı adı sadece harf, rakam ve (_-.) karakterleri içerebilir.')
-        ]
-    )
-
-    ad = StringField(
-        'Ad',
-        validators=[
-            DataRequired(message='Ad zorunludur.'),
-            Length(min=2, max=50, message='Ad 2-50 karakter arasında olmalıdır.'),
-            pattern_validator(r'^[a-zA-ZğüşöçıİĞÜŞÖÇı\s]+$', 'Ad sadece harf içerebilir.')
-        ]
-    )
-
-    soyad = StringField(
-        'Soyad',
-        validators=[
-            DataRequired(message='Soyad zorunludur.'),
-            Length(min=2, max=50, message='Soyad 2-50 karakter arasında olmalıdır.'),
-            pattern_validator(r'^[a-zA-ZğüşöçıİĞÜŞÖÇı\s]+$', 'Soyad sadece harf içerebilir.')
-        ]
-    )
-
-    email = StringField(
-        'E-posta',
-        validators=[
-            Optional(),
-            Email(message='Geçerli bir e-posta adresi giriniz.'),
-            Length(max=100, message='E-posta adresi 100 karakterden uzun olamaz.')
-        ]
-    )
-
-    telefon = StringField(
-        'Telefon',
-        validators=[
-            Optional(),
-            Length(max=20, message='Telefon numarası 20 karakterden uzun olamaz.'),
-            pattern_validator(r'^[\d\s\-\+\(\)\.]+$', 'Geçerli bir telefon numarası giriniz.')
-        ]
-    )
-
-    rol = SelectField(
-        'Rol',
-        choices=[
-            ('sistem_yoneticisi', 'Sistem Yöneticisi'),
-            ('depo_sorumlusu', 'Depo Sorumlusu'),
-            ('kat_sorumlusu', 'Kat Sorumlusu')
-        ],
-        validators=[DataRequired(message='Rol seçimi zorunludur.')]
-    )
-
-    sifre = PasswordField(
-        'Şifre',
-        validators=[
-            DataRequired(message='Şifre zorunludur.'),
-            Length(min=8, max=128, message='Şifre en az 8 karakter olmalıdır.'),
-            password_strength_validator('Şifre en az bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter içermelidir.')
-        ]
-    )
+# İkinci PersonelForm tanımı kaldırıldı - duplicate temizliği (29.12.2025)
+# Yukarıdaki "Enhanced personnel form" versiyonu kullanılıyor
 
 class PersonelDuzenleForm(BaseForm):
     """Personel düzenleme formu (şifre opsiyonel)"""

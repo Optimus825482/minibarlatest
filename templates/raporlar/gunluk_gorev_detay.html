@@ -1,0 +1,261 @@
+{% extends "base.html" %} {% block title %}Günlük Görev Detay Raporu{% endblock
+%} {% block page_title %}Günlük Görev Tamamlama Raporu{% endblock %} {% block
+content %}
+<div class="space-y-6">
+  <!-- Filtre Formu -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3 class="text-lg font-medium text-slate-900 dark:text-white mb-4">
+        <i class="fas fa-filter mr-2 text-indigo-600"></i>Rapor Filtresi
+      </h3>
+      <form
+        method="POST"
+        action="{{ url_for('raporlar.gunluk_gorev_detay_raporu_olustur') }}"
+        class="space-y-4"
+      >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              >Otel</label
+            >
+            <select
+              name="otel_id"
+              class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white shadow-sm"
+            >
+              <option value="">Tüm Oteller</option>
+              {% for otel in oteller %}
+              <option value="{{ otel.id }}">{{ otel.ad }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              >Personel</label
+            >
+            <select
+              name="personel_id"
+              class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white shadow-sm"
+            >
+              <option value="">Tüm Personeller</option>
+              {% for personel in personeller %}
+              <option value="{{ personel.id }}">
+                {{ personel.ad }} {{ personel.soyad }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              >Başlangıç</label
+            >
+            <input
+              type="date"
+              name="baslangic"
+              class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white shadow-sm"
+            />
+          </div>
+          <div>
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              >Bitiş</label
+            >
+            <input
+              type="date"
+              name="bitis"
+              class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white shadow-sm"
+            />
+          </div>
+          <div class="flex items-end">
+            <button
+              type="submit"
+              class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+            >
+              <i class="fas fa-search mr-2"></i>Rapor Oluştur
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% if rapor_verisi %}
+  <!-- Özet Kartları -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div
+      class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-4 text-white"
+    >
+      <p class="text-indigo-100 text-sm">Toplam Gün</p>
+      <p class="text-2xl font-bold">{{ rapor_verisi.toplam_gun }}</p>
+    </div>
+    <div
+      class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 text-white"
+    >
+      <p class="text-emerald-100 text-sm">Toplam Görev</p>
+      <p class="text-2xl font-bold">{{ rapor_verisi.genel_toplam_gorev }}</p>
+    </div>
+    <div
+      class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white"
+    >
+      <p class="text-green-100 text-sm">Tamamlanan</p>
+      <p class="text-2xl font-bold">{{ rapor_verisi.genel_tamamlanan }}</p>
+    </div>
+    <div
+      class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white"
+    >
+      <p class="text-blue-100 text-sm">Tamamlanma Oranı</p>
+      <p class="text-2xl font-bold">
+        %{{ rapor_verisi.genel_tamamlanma_orani }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Günlük Detaylar -->
+  {% for gun in rapor_verisi.gunler %}
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+    <div
+      class="px-4 py-4 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700"
+    >
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+          <i class="fas fa-calendar-day mr-2 text-indigo-600"></i>{{ gun.tarih
+          }}
+        </h3>
+        <div class="flex items-center gap-4 text-sm">
+          <span
+            class="px-3 py-1 bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-full"
+          >
+            <i class="fas fa-tasks mr-1"></i>{{ gun.toplam_gorev }} görev
+          </span>
+          <span
+            class="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 rounded-full"
+          >
+            <i class="fas fa-check mr-1"></i>{{ gun.tamamlanan }} tamamlandı
+          </span>
+          <span
+            class="px-3 py-1 {% if gun.tamamlanma_orani >= 80 %}bg-emerald-100 text-emerald-800{% elif gun.tamamlanma_orani >= 50 %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %} rounded-full font-semibold"
+          >
+            <i class="fas fa-percentage mr-1"></i>%{{ gun.tamamlanma_orani }}
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+        <thead class="bg-slate-100 dark:bg-slate-900">
+          <tr>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+            >
+              Personel
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+            >
+              Otel
+            </th>
+            <th
+              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+            >
+              Toplam
+            </th>
+            <th
+              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+            >
+              Tamamlanan
+            </th>
+            <th
+              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+            >
+              Bekleyen
+            </th>
+            <th
+              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+            >
+              DND
+            </th>
+            <th
+              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+            >
+              İptal
+            </th>
+            <th
+              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+            >
+              Oran
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+          {% for personel in gun.personeller %}
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+            <td
+              class="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white"
+            >
+              {{ personel.ad_soyad }}
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+              {{ personel.otel_ad }}
+            </td>
+            <td
+              class="px-4 py-3 text-sm text-center text-indigo-600 font-semibold"
+            >
+              {{ personel.toplam }}
+            </td>
+            <td
+              class="px-4 py-3 text-sm text-center text-green-600 font-semibold"
+            >
+              {{ personel.tamamlanan }}
+            </td>
+            <td class="px-4 py-3 text-sm text-center text-yellow-600">
+              {{ personel.bekleyen }}
+            </td>
+            <td class="px-4 py-3 text-sm text-center text-orange-600">
+              {{ personel.dnd }}
+            </td>
+            <td class="px-4 py-3 text-sm text-center text-red-600">
+              {{ personel.iptal }}
+            </td>
+            <td class="px-4 py-3 text-sm text-center">
+              <span
+                class="px-2 py-1 rounded-full text-xs font-semibold {% if personel.tamamlanma_orani >= 80 %}bg-emerald-100 text-emerald-800{% elif personel.tamamlanma_orani >= 50 %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %}"
+              >
+                %{{ personel.tamamlanma_orani }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %} {% if rapor_verisi.gunler|length == 0 %}
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-12 text-center">
+    <i
+      class="fas fa-search text-5xl text-slate-300 dark:text-slate-600 mb-4"
+    ></i>
+    <p class="text-slate-500 dark:text-slate-400">
+      Seçilen dönemde görev kaydı bulunamadı.
+    </p>
+  </div>
+  {% endif %}
+
+  <div class="text-center text-sm text-slate-500 dark:text-slate-400">
+    <i class="fas fa-clock mr-1"></i>Rapor Tarihi: {{ rapor_verisi.rapor_tarihi
+    }} | Dönem: {{ rapor_verisi.baslangic }} - {{ rapor_verisi.bitis }}
+  </div>
+  {% else %}
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-12 text-center">
+    <i
+      class="fas fa-clipboard-list text-5xl text-slate-300 dark:text-slate-600 mb-4"
+    ></i>
+    <p class="text-slate-500 dark:text-slate-400">
+      Rapor oluşturmak için yukarıdaki formu kullanın.
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
