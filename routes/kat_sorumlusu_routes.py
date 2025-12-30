@@ -1125,11 +1125,19 @@ def register_kat_sorumlusu_routes(app):
     @login_required
     @role_required('kat_sorumlusu')
     def api_minibar_islem_sil(islem_id):
-        """Minibar işlemini sil (sadece aynı gün)"""
+        """Minibar işlemini sil (sadece aynı gün) - Otel zimmet deposuna iade yapar"""
         try:
             from datetime import date
+            from utils.otel_zimmet_servisleri import OtelZimmetServisi
             
             kullanici_id = session.get('kullanici_id')
+            kullanici = Kullanici.query.get(kullanici_id)
+            
+            if not kullanici or not kullanici.otel_id:
+                return jsonify({
+                    'success': False,
+                    'error': 'Otel atamanız bulunamadı'
+                }), 400
             
             # İşlemi bul
             islem = MinibarIslem.query.filter_by(
@@ -1155,13 +1163,19 @@ def register_kat_sorumlusu_routes(app):
             
             # Transaction başlat
             try:
-                # Zimmet stoklarını geri yükle
+                # Otel zimmet deposuna stok iade et
                 for detay in islem.detaylar:
-                    if detay.zimmet_detay_id:
-                        zimmet_detay = PersonelZimmetDetay.query.get(detay.zimmet_detay_id)
-                        if zimmet_detay:
-                            zimmet_detay.kullanilan_miktar -= detay.eklenen_miktar
-                            zimmet_detay.kalan_miktar = zimmet_detay.miktar - zimmet_detay.kullanilan_miktar
+                    iade_miktar = detay.eklenen_miktar or 0
+                    if iade_miktar > 0:
+                        # Otel zimmet deposuna iade
+                        OtelZimmetServisi.stok_iade(
+                            otel_id=kullanici.otel_id,
+                            urun_id=detay.urun_id,
+                            miktar=iade_miktar,
+                            personel_id=kullanici_id,
+                            referans_id=islem_id,
+                            aciklama=f"Minibar işlemi silindi - İade"
+                        )
                 
                 # Oda numarasını önceden al (session kapatılmadan önce)
                 oda_no = islem.oda.oda_no
@@ -1175,12 +1189,12 @@ def register_kat_sorumlusu_routes(app):
                     tablo_adi='minibar_islem',
                     kayit_id=islem_id,
                     yeni_deger={'silindi': True},
-                    aciklama=f"Minibar işlemi silindi (Oda: {oda_no})"
+                    aciklama=f"Minibar işlemi silindi (Oda: {oda_no}) - Stok otel zimmet deposuna iade edildi"
                 )
                 
                 return jsonify({
                     'success': True,
-                    'message': 'İşlem başarıyla silindi'
+                    'message': 'İşlem başarıyla silindi ve stok iade edildi'
                 })
                 
             except Exception as e:
