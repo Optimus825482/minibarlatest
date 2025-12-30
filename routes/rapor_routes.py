@@ -1666,7 +1666,9 @@ def export_gun_sonu_excel(rapor):
     ws.title = "Gün Sonu Raporu"
     
     # Stiller - Slate tonları
-    title_font = Font(bold=True, size=16, color="1E293B")
+    title_font = Font(bold=True, size=14, color="1E3A5F")
+    subtitle_font = Font(size=10, color="475569")
+    date_font = Font(bold=True, size=11, color="1E293B")
     header_font = Font(bold=True, color="FFFFFF", size=10)
     header_fill = PatternFill(start_color="475569", end_color="475569", fill_type="solid")
     personel_fill = PatternFill(start_color="334155", end_color="334155", fill_type="solid")
@@ -1677,17 +1679,30 @@ def export_gun_sonu_excel(rapor):
         top=Side(style='thin'),
         bottom=Side(style='thin')
     )
+    header_border = Border(bottom=Side(style='thin', color='CBD5E1'))
     center_align = Alignment(horizontal='center', vertical='center')
+    left_align = Alignment(horizontal='left', vertical='center')
+    right_align = Alignment(horizontal='right', vertical='center')
     
     row = 1
     
-    # Otel Logosu Ekle
+    # HEADER SATIRI: Logo (A1) | Otel Adı + Rapor Adı (B1-C1) | Tarih (D1)
+    # Sütun genişlikleri
+    ws.column_dimensions['A'].width = 15  # Logo
+    ws.column_dimensions['B'].width = 25  # Otel adı
+    ws.column_dimensions['C'].width = 25  # Rapor adı
+    ws.column_dimensions['D'].width = 15  # Tarih
+    
+    # Satır yüksekliği
+    ws.row_dimensions[1].height = 45
+    ws.row_dimensions[2].height = 20
+    
+    # Otel Logosu Ekle (A1)
     otel_id = rapor.get('otel_id')
     if otel_id:
         otel = Otel.query.get(otel_id)
         if otel and otel.logo:
             try:
-                # Base64 logo'yu decode et
                 logo_data = otel.logo
                 if ',' in logo_data:
                     logo_data = logo_data.split(',')[1]
@@ -1696,35 +1711,37 @@ def export_gun_sonu_excel(rapor):
                 logo_stream = io.BytesIO(logo_bytes)
                 
                 img = XLImage(logo_stream)
-                img.width = 120
-                img.height = 60
+                img.width = 60
+                img.height = 45
                 ws.add_image(img, 'A1')
-                
-                # Logo için satır yüksekliği ayarla
-                ws.row_dimensions[1].height = 50
-                row = 3  # Logo'dan sonra 2 satır boşluk
-            except Exception as e:
-                # Logo yüklenemezse devam et
+            except:
                 pass
     
-    # Otel Başlığı
-    ws.merge_cells(f'A{row}:B{row}')
-    ws[f'A{row}'] = f"🏨 {rapor['otel_adi']}"
-    ws[f'A{row}'].font = title_font
-    ws[f'A{row}'].alignment = center_align
-    row += 1
+    # Otel Adı (B1) - büyük font
+    ws['B1'] = rapor['otel_adi']
+    ws['B1'].font = title_font
+    ws['B1'].alignment = left_align
     
-    # Tarih
-    ws.merge_cells(f'A{row}:B{row}')
-    ws[f'A{row}'] = f"📅 Tarih: {rapor['rapor_tarihi']}"
-    ws[f'A{row}'].font = Font(bold=True, size=14)
-    ws[f'A{row}'].alignment = center_align
-    row += 2
+    # Rapor Adı (C1) - küçük font
+    ws['C1'] = "Kat Sorumlusu Gün Sonu Raporu"
+    ws['C1'].font = subtitle_font
+    ws['C1'].alignment = left_align
+    
+    # Tarih (D1)
+    ws['D1'] = f"📅 {rapor['rapor_tarihi']}"
+    ws['D1'].font = date_font
+    ws['D1'].alignment = right_align
+    
+    # Header altı çizgi
+    for col in ['A', 'B', 'C', 'D']:
+        ws[f'{col}1'].border = header_border
+    
+    row = 3  # Header'dan sonra 1 satır boşluk
     
     # Her personel için
     for personel in rapor.get('personeller', []):
         # Personel başlığı
-        ws.merge_cells(f'A{row}:B{row}')
+        ws.merge_cells(f'A{row}:D{row}')
         cell = ws[f'A{row}']
         cell.value = f"👤 {personel['personel_adi']} (Toplam: {personel['toplam_eklenen']} adet)"
         cell.font = Font(bold=True, color="FFFFFF", size=11)
@@ -1733,29 +1750,36 @@ def export_gun_sonu_excel(rapor):
         row += 1
         
         # Tablo başlıkları
-        headers = ['Ürün Adı', 'Minibarlara Eklenen']
-        for col, header in enumerate(headers, 1):
-            cell = ws.cell(row=row, column=col, value=header)
-            cell.font = header_font
-            cell.fill = header_fill
-            cell.alignment = center_align
-            cell.border = thin_border
+        ws.merge_cells(f'A{row}:C{row}')
+        ws[f'A{row}'] = 'Ürün Adı'
+        ws[f'A{row}'].font = header_font
+        ws[f'A{row}'].fill = header_fill
+        ws[f'A{row}'].alignment = center_align
+        ws[f'A{row}'].border = thin_border
+        
+        ws[f'D{row}'] = 'Minibarlara Eklenen'
+        ws[f'D{row}'].font = header_font
+        ws[f'D{row}'].fill = header_fill
+        ws[f'D{row}'].alignment = center_align
+        ws[f'D{row}'].border = thin_border
         row += 1
         
         # Ürünler
         for urun in personel.get('urunler', []):
-            ws.cell(row=row, column=1, value=urun['urun_adi']).border = thin_border
+            ws.merge_cells(f'A{row}:C{row}')
+            ws[f'A{row}'] = urun['urun_adi']
+            ws[f'A{row}'].border = thin_border
             
-            cell = ws.cell(row=row, column=2, value=urun['toplam_eklenen'])
-            cell.border = thin_border
-            cell.alignment = center_align
+            ws[f'D{row}'] = urun['toplam_eklenen']
+            ws[f'D{row}'].border = thin_border
+            ws[f'D{row}'].alignment = center_align
             row += 1
         
         row += 1
     
     # GENEL TOPLAM
     if rapor.get('genel_toplam'):
-        ws.merge_cells(f'A{row}:B{row}')
+        ws.merge_cells(f'A{row}:D{row}')
         cell = ws[f'A{row}']
         cell.value = f"📊 GENEL TOPLAM: {rapor.get('genel_toplam_adet', 0)} Adet"
         cell.font = Font(bold=True, color="FFFFFF", size=12)
@@ -1764,24 +1788,29 @@ def export_gun_sonu_excel(rapor):
         row += 1
         
         # Başlıklar
-        for col, header in enumerate(['Ürün Adı', 'Toplam Eklenen'], 1):
-            cell = ws.cell(row=row, column=col, value=header)
-            cell.font = header_font
-            cell.fill = header_fill
-            cell.alignment = center_align
-            cell.border = thin_border
+        ws.merge_cells(f'A{row}:C{row}')
+        ws[f'A{row}'] = 'Ürün Adı'
+        ws[f'A{row}'].font = header_font
+        ws[f'A{row}'].fill = header_fill
+        ws[f'A{row}'].alignment = center_align
+        ws[f'A{row}'].border = thin_border
+        
+        ws[f'D{row}'] = 'Toplam Eklenen'
+        ws[f'D{row}'].font = header_font
+        ws[f'D{row}'].fill = header_fill
+        ws[f'D{row}'].alignment = center_align
+        ws[f'D{row}'].border = thin_border
         row += 1
         
         for urun in rapor['genel_toplam']:
-            ws.cell(row=row, column=1, value=urun['urun_adi']).border = thin_border
-            cell = ws.cell(row=row, column=2, value=urun['toplam_eklenen'])
-            cell.border = thin_border
-            cell.alignment = center_align
+            ws.merge_cells(f'A{row}:C{row}')
+            ws[f'A{row}'] = urun['urun_adi']
+            ws[f'A{row}'].border = thin_border
+            
+            ws[f'D{row}'] = urun['toplam_eklenen']
+            ws[f'D{row}'].border = thin_border
+            ws[f'D{row}'].alignment = center_align
             row += 1
-    
-    # Sütun genişlikleri
-    ws.column_dimensions['A'].width = 30
-    ws.column_dimensions['B'].width = 20
     
     # Excel dosyasını oluştur
     excel_buffer = io.BytesIO()
@@ -1840,70 +1869,61 @@ def export_gun_sonu_pdf(rapor):
         font_name = 'Helvetica'
     
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=1.5*cm, bottomMargin=1.5*cm)
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=1*cm, bottomMargin=1*cm, leftMargin=1*cm, rightMargin=1*cm)
     
     elements = []
     styles = getSampleStyleSheet()
     
-    # Özel stiller - Türkçe font ile
-    title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
-        fontName=font_name,
-        fontSize=18,
-        textColor=colors.HexColor('#1E40AF'),
-        spaceAfter=6,
-        alignment=1
-    )
-    
-    date_style = ParagraphStyle(
-        'DateStyle',
-        parent=styles['Normal'],
-        fontName=font_name,
-        fontSize=14,
-        textColor=colors.HexColor('#374151'),
-        spaceAfter=20,
-        alignment=1
-    )
-    
-    # Otel Logosu Ekle
+    # Header: Logo (sol) | Otel Adı + Rapor Adı (orta) | Tarih (sağ)
+    logo_cell = ""
     otel_id = rapor.get('otel_id')
     if otel_id:
         otel = Otel.query.get(otel_id)
         if otel and otel.logo:
             try:
-                # Base64 logo'yu decode et
                 logo_data = otel.logo
                 if ',' in logo_data:
                     logo_data = logo_data.split(',')[1]
-                
                 logo_bytes = base64.b64decode(logo_data)
                 logo_stream = io.BytesIO(logo_bytes)
-                
-                # Logo'yu PDF'e ekle (ortalanmış, küçük boyut)
-                logo_img = RLImage(logo_stream, width=1.5*cm, height=1.5*cm)
-                logo_table = Table([[logo_img]], colWidths=[18*cm])
-                logo_table.setStyle(TableStyle([
-                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ]))
-                elements.append(logo_table)
-                elements.append(Spacer(1, 5))
-            except Exception as e:
-                # Logo yüklenemezse devam et
-                pass
+                logo_cell = RLImage(logo_stream, width=1.8*cm, height=1.8*cm)
+            except:
+                logo_cell = ""
     
-    # Otel Başlığı
-    elements.append(Paragraph(rapor['otel_adi'], title_style))
-    elements.append(Paragraph("Kat Sorumlusu Gün Sonu Raporu", title_style))
-    elements.append(Paragraph(rapor['rapor_tarihi'], date_style))
+    # Orta kısım: Otel adı ve rapor adı
+    center_content = f"""<para align="center">
+        <font name="{font_name}" size="16" color="#1E3A5F"><b>{rapor['otel_adi']}</b></font><br/>
+        <font name="{font_name}" size="11" color="#475569">Kat Sorumlusu Gün Sonu Raporu</font>
+    </para>"""
+    
+    # Sağ kısım: Tarih
+    date_content = f"""<para align="right">
+        <font name="{font_name}" size="10" color="#64748B">📅</font><br/>
+        <font name="{font_name}" size="12" color="#1E293B"><b>{rapor['rapor_tarihi']}</b></font>
+    </para>"""
+    
+    header_table = Table(
+        [[logo_cell, Paragraph(center_content, styles['Normal']), Paragraph(date_content, styles['Normal'])]],
+        colWidths=[3*cm, 12*cm, 4*cm]
+    )
+    header_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+        ('ALIGN', (1, 0), (1, 0), 'CENTER'),
+        ('ALIGN', (2, 0), (2, 0), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('LINEBELOW', (0, 0), (-1, -1), 1, colors.HexColor('#CBD5E1')),
+    ]))
+    elements.append(header_table)
+    elements.append(Spacer(1, 15))
     
     # Her personel için
     for personel in rapor.get('personeller', []):
         # Personel başlık tablosu (slate arka plan)
         personel_header = Table(
             [[f"{personel['personel_adi']} - Toplam: {personel['toplam_eklenen']} adet"]],
-            colWidths=[18*cm]
+            colWidths=[19*cm]
         )
         personel_header.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#334155')),
@@ -1921,7 +1941,7 @@ def export_gun_sonu_pdf(rapor):
         for urun in personel.get('urunler', []):
             urun_data.append([urun['urun_adi'], str(urun['toplam_eklenen'])])
         
-        urun_table = Table(urun_data, colWidths=[10*cm, 6*cm])
+        urun_table = Table(urun_data, colWidths=[13*cm, 6*cm])
         urun_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#475569')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
@@ -1941,7 +1961,7 @@ def export_gun_sonu_pdf(rapor):
     if rapor.get('genel_toplam'):
         toplam_header = Table(
             [[f"GENEL TOPLAM: {rapor.get('genel_toplam_adet', 0)} Adet"]],
-            colWidths=[18*cm]
+            colWidths=[19*cm]
         )
         toplam_header.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#1E293B')),
@@ -1958,7 +1978,7 @@ def export_gun_sonu_pdf(rapor):
         for urun in rapor['genel_toplam']:
             toplam_data.append([urun['urun_adi'], str(urun['toplam_eklenen'])])
         
-        toplam_table = Table(toplam_data, colWidths=[12*cm, 6*cm])
+        toplam_table = Table(toplam_data, colWidths=[13*cm, 6*cm])
         toplam_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#334155')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),

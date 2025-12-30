@@ -245,6 +245,7 @@ class KatSorumlusuGunSonuRaporServisi:
                 'success': True,
                 'otel_id': otel_id,
                 'otel_adi': otel.ad,
+                'otel_logo': otel.logo if otel.logo else None,
                 'rapor_tarihi': tarih.strftime('%d.%m.%Y'),
                 'olusturma_zamani': get_kktc_now().strftime('%d.%m.%Y %H:%M'),
                 'personeller': personel_raporlari,
