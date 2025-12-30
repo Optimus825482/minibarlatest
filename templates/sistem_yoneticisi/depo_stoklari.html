@@ -76,17 +76,14 @@
                     </select>
                 </div>
                 <div class="flex items-end gap-2">
-                    <button type="submit" id="filtreButton"
-                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
-                        Filtrele
-                    </button>
                     {% if secili_otel_id or secili_depo_id %}
                     <a href="{{ url_for('admin_depo_stoklari') }}"
                         class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-colors">
                         Temizle
                     </a>
                     {% endif %}
-                    <a href="{{ url_for('admin_depo_stoklari', format='excel') }}"
+                    {% if secili_otel_id %}
+                    <a href="{{ url_for('admin_depo_stoklari', format='excel', otel_id=secili_otel_id, depo_sorumlusu_id=secili_depo_id) }}" id="excelIndirBtn"
                         class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -95,67 +92,21 @@
                         </svg>
                         Excel İndir
                     </a>
+                    {% else %}
+                    <span class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg opacity-50 cursor-not-allowed">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                        Excel İndir
+                    </span>
+                    {% endif %}
                 </div>
             </div>
         </form>
     </div>
 
-    <!-- İstatistik Kartları -->
-    {% if secili_otel_id %}
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 rounded-lg p-3">
-                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Toplam Ürün</p>
-                    <p class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ stok_listesi|length }}</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 bg-red-100 dark:bg-red-900/30 rounded-lg p-3">
-                    <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd"
-                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                            clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Kritik Stok</p>
-                    <p class="text-2xl font-bold text-red-600 dark:text-red-400">
-                        {{ stok_listesi|selectattr('durum', 'equalto', 'kritik')|list|length }}
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
-            <div class="flex items-center">
-                <div class="flex-shrink-0 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg p-3">
-                    <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd"
-                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                            clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Dikkat Stok</p>
-                    <p class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                        {{ stok_listesi|selectattr('durum', 'equalto', 'dikkat')|list|length }}
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 
     <!-- Stok Tablosu -->
     <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
@@ -163,12 +114,7 @@
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                 <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100">Stok Listesi</h3>
                 <div class="flex flex-wrap items-center gap-3">
-                    <div class="text-sm text-slate-600 dark:text-slate-400">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Yeni stok girişi için <a href="{{ url_for('satin_alma_siparis') }}"
-                            class="text-blue-600 dark:text-blue-400 hover:underline font-medium">Satın Alma</a> modülünü
-                        kullanın
-                    </div>
+                   
                 </div>
             </div>
 
@@ -280,7 +226,7 @@
 </div>
 
 <script>
-    // Filtre - Otel değiştiğinde depo sorumlularını yükle
+    // Filtre - Otel değiştiğinde depo sorumlularını yükle ve otomatik filtrele
     document.addEventListener('DOMContentLoaded', function () {
         const otelSelect = document.getElementById('filtre_otel_id');
         const depoSelect = document.getElementById('filtre_depo_sorumlusu_id');
@@ -288,35 +234,49 @@
 
         // Sayfa yüklendiğinde eğer otel seçiliyse depo sorumlularını yükle
         var seciliDepoId = {% if secili_depo_id %}{{ secili_depo_id }}{% else %}null{% endif %};
-    if (otelSelect.value) {
-        loadDepoSorumluları(otelSelect.value, seciliDepoId);
-    }
+        var seciliOtelId = {% if secili_otel_id %}{{ secili_otel_id }}{% else %}null{% endif %};
 
-    // Otel değiştiğinde
-    otelSelect.addEventListener('change', async function () {
-        const otelId = this.value;
-
-        if (!otelId) {
-            depoSelect.innerHTML = '<option value="">Önce otel seçin</option>';
-            depoSelect.disabled = true;
-            return;
+        if (otelSelect.value) {
+            loadDepoSorumluları(otelSelect.value, seciliDepoId);
         }
 
-        // Depo sorumlularını yükle
-        await loadDepoSorumluları(otelId);
-    });
+        // Otel değiştiğinde - otomatik filtrele
+        otelSelect.addEventListener('change', async function () {
+            const otelId = this.value;
 
-    // Tablo scroll indicator
-    const tableWrapper = document.querySelector('.table-wrapper');
-    if (tableWrapper) {
-        tableWrapper.addEventListener('scroll', function () {
-            if (this.scrollLeft + this.clientWidth >= this.scrollWidth - 10) {
-                this.classList.add('scrolled-end');
-            } else {
-                this.classList.remove('scrolled-end');
+            if (!otelId) {
+                depoSelect.innerHTML = '<option value="">Önce otel seçin</option>';
+                depoSelect.disabled = true;
+                // Otel seçilmezse sayfayı temizle
+                window.location.href = '{{ url_for("admin_depo_stoklari") }}';
+                return;
+            }
+
+            // Depo sorumlularını yükle
+            await loadDepoSorumluları(otelId);
+            
+            // Otomatik filtrele - sadece otel ile
+            filtreForm.submit();
+        });
+
+        // Depo sorumlusu değiştiğinde - otomatik filtrele
+        depoSelect.addEventListener('change', function () {
+            if (otelSelect.value) {
+                filtreForm.submit();
             }
         });
-    }
+
+        // Tablo scroll indicator
+        const tableWrapper = document.querySelector('.table-wrapper');
+        if (tableWrapper) {
+            tableWrapper.addEventListener('scroll', function () {
+                if (this.scrollLeft + this.clientWidth >= this.scrollWidth - 10) {
+                    this.classList.add('scrolled-end');
+                } else {
+                    this.classList.remove('scrolled-end');
+                }
+            });
+        }
     });
 
     // Depo sorumlularını yükle
@@ -357,11 +317,6 @@
 
                 depoSelect.appendChild(option);
             });
-
-            // Eğer tek sorumlu varsa otomatik seç
-            if (depoSorumlular.length === 1 && !seciliDepoId) {
-                depoSelect.selectedIndex = 1; // İlk gerçek seçeneği seç (0. index "Tüm Depo Sorumluları")
-            }
 
             depoSelect.disabled = false;
 

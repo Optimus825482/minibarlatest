@@ -60,6 +60,26 @@ def register_api_routes(app):
     # CSRF protection instance'ını al
     csrf = app.extensions.get('csrf')
     
+    # AJAX endpoint - Tüm otelleri getir
+    @app.route('/api/oteller-liste')
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_oteller_liste():
+        """Tüm aktif otelleri getir"""
+        try:
+            from models import Otel
+            oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
+            return jsonify({
+                'success': True,
+                'oteller': [{
+                    'id': otel.id,
+                    'ad': otel.ad
+                } for otel in oteller]
+            })
+        except Exception as e:
+            log_hata(e, modul='api_oteller_liste')
+            return jsonify({'success': False, 'error': str(e), 'oteller': []}), 500
+    
     # AJAX endpoint - Tüm odaları getir
     @app.route('/api/odalar')
     @login_required

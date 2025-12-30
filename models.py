@@ -258,10 +258,11 @@ class SetupIcerik(db.Model):
         return f'<SetupIcerik Setup:{self.setup_id} Urun:{self.urun_id}>'
 
 
-# Many-to-Many ara tablo: OdaTipi <-> Setup
+# Many-to-Many ara tablo: OdaTipi <-> Setup (Otel bazlı)
 oda_tipi_setup = db.Table('oda_tipi_setup',
-    db.Column('oda_tipi_id', db.Integer, db.ForeignKey('oda_tipleri.id'), primary_key=True),
-    db.Column('setup_id', db.Integer, db.ForeignKey('setuplar.id'), primary_key=True),
+    db.Column('otel_id', db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('oda_tipi_id', db.Integer, db.ForeignKey('oda_tipleri.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('setup_id', db.Integer, db.ForeignKey('setuplar.id', ondelete='CASCADE'), primary_key=True),
     db.Column('olusturma_tarihi', db.DateTime(timezone=True), default=lambda: get_kktc_now())
 )
 

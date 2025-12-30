@@ -4,7 +4,7 @@ Admin Zimmet Route'ları
 Bu modül admin zimmet yönetimi ile ilgili endpoint'leri içerir.
 
 Endpoint'ler:
-- /admin/personel-zimmetleri - Personel zimmet kayıtlarını listeleme
+- /admin/personel-zimmetleri - Otel bazlı personel zimmet raporu
 - /admin/zimmet-detay/<int:zimmet_id> - Zimmet detaylarını görüntüleme
 - /admin/zimmet-iade/<int:zimmet_id> - Zimmet iade işlemi
 - /admin/zimmet-iptal/<int:zimmet_id> - Zimmet iptal işlemi
@@ -14,68 +14,208 @@ Roller:
 - admin
 """
 
-from flask import render_template, request, redirect, url_for, flash, session, jsonify
-from models import db, PersonelZimmet, PersonelZimmetDetay, Kullanici, StokHareket
+from flask import render_template, request, redirect, url_for, flash, session, jsonify, send_file
+from models import db, PersonelZimmet, PersonelZimmetDetay, Kullanici, StokHareket, Otel, OtelZimmetStok, PersonelZimmetKullanim, Urun
 from utils.decorators import login_required, role_required
-from utils.helpers import log_islem, log_hata
+from utils.helpers import log_islem, log_hata, get_kktc_now
 from utils.audit import serialize_model, audit_update
+from sqlalchemy import func
+import io
 
 
 def register_admin_zimmet_routes(app):
     """Admin zimmet route'larını kaydet"""
     
+    # Excel export fonksiyonu
+    def export_personel_zimmet_excel_func(otel, kat_sorumlulari, zimmet_stoklari, personel_kullanimlari):
+        """Otel zimmet raporunu Excel'e aktar"""
+        try:
+            from openpyxl import Workbook
+            from openpyxl.styles import Font, Alignment, PatternFill
+            
+            wb = Workbook()
+            
+            # ===== SAYFA 1: ÖZET =====
+            ws_ozet = wb.active
+            ws_ozet.title = "Rapor"
+            
+            # Başlık
+            ws_ozet['A1'] = f"{otel.ad} - Zimmet Raporu"
+            ws_ozet['A1'].font = Font(bold=True, size=16)
+            ws_ozet.merge_cells('A1:F1')
+            
+            ws_ozet['A2'] = f"Rapor Tarihi: {get_kktc_now().strftime('%d.%m.%Y %H:%M')}"
+            ws_ozet['A2'].font = Font(italic=True, size=10)
+            
+            # Kat Sorumluları
+            ws_ozet['A4'] = "Kat Sorumluları:"
+            ws_ozet['A4'].font = Font(bold=True)
+            
+            kat_isimleri = ", ".join([f"{p.ad} {p.soyad}" for p in kat_sorumlulari]) if kat_sorumlulari else "Yok"
+            ws_ozet['B4'] = kat_isimleri
+            
+            # ===== ZİMMET STOKLARI (Aynı sayfada) =====
+            ws_ozet['A6'] = "Zimmet Stokları"
+            ws_ozet['A6'].font = Font(bold=True, size=12)
+            
+            stok_headers = ['Ürün Adı', 'Birim', 'Toplam', 'Kullanılan', 'Kalan', 'Durum']
+            for col, header in enumerate(stok_headers, 1):
+                cell = ws_ozet.cell(row=7, column=col, value=header)
+                cell.font = Font(bold=True, color="FFFFFF")
+                cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+            
+            for i, stok in enumerate(zimmet_stoklari, start=8):
+                ws_ozet.cell(row=i, column=1, value=stok.urun.urun_adi if stok.urun else '-')
+                ws_ozet.cell(row=i, column=2, value=stok.urun.birim if stok.urun else '-')
+                ws_ozet.cell(row=i, column=3, value=stok.toplam_miktar)
+                ws_ozet.cell(row=i, column=4, value=stok.kullanilan_miktar)
+                ws_ozet.cell(row=i, column=5, value=stok.kalan_miktar)
+                
+                durum = stok.stok_durumu
+                durum_text = {'normal': 'Normal', 'dikkat': 'Dikkat', 'kritik': 'Kritik', 'stokout': 'Stok Yok'}.get(durum, durum)
+                cell = ws_ozet.cell(row=i, column=6, value=durum_text)
+                
+                if durum == 'kritik' or durum == 'stokout':
+                    cell.fill = PatternFill(start_color="FF6B6B", end_color="FF6B6B", fill_type="solid")
+                elif durum == 'dikkat':
+                    cell.fill = PatternFill(start_color="FFE066", end_color="FFE066", fill_type="solid")
+            
+            # Sütun genişlikleri
+            ws_ozet.column_dimensions['A'].width = 35
+            ws_ozet.column_dimensions['B'].width = 15
+            ws_ozet.column_dimensions['C'].width = 12
+            ws_ozet.column_dimensions['D'].width = 12
+            ws_ozet.column_dimensions['E'].width = 12
+            ws_ozet.column_dimensions['F'].width = 12
+            
+            # Buffer'a kaydet
+            buffer = io.BytesIO()
+            wb.save(buffer)
+            buffer.seek(0)
+            
+            return buffer
+            
+        except Exception as e:
+            log_hata(e, modul='export_personel_zimmet_excel')
+            return None
+    
     @app.route('/admin/personel-zimmetleri')
     @login_required
     @role_required('sistem_yoneticisi', 'admin')
     def admin_personel_zimmetleri():
-        """Tüm personel zimmet kayıtlarını listele"""
+        """Otel bazlı personel zimmet raporu"""
         try:
             # Filtreler
-            personel_id = request.args.get('personel_id', type=int)
-            durum = request.args.get('durum', '')
+            otel_id = request.args.get('otel_id', type=int)
+            export_format = request.args.get('format', '')
             
-            # Sayfalama
-            sayfa = request.args.get('sayfa', 1, type=int)
-            per_page = 50
+            # Oteller listesi
+            oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
             
-            # Sorgu oluştur
-            query = PersonelZimmet.query.options(
-                db.joinedload(PersonelZimmet.personel),
-                db.joinedload(PersonelZimmet.teslim_eden),
-                db.joinedload(PersonelZimmet.detaylar).joinedload(PersonelZimmetDetay.urun)
-            )
+            # Seçili otel bilgisi
+            secili_otel = None
+            kat_sorumlulari = []
+            zimmet_stoklari = []
+            personel_kullanimlari = []
+            ozet_bilgiler = {}
             
-            if personel_id:
-                query = query.filter(PersonelZimmet.personel_id == personel_id)
-            if durum:
-                query = query.filter(PersonelZimmet.durum == durum)
+            if otel_id:
+                secili_otel = Otel.query.get(otel_id)
+                
+                if secili_otel:
+                    # O oteldeki kat sorumluları
+                    kat_sorumlulari = Kullanici.query.filter(
+                        Kullanici.otel_id == otel_id,
+                        Kullanici.rol == 'kat_sorumlusu',
+                        Kullanici.aktif.is_(True)
+                    ).order_by(Kullanici.ad, Kullanici.soyad).all()
+                    
+                    # Otel zimmet stokları
+                    zimmet_stoklari = OtelZimmetStok.query.options(
+                        db.joinedload(OtelZimmetStok.urun)
+                    ).filter(
+                        OtelZimmetStok.otel_id == otel_id
+                    ).order_by(OtelZimmetStok.kalan_miktar.asc()).all()
+                    
+                    # Personel bazlı kullanım özeti
+                    kullanim_query = db.session.query(
+                        PersonelZimmetKullanim.personel_id,
+                        Kullanici.ad,
+                        Kullanici.soyad,
+                        func.sum(PersonelZimmetKullanim.kullanilan_miktar).label('toplam_kullanim'),
+                        func.count(PersonelZimmetKullanim.id).label('islem_sayisi'),
+                        func.max(PersonelZimmetKullanim.islem_tarihi).label('son_islem')
+                    ).join(
+                        Kullanici, PersonelZimmetKullanim.personel_id == Kullanici.id
+                    ).join(
+                        OtelZimmetStok, PersonelZimmetKullanim.otel_zimmet_stok_id == OtelZimmetStok.id
+                    ).filter(
+                        OtelZimmetStok.otel_id == otel_id
+                    ).group_by(
+                        PersonelZimmetKullanim.personel_id,
+                        Kullanici.ad,
+                        Kullanici.soyad
+                    ).order_by(
+                        func.sum(PersonelZimmetKullanim.kullanilan_miktar).desc()
+                    ).all()
+                    
+                    personel_kullanimlari = [{
+                        'personel_id': k.personel_id,
+                        'ad_soyad': f"{k.ad} {k.soyad}",
+                        'toplam_kullanim': k.toplam_kullanim or 0,
+                        'islem_sayisi': k.islem_sayisi or 0,
+                        'son_islem': k.son_islem
+                    } for k in kullanim_query]
+                    
+                    # Özet bilgiler
+                    toplam_stok = sum(z.toplam_miktar for z in zimmet_stoklari)
+                    toplam_kullanilan = sum(z.kullanilan_miktar for z in zimmet_stoklari)
+                    toplam_kalan = sum(z.kalan_miktar for z in zimmet_stoklari)
+                    kritik_urun_sayisi = len([z for z in zimmet_stoklari if z.stok_durumu in ['kritik', 'stokout']])
+                    
+                    ozet_bilgiler = {
+                        'toplam_stok': toplam_stok,
+                        'toplam_kullanilan': toplam_kullanilan,
+                        'toplam_kalan': toplam_kalan,
+                        'kritik_urun_sayisi': kritik_urun_sayisi,
+                        'urun_cesidi': len(zimmet_stoklari),
+                        'personel_sayisi': len(kat_sorumlulari)
+                    }
             
-            # Sayfalama
-            zimmetler = query.order_by(PersonelZimmet.zimmet_tarihi.desc()).paginate(
-                page=sayfa, per_page=per_page, error_out=False
-            )
-            
-            # Personeller (filtre için)
-            personeller = Kullanici.query.filter(
-                Kullanici.rol.in_(['depo_sorumlusu', 'kat_sorumlusu']),
-                Kullanici.aktif.is_(True)
-            ).order_by(Kullanici.ad, Kullanici.soyad).all()
+            # Excel export
+            if export_format == 'excel' and otel_id and secili_otel:
+                excel_buffer = export_personel_zimmet_excel_func(secili_otel, kat_sorumlulari, zimmet_stoklari, personel_kullanimlari)
+                if excel_buffer:
+                    safe_otel_adi = secili_otel.ad.replace(' ', '_').replace('/', '_')
+                    filename = f'otel_zimmet_raporu_{safe_otel_adi}_{get_kktc_now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+                    return send_file(
+                        excel_buffer,
+                        as_attachment=True,
+                        download_name=filename,
+                        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    )
+                else:
+                    flash('Excel dosyası oluşturulamadı.', 'danger')
             
             # Log kaydı
             log_islem('goruntuleme', 'personel_zimmetleri', {
-                'sayfa': sayfa,
-                'kayit_sayisi': zimmetler.total
+                'otel_id': otel_id,
+                'personel_sayisi': len(kat_sorumlulari),
+                'stok_kayit_sayisi': len(zimmet_stoklari)
             })
             
             return render_template('sistem_yoneticisi/admin_personel_zimmetleri.html',
-                                 zimmetler=zimmetler,
-                                 personeller=personeller,
-                                 personel_id=personel_id,
-                                 durum=durum)
+                                 oteller=oteller,
+                                 secili_otel=secili_otel,
+                                 secili_otel_id=otel_id,
+                                 kat_sorumlulari=kat_sorumlulari,
+                                 zimmet_stoklari=zimmet_stoklari,
+                                 personel_kullanimlari=personel_kullanimlari,
+                                 ozet_bilgiler=ozet_bilgiler)
             
         except Exception as e:
             log_hata(e, modul='admin_personel_zimmetleri')
-            flash('Zimmet kayıtları yüklenirken hata oluştu.', 'danger')
+            flash('Zimmet raporu yüklenirken hata oluştu.', 'danger')
             return redirect(url_for('sistem_yoneticisi_dashboard'))
 
     @app.route('/admin/zimmet-detay/<int:zimmet_id>')

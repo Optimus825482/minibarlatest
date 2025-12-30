@@ -101,13 +101,6 @@
       <span class="sidebar-text">Depo Stokları</span>
     </a>
     <a
-      href="{{ url_for('otel_ilk_stok_yukleme') }}"
-      class="sidebar-item {% if request.endpoint == 'otel_ilk_stok_yukleme' %}active{% endif %}"
-    >
-      <i class="fas fa-cloud-upload-alt sidebar-icon text-emerald-500"></i>
-      <span class="sidebar-text">İlk Stok Yükleme (FIFO)</span>
-    </a>
-    <a
       href="{{ url_for('admin_stok_hareketleri') }}"
       class="sidebar-item {% if request.endpoint == 'admin_stok_hareketleri' %}active{% endif %}"
     >
@@ -230,7 +223,7 @@
       class="sidebar-item {% if request.endpoint == 'raporlar.kat_sorumlusu_kullanim_raporlari' %}active{% endif %}"
     >
       <i class="fas fa-user-check sidebar-icon text-indigo-500"></i>
-      <span class="sidebar-text">Kat Sorumlusu Kullanım</span>
+      <span class="sidebar-text">Gün Sonu Raporu</span>
     </a>
     <a
       href="{{ url_for('raporlar.oda_bazli_tuketim_raporlari') }}"

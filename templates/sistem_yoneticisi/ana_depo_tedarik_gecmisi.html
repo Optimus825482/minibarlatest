@@ -15,143 +15,264 @@
         </div>
     </div>
 
-    <!-- İstatistik Kartları -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">Toplam</p>
-                    <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ istatistikler.toplam }}</p>
-                </div>
-                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                    <i class="fas fa-list text-blue-500"></i>
-                </div>
-            </div>
-        </div>
-        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">Aktif</p>
-                    <p class="text-2xl font-bold text-green-600">{{ istatistikler.aktif }}</p>
-                </div>
-                <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                    <i class="fas fa-check text-green-500"></i>
-                </div>
-            </div>
-        </div>
-        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">İptal</p>
-                    <p class="text-2xl font-bold text-red-600">{{ istatistikler.iptal }}</p>
-                </div>
-                <div class="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
-                    <i class="fas fa-times text-red-500"></i>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Filtreler -->
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 p-4 mb-6">
-        <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Otel</label>
-                <select name="otel_id" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
-                    <option value="">Tüm Oteller</option>
-                    {% for otel in oteller %}
-                    <option value="{{ otel.id }}" {% if secili_otel_id == otel.id %}selected{% endif %}>{{ otel.ad }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Ay</label>
-                <select name="ay" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
-                    {% for i in range(1, 13) %}
-                    <option value="{{ i }}" {% if secili_ay == i %}selected{% endif %}>
-                        {{ ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'][i-1] }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Yıl</label>
-                <select name="yil" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
-                    {% for y in range(2024, 2030) %}
-                    <option value="{{ y }}" {% if secili_yil == y %}selected{% endif %}>{{ y }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Durum</label>
-                <select name="durum" class="w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
-                    <option value="">Tümü</option>
-                    <option value="aktif" {% if secili_durum == 'aktif' %}selected{% endif %}>Aktif</option>
-                    <option value="iptal" {% if secili_durum == 'iptal' %}selected{% endif %}>İptal</option>
-                </select>
-            </div>
-            <div class="flex items-end">
-                <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium">
-                    <i class="fas fa-filter mr-2"></i>Filtrele
-                </button>
+
+    <!-- Filtreler - Premium Design -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 p-6 mb-6">
+        <form method="GET" id="filterForm">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+                
+                <!-- Otel Seçimi - Logo ile Custom Dropdown -->
+                <div class="md:col-span-5">
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-3">
+                        Otel Seçin
+                    </label>
+                    <div class="relative" id="otelDropdownContainer">
+                        <button type="button" id="otelDropdownBtn" onclick="toggleOtelDropdown()"
+                            class="w-full flex items-center justify-between gap-3 py-3.5 px-4 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800 dark:to-slate-900 border-2 border-slate-200 dark:border-slate-600 rounded-xl text-left hover:border-blue-400 dark:hover:border-blue-500 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200">
+                            <div class="flex items-center gap-3" id="selectedOtelDisplay">
+                                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                                    <i class="fas fa-hotel text-white text-sm"></i>
+                                </div>
+                                <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Tüm Oteller</span>
+                            </div>
+                            <svg class="w-5 h-5 text-slate-400 transition-transform duration-200" id="otelDropdownArrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div id="otelDropdownMenu" class="hidden absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden">
+                            <div class="max-h-72 overflow-y-auto">
+                                <!-- Tüm Oteller -->
+                                <div class="otel-option p-3 hover:bg-blue-50 dark:hover:bg-slate-700 cursor-pointer transition-colors border-b border-slate-100 dark:border-slate-700" 
+                                     data-value="" onclick="selectOtel('', 'Tüm Oteller', null)">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                                            <i class="fas fa-hotel text-white text-sm"></i>
+                                        </div>
+                                        <div>
+                                            <span class="text-sm font-semibold text-slate-800 dark:text-slate-200">Tüm Oteller</span>
+                                            <span class="block text-xs text-slate-500 dark:text-slate-400">Tüm otelleri görüntüle</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {% for otel in oteller %}
+                                <div class="otel-option p-3 hover:bg-blue-50 dark:hover:bg-slate-700 cursor-pointer transition-colors {% if not loop.last %}border-b border-slate-100 dark:border-slate-700{% endif %}" 
+                                     data-value="{{ otel.id }}" onclick="selectOtel('{{ otel.id }}', '{{ otel.ad }}', '{{ otel.logo if otel.logo else '' }}')">
+                                    <div class="flex items-center gap-3">
+                                        {% if otel.logo %}
+                                        <img src="data:image/png;base64,{{ otel.logo }}" alt="{{ otel.ad }}" class="w-10 h-10 rounded-xl object-cover border-2 border-slate-200 dark:border-slate-600 shadow">
+                                        {% else %}
+                                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow">
+                                            <span class="text-white text-xs font-bold">{{ otel.ad[:2]|upper }}</span>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <span class="text-sm font-semibold text-slate-800 dark:text-slate-200">{{ otel.ad }}</span>
+                                        </div>
+                                        {% if secili_otel_id == otel.id %}
+                                        <svg class="w-5 h-5 text-blue-600 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <input type="hidden" name="otel_id" id="otelIdInput" value="{{ secili_otel_id or '' }}">
+                    </div>
+                </div>
+
+                <!-- Ay Seçimi -->
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-3">
+                        Ay
+                    </label>
+                    <div class="relative">
+                        <select name="ay" id="aySelect" onchange="document.getElementById('filterForm').submit()"
+                            class="w-full py-3.5 px-4 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800 dark:to-slate-900 border-2 border-slate-200 dark:border-slate-600 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-emerald-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200 cursor-pointer appearance-none">
+                            {% set aylar = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'] %}
+                            {% for i in range(1, 13) %}
+                            <option value="{{ i }}" {% if secili_ay == i %}selected{% endif %}>{{ aylar[i-1] }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Yıl Seçimi -->
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-3">
+                        Yıl
+                    </label>
+                    <div class="relative">
+                        <select name="yil" id="yilSelect" onchange="document.getElementById('filterForm').submit()"
+                            class="w-full py-3.5 px-4 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800 dark:to-slate-900 border-2 border-slate-200 dark:border-slate-600 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-purple-400 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all duration-200 cursor-pointer appearance-none">
+                            {% for y in range(2024, 2030) %}
+                            <option value="{{ y }}" {% if secili_yil == y %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sıfırla Butonu -->
+                <div class="md:col-span-2">
+                    <a href="{{ url_for('admin_ana_depo_tedarik_gecmisi') }}" 
+                       class="w-full inline-flex items-center justify-center gap-2 py-3.5 px-4 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-semibold text-sm rounded-xl transition-all duration-200">
+                        <i class="fas fa-undo"></i>
+                        <span>Sıfırla</span>
+                    </a>
+                </div>
             </div>
         </form>
     </div>
 
+    <script>
+    // Otel Dropdown Functions
+    function toggleOtelDropdown() {
+        const menu = document.getElementById('otelDropdownMenu');
+        const arrow = document.getElementById('otelDropdownArrow');
+        menu.classList.toggle('hidden');
+        arrow.classList.toggle('rotate-180');
+    }
+
+    function selectOtel(id, name, logo) {
+        document.getElementById('otelIdInput').value = id;
+        
+        // Update display
+        const display = document.getElementById('selectedOtelDisplay');
+        if (logo && logo !== '') {
+            display.innerHTML = `
+                <img src="data:image/png;base64,${logo}" alt="${name}" class="w-10 h-10 rounded-xl object-cover border-2 border-slate-200 dark:border-slate-600 shadow">
+                <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">${name}</span>
+            `;
+        } else if (id === '') {
+            display.innerHTML = `
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                    <i class="fas fa-hotel text-white text-sm"></i>
+                </div>
+                <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Tüm Oteller</span>
+            `;
+        } else {
+            display.innerHTML = `
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow">
+                    <span class="text-white text-xs font-bold">${name.substring(0,2).toUpperCase()}</span>
+                </div>
+                <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">${name}</span>
+            `;
+        }
+        
+        // Close dropdown and submit
+        document.getElementById('otelDropdownMenu').classList.add('hidden');
+        document.getElementById('otelDropdownArrow').classList.remove('rotate-180');
+        document.getElementById('filterForm').submit();
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        const container = document.getElementById('otelDropdownContainer');
+        if (container && !container.contains(e.target)) {
+            document.getElementById('otelDropdownMenu').classList.add('hidden');
+            document.getElementById('otelDropdownArrow').classList.remove('rotate-180');
+        }
+    });
+
+    // Set initial display based on selected hotel
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectedId = '{{ secili_otel_id or "" }}';
+        if (selectedId) {
+            {% for otel in oteller %}
+            if ('{{ otel.id }}' === selectedId) {
+                const display = document.getElementById('selectedOtelDisplay');
+                {% if otel.logo %}
+                display.innerHTML = `
+                    <img src="data:image/png;base64,{{ otel.logo }}" alt="{{ otel.ad }}" class="w-10 h-10 rounded-xl object-cover border-2 border-slate-200 dark:border-slate-600 shadow">
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ otel.ad }}</span>
+                `;
+                {% else %}
+                display.innerHTML = `
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow">
+                        <span class="text-white text-xs font-bold">{{ otel.ad[:2]|upper }}</span>
+                    </div>
+                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ otel.ad }}</span>
+                `;
+                {% endif %}
+            }
+            {% endfor %}
+        }
+    });
+    </script>
+
     <!-- Tedarik Listesi -->
     <div class="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
         {% if tedarikler %}
-        <div class="overflow-x-auto">
+        
+        <!-- Desktop Tablo -->
+        <div class="hidden md:block overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-slate-50 dark:bg-slate-700">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Tarih</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Otel</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Ürün Sayısı</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Toplam Miktar</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">İşlemi Yapan</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Durum</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Detay</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">Tarih</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">Otel</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">Ürün Sayısı</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">Toplam Miktar</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">İşlemi Yapan</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">Detay</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
                     {% for tedarik in tedarikler %}
-                    <tr class="transition-colors">
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                         <td class="px-4 py-3 whitespace-nowrap">
-                            <span class="text-sm font-medium text-slate-900 dark:text-white">
-                                {{ tedarik.tarih.strftime('%d.%m.%Y') }}
+                            <div class="flex items-center">
+                                <div class="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3">
+                                    <i class="fas fa-calendar-day text-blue-600 dark:text-blue-400"></i>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-medium text-slate-900 dark:text-white">
+                                        {{ tedarik.tarih.strftime('%d.%m.%Y') }}
+                                    </span>
+                                    <span class="block text-xs text-slate-500 dark:text-slate-400">
+                                        {{ tedarik.tarih.strftime('%H:%M') }}
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-2 text-white text-xs font-bold">
+                                    {{ tedarik.otel_adi[:2]|upper }}
+                                </div>
+                                <span class="text-sm font-medium text-slate-900 dark:text-white">{{ tedarik.otel_adi }}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-sm text-slate-700 dark:text-slate-300">
+                                <i class="fas fa-boxes text-xs mr-1.5 text-slate-400"></i>{{ tedarik.detay_sayisi }} çeşit
                             </span>
-                            <span class="block text-xs text-slate-500 dark:text-slate-400">
-                                {{ tedarik.tarih.strftime('%H:%M') }}
-                            </span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
-                            <span class="text-sm text-slate-900 dark:text-white">{{ tedarik.otel_adi }}</span>
-                        </td>
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <span class="text-sm text-slate-600 dark:text-slate-300">{{ tedarik.detay_sayisi }} çeşit</span>
-                        </td>
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <span class="text-sm font-medium text-slate-900 dark:text-white">{{ tedarik.toplam_urun }} adet</span>
+                            <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{{ tedarik.toplam_urun }} adet</span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <span class="text-sm text-slate-600 dark:text-slate-300">{{ tedarik.kullanici }}</span>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            {% if tedarik.durum == 'aktif' %}
-                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                                <i class="fas fa-check mr-1"></i>Aktif
-                            </span>
-                            {% elif tedarik.durum == 'iptal' %}
-                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
-                                <i class="fas fa-times mr-1"></i>İptal
-                            </span>
-                            {% endif %}
-                        </td>
                         <td class="px-4 py-3 text-center">
                             <button onclick='showTedarikDetay({{ tedarik.id }}, {{ tedarik.detaylar | tojson }})' 
-                                    class="px-3 py-1 text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg">
-                                <i class="fas fa-eye mr-1"></i>Detay
+                                    class="inline-flex items-center px-3 py-1.5 text-sm bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
+                                <i class="fas fa-eye mr-1.5"></i>Detay
                             </button>
                         </td>
                     </tr>
@@ -159,6 +280,61 @@
                 </tbody>
             </table>
         </div>
+        
+        <!-- Mobil Kartlar -->
+        <div class="md:hidden divide-y divide-slate-200 dark:divide-slate-700">
+            {% for tedarik in tedarikler %}
+            <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                <!-- Üst Kısım: Tarih ve Otel -->
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                            <i class="fas fa-calendar-day text-blue-600 dark:text-blue-400"></i>
+                        </div>
+                        <div>
+                            <span class="text-sm font-semibold text-slate-900 dark:text-white block">
+                                {{ tedarik.tarih.strftime('%d.%m.%Y') }}
+                            </span>
+                            <span class="text-xs text-slate-500 dark:text-slate-400">
+                                {{ tedarik.tarih.strftime('%H:%M') }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                            {{ tedarik.otel_adi[:2]|upper }}
+                        </div>
+                        <span class="text-sm font-medium text-slate-900 dark:text-white">{{ tedarik.otel_adi }}</span>
+                    </div>
+                </div>
+                
+                <!-- Orta Kısım: Detaylar -->
+                <div class="flex items-center justify-between mb-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3">
+                    <div class="text-center">
+                        <span class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Ürün Çeşidi</span>
+                        <span class="inline-flex items-center px-2 py-1 rounded bg-slate-200 dark:bg-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300">
+                            <i class="fas fa-boxes text-xs mr-1 text-slate-400"></i>{{ tedarik.detay_sayisi }}
+                        </span>
+                    </div>
+                    <div class="text-center">
+                        <span class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Toplam Miktar</span>
+                        <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400">{{ tedarik.toplam_urun }} adet</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="block text-xs text-slate-500 dark:text-slate-400 mb-1">İşlemi Yapan</span>
+                        <span class="text-sm text-slate-700 dark:text-slate-300">{{ tedarik.kullanici }}</span>
+                    </div>
+                </div>
+                
+                <!-- Alt Kısım: Detay Butonu -->
+                <button onclick='showTedarikDetay({{ tedarik.id }}, {{ tedarik.detaylar | tojson }})' 
+                        class="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors font-medium">
+                    <i class="fas fa-eye"></i>Detayları Görüntüle
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        
         {% else %}
         <div class="p-8 text-center">
             <i class="fas fa-inbox text-4xl text-slate-300 dark:text-slate-600 mb-4"></i>

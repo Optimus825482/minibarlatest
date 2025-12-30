@@ -58,7 +58,7 @@ class SetupNotFoundError(Exception):
 
 def oda_setup_durumu_getir(oda_id):
     """
-    Odanın tüm setup'larını ve mevcut durumlarını getirir
+    Odanın tüm setup'larını ve mevcut durumlarını getirir (Otel bazlı)
     
     Args:
         oda_id (int): Oda ID
@@ -71,6 +71,9 @@ def oda_setup_durumu_getir(oda_id):
         SetupNotFoundError: Setup tanımlı değilse
     """
     try:
+        from models import Kat, oda_tipi_setup
+        from sqlalchemy import and_
+        
         # Odayı getir
         oda = Oda.query.get_or_404(oda_id)
         
@@ -82,8 +85,31 @@ def oda_setup_durumu_getir(oda_id):
         if not oda_tipi:
             raise OdaTipiNotFoundError(oda.oda_no)
         
-        # Oda tipine bağlı setup'ları getir
-        setuplar = oda_tipi.setuplar
+        # Odanın otelini bul (kat üzerinden)
+        kat = Kat.query.get(oda.kat_id)
+        if not kat:
+            raise OdaTipiNotFoundError(oda.oda_no)
+        
+        otel_id = kat.otel_id
+        
+        # Otel bazlı setup'ları getir
+        setup_rows = db.session.execute(
+            db.select(oda_tipi_setup.c.setup_id).where(
+                and_(
+                    oda_tipi_setup.c.otel_id == otel_id,
+                    oda_tipi_setup.c.oda_tipi_id == oda_tipi.id
+                )
+            )
+        ).fetchall()
+        
+        setup_ids = [row[0] for row in setup_rows]
+        
+        # Setup'ları getir
+        if setup_ids:
+            setuplar = Setup.query.filter(Setup.id.in_(setup_ids), Setup.aktif == True).all()
+        else:
+            # Otel bazlı atama yoksa, geriye uyumluluk için global ilişkiyi kullan
+            setuplar = [s for s in oda_tipi.setuplar if s.aktif]
         
         if not setuplar:
             raise SetupNotFoundError(oda_tipi.ad)

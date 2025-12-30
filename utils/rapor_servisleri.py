@@ -119,6 +119,143 @@ class OtelZimmetRaporServisi:
             return {'success': False, 'message': str(e), 'oteller': []}
 
 
+class KatSorumlusuGunSonuRaporServisi:
+    """Kat Sorumlusu Gün Sonu Raporu - Profesyonel format"""
+    
+    @staticmethod
+    def get_gun_sonu_raporu(
+        otel_id: int,
+        personel_ids: list = None,
+        tarih: date = None
+    ) -> dict:
+        """
+        Kat sorumlusu gün sonu raporu
+        
+        Args:
+            otel_id: Otel ID (zorunlu)
+            personel_ids: Kat sorumlusu ID listesi (çoklu seçim)
+            tarih: Rapor tarihi (varsayılan: bugün)
+            
+        Returns:
+            dict: Gün sonu rapor verisi
+        """
+        try:
+            if not tarih:
+                tarih = date.today()
+            
+            otel = Otel.query.get(otel_id)
+            if not otel:
+                return {'success': False, 'message': 'Otel bulunamadı'}
+            
+            # Tarih aralığı: Seçilen günün başı ve sonu
+            tarih_baslangic = datetime.combine(tarih, datetime.min.time())
+            tarih_bitis = datetime.combine(tarih, datetime.max.time())
+            
+            # Kat sorumlularını getir
+            kat_sorumlusu_query = Kullanici.query.filter(
+                Kullanici.rol == 'kat_sorumlusu',
+                Kullanici.aktif.is_(True),
+                Kullanici.otel_id == otel_id
+            )
+            
+            if personel_ids:
+                kat_sorumlusu_query = kat_sorumlusu_query.filter(Kullanici.id.in_(personel_ids))
+            
+            kat_sorumlulari = kat_sorumlusu_query.order_by(Kullanici.ad, Kullanici.soyad).all()
+            
+            if not kat_sorumlulari:
+                return {
+                    'success': True,
+                    'otel_adi': otel.ad,
+                    'rapor_tarihi': tarih.strftime('%d.%m.%Y'),
+                    'olusturma_zamani': get_kktc_now().strftime('%d.%m.%Y %H:%M'),
+                    'personeller': [],
+                    'genel_toplam': []
+                }
+            
+            personel_raporlari = []
+            # Genel toplam için tüm ürünleri takip et
+            genel_urun_toplam = {}
+            
+            for personel in kat_sorumlulari:
+                # Bu personelin o günkü minibar işlemlerini çek
+                islemler = MinibarIslem.query.filter(
+                    MinibarIslem.personel_id == personel.id,
+                    MinibarIslem.islem_tarihi >= tarih_baslangic,
+                    MinibarIslem.islem_tarihi <= tarih_bitis
+                ).order_by(MinibarIslem.islem_tarihi).all()
+                
+                # Ürün bazlı özet - oda detayları ile
+                urun_ozeti = {}
+                
+                for islem in islemler:
+                    oda = Oda.query.get(islem.oda_id)
+                    oda_no = oda.oda_no if oda else 'Bilinmiyor'
+                    saat = islem.islem_tarihi.strftime('%H:%M')
+                    
+                    for detay in islem.detaylar:
+                        # Sadece eklenen (minibara tamamlanan) ürünleri al
+                        if detay.eklenen_miktar and detay.eklenen_miktar > 0:
+                            urun = Urun.query.get(detay.urun_id)
+                            urun_adi = urun.urun_adi if urun else 'Bilinmiyor'
+                            urun_id = detay.urun_id
+                            
+                            if urun_id not in urun_ozeti:
+                                urun_ozeti[urun_id] = {
+                                    'urun_adi': urun_adi,
+                                    'toplam_eklenen': 0,
+                                    'odalar': []
+                                }
+                            
+                            urun_ozeti[urun_id]['toplam_eklenen'] += detay.eklenen_miktar
+                            urun_ozeti[urun_id]['odalar'].append({
+                                'oda_no': oda_no,
+                                'miktar': detay.eklenen_miktar,
+                                'saat': saat
+                            })
+                            
+                            # Genel toplama ekle
+                            if urun_id not in genel_urun_toplam:
+                                genel_urun_toplam[urun_id] = {
+                                    'urun_adi': urun_adi,
+                                    'toplam_eklenen': 0
+                                }
+                            genel_urun_toplam[urun_id]['toplam_eklenen'] += detay.eklenen_miktar
+                
+                # Ürün özetini listeye çevir ve sırala
+                urun_listesi = list(urun_ozeti.values())
+                urun_listesi.sort(key=lambda x: x['toplam_eklenen'], reverse=True)
+                
+                personel_toplam = sum(u['toplam_eklenen'] for u in urun_listesi)
+                
+                if urun_listesi:  # Sadece işlem yapan personelleri ekle
+                    personel_raporlari.append({
+                        'personel_id': personel.id,
+                        'personel_adi': f"{personel.ad} {personel.soyad}",
+                        'toplam_eklenen': personel_toplam,
+                        'urun_sayisi': len(urun_listesi),
+                        'urunler': urun_listesi
+                    })
+            
+            # Genel toplamı listeye çevir ve sırala
+            genel_toplam_listesi = list(genel_urun_toplam.values())
+            genel_toplam_listesi.sort(key=lambda x: x['toplam_eklenen'], reverse=True)
+            
+            return {
+                'success': True,
+                'otel_adi': otel.ad,
+                'rapor_tarihi': tarih.strftime('%d.%m.%Y'),
+                'olusturma_zamani': get_kktc_now().strftime('%d.%m.%Y %H:%M'),
+                'personeller': personel_raporlari,
+                'genel_toplam': genel_toplam_listesi,
+                'genel_toplam_adet': sum(u['toplam_eklenen'] for u in genel_toplam_listesi)
+            }
+            
+        except Exception as e:
+            logger.error(f"Gün sonu raporu hatası: {e}")
+            return {'success': False, 'message': str(e)}
+
+
 class KatSorumlusuKullanimRaporServisi:
     """Kat sorumlusu zimmet kullanım raporları"""
     
@@ -388,7 +525,8 @@ class GunlukGorevRaporServisi:
         otel_id: int = None,
         baslangic_tarihi: date = None,
         bitis_tarihi: date = None,
-        personel_id: int = None
+        personel_id: int = None,
+        personel_ids: list = None
     ) -> dict:
         """
         Günlük görev tamamlama raporu
@@ -397,7 +535,8 @@ class GunlukGorevRaporServisi:
             otel_id: Otel ID (opsiyonel)
             baslangic_tarihi: Başlangıç tarihi
             bitis_tarihi: Bitiş tarihi
-            personel_id: Personel ID (opsiyonel)
+            personel_id: Personel ID (opsiyonel, tekil)
+            personel_ids: Personel ID listesi (opsiyonel, çoklu)
             
         Returns:
             dict: Rapor verisi
@@ -435,7 +574,11 @@ class GunlukGorevRaporServisi:
             
             if otel_id:
                 query = query.filter(Kullanici.otel_id == otel_id)
-            if personel_id:
+            
+            # Çoklu personel ID desteği
+            if personel_ids:
+                query = query.filter(GunlukGorev.personel_id.in_(personel_ids))
+            elif personel_id:
                 query = query.filter(GunlukGorev.personel_id == personel_id)
             
             query = query.group_by(

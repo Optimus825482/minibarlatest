@@ -1065,12 +1065,13 @@ def sifirla_minibar_stoklari(kullanici_id):
         }
 
 
-def export_depo_stok_excel(stok_listesi):
+def export_depo_stok_excel(stok_listesi, otel_adi=None):
     """
     Depo stok listesini Excel formatında export eder
     
     Args:
         stok_listesi (list): get_depo_stok_durumu() çıktısı
+        otel_adi (str, optional): Otel adı - başlıkta gösterilir
     
     Returns:
         BytesIO: Excel dosyası buffer
@@ -1091,24 +1092,41 @@ def export_depo_stok_excel(stok_listesi):
             bottom=Side(style='thin')
         )
         
+        row_offset = 1
+        
+        # Otel adı başlığı
+        if otel_adi:
+            ws.cell(row=1, column=1, value=f"Otel: {otel_adi}")
+            ws.cell(row=1, column=1).font = Font(name='Calibri', size=14, bold=True)
+            ws.merge_cells('A1:H1')
+            
+            # Rapor tarihi
+            ws.cell(row=2, column=1, value=f"Rapor Tarihi: {get_kktc_now().strftime('%d.%m.%Y %H:%M')}")
+            ws.cell(row=2, column=1).font = Font(name='Calibri', size=10, italic=True)
+            ws.merge_cells('A2:H2')
+            
+            row_offset = 4  # Başlıklar 4. satırdan başlasın
+        
         # Başlıklar
-        headers = ['Ürün Adı', 'Grup', 'Birim', 'Mevcut Stok', 'Kritik Stok', 'Durum']
+        headers = ['Ürün Adı', 'Grup', 'Birim', 'Depo Stok', 'Zimmet Stok', 'Toplam Stok', 'Kritik Stok', 'Durum']
         for col_num, header in enumerate(headers, 1):
-            cell = ws.cell(row=1, column=col_num, value=header)
+            cell = ws.cell(row=row_offset, column=col_num, value=header)
             cell.font = baslik_font
             cell.fill = baslik_fill
             cell.alignment = baslik_alignment
             cell.border = border
         
         # Veri satırları
-        for row_num, item in enumerate(stok_listesi, 2):
+        for row_num, item in enumerate(stok_listesi, row_offset + 1):
             data = [
-                item['urun_adi'],
-                item['grup_adi'],
-                item['birim'],
-                item['mevcut_stok'],
-                item['kritik_stok'],
-                item['badge_text']
+                item.get('urun_adi', ''),
+                item.get('grup_adi', ''),
+                item.get('birim', ''),
+                item.get('depo_stok', 0),
+                item.get('zimmet_stok', 0),
+                item.get('toplam_stok', 0),
+                item.get('kritik_stok', 0),
+                item.get('badge_text', '')
             ]
             
             for col_num, value in enumerate(data, 1):
@@ -1117,13 +1135,14 @@ def export_depo_stok_excel(stok_listesi):
                 cell.alignment = Alignment(horizontal='left', vertical='center')
                 
                 # Kritik stok vurgulama
-                if item['durum'] == 'kritik':
+                durum = item.get('durum', 'normal')
+                if durum == 'kritik':
                     cell.fill = PatternFill(start_color='FEE2E2', end_color='FEE2E2', fill_type='solid')
-                    if col_num == 6:  # Durum kolonu
+                    if col_num == 8:  # Durum kolonu
                         cell.font = Font(color='DC2626', bold=True)
-                elif item['durum'] == 'dikkat':
+                elif durum == 'dikkat':
                     cell.fill = PatternFill(start_color='FEF3C7', end_color='FEF3C7', fill_type='solid')
-                    if col_num == 6:
+                    if col_num == 8:
                         cell.font = Font(color='D97706', bold=True)
         
         # Sütun genişlikleri
@@ -1132,10 +1151,12 @@ def export_depo_stok_excel(stok_listesi):
         ws.column_dimensions['C'].width = 12
         ws.column_dimensions['D'].width = 15
         ws.column_dimensions['E'].width = 15
-        ws.column_dimensions['F'].width = 12
+        ws.column_dimensions['F'].width = 15
+        ws.column_dimensions['G'].width = 15
+        ws.column_dimensions['H'].width = 12
         
-        # Freeze panes (İlk satır sabit)
-        ws.freeze_panes = 'A2'
+        # Freeze panes (Başlık satırı sabit)
+        ws.freeze_panes = f'A{row_offset + 1}'
         
         # BytesIO'ya kaydet
         output = BytesIO()

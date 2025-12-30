@@ -1304,24 +1304,43 @@ def register_kat_sorumlusu_routes(app):
                 if son_islem_detay:
                     baslangic_stok = son_islem_detay.bitis_stok or 0
                 
-                # Setup miktarını bul
-                from models import OdaTipi, SetupIcerik
+                # Setup miktarını bul (Otel bazlı)
+                from models import OdaTipi, SetupIcerik, Kat, oda_tipi_setup
+                from sqlalchemy import and_
                 oda = Oda.query.get(oda_id)
                 setup_miktari = 0
                 
                 if oda and oda.oda_tipi_id:
                     oda_tipi = OdaTipi.query.get(oda.oda_tipi_id)
                     if oda_tipi:
-                        for setup in oda_tipi.setuplar:
-                            if not setup.aktif:
-                                continue
-                            setup_icerik = SetupIcerik.query.filter_by(
-                                setup_id=setup.id,
-                                urun_id=urun_id
-                            ).first()
-                            if setup_icerik:
-                                setup_miktari = setup_icerik.adet
-                                break
+                        # Odanın otelini bul
+                        kat = Kat.query.get(oda.kat_id)
+                        if kat:
+                            # Otel bazlı setup'ları getir
+                            setup_rows = db.session.execute(
+                                db.select(oda_tipi_setup.c.setup_id).where(
+                                    and_(
+                                        oda_tipi_setup.c.otel_id == kat.otel_id,
+                                        oda_tipi_setup.c.oda_tipi_id == oda_tipi.id
+                                    )
+                                )
+                            ).fetchall()
+                            setup_ids = [row[0] for row in setup_rows]
+                            
+                            if setup_ids:
+                                setuplar = Setup.query.filter(Setup.id.in_(setup_ids), Setup.aktif == True).all()
+                            else:
+                                # Geriye uyumluluk
+                                setuplar = [s for s in oda_tipi.setuplar if s.aktif]
+                            
+                            for setup in setuplar:
+                                setup_icerik = SetupIcerik.query.filter_by(
+                                    setup_id=setup.id,
+                                    urun_id=urun_id
+                                ).first()
+                                if setup_icerik:
+                                    setup_miktari = setup_icerik.adet
+                                    break
                 
                 # Tüketim hesapla: Setup'ta olması gereken - Başlangıçta olan
                 tuketim_miktari = max(0, setup_miktari - baslangic_stok)

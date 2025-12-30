@@ -1,241 +1,415 @@
-{% extends "base.html" %} {% block title %}Kat Sorumlusu Kullanım Raporu{%
-endblock %} {% block page_title %}Kat Sorumlusu Kullanım Raporu{% endblock %} {%
-block content %}
+{% extends "base.html" %}
+
+{% block title %}Kat Sorumlusu Gün Sonu Raporu{% endblock %}
+{% block page_title %}Kat Sorumlusu Gün Sonu Raporu{% endblock %}
+
+{% block content %}
 <div class="space-y-6">
-  <!-- Filtre Formu -->
-  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-    <div class="px-4 py-5 sm:p-6">
-      <h3 class="text-lg font-medium text-slate-900 dark:text-white mb-4">
-        <i class="fas fa-filter mr-2 text-blue-600"></i>Rapor Filtresi
-      </h3>
-      <form
-        method="POST"
-        action="{{ url_for('raporlar.kat_sorumlusu_kullanim_raporu_olustur') }}"
-        class="space-y-4"
-      >
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div>
-            <label
-              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
-              >Otel</label
-            >
-            <select
-              name="otel_id"
-              class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white shadow-sm"
-            >
-              <option value="">Tüm Oteller</option>
-              {% for otel in oteller %}
-              <option value="{{ otel.id }}">{{ otel.ad }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div>
-            <label
-              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
-              >Kat Sorumlusu</label
-            >
-            <select
-              name="personel_id"
-              class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white shadow-sm"
-            >
-              <option value="">Tümü</option>
-              {% for p in personeller %}
-              <option value="{{ p.id }}">{{ p.ad }} {{ p.soyad }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div>
-            <label
-              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
-              >Başlangıç</label
-            >
-            <input
-              type="date"
-              name="baslangic"
-              class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white shadow-sm"
-            />
-          </div>
-          <div>
-            <label
-              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
-              >Bitiş</label
-            >
-            <input
-              type="date"
-              name="bitis"
-              class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white shadow-sm"
-            />
-          </div>
-          <div class="flex items-end">
-            <button
-              type="submit"
-              class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-            >
-              <i class="fas fa-search mr-2"></i>Rapor Oluştur
-            </button>
-          </div>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  {% if rapor_verisi %}
-  <!-- Özet Kartları -->
-  <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-    <div
-      class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-4 text-white"
-    >
-      <p class="text-indigo-100 text-sm">Personel Sayısı</p>
-      <p class="text-2xl font-bold">{{ rapor_verisi.toplam_personel }}</p>
-    </div>
-    <div
-      class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-4 text-white"
-    >
-      <p class="text-red-100 text-sm">Toplam Tüketim</p>
-      <p class="text-2xl font-bold">{{ rapor_verisi.toplam_tuketim }}</p>
-    </div>
-    <div
-      class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white"
-    >
-      <p class="text-green-100 text-sm">Toplam Ekleme</p>
-      <p class="text-2xl font-bold">{{ rapor_verisi.toplam_ekleme }}</p>
-    </div>
-    <div
-      class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white"
-    >
-      <p class="text-purple-100 text-sm">İşlem Sayısı</p>
-      <p class="text-2xl font-bold">{{ rapor_verisi.toplam_grup }}</p>
-    </div>
-    <div
-      class="bg-gradient-to-br from-slate-500 to-slate-600 rounded-xl p-4 text-white"
-    >
-      <p class="text-slate-100 text-sm">Dönem</p>
-      <p class="text-lg font-bold">
-        {{ rapor_verisi.baslangic }} - {{ rapor_verisi.bitis }}
-      </p>
-    </div>
-  </div>
-
-  <!-- Kullanım Listesi Tablosu -->
-  <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
-    <div
-      class="px-4 py-4 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700"
-    >
-      <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-        <i class="fas fa-list mr-2 text-indigo-600"></i>Kullanım Kayıtları
-        <span class="text-sm font-normal text-slate-500 ml-2"
-          >(Tarih Azalan)</span
-        >
-      </h3>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-        <thead class="bg-slate-100 dark:bg-slate-900">
-          <tr>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase w-40"
-            >
-              Tarih
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase w-36"
-            >
-              Personel
-            </th>
-            <th
-              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase w-20"
-            >
-              Oda
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase"
-            >
-              Ürünler
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase w-32"
-            >
-              Otel
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-          {% for grup in rapor_verisi.gruplar %}
-          <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50 align-top">
-            <td
-              class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap"
-            >
-              <i class="fas fa-calendar-alt mr-1 text-slate-400"></i>{{
-              grup.tarih }}
-            </td>
-            <td
-              class="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white whitespace-nowrap"
-            >
-              <i class="fas fa-user mr-1 text-indigo-500"></i>{{ grup.personel
-              }}
-            </td>
-            <td class="px-4 py-3 text-sm text-center">
-              <span
-                class="px-2 py-1 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-400 rounded font-bold"
-                >{{ grup.oda_no }}</span
-              >
-            </td>
-            <td class="px-4 py-3 text-sm">
-              <div class="space-y-1">
-                {% for urun in grup.urunler %}
-                <div
-                  class="flex items-center justify-between py-1 {% if not loop.last %}border-b border-slate-100 dark:border-slate-700{% endif %}"
-                >
-                  <span class="text-slate-900 dark:text-white"
-                    >{{ urun.urun_adi }}</span
-                  >
-                  <span
-                    class="px-2 py-0.5 {% if urun.islem_class == 'tuketim' %}bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400{% else %}bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400{% endif %} rounded font-bold text-xs ml-3"
-                  >
-                    {% if urun.islem_class == 'tuketim' %}-{% else %}+{% endif
-                    %}{{ urun.miktar }}
-                  </span>
+    <!-- Rapor Filtre Formu -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-slate-900 mb-4">Rapor Oluştur</h3>
+            
+            <form method="POST" action="{{ url_for('raporlar.kat_sorumlusu_kullanim_raporu_olustur') }}" id="raporForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <!-- Üst Satır: Otel ve Tarih -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <!-- Otel Seçimi -->
+                    <div>
+                        <label for="otel_id" class="block text-sm font-medium text-slate-700 mb-1">
+                            Otel <span class="text-red-500">*</span>
+                        </label>
+                        <select id="otel_id" name="otel_id" required
+                            class="h-11 appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">Otel seçiniz...</option>
+                            {% for otel in oteller %}
+                            <option value="{{ otel.id }}" {% if request.form.get('otel_id')|int == otel.id or secili_otel_id == otel.id %}selected{% endif %}>
+                                {{ otel.ad }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Tarih Seçimi -->
+                    <div>
+                        <label for="tarih" class="block text-sm font-medium text-slate-700 mb-1">
+                            Tarih <span class="text-red-500">*</span>
+                        </label>
+                        <input type="date" id="tarih" name="tarih" required
+                            value="{{ request.form.get('tarih', '') or secili_tarih or today }}"
+                            class="h-11 appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
                 </div>
-                {% endfor %}
-              </div>
-            </td>
-            <td
-              class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap"
-            >
-              {{ grup.otel }}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+                
+                <!-- Alt Satır: Kat Sorumluları Checkbox'ları -->
+                <div class="mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-medium text-slate-700">
+                            Kat Sorumluları
+                        </label>
+                        <button type="button" id="tumunuSecBtn" 
+                            class="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium rounded-md border border-blue-200 transition-colors">
+                            Tümünü Seç/Kaldır
+                        </button>
+                    </div>
+                    
+                    <div id="katSorumlulariContainer" class="p-3 bg-slate-50 rounded-lg border border-slate-200 min-h-[60px]">
+                        <p class="text-sm text-slate-500 italic" id="katSorumlulariPlaceholder">
+                            Önce otel seçiniz...
+                        </p>
+                        <div id="katSorumlulariCheckboxes" class="flex flex-wrap gap-3 hidden">
+                            <!-- Checkbox'lar AJAX ile doldurulacak -->
+                        </div>
+                    </div>
+                    <input type="hidden" id="personel_ids" name="personel_ids" value="">
+                </div>
+                
+                <div class="flex justify-end">
+                    <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Rapor Oluştur
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
-
-  {% if rapor_verisi.gruplar|length == 0 %}
-  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-12 text-center">
-    <i
-      class="fas fa-search text-5xl text-slate-300 dark:text-slate-600 mb-4"
-    ></i>
-    <p class="text-slate-500 dark:text-slate-400">
-      Seçilen kriterlere uygun kayıt bulunamadı.
-    </p>
-  </div>
-  {% endif %}
-
-  <div class="text-center text-sm text-slate-500 dark:text-slate-400">
-    <i class="fas fa-clock mr-1"></i>Rapor Tarihi: {{ rapor_verisi.rapor_tarihi
-    }}
-  </div>
-  {% else %}
-  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-12 text-center">
-    <i
-      class="fas fa-users text-5xl text-slate-300 dark:text-slate-600 mb-4"
-    ></i>
-    <p class="text-slate-500 dark:text-slate-400">
-      Rapor oluşturmak için yukarıdaki formu kullanın.
-    </p>
-  </div>
-  {% endif %}
+    
+    {% if rapor_verisi %}
+    <!-- Rapor Sonuçları -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <!-- Rapor Başlığı -->
+            <div class="text-center mb-6 pb-4 border-b border-slate-200">
+                <h2 class="text-2xl font-bold text-blue-800">{{ rapor_verisi.otel_adi }}</h2>
+                <h3 class="text-lg font-semibold text-slate-700 mt-1">Kat Sorumlusu Gün Sonu Raporu</h3>
+                <p class="text-slate-600 mt-1">{{ rapor_verisi.rapor_tarihi }}</p>
+                <p class="text-xs text-slate-400 mt-1">Oluşturulma: {{ rapor_verisi.olusturma_zamani }}</p>
+            </div>
+            
+            <!-- Export Butonları -->
+            <div class="flex justify-end gap-2 mb-4">
+                <button type="button" onclick="exportExcel()" 
+                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Excel
+                </button>
+                <button type="button" onclick="exportPDF()"
+                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    PDF
+                </button>
+            </div>
+            
+            {% if rapor_verisi.personeller %}
+            <!-- Her Personel İçin Bölüm -->
+            {% for personel in rapor_verisi.personeller %}
+            <div class="mb-6">
+                <!-- Personel Başlığı -->
+                <div class="bg-slate-700 text-white px-4 py-3 rounded-t-lg flex justify-between items-center">
+                    <span class="font-semibold">{{ personel.personel_adi }}</span>
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-bold">
+                        Toplam: {{ personel.toplam_eklenen }} adet
+                    </span>
+                </div>
+                
+                <!-- Ürün Tablosu -->
+                <div class="overflow-x-auto border border-t-0 border-slate-200 rounded-b-lg">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-600">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Ürün Adı</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Minibarlara Eklenen</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Detay</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-200">
+                            {% for urun in personel.urunler %}
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-4 py-3 text-sm text-slate-900">{{ urun.urun_adi }}</td>
+                                <td class="px-4 py-3 text-sm text-slate-900 text-center font-semibold">{{ urun.toplam_eklenen }}</td>
+                                <td class="px-4 py-3 text-center">
+                                    <button type="button" 
+                                        class="oda-detay-btn inline-flex items-center px-2 py-1 text-xs font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded"
+                                        data-personel="{{ personel.personel_adi }}"
+                                        data-urun="{{ urun.urun_adi }}"
+                                        data-odalar='{{ urun.odalar | tojson | safe }}'>
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                        Odalar
+                                    </button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="px-4 py-8 text-center text-slate-500">
+                                    Bu personel için kayıt bulunamadı
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <!-- Genel Toplam -->
+            {% if rapor_verisi.genel_toplam %}
+            <div class="mt-8">
+                <div class="bg-slate-800 text-white px-4 py-3 rounded-t-lg flex justify-between items-center">
+                    <span class="font-bold text-lg">GENEL TOPLAM</span>
+                    <span class="bg-slate-100 text-slate-800 px-3 py-1 rounded-full text-sm font-bold">
+                        {{ rapor_verisi.genel_toplam_adet }} adet
+                    </span>
+                </div>
+                
+                <div class="overflow-x-auto border border-t-0 border-slate-200 rounded-b-lg">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-700">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Ürün Adı</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Toplam Eklenen</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-200">
+                            {% for urun in rapor_verisi.genel_toplam %}
+                            <tr class="hover:bg-amber-50">
+                                <td class="px-4 py-3 text-sm text-slate-900 font-medium">{{ urun.urun_adi }}</td>
+                                <td class="px-4 py-3 text-sm text-slate-900 text-center font-bold">{{ urun.toplam_eklenen }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-slate-900">Veri Bulunamadı</h3>
+                <p class="mt-1 text-sm text-slate-500">Seçilen tarih ve kriterlere uygun kayıt bulunamadı.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 </div>
+
+<!-- Oda Detay Modal -->
+<div id="odaDetayModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeOdaDetayModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                        <h3 class="text-lg leading-6 font-medium text-slate-900" id="modalTitle">Oda Detayları</h3>
+                        <div class="mt-4" id="modalContent">
+                            <!-- İçerik JS ile doldurulacak -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="closeOdaDetayModal()"
+                    class="w-full inline-flex justify-center rounded-md border border-slate-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                    Kapat
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Bugünün tarihini ayarla
+document.addEventListener('DOMContentLoaded', function() {
+    const tarihInput = document.getElementById('tarih');
+    if (!tarihInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        tarihInput.value = today;
+    }
+    
+    // Otel seçiliyse kat sorumlularını yükle
+    const otelSelect = document.getElementById('otel_id');
+    if (otelSelect.value) {
+        loadKatSorumlulari(otelSelect.value);
+    }
+    
+    // Oda detay butonlarına event listener ekle
+    document.querySelectorAll('.oda-detay-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const personelAdi = this.dataset.personel;
+            const urunAdi = this.dataset.urun;
+            const odalar = JSON.parse(this.dataset.odalar || '[]');
+            showOdaDetay(personelAdi, urunAdi, odalar);
+        });
+    });
+});
+
+// Otel değiştiğinde kat sorumlularını yükle
+document.getElementById('otel_id').addEventListener('change', function() {
+    loadKatSorumlulari(this.value);
+});
+
+// Kat sorumlularını AJAX ile yükle - Checkbox formatında
+function loadKatSorumlulari(otelId) {
+    const container = document.getElementById('katSorumlulariCheckboxes');
+    const placeholder = document.getElementById('katSorumlulariPlaceholder');
+    
+    if (!otelId) {
+        container.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+        placeholder.textContent = 'Önce otel seçiniz...';
+        return;
+    }
+    
+    placeholder.textContent = 'Yükleniyor...';
+    placeholder.classList.remove('hidden');
+    container.classList.add('hidden');
+    
+    fetch(`/raporlar/api/otel-kat-sorumlulari/${otelId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.personeller.length > 0) {
+                container.innerHTML = '';
+                
+                data.personeller.forEach(p => {
+                    const label = document.createElement('label');
+                    label.className = 'inline-flex items-center cursor-pointer bg-white px-3 py-2 rounded-md border border-slate-200 hover:bg-blue-50 hover:border-blue-300 transition-colors';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = 'personel_checkbox';
+                    checkbox.value = p.id;
+                    checkbox.checked = true; // Default hepsi seçili
+                    checkbox.className = 'h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500';
+                    checkbox.addEventListener('change', updatePersonelIds);
+                    
+                    const span = document.createElement('span');
+                    span.className = 'ml-2 text-sm text-slate-700';
+                    span.textContent = p.ad_soyad;
+                    
+                    label.appendChild(checkbox);
+                    label.appendChild(span);
+                    container.appendChild(label);
+                });
+                
+                placeholder.classList.add('hidden');
+                container.classList.remove('hidden');
+                
+                // Hepsini seçili olarak işaretle
+                updatePersonelIds();
+            } else {
+                placeholder.textContent = 'Bu otelde kat sorumlusu bulunamadı';
+                placeholder.classList.remove('hidden');
+                container.classList.add('hidden');
+            }
+        })
+        .catch(err => {
+            console.error('Kat sorumluları yüklenemedi:', err);
+            placeholder.textContent = 'Hata oluştu, tekrar deneyin';
+            placeholder.classList.remove('hidden');
+            container.classList.add('hidden');
+        });
+}
+
+// Tümünü Seç/Kaldır butonu
+document.getElementById('tumunuSecBtn').addEventListener('click', function() {
+    const checkboxes = document.querySelectorAll('input[name="personel_checkbox"]');
+    if (checkboxes.length === 0) return;
+    
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    
+    checkboxes.forEach(cb => {
+        cb.checked = !allChecked;
+    });
+    
+    updatePersonelIds();
+});
+
+// Seçili personel ID'lerini güncelle
+function updatePersonelIds() {
+    const checkboxes = document.querySelectorAll('input[name="personel_checkbox"]:checked');
+    const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+    document.getElementById('personel_ids').value = selectedIds.join(',');
+}
+
+// Form submit öncesi personel ID'lerini güncelle
+document.getElementById('raporForm').addEventListener('submit', function(e) {
+    updatePersonelIds();
+});
+
+// Oda detay modal
+function showOdaDetay(personelAdi, urunAdi, odalar) {
+    const modal = document.getElementById('odaDetayModal');
+    const title = document.getElementById('modalTitle');
+    const content = document.getElementById('modalContent');
+    
+    title.textContent = `${personelAdi} - ${urunAdi}`;
+    
+    let html = '<div class="overflow-x-auto"><table class="min-w-full divide-y divide-slate-200">';
+    html += '<thead class="bg-slate-50"><tr>';
+    html += '<th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">Oda No</th>';
+    html += '<th class="px-3 py-2 text-center text-xs font-medium text-slate-500 uppercase">Miktar</th>';
+    html += '<th class="px-3 py-2 text-center text-xs font-medium text-slate-500 uppercase">Saat</th>';
+    html += '</tr></thead><tbody class="divide-y divide-slate-200">';
+    
+    odalar.forEach(oda => {
+        html += `<tr class="hover:bg-slate-50">`;
+        html += `<td class="px-3 py-2 text-sm text-slate-900">${oda.oda_no}</td>`;
+        html += `<td class="px-3 py-2 text-sm text-slate-900 text-center font-semibold">${oda.miktar}</td>`;
+        html += `<td class="px-3 py-2 text-sm text-slate-500 text-center">${oda.saat || '-'}</td>`;
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table></div>';
+    content.innerHTML = html;
+    
+    modal.classList.remove('hidden');
+}
+
+function closeOdaDetayModal() {
+    document.getElementById('odaDetayModal').classList.add('hidden');
+}
+
+// ESC tuşu ile modal kapat
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeOdaDetayModal();
+    }
+});
+
+// Excel Export
+function exportExcel() {
+    const form = document.getElementById('raporForm');
+    const formData = new FormData(form);
+    const params = new URLSearchParams(formData).toString();
+    window.location.href = `/raporlar/kat-sorumlusu-kullanim-excel?${params}`;
+}
+
+// PDF Export
+function exportPDF() {
+    const form = document.getElementById('raporForm');
+    const formData = new FormData(form);
+    const params = new URLSearchParams(formData).toString();
+    window.location.href = `/raporlar/kat-sorumlusu-kullanim-pdf?${params}`;
+}
+</script>
 {% endblock %}

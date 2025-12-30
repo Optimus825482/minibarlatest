@@ -17,7 +17,7 @@ Roller:
 - admin
 """
 
-from flask import Blueprint, render_template, request, send_file, flash, redirect, url_for
+from flask import Blueprint, render_template, request, send_file, flash, redirect, url_for, jsonify
 from datetime import datetime, timedelta, date
 from io import BytesIO
 from sqlalchemy import func, and_, or_
@@ -1345,12 +1345,17 @@ def otel_zimmet_stok_raporu_olustur():
         from utils.rapor_servisleri import OtelZimmetRaporServisi
         
         otel_id = request.form.get('otel_id', type=int)
+        export_format = request.form.get('format', '')
         
         rapor = OtelZimmetRaporServisi.get_otel_zimmet_stok_raporu(otel_id)
         
         if not rapor['success']:
             flash(rapor.get('message', 'Rapor oluşturulamadı'), 'danger')
             return redirect(url_for('raporlar.otel_zimmet_stok_raporlari'))
+        
+        # Excel export
+        if export_format == 'excel':
+            return export_otel_zimmet_stok_excel(rapor)
         
         oteller = get_kullanici_otelleri()
         
@@ -1366,71 +1371,571 @@ def otel_zimmet_stok_raporu_olustur():
         return redirect(url_for('raporlar.otel_zimmet_stok_raporlari'))
 
 
+def export_otel_zimmet_stok_excel(rapor):
+    """Otel zimmet stok raporunu Excel olarak export et"""
+    import io
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from flask import send_file
+    from datetime import datetime
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Otel Zimmet Stok Raporu"
+    
+    # Stiller
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="2563EB", end_color="2563EB", fill_type="solid")
+    otel_font = Font(bold=True, size=12, color="1E40AF")
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    center_align = Alignment(horizontal='center', vertical='center')
+    
+    row = 1
+    
+    # Başlık
+    ws.merge_cells(f'A{row}:H{row}')
+    ws[f'A{row}'] = f"Otel Bazlı Zimmet Stok Raporu - {rapor.get('rapor_tarihi', '')}"
+    ws[f'A{row}'].font = Font(bold=True, size=14)
+    ws[f'A{row}'].alignment = center_align
+    row += 2
+    
+    # Her otel için tablo
+    for otel in rapor.get('oteller', []):
+        # Otel adı
+        ws.merge_cells(f'A{row}:H{row}')
+        ws[f'A{row}'] = f"🏨 {otel['otel_ad']}"
+        ws[f'A{row}'].font = otel_font
+        row += 1
+        
+        # Tablo başlıkları
+        headers = ['Ürün', 'Birim', 'Toplam', 'Kullanılan', 'Kalan', 'Kritik Seviye', 'Kullanım %', 'Durum']
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=row, column=col, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center_align
+            cell.border = thin_border
+        row += 1
+        
+        # Ürün verileri
+        for urun in otel.get('urunler', []):
+            ws.cell(row=row, column=1, value=urun['urun_adi']).border = thin_border
+            ws.cell(row=row, column=2, value=urun['birim']).border = thin_border
+            ws.cell(row=row, column=2).alignment = center_align
+            ws.cell(row=row, column=3, value=urun['toplam_miktar']).border = thin_border
+            ws.cell(row=row, column=3).alignment = center_align
+            ws.cell(row=row, column=4, value=urun['kullanilan_miktar']).border = thin_border
+            ws.cell(row=row, column=4).alignment = center_align
+            ws.cell(row=row, column=5, value=urun['kalan_miktar']).border = thin_border
+            ws.cell(row=row, column=5).alignment = center_align
+            ws.cell(row=row, column=6, value=urun['kritik_seviye']).border = thin_border
+            ws.cell(row=row, column=6).alignment = center_align
+            ws.cell(row=row, column=7, value=f"{urun['kullanim_yuzdesi']}%").border = thin_border
+            ws.cell(row=row, column=7).alignment = center_align
+            
+            # Durum
+            durum_map = {'stokout': 'TÜKENDİ', 'kritik': 'KRİTİK', 'dikkat': 'DİKKAT', 'normal': 'NORMAL'}
+            durum = durum_map.get(urun['stok_durumu'], 'NORMAL')
+            durum_cell = ws.cell(row=row, column=8, value=durum)
+            durum_cell.border = thin_border
+            durum_cell.alignment = center_align
+            
+            # Durum renkleri
+            if urun['stok_durumu'] == 'stokout':
+                durum_cell.fill = PatternFill(start_color="FEE2E2", end_color="FEE2E2", fill_type="solid")
+            elif urun['stok_durumu'] == 'kritik':
+                durum_cell.fill = PatternFill(start_color="FFEDD5", end_color="FFEDD5", fill_type="solid")
+            elif urun['stok_durumu'] == 'dikkat':
+                durum_cell.fill = PatternFill(start_color="FEF9C3", end_color="FEF9C3", fill_type="solid")
+            else:
+                durum_cell.fill = PatternFill(start_color="DCFCE7", end_color="DCFCE7", fill_type="solid")
+            
+            row += 1
+        
+        row += 1  # Oteller arası boşluk
+    
+    # Sütun genişlikleri
+    ws.column_dimensions['A'].width = 30
+    ws.column_dimensions['B'].width = 10
+    ws.column_dimensions['C'].width = 12
+    ws.column_dimensions['D'].width = 12
+    ws.column_dimensions['E'].width = 12
+    ws.column_dimensions['F'].width = 14
+    ws.column_dimensions['G'].width = 12
+    ws.column_dimensions['H'].width = 12
+    
+    # Excel dosyasını oluştur
+    excel_buffer = io.BytesIO()
+    wb.save(excel_buffer)
+    excel_buffer.seek(0)
+    
+    filename = f"otel_zimmet_stok_raporu_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    
+    log_islem('export', 'otel_zimmet_stok_raporu', {'format': 'excel'})
+    
+    return send_file(
+        excel_buffer,
+        as_attachment=True,
+        download_name=filename,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+
+
 @raporlar_bp.route('/kat-sorumlusu-kullanim')
 @login_required
 @role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
 def kat_sorumlusu_kullanim_raporlari():
-    """Kat sorumlusu zimmet kullanım raporları sayfası"""
+    """Kat sorumlusu gün sonu raporu sayfası"""
     try:
         oteller = get_kullanici_otelleri()
-        personeller = Kullanici.query.filter(
-            Kullanici.rol == 'kat_sorumlusu',
-            Kullanici.aktif.is_(True)
-        ).order_by(Kullanici.ad, Kullanici.soyad).all()
-        return render_template('raporlar/kat_sorumlusu_kullanim.html', 
-                             oteller=oteller, personeller=personeller)
+        return render_template('raporlar/kat_sorumlusu_kullanim.html', oteller=oteller)
     except Exception as e:
         log_hata(e, modul='kat_sorumlusu_kullanim_raporlari')
-        flash('Sayfa yüklenirken hata oluştu.', 'danger')
-        return redirect(url_for('raporlar.doluluk_raporlari'))
+        flash(f'Sayfa yüklenirken hata oluştu: {str(e)}', 'danger')
+        return redirect(url_for('sistem_yoneticisi_dashboard'))
+
+
+@raporlar_bp.route('/api/otel-kat-sorumlulari/<int:otel_id>')
+@login_required
+@role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
+def api_otel_kat_sorumlulari(otel_id):
+    """Otele ait kat sorumlularını getir"""
+    try:
+        personeller = Kullanici.query.filter(
+            Kullanici.rol == 'kat_sorumlusu',
+            Kullanici.aktif.is_(True),
+            Kullanici.otel_id == otel_id
+        ).order_by(Kullanici.ad, Kullanici.soyad).all()
+        
+        return jsonify({
+            'success': True,
+            'personeller': [
+                {'id': p.id, 'ad_soyad': f"{p.ad} {p.soyad}"}
+                for p in personeller
+            ]
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 
 @raporlar_bp.route('/kat-sorumlusu-kullanim-raporu-olustur', methods=['POST'])
 @login_required
 @role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
 def kat_sorumlusu_kullanim_raporu_olustur():
-    """Kat sorumlusu kullanım raporu oluştur"""
+    """Kat sorumlusu gün sonu raporu oluştur"""
     try:
-        from utils.rapor_servisleri import KatSorumlusuKullanimRaporServisi
+        from utils.rapor_servisleri import KatSorumlusuGunSonuRaporServisi
         
         otel_id = request.form.get('otel_id', type=int)
-        personel_id = request.form.get('personel_id', type=int)
-        baslangic = request.form.get('baslangic')
-        bitis = request.form.get('bitis')
+        personel_ids = request.form.getlist('personel_ids[]', type=int)
+        tarih_str = request.form.get('tarih')
+        export_format = request.form.get('format', '')
         
-        baslangic_tarihi = datetime.strptime(baslangic, '%Y-%m-%d').date() if baslangic else None
-        bitis_tarihi = datetime.strptime(bitis, '%Y-%m-%d').date() if bitis else None
+        if not otel_id:
+            flash('Lütfen otel seçin.', 'warning')
+            return redirect(url_for('raporlar.kat_sorumlusu_kullanim_raporlari'))
         
-        rapor = KatSorumlusuKullanimRaporServisi.get_personel_kullanim_raporu(
+        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date() if tarih_str else date.today()
+        
+        rapor = KatSorumlusuGunSonuRaporServisi.get_gun_sonu_raporu(
             otel_id=otel_id,
-            personel_id=personel_id,
-            baslangic_tarihi=baslangic_tarihi,
-            bitis_tarihi=bitis_tarihi
+            personel_ids=personel_ids if personel_ids else None,
+            tarih=tarih
         )
         
         if not rapor['success']:
             flash(rapor.get('message', 'Rapor oluşturulamadı'), 'danger')
             return redirect(url_for('raporlar.kat_sorumlusu_kullanim_raporlari'))
         
-        oteller = get_kullanici_otelleri()
-        personeller = Kullanici.query.filter(
-            Kullanici.rol == 'kat_sorumlusu',
-            Kullanici.aktif.is_(True)
-        ).order_by(Kullanici.ad, Kullanici.soyad).all()
+        # Excel export
+        if export_format == 'excel':
+            return export_gun_sonu_excel(rapor)
         
-        log_islem('view', 'kat_sorumlusu_kullanim_raporu', {
-            'otel_id': otel_id, 'personel_id': personel_id
+        # PDF export
+        if export_format == 'pdf':
+            return export_gun_sonu_pdf(rapor)
+        
+        oteller = get_kullanici_otelleri()
+        
+        log_islem('view', 'kat_sorumlusu_gun_sonu_raporu', {
+            'otel_id': otel_id, 'tarih': tarih_str
         })
         
         return render_template('raporlar/kat_sorumlusu_kullanim.html',
                              oteller=oteller,
-                             personeller=personeller,
-                             rapor_verisi=rapor)
+                             rapor_verisi=rapor,
+                             secili_otel_id=otel_id,
+                             secili_tarih=tarih_str)
         
     except Exception as e:
         log_hata(e, modul='kat_sorumlusu_kullanim_raporu_olustur')
         flash('Rapor oluşturulamadı.', 'danger')
         return redirect(url_for('raporlar.kat_sorumlusu_kullanim_raporlari'))
+
+
+@raporlar_bp.route('/kat-sorumlusu-kullanim-excel')
+@login_required
+@role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
+def kat_sorumlusu_kullanim_excel():
+    """Kat sorumlusu gün sonu raporu Excel export"""
+    try:
+        from utils.rapor_servisleri import KatSorumlusuGunSonuRaporServisi
+        
+        otel_id = request.args.get('otel_id', type=int)
+        personel_ids_str = request.args.get('personel_ids', '')
+        tarih_str = request.args.get('tarih')
+        
+        if not otel_id:
+            flash('Lütfen otel seçin.', 'warning')
+            return redirect(url_for('raporlar.kat_sorumlusu_kullanim_raporlari'))
+        
+        personel_ids = [int(x) for x in personel_ids_str.split(',') if x.strip().isdigit()] if personel_ids_str else None
+        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date() if tarih_str else date.today()
+        
+        rapor = KatSorumlusuGunSonuRaporServisi.get_gun_sonu_raporu(
+            otel_id=otel_id,
+            personel_ids=personel_ids,
+            tarih=tarih
+        )
+        
+        if not rapor['success']:
+            flash(rapor.get('message', 'Rapor oluşturulamadı'), 'danger')
+            return redirect(url_for('raporlar.kat_sorumlusu_kullanim_raporlari'))
+        
+        return export_gun_sonu_excel(rapor)
+        
+    except Exception as e:
+        log_hata(e, modul='kat_sorumlusu_kullanim_excel')
+        flash('Excel export başarısız.', 'danger')
+        return redirect(url_for('raporlar.kat_sorumlusu_kullanim_raporlari'))
+
+
+@raporlar_bp.route('/kat-sorumlusu-kullanim-pdf')
+@login_required
+@role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
+def kat_sorumlusu_kullanim_pdf():
+    """Kat sorumlusu gün sonu raporu PDF export"""
+    try:
+        from utils.rapor_servisleri import KatSorumlusuGunSonuRaporServisi
+        
+        otel_id = request.args.get('otel_id', type=int)
+        personel_ids_str = request.args.get('personel_ids', '')
+        tarih_str = request.args.get('tarih')
+        
+        if not otel_id:
+            flash('Lütfen otel seçin.', 'warning')
+            return redirect(url_for('raporlar.kat_sorumlusu_kullanim_raporlari'))
+        
+        personel_ids = [int(x) for x in personel_ids_str.split(',') if x.strip().isdigit()] if personel_ids_str else None
+        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date() if tarih_str else date.today()
+        
+        rapor = KatSorumlusuGunSonuRaporServisi.get_gun_sonu_raporu(
+            otel_id=otel_id,
+            personel_ids=personel_ids,
+            tarih=tarih
+        )
+        
+        if not rapor['success']:
+            flash(rapor.get('message', 'Rapor oluşturulamadı'), 'danger')
+            return redirect(url_for('raporlar.kat_sorumlusu_kullanim_raporlari'))
+        
+        return export_gun_sonu_pdf(rapor)
+        
+    except Exception as e:
+        log_hata(e, modul='kat_sorumlusu_kullanim_pdf')
+        flash('PDF export başarısız.', 'danger')
+        return redirect(url_for('raporlar.kat_sorumlusu_kullanim_raporlari'))
+
+
+def export_gun_sonu_excel(rapor):
+    """Gün sonu raporunu Excel olarak export et - Yeni format"""
+    import io
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from flask import send_file
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Gün Sonu Raporu"
+    
+    # Stiller - Slate tonları
+    title_font = Font(bold=True, size=16, color="1E293B")
+    header_font = Font(bold=True, color="FFFFFF", size=10)
+    header_fill = PatternFill(start_color="475569", end_color="475569", fill_type="solid")
+    personel_fill = PatternFill(start_color="334155", end_color="334155", fill_type="solid")
+    toplam_fill = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid")
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    center_align = Alignment(horizontal='center', vertical='center')
+    
+    row = 1
+    
+    # Otel Başlığı
+    ws.merge_cells(f'A{row}:C{row}')
+    ws[f'A{row}'] = f"🏨 {rapor['otel_adi']}"
+    ws[f'A{row}'].font = title_font
+    ws[f'A{row}'].alignment = center_align
+    row += 1
+    
+    # Tarih
+    ws.merge_cells(f'A{row}:C{row}')
+    ws[f'A{row}'] = f"📅 Tarih: {rapor['rapor_tarihi']}"
+    ws[f'A{row}'].font = Font(bold=True, size=14)
+    ws[f'A{row}'].alignment = center_align
+    row += 2
+    
+    # Her personel için
+    for personel in rapor.get('personeller', []):
+        # Personel başlığı
+        ws.merge_cells(f'A{row}:C{row}')
+        cell = ws[f'A{row}']
+        cell.value = f"👤 {personel['personel_adi']} (Toplam: {personel['toplam_eklenen']} adet)"
+        cell.font = Font(bold=True, color="FFFFFF", size=11)
+        cell.fill = personel_fill
+        cell.alignment = center_align
+        row += 1
+        
+        # Tablo başlıkları
+        headers = ['Ürün Adı', 'Minibarlara Eklenen', 'Eklenen Odalar']
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=row, column=col, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center_align
+            cell.border = thin_border
+        row += 1
+        
+        # Ürünler
+        for urun in personel.get('urunler', []):
+            ws.cell(row=row, column=1, value=urun['urun_adi']).border = thin_border
+            
+            cell = ws.cell(row=row, column=2, value=urun['toplam_eklenen'])
+            cell.border = thin_border
+            cell.alignment = center_align
+            
+            # Odaları listele
+            oda_listesi = ", ".join([f"{o['oda_no']}({o['miktar']})" for o in urun.get('odalar', [])])
+            ws.cell(row=row, column=3, value=oda_listesi).border = thin_border
+            row += 1
+        
+        row += 1
+    
+    # GENEL TOPLAM
+    if rapor.get('genel_toplam'):
+        ws.merge_cells(f'A{row}:C{row}')
+        cell = ws[f'A{row}']
+        cell.value = f"📊 GENEL TOPLAM: {rapor.get('genel_toplam_adet', 0)} Adet"
+        cell.font = Font(bold=True, color="FFFFFF", size=12)
+        cell.fill = toplam_fill
+        cell.alignment = center_align
+        row += 1
+        
+        # Başlıklar
+        for col, header in enumerate(['Ürün Adı', 'Toplam Eklenen'], 1):
+            cell = ws.cell(row=row, column=col, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center_align
+            cell.border = thin_border
+        row += 1
+        
+        for urun in rapor['genel_toplam']:
+            ws.cell(row=row, column=1, value=urun['urun_adi']).border = thin_border
+            cell = ws.cell(row=row, column=2, value=urun['toplam_eklenen'])
+            cell.border = thin_border
+            cell.alignment = center_align
+            row += 1
+    
+    # Sütun genişlikleri
+    ws.column_dimensions['A'].width = 30
+    ws.column_dimensions['B'].width = 20
+    ws.column_dimensions['C'].width = 50
+    
+    # Excel dosyasını oluştur
+    excel_buffer = io.BytesIO()
+    wb.save(excel_buffer)
+    excel_buffer.seek(0)
+    
+    filename = f"gun_sonu_raporu_{rapor['rapor_tarihi'].replace('.', '')}_{rapor['otel_adi'].replace(' ', '_')}.xlsx"
+    
+    log_islem('export', 'gun_sonu_raporu', {'format': 'excel'})
+    
+    return send_file(
+        excel_buffer,
+        as_attachment=True,
+        download_name=filename,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+
+
+def export_gun_sonu_pdf(rapor):
+    """Gün sonu raporunu PDF olarak export et - Türkçe karakter destekli"""
+    import io
+    from flask import send_file
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    import urllib.request
+    import os
+    import tempfile
+    
+    # Türkçe karakter desteği için font
+    font_name = 'Helvetica'
+    
+    try:
+        # DejaVuSans font'u indir veya mevcut olanı kullan
+        fonts_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'fonts')
+        font_path = os.path.join(fonts_dir, 'DejaVuSans.ttf')
+        
+        if not os.path.exists(fonts_dir):
+            os.makedirs(fonts_dir)
+        
+        if not os.path.exists(font_path):
+            # Font'u indir
+            font_url = "https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf"
+            urllib.request.urlretrieve(font_url, font_path)
+        
+        if os.path.exists(font_path):
+            pdfmetrics.registerFont(TTFont('DejaVuSans', font_path))
+            font_name = 'DejaVuSans'
+    except Exception as e:
+        # Font yüklenemedi, varsayılan font kullanılacak
+        font_name = 'Helvetica'
+    
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=1.5*cm, bottomMargin=1.5*cm)
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Özel stiller - Türkçe font ile
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontName=font_name,
+        fontSize=18,
+        textColor=colors.HexColor('#1E40AF'),
+        spaceAfter=6,
+        alignment=1
+    )
+    
+    date_style = ParagraphStyle(
+        'DateStyle',
+        parent=styles['Normal'],
+        fontName=font_name,
+        fontSize=14,
+        textColor=colors.HexColor('#374151'),
+        spaceAfter=20,
+        alignment=1
+    )
+    
+    # Otel Başlığı
+    elements.append(Paragraph(rapor['otel_adi'], title_style))
+    elements.append(Paragraph("Kat Sorumlusu Gün Sonu Raporu", title_style))
+    elements.append(Paragraph(rapor['rapor_tarihi'], date_style))
+    
+    # Her personel için
+    for personel in rapor.get('personeller', []):
+        # Personel başlık tablosu (slate arka plan)
+        personel_header = Table(
+            [[f"{personel['personel_adi']} - Toplam: {personel['toplam_eklenen']} adet"]],
+            colWidths=[18*cm]
+        )
+        personel_header.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#334155')),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
+            ('FONTSIZE', (0, 0), (-1, -1), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 10),
+        ]))
+        elements.append(personel_header)
+        
+        # Ürün tablosu
+        urun_data = [['Ürün Adı', 'Minibarlara Eklenen', 'Eklenen Odalar']]
+        for urun in personel.get('urunler', []):
+            oda_listesi = ", ".join([f"{o['oda_no']}({o['miktar']})" for o in urun.get('odalar', [])])
+            urun_data.append([urun['urun_adi'], str(urun['toplam_eklenen']), oda_listesi])
+        
+        urun_table = Table(urun_data, colWidths=[6*cm, 4*cm, 8*cm])
+        urun_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#475569')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('ALIGN', (1, 1), (1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8FAFC')])
+        ]))
+        elements.append(urun_table)
+        elements.append(Spacer(1, 15))
+    
+    # GENEL TOPLAM
+    if rapor.get('genel_toplam'):
+        toplam_header = Table(
+            [[f"GENEL TOPLAM: {rapor.get('genel_toplam_adet', 0)} Adet"]],
+            colWidths=[18*cm]
+        )
+        toplam_header.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#1E293B')),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 10),
+        ]))
+        elements.append(toplam_header)
+        
+        toplam_data = [['Ürün Adı', 'Toplam Eklenen']]
+        for urun in rapor['genel_toplam']:
+            toplam_data.append([urun['urun_adi'], str(urun['toplam_eklenen'])])
+        
+        toplam_table = Table(toplam_data, colWidths=[12*cm, 6*cm])
+        toplam_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#334155')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('ALIGN', (1, 1), (1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+        ]))
+        elements.append(toplam_table)
+    
+    # PDF oluştur
+    doc.build(elements)
+    buffer.seek(0)
+    
+    filename = f"gun_sonu_raporu_{rapor['rapor_tarihi'].replace('.', '')}_{rapor['otel_adi'].replace(' ', '_')}.pdf"
+    
+    log_islem('export', 'gun_sonu_raporu', {'format': 'pdf'})
+    
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=filename,
+        mimetype='application/pdf'
+    )
 
 
 @raporlar_bp.route('/oda-bazli-tuketim')
@@ -1520,16 +2025,19 @@ def gunluk_gorev_detay_raporu_olustur():
         from utils.rapor_servisleri import GunlukGorevRaporServisi
         
         otel_id = request.form.get('otel_id', type=int)
-        personel_id = request.form.get('personel_id', type=int)
+        personel_ids_str = request.form.get('personel_ids', '')
         baslangic = request.form.get('baslangic')
         bitis = request.form.get('bitis')
+        
+        # Personel ID'lerini parse et
+        personel_ids = [int(x) for x in personel_ids_str.split(',') if x.strip().isdigit()] if personel_ids_str else None
         
         baslangic_tarihi = datetime.strptime(baslangic, '%Y-%m-%d').date() if baslangic else None
         bitis_tarihi = datetime.strptime(bitis, '%Y-%m-%d').date() if bitis else None
         
         rapor = GunlukGorevRaporServisi.get_gunluk_gorev_raporu(
             otel_id=otel_id,
-            personel_id=personel_id,
+            personel_ids=personel_ids,
             baslangic_tarihi=baslangic_tarihi,
             bitis_tarihi=bitis_tarihi
         )
@@ -1545,13 +2053,16 @@ def gunluk_gorev_detay_raporu_olustur():
         ).order_by(Kullanici.ad, Kullanici.soyad).all()
         
         log_islem('view', 'gunluk_gorev_detay_raporu', {
-            'otel_id': otel_id, 'personel_id': personel_id
+            'otel_id': otel_id, 'personel_ids': personel_ids
         })
         
         return render_template('raporlar/gunluk_gorev_detay.html',
                              oteller=oteller,
                              personeller=personeller,
-                             rapor_verisi=rapor)
+                             rapor_verisi=rapor,
+                             secili_otel_id=otel_id,
+                             secili_baslangic=baslangic,
+                             secili_bitis=bitis)
         
     except Exception as e:
         log_hata(e, modul='gunluk_gorev_detay_raporu_olustur')

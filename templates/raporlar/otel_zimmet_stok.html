@@ -12,9 +12,11 @@ content %}
         method="POST"
         action="{{ url_for('raporlar.otel_zimmet_stok_raporu_olustur') }}"
         class="space-y-4"
+        id="raporForm"
       >
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <input type="hidden" name="format" id="formatInput" value="" />
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label
               class="block text-sm font-medium text-slate-700 dark:text-slate-300"
@@ -33,11 +35,23 @@ content %}
           <div class="flex items-end">
             <button
               type="submit"
+              onclick="document.getElementById('formatInput').value=''"
               class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
             >
               <i class="fas fa-search mr-2"></i>Rapor Oluştur
             </button>
           </div>
+          {% if rapor_verisi %}
+          <div class="flex items-end">
+            <button
+              type="submit"
+              onclick="document.getElementById('formatInput').value='excel'"
+              class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            >
+              <i class="fas fa-file-excel mr-2"></i>Excel İndir
+            </button>
+          </div>
+          {% endif %}
         </div>
       </form>
     </div>
@@ -45,58 +59,6 @@ content %}
 
   {% if rapor_verisi %}
   <!-- Özet Kartları -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <div
-      class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white"
-    >
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-blue-100 text-sm">Toplam Otel</p>
-          <p class="text-2xl font-bold">{{ rapor_verisi.toplam_otel }}</p>
-        </div>
-        <i class="fas fa-hotel text-3xl text-blue-200"></i>
-      </div>
-    </div>
-    <div
-      class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white"
-    >
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-green-100 text-sm">Toplam Stok</p>
-          <p class="text-2xl font-bold">
-            {{ rapor_verisi.oteller|sum(attribute='toplam_stok') }}
-          </p>
-        </div>
-        <i class="fas fa-boxes text-3xl text-green-200"></i>
-      </div>
-    </div>
-    <div
-      class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-4 text-white"
-    >
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-amber-100 text-sm">Kullanılan</p>
-          <p class="text-2xl font-bold">
-            {{ rapor_verisi.oteller|sum(attribute='toplam_kullanilan') }}
-          </p>
-        </div>
-        <i class="fas fa-hand-holding text-3xl text-amber-200"></i>
-      </div>
-    </div>
-    <div
-      class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-4 text-white"
-    >
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-red-100 text-sm">Kritik Ürün</p>
-          <p class="text-2xl font-bold">
-            {{ rapor_verisi.oteller|sum(attribute='kritik_urun_sayisi') }}
-          </p>
-        </div>
-        <i class="fas fa-exclamation-triangle text-3xl text-red-200"></i>
-      </div>
-    </div>
-  </div>
 
   <!-- Otel Bazlı Detaylar -->
   {% for otel in rapor_verisi.oteller %}
@@ -108,21 +70,6 @@ content %}
         <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
           <i class="fas fa-hotel mr-2 text-blue-600"></i>{{ otel.otel_ad }}
         </h3>
-        <div class="flex items-center gap-4 text-sm">
-          <span class="text-slate-600 dark:text-slate-400">
-            <i class="fas fa-cubes mr-1"></i>{{ otel.toplam_urun_cesidi }} ürün
-          </span>
-          <span class="text-green-600">
-            <i class="fas fa-check-circle mr-1"></i>{{ otel.toplam_kalan }}
-            kalan
-          </span>
-          {% if otel.kritik_urun_sayisi > 0 %}
-          <span class="text-red-600">
-            <i class="fas fa-exclamation-circle mr-1"></i>{{
-            otel.kritik_urun_sayisi }} kritik
-          </span>
-          {% endif %}
-        </div>
       </div>
     </div>
     <div class="overflow-x-auto">

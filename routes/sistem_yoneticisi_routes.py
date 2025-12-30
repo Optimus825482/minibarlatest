@@ -1759,22 +1759,52 @@ def register_sistem_yoneticisi_routes(app):
     @login_required
     @role_required('sistem_yoneticisi', 'admin')
     def api_oda_tipleri_listele():
-        """Tüm oda tiplerini listele"""
+        """Tüm oda tiplerini listele (otel bazlı setup bilgisi ile)"""
         try:
-            from models import OdaTipi
+            from models import OdaTipi, oda_tipi_setup, Setup
+            from sqlalchemy import and_
+            
+            otel_id = request.args.get('otel_id', type=int)
             
             oda_tipleri = OdaTipi.query.filter_by(aktif=True).order_by(OdaTipi.ad).all()
             
-            return jsonify({
-                'success': True,
-                'oda_tipleri': [{
+            result = []
+            for tip in oda_tipleri:
+                # Otel ID verilmişse, o otele ait setup'ları getir
+                if otel_id:
+                    setup_rows = db.session.execute(
+                        db.select(oda_tipi_setup.c.setup_id).where(
+                            and_(
+                                oda_tipi_setup.c.otel_id == otel_id,
+                                oda_tipi_setup.c.oda_tipi_id == tip.id
+                            )
+                        )
+                    ).fetchall()
+                    setup_ids = [row[0] for row in setup_rows]
+                    
+                    # Setup adlarını al
+                    setup_adlari = []
+                    for sid in setup_ids:
+                        setup = Setup.query.get(sid)
+                        if setup:
+                            setup_adlari.append(setup.ad)
+                else:
+                    # Otel ID yoksa, global ilişkiden al (geriye uyumluluk)
+                    setup_ids = [s.id for s in tip.setuplar]
+                    setup_adlari = [s.ad for s in tip.setuplar]
+                
+                result.append({
                     'id': tip.id,
                     'ad': tip.ad,
                     'dolap_sayisi': tip.dolap_sayisi,
-                    'setup_ids': [s.id for s in tip.setuplar],  # Many-to-Many ilişkiden setup ID'leri
-                    'setup_adlari': [s.ad for s in tip.setuplar],  # Setup isimleri
+                    'setup_ids': setup_ids,
+                    'setup_adlari': setup_adlari,
                     'olusturma_tarihi': tip.olusturma_tarihi.isoformat() if tip.olusturma_tarihi else None
-                } for tip in oda_tipleri]
+                })
+            
+            return jsonify({
+                'success': True,
+                'oda_tipleri': result
             })
             
         except Exception as e:
@@ -2022,7 +2052,8 @@ def register_sistem_yoneticisi_routes(app):
     def api_setuplar_listele():
         """Tüm setup'ları listele"""
         try:
-            from models import Setup, SetupIcerik
+            from models import Setup, SetupIcerik, OdaTipi, Otel, oda_tipi_setup
+            from sqlalchemy import distinct
             
             # Sadece aktif setup'ları getir
             setuplar = Setup.query.filter_by(aktif=True).all()
@@ -2032,8 +2063,44 @@ def register_sistem_yoneticisi_routes(app):
                 # Ürün sayısını hesapla
                 urun_sayisi = SetupIcerik.query.filter_by(setup_id=setup.id).count()
                 
-                # Bu setup'a atanmış oda tiplerini al (Many-to-Many)
-                oda_tipi_adlari = [ot.ad for ot in setup.oda_tipleri]
+                # Bu setup'a atanmış oda tiplerini al (otel bazlı tablodan, sadece aktif oda tipleri)
+                # Otel adı ile birlikte getir
+                atamalar = db.session.execute(
+                    db.select(
+                        oda_tipi_setup.c.otel_id,
+                        oda_tipi_setup.c.oda_tipi_id
+                    ).where(
+                        oda_tipi_setup.c.setup_id == setup.id
+                    )
+                ).fetchall()
+                
+                # Otel bazlı oda tipleri dict'i oluştur
+                otel_oda_tipleri = {}  # {otel_adi: [oda_tipi_adlari]}
+                oda_tipi_adlari = []  # Geriye uyumluluk için
+                
+                for row in atamalar:
+                    otel_id = row[0]
+                    oda_tipi_id = row[1]
+                    
+                    # Aktif oda tipini al
+                    oda_tipi = OdaTipi.query.filter_by(id=oda_tipi_id, aktif=True).first()
+                    if not oda_tipi:
+                        continue
+                    
+                    # Otel adını al
+                    otel = Otel.query.get(otel_id) if otel_id else None
+                    otel_adi = otel.ad if otel else "Bilinmeyen Otel"
+                    
+                    # Dict'e ekle
+                    if otel_adi not in otel_oda_tipleri:
+                        otel_oda_tipleri[otel_adi] = []
+                    
+                    if oda_tipi.ad not in otel_oda_tipleri[otel_adi]:
+                        otel_oda_tipleri[otel_adi].append(oda_tipi.ad)
+                    
+                    # Geriye uyumluluk için
+                    if oda_tipi.ad not in oda_tipi_adlari:
+                        oda_tipi_adlari.append(oda_tipi.ad)
                 
                 # Toplam maliyeti hesapla (ürün alış fiyatı * adet)
                 toplam_maliyet = 0
@@ -2048,7 +2115,8 @@ def register_sistem_yoneticisi_routes(app):
                     'aciklama': setup.aciklama,
                     'dolap_ici': setup.dolap_ici if hasattr(setup, 'dolap_ici') else True,
                     'urun_sayisi': urun_sayisi,
-                    'oda_tipleri': oda_tipi_adlari,
+                    'oda_tipleri': oda_tipi_adlari,  # Geriye uyumluluk
+                    'otel_oda_tipleri': otel_oda_tipleri,  # Yeni: Otel bazlı
                     'toplam_maliyet': round(toplam_maliyet, 2)
                 })
             
@@ -2340,9 +2408,10 @@ def register_sistem_yoneticisi_routes(app):
     @login_required
     @role_required('sistem_yoneticisi', 'admin')
     def api_setup_atama():
-        """Setup'ları oda tiplerine ata (Many-to-Many)"""
+        """Setup'ları oda tiplerine ata (Otel bazlı Many-to-Many)"""
         try:
-            from models import OdaTipi, Setup
+            from models import OdaTipi, Setup, Otel, oda_tipi_setup
+            from sqlalchemy import and_
             
             data = request.get_json()
             
@@ -2352,14 +2421,29 @@ def register_sistem_yoneticisi_routes(app):
                     'error': 'Veri gönderilmedi'
                 }, 400
             
+            otel_id = data.get('otel_id')
             oda_tipi_id = data.get('oda_tipi_id')
             setup_ids = data.get('setup_ids', [])
+            
+            if not otel_id:
+                return {
+                    'success': False,
+                    'error': 'Otel ID belirtilmedi'
+                }, 400
             
             if not oda_tipi_id:
                 return {
                     'success': False,
                     'error': 'Oda tipi ID belirtilmedi'
                 }, 400
+            
+            # Otel kontrolü
+            otel = Otel.query.get(otel_id)
+            if not otel:
+                return {
+                    'success': False,
+                    'error': f'Otel bulunamadı: {otel_id}'
+                }, 404
             
             # Oda tipini bul
             oda_tipi = OdaTipi.query.get(oda_tipi_id)
@@ -2369,19 +2453,32 @@ def register_sistem_yoneticisi_routes(app):
                     'error': f'Oda tipi bulunamadı: {oda_tipi_id}'
                 }, 404
             
-            # Mevcut setup'ları temizle
-            oda_tipi.setuplar.clear()
+            # Bu otel ve oda tipi için mevcut atamaları sil
+            db.session.execute(
+                oda_tipi_setup.delete().where(
+                    and_(
+                        oda_tipi_setup.c.otel_id == otel_id,
+                        oda_tipi_setup.c.oda_tipi_id == oda_tipi_id
+                    )
+                )
+            )
             
             # Yeni setup'ları ekle
             if setup_ids:
                 for setup_id in setup_ids:
                     setup = Setup.query.get(setup_id)
                     if setup:
-                        oda_tipi.setuplar.append(setup)
+                        db.session.execute(
+                            oda_tipi_setup.insert().values(
+                                otel_id=otel_id,
+                                oda_tipi_id=oda_tipi_id,
+                                setup_id=setup_id
+                            )
+                        )
             
             db.session.commit()
             
-            log_islem('setup_atama', f'Oda tipi setup ataması güncellendi: {oda_tipi.ad} -> {len(setup_ids)} setup')
+            log_islem('setup_atama', f'Otel bazlı setup ataması güncellendi: {otel.ad} - {oda_tipi.ad} -> {len(setup_ids)} setup')
             
             return {
                 'success': True,

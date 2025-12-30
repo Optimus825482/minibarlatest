@@ -6,12 +6,58 @@
 {% block content %}
 <div class="space-y-6">
     <!-- Filtreler -->
-    <div class="bg-white shadow rounded-lg p-6">
-        <h3 class="text-lg font-semibold text-slate-900 mb-4">Filtreler</h3>
-        <form method="GET" action="{{ url_for('admin_minibar_islemleri') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Filtreler</h3>
+        
+        <!-- Hızlı Tarih Seçici -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hızlı Tarih Seçimi</label>
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ url_for('admin_minibar_islemleri', tarih_filtre='bugun', otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi) }}"
+                   class="px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                          {% if tarih_filtre == 'bugun' %}bg-blue-600 text-white{% else %}bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600{% endif %}">
+                    📅 Bugün
+                </a>
+                <a href="{{ url_for('admin_minibar_islemleri', tarih_filtre='dun', otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi) }}"
+                   class="px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                          {% if tarih_filtre == 'dun' %}bg-blue-600 text-white{% else %}bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600{% endif %}">
+                    ⏪ Dün
+                </a>
+                <a href="{{ url_for('admin_minibar_islemleri', tarih_filtre='bu_hafta', otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi) }}"
+                   class="px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                          {% if tarih_filtre == 'bu_hafta' %}bg-blue-600 text-white{% else %}bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600{% endif %}">
+                    📆 Bu Hafta
+                </a>
+                <a href="{{ url_for('admin_minibar_islemleri', tarih_filtre='bu_ay', otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi) }}"
+                   class="px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                          {% if tarih_filtre == 'bu_ay' %}bg-blue-600 text-white{% else %}bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600{% endif %}">
+                    🗓️ Bu Ay
+                </a>
+                {% if tarih_filtre %}
+                <a href="{{ url_for('admin_minibar_islemleri', otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi) }}"
+                   class="px-4 py-2 rounded-lg text-sm font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors">
+                    ✕ Temizle
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <form method="GET" action="{{ url_for('admin_minibar_islemleri') }}" class="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">Oda</label>
-                <select name="oda_id" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Otel</label>
+                <select name="otel_id" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200">
+                    <option value="">Tümü</option>
+                    {% for otel in oteller %}
+                    <option value="{{ otel.id }}" {% if otel_id == otel.id %}selected{% endif %}>
+                        {{ otel.ad }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Oda</label>
+                <select name="oda_id" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200">
                     <option value="">Tümü</option>
                     {% for oda in odalar %}
                     <option value="{{ oda.id }}" {% if oda_id == oda.id %}selected{% endif %}>
@@ -22,8 +68,8 @@
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">Personel</label>
-                <select name="personel_id" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Personel</label>
+                <select name="personel_id" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200">
                     <option value="">Tümü</option>
                     {% for personel in personeller %}
                     <option value="{{ personel.id }}" {% if personel_id == personel.id %}selected{% endif %}>
@@ -34,8 +80,8 @@
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">İşlem Tipi</label>
-                <select name="islem_tipi" class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">İşlem Tipi</label>
+                <select name="islem_tipi" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200">
                     <option value="">Tümü</option>
                     <option value="kontrol" {% if islem_tipi == 'kontrol' %}selected{% endif %}>Kontrol</option>
                     <option value="dolum" {% if islem_tipi == 'dolum' %}selected{% endif %}>Dolum</option>
@@ -43,20 +89,20 @@
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">Başlangıç Tarihi</label>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Başlangıç Tarihi</label>
                 <input type="date" name="baslangic_tarih" value="{{ baslangic_tarih }}"
-                    class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                    class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200">
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">Bitiş Tarihi</label>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bitiş Tarihi</label>
                 <input type="date" name="bitis_tarih" value="{{ bitis_tarih }}"
-                    class="w-full px-4 py-2 border border-slate-300 rounded-lg">
+                    class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200">
             </div>
             
-            <div class="md:col-span-5 flex justify-end space-x-4">
+            <div class="md:col-span-6 flex justify-end space-x-4">
                 <a href="{{ url_for('admin_minibar_islemleri') }}"
-                    class="px-6 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50">
+                    class="px-6 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
                     Temizle
                 </a>
                 <button type="submit"
@@ -68,7 +114,7 @@
     </div>
     
     <!-- Minibar İşlemleri Tablosu -->
-    <div class="bg-white shadow rounded-lg overflow-hidden">
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
             <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 Minibar İşlemleri ({{ islemler.total }} kayıt)
@@ -77,46 +123,59 @@
         
         {% if islemler.items %}
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200">
-                <thead class="bg-slate-50">
+            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                <thead class="bg-slate-50 dark:bg-slate-900">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Tarih</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Oda</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">İşlem Tipi</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Personel</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Ürün Sayısı</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Açıklama</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">İşlemler</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Tarih</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Oda No</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Kat Sorumlusu</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Ürünler</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">İşlem Tipi</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">İşlemler</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-slate-200">
+                <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
                     {% for islem in islemler.items %}
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                            {{ islem.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100 font-medium">
+                            {{ islem.islem_tarihi.strftime('%d.%m.%Y') }}<br>
+                            <span class="text-xs text-slate-500 dark:text-slate-400">{{ islem.islem_tarihi.strftime('%H:%M') }}</span>
                         </td>
-                        <td class="px-6 py-4 text-sm text-slate-900">
-                            {{ islem.oda.oda_no }} - {{ islem.oda.kat.kat_adi }}
+                        <td class="px-6 py-4 text-sm">
+                            <span class="font-semibold text-slate-900 dark:text-slate-100">{{ islem.oda.oda_no }}</span><br>
+                            <span class="text-xs text-slate-500 dark:text-slate-400">{{ islem.oda.kat.kat_adi }}</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                {% if islem.islem_tipi == 'kontrol' %}bg-blue-100 text-blue-800
-                                {% else %}bg-green-100 text-green-800{% endif %}">
-                                {{ islem.islem_tipi.title() }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-slate-600">
+                        <td class="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">
                             {% if islem.personel %}
                             {{ islem.personel.ad }} {{ islem.personel.soyad }}
                             {% else %}
-                            -
+                            <span class="text-slate-400">-</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                            {{ islem.detaylar|length }} ürün
+                        <td class="px-6 py-4 text-sm">
+                            <div class="space-y-1 max-h-32 overflow-y-auto">
+                                {% for detay in islem.detaylar %}
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="text-slate-700 dark:text-slate-300">{{ detay.urun.urun_adi if detay.urun else 'Bilinmeyen Ürün' }}</span>
+                                    {% if detay.tuketim > 0 %}
+                                    <span class="px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-medium">-{{ detay.tuketim }}</span>
+                                    {% endif %}
+                                    {% if detay.eklenen_miktar > 0 %}
+                                    <span class="px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium">+{{ detay.eklenen_miktar }}</span>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <span class="text-slate-400 text-xs">Ürün yok</span>
+                                {% endfor %}
+                            </div>
                         </td>
-                        <td class="px-6 py-4 text-sm text-slate-600">
-                            {{ islem.aciklama or '-' }}
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                {% if islem.islem_tipi == 'kontrol' %}bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400
+                                {% elif islem.islem_tipi == 'ilk_dolum' %}bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400
+                                {% else %}bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400{% endif %}">
+                                {{ islem.islem_tipi.replace('_', ' ').title() }}
+                            </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                             <button onclick="showDetayModal({{ islem.id }})"
@@ -124,7 +183,7 @@
                                 Detay
                             </button>
                             <button onclick="silIslem({{ islem.id }})"
-                                class="text-red-600 hover:text-red-900">
+                                class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 transition-colors">
                                 Sil
                             </button>
                         </td>
@@ -136,20 +195,20 @@
         
         <!-- Sayfalama -->
         {% if islemler.pages > 1 %}
-        <div class="px-6 py-4 border-t border-slate-200 flex justify-between items-center">
-            <div class="text-sm text-slate-600">
+        <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
+            <div class="text-sm text-slate-600 dark:text-slate-400">
                 Sayfa {{ islemler.page }} / {{ islemler.pages }}
             </div>
             <div class="flex space-x-2">
                 {% if islemler.has_prev %}
-                <a href="{{ url_for('admin_minibar_islemleri', sayfa=islemler.prev_num, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi, baslangic_tarih=baslangic_tarih, bitis_tarih=bitis_tarih) }}"
-                    class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50">
+                <a href="{{ url_for('admin_minibar_islemleri', sayfa=islemler.prev_num, otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi, baslangic_tarih=baslangic_tarih, bitis_tarih=bitis_tarih, tarih_filtre=tarih_filtre) }}"
+                    class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
                     Önceki
                 </a>
                 {% endif %}
                 {% if islemler.has_next %}
-                <a href="{{ url_for('admin_minibar_islemleri', sayfa=islemler.next_num, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi, baslangic_tarih=baslangic_tarih, bitis_tarih=bitis_tarih) }}"
-                    class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50">
+                <a href="{{ url_for('admin_minibar_islemleri', sayfa=islemler.next_num, otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi, baslangic_tarih=baslangic_tarih, bitis_tarih=bitis_tarih, tarih_filtre=tarih_filtre) }}"
+                    class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
                     Sonraki
                 </a>
                 {% endif %}

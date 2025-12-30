@@ -49,53 +49,11 @@ page_title %}Setup Yönetimi{% endblock %} {% block content %}
       </div>
 
       <div id="setupListesiIcerik" style="display: none">
-        <table
-          class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
-        >
-          <thead class="bg-slate-50 dark:bg-slate-900">
-            <tr>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
-              >
-                Setup Adı
-              </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
-              >
-                Açıklama
-              </th>
-              <th
-                class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
-              >
-                Yerleşim
-              </th>
-              <th
-                class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
-              >
-                Ürün Sayısı
-              </th>
-              <th
-                class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
-              >
-                Maliyet
-              </th>
-              <th
-                class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
-              >
-                Atanan Oda Tipleri
-              </th>
-              <th
-                class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
-              >
-                İşlemler
-              </th>
-            </tr>
-          </thead>
-          <tbody
-            id="setupListesiTablo"
-            class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
-          ></tbody>
-        </table>
+        <!-- Kart Görünümü - Desktop: 3 sütun, Tablet: 2 sütun, Mobil: 1 sütun -->
+        <div
+          id="setupListesiKartlar"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+        ></div>
       </div>
     </div>
   </div>
@@ -406,17 +364,6 @@ page_title %}Setup Yönetimi{% endblock %} {% block content %}
           <h6 class="text-sm font-medium text-slate-900 dark:text-slate-100">
             Mevcut Ürünler
           </h6>
-          <div class="text-right">
-            <div class="text-xs text-slate-500 dark:text-slate-400">
-              Toplam Maliyet
-            </div>
-            <div
-              id="toplamMaliyet"
-              class="text-lg font-bold text-green-600 dark:text-green-400"
-            >
-              ₺0.00
-            </div>
-          </div>
         </div>
         <div id="setupIcerikListesi" class="space-y-2"></div>
       </div>
@@ -444,7 +391,7 @@ page_title %}Setup Yönetimi{% endblock %} {% block content %}
       class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between sticky top-0 bg-white dark:bg-slate-800"
     >
       <h5 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
-        Oda Tipi - Setup Ataması
+        <span id="setupAtamaBaslik">Setup Ataması</span>
       </h5>
       <a href="#" rel="modal:close" class="text-slate-400 hover:text-slate-600">
         <svg
@@ -463,10 +410,71 @@ page_title %}Setup Yönetimi{% endblock %} {% block content %}
       </a>
     </div>
     <div class="p-6">
+      <!-- Seçilen Setup Bilgisi -->
+      <div
+        class="mb-4 p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg border border-indigo-200 dark:border-indigo-800"
+      >
+        <div class="flex items-center gap-2">
+          <svg
+            class="h-5 w-5 text-indigo-600 dark:text-indigo-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+            ></path>
+          </svg>
+          <span class="text-sm font-medium text-indigo-800 dark:text-indigo-200"
+            >Setup:</span
+          >
+          <span
+            id="seciliSetupAdi"
+            class="text-sm font-bold text-indigo-900 dark:text-indigo-100"
+          ></span>
+        </div>
+      </div>
+
+      <input type="hidden" id="seciliSetupId" value="" />
+
+      <!-- Otel Seçimi -->
+      <div class="mb-4">
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          <svg
+            class="inline-block h-4 w-4 mr-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+            ></path>
+          </svg>
+          Otel Seçin
+        </label>
+        <select
+          id="setupAtamaOtelSecim"
+          onchange="otelSecildiSetupAtama()"
+          class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+        >
+          <option value="">-- Otel Seçin --</option>
+        </select>
+      </div>
+
       <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">
-        Her oda tipi için setup'ları seçin (çoklu seçim yapabilirsiniz):
+        Bu setup'ı atamak istediğiniz oda tiplerini seçin:
       </p>
-      <div id="odaTipiSetupListesi" class="space-y-4"></div>
+      <div id="odaTipiSetupListesi" class="space-y-2">
+        <p class="text-center text-slate-400 py-4">Önce bir otel seçin</p>
+      </div>
     </div>
     <div
       class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3 sticky bottom-0 bg-white dark:bg-slate-800"
@@ -479,10 +487,12 @@ page_title %}Setup Yönetimi{% endblock %} {% block content %}
         İptal
       </a>
       <button
-        onclick="odaTipiSetupKaydet()"
-        class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+        onclick="setupAtamaKaydet()"
+        id="btnOdaTipiSetupKaydet"
+        disabled
+        class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Tümünü Kaydet
+        Kaydet
       </button>
     </div>
   </div>
@@ -517,101 +527,142 @@ page_title %}Setup Yönetimi{% endblock %} {% block content %}
 
         if (data.success && data.setuplar) {
           mevcutSetuplar = data.setuplar;
-          const tbody = document.getElementById("setupListesiTablo");
-          tbody.innerHTML = "";
+          const kartlar = document.getElementById("setupListesiKartlar");
+          kartlar.innerHTML = "";
+
+          // Güvenli string escape fonksiyonları
+          const escapeHtml = (str) => {
+            const div = document.createElement("div");
+            div.textContent = str;
+            return div.innerHTML;
+          };
+
+          const escapeQuotes = (str) => {
+            return str
+              .replace(/'/g, "\\'")
+              .replace(/"/g, '\\"')
+              .replace(/\n/g, "\\n");
+          };
 
           data.setuplar.forEach((setup) => {
-            const row = document.createElement("tr");
-            row.className = "hover:bg-slate-50 dark:hover:bg-slate-700";
-
-            const odaTipleri =
-              setup.oda_tipleri && setup.oda_tipleri.length > 0
-                ? setup.oda_tipleri
+            // Otel bazlı oda tipleri HTML'i oluştur
+            let otelOdaTipleriHTML = "";
+            if (
+              setup.otel_oda_tipleri &&
+              Object.keys(setup.otel_oda_tipleri).length > 0
+            ) {
+              otelOdaTipleriHTML = Object.entries(setup.otel_oda_tipleri)
+                .map(([otelAdi, odaTipleri]) => {
+                  const odaTipleriBadges = odaTipleri
                     .map(
-                      (t) =>
-                        `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 mr-1">${t}</span>`
+                      (tip) =>
+                        `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">${tip}</span>`
                     )
-                    .join("")
-                : '<span class="text-slate-400">-</span>';
-
-            // Güvenli string escape
-            const escapeHtml = (str) => {
-              const div = document.createElement("div");
-              div.textContent = str;
-              return div.innerHTML;
-            };
-
-            const escapeQuotes = (str) => {
-              return str
-                .replace(/'/g, "\\'")
-                .replace(/"/g, '\\"')
-                .replace(/\n/g, "\\n");
-            };
+                    .join(" ");
+                  return `
+                  <div class="mb-2 last:mb-0">
+                    <div class="flex items-center gap-1 mb-1">
+                      <svg class="h-3.5 w-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                      </svg>
+                      <span class="text-xs font-medium text-amber-600 dark:text-amber-400">${escapeHtml(
+                        otelAdi
+                      )}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1 pl-4">${odaTipleriBadges}</div>
+                  </div>
+                `;
+                })
+                .join("");
+            } else {
+              otelOdaTipleriHTML =
+                '<span class="text-slate-400 text-sm">Henüz atama yapılmamış</span>';
+            }
 
             // Dolap İçi / Dolap Dışı badge
             const dolapYerlesim = setup.dolap_ici
               ? '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">Dolap İçi</span>'
               : '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200">Dolap Dışı</span>';
 
-            row.innerHTML = `
-                            <td class="px-4 py-3">
-                                <span class="inline-flex items-center px-3 py-1 text-sm font-medium bg-indigo-600 dark:bg-indigo-700 text-white">
-                                    ${escapeHtml(setup.ad)}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">${escapeHtml(
-                              setup.aciklama || "-"
-                            )}</td>
-                            <td class="px-4 py-3 text-center">${dolapYerlesim}</td>
-                            <td class="px-4 py-3 text-center">
-                                <span class="inline-flex items-center px-3 py-1 text-sm font-semibold bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
-                                    ${setup.urun_sayisi || 0}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-right">
-                                <span class="text-lg font-bold text-green-600 dark:text-green-400">
-                                    ₺${parseFloat(
-                                      setup.toplam_maliyet || 0
-                                    ).toFixed(2)}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-center">${odaTipleri}</td>
-                            <td class="px-4 py-3 text-right">
-                                <div class="flex justify-end gap-2">
-                                    <button onclick="setupDuzenleModal(${
-                                      setup.id
-                                    }, '${escapeQuotes(
+            // === KART ===
+            const kart = document.createElement("div");
+            kart.className =
+              "bg-slate-50 dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-shadow";
+            kart.innerHTML = `
+              <!-- Başlık ve Yerleşim -->
+              <div class="flex items-start justify-between mb-3">
+                <div>
+                  <span class="inline-flex items-center px-3 py-1.5 text-sm font-semibold bg-indigo-600 dark:bg-indigo-700 text-white rounded-lg">
+                    ${escapeHtml(setup.ad)}
+                  </span>
+                </div>
+                ${dolapYerlesim}
+              </div>
+              
+              <!-- Açıklama -->
+              ${
+                setup.aciklama
+                  ? `<p class="text-sm text-slate-600 dark:text-slate-400 mb-3">${escapeHtml(
+                      setup.aciklama
+                    )}</p>`
+                  : ""
+              }
+              
+              <!-- Ürün Sayısı -->
+              <div class="flex items-center gap-2 mb-3">
+                <span class="text-xs text-slate-500 dark:text-slate-400">Ürün Sayısı:</span>
+                <span class="inline-flex items-center px-2 py-1 text-xs font-semibold bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded">
+                  ${setup.urun_sayisi || 0}
+                </span>
+              </div>
+              
+              <!-- Otel Bazlı Oda Tipleri -->
+              <div class="mb-3">
+                <span class="text-xs text-slate-500 dark:text-slate-400 block mb-2">Atanan Oteller ve Oda Tipleri:</span>
+                <div class="bg-white dark:bg-slate-800 rounded-lg p-2 border border-slate-200 dark:border-slate-600">
+                  ${otelOdaTipleriHTML}
+                </div>
+              </div>
+              
+              <!-- İşlem Butonları - 2x2 Grid -->
+              <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+                <button onclick="setupDuzenleModal(${setup.id}, '${escapeQuotes(
               setup.ad
             )}', '${escapeQuotes(setup.aciklama || "")}', ${
               setup.dolap_ici
-            })" class="p-2 text-white bg-indigo-600 rounded hover:bg-indigo-700" title="Düzenle">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                        </svg>
-                                    </button>
-                                    <button onclick="setupIcerikModal(${
-                                      setup.id
-                                    }, '${escapeQuotes(
+            })" class="py-2.5 px-3 inline-flex items-center justify-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-blue-100 text-blue-800 hover:bg-blue-200 focus:outline-hidden focus:bg-blue-200 dark:text-blue-400 dark:bg-blue-800/30 dark:hover:bg-blue-800/20 dark:focus:bg-blue-800/20">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                  Düzenle
+                </button>
+                <button onclick="setupIcerikModal(${setup.id}, '${escapeQuotes(
               setup.ad
-            )}')" class="px-3 py-2 text-xs font-medium text-white bg-cyan-600 rounded hover:bg-cyan-700">İçerik</button>
-                                    <button onclick="setupAtamaModal(${
-                                      setup.id
-                                    }, '${escapeQuotes(
+            )}')" class="py-2.5 px-3 inline-flex items-center justify-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-teal-100 text-teal-800 hover:bg-teal-200 focus:outline-hidden focus:bg-teal-200 dark:text-teal-400 dark:bg-teal-800/30 dark:hover:bg-teal-800/20 dark:focus:bg-teal-800/20">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                  </svg>
+                  İçerik
+                </button>
+                <button onclick="setupAtamaModal(${setup.id}, '${escapeQuotes(
               setup.ad
-            )}')" class="px-3 py-2 text-xs font-medium text-white bg-amber-600 rounded hover:bg-amber-700">Atama</button>
-                                    <button onclick="setupSil(${
-                                      setup.id
-                                    }, '${escapeQuotes(
+            )}')" class="py-2.5 px-3 inline-flex items-center justify-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-yellow-100 text-yellow-800 hover:bg-yellow-200 focus:outline-hidden focus:bg-yellow-200 dark:text-yellow-500 dark:bg-yellow-800/30 dark:hover:bg-yellow-800/20 dark:focus:bg-yellow-800/20">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                  </svg>
+                  Oda Tipi
+                </button>
+                <button onclick="setupSil(${setup.id}, '${escapeQuotes(
               setup.ad
-            )}')" class="p-2 text-white bg-red-600 rounded hover:bg-red-700" title="Sil">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        `;
-            tbody.appendChild(row);
+            )}')" class="py-2.5 px-3 inline-flex items-center justify-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-red-100 text-red-800 hover:bg-red-200 focus:outline-hidden focus:bg-red-200 dark:text-red-500 dark:bg-red-800/30 dark:hover:bg-red-800/20 dark:focus:bg-red-800/20">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                  Sil
+                </button>
+              </div>
+            `;
+            kartlar.appendChild(kart);
           });
         }
       });
@@ -771,22 +822,11 @@ page_title %}Setup Yönetimi{% endblock %} {% block content %}
             div.innerHTML = `
                             <div class="flex-1">
                                 <div class="flex items-center gap-2">
-                                    <span class="font-medium text-slate-900 dark:text-slate-100">${
-                                      icerik.urun_ad
-                                    }</span>
-                                    <span class="text-sm text-slate-500 dark:text-slate-400">x${
-                                      icerik.adet
-                                    }</span>
-                                </div>
-                                <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                    ₺${icerik.alis_fiyati.toFixed(2)} × ${
-              icerik.adet
-            } = ₺${icerik.tutar.toFixed(2)}
+                                    <span class="font-medium text-slate-900 dark:text-slate-100">${icerik.urun_ad}</span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">x${icerik.adet}</span>
                                 </div>
                             </div>
-                            <button onclick="urunSil(${
-                              icerik.id
-                            })" class="text-red-600 hover:text-red-800">
+                            <button onclick="urunSil(${icerik.id})" class="text-red-600 hover:text-red-800">
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                 </svg>
@@ -794,15 +834,9 @@ page_title %}Setup Yönetimi{% endblock %} {% block content %}
                         `;
             liste.appendChild(div);
           });
-
-          // Toplam maliyeti güncelle
-          document.getElementById(
-            "toplamMaliyet"
-          ).textContent = `₺${data.toplam_maliyet.toFixed(2)}`;
         } else {
           liste.innerHTML =
             '<p class="text-center text-slate-400 py-4">Henüz ürün eklenmemiş</p>';
-          document.getElementById("toplamMaliyet").textContent = "₺0.00";
         }
       });
   }
@@ -868,81 +902,41 @@ page_title %}Setup Yönetimi{% endblock %} {% block content %}
   }
 
   // Oda Tipi Setup Atama Modal
+  let seciliOtelIdSetupAtama = null;
+  let seciliSetupIdAtama = null;
+
   function setupAtamaModal(setupId, setupAd) {
-    // Tüm oda tiplerini ve setup'ları yükle
-    Promise.all([
-      fetch("/api/oda-tipleri").then((r) => r.json()),
-      fetch("/api/setuplar").then((r) => r.json()),
-    ])
-      .then(([odaTipleriData, setuplarData]) => {
-        console.log("Oda Tipleri:", odaTipleriData);
-        console.log("Setup'lar:", setuplarData);
+    // Seçilen setup bilgisini kaydet
+    seciliSetupIdAtama = setupId;
+    document.getElementById("seciliSetupId").value = setupId;
+    document.getElementById("seciliSetupAdi").textContent = setupAd;
+    document.getElementById(
+      "setupAtamaBaslik"
+    ).textContent = `${setupAd} - Oda Tipi Ataması`;
 
-        if (odaTipleriData.success && setuplarData.success) {
-          const liste = document.getElementById("odaTipiSetupListesi");
-          liste.innerHTML = "";
+    // Önce otelleri yükle
+    fetch("/api/oteller-liste")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success && data.oteller) {
+          const otelSelect = document.getElementById("setupAtamaOtelSecim");
+          otelSelect.innerHTML = '<option value="">-- Otel Seçin --</option>';
 
-          if (
-            !odaTipleriData.oda_tipleri ||
-            odaTipleriData.oda_tipleri.length === 0
-          ) {
-            liste.innerHTML =
-              '<p class="text-center text-slate-500 py-4">Henüz oda tipi tanımlanmamış</p>';
-            return;
-          }
-
-          if (!setuplarData.setuplar || setuplarData.setuplar.length === 0) {
-            liste.innerHTML =
-              '<p class="text-center text-slate-500 py-4">Henüz setup tanımlanmamış</p>';
-            return;
-          }
-
-          odaTipleriData.oda_tipleri.forEach((odaTipi) => {
-            const div = document.createElement("div");
-            div.className = "p-4 bg-slate-50 dark:bg-slate-900 rounded-lg";
-
-            let setupCheckboxes = "";
-            setuplarData.setuplar.forEach((setup) => {
-              // setup_ids array kontrolü
-              const setupIds = odaTipi.setup_ids || [];
-              const checked = setupIds.includes(setup.id) ? "checked" : "";
-
-              setupCheckboxes += `
-              <label class="flex items-center p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded cursor-pointer">
-                <input type="checkbox"
-                       class="h-4 w-4 text-indigo-600 border-slate-300 rounded"
-                       data-oda-tipi="${odaTipi.id}"
-                       data-setup="${setup.id}"
-                       ${checked}>
-                <span class="ml-2 text-sm text-slate-900 dark:text-slate-100">${setup.ad}</span>
-              </label>
-            `;
-            });
-
-            div.innerHTML = `
-            <div class="font-medium text-slate-900 dark:text-slate-100 mb-2">
-              ${odaTipi.ad}
-            </div>
-            <div class="space-y-1">
-              ${setupCheckboxes}
-            </div>
-          `;
-            liste.appendChild(div);
+          data.oteller.forEach((otel) => {
+            otelSelect.innerHTML += `<option value="${otel.id}">${otel.ad}</option>`;
           });
-        } else {
-          const liste = document.getElementById("odaTipiSetupListesi");
-          liste.innerHTML =
-            '<p class="text-center text-red-500 py-4">Veri yüklenirken hata oluştu</p>';
-          console.error("API Hataları:", odaTipleriData, setuplarData);
+
+          // Listeyi temizle
+          document.getElementById("odaTipiSetupListesi").innerHTML =
+            '<p class="text-center text-slate-400 py-4">Önce bir otel seçin</p>';
+
+          // Kaydet butonunu devre dışı bırak
+          document.getElementById("btnOdaTipiSetupKaydet").disabled = true;
+          seciliOtelIdSetupAtama = null;
         }
       })
       .catch((error) => {
-        console.error("Modal yükleme hatası:", error);
-        const liste = document.getElementById("odaTipiSetupListesi");
-        liste.innerHTML =
-          '<p class="text-center text-red-500 py-4">Veri yüklenirken hata oluştu: ' +
-          error.message +
-          "</p>";
+        console.error("Oteller yüklenirken hata:", error);
       });
 
     $("#odaTipiSetupModal").modal({
@@ -951,74 +945,222 @@ page_title %}Setup Yönetimi{% endblock %} {% block content %}
     });
   }
 
+  function otelSecildiSetupAtama() {
+    const otelId = document.getElementById("setupAtamaOtelSecim").value;
+    const liste = document.getElementById("odaTipiSetupListesi");
+    const kaydetBtn = document.getElementById("btnOdaTipiSetupKaydet");
+    const setupId = seciliSetupIdAtama;
+
+    if (!otelId) {
+      liste.innerHTML =
+        '<p class="text-center text-slate-400 py-4">Önce bir otel seçin</p>';
+      kaydetBtn.disabled = true;
+      seciliOtelIdSetupAtama = null;
+      return;
+    }
+
+    if (!setupId) {
+      liste.innerHTML =
+        '<p class="text-center text-red-500 py-4">Setup seçilmedi!</p>';
+      kaydetBtn.disabled = true;
+      return;
+    }
+
+    seciliOtelIdSetupAtama = parseInt(otelId);
+    liste.innerHTML =
+      '<p class="text-center text-slate-400 py-4">Yükleniyor...</p>';
+
+    // Seçilen oteldeki oda tiplerini ve mevcut atamaları yükle
+    Promise.all([
+      fetch(`/api/oteller/${otelId}/oda-tipleri-liste`).then((r) => r.json()),
+      fetch(`/api/oda-tipleri?otel_id=${otelId}`).then((r) => r.json()),
+    ])
+      .then(([odaTipleriData, odaTipleriSetupData]) => {
+        console.log("Otel Oda Tipleri:", odaTipleriData);
+        console.log("Oda Tipleri Setup (Otel bazlı):", odaTipleriSetupData);
+
+        if (odaTipleriData.success && odaTipleriSetupData.success) {
+          liste.innerHTML = "";
+
+          if (
+            !odaTipleriData.oda_tipleri ||
+            odaTipleriData.oda_tipleri.length === 0
+          ) {
+            liste.innerHTML =
+              '<p class="text-center text-slate-500 py-4">Bu otelde henüz oda tipi tanımlanmamış</p>';
+            kaydetBtn.disabled = true;
+            return;
+          }
+
+          // Otel bazlı setup bilgisini map'e çevir (hangi oda tipine hangi setup'lar atanmış)
+          const odaTipiSetupMap = {};
+          odaTipleriSetupData.oda_tipleri.forEach((tip) => {
+            odaTipiSetupMap[tip.id] = tip.setup_ids || [];
+          });
+
+          // Oda tiplerini listele - her biri için sadece bu setup atanmış mı checkbox göster
+          odaTipleriData.oda_tipleri.forEach((odaTipi) => {
+            // Bu oda tipine bu setup atanmış mı?
+            const setupIds = odaTipiSetupMap[odaTipi.id] || [];
+            const checked = setupIds.includes(setupId) ? "checked" : "";
+
+            const div = document.createElement("div");
+            div.className =
+              "flex items-center p-3 bg-slate-50 dark:bg-slate-900 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors";
+
+            div.innerHTML = `
+              <label class="flex items-center w-full cursor-pointer">
+                <input type="checkbox"
+                       class="h-5 w-5 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                       data-oda-tipi="${odaTipi.id}"
+                       ${checked}>
+                <span class="ml-3 text-sm font-medium text-slate-900 dark:text-slate-100">${odaTipi.ad}</span>
+              </label>
+            `;
+            liste.appendChild(div);
+          });
+
+          kaydetBtn.disabled = false;
+        } else {
+          liste.innerHTML =
+            '<p class="text-center text-red-500 py-4">Veri yüklenirken hata oluştu</p>';
+          kaydetBtn.disabled = true;
+          console.error("API Hataları:", odaTipleriData, odaTipleriSetupData);
+        }
+      })
+      .catch((error) => {
+        console.error("Modal yükleme hatası:", error);
+        liste.innerHTML =
+          '<p class="text-center text-red-500 py-4">Veri yüklenirken hata oluştu: ' +
+          error.message +
+          "</p>";
+        kaydetBtn.disabled = true;
+      });
+  }
+
   function odaTipiSetupModalKapat() {
     $.modal.close();
   }
 
-  // Oda Tipi Setup Atama Kaydet
-  function odaTipiSetupKaydet() {
+  // Setup Atama Kaydet - Seçilen setup'ı seçilen oda tiplerine ata
+  function setupAtamaKaydet() {
+    if (!seciliOtelIdSetupAtama) {
+      alert("Lütfen önce bir otel seçin");
+      return;
+    }
+
+    if (!seciliSetupIdAtama) {
+      alert("Setup seçilmedi!");
+      return;
+    }
+
     const checkboxes = document.querySelectorAll(
       '#odaTipiSetupListesi input[type="checkbox"]'
     );
 
-    // Oda tipi bazında setup'ları grupla
-    const atamalar = {};
+    // Seçilen ve seçilmeyen oda tiplerini ayır
+    const secilenOdaTipleri = [];
+    const secilemeyenOdaTipleri = [];
+
     checkboxes.forEach((cb) => {
       const odaTipiId = parseInt(cb.dataset.odaTipi);
-      const setupId = parseInt(cb.dataset.setup);
-
-      if (!atamalar[odaTipiId]) {
-        atamalar[odaTipiId] = [];
-      }
-
       if (cb.checked) {
-        atamalar[odaTipiId].push(setupId);
-      }
-    });
-
-    console.log("Atamalar:", atamalar);
-
-    // Her oda tipi için ayrı ayrı kaydet
-    const promises = Object.keys(atamalar).map((odaTipiId) => {
-      const payload = {
-        oda_tipi_id: parseInt(odaTipiId),
-        setup_ids: atamalar[odaTipiId],
-      };
-      console.log("Gönderilen:", payload);
-
-      return fetch("/api/setup-atama", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
-        },
-        body: JSON.stringify(payload),
-      })
-        .then((r) => {
-          if (!r.ok) {
-            return r.json().then((err) => {
-              console.error("API Hatası:", err);
-              throw new Error(err.error || "Bilinmeyen hata");
-            });
-          }
-          return r.json();
-        })
-        .catch((error) => {
-          console.error("Fetch hatası:", error);
-          return { success: false, error: error.message };
-        });
-    });
-
-    Promise.all(promises).then((results) => {
-      const basarili = results.every((r) => r.success);
-      if (basarili) {
-        $.modal.close();
-        setupListesiYukle();
-        alert("Tüm atamalar başarıyla kaydedildi");
+        secilenOdaTipleri.push(odaTipiId);
       } else {
-        alert("Bazı atamalar kaydedilemedi");
+        secilemeyenOdaTipleri.push(odaTipiId);
       }
     });
+
+    console.log("Seçilen Setup ID:", seciliSetupIdAtama);
+    console.log("Otel ID:", seciliOtelIdSetupAtama);
+    console.log("Seçilen Oda Tipleri:", secilenOdaTipleri);
+    console.log("Seçilmeyen Oda Tipleri:", secilemeyenOdaTipleri);
+
+    // Önce mevcut atamaları al, sonra güncelle
+    fetch(`/api/oda-tipleri?otel_id=${seciliOtelIdSetupAtama}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.success) {
+          throw new Error("Mevcut atamalar alınamadı");
+        }
+
+        // Her oda tipi için güncelleme yap
+        const promises = [];
+
+        // Mevcut oda tipi -> setup_ids map'i
+        const odaTipiSetupMap = {};
+        data.oda_tipleri.forEach((tip) => {
+          odaTipiSetupMap[tip.id] = tip.setup_ids || [];
+        });
+
+        // Seçilen oda tiplerine bu setup'ı ekle
+        secilenOdaTipleri.forEach((odaTipiId) => {
+          let setupIds = [...(odaTipiSetupMap[odaTipiId] || [])];
+          if (!setupIds.includes(seciliSetupIdAtama)) {
+            setupIds.push(seciliSetupIdAtama);
+          }
+
+          const payload = {
+            otel_id: seciliOtelIdSetupAtama,
+            oda_tipi_id: odaTipiId,
+            setup_ids: setupIds,
+          };
+
+          promises.push(
+            fetch("/api/setup-atama", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken,
+              },
+              body: JSON.stringify(payload),
+            }).then((r) => r.json())
+          );
+        });
+
+        // Seçilmeyen oda tiplerinden bu setup'ı kaldır
+        secilemeyenOdaTipleri.forEach((odaTipiId) => {
+          let setupIds = [...(odaTipiSetupMap[odaTipiId] || [])];
+          setupIds = setupIds.filter((id) => id !== seciliSetupIdAtama);
+
+          const payload = {
+            otel_id: seciliOtelIdSetupAtama,
+            oda_tipi_id: odaTipiId,
+            setup_ids: setupIds,
+          };
+
+          promises.push(
+            fetch("/api/setup-atama", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken,
+              },
+              body: JSON.stringify(payload),
+            }).then((r) => r.json())
+          );
+        });
+
+        return Promise.all(promises);
+      })
+      .then((results) => {
+        const basarili = results.every((r) => r.success);
+        if (basarili) {
+          $.modal.close();
+          setupListesiYukle();
+          alert("Atamalar başarıyla kaydedildi");
+        } else {
+          alert("Bazı atamalar kaydedilemedi");
+          console.error(
+            "Hatalı sonuçlar:",
+            results.filter((r) => !r.success)
+          );
+        }
+      })
+      .catch((error) => {
+        console.error("Kaydetme hatası:", error);
+        alert("Kaydetme sırasında hata oluştu: " + error.message);
+      });
   }
 
   // Setup düzenle modal

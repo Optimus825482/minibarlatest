@@ -61,20 +61,33 @@ def register_admin_minibar_routes(app):
             oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
             gruplar = UrunGrup.query.filter_by(aktif=True).order_by(UrunGrup.grup_adi).all()
             
+            # Seçili otel adını al
+            secili_otel = None
+            otel_adi = None
+            if otel_id:
+                secili_otel = Otel.query.get(otel_id)
+                otel_adi = secili_otel.ad if secili_otel else None
+            
             # Stok durumlarını getir - otel_id None ise tüm oteller
             stok_listesi = get_depo_stok_durumu(grup_id=grup_id, depo_sorumlusu_id=depo_id, otel_id=otel_id)
             
             # Excel export
             if export_format == 'excel':
-                excel_buffer = export_depo_stok_excel(stok_listesi)
+                excel_buffer = export_depo_stok_excel(stok_listesi, otel_adi=otel_adi)
                 if excel_buffer:
                     from datetime import datetime
-                    filename = f'depo_stoklari_{get_kktc_now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+                    # Dosya adına otel adını ekle
+                    if otel_adi:
+                        safe_otel_adi = otel_adi.replace(' ', '_').replace('/', '_')
+                        filename = f'depo_stoklari_{safe_otel_adi}_{get_kktc_now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+                    else:
+                        filename = f'depo_stoklari_tum_oteller_{get_kktc_now().strftime("%Y%m%d_%H%M%S")}.xlsx'
                     
                     # Log kaydı
                     log_islem('export', 'depo_stoklari', {
                         'format': 'excel',
                         'otel_id': otel_id,
+                        'otel_adi': otel_adi,
                         'kayit_sayisi': len(stok_listesi)
                     })
                     
@@ -484,12 +497,36 @@ def register_admin_minibar_routes(app):
     def admin_minibar_islemleri():
         """Tüm minibar işlemlerini listele"""
         try:
+            from datetime import timedelta
+            from models import Otel
+            
             # Filtreler
+            otel_id = request.args.get('otel_id', type=int)
             oda_id = request.args.get('oda_id', type=int)
             personel_id = request.args.get('personel_id', type=int)
             islem_tipi = request.args.get('islem_tipi', '')
             baslangic_tarih = request.args.get('baslangic_tarih', '')
             bitis_tarih = request.args.get('bitis_tarih', '')
+            tarih_filtre = request.args.get('tarih_filtre', '')  # Hızlı tarih seçici
+            
+            # Hızlı tarih filtresi uygula
+            bugun = get_kktc_now().date()
+            if tarih_filtre == 'bugun':
+                baslangic_tarih = bugun.strftime('%Y-%m-%d')
+                bitis_tarih = bugun.strftime('%Y-%m-%d')
+            elif tarih_filtre == 'dun':
+                dun = bugun - timedelta(days=1)
+                baslangic_tarih = dun.strftime('%Y-%m-%d')
+                bitis_tarih = dun.strftime('%Y-%m-%d')
+            elif tarih_filtre == 'bu_hafta':
+                # Pazartesi'den bugüne
+                hafta_basi = bugun - timedelta(days=bugun.weekday())
+                baslangic_tarih = hafta_basi.strftime('%Y-%m-%d')
+                bitis_tarih = bugun.strftime('%Y-%m-%d')
+            elif tarih_filtre == 'bu_ay':
+                ay_basi = bugun.replace(day=1)
+                baslangic_tarih = ay_basi.strftime('%Y-%m-%d')
+                bitis_tarih = bugun.strftime('%Y-%m-%d')
             
             # Sayfalama
             sayfa = request.args.get('sayfa', 1, type=int)
@@ -501,6 +538,10 @@ def register_admin_minibar_routes(app):
                 db.joinedload(MinibarIslem.personel)
                 # detaylar eager loading kaldırıldı - satis_fiyati kolonu DB'de yok
             )
+            
+            # Otel filtresi - oda üzerinden
+            if otel_id:
+                query = query.join(Oda, MinibarIslem.oda_id == Oda.id).join(Kat, Oda.kat_id == Kat.id).filter(Kat.otel_id == otel_id)
             
             if oda_id:
                 query = query.filter(MinibarIslem.oda_id == oda_id)
@@ -519,6 +560,7 @@ def register_admin_minibar_routes(app):
             )
             
             # Odalar ve personeller (filtre için)
+            oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
             odalar = Oda.query.filter_by(aktif=True).order_by(Oda.oda_no).all()
             personeller = Kullanici.query.filter(
                 Kullanici.rol.in_(['depo_sorumlusu', 'kat_sorumlusu']),
@@ -533,13 +575,16 @@ def register_admin_minibar_routes(app):
             
             return render_template('sistem_yoneticisi/admin_minibar_islemleri.html',
                                  islemler=islemler,
+                                 oteller=oteller,
                                  odalar=odalar,
                                  personeller=personeller,
+                                 otel_id=otel_id,
                                  oda_id=oda_id,
                                  personel_id=personel_id,
                                  islem_tipi=islem_tipi,
                                  baslangic_tarih=baslangic_tarih,
-                                 bitis_tarih=bitis_tarih)
+                                 bitis_tarih=bitis_tarih,
+                                 tarih_filtre=tarih_filtre)
             
         except Exception as e:
             log_hata(e, modul='admin_minibar_islemleri')
