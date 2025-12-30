@@ -1418,8 +1418,8 @@ def export_otel_zimmet_stok_excel(rapor):
     # Her otel için tablo
     for otel in rapor.get('oteller', []):
         # HEADER: A(row):A(row+1) Logo | B(row):C(row) Otel Adı | B(row+1):C(row+1) Rapor Adı | D(row):D(row+1) Tarih
-        ws.row_dimensions[row].height = 25
-        ws.row_dimensions[row + 1].height = 25
+        ws.row_dimensions[row].height = 30
+        ws.row_dimensions[row + 1].height = 30
         
         # Logo (A birleşik 2 satır)
         ws.merge_cells(f'A{row}:A{row + 1}')
@@ -1433,8 +1433,8 @@ def export_otel_zimmet_stok_excel(rapor):
                 logo_stream = io.BytesIO(logo_bytes)
                 
                 img = XLImage(logo_stream)
-                img.width = 50
-                img.height = 45
+                img.width = 85
+                img.height = 80
                 ws.add_image(img, f'A{row}')
             except:
                 pass
@@ -1443,13 +1443,13 @@ def export_otel_zimmet_stok_excel(rapor):
         ws.merge_cells(f'B{row}:C{row}')
         ws[f'B{row}'] = otel['otel_ad']
         ws[f'B{row}'].font = title_font
-        ws[f'B{row}'].alignment = left_align
+        ws[f'B{row}'].alignment = center_align
         
         # Rapor Adı (B:C birleşik - 2. satır)
         ws.merge_cells(f'B{row + 1}:C{row + 1}')
         ws[f'B{row + 1}'] = "Zimmet Stok Raporu"
         ws[f'B{row + 1}'].font = subtitle_font
-        ws[f'B{row + 1}'].alignment = left_align
+        ws[f'B{row + 1}'].alignment = center_align
         
         # Tarih (D birleşik 2 satır)
         ws.merge_cells(f'D{row}:D{row + 1}')
@@ -1732,8 +1732,8 @@ def export_gun_sonu_excel(rapor):
     
     # HEADER SATIRI: A1:A2 Logo | B1:C1 Otel Adı | B2:C2 Rapor Adı | D1:D2 Tarih
     # Satır yükseklikleri
-    ws.row_dimensions[1].height = 25
-    ws.row_dimensions[2].height = 25
+    ws.row_dimensions[1].height = 30
+    ws.row_dimensions[2].height = 30
     
     # Logo (A1:A2 birleşik)
     ws.merge_cells('A1:A2')
@@ -1750,8 +1750,8 @@ def export_gun_sonu_excel(rapor):
                 logo_stream = io.BytesIO(logo_bytes)
                 
                 img = XLImage(logo_stream)
-                img.width = 50
-                img.height = 45
+                img.width = 85
+                img.height = 80
                 ws.add_image(img, 'A1')
             except:
                 pass
@@ -1760,19 +1760,19 @@ def export_gun_sonu_excel(rapor):
     ws.merge_cells('B1:C1')
     ws['B1'] = rapor['otel_adi']
     ws['B1'].font = title_font
-    ws['B1'].alignment = left_align
+    ws['B1'].alignment = center_align
     
     # Rapor Adı (B2:C2 birleşik)
     ws.merge_cells('B2:C2')
     ws['B2'] = "Kat Sorumlusu Gün Sonu Raporu"
     ws['B2'].font = subtitle_font
-    ws['B2'].alignment = left_align
+    ws['B2'].alignment = center_align
     
     # Tarih (D1:D2 birleşik)
     ws.merge_cells('D1:D2')
     ws['D1'] = f"📅 {rapor['rapor_tarihi']}"
     ws['D1'].font = date_font
-    ws['D1'].alignment = Alignment(horizontal='right', vertical='center')
+    ws['D1'].alignment = Alignment(horizontal='center', vertical='center')
     
     # Header altı çizgi
     for col in ['A', 'B', 'C', 'D']:
