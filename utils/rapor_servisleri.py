@@ -243,6 +243,7 @@ class KatSorumlusuGunSonuRaporServisi:
             
             return {
                 'success': True,
+                'otel_id': otel_id,
                 'otel_adi': otel.ad,
                 'rapor_tarihi': tarih.strftime('%d.%m.%Y'),
                 'olusturma_zamani': get_kktc_now().strftime('%d.%m.%Y %H:%M'),

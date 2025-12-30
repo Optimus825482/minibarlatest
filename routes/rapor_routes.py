@@ -1653,10 +1653,12 @@ def kat_sorumlusu_kullanim_pdf():
 
 
 def export_gun_sonu_excel(rapor):
-    """Gün sonu raporunu Excel olarak export et - Yeni format"""
+    """Gün sonu raporunu Excel olarak export et - Yeni format + Otel Logosu"""
     import io
+    import base64
     from openpyxl import Workbook
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from openpyxl.drawing.image import Image as XLImage
     from flask import send_file
     
     wb = Workbook()
@@ -1678,6 +1680,32 @@ def export_gun_sonu_excel(rapor):
     center_align = Alignment(horizontal='center', vertical='center')
     
     row = 1
+    
+    # Otel Logosu Ekle
+    otel_id = rapor.get('otel_id')
+    if otel_id:
+        otel = Otel.query.get(otel_id)
+        if otel and otel.logo:
+            try:
+                # Base64 logo'yu decode et
+                logo_data = otel.logo
+                if ',' in logo_data:
+                    logo_data = logo_data.split(',')[1]
+                
+                logo_bytes = base64.b64decode(logo_data)
+                logo_stream = io.BytesIO(logo_bytes)
+                
+                img = XLImage(logo_stream)
+                img.width = 120
+                img.height = 60
+                ws.add_image(img, 'A1')
+                
+                # Logo için satır yüksekliği ayarla
+                ws.row_dimensions[1].height = 50
+                row = 3  # Logo'dan sonra 2 satır boşluk
+            except Exception as e:
+                # Logo yüklenemezse devam et
+                pass
     
     # Otel Başlığı
     ws.merge_cells(f'A{row}:B{row}')
@@ -1773,14 +1801,15 @@ def export_gun_sonu_excel(rapor):
 
 
 def export_gun_sonu_pdf(rapor):
-    """Gün sonu raporunu PDF olarak export et - Türkçe karakter destekli"""
+    """Gün sonu raporunu PDF olarak export et - Türkçe karakter destekli + Otel Logosu"""
     import io
+    import base64
     from flask import send_file
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
     import urllib.request
@@ -1836,6 +1865,33 @@ def export_gun_sonu_pdf(rapor):
         spaceAfter=20,
         alignment=1
     )
+    
+    # Otel Logosu Ekle
+    otel_id = rapor.get('otel_id')
+    if otel_id:
+        otel = Otel.query.get(otel_id)
+        if otel and otel.logo:
+            try:
+                # Base64 logo'yu decode et
+                logo_data = otel.logo
+                if ',' in logo_data:
+                    logo_data = logo_data.split(',')[1]
+                
+                logo_bytes = base64.b64decode(logo_data)
+                logo_stream = io.BytesIO(logo_bytes)
+                
+                # Logo'yu PDF'e ekle (ortalanmış)
+                logo_img = RLImage(logo_stream, width=3*cm, height=1.5*cm)
+                logo_table = Table([[logo_img]], colWidths=[18*cm])
+                logo_table.setStyle(TableStyle([
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ]))
+                elements.append(logo_table)
+                elements.append(Spacer(1, 10))
+            except Exception as e:
+                # Logo yüklenemezse devam et
+                pass
     
     # Otel Başlığı
     elements.append(Paragraph(rapor['otel_adi'], title_style))
