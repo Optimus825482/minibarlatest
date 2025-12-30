@@ -1687,11 +1687,11 @@ def export_gun_sonu_excel(rapor):
     row = 1
     
     # HEADER SATIRI: Logo (A1) | Otel Adı + Rapor Adı (B1-C1) | Tarih (D1)
-    # Sütun genişlikleri
-    ws.column_dimensions['A'].width = 15  # Logo
-    ws.column_dimensions['B'].width = 25  # Otel adı
-    ws.column_dimensions['C'].width = 25  # Rapor adı
-    ws.column_dimensions['D'].width = 15  # Tarih
+    # Sütun genişlikleri - Ürün adları için geniş alan
+    ws.column_dimensions['A'].width = 12  # Logo
+    ws.column_dimensions['B'].width = 40  # Ürün adı (geniş)
+    ws.column_dimensions['C'].width = 30  # Rapor adı / ürün devam
+    ws.column_dimensions['D'].width = 18  # Tarih / Miktar
     
     # Satır yüksekliği
     ws.row_dimensions[1].height = 45
@@ -1750,29 +1750,35 @@ def export_gun_sonu_excel(rapor):
         row += 1
         
         # Tablo başlıkları
-        ws.merge_cells(f'A{row}:C{row}')
+        ws.merge_cells(f'A{row}:B{row}')
         ws[f'A{row}'] = 'Ürün Adı'
         ws[f'A{row}'].font = header_font
         ws[f'A{row}'].fill = header_fill
         ws[f'A{row}'].alignment = center_align
         ws[f'A{row}'].border = thin_border
+        ws[f'B{row}'].border = thin_border
         
-        ws[f'D{row}'] = 'Minibarlara Eklenen'
-        ws[f'D{row}'].font = header_font
-        ws[f'D{row}'].fill = header_fill
-        ws[f'D{row}'].alignment = center_align
+        ws.merge_cells(f'C{row}:D{row}')
+        ws[f'C{row}'] = 'Minibarlara Eklenen'
+        ws[f'C{row}'].font = header_font
+        ws[f'C{row}'].fill = header_fill
+        ws[f'C{row}'].alignment = center_align
+        ws[f'C{row}'].border = thin_border
         ws[f'D{row}'].border = thin_border
         row += 1
         
         # Ürünler
         for urun in personel.get('urunler', []):
-            ws.merge_cells(f'A{row}:C{row}')
+            ws.merge_cells(f'A{row}:B{row}')
             ws[f'A{row}'] = urun['urun_adi']
             ws[f'A{row}'].border = thin_border
+            ws[f'B{row}'].border = thin_border
             
-            ws[f'D{row}'] = urun['toplam_eklenen']
+            ws.merge_cells(f'C{row}:D{row}')
+            ws[f'C{row}'] = urun['toplam_eklenen']
+            ws[f'C{row}'].border = thin_border
+            ws[f'C{row}'].alignment = center_align
             ws[f'D{row}'].border = thin_border
-            ws[f'D{row}'].alignment = center_align
             row += 1
         
         row += 1
@@ -1788,28 +1794,34 @@ def export_gun_sonu_excel(rapor):
         row += 1
         
         # Başlıklar
-        ws.merge_cells(f'A{row}:C{row}')
+        ws.merge_cells(f'A{row}:B{row}')
         ws[f'A{row}'] = 'Ürün Adı'
         ws[f'A{row}'].font = header_font
         ws[f'A{row}'].fill = header_fill
         ws[f'A{row}'].alignment = center_align
         ws[f'A{row}'].border = thin_border
+        ws[f'B{row}'].border = thin_border
         
-        ws[f'D{row}'] = 'Toplam Eklenen'
-        ws[f'D{row}'].font = header_font
-        ws[f'D{row}'].fill = header_fill
-        ws[f'D{row}'].alignment = center_align
+        ws.merge_cells(f'C{row}:D{row}')
+        ws[f'C{row}'] = 'Toplam Eklenen'
+        ws[f'C{row}'].font = header_font
+        ws[f'C{row}'].fill = header_fill
+        ws[f'C{row}'].alignment = center_align
+        ws[f'C{row}'].border = thin_border
         ws[f'D{row}'].border = thin_border
         row += 1
         
         for urun in rapor['genel_toplam']:
-            ws.merge_cells(f'A{row}:C{row}')
+            ws.merge_cells(f'A{row}:B{row}')
             ws[f'A{row}'] = urun['urun_adi']
             ws[f'A{row}'].border = thin_border
+            ws[f'B{row}'].border = thin_border
             
-            ws[f'D{row}'] = urun['toplam_eklenen']
+            ws.merge_cells(f'C{row}:D{row}')
+            ws[f'C{row}'] = urun['toplam_eklenen']
+            ws[f'C{row}'].border = thin_border
+            ws[f'C{row}'].alignment = center_align
             ws[f'D{row}'].border = thin_border
-            ws[f'D{row}'].alignment = center_align
             row += 1
     
     # Excel dosyasını oluştur
