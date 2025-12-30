@@ -1880,15 +1880,15 @@ def export_gun_sonu_pdf(rapor):
                 logo_bytes = base64.b64decode(logo_data)
                 logo_stream = io.BytesIO(logo_bytes)
                 
-                # Logo'yu PDF'e ekle (ortalanmış)
-                logo_img = RLImage(logo_stream, width=3*cm, height=1.5*cm)
+                # Logo'yu PDF'e ekle (ortalanmış, küçük boyut)
+                logo_img = RLImage(logo_stream, width=1.5*cm, height=1.5*cm)
                 logo_table = Table([[logo_img]], colWidths=[18*cm])
                 logo_table.setStyle(TableStyle([
                     ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                     ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                 ]))
                 elements.append(logo_table)
-                elements.append(Spacer(1, 10))
+                elements.append(Spacer(1, 5))
             except Exception as e:
                 # Logo yüklenemezse devam et
                 pass
