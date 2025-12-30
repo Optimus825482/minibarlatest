@@ -1,6 +1,6 @@
 {% extends "base.html" %} {% block title %}Kat Sorumlusu Kullanım Raporu{%
-endblock %} {% block page_title %}Kat Sorumlusu Zimmet Kullanım Raporu{%
-endblock %} {% block content %}
+endblock %} {% block page_title %}Kat Sorumlusu Kullanım Raporu{% endblock %} {%
+block content %}
 <div class="space-y-6">
   <!-- Filtre Formu -->
   <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
@@ -81,130 +81,129 @@ endblock %} {% block content %}
   </div>
 
   {% if rapor_verisi %}
-  <!-- Özet -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <!-- Özet Kartları -->
+  <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
     <div
       class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-4 text-white"
     >
-      <p class="text-indigo-100 text-sm">Toplam Personel</p>
+      <p class="text-indigo-100 text-sm">Personel Sayısı</p>
       <p class="text-2xl font-bold">{{ rapor_verisi.toplam_personel }}</p>
     </div>
     <div
-      class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 text-white"
+      class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-4 text-white"
     >
-      <p class="text-emerald-100 text-sm">Dönem</p>
-      <p class="text-lg font-bold">
-        {{ rapor_verisi.baslangic }} - {{ rapor_verisi.bitis }}
-      </p>
+      <p class="text-red-100 text-sm">Toplam Tüketim</p>
+      <p class="text-2xl font-bold">{{ rapor_verisi.toplam_tuketim }}</p>
+    </div>
+    <div
+      class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white"
+    >
+      <p class="text-green-100 text-sm">Toplam Ekleme</p>
+      <p class="text-2xl font-bold">{{ rapor_verisi.toplam_ekleme }}</p>
     </div>
     <div
       class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white"
     >
-      <p class="text-purple-100 text-sm">Rapor Tarihi</p>
-      <p class="text-lg font-bold">{{ rapor_verisi.rapor_tarihi }}</p>
+      <p class="text-purple-100 text-sm">İşlem Sayısı</p>
+      <p class="text-2xl font-bold">{{ rapor_verisi.toplam_grup }}</p>
+    </div>
+    <div
+      class="bg-gradient-to-br from-slate-500 to-slate-600 rounded-xl p-4 text-white"
+    >
+      <p class="text-slate-100 text-sm">Dönem</p>
+      <p class="text-lg font-bold">
+        {{ rapor_verisi.baslangic }} - {{ rapor_verisi.bitis }}
+      </p>
     </div>
   </div>
 
-  <!-- Personel Bazlı Detaylar -->
-  {% for personel in rapor_verisi.personeller %}
+  <!-- Kullanım Listesi Tablosu -->
   <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
     <div
       class="px-4 py-4 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700"
     >
-      <div class="flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-          <i class="fas fa-user mr-2 text-indigo-600"></i>{{ personel.ad_soyad
-          }}
-          <span class="text-sm font-normal text-slate-500 ml-2"
-            >({{ personel.otel_ad }})</span
-          >
-        </h3>
-        <div class="flex items-center gap-4 text-sm">
-          <span
-            class="px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded-full"
-          >
-            <i class="fas fa-hand-holding mr-1"></i>Kullanım: {{
-            personel.toplam_kullanim }}
-          </span>
-          <span
-            class="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 rounded-full"
-          >
-            <i class="fas fa-undo mr-1"></i>İade: {{ personel.toplam_iade }}
-          </span>
-          <span
-            class="px-3 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 rounded-full font-semibold"
-          >
-            Net: {{ personel.net_kullanim }}
-          </span>
-        </div>
-      </div>
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+        <i class="fas fa-list mr-2 text-indigo-600"></i>Kullanım Kayıtları
+        <span class="text-sm font-normal text-slate-500 ml-2"
+          >(Tarih Azalan)</span
+        >
+      </h3>
     </div>
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
         <thead class="bg-slate-100 dark:bg-slate-900">
           <tr>
             <th
+              class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase w-40"
+            >
+              Tarih
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase w-36"
+            >
+              Personel
+            </th>
+            <th
+              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase w-20"
+            >
+              Oda
+            </th>
+            <th
               class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase"
             >
-              Ürün
+              Ürünler
             </th>
             <th
-              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+              class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase w-32"
             >
-              Birim
-            </th>
-            <th
-              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
-            >
-              Kullanım
-            </th>
-            <th
-              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
-            >
-              İade
-            </th>
-            <th
-              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
-            >
-              Net
-            </th>
-            <th
-              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
-            >
-              İşlem Sayısı
+              Otel
             </th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-          {% for urun in personel.urunler %}
-          <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
+          {% for grup in rapor_verisi.gruplar %}
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50 align-top">
             <td
-              class="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white"
+              class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap"
             >
-              {{ urun.urun_adi }}
+              <i class="fas fa-calendar-alt mr-1 text-slate-400"></i>{{
+              grup.tarih }}
             </td>
             <td
-              class="px-4 py-3 text-sm text-center text-slate-600 dark:text-slate-400"
+              class="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white whitespace-nowrap"
             >
-              {{ urun.birim }}
+              <i class="fas fa-user mr-1 text-indigo-500"></i>{{ grup.personel
+              }}
+            </td>
+            <td class="px-4 py-3 text-sm text-center">
+              <span
+                class="px-2 py-1 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-400 rounded font-bold"
+                >{{ grup.oda_no }}</span
+              >
+            </td>
+            <td class="px-4 py-3 text-sm">
+              <div class="space-y-1">
+                {% for urun in grup.urunler %}
+                <div
+                  class="flex items-center justify-between py-1 {% if not loop.last %}border-b border-slate-100 dark:border-slate-700{% endif %}"
+                >
+                  <span class="text-slate-900 dark:text-white"
+                    >{{ urun.urun_adi }}</span
+                  >
+                  <span
+                    class="px-2 py-0.5 {% if urun.islem_class == 'tuketim' %}bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400{% else %}bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400{% endif %} rounded font-bold text-xs ml-3"
+                  >
+                    {% if urun.islem_class == 'tuketim' %}-{% else %}+{% endif
+                    %}{{ urun.miktar }}
+                  </span>
+                </div>
+                {% endfor %}
+              </div>
             </td>
             <td
-              class="px-4 py-3 text-sm text-center text-blue-600 font-semibold"
+              class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap"
             >
-              {{ urun.kullanim }}
-            </td>
-            <td class="px-4 py-3 text-sm text-center text-green-600">
-              {{ urun.iade }}
-            </td>
-            <td
-              class="px-4 py-3 text-sm text-center font-bold {% if urun.net > 0 %}text-purple-600{% else %}text-slate-600{% endif %}"
-            >
-              {{ urun.net }}
-            </td>
-            <td
-              class="px-4 py-3 text-sm text-center text-slate-600 dark:text-slate-400"
-            >
-              {{ urun.islem_sayisi }}
+              {{ grup.otel }}
             </td>
           </tr>
           {% endfor %}
@@ -212,16 +211,23 @@ endblock %} {% block content %}
       </table>
     </div>
   </div>
-  {% endfor %} {% if rapor_verisi.personeller|length == 0 %}
+
+  {% if rapor_verisi.gruplar|length == 0 %}
   <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-12 text-center">
     <i
       class="fas fa-search text-5xl text-slate-300 dark:text-slate-600 mb-4"
     ></i>
     <p class="text-slate-500 dark:text-slate-400">
-      Seçilen kriterlere uygun kullanım kaydı bulunamadı.
+      Seçilen kriterlere uygun kayıt bulunamadı.
     </p>
   </div>
-  {% endif %} {% else %}
+  {% endif %}
+
+  <div class="text-center text-sm text-slate-500 dark:text-slate-400">
+    <i class="fas fa-clock mr-1"></i>Rapor Tarihi: {{ rapor_verisi.rapor_tarihi
+    }}
+  </div>
+  {% else %}
   <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-12 text-center">
     <i
       class="fas fa-users text-5xl text-slate-300 dark:text-slate-600 mb-4"

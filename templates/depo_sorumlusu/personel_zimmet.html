@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Personel Zimmet{% endblock %}
-{% block page_title %}Personel Zimmet Atama{% endblock %}
+{% block title %}Otel Zimmet Atama{% endblock %}
+{% block page_title %}Otel Zimmet Atama{% endblock %}
 
 {% block content %}
 <style>
@@ -15,63 +15,42 @@
     .urun-card-footer .value { font-weight: 800; font-size: 16px; }
     .grup-btn { padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; border: 2px solid transparent; transition: all 0.2s; }
     .grup-btn.aktif { box-shadow: 0 0 0 3px rgba(255,255,255,0.5); }
+    .zimmet-kart { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+    .zimmet-kart-header { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .personel-chip { display: inline-flex; align-items: center; padding: 4px 10px; background: rgba(99,102,241,0.2); color: #a5b4fc; border-radius: 16px; font-size: 12px; font-weight: 500; margin: 2px; }
 </style>
 
 <div class="space-y-6">
-    <!-- Kat Sorumlusu Seçimi -->
+    <!-- Otel Seçimi ve Ürün Ekle Butonu -->
     <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
-        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-            <i class="fas fa-user-plus mr-2 text-blue-500"></i>Zimmet Atama
-        </h3>
-        <div class="max-w-md">
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Kat Sorumlusu Seçin <span class="text-red-500">*</span>
-            </label>
-            <select id="kat_sorumlusu_select" class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg text-base dark:bg-slate-700 dark:text-white">
-                <option value="">-- Kat Sorumlusu Seçiniz --</option>
-                {% for personel in kat_sorumlulari %}
-                <option value="{{ personel.id }}" data-ad="{{ personel.ad }} {{ personel.soyad }}">{{ personel.ad }} {{ personel.soyad }}</option>
-                {% endfor %}
-            </select>
+        <div class="flex flex-wrap items-end gap-4">
+            <div class="flex-1 min-w-[250px]">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    <i class="fas fa-hotel mr-2 text-blue-500"></i>Otel Seçin
+                </label>
+                <select id="otel_select" class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg text-base dark:bg-slate-700 dark:text-white">
+                    <option value="">-- Otel Seçiniz --</option>
+                    {% for otel in otel_secenekleri %}
+                    <option value="{{ otel.id }}" data-ad="{{ otel.ad }}" {% if otel.id == secili_otel_id %}selected{% endif %}>{{ otel.ad }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button id="urun_ekle_btn" onclick="modalAc()" disabled class="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white rounded-lg font-bold text-base transition-colors">
+                <i class="fas fa-plus mr-2"></i>Ürün Ekle
+            </button>
         </div>
     </div>
 
-    <!-- Zimmet İşlemleri Listesi -->
+    <!-- Zimmet Atama İşlemleri Listesi -->
     <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-                <i class="fas fa-list mr-2 text-green-500"></i>Zimmet Atama İşlemleri
-            </h3>
-            <div class="flex items-center gap-3">
-                <select id="filtre_ay" class="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm dark:bg-slate-700 dark:text-white">
-                    {% for i in range(1, 13) %}
-                    <option value="{{ i }}" {% if i == current_month %}selected{% endif %}>{{ ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'][i-1] }}</option>
-                    {% endfor %}
-                </select>
-                <select id="filtre_yil" class="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm dark:bg-slate-700 dark:text-white">
-                    {% for y in range(current_year - 2, current_year + 1) %}
-                    <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
-                    {% endfor %}
-                </select>
-                <button type="button" onclick="zimmetListesiYukle()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"><i class="fas fa-filter mr-1"></i>Filtrele</button>
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+            <i class="fas fa-list mr-2 text-indigo-500"></i>Zimmet Atama İşlemleri
+        </h3>
+        <div id="zimmet_listesi">
+            <div class="text-center py-8 text-slate-500">
+                <i class="fas fa-hotel text-4xl mb-3 opacity-50"></i>
+                <p>Otel seçiniz...</p>
             </div>
-        </div>
-
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                <thead class="bg-slate-50 dark:bg-slate-700">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Tarih</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Kat Sorumlusu</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Ürün Sayısı</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">Durum</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase">İşlemler</th>
-                    </tr>
-                </thead>
-                <tbody id="zimmet_listesi_tbody" class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                    <tr><td colspan="5" class="px-4 py-8 text-center text-slate-500"><i class="fas fa-spinner fa-spin mr-2"></i>Yükleniyor...</td></tr>
-                </tbody>
-            </table>
         </div>
     </div>
 </div>
@@ -80,20 +59,14 @@
 <div id="zimmet_modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
     <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col" onclick="event.stopPropagation()">
         <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
-            <h3 class="text-xl font-bold text-white"><i class="fas fa-user mr-2"></i><span id="modal_personel_adi">Personel</span> - Zimmet Atama</h3>
+            <h3 class="text-xl font-bold text-white"><i class="fas fa-hotel mr-2"></i><span id="modal_otel_adi">Otel</span> - Zimmet Ekle</h3>
             <button type="button" onclick="modalKapat()" class="text-white text-3xl leading-none">&times;</button>
         </div>
-        
         <div class="flex-1 overflow-y-auto p-6">
-            <!-- Ürün Grupları Butonları -->
             <div id="grup_butonlari" class="flex flex-wrap gap-2 mb-4"></div>
-            
-            <!-- Arama -->
             <div class="mb-4">
                 <input type="text" id="urun_ara" placeholder="Ürün ara..." class="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white w-64">
             </div>
-            
-            <!-- Ürün Kartları -->
             <div id="urun_kartlari" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 p-1">
                 <div class="col-span-full text-center py-8 text-slate-400"><i class="fas fa-spinner fa-spin text-2xl"></i><p class="mt-2">Yükleniyor...</p></div>
             </div>
@@ -130,27 +103,7 @@
     </div>
 </div>
 
-
-<!-- Detay Modal -->
-<div id="detay_modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-    <div class="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
-        <div class="px-6 py-4 bg-gradient-to-r from-slate-700 to-slate-800 flex items-center justify-between">
-            <h3 id="detay_baslik" class="text-xl font-bold text-white flex items-center gap-2">
-                <i class="fas fa-clipboard-list text-blue-400"></i>Zimmet Detayları
-            </h3>
-            <button type="button" onclick="detayModalKapat()" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-600/50 text-white text-xl">&times;</button>
-        </div>
-        <div id="detay_icerik" class="flex-1 overflow-y-auto p-6 text-white"></div>
-        <div id="detay_footer" class="px-6 py-4 border-t border-slate-700 flex items-center justify-between bg-slate-800">
-            <div id="detay_toplamlar" class="flex gap-6 text-sm"></div>
-            <button type="button" onclick="detayModalKapat()" class="px-6 py-2.5 bg-slate-600 text-white rounded-lg font-semibold">
-                <i class="fas fa-times mr-2"></i>Kapat
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Bildirim Modal (Alert yerine) -->
+<!-- Bildirim Modal -->
 <div id="bildirim_modal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4" style="background: rgba(0,0,0,0.6);">
     <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6 text-center">
         <div id="bildirim_icon" class="text-5xl mb-4"></div>
@@ -167,204 +120,183 @@
 const csrfToken = '{{ csrf_token() }}';
 let urunListesi = [];
 let grupListesi = [];
-let seciliPersonelId = null;
-let seciliPersonelAdi = '';
+let seciliOtelId = null;
+let seciliOtelAdi = '';
 let seciliGrup = '';
 
-// Bildirim Modal Fonksiyonları
 function bildirimGoster(mesaj, tip = 'info', baslik = null) {
     const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
     const titles = { success: 'Başarılı!', error: 'Hata!', warning: 'Dikkat!', info: 'Bilgi' };
-    
     document.getElementById('bildirim_icon').textContent = icons[tip] || icons.info;
     document.getElementById('bildirim_baslik').textContent = baslik || titles[tip] || titles.info;
     document.getElementById('bildirim_mesaj').textContent = mesaj;
     document.getElementById('bildirim_modal').classList.remove('hidden');
 }
 
-function bildirimKapat() {
-    document.getElementById('bildirim_modal').classList.add('hidden');
-}
+function bildirimKapat() { document.getElementById('bildirim_modal').classList.add('hidden'); }
+function formatSayi(sayi) { return (sayi || 0).toLocaleString('tr-TR'); }
 
-// Binlik ayırıcı fonksiyonu
-function formatSayi(sayi) {
-    return (sayi || 0).toLocaleString('tr-TR');
-}
-
-// Grup renkleri - Ana Depo Tedarik sayfasıyla AYNI (Grup ID bazlı sabit renkler)
-// Her grup ID için sabit renk - her iki sayfada tutarlı
 const GRUP_RENK_PALETI = [
-  {header: '#dc2626', border: '#fca5a5', bg: '#fee2e2', text: '#7f1d1d', subtext: '#dc2626'},  // 0: Kırmızı
-  {header: '#f97316', border: '#fdba74', bg: '#ffedd5', text: '#7c2d12', subtext: '#ea580c'},  // 1: Turuncu
-  {header: '#7c3aed', border: '#c4b5fd', bg: '#ede9fe', text: '#4c1d95', subtext: '#6d28d9'},  // 2: Mor
-  {header: '#0891b2', border: '#67e8f9', bg: '#cffafe', text: '#164e63', subtext: '#0891b2'},  // 3: Cyan
-  {header: '#16a34a', border: '#86efac', bg: '#dcfce7', text: '#166534', subtext: '#15803d'},  // 4: Yeşil
-  {header: '#db2777', border: '#f9a8d4', bg: '#fce7f3', text: '#9d174d', subtext: '#db2777'},  // 5: Pembe
-  {header: '#2563eb', border: '#93c5fd', bg: '#dbeafe', text: '#1e3a8a', subtext: '#1d4ed8'},  // 6: Mavi
-  {header: '#ca8a04', border: '#fde047', bg: '#fef9c3', text: '#713f12', subtext: '#a16207'}   // 7: Sarı
+  {header: '#dc2626', border: '#fca5a5'}, {header: '#f97316', border: '#fdba74'},
+  {header: '#7c3aed', border: '#c4b5fd'}, {header: '#0891b2', border: '#67e8f9'},
+  {header: '#16a34a', border: '#86efac'}, {header: '#db2777', border: '#f9a8d4'},
+  {header: '#2563eb', border: '#93c5fd'}, {header: '#ca8a04', border: '#fde047'}
 ];
-
-// Grup ID'ye göre renk döndür (her iki sayfada tutarlı)
-function getGrupRenk(grupId) {
-  const idx = (parseInt(grupId) || 0) % GRUP_RENK_PALETI.length;
-  return GRUP_RENK_PALETI[idx];
-}
+function getGrupRenk(grupId) { return GRUP_RENK_PALETI[(parseInt(grupId) || 0) % GRUP_RENK_PALETI.length]; }
 
 document.addEventListener('DOMContentLoaded', function() {
-    zimmetListesiYukle();
+    const otelSelect = document.getElementById('otel_select');
+    const urunEkleBtn = document.getElementById('urun_ekle_btn');
     
-    document.getElementById('kat_sorumlusu_select').addEventListener('change', function() {
+    otelSelect.addEventListener('change', function() {
         if (this.value) {
-            seciliPersonelId = this.value;
-            seciliPersonelAdi = this.options[this.selectedIndex].dataset.ad;
-            modalAc();
+            seciliOtelId = this.value;
+            seciliOtelAdi = this.options[this.selectedIndex].dataset.ad;
+            urunEkleBtn.disabled = false;
+            zimmetListesiYukle();
+        } else {
+            seciliOtelId = null;
+            urunEkleBtn.disabled = true;
+            document.getElementById('zimmet_listesi').innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fas fa-hotel text-4xl mb-3 opacity-50"></i><p>Otel seçiniz...</p></div>';
         }
     });
     
-    // Miktar butonları
+    if (otelSelect.value) {
+        seciliOtelId = otelSelect.value;
+        seciliOtelAdi = otelSelect.options[otelSelect.selectedIndex].dataset.ad;
+        urunEkleBtn.disabled = false;
+        zimmetListesiYukle();
+    }
+    
     document.querySelectorAll('.miktar-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const input = document.getElementById('miktar_input');
             input.value = parseInt(input.value || 0) + parseInt(this.dataset.miktar);
         });
     });
-    
-    // Sıfırla butonu
-    document.querySelector('.miktar-sifirla').addEventListener('click', function() {
-        document.getElementById('miktar_input').value = 0;
-    });
-    
-    // Arama
+    document.querySelector('.miktar-sifirla').addEventListener('click', () => document.getElementById('miktar_input').value = 0);
     document.getElementById('urun_ara')?.addEventListener('input', function() {
         const q = this.value.toLowerCase();
-        const filtrelenmis = urunListesi.filter(u => 
-            u.urun_adi.toLowerCase().includes(q) && (seciliGrup === '' || u.grup_id == seciliGrup)
-        );
-        urunleriRenderle(filtrelenmis);
+        urunleriRenderle(urunListesi.filter(u => u.urun_adi.toLowerCase().includes(q) && (seciliGrup === '' || u.grup_id == seciliGrup)));
     });
 });
 
 async function zimmetListesiYukle() {
-    const ay = document.getElementById('filtre_ay').value;
-    const yil = document.getElementById('filtre_yil').value;
-    const tbody = document.getElementById('zimmet_listesi_tbody');
-    
-    tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500"><i class="fas fa-spinner fa-spin mr-2"></i>Yükleniyor...</td></tr>';
+    const container = document.getElementById('zimmet_listesi');
+    container.innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fas fa-spinner fa-spin text-2xl"></i><p class="mt-2">Yükleniyor...</p></div>';
     
     try {
-        const response = await fetch(`/api/zimmet-listesi-filtreli?ay=${ay}&yil=${yil}`);
+        const response = await fetch(`/api/otel-zimmet-islemleri?otel_id=${seciliOtelId}`);
         const data = await response.json();
         
-        if (data.success && data.zimmetler.length > 0) {
-            tbody.innerHTML = data.zimmetler.map(z => `
-                <tr>
-                    <td class="px-4 py-3 text-sm text-slate-900 dark:text-white">${z.tarih}</td>
-                    <td class="px-4 py-3 text-sm text-slate-900 dark:text-white">${z.personel_adi}</td>
-                    <td class="px-4 py-3"><span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">${z.urun_sayisi} ürün</span></td>
-                    <td class="px-4 py-3"><span class="px-3 py-1 rounded-full text-xs font-bold ${z.durum === 'aktif' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${z.durum === 'aktif' ? 'Aktif' : 'İptal'}</span></td>
-                    <td class="px-4 py-3 text-center space-x-2">
-                        <button onclick="zimmetDetayGoster(${z.id})" class="px-3 py-1.5 bg-blue-500 text-white rounded text-xs font-medium"><i class="fas fa-eye mr-1"></i>Detay</button>
-                        ${z.durum === 'aktif' && z.iptal_edilebilir ? `<button onclick="zimmetIptal(${z.id})" class="px-3 py-1.5 bg-red-500 text-white rounded text-xs font-medium"><i class="fas fa-times mr-1"></i>İptal</button>` : ''}
-                    </td>
-                </tr>
-            `).join('');
+        if (data.success && data.islemler.length > 0) {
+            container.innerHTML = data.islemler.map(islem => {
+                const personelChips = islem.personeller.map(p => `<span class="personel-chip"><i class="fas fa-user mr-1"></i>${p}</span>`).join('');
+                const urunRows = islem.urunler.map(u => `
+                    <tr class="border-b border-slate-700/50">
+                        <td class="px-4 py-3 text-white font-medium">${u.urun_adi}</td>
+                        <td class="px-4 py-3 text-center text-green-400 font-bold">+${formatSayi(u.eklenen)}</td>
+                        <td class="px-4 py-3 text-center text-slate-400">${formatSayi(u.onceki)}</td>
+                        <td class="px-4 py-3 text-center text-blue-400 font-bold">${formatSayi(u.toplam)}</td>
+                    </tr>
+                `).join('');
+                
+                return `
+                    <div class="zimmet-kart">
+                        <div class="zimmet-kart-header">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h4 class="text-lg font-bold text-white">${islem.otel_adi}</h4>
+                                    <div class="flex flex-wrap gap-1 mt-2">${personelChips || '<span class="text-slate-400 text-sm">Tüm Kat Sorumluları</span>'}</div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-sm font-bold">${islem.urun_cesidi} ürün</span>
+                                    <p class="text-slate-400 text-sm mt-1">${islem.tarih}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-slate-900/50 text-slate-400 text-xs uppercase">
+                                    <th class="px-4 py-2 text-left">Ürün Adı</th>
+                                    <th class="px-4 py-2 text-center">Eklenen</th>
+                                    <th class="px-4 py-2 text-center">Önceki</th>
+                                    <th class="px-4 py-2 text-center">Toplam</th>
+                                </tr>
+                            </thead>
+                            <tbody>${urunRows}</tbody>
+                        </table>
+                    </div>
+                `;
+            }).join('');
         } else {
-            tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">Bu dönemde zimmet işlemi bulunamadı.</td></tr>';
+            container.innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fas fa-inbox text-4xl mb-3 opacity-50"></i><p>Bu otelde henüz zimmet işlemi yok.</p></div>';
         }
     } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-red-500">Yükleme hatası!</td></tr>';
+        container.innerHTML = '<div class="text-center py-8 text-red-500"><i class="fas fa-exclamation-triangle text-2xl"></i><p class="mt-2">Yükleme hatası!</p></div>';
     }
 }
 
 async function modalAc() {
-    document.getElementById('modal_personel_adi').textContent = seciliPersonelAdi;
+    if (!seciliOtelId) { bildirimGoster('Lütfen önce bir otel seçin!', 'warning'); return; }
+    document.getElementById('modal_otel_adi').textContent = seciliOtelAdi;
     document.getElementById('zimmet_modal').classList.remove('hidden');
     await urunleriYukle();
 }
 
 function modalKapat() {
     document.getElementById('zimmet_modal').classList.add('hidden');
-    document.getElementById('kat_sorumlusu_select').value = '';
-    seciliPersonelId = null;
     zimmetListesiYukle();
 }
+</script>
 
-
+<script>
 async function urunleriYukle() {
     try {
-        const response = await fetch(`/api/urunler-stoklu?personel_id=${seciliPersonelId}`);
+        const response = await fetch(`/api/urunler-zimmet-icin?otel_id=${seciliOtelId}`);
         const data = await response.json();
-        
         if (data.success) {
             urunListesi = data.urunler;
-            
-            // Grupları çıkar
             const grupMap = {};
-            urunListesi.forEach(u => {
-                if (u.grup_id && !grupMap[u.grup_id]) {
-                    grupMap[u.grup_id] = u.grup_adi;
-                }
-            });
+            urunListesi.forEach(u => { if (u.grup_id && !grupMap[u.grup_id]) grupMap[u.grup_id] = u.grup_adi; });
             grupListesi = Object.entries(grupMap).map(([id, adi]) => ({id: parseInt(id), adi}));
-            
             grupButonlariniRenderle();
             urunleriRenderle(urunListesi);
         }
-    } catch (error) {
-        console.error('Ürün yükleme hatası:', error);
-    }
+    } catch (error) { console.error('Ürün yükleme hatası:', error); }
 }
 
 function grupButonlariniRenderle() {
     const container = document.getElementById('grup_butonlari');
     let html = `<button type="button" data-grup="" class="grup-btn aktif" style="background: #374151; color: white;">Tümü</button>`;
-    
-    grupListesi.forEach((g) => {
+    grupListesi.forEach(g => {
         const renk = getGrupRenk(g.id);
         html += `<button type="button" data-grup="${g.id}" class="grup-btn" style="background: ${renk.header}; color: white;">${g.adi}</button>`;
     });
-    
     container.innerHTML = html;
-    
     container.querySelectorAll('.grup-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             container.querySelectorAll('.grup-btn').forEach(b => b.classList.remove('aktif'));
             this.classList.add('aktif');
             seciliGrup = this.dataset.grup;
-            
-            if (seciliGrup === '') {
-                urunleriRenderle(urunListesi);
-            } else {
-                urunleriRenderle(urunListesi.filter(u => u.grup_id == seciliGrup));
-            }
+            urunleriRenderle(seciliGrup === '' ? urunListesi : urunListesi.filter(u => u.grup_id == seciliGrup));
         });
     });
 }
 
 function urunleriRenderle(urunler) {
     const container = document.getElementById('urun_kartlari');
-    
-    if (urunler.length === 0) {
-        container.innerHTML = '<div class="col-span-full text-center py-8 text-slate-400">Ürün bulunamadı.</div>';
-        return;
-    }
-    
-    // Personel adının kısa halini al (ilk isim)
-    const kisaAd = seciliPersonelAdi ? seciliPersonelAdi.split(' ')[0] : 'Personel';
-    
+    if (urunler.length === 0) { container.innerHTML = '<div class="col-span-full text-center py-8 text-slate-400">Ürün bulunamadı.</div>'; return; }
     container.innerHTML = urunler.map(u => {
         const renk = getGrupRenk(u.grup_id);
-        const stokRenk = u.stok > 0 ? '#16a34a' : '#dc2626';
-        const zimmetRenk = u.personel_zimmet > 0 ? '#2563eb' : '#94a3b8';
-        
         return `
-            <div class="urun-card" style="border: 3px solid ${renk.border};" onclick="urunSec(event, ${u.id}, '${u.urun_adi.replace(/'/g, "\\'")}', ${u.stok}, '${renk.header}', '${u.grup_adi || 'Genel'}')">
+            <div class="urun-card" style="border: 3px solid ${renk.border};" onclick="urunSec(event, ${u.id}, '${u.urun_adi.replace(/'/g, "\\'")}', ${u.ana_depo_stok}, '${renk.header}', '${u.grup_adi || 'Genel'}')">
                 <div class="urun-card-header" style="background: ${renk.header}; color: white;">${u.grup_adi || 'GENEL'}</div>
                 <div class="urun-card-body">
                     <div class="urun-card-name">${u.urun_adi}</div>
                     <div class="urun-card-footer">
-                        <span><span class="label">Depo:</span><span class="value" style="color: ${stokRenk};">${formatSayi(u.stok)}</span></span>
-                        <span style="text-align: right;"><span class="label">${kisaAd}:</span><span class="value" style="color: ${zimmetRenk};">${formatSayi(u.personel_zimmet)}</span></span>
+                        <span><span class="label">Ana Depo:</span><span class="value" style="color: ${u.ana_depo_stok > 0 ? '#16a34a' : '#dc2626'};">${formatSayi(u.ana_depo_stok)}</span></span>
+                        <span style="text-align: right;"><span class="label">Zimmet:</span><span class="value" style="color: ${u.otel_zimmet_stok > 0 ? '#2563eb' : '#94a3b8'};">${formatSayi(u.otel_zimmet_stok)}</span></span>
                     </div>
                 </div>
             </div>
@@ -374,207 +306,39 @@ function urunleriRenderle(urunler) {
 
 function urunSec(event, urunId, urunAdi, stok, renk, grupAdi) {
     event.stopPropagation();
-    
-    if (stok <= 0) {
-        bildirimGoster('Bu ürün stokta yok!', 'warning');
-        return;
-    }
-    
     document.getElementById('miktar_urun_id').value = urunId;
     document.getElementById('miktar_urun_adi').textContent = urunAdi;
-    document.getElementById('miktar_urun_stok').textContent = `Mevcut Stok: ${stok} | Grup: ${grupAdi}`;
+    document.getElementById('miktar_urun_stok').textContent = `Ana Depo: ${formatSayi(stok)} | ${grupAdi}`;
     document.getElementById('miktar_modal_header').style.background = renk;
     document.getElementById('miktar_input').value = 0;
-    document.getElementById('miktar_input').max = stok;
     document.getElementById('miktar_modal').classList.remove('hidden');
     setTimeout(() => document.getElementById('miktar_input').focus(), 100);
 }
 
-function miktarModalKapat() {
-    document.getElementById('miktar_modal').classList.add('hidden');
-}
+function miktarModalKapat() { document.getElementById('miktar_modal').classList.add('hidden'); }
 
-// Miktar onaylandığında direkt zimmet ata
 async function miktarOnaylaVeKaydet() {
     const urunId = document.getElementById('miktar_urun_id').value;
     const miktar = parseInt(document.getElementById('miktar_input').value) || 0;
-    const maxStok = parseInt(document.getElementById('miktar_input').max);
+    if (miktar <= 0) { bildirimGoster('Geçerli bir miktar giriniz!', 'warning'); return; }
     
-    if (miktar <= 0) {
-        bildirimGoster('Geçerli bir miktar giriniz!', 'warning');
-        return;
-    }
-    
-    if (miktar > maxStok) {
-        bildirimGoster(`Stok yetersiz! Maksimum ${maxStok} adet seçebilirsiniz.`, 'error');
-        return;
-    }
-    
-    // Direkt zimmet ata
     try {
-        const response = await fetch('/api/zimmet-ata', {
+        const response = await fetch('/api/otel-zimmet-ekle', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({
-                personel_id: seciliPersonelId,
-                urunler: [{ urun_id: parseInt(urunId), miktar: miktar }]
-            })
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ otel_id: parseInt(seciliOtelId), urun_id: parseInt(urunId), miktar: miktar })
         });
-        
         const data = await response.json();
-        
         if (data.success) {
-            // Stok listesini güncelle
             const urun = urunListesi.find(u => u.id == urunId);
-            const urunAdi = urun ? urun.urun_adi : 'Ürün';
-            if (urun) {
-                urun.stok -= miktar;
-                urun.personel_zimmet = (urun.personel_zimmet || 0) + miktar;
-            }
-            
-            // Kartları yeniden renderle
-            if (seciliGrup === '') {
-                urunleriRenderle(urunListesi);
-            } else {
-                urunleriRenderle(urunListesi.filter(u => u.grup_id == seciliGrup));
-            }
-            
+            if (urun) urun.otel_zimmet_stok = (urun.otel_zimmet_stok || 0) + miktar;
+            urunleriRenderle(seciliGrup === '' ? urunListesi : urunListesi.filter(u => u.grup_id == seciliGrup));
             miktarModalKapat();
-            bildirimGoster(`${formatSayi(miktar)} adet ${urunAdi} zimmete atandı.`, 'success');
+            bildirimGoster(`${formatSayi(miktar)} adet ürün otel zimmetine eklendi.`, 'success');
         } else {
             bildirimGoster(data.error || 'Bir hata oluştu!', 'error');
         }
-    } catch (error) {
-        console.error('Zimmet atama hatası:', error);
-        bildirimGoster('Bir hata oluştu!', 'error');
-    }
-}
-
-
-async function zimmetDetayGoster(zimmetId) {
-    try {
-        const response = await fetch(`/api/zimmet-detay/${zimmetId}`);
-        const data = await response.json();
-        
-        if (data.success) {
-            const toplamMiktar = data.detaylar.reduce((sum, d) => sum + d.miktar, 0);
-            const toplamKalan = data.detaylar.reduce((sum, d) => sum + d.kalan, 0);
-            
-            let html = `
-                <div class="mb-4 p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl text-white">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                            <i class="fas fa-user text-xl"></i>
-                        </div>
-                        <div>
-                            <p class="font-bold text-lg">${data.personel}</p>
-                            <p class="text-sm text-blue-100"><i class="fas fa-calendar-alt mr-1"></i>${data.tarih}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="bg-slate-700 text-slate-300">
-                                <th class="px-4 py-3 text-left font-semibold rounded-tl-lg">Ürün</th>
-                                <th class="px-4 py-3 text-center font-semibold">Atanan</th>
-                                <th class="px-4 py-3 text-center font-semibold">Kalan</th>
-                                <th class="px-4 py-3 text-center font-semibold rounded-tr-lg w-16"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-            
-            data.detaylar.forEach((d, idx) => {
-                const kullanildi = d.kalan < d.miktar;
-                const kullanilan = d.miktar - d.kalan;
-                const yuzde = d.miktar > 0 ? Math.round((kullanilan / d.miktar) * 100) : 0;
-                const durumRenk = kullanildi ? 'text-amber-400' : 'text-emerald-400';
-                const iptalBtn = kullanildi ? 
-                    `<span class="text-xs text-slate-500" title="%${yuzde} kullanıldı"><i class="fas fa-lock"></i></span>` :
-                    `<button onclick="detayIptal(${d.detay_id}, ${zimmetId})" class="w-8 h-8 flex items-center justify-center bg-red-500 text-white rounded-lg text-sm" title="İptal Et"><i class="fas fa-trash"></i></button>`;
-                
-                const rowBg = idx % 2 === 0 ? 'bg-slate-800/50' : 'bg-slate-700/30';
-                
-                html += `
-                    <tr class="${rowBg}">
-                        <td class="px-4 py-3 font-medium">${d.urun_adi}</td>
-                        <td class="px-4 py-3 text-center font-bold">${formatSayi(d.miktar)}</td>
-                        <td class="px-4 py-3 text-center font-bold ${durumRenk}">${formatSayi(d.kalan)}</td>
-                        <td class="px-4 py-3 text-center">${iptalBtn}</td>
-                    </tr>
-                `;
-            });
-            
-            html += '</tbody></table></div>';
-            
-            // Footer toplamları
-            const footerHtml = `
-                <div class="flex gap-6">
-                    <span class="text-slate-400"><i class="fas fa-box mr-1"></i>Ürün: <strong class="text-white">${data.detaylar.length}</strong></span>
-                    <span class="text-slate-400"><i class="fas fa-arrow-down mr-1"></i>Atanan: <strong class="text-blue-400">${formatSayi(toplamMiktar)}</strong></span>
-                    <span class="text-slate-400"><i class="fas fa-warehouse mr-1"></i>Kalan: <strong class="text-emerald-400">${formatSayi(toplamKalan)}</strong></span>
-                </div>
-            `;
-            
-            document.getElementById('detay_baslik').textContent = `Zimmet #${zimmetId} Detayları`;
-            document.getElementById('detay_icerik').innerHTML = html;
-            document.getElementById('detay_toplamlar').innerHTML = footerHtml;
-            document.getElementById('detay_modal').classList.remove('hidden');
-        }
-    } catch (error) {
-        bildirimGoster('Detay yüklenemedi!', 'error');
-    }
-}
-
-function detayModalKapat() {
-    document.getElementById('detay_modal').classList.add('hidden');
-}
-
-async function detayIptal(detayId, zimmetId) {
-    if (!confirm('Bu ürünü zimmet listesinden çıkarmak istediğinize emin misiniz?')) return;
-    
-    try {
-        const response = await fetch(`/api/zimmet-detay-iptal/${detayId}`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': csrfToken }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            zimmetDetayGoster(zimmetId);
-            zimmetListesiYukle();
-        } else {
-            bildirimGoster(data.error || 'İptal edilemedi!', 'error');
-        }
-    } catch (error) {
-        bildirimGoster('Bir hata oluştu!', 'error');
-    }
-}
-
-async function zimmetIptal(zimmetId) {
-    if (!confirm('Bu zimmet kaydını tamamen iptal etmek istediğinize emin misiniz?\nTüm ürünler depoya geri eklenecektir.')) return;
-    
-    try {
-        const response = await fetch(`/api/zimmet-iptal/${zimmetId}`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': csrfToken }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            zimmetListesiYukle();
-        } else {
-            bildirimGoster(data.error || 'İptal edilemedi!', 'error');
-        }
-    } catch (error) {
-        bildirimGoster('Bir hata oluştu!', 'error');
-    }
+    } catch (error) { bildirimGoster('Bir hata oluştu!', 'error'); }
 }
 </script>
 {% endblock %}

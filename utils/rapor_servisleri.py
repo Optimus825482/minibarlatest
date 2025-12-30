@@ -130,7 +130,8 @@ class KatSorumlusuKullanimRaporServisi:
         bitis_tarihi: date = None
     ) -> dict:
         """
-        Kat sorumlusu zimmet kullanım raporu
+        Kat sorumlusu kullanım raporu - MinibarIslem tablosundan
+        Gruplu tablo formatında - tarih+personel bazlı
         
         Args:
             otel_id: Otel ID (opsiyonel)
@@ -139,7 +140,7 @@ class KatSorumlusuKullanimRaporServisi:
             bitis_tarihi: Bitiş tarihi
             
         Returns:
-            dict: Rapor verisi
+            dict: Rapor verisi - tarih+personel bazlı gruplu liste
         """
         try:
             # Varsayılan tarih aralığı: Son 30 gün
@@ -148,99 +149,119 @@ class KatSorumlusuKullanimRaporServisi:
             if not bitis_tarihi:
                 bitis_tarihi = date.today()
             
+            # MinibarIslem tablosundan kat sorumlusu işlemlerini çek
             query = db.session.query(
-                Kullanici.id.label('personel_id'),
-                Kullanici.ad,
-                Kullanici.soyad,
-                Otel.id.label('otel_id'),
+                MinibarIslem.id.label('islem_id'),
+                MinibarIslem.islem_tarihi,
+                MinibarIslem.islem_tipi,
+                Oda.oda_no,
+                Kullanici.ad.label('personel_ad'),
+                Kullanici.soyad.label('personel_soyad'),
                 Otel.ad.label('otel_ad'),
-                Urun.id.label('urun_id'),
                 Urun.urun_adi,
                 Urun.birim,
-                func.sum(
-                    case(
-                        (PersonelZimmetKullanim.islem_tipi != 'iade', PersonelZimmetKullanim.kullanilan_miktar),
-                        else_=0
-                    )
-                ).label('toplam_kullanim'),
-                func.sum(
-                    case(
-                        (PersonelZimmetKullanim.islem_tipi == 'iade', PersonelZimmetKullanim.kullanilan_miktar),
-                        else_=0
-                    )
-                ).label('toplam_iade'),
-                func.count(PersonelZimmetKullanim.id).label('islem_sayisi')
+                MinibarIslemDetay.tuketim,
+                MinibarIslemDetay.eklenen_miktar
             ).join(
-                OtelZimmetStok, PersonelZimmetKullanim.otel_zimmet_stok_id == OtelZimmetStok.id
+                MinibarIslemDetay, MinibarIslem.id == MinibarIslemDetay.islem_id
             ).join(
-                Otel, OtelZimmetStok.otel_id == Otel.id
+                Oda, MinibarIslem.oda_id == Oda.id
             ).join(
-                Kullanici, PersonelZimmetKullanim.personel_id == Kullanici.id
+                Kat, Oda.kat_id == Kat.id
             ).join(
-                Urun, PersonelZimmetKullanim.urun_id == Urun.id
+                Otel, Kat.otel_id == Otel.id
+            ).join(
+                Kullanici, MinibarIslem.personel_id == Kullanici.id
+            ).join(
+                Urun, MinibarIslemDetay.urun_id == Urun.id
             ).filter(
-                PersonelZimmetKullanim.islem_tarihi >= baslangic_tarihi,
-                PersonelZimmetKullanim.islem_tarihi <= bitis_tarihi + timedelta(days=1)
+                MinibarIslem.islem_tarihi >= baslangic_tarihi,
+                MinibarIslem.islem_tarihi <= bitis_tarihi + timedelta(days=1),
+                Kullanici.rol == 'kat_sorumlusu'
+            )
+            
+            # Sadece tüketim veya ekleme olan kayıtları al
+            query = query.filter(
+                or_(
+                    MinibarIslemDetay.tuketim > 0,
+                    MinibarIslemDetay.eklenen_miktar > 0
+                )
             )
             
             if otel_id:
-                query = query.filter(OtelZimmetStok.otel_id == otel_id)
+                query = query.filter(Kat.otel_id == otel_id)
             if personel_id:
-                query = query.filter(PersonelZimmetKullanim.personel_id == personel_id)
+                query = query.filter(MinibarIslem.personel_id == personel_id)
             
-            query = query.group_by(
-                Kullanici.id, Kullanici.ad, Kullanici.soyad,
-                Otel.id, Otel.ad,
-                Urun.id, Urun.urun_adi, Urun.birim
-            ).order_by(Otel.ad, Kullanici.ad, Urun.urun_adi)
+            # Tarih azalan sırada
+            query = query.order_by(desc(MinibarIslem.islem_tarihi), Oda.oda_no)
             
             sonuclar = query.all()
             
-            # Personel bazlı gruplama
-            personeller = {}
+            # Tarih + Personel + Oda bazlı gruplama
+            gruplar = {}
+            toplam_tuketim = 0
+            toplam_ekleme = 0
+            benzersiz_personeller = set()
+            
             for row in sonuclar:
-                key = f"{row.otel_id}_{row.personel_id}"
-                if key not in personeller:
-                    personeller[key] = {
-                        'personel_id': row.personel_id,
-                        'ad_soyad': f"{row.ad} {row.soyad}",
-                        'otel_id': row.otel_id,
-                        'otel_ad': row.otel_ad,
-                        'toplam_kullanim': 0,
-                        'toplam_iade': 0,
-                        'net_kullanim': 0,
-                        'islem_sayisi': 0,
+                personel_adi = f"{row.personel_ad} {row.personel_soyad}"
+                tarih_str = row.islem_tarihi.strftime('%d.%m.%Y %H:%M')
+                benzersiz_personeller.add(personel_adi)
+                
+                # Grup anahtarı: tarih + personel + oda
+                grup_key = f"{tarih_str}_{personel_adi}_{row.oda_no}"
+                
+                if grup_key not in gruplar:
+                    gruplar[grup_key] = {
+                        'tarih': tarih_str,
+                        'personel': personel_adi,
+                        'oda_no': row.oda_no,
+                        'otel': row.otel_ad,
                         'urunler': []
                     }
                 
-                net = (row.toplam_kullanim or 0) - (row.toplam_iade or 0)
-                personeller[key]['urunler'].append({
-                    'urun_id': row.urun_id,
-                    'urun_adi': row.urun_adi,
-                    'birim': row.birim,
-                    'kullanim': row.toplam_kullanim or 0,
-                    'iade': row.toplam_iade or 0,
-                    'net': net,
-                    'islem_sayisi': row.islem_sayisi
-                })
+                # Tüketim veya ekleme
+                tuketim = row.tuketim or 0
+                ekleme = row.eklenen_miktar or 0
                 
-                personeller[key]['toplam_kullanim'] += row.toplam_kullanim or 0
-                personeller[key]['toplam_iade'] += row.toplam_iade or 0
-                personeller[key]['net_kullanim'] += net
-                personeller[key]['islem_sayisi'] += row.islem_sayisi
+                if tuketim > 0:
+                    gruplar[grup_key]['urunler'].append({
+                        'urun_adi': row.urun_adi,
+                        'miktar': tuketim,
+                        'birim': row.birim,
+                        'islem_class': 'tuketim'
+                    })
+                    toplam_tuketim += tuketim
+                
+                if ekleme > 0:
+                    gruplar[grup_key]['urunler'].append({
+                        'urun_adi': row.urun_adi,
+                        'miktar': ekleme,
+                        'birim': row.birim,
+                        'islem_class': 'ekleme'
+                    })
+                    toplam_ekleme += ekleme
+            
+            # Grupları listeye çevir ve tarih azalan sırala
+            grup_listesi = list(gruplar.values())
+            grup_listesi.sort(key=lambda x: x['tarih'], reverse=True)
             
             return {
                 'success': True,
                 'rapor_tarihi': get_kktc_now().strftime('%d.%m.%Y %H:%M'),
                 'baslangic': baslangic_tarihi.strftime('%d.%m.%Y'),
                 'bitis': bitis_tarihi.strftime('%d.%m.%Y'),
-                'toplam_personel': len(personeller),
-                'personeller': list(personeller.values())
+                'toplam_personel': len(benzersiz_personeller),
+                'toplam_grup': len(grup_listesi),
+                'toplam_tuketim': toplam_tuketim,
+                'toplam_ekleme': toplam_ekleme,
+                'gruplar': grup_listesi
             }
             
         except Exception as e:
             logger.error(f"Personel kullanım raporu hatası: {e}")
-            return {'success': False, 'message': str(e), 'personeller': []}
+            return {'success': False, 'message': str(e), 'gruplar': []}
 
 
 class OdaBazliTuketimRaporServisi:
@@ -254,7 +275,7 @@ class OdaBazliTuketimRaporServisi:
         kat_id: int = None
     ) -> dict:
         """
-        Oda bazlı minibar tüketim raporu
+        Oda bazlı minibar tüketim raporu - Gruplu tablo formatında
         
         Args:
             otel_id: Otel ID
@@ -263,7 +284,7 @@ class OdaBazliTuketimRaporServisi:
             kat_id: Kat ID (opsiyonel)
             
         Returns:
-            dict: Rapor verisi
+            dict: Rapor verisi - tarih+oda bazlı gruplu liste
         """
         try:
             if not baslangic_tarihi:
@@ -275,24 +296,25 @@ class OdaBazliTuketimRaporServisi:
             if not otel:
                 return {'success': False, 'message': 'Otel bulunamadı'}
             
+            # Her işlem detayını çek
             query = db.session.query(
-                Oda.id.label('oda_id'),
+                MinibarIslem.id.label('islem_id'),
+                MinibarIslem.islem_tarihi,
                 Oda.oda_no,
-                Kat.kat_adi,
-                Urun.id.label('urun_id'),
                 Urun.urun_adi,
-                Urun.birim,
-                Urun.satis_fiyati,
-                func.sum(MinibarIslemDetay.tuketim).label('toplam_tuketim'),
-                func.count(MinibarIslem.id).label('islem_sayisi')
-            ).join(
-                MinibarIslem, Oda.id == MinibarIslem.oda_id
+                MinibarIslemDetay.tuketim,
+                Kullanici.ad.label('personel_ad'),
+                Kullanici.soyad.label('personel_soyad')
             ).join(
                 MinibarIslemDetay, MinibarIslem.id == MinibarIslemDetay.islem_id
+            ).join(
+                Oda, MinibarIslem.oda_id == Oda.id
             ).join(
                 Kat, Oda.kat_id == Kat.id
             ).join(
                 Urun, MinibarIslemDetay.urun_id == Urun.id
+            ).outerjoin(
+                Kullanici, MinibarIslem.personel_id == Kullanici.id
             ).filter(
                 Kat.otel_id == otel_id,
                 MinibarIslem.islem_tarihi >= baslangic_tarihi,
@@ -303,54 +325,42 @@ class OdaBazliTuketimRaporServisi:
             if kat_id:
                 query = query.filter(Kat.id == kat_id)
             
-            query = query.group_by(
-                Oda.id, Oda.oda_no, Kat.kat_adi,
-                Urun.id, Urun.urun_adi, Urun.birim, Urun.satis_fiyati
-            ).order_by(Kat.kat_adi, Oda.oda_no, desc(func.sum(MinibarIslemDetay.tuketim)))
+            # Tarih azalan sırada
+            query = query.order_by(desc(MinibarIslem.islem_tarihi), Oda.oda_no, Urun.urun_adi)
             
             sonuclar = query.all()
             
-            # Oda bazlı gruplama
-            odalar = {}
+            # Tarih + Oda bazlı gruplama
+            gruplar = {}
             genel_toplam_tuketim = 0
-            genel_toplam_tutar = Decimal('0')
+            benzersiz_odalar = set()
             
             for row in sonuclar:
-                if row.oda_id not in odalar:
-                    odalar[row.oda_id] = {
-                        'oda_id': row.oda_id,
+                kontrol_eden = f"{row.personel_ad} {row.personel_soyad}" if row.personel_ad else '-'
+                tarih_str = row.islem_tarihi.strftime('%d.%m.%Y %H:%M')
+                
+                # Grup anahtarı: tarih + oda + kontrol eden
+                grup_key = f"{tarih_str}_{row.oda_no}_{kontrol_eden}"
+                
+                if grup_key not in gruplar:
+                    gruplar[grup_key] = {
+                        'tarih': tarih_str,
                         'oda_no': row.oda_no,
-                        'kat': row.kat_adi,
-                        'toplam_tuketim': 0,
-                        'toplam_tutar': Decimal('0'),
-                        'urun_cesidi': 0,
+                        'kontrol_eden': kontrol_eden,
                         'urunler': []
                     }
                 
-                tutar = Decimal(str(row.toplam_tuketim)) * (row.satis_fiyati or Decimal('0'))
-                
-                odalar[row.oda_id]['urunler'].append({
-                    'urun_id': row.urun_id,
+                gruplar[grup_key]['urunler'].append({
                     'urun_adi': row.urun_adi,
-                    'birim': row.birim,
-                    'tuketim': row.toplam_tuketim,
-                    'birim_fiyat': float(row.satis_fiyati) if row.satis_fiyati else 0,
-                    'tutar': float(tutar),
-                    'islem_sayisi': row.islem_sayisi
+                    'tuketim': row.tuketim
                 })
                 
-                odalar[row.oda_id]['toplam_tuketim'] += row.toplam_tuketim
-                odalar[row.oda_id]['toplam_tutar'] += tutar
-                odalar[row.oda_id]['urun_cesidi'] += 1
-                genel_toplam_tuketim += row.toplam_tuketim
-                genel_toplam_tutar += tutar
+                genel_toplam_tuketim += row.tuketim
+                benzersiz_odalar.add(row.oda_no)
             
-            # Toplam tutarları float'a çevir
-            for oda in odalar.values():
-                oda['toplam_tutar'] = float(oda['toplam_tutar'])
-            
-            # En çok tüketen odaları sırala
-            odalar_list = sorted(odalar.values(), key=lambda x: x['toplam_tuketim'], reverse=True)
+            # Grupları listeye çevir ve tarih azalan sırala
+            grup_listesi = list(gruplar.values())
+            grup_listesi.sort(key=lambda x: x['tarih'], reverse=True)
             
             return {
                 'success': True,
@@ -359,15 +369,15 @@ class OdaBazliTuketimRaporServisi:
                 'otel_ad': otel.ad,
                 'baslangic': baslangic_tarihi.strftime('%d.%m.%Y'),
                 'bitis': bitis_tarihi.strftime('%d.%m.%Y'),
-                'toplam_oda': len(odalar),
+                'toplam_oda': len(benzersiz_odalar),
+                'toplam_grup': len(grup_listesi),
                 'genel_toplam_tuketim': genel_toplam_tuketim,
-                'genel_toplam_tutar': float(genel_toplam_tutar),
-                'odalar': odalar_list
+                'gruplar': grup_listesi
             }
             
         except Exception as e:
             logger.error(f"Oda bazlı tüketim raporu hatası: {e}")
-            return {'success': False, 'message': str(e), 'odalar': []}
+            return {'success': False, 'message': str(e), 'gruplar': []}
 
 
 class GunlukGorevRaporServisi:

@@ -1150,7 +1150,8 @@ def export_depo_stok_excel(stok_listesi):
 
 def get_kat_sorumlusu_zimmet_stoklari(personel_id):
     """
-    Kat sorumlusunun aktif zimmet stoklarını detaylı şekilde getirir
+    Kat sorumlusunun bağlı olduğu OTELİN ORTAK zimmet stoklarını getirir.
+    Aynı oteldeki TÜM kat sorumluları AYNI stokları görür.
     
     Args:
         personel_id (int): Kat sorumlusu kullanıcı ID
@@ -1158,21 +1159,19 @@ def get_kat_sorumlusu_zimmet_stoklari(personel_id):
     Returns:
         list: [
             {
-                'zimmet_id': int,
-                'zimmet_tarihi': datetime,
-                'teslim_eden': str,
-                'durum': str,
+                'otel_id': int,
+                'otel_adi': str,
                 'urunler': [
                     {
-                        'detay_id': int,
+                        'stok_id': int,
                         'urun_id': int,
                         'urun_adi': str,
                         'grup_adi': str,
                         'birim': str,
-                        'teslim_edilen': int,
+                        'toplam_miktar': int,
                         'kullanilan': int,
                         'kalan': int,
-                        'kritik_seviye': int or None,
+                        'kritik_seviye': int,
                         'kullanim_yuzdesi': float,
                         'durum': 'kritik'|'dikkat'|'normal'|'stokout',
                         'badge_class': str,
@@ -1183,83 +1182,86 @@ def get_kat_sorumlusu_zimmet_stoklari(personel_id):
         ]
     """
     try:
-        from models import PersonelZimmet, PersonelZimmetDetay, Urun, UrunGrup, Kullanici
+        from models import OtelZimmetStok, Kullanici, Otel, Urun, UrunGrup
         
-        # Aktif zimmetleri getir
-        zimmetler = PersonelZimmet.query.filter_by(
-            personel_id=personel_id,
-            durum='aktif'
-        ).order_by(PersonelZimmet.zimmet_tarihi.desc()).all()
+        # Personelin otel bilgisini al
+        personel = Kullanici.query.get(personel_id)
+        if not personel or not personel.otel_id:
+            return []
         
-        sonuclar = []
+        otel = Otel.query.get(personel.otel_id)
+        if not otel:
+            return []
         
-        for zimmet in zimmetler:
-            # Teslim eden kişi bilgisi
-            teslim_eden = zimmet.teslim_eden
-            teslim_eden_adi = f"{teslim_eden.ad} {teslim_eden.soyad}" if teslim_eden else "Bilinmiyor"
+        # Otelin TÜM zimmet stoklarını getir (ORTAK HAVUZ)
+        stoklar = OtelZimmetStok.query.filter_by(
+            otel_id=personel.otel_id
+        ).join(Urun).order_by(Urun.urun_adi).all()
+        
+        urunler = []
+        
+        for stok in stoklar:
+            kalan = stok.kalan_miktar
+            toplam = stok.toplam_miktar
+            kullanilan = stok.kullanilan_miktar
+            kritik_seviye = stok.kritik_stok_seviyesi or 10
             
-            urunler = []
+            # Kullanım yüzdesi
+            kullanim_yuzdesi = (kullanilan / toplam * 100) if toplam > 0 else 0
             
-            for detay in zimmet.detaylar:
-                # Kalan miktar hesapla
-                kalan = detay.kalan_miktar if detay.kalan_miktar is not None else (detay.miktar - detay.kullanilan_miktar)
-                
-                # Kritik seviye (zimmet detayında varsa onu, yoksa ürünün genel seviyesini kullan)
-                kritik_seviye = detay.kritik_stok_seviyesi or detay.urun.kritik_stok_seviyesi
-                
-                # Kullanım yüzdesi
-                kullanim_yuzdesi = (detay.kullanilan_miktar / detay.miktar * 100) if detay.miktar > 0 else 0
-                
-                # Kritik seviye kontrolü (None ise varsayılan 10)
-                kritik_seviye_safe = kritik_seviye if kritik_seviye is not None else 10
-                
-                # Stok durumu belirleme
-                if kalan == 0:
-                    durum = 'stokout'
-                    badge_class = 'bg-red-100 text-red-800 border border-red-300 dark:bg-red-900/20 dark:text-red-400'
-                    badge_text = 'Stokout'
-                elif kalan <= kritik_seviye_safe:
-                    durum = 'kritik'
-                    badge_class = 'bg-red-100 text-red-800 border border-red-300 dark:bg-red-900/20 dark:text-red-400'
-                    badge_text = 'Kritik'
-                elif kalan <= kritik_seviye_safe * 1.5:
-                    durum = 'dikkat'
-                    badge_class = 'bg-yellow-100 text-yellow-800 border border-yellow-300 dark:bg-yellow-900/20 dark:text-yellow-400'
-                    badge_text = 'Dikkat'
-                else:
-                    durum = 'normal'
-                    badge_class = 'bg-green-100 text-green-800 border border-green-300 dark:bg-green-900/20 dark:text-green-400'
-                    badge_text = 'Normal'
-                
-                urunler.append({
-                    'detay_id': detay.id,
-                    'urun_id': detay.urun_id,
-                    'urun_adi': detay.urun.urun_adi,
-                    'grup_adi': detay.urun.grup.grup_adi,
-                    'birim': detay.urun.birim,
-                    'teslim_edilen': detay.miktar,
-                    'kullanilan': detay.kullanilan_miktar,
-                    'kalan': kalan,
-                    'kritik_seviye': kritik_seviye,
-                    'kullanim_yuzdesi': round(kullanim_yuzdesi, 1),
-                    'durum': durum,
-                    'badge_class': badge_class,
-                    'badge_text': badge_text
-                })
+            # Stok durumu belirleme
+            if kalan == 0:
+                durum = 'stokout'
+                badge_class = 'bg-red-100 text-red-800 border border-red-300 dark:bg-red-900/20 dark:text-red-400'
+                badge_text = 'Stokout'
+            elif kalan <= kritik_seviye:
+                durum = 'kritik'
+                badge_class = 'bg-red-100 text-red-800 border border-red-300 dark:bg-red-900/20 dark:text-red-400'
+                badge_text = 'Kritik'
+            elif kalan <= kritik_seviye * 1.5:
+                durum = 'dikkat'
+                badge_class = 'bg-yellow-100 text-yellow-800 border border-yellow-300 dark:bg-yellow-900/20 dark:text-yellow-400'
+                badge_text = 'Dikkat'
+            else:
+                durum = 'normal'
+                badge_class = 'bg-green-100 text-green-800 border border-green-300 dark:bg-green-900/20 dark:text-green-400'
+                badge_text = 'Normal'
             
-            # Ürünleri duruma göre sırala (stokout > kritik > dikkat > normal)
-            durum_siralama = {'stokout': 0, 'kritik': 1, 'dikkat': 2, 'normal': 3}
-            urunler.sort(key=lambda x: (durum_siralama.get(x['durum'], 4), x['urun_adi']))
-            
-            sonuclar.append({
-                'zimmet_id': zimmet.id,
-                'zimmet_tarihi': zimmet.zimmet_tarihi,
-                'teslim_eden': teslim_eden_adi,
-                'durum': zimmet.durum,
-                'urunler': urunler
+            urunler.append({
+                'stok_id': stok.id,
+                'detay_id': stok.id,  # Eski template uyumluluğu için
+                'urun_id': stok.urun_id,
+                'urun_adi': stok.urun.urun_adi if stok.urun else 'Bilinmiyor',
+                'grup_adi': stok.urun.grup.grup_adi if stok.urun and stok.urun.grup else 'Genel',
+                'birim': stok.urun.birim if stok.urun else 'Adet',
+                'teslim_edilen': toplam,
+                'toplam_miktar': toplam,
+                'kullanilan': kullanilan,
+                'kalan': kalan,
+                'kritik_seviye': kritik_seviye,
+                'kullanim_yuzdesi': round(kullanim_yuzdesi, 1),
+                'durum': durum,
+                'badge_class': badge_class,
+                'badge_text': badge_text
             })
         
-        return sonuclar
+        # Ürünleri duruma göre sırala (stokout > kritik > dikkat > normal)
+        durum_siralama = {'stokout': 0, 'kritik': 1, 'dikkat': 2, 'normal': 3}
+        urunler.sort(key=lambda x: (durum_siralama.get(x['durum'], 4), x['urun_adi']))
+        
+        # Tek bir otel kaydı döndür (ortak havuz)
+        if urunler:
+            return [{
+                'otel_id': otel.id,
+                'otel_adi': otel.ad,
+                'zimmet_id': f"OTEL-{otel.id}",  # Eski template uyumluluğu
+                'zimmet_tarihi': stoklar[0].son_guncelleme if stoklar else None,
+                'teslim_eden': 'Otel Ortak Zimmet Deposu',
+                'durum': 'aktif',
+                'urunler': urunler
+            }]
+        
+        return []
         
     except Exception as e:
         log_hata(e, modul='kat_sorumlusu_stok', extra_info={'function': 'get_kat_sorumlusu_zimmet_stoklari', 'personel_id': personel_id})

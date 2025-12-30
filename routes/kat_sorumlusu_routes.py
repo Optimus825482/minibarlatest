@@ -748,12 +748,15 @@ def register_kat_sorumlusu_routes(app):
                 if gorev_tamamlandi:
                     mesaj += ' - Görev tamamlandı!'
                 
+                # otel_stok'tan kalan miktarı al (OtelZimmetStok objesi)
+                zimmet_kalan = otel_stok.kalan_miktar if otel_stok else 0
+                
                 return jsonify({
                     'success': True,
                     'message': mesaj,
                     'tuketim': tuketim,
                     'yeni_miktar': setup_miktari,
-                    'zimmet_kalan': zimmet_detay.kalan_miktar,
+                    'zimmet_kalan': zimmet_kalan,
                     'gorev_tamamlandi': gorev_tamamlandi
                 })
                 

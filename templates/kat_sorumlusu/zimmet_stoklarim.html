@@ -1,209 +1,292 @@
-{% extends "base.html" %}
-
-{% block title %}Zimmet Stoklarım - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Zimmet Stoklarım{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Zimmet Stoklarım - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}Otel Ortak Zimmet Stoğu{% endblock
+%} {% block content %}
 <div class="space-y-6">
-    <!-- Başlık ve Aksiyonlar -->
-    <div class="flex justify-between items-center">
-        <div>
-            <h2 class="text-2xl font-bold text-slate-900">Zimmet Stoklarım</h2>
-            <p class="mt-1 text-sm text-slate-500">Aktif zimmetlerinizi ve stok durumlarını görüntüleyin</p>
-        </div>
-        <div class="flex gap-3">
-            <a href="{{ url_for('kat_sorumlusu_zimmet_export') }}" 
-               class="inline-flex items-center px-4 py-2 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                Excel İndir
-            </a>
-            <a href="{{ url_for('kat_sorumlusu_dashboard') }}" 
-               class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-                Dashboard'a Dön
-            </a>
-        </div>
+  <!-- Başlık ve Aksiyonlar -->
+  <div class="flex justify-between items-center">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
+        Otel Ortak Zimmet Stoğu
+      </h2>
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <i class="fas fa-info-circle mr-1"></i>
+        Tüm kat sorumluları bu ortak stoktan kullanır
+      </p>
     </div>
-
-    {% if not zimmet_stoklari %}
-    <!-- Boş Durum -->
-    <div class="bg-white shadow rounded-lg p-12 text-center">
-        <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+    <div class="flex gap-3">
+      <a
+        href="{{ url_for('kat_sorumlusu_zimmet_export') }}"
+        class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600"
+      >
+        <svg
+          class="w-5 h-5 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          ></path>
         </svg>
-        <h3 class="mt-2 text-sm font-medium text-slate-900">Aktif zimmet bulunamadı</h3>
-        <p class="mt-1 text-sm text-slate-500">Henüz size aktarılmış bir zimmet bulunmamaktadır.</p>
+        Excel İndir
+      </a>
+      <a
+        href="{{ url_for('kat_sorumlusu_dashboard') }}"
+        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+      >
+        Dashboard'a Dön
+      </a>
     </div>
-    {% else %}
-    <!-- Zimmet Listesi -->
-    {% for zimmet in zimmet_stoklari %}
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-        <!-- Zimmet Başlık -->
-        <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h3 class="text-lg font-medium text-slate-900">Zimmet #{{ zimmet.zimmet_id }}</h3>
-                    <p class="text-sm text-slate-500">
-                        Teslim Eden: {{ zimmet.teslim_eden }} | 
-                        Tarih: {{ zimmet.zimmet_tarihi.strftime('%d.%m.%Y %H:%M') }}
-                    </p>
-                </div>
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                    {{ zimmet.urunler|length }} Ürün
-                </span>
-            </div>
-        </div>
+  </div>
 
-        <!-- Ürün Listesi -->
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200">
-                <thead class="bg-slate-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Ürün</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Grup</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase">Teslim Edilen</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase">Kullanılan</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase">Kalan</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase">Kritik Seviye</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase">Kullanım</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase">Durum</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase">İşlem</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-slate-200">
-                    {% for urun in zimmet.urunler %}
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-slate-900">{{ urun.urun_adi }}</div>
-                            <div class="text-sm text-slate-500">{{ urun.birim }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{ urun.grup_adi }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-slate-900">{{ urun.teslim_edilen }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-slate-900">{{ urun.kullanilan }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-slate-900">{{ urun.kalan }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-slate-500">{{ urun.kritik_seviye }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center justify-center">
-                                <div class="w-24">
-                                    <div class="flex items-center">
-                                        <div class="w-full bg-slate-200 rounded-full h-2">
-                                            <div class="{% if urun.kullanim_yuzdesi >= 80 %}bg-red-600{% elif urun.kullanim_yuzdesi >= 50 %}bg-yellow-500{% else %}bg-green-500{% endif %} h-2 rounded-full" 
-                                                 style="width: {{ urun.kullanim_yuzdesi }}%"></div>
-                                        </div>
-                                        <span class="ml-2 text-xs text-slate-600">{{ urun.kullanim_yuzdesi }}%</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ urun.badge_class }}">
-                                {{ urun.badge_text }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                            <button onclick="openKritikSeviyeModal({{ urun.detay_id }}, '{{ urun.urun_adi }}', {{ urun.kritik_seviye }})"
-                                    class="text-blue-600 hover:text-blue-900 text-sm font-medium">
-                                Kritik Seviye
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+  {% if not zimmet_stoklari %}
+  <!-- Boş Durum -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-12 text-center">
+    <svg
+      class="mx-auto h-12 w-12 text-slate-400"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+      ></path>
+    </svg>
+    <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-white">
+      Zimmet stoğu bulunamadı
+    </h3>
+    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+      Otelinize henüz zimmet stoğu tanımlanmamış.
+    </p>
+  </div>
+  {% else %}
+
+  <!-- Otel Bilgisi Banner -->
+  {% for zimmet in zimmet_stoklari %}
+  <div
+    class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white shadow-lg"
+  >
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div
+          class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center"
+        >
+          <i class="fas fa-hotel text-2xl"></i>
         </div>
+        <div>
+          <h3 class="text-xl font-bold">{{ zimmet.otel_adi }}</h3>
+          <p class="text-blue-100 text-sm">Ortak Zimmet Deposu</p>
+        </div>
+      </div>
+      <div class="text-right">
+        <div class="text-3xl font-bold">{{ zimmet.urunler|length }}</div>
+        <div class="text-blue-100 text-sm">Ürün Çeşidi</div>
+      </div>
     </div>
-    {% endfor %}
-    {% endif %}
+  </div>
+
+  <!-- Özet Kartları -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    {% set normal_count = zimmet.urunler|selectattr('durum', 'equalto',
+    'normal')|list|length %} {% set dikkat_count =
+    zimmet.urunler|selectattr('durum', 'equalto', 'dikkat')|list|length %} {%
+    set kritik_count = zimmet.urunler|selectattr('durum', 'equalto',
+    'kritik')|list|length %} {% set stokout_count =
+    zimmet.urunler|selectattr('durum', 'equalto', 'stokout')|list|length %}
+
+    <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
+      <div class="text-2xl font-bold text-green-600">{{ normal_count }}</div>
+      <div class="text-xs text-green-600/70 font-medium">Normal</div>
+    </div>
+    <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 text-center">
+      <div class="text-2xl font-bold text-yellow-600">{{ dikkat_count }}</div>
+      <div class="text-xs text-yellow-600/70 font-medium">Dikkat</div>
+    </div>
+    <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 text-center">
+      <div class="text-2xl font-bold text-red-600">{{ kritik_count }}</div>
+      <div class="text-xs text-red-600/70 font-medium">Kritik</div>
+    </div>
+    <div class="bg-slate-100 dark:bg-slate-700 rounded-lg p-4 text-center">
+      <div class="text-2xl font-bold text-slate-600 dark:text-slate-300">
+        {{ stokout_count }}
+      </div>
+      <div class="text-xs text-slate-500 font-medium">Stokout</div>
+    </div>
+  </div>
+
+  <!-- Ürün Listesi -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+          <i class="fas fa-boxes text-blue-500 mr-2"></i>Stok Durumu
+        </h3>
+        <input
+          type="text"
+          id="arama_input"
+          placeholder="Ürün ara..."
+          class="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm dark:bg-slate-700 dark:text-white w-48"
+          onkeyup="filtreleUrunler()"
+        />
+      </div>
+    </div>
+
+    <!-- Ürün Listesi -->
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+        <thead class="bg-slate-50 dark:bg-slate-700">
+          <tr>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+            >
+              Ürün
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+            >
+              Grup
+            </th>
+            <th
+              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+            >
+              Toplam
+            </th>
+            <th
+              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+            >
+              Kullanılan
+            </th>
+            <th
+              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+            >
+              Kalan
+            </th>
+            <th
+              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+            >
+              Kullanım
+            </th>
+            <th
+              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+            >
+              Durum
+            </th>
+          </tr>
+        </thead>
+        <tbody
+          id="urun_listesi"
+          class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+        >
+          {% for urun in zimmet.urunler %}
+          <tr
+            class="hover:bg-slate-50 dark:hover:bg-slate-700/50 urun-row"
+            data-urun="{{ urun.urun_adi|lower }}"
+          >
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-slate-900 dark:text-white">
+                {{ urun.urun_adi }}
+              </div>
+              <div class="text-sm text-slate-500 dark:text-slate-400">
+                {{ urun.birim }}
+              </div>
+            </td>
+            <td
+              class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+            >
+              {{ urun.grup_adi }}
+            </td>
+            <td
+              class="px-6 py-4 whitespace-nowrap text-center text-sm font-semibold text-slate-900 dark:text-white"
+            >
+              {{ urun.teslim_edilen|default(urun.toplam_miktar, true) }}
+            </td>
+            <td
+              class="px-6 py-4 whitespace-nowrap text-center text-sm text-slate-600 dark:text-slate-400"
+            >
+              {{ urun.kullanilan }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-center">
+              <span
+                class="text-lg font-bold {% if urun.durum == 'stokout' or urun.durum == 'kritik' %}text-red-500{% elif urun.durum == 'dikkat' %}text-yellow-500{% else %}text-green-600{% endif %}"
+              >
+                {{ urun.kalan }}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center justify-center">
+                <div class="w-24">
+                  <div class="flex items-center">
+                    <div
+                      class="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2"
+                    >
+                      <div
+                        class="{% if urun.kullanim_yuzdesi >= 80 %}bg-red-600{% elif urun.kullanim_yuzdesi >= 50 %}bg-yellow-500{% else %}bg-green-500{% endif %} h-2 rounded-full"
+                        style="width: {{ urun.kullanim_yuzdesi }}%"
+                      ></div>
+                    </div>
+                    <span
+                      class="ml-2 text-xs text-slate-600 dark:text-slate-400"
+                      >{{ urun.kullanim_yuzdesi }}%</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-center">
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ urun.badge_class }}"
+              >
+                {{ urun.badge_text }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %} {% endif %}
 </div>
 
-<!-- Kritik Seviye Modal -->
-<div id="kritikSeviyeModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <h3 class="text-lg font-medium text-slate-900 mb-4">Kritik Stok Seviyesi Belirle</h3>
-            <p class="text-sm text-slate-500 mb-4">Ürün: <span id="modalUrunAdi" class="font-medium text-slate-900"></span></p>
-            
-            <form id="kritikSeviyeForm" onsubmit="return false;">
-                <input type="hidden" id="modalDetayId">
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Kritik Seviye</label>
-                    <input type="number" id="modalKritikSeviye" min="1" required
-                           class="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <p class="mt-1 text-xs text-slate-500">Bu seviyenin altına düştüğünde uyarı alırsınız</p>
-                </div>
-                
-                <div class="flex gap-3">
-                    <button type="button" onclick="kaydetKritikSeviye()"
-                            class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium">
-                        Kaydet
-                    </button>
-                    <button type="button" onclick="closeKritikSeviyeModal()"
-                            class="flex-1 bg-slate-300 text-slate-700 px-4 py-2 rounded-md hover:bg-slate-400 font-medium">
-                        İptal
-                    </button>
-                </div>
-            </form>
-        </div>
+<!-- Bilgi Notu -->
+<div
+  class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
+>
+  <div class="flex items-start gap-3">
+    <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
+    <div>
+      <h4 class="font-semibold text-blue-800 dark:text-blue-300">
+        Ortak Zimmet Havuzu
+      </h4>
+      <p class="text-sm text-blue-700 dark:text-blue-400 mt-1">
+        Bu stoklar otelinizin ortak zimmet deposundan gelmektedir. Aynı oteldeki
+        tüm kat sorumluları bu stokları görür ve kullanır. Stok eklemesi sadece
+        depo sorumlusu tarafından yapılabilir.
+      </p>
     </div>
+  </div>
 </div>
 
-{% endblock %}
-
-{% block extra_scripts %}
+{% endblock %} {% block extra_scripts %}
 <script>
-function openKritikSeviyeModal(detayId, urunAdi, mevcutSeviye) {
-    document.getElementById('modalDetayId').value = detayId;
-    document.getElementById('modalUrunAdi').textContent = urunAdi;
-    document.getElementById('modalKritikSeviye').value = mevcutSeviye;
-    document.getElementById('kritikSeviyeModal').classList.remove('hidden');
-}
+  function filtreleUrunler() {
+    const arama = document.getElementById("arama_input").value.toLowerCase();
+    const rows = document.querySelectorAll(".urun-row");
 
-function closeKritikSeviyeModal() {
-    document.getElementById('kritikSeviyeModal').classList.add('hidden');
-}
-
-async function kaydetKritikSeviye() {
-    const detayId = document.getElementById('modalDetayId').value;
-    const kritikSeviye = document.getElementById('modalKritikSeviye').value;
-    
-    if (!kritikSeviye || kritikSeviye < 1) {
-        alert('Lütfen geçerli bir kritik seviye girin');
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/kat-sorumlusu/kritik-seviye-guncelle', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({
-                zimmet_detay_id: parseInt(detayId),
-                kritik_seviye: parseInt(kritikSeviye)
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            alert('Kritik seviye başarıyla güncellendi!');
-            closeKritikSeviyeModal();
-            location.reload();
-        } else {
-            alert('Hata: ' + data.message);
-        }
-    } catch (error) {
-        alert('Bir hata oluştu: ' + error.message);
-    }
-}
-
-// Modal dışına tıklanınca kapat
-document.getElementById('kritikSeviyeModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeKritikSeviyeModal();
-    }
-});
+    rows.forEach((row) => {
+      const urunAdi = row.dataset.urun;
+      if (urunAdi.includes(arama)) {
+        row.style.display = "";
+      } else {
+        row.style.display = "none";
+      }
+    });
+  }
 </script>
 {% endblock %}

@@ -2650,18 +2650,267 @@ def register_api_routes(app):
             log_hata(e, modul='api_tedarik_tamamla')
             return jsonify({'success': False, 'message': str(e)}), 500
 
+    @app.route('/api/otel-zimmet-stok-ekle', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_otel_zimmet_stok_ekle():
+        """Otel zimmet stoğuna ürün ekle"""
+        try:
+            from models import OtelZimmetStok
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({'success': False, 'error': 'Geçersiz veri'}), 400
+            
+            stok_id = data.get('stok_id')
+            miktar = data.get('miktar', 0)
+            
+            if not stok_id or miktar <= 0:
+                return jsonify({'success': False, 'error': 'Stok ID ve miktar gerekli'}), 400
+            
+            stok = OtelZimmetStok.query.get(stok_id)
+            if not stok:
+                return jsonify({'success': False, 'error': 'Stok kaydı bulunamadı'}), 404
+            
+            # Stok ekle
+            stok.toplam_miktar += miktar
+            stok.kalan_miktar += miktar
+            stok.son_guncelleme = get_kktc_now()
+            
+            db.session.commit()
+            
+            log_islem('ekleme', 'otel_zimmet_stok', {
+                'stok_id': stok_id,
+                'miktar': miktar,
+                'yeni_toplam': stok.toplam_miktar,
+                'yeni_kalan': stok.kalan_miktar
+            })
+            
+            return jsonify({
+                'success': True,
+                'message': f'{miktar} adet stok eklendi',
+                'yeni_toplam': stok.toplam_miktar,
+                'yeni_kalan': stok.kalan_miktar
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='api_otel_zimmet_stok_ekle')
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/otel-zimmet-stoklari', methods=['GET'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_otel_zimmet_stoklari():
+        """Belirli bir otelin zimmet stoklarını getir"""
+        try:
+            from models import OtelZimmetStok, Otel
+            
+            otel_id = request.args.get('otel_id', type=int)
+            if not otel_id:
+                return jsonify({'success': False, 'error': 'Otel ID gerekli'}), 400
+            
+            stoklar = OtelZimmetStok.query.filter_by(otel_id=otel_id).join(Urun).order_by(Urun.urun_adi).all()
+            
+            result = []
+            for s in stoklar:
+                if s.kalan_miktar == 0:
+                    durum = 'stokout'
+                elif s.kalan_miktar <= (s.kritik_stok_seviyesi or 10):
+                    durum = 'kritik'
+                elif s.kalan_miktar <= (s.kritik_stok_seviyesi or 10) * 1.5:
+                    durum = 'dikkat'
+                else:
+                    durum = 'normal'
+                
+                result.append({
+                    'id': s.id,
+                    'urun_id': s.urun_id,
+                    'urun_adi': s.urun.urun_adi if s.urun else 'Bilinmiyor',
+                    'grup_adi': s.urun.grup.grup_adi if s.urun and s.urun.grup else 'Genel',
+                    'birim': s.urun.birim if s.urun else 'Adet',
+                    'toplam_miktar': s.toplam_miktar,
+                    'kullanilan_miktar': s.kullanilan_miktar,
+                    'kalan_miktar': s.kalan_miktar,
+                    'durum': durum
+                })
+            
+            return jsonify({'success': True, 'stoklar': result})
+            
+        except Exception as e:
+            log_hata(e, modul='api_otel_zimmet_stoklari')
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/urunler-zimmet-icin', methods=['GET'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_urunler_zimmet_icin():
+        """Zimmet için ürün listesi - Ana depo stok ve otel zimmet stoğu ile"""
+        try:
+            from models import OtelZimmetStok, UrunStok, UrunGrup
+            
+            otel_id = request.args.get('otel_id', type=int)
+            if not otel_id:
+                return jsonify({'success': False, 'error': 'Otel ID gerekli'}), 400
+            
+            # Tüm aktif ürünleri getir
+            urunler = Urun.query.filter_by(aktif=True).order_by(Urun.urun_adi).all()
+            
+            # Ana depo stokları (UrunStok tablosundan)
+            ana_depo_stoklar = {s.urun_id: s.mevcut_stok for s in UrunStok.query.filter_by(otel_id=otel_id).all()}
+            
+            # Otel zimmet stokları
+            otel_zimmet_stoklar = {s.urun_id: s.kalan_miktar for s in OtelZimmetStok.query.filter_by(otel_id=otel_id).all()}
+            
+            result = []
+            for u in urunler:
+                grup = db.session.get(UrunGrup, u.grup_id) if u.grup_id else None
+                result.append({
+                    'id': u.id,
+                    'urun_adi': u.urun_adi,
+                    'birim': u.birim or 'Adet',
+                    'grup_id': u.grup_id or 0,
+                    'grup_adi': grup.grup_adi if grup else 'Genel',
+                    'ana_depo_stok': ana_depo_stoklar.get(u.id, 0),
+                    'otel_zimmet_stok': otel_zimmet_stoklar.get(u.id, 0)
+                })
+            
+            return jsonify({'success': True, 'urunler': result})
+            
+        except Exception as e:
+            log_hata(e, modul='api_urunler_zimmet_icin')
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/otel-zimmet-ekle', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_otel_zimmet_ekle():
+        """Otel zimmet stoğuna yeni ürün ekle veya mevcut stoğu artır"""
+        try:
+            from models import OtelZimmetStok
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({'success': False, 'error': 'Geçersiz veri'}), 400
+            
+            otel_id = data.get('otel_id')
+            urun_id = data.get('urun_id')
+            miktar = data.get('miktar', 0)
+            
+            if not otel_id or not urun_id or miktar <= 0:
+                return jsonify({'success': False, 'error': 'Otel, ürün ve miktar gerekli'}), 400
+            
+            # Mevcut stok var mı kontrol et
+            stok = OtelZimmetStok.query.filter_by(otel_id=otel_id, urun_id=urun_id).first()
+            
+            if stok:
+                # Mevcut stoğa ekle
+                stok.toplam_miktar += miktar
+                stok.kalan_miktar += miktar
+                stok.son_guncelleme = get_kktc_now()
+            else:
+                # Yeni stok kaydı oluştur
+                stok = OtelZimmetStok(
+                    otel_id=otel_id,
+                    urun_id=urun_id,
+                    toplam_miktar=miktar,
+                    kullanilan_miktar=0,
+                    kalan_miktar=miktar,
+                    kritik_stok_seviyesi=50
+                )
+                db.session.add(stok)
+            
+            db.session.commit()
+            
+            log_islem('ekleme', 'otel_zimmet_stok', {
+                'otel_id': otel_id,
+                'urun_id': urun_id,
+                'miktar': miktar,
+                'yeni_toplam': stok.toplam_miktar
+            })
+            
+            return jsonify({
+                'success': True,
+                'message': f'{miktar} adet ürün eklendi',
+                'yeni_toplam': stok.toplam_miktar,
+                'yeni_kalan': stok.kalan_miktar
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='api_otel_zimmet_ekle')
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/otel-zimmet-islemleri', methods=['GET'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_otel_zimmet_islemleri():
+        """Otel zimmet işlemlerini listele - Her işlem için ayrı kart"""
+        try:
+            from models import OtelZimmetStok, Otel
+            
+            otel_id = request.args.get('otel_id', type=int)
+            if not otel_id:
+                return jsonify({'success': False, 'error': 'Otel ID gerekli'}), 400
+            
+            otel = Otel.query.get(otel_id)
+            if not otel:
+                return jsonify({'success': False, 'error': 'Otel bulunamadı'}), 404
+            
+            # O oteldeki kat sorumlularını al
+            personeller = Kullanici.query.filter_by(
+                otel_id=otel_id,
+                rol='kat_sorumlusu',
+                aktif=True
+            ).all()
+            personel_adlari = [f"{p.ad} {p.soyad}" for p in personeller]
+            
+            # Otel zimmet stoklarını getir
+            stoklar = OtelZimmetStok.query.filter_by(otel_id=otel_id).join(Urun).order_by(Urun.urun_adi).all()
+            
+            if not stoklar:
+                return jsonify({'success': True, 'islemler': []})
+            
+            # Tek bir "işlem" olarak göster (otel bazlı ortak havuz)
+            urunler = []
+            for s in stoklar:
+                urunler.append({
+                    'urun_adi': s.urun.urun_adi if s.urun else 'Bilinmiyor',
+                    'eklenen': s.toplam_miktar,
+                    'onceki': 0,
+                    'toplam': s.kalan_miktar
+                })
+            
+            islem = {
+                'id': otel_id,
+                'otel_adi': otel.ad,
+                'personeller': personel_adlari,
+                'urun_cesidi': len(urunler),
+                'tarih': stoklar[0].son_guncelleme.strftime('%d.%m.%Y %H:%M') if stoklar and stoklar[0].son_guncelleme else '-',
+                'urunler': urunler
+            }
+            
+            return jsonify({'success': True, 'islemler': [islem]})
+            
+        except Exception as e:
+            log_hata(e, modul='api_otel_zimmet_islemleri')
+            return jsonify({'success': False, 'error': str(e)}), 500
+
     @app.route('/api/zimmet-listesi-filtreli', methods=['GET'])
     @login_required
     @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
     def api_zimmet_listesi_filtreli():
-        """Ay/Yıl bazlı zimmet listesi"""
+        """Otel Zimmet Stok bazlı liste - ÜRÜN BAZLI GÖSTERİM
+        
+        Her ürün için:
+        - Otel adı
+        - O oteldeki TÜM personellerin zimmet durumu
+        - Toplam stok bilgisi
+        """
         try:
-            from models import PersonelZimmet
+            from models import OtelZimmetStok, Otel, Urun, UrunGrup, PersonelZimmetKullanim
             from utils.authorization import get_kullanici_otelleri
-            from sqlalchemy import extract
-            
-            ay = request.args.get('ay', type=int) or datetime.now().month
-            yil = request.args.get('yil', type=int) or datetime.now().year
+            from sqlalchemy import func
             
             oteller = get_kullanici_otelleri()
             otel_ids = [o.id for o in oteller]
@@ -2669,26 +2918,50 @@ def register_api_routes(app):
             if not otel_ids:
                 return jsonify({'success': True, 'zimmetler': []})
             
-            # Sadece aktif zimmetleri getir (iptal edilenler silindiği için zaten gelmez)
-            zimmetler = PersonelZimmet.query.filter(
-                PersonelZimmet.personel.has(Kullanici.otel_id.in_(otel_ids)),
-                PersonelZimmet.durum == 'aktif',
-                extract('month', PersonelZimmet.zimmet_tarihi) == ay,
-                extract('year', PersonelZimmet.zimmet_tarihi) == yil
-            ).order_by(PersonelZimmet.zimmet_tarihi.desc()).all()
+            # Otel zimmet stoklarını getir
+            stoklar = OtelZimmetStok.query.filter(
+                OtelZimmetStok.otel_id.in_(otel_ids)
+            ).join(Otel).join(Urun).order_by(Urun.urun_adi).all()
+            
+            # Her otel için kat sorumlularını al
+            otel_personeller = {}
+            for otel_id in otel_ids:
+                personeller = Kullanici.query.filter_by(
+                    otel_id=otel_id,
+                    rol='kat_sorumlusu',
+                    aktif=True
+                ).all()
+                otel_personeller[otel_id] = [
+                    {'id': p.id, 'ad': f"{p.ad} {p.soyad}"} for p in personeller
+                ]
             
             result = []
-            for z in zimmetler:
-                # İptal edilebilirlik kontrolü - hiçbir ürün kullanılmadıysa iptal edilebilir
-                iptal_edilebilir = all(d.kalan_miktar == d.miktar for d in z.detaylar) if z.detaylar else False
+            for stok in stoklar:
+                # Stok durumu
+                if stok.kalan_miktar == 0:
+                    durum = 'stokout'
+                elif stok.kalan_miktar <= (stok.kritik_stok_seviyesi or 10):
+                    durum = 'kritik'
+                elif stok.kalan_miktar <= (stok.kritik_stok_seviyesi or 10) * 1.5:
+                    durum = 'dikkat'
+                else:
+                    durum = 'normal'
                 
                 result.append({
-                    'id': z.id,
-                    'personel_adi': f"{z.personel.ad} {z.personel.soyad}" if z.personel else 'Bilinmiyor',
-                    'tarih': z.zimmet_tarihi.strftime('%d.%m.%Y %H:%M') if z.zimmet_tarihi else '',
-                    'urun_sayisi': len(z.detaylar),
-                    'durum': z.durum,
-                    'iptal_edilebilir': iptal_edilebilir and z.durum == 'aktif'
+                    'id': stok.id,
+                    'urun_id': stok.urun_id,
+                    'urun_adi': stok.urun.urun_adi if stok.urun else 'Bilinmiyor',
+                    'grup_adi': stok.urun.grup.grup_adi if stok.urun and stok.urun.grup else 'Genel',
+                    'birim': stok.urun.birim if stok.urun else 'Adet',
+                    'otel_id': stok.otel_id,
+                    'otel_adi': stok.otel.ad if stok.otel else 'Bilinmiyor',
+                    'toplam_miktar': stok.toplam_miktar,
+                    'kullanilan_miktar': stok.kullanilan_miktar,
+                    'kalan_miktar': stok.kalan_miktar,
+                    'kritik_seviye': stok.kritik_stok_seviyesi or 10,
+                    'durum': durum,
+                    'personeller': otel_personeller.get(stok.otel_id, []),
+                    'son_guncelleme': stok.son_guncelleme.strftime('%d.%m.%Y %H:%M') if stok.son_guncelleme else ''
                 })
             
             return jsonify({'success': True, 'zimmetler': result})
@@ -2701,14 +2974,17 @@ def register_api_routes(app):
     @login_required
     @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
     def api_urunler_stoklu():
-        """Stok bilgisiyle birlikte ürün listesi - personel zimmet miktarı dahil"""
+        """Otel Zimmet Stok bilgisiyle birlikte ürün listesi
+        
+        OtelZimmetStok tablosundan stok bilgisi çeker.
+        Tüm kat sorumluları için ORTAK stok havuzu.
+        """
         try:
-            from models import UrunStok, UrunGrup, PersonelZimmet, PersonelZimmetDetay
+            from models import OtelZimmetStok, UrunGrup
             from utils.authorization import get_kullanici_otelleri
             
             oteller = get_kullanici_otelleri()
             otel_id = oteller[0].id if oteller else None
-            personel_id = request.args.get('personel_id', type=int)
             
             if not otel_id:
                 return jsonify({'success': True, 'urunler': []})
@@ -2716,37 +2992,25 @@ def register_api_routes(app):
             # Tüm ürünleri getir
             urunler = Urun.query.filter_by(aktif=True).order_by(Urun.urun_adi).all()
             
-            # Stok bilgilerini al
-            stoklar = {s.urun_id: s.mevcut_stok for s in UrunStok.query.filter_by(otel_id=otel_id).all()}
-            
-            # Personel zimmet miktarlarını al (eğer personel_id varsa)
-            personel_zimmetleri = {}
-            if personel_id:
-                # Aktif zimmetlerdeki kalan miktarları topla
-                zimmetler = PersonelZimmet.query.filter_by(
-                    personel_id=personel_id, 
-                    durum='aktif'
-                ).all()
-                
-                for zimmet in zimmetler:
-                    detaylar = PersonelZimmetDetay.query.filter_by(zimmet_id=zimmet.id).all()
-                    for d in detaylar:
-                        # Kalan miktar hesapla (iade edilmemiş ve kullanılmamış)
-                        kalan = d.miktar - (d.kullanilan_miktar or 0) - (d.iade_edilen_miktar or 0)
-                        if kalan > 0:
-                            personel_zimmetleri[d.urun_id] = personel_zimmetleri.get(d.urun_id, 0) + kalan
+            # Otel zimmet stoklarını al (ORTAK HAVUZ)
+            otel_stoklar = {
+                s.urun_id: s.kalan_miktar 
+                for s in OtelZimmetStok.query.filter_by(otel_id=otel_id).all()
+            }
             
             result = []
             for u in urunler:
                 grup = db.session.get(UrunGrup, u.grup_id) if u.grup_id else None
+                otel_stok = otel_stoklar.get(u.id, 0)
+                
                 result.append({
                     'id': u.id,
                     'urun_adi': u.urun_adi,
                     'birim': u.birim or 'Adet',
                     'grup_id': u.grup_id or 0,
                     'grup_adi': grup.grup_adi if grup else 'Genel',
-                    'stok': stoklar.get(u.id, 0),
-                    'personel_zimmet': personel_zimmetleri.get(u.id, 0)
+                    'stok': otel_stok,  # Otel ortak zimmet stoğu
+                    'personel_zimmet': otel_stok  # Aynı değer - ortak havuz
                 })
             
             return jsonify({'success': True, 'urunler': result})

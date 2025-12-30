@@ -84,12 +84,10 @@ content %}
       </p>
     </div>
     <div
-      class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 text-white"
+      class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-4 text-white"
     >
-      <p class="text-emerald-100 text-sm">Toplam Tutar</p>
-      <p class="text-2xl font-bold">
-        {{ "%.2f"|format(rapor_verisi.genel_toplam_tutar) }} TL
-      </p>
+      <p class="text-indigo-100 text-sm">İşlem Sayısı</p>
+      <p class="text-2xl font-bold">{{ rapor_verisi.toplam_grup }}</p>
     </div>
     <div
       class="bg-gradient-to-br from-slate-500 to-slate-600 rounded-xl p-4 text-white"
@@ -100,74 +98,113 @@ content %}
       </p>
     </div>
   </div>
-</div>
 
-    <!-- Oda Bazlı Detaylar -->
-    {% for oda in rapor_verisi.odalar %}
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
-        <div class="px-4 py-4 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-                    <i class="fas fa-door-open mr-2 text-cyan-600"></i>Oda {{ oda.oda_no }}
-                    <span class="text-sm font-normal text-slate-500 ml-2">({{ oda.kat }})</span>
-                </h3>
-                <div class="flex items-center gap-4 text-sm">
-                    <span class="px-3 py-1 bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400 rounded-full">
-                        <i class="fas fa-cubes mr-1"></i>{{ oda.urun_cesidi }} ürün
-                    </span>
-                    <span class="px-3 py-1 bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400 rounded-full">
-                        <i class="fas fa-shopping-cart mr-1"></i>{{ oda.toplam_tuketim }} adet
-                    </span>
-                    <span class="px-3 py-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full font-semibold">
-                        <i class="fas fa-lira-sign mr-1"></i>{{ "%.2f"|format(oda.toplam_tutar) }} TL
-                    </span>
+  <!-- Tüketim Listesi Tablosu - Gruplu Görünüm -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+    <div
+      class="px-4 py-4 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700"
+    >
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+        <i class="fas fa-list mr-2 text-cyan-600"></i>Tüketim Kayıtları
+        <span class="text-sm font-normal text-slate-500 ml-2"
+          >(Tarih Azalan)</span
+        >
+      </h3>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+        <thead class="bg-slate-100 dark:bg-slate-900">
+          <tr>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase w-40"
+            >
+              Tarih
+            </th>
+            <th
+              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase w-24"
+            >
+              Oda No
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+            >
+              Ürünler
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase w-40"
+            >
+              Kontrol Eden
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+          {% for grup in rapor_verisi.gruplar %}
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50 align-top">
+            <td
+              class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap"
+            >
+              <i class="fas fa-calendar-alt mr-1 text-slate-400"></i>{{
+              grup.tarih }}
+            </td>
+            <td class="px-4 py-3 text-sm text-center">
+              <span
+                class="px-3 py-1 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-400 rounded font-bold"
+                >{{ grup.oda_no }}</span
+              >
+            </td>
+            <td class="px-4 py-3 text-sm">
+              <div class="space-y-1">
+                {% for urun in grup.urunler %}
+                <div
+                  class="flex items-center justify-between py-1 {% if not loop.last %}border-b border-slate-100 dark:border-slate-700{% endif %}"
+                >
+                  <span class="text-slate-900 dark:text-white"
+                    >{{ urun.urun_adi }}</span
+                  >
+                  <span
+                    class="px-2 py-0.5 bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-400 rounded font-bold text-xs ml-3"
+                    >{{ urun.tuketim }}</span
+                  >
                 </div>
-            </div>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                <thead class="bg-slate-100 dark:bg-slate-900">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Ürün</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Birim</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Tüketim</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Birim Fiyat</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Tutar</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">İşlem Sayısı</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                    {% for urun in oda.urunler %}
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
-                        <td class="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">{{ urun.urun_adi }}</td>
-                        <td class="px-4 py-3 text-sm text-center text-slate-600 dark:text-slate-400">{{ urun.birim }}</td>
-                        <td class="px-4 py-3 text-sm text-center text-cyan-600 font-semibold">{{ urun.tuketim }}</td>
-                        <td class="px-4 py-3 text-sm text-center text-slate-600 dark:text-slate-400">{{ "%.2f"|format(urun.birim_fiyat) }} TL</td>
-                        <td class="px-4 py-3 text-sm text-center text-emerald-600 font-semibold">{{ "%.2f"|format(urun.tutar) }} TL</td>
-                        <td class="px-4 py-3 text-sm text-center text-slate-600 dark:text-slate-400">{{ urun.islem_sayisi }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                {% endfor %}
+              </div>
+            </td>
+            <td
+              class="px-4 py-3 text-sm text-indigo-600 dark:text-indigo-400 whitespace-nowrap"
+            >
+              <i class="fas fa-user-check mr-1"></i>{{ grup.kontrol_eden }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    {% endfor %}
-    
-    {% if rapor_verisi.odalar|length == 0 %}
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-12 text-center">
-        <i class="fas fa-search text-5xl text-slate-300 dark:text-slate-600 mb-4"></i>
-        <p class="text-slate-500 dark:text-slate-400">Seçilen dönemde tüketim kaydı bulunamadı.</p>
-    </div>
-    {% endif %}
-    
-    <div class="text-center text-sm text-slate-500 dark:text-slate-400">
-        <i class="fas fa-clock mr-1"></i>Rapor Tarihi: {{ rapor_verisi.rapor_tarihi }}
-    </div>
-    {% else %}
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-12 text-center">
-        <i class="fas fa-door-open text-5xl text-slate-300 dark:text-slate-600 mb-4"></i>
-        <p class="text-slate-500 dark:text-slate-400">Rapor oluşturmak için yukarıdaki formu kullanın.</p>
-    </div>
-    {% endif %}
+  </div>
+
+  {% if rapor_verisi.gruplar|length == 0 %}
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-12 text-center">
+    <i
+      class="fas fa-search text-5xl text-slate-300 dark:text-slate-600 mb-4"
+    ></i>
+    <p class="text-slate-500 dark:text-slate-400">
+      Seçilen dönemde tüketim kaydı bulunamadı.
+    </p>
+  </div>
+  {% endif %}
+
+  <div class="text-center text-sm text-slate-500 dark:text-slate-400">
+    <i class="fas fa-clock mr-1"></i>Rapor Tarihi: {{ rapor_verisi.rapor_tarihi
+    }}
+  </div>
+  {% else %}
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-12 text-center">
+    <i
+      class="fas fa-door-open text-5xl text-slate-300 dark:text-slate-600 mb-4"
+    ></i>
+    <p class="text-slate-500 dark:text-slate-400">
+      Rapor oluşturmak için yukarıdaki formu kullanın.
+    </p>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
