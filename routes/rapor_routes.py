@@ -1680,14 +1680,14 @@ def export_gun_sonu_excel(rapor):
     row = 1
     
     # Otel Başlığı
-    ws.merge_cells(f'A{row}:C{row}')
+    ws.merge_cells(f'A{row}:B{row}')
     ws[f'A{row}'] = f"🏨 {rapor['otel_adi']}"
     ws[f'A{row}'].font = title_font
     ws[f'A{row}'].alignment = center_align
     row += 1
     
     # Tarih
-    ws.merge_cells(f'A{row}:C{row}')
+    ws.merge_cells(f'A{row}:B{row}')
     ws[f'A{row}'] = f"📅 Tarih: {rapor['rapor_tarihi']}"
     ws[f'A{row}'].font = Font(bold=True, size=14)
     ws[f'A{row}'].alignment = center_align
@@ -1696,7 +1696,7 @@ def export_gun_sonu_excel(rapor):
     # Her personel için
     for personel in rapor.get('personeller', []):
         # Personel başlığı
-        ws.merge_cells(f'A{row}:C{row}')
+        ws.merge_cells(f'A{row}:B{row}')
         cell = ws[f'A{row}']
         cell.value = f"👤 {personel['personel_adi']} (Toplam: {personel['toplam_eklenen']} adet)"
         cell.font = Font(bold=True, color="FFFFFF", size=11)
@@ -1727,7 +1727,7 @@ def export_gun_sonu_excel(rapor):
     
     # GENEL TOPLAM
     if rapor.get('genel_toplam'):
-        ws.merge_cells(f'A{row}:C{row}')
+        ws.merge_cells(f'A{row}:B{row}')
         cell = ws[f'A{row}']
         cell.value = f"📊 GENEL TOPLAM: {rapor.get('genel_toplam_adet', 0)} Adet"
         cell.font = Font(bold=True, color="FFFFFF", size=12)
