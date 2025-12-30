@@ -1391,8 +1391,6 @@ def export_otel_zimmet_stok_excel(rapor):
     date_font = Font(bold=True, size=11, color="1E293B")
     header_font = Font(bold=True, color="FFFFFF", size=10)
     header_fill = PatternFill(start_color="475569", end_color="475569", fill_type="solid")
-    otel_fill = PatternFill(start_color="334155", end_color="334155", fill_type="solid")
-    otel_font = Font(bold=True, size=12, color="FFFFFF")
     thin_border = Border(
         left=Side(style='thin'),
         right=Side(style='thin'),
@@ -1406,9 +1404,9 @@ def export_otel_zimmet_stok_excel(rapor):
     
     # Sütun genişlikleri
     ws.column_dimensions['A'].width = 12  # Logo
-    ws.column_dimensions['B'].width = 30  # Ürün adı
-    ws.column_dimensions['C'].width = 10  # Birim
-    ws.column_dimensions['D'].width = 12  # Toplam
+    ws.column_dimensions['B'].width = 30  # Otel Adı / Ürün adı
+    ws.column_dimensions['C'].width = 20  # Rapor Adı / Birim
+    ws.column_dimensions['D'].width = 18  # Tarih / Toplam
     ws.column_dimensions['E'].width = 12  # Kullanılan
     ws.column_dimensions['F'].width = 12  # Kalan
     ws.column_dimensions['G'].width = 14  # Kritik Seviye
@@ -1419,10 +1417,12 @@ def export_otel_zimmet_stok_excel(rapor):
     
     # Her otel için tablo
     for otel in rapor.get('oteller', []):
-        # Otel başlık satırı yüksekliği
-        ws.row_dimensions[row].height = 45
+        # HEADER: A(row):A(row+1) Logo | B(row):C(row) Otel Adı | B(row+1):C(row+1) Rapor Adı | D(row):D(row+1) Tarih
+        ws.row_dimensions[row].height = 25
+        ws.row_dimensions[row + 1].height = 25
         
-        # Otel Logosu (A sütunu)
+        # Logo (A birleşik 2 satır)
+        ws.merge_cells(f'A{row}:A{row + 1}')
         if otel.get('otel_logo'):
             try:
                 logo_data = otel['otel_logo']
@@ -1434,36 +1434,37 @@ def export_otel_zimmet_stok_excel(rapor):
                 
                 img = XLImage(logo_stream)
                 img.width = 50
-                img.height = 40
+                img.height = 45
                 ws.add_image(img, f'A{row}')
             except:
                 pass
         
-        # Otel Adı (B sütunu)
+        # Otel Adı (B:C birleşik - 1. satır)
+        ws.merge_cells(f'B{row}:C{row}')
         ws[f'B{row}'] = otel['otel_ad']
         ws[f'B{row}'].font = title_font
         ws[f'B{row}'].alignment = left_align
         
-        # Rapor Adı (C-D sütunları)
-        ws.merge_cells(f'C{row}:E{row}')
-        ws[f'C{row}'] = "Zimmet Stok Raporu"
-        ws[f'C{row}'].font = subtitle_font
-        ws[f'C{row}'].alignment = left_align
+        # Rapor Adı (B:C birleşik - 2. satır)
+        ws.merge_cells(f'B{row + 1}:C{row + 1}')
+        ws[f'B{row + 1}'] = "Zimmet Stok Raporu"
+        ws[f'B{row + 1}'].font = subtitle_font
+        ws[f'B{row + 1}'].alignment = left_align
         
-        # Tarih (F-G sütunları)
-        ws.merge_cells(f'F{row}:I{row}')
-        ws[f'F{row}'] = f"📅 {rapor.get('rapor_tarihi', '')}"
-        ws[f'F{row}'].font = date_font
-        ws[f'F{row}'].alignment = right_align
+        # Tarih (D birleşik 2 satır)
+        ws.merge_cells(f'D{row}:D{row + 1}')
+        ws[f'D{row}'] = f"📅 {rapor.get('rapor_tarihi', '')}"
+        ws[f'D{row}'].font = date_font
+        ws[f'D{row}'].alignment = Alignment(horizontal='right', vertical='center')
         
         # Header altı çizgi
-        for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']:
-            ws[f'{col}{row}'].border = header_border
+        for col in ['A', 'B', 'C', 'D']:
+            ws[f'{col}{row + 1}'].border = header_border
         
-        row += 2
+        row += 3  # Header'dan sonra 1 satır boşluk
         
         # Tablo başlıkları
-        headers = ['', 'Ürün', 'Birim', 'Toplam', 'Kullanılan', 'Kalan', 'Kritik Seviye', 'Kullanım %', 'Durum']
+        headers = ['Ürün', 'Birim', 'Toplam', 'Kullanılan', 'Kalan', 'Kritik Seviye', 'Kullanım %', 'Durum']
         for col, header in enumerate(headers, 1):
             cell = ws.cell(row=row, column=col, value=header)
             cell.font = header_font
@@ -1474,25 +1475,24 @@ def export_otel_zimmet_stok_excel(rapor):
         
         # Ürün verileri
         for urun in otel.get('urunler', []):
-            ws.cell(row=row, column=1, value='').border = thin_border
-            ws.cell(row=row, column=2, value=urun['urun_adi']).border = thin_border
-            ws.cell(row=row, column=3, value=urun['birim']).border = thin_border
+            ws.cell(row=row, column=1, value=urun['urun_adi']).border = thin_border
+            ws.cell(row=row, column=2, value=urun['birim']).border = thin_border
+            ws.cell(row=row, column=2).alignment = center_align
+            ws.cell(row=row, column=3, value=urun['toplam_miktar']).border = thin_border
             ws.cell(row=row, column=3).alignment = center_align
-            ws.cell(row=row, column=4, value=urun['toplam_miktar']).border = thin_border
+            ws.cell(row=row, column=4, value=urun['kullanilan_miktar']).border = thin_border
             ws.cell(row=row, column=4).alignment = center_align
-            ws.cell(row=row, column=5, value=urun['kullanilan_miktar']).border = thin_border
+            ws.cell(row=row, column=5, value=urun['kalan_miktar']).border = thin_border
             ws.cell(row=row, column=5).alignment = center_align
-            ws.cell(row=row, column=6, value=urun['kalan_miktar']).border = thin_border
+            ws.cell(row=row, column=6, value=urun['kritik_seviye']).border = thin_border
             ws.cell(row=row, column=6).alignment = center_align
-            ws.cell(row=row, column=7, value=urun['kritik_seviye']).border = thin_border
+            ws.cell(row=row, column=7, value=f"{urun['kullanim_yuzdesi']}%").border = thin_border
             ws.cell(row=row, column=7).alignment = center_align
-            ws.cell(row=row, column=8, value=f"{urun['kullanim_yuzdesi']}%").border = thin_border
-            ws.cell(row=row, column=8).alignment = center_align
             
             # Durum
             durum_map = {'stokout': 'TÜKENDİ', 'kritik': 'KRİTİK', 'dikkat': 'DİKKAT', 'normal': 'NORMAL'}
             durum = durum_map.get(urun['stok_durumu'], 'NORMAL')
-            durum_cell = ws.cell(row=row, column=9, value=durum)
+            durum_cell = ws.cell(row=row, column=8, value=durum)
             durum_cell.border = thin_border
             durum_cell.alignment = center_align
             
@@ -1723,22 +1723,20 @@ def export_gun_sonu_excel(rapor):
     header_border = Border(bottom=Side(style='thin', color='CBD5E1'))
     center_align = Alignment(horizontal='center', vertical='center')
     left_align = Alignment(horizontal='left', vertical='center')
-    right_align = Alignment(horizontal='right', vertical='center')
     
-    row = 1
-    
-    # HEADER SATIRI: Logo (A1) | Otel Adı + Rapor Adı (B1-C1) | Tarih (D1)
-    # Sütun genişlikleri - Ürün adları için geniş alan
+    # Sütun genişlikleri
     ws.column_dimensions['A'].width = 12  # Logo
-    ws.column_dimensions['B'].width = 40  # Ürün adı (geniş)
-    ws.column_dimensions['C'].width = 30  # Rapor adı / ürün devam
-    ws.column_dimensions['D'].width = 18  # Tarih / Miktar
+    ws.column_dimensions['B'].width = 35  # Otel Adı / Ürün adı
+    ws.column_dimensions['C'].width = 25  # Rapor Adı / Ürün devam
+    ws.column_dimensions['D'].width = 20  # Tarih / Miktar
     
-    # Satır yüksekliği
-    ws.row_dimensions[1].height = 45
-    ws.row_dimensions[2].height = 20
+    # HEADER SATIRI: A1:A2 Logo | B1:C1 Otel Adı | B2:C2 Rapor Adı | D1:D2 Tarih
+    # Satır yükseklikleri
+    ws.row_dimensions[1].height = 25
+    ws.row_dimensions[2].height = 25
     
-    # Otel Logosu Ekle (A1)
+    # Logo (A1:A2 birleşik)
+    ws.merge_cells('A1:A2')
     otel_id = rapor.get('otel_id')
     if otel_id:
         otel = Otel.query.get(otel_id)
@@ -1752,32 +1750,35 @@ def export_gun_sonu_excel(rapor):
                 logo_stream = io.BytesIO(logo_bytes)
                 
                 img = XLImage(logo_stream)
-                img.width = 60
+                img.width = 50
                 img.height = 45
                 ws.add_image(img, 'A1')
             except:
                 pass
     
-    # Otel Adı (B1) - büyük font
+    # Otel Adı (B1:C1 birleşik)
+    ws.merge_cells('B1:C1')
     ws['B1'] = rapor['otel_adi']
     ws['B1'].font = title_font
     ws['B1'].alignment = left_align
     
-    # Rapor Adı (C1) - küçük font
-    ws['C1'] = "Kat Sorumlusu Gün Sonu Raporu"
-    ws['C1'].font = subtitle_font
-    ws['C1'].alignment = left_align
+    # Rapor Adı (B2:C2 birleşik)
+    ws.merge_cells('B2:C2')
+    ws['B2'] = "Kat Sorumlusu Gün Sonu Raporu"
+    ws['B2'].font = subtitle_font
+    ws['B2'].alignment = left_align
     
-    # Tarih (D1)
+    # Tarih (D1:D2 birleşik)
+    ws.merge_cells('D1:D2')
     ws['D1'] = f"📅 {rapor['rapor_tarihi']}"
     ws['D1'].font = date_font
-    ws['D1'].alignment = right_align
+    ws['D1'].alignment = Alignment(horizontal='right', vertical='center')
     
     # Header altı çizgi
     for col in ['A', 'B', 'C', 'D']:
-        ws[f'{col}1'].border = header_border
+        ws[f'{col}2'].border = header_border
     
-    row = 3  # Header'dan sonra 1 satır boşluk
+    row = 4  # Header'dan sonra 1 satır boşluk
     
     # Her personel için
     for personel in rapor.get('personeller', []):
