@@ -66,9 +66,14 @@ class OtelZimmetRaporServisi:
             oteller = {}
             for row in sonuclar:
                 if row.otel_id not in oteller:
+                    # Otel logosunu al
+                    otel_obj = Otel.query.get(row.otel_id)
+                    otel_logo = otel_obj.logo if otel_obj and otel_obj.logo else None
+                    
                     oteller[row.otel_id] = {
                         'otel_id': row.otel_id,
                         'otel_ad': row.otel_ad,
+                        'otel_logo': otel_logo,
                         'toplam_urun_cesidi': 0,
                         'toplam_stok': 0,
                         'toplam_kullanilan': 0,

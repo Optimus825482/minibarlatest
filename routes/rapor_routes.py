@@ -1372,10 +1372,12 @@ def otel_zimmet_stok_raporu_olustur():
 
 
 def export_otel_zimmet_stok_excel(rapor):
-    """Otel zimmet stok raporunu Excel olarak export et"""
+    """Otel zimmet stok raporunu Excel olarak export et - Logo destekli"""
     import io
+    import base64
     from openpyxl import Workbook
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from openpyxl.drawing.image import Image as XLImage
     from flask import send_file
     from datetime import datetime
     
@@ -1384,36 +1386,84 @@ def export_otel_zimmet_stok_excel(rapor):
     ws.title = "Otel Zimmet Stok Raporu"
     
     # Stiller
-    header_font = Font(bold=True, color="FFFFFF", size=11)
-    header_fill = PatternFill(start_color="2563EB", end_color="2563EB", fill_type="solid")
-    otel_font = Font(bold=True, size=12, color="1E40AF")
+    title_font = Font(bold=True, size=14, color="1E3A5F")
+    subtitle_font = Font(size=10, color="475569")
+    date_font = Font(bold=True, size=11, color="1E293B")
+    header_font = Font(bold=True, color="FFFFFF", size=10)
+    header_fill = PatternFill(start_color="475569", end_color="475569", fill_type="solid")
+    otel_fill = PatternFill(start_color="334155", end_color="334155", fill_type="solid")
+    otel_font = Font(bold=True, size=12, color="FFFFFF")
     thin_border = Border(
         left=Side(style='thin'),
         right=Side(style='thin'),
         top=Side(style='thin'),
         bottom=Side(style='thin')
     )
+    header_border = Border(bottom=Side(style='thin', color='CBD5E1'))
     center_align = Alignment(horizontal='center', vertical='center')
+    left_align = Alignment(horizontal='left', vertical='center')
+    right_align = Alignment(horizontal='right', vertical='center')
+    
+    # Sütun genişlikleri
+    ws.column_dimensions['A'].width = 12  # Logo
+    ws.column_dimensions['B'].width = 30  # Ürün adı
+    ws.column_dimensions['C'].width = 10  # Birim
+    ws.column_dimensions['D'].width = 12  # Toplam
+    ws.column_dimensions['E'].width = 12  # Kullanılan
+    ws.column_dimensions['F'].width = 12  # Kalan
+    ws.column_dimensions['G'].width = 14  # Kritik Seviye
+    ws.column_dimensions['H'].width = 12  # Kullanım %
+    ws.column_dimensions['I'].width = 12  # Durum
     
     row = 1
     
-    # Başlık
-    ws.merge_cells(f'A{row}:H{row}')
-    ws[f'A{row}'] = f"Otel Bazlı Zimmet Stok Raporu - {rapor.get('rapor_tarihi', '')}"
-    ws[f'A{row}'].font = Font(bold=True, size=14)
-    ws[f'A{row}'].alignment = center_align
-    row += 2
-    
     # Her otel için tablo
     for otel in rapor.get('oteller', []):
-        # Otel adı
-        ws.merge_cells(f'A{row}:H{row}')
-        ws[f'A{row}'] = f"🏨 {otel['otel_ad']}"
-        ws[f'A{row}'].font = otel_font
-        row += 1
+        # Otel başlık satırı yüksekliği
+        ws.row_dimensions[row].height = 45
+        
+        # Otel Logosu (A sütunu)
+        if otel.get('otel_logo'):
+            try:
+                logo_data = otel['otel_logo']
+                if ',' in logo_data:
+                    logo_data = logo_data.split(',')[1]
+                
+                logo_bytes = base64.b64decode(logo_data)
+                logo_stream = io.BytesIO(logo_bytes)
+                
+                img = XLImage(logo_stream)
+                img.width = 50
+                img.height = 40
+                ws.add_image(img, f'A{row}')
+            except:
+                pass
+        
+        # Otel Adı (B sütunu)
+        ws[f'B{row}'] = otel['otel_ad']
+        ws[f'B{row}'].font = title_font
+        ws[f'B{row}'].alignment = left_align
+        
+        # Rapor Adı (C-D sütunları)
+        ws.merge_cells(f'C{row}:E{row}')
+        ws[f'C{row}'] = "Zimmet Stok Raporu"
+        ws[f'C{row}'].font = subtitle_font
+        ws[f'C{row}'].alignment = left_align
+        
+        # Tarih (F-G sütunları)
+        ws.merge_cells(f'F{row}:I{row}')
+        ws[f'F{row}'] = f"📅 {rapor.get('rapor_tarihi', '')}"
+        ws[f'F{row}'].font = date_font
+        ws[f'F{row}'].alignment = right_align
+        
+        # Header altı çizgi
+        for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']:
+            ws[f'{col}{row}'].border = header_border
+        
+        row += 2
         
         # Tablo başlıkları
-        headers = ['Ürün', 'Birim', 'Toplam', 'Kullanılan', 'Kalan', 'Kritik Seviye', 'Kullanım %', 'Durum']
+        headers = ['', 'Ürün', 'Birim', 'Toplam', 'Kullanılan', 'Kalan', 'Kritik Seviye', 'Kullanım %', 'Durum']
         for col, header in enumerate(headers, 1):
             cell = ws.cell(row=row, column=col, value=header)
             cell.font = header_font
@@ -1424,24 +1474,25 @@ def export_otel_zimmet_stok_excel(rapor):
         
         # Ürün verileri
         for urun in otel.get('urunler', []):
-            ws.cell(row=row, column=1, value=urun['urun_adi']).border = thin_border
-            ws.cell(row=row, column=2, value=urun['birim']).border = thin_border
-            ws.cell(row=row, column=2).alignment = center_align
-            ws.cell(row=row, column=3, value=urun['toplam_miktar']).border = thin_border
+            ws.cell(row=row, column=1, value='').border = thin_border
+            ws.cell(row=row, column=2, value=urun['urun_adi']).border = thin_border
+            ws.cell(row=row, column=3, value=urun['birim']).border = thin_border
             ws.cell(row=row, column=3).alignment = center_align
-            ws.cell(row=row, column=4, value=urun['kullanilan_miktar']).border = thin_border
+            ws.cell(row=row, column=4, value=urun['toplam_miktar']).border = thin_border
             ws.cell(row=row, column=4).alignment = center_align
-            ws.cell(row=row, column=5, value=urun['kalan_miktar']).border = thin_border
+            ws.cell(row=row, column=5, value=urun['kullanilan_miktar']).border = thin_border
             ws.cell(row=row, column=5).alignment = center_align
-            ws.cell(row=row, column=6, value=urun['kritik_seviye']).border = thin_border
+            ws.cell(row=row, column=6, value=urun['kalan_miktar']).border = thin_border
             ws.cell(row=row, column=6).alignment = center_align
-            ws.cell(row=row, column=7, value=f"{urun['kullanim_yuzdesi']}%").border = thin_border
+            ws.cell(row=row, column=7, value=urun['kritik_seviye']).border = thin_border
             ws.cell(row=row, column=7).alignment = center_align
+            ws.cell(row=row, column=8, value=f"{urun['kullanim_yuzdesi']}%").border = thin_border
+            ws.cell(row=row, column=8).alignment = center_align
             
             # Durum
             durum_map = {'stokout': 'TÜKENDİ', 'kritik': 'KRİTİK', 'dikkat': 'DİKKAT', 'normal': 'NORMAL'}
             durum = durum_map.get(urun['stok_durumu'], 'NORMAL')
-            durum_cell = ws.cell(row=row, column=8, value=durum)
+            durum_cell = ws.cell(row=row, column=9, value=durum)
             durum_cell.border = thin_border
             durum_cell.alignment = center_align
             
@@ -1457,17 +1508,7 @@ def export_otel_zimmet_stok_excel(rapor):
             
             row += 1
         
-        row += 1  # Oteller arası boşluk
-    
-    # Sütun genişlikleri
-    ws.column_dimensions['A'].width = 30
-    ws.column_dimensions['B'].width = 10
-    ws.column_dimensions['C'].width = 12
-    ws.column_dimensions['D'].width = 12
-    ws.column_dimensions['E'].width = 12
-    ws.column_dimensions['F'].width = 14
-    ws.column_dimensions['G'].width = 12
-    ws.column_dimensions['H'].width = 12
+        row += 2  # Oteller arası boşluk
     
     # Excel dosyasını oluştur
     excel_buffer = io.BytesIO()

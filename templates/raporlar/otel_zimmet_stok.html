@@ -63,13 +63,43 @@ content %}
   <!-- Otel Bazlı Detaylar -->
   {% for otel in rapor_verisi.oteller %}
   <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+    <!-- Otel Başlığı - Logo | Otel Adı | Tarih -->
     <div
       class="px-4 py-4 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700"
     >
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-          <i class="fas fa-hotel mr-2 text-blue-600"></i>{{ otel.otel_ad }}
-        </h3>
+        <!-- Sol: Logo -->
+        <div class="flex items-center gap-4">
+          {% if otel.otel_logo %}
+          <img
+            src="data:image/png;base64,{{ otel.otel_logo }}"
+            alt="{{ otel.otel_ad }}"
+            class="w-12 h-12 object-contain rounded"
+          />
+          {% else %}
+          <div
+            class="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center"
+          >
+            <i class="fas fa-hotel text-slate-400 text-xl"></i>
+          </div>
+          {% endif %}
+
+          <!-- Otel Adı -->
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+              {{ otel.otel_ad }}
+            </h3>
+            <p class="text-xs text-slate-500">Zimmet Stok Durumu</p>
+          </div>
+        </div>
+
+        <!-- Sağ: Tarih -->
+        <div class="text-right">
+          <div class="text-xs text-slate-400">📅</div>
+          <div class="text-sm font-medium text-slate-700 dark:text-slate-300">
+            {{ rapor_verisi.rapor_tarihi }}
+          </div>
+        </div>
       </div>
     </div>
     <div class="overflow-x-auto">
