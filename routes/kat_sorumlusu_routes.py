@@ -523,37 +523,29 @@ def register_kat_sorumlusu_routes(app):
                 OdaTipiNotFoundError,
                 SetupNotFoundError
             )
+            from models import OtelZimmetStok
             
             # Oda setup durumunu getir
             sonuc = oda_setup_durumu_getir(oda_id)
             
-            # Kat sorumlusunun zimmet stoklarını getir
+            # Kat sorumlusunun OTEL BAZLI zimmet stoklarını getir
             kullanici_id = session.get('kullanici_id')
-            
-            # Tüm aktif zimmetleri bul (birden fazla olabilir)
-            aktif_zimmetler = PersonelZimmet.query.filter_by(
-                personel_id=kullanici_id,
-                durum='aktif'
-            ).all()
+            kullanici = Kullanici.query.get(kullanici_id)
             
             zimmet_stoklar = {}
-            for aktif_zimmet in aktif_zimmetler:
-                zimmet_detaylar = PersonelZimmetDetay.query.filter_by(
-                    zimmet_id=aktif_zimmet.id
-                ).all()
+            
+            if kullanici and kullanici.otel_id:
+                # Otel bazlı ortak zimmet deposundan stokları çek
+                otel_stoklar = OtelZimmetStok.query.filter_by(
+                    otel_id=kullanici.otel_id
+                ).filter(OtelZimmetStok.kalan_miktar > 0).all()
                 
-                for detay in zimmet_detaylar:
-                    kalan = detay.kalan_miktar if detay.kalan_miktar is not None else (detay.miktar - detay.kullanilan_miktar)
-                    urun_key = str(detay.urun_id)
-                    
-                    # Aynı üründen birden fazla zimmet varsa topla
-                    if urun_key in zimmet_stoklar:
-                        zimmet_stoklar[urun_key]['miktar'] += kalan
-                    else:
-                        zimmet_stoklar[urun_key] = {
-                            'miktar': kalan,
-                            'zimmet_detay_id': detay.id
-                        }
+                for stok in otel_stoklar:
+                    urun_key = str(stok.urun_id)
+                    zimmet_stoklar[urun_key] = {
+                        'miktar': stok.kalan_miktar,
+                        'otel_zimmet_stok_id': stok.id
+                    }
             
             sonuc['kat_sorumlusu_stok'] = zimmet_stoklar
             
@@ -886,12 +878,15 @@ def register_kat_sorumlusu_routes(app):
                 
                 yeni_miktar = stok_durumu['baslangic_stok'] + ekstra_miktar
                 
+                # otel_stok'tan kalan miktarı al
+                zimmet_kalan = otel_stok.kalan_miktar if otel_stok else 0
+                
                 return jsonify({
                     'success': True,
                     'message': 'Ekstra ürün başarıyla eklendi',
                     'yeni_miktar': yeni_miktar,
                     'ekstra_miktar': ekstra_miktar,
-                    'zimmet_kalan': zimmet_detay.kalan_miktar
+                    'zimmet_kalan': zimmet_kalan
                 })
                 
             except ZimmetStokYetersizError as e:
