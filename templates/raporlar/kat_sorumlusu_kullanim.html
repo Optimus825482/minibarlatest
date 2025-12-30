@@ -85,12 +85,12 @@
             <!-- Rapor Başlığı - Logo | Otel Adı + Rapor Adı | Tarih -->
             <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-200">
                 <!-- Sol: Logo -->
-                <div class="flex-shrink-0 w-16 h-16">
+                <div class="flex-shrink-0">
                     {% if rapor_verisi.otel_logo %}
-                    <img src="{{ rapor_verisi.otel_logo }}" alt="Otel Logo" class="w-16 h-16 object-contain rounded">
+                    <img src="{{ rapor_verisi.otel_logo }}" alt="{{ rapor_verisi.otel_adi }}" class="w-14 h-14 object-contain">
                     {% else %}
-                    <div class="w-16 h-16 bg-slate-100 rounded flex items-center justify-center">
-                        <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-14 h-14 bg-slate-100 rounded flex items-center justify-center">
+                        <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                         </svg>
                     </div>
@@ -105,7 +105,7 @@
                 
                 <!-- Sağ: Tarih -->
                 <div class="flex-shrink-0 text-right">
-                    <div class="text-slate-400 text-xs">📅</div>
+                    <div class="text-xs text-slate-400 mb-1">📅</div>
                     <div class="text-lg font-bold text-slate-800">{{ rapor_verisi.rapor_tarihi }}</div>
                 </div>
             </div>
