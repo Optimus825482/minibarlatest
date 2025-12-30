@@ -2911,6 +2911,7 @@ def register_api_routes(app):
             urunler = []
             for s in stoklar:
                 urunler.append({
+                    'urun_id': s.urun_id,
                     'urun_adi': s.urun.urun_adi if s.urun else 'Bilinmiyor',
                     'eklenen': s.toplam_miktar,
                     'onceki': 0,
@@ -3174,4 +3175,102 @@ def register_api_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, modul='api_zimmet_ata')
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+
+    @app.route('/api/otel-zimmet-iptal', methods=['POST'])
+    @login_required
+    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    def api_otel_zimmet_iptal():
+        """Otel zimmet stoğundan ürün iptal et - Ana depoya geri ekler
+        
+        Sadece kullanılmamış (kalan_miktar >= iptal_miktar) ürünler iptal edilebilir.
+        İptal edilen miktar ana depoya FIFO ile geri eklenir.
+        """
+        try:
+            from models import OtelZimmetStok, UrunStok
+            from utils.fifo_servisler import FifoStokServisi
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({'success': False, 'error': 'Geçersiz veri'}), 400
+            
+            otel_id = data.get('otel_id')
+            urun_id = data.get('urun_id')
+            iptal_miktar = data.get('miktar', 0)
+            
+            if not otel_id or not urun_id or iptal_miktar <= 0:
+                return jsonify({'success': False, 'error': 'Otel, ürün ve miktar gerekli'}), 400
+            
+            # Otel zimmet stoğunu kontrol et
+            stok = OtelZimmetStok.query.filter_by(otel_id=otel_id, urun_id=urun_id).first()
+            
+            if not stok:
+                return jsonify({'success': False, 'error': 'Bu ürün için zimmet kaydı bulunamadı'}), 404
+            
+            # Kalan miktar kontrolü - sadece kullanılmamış miktar iptal edilebilir
+            if stok.kalan_miktar < iptal_miktar:
+                urun = db.session.get(Urun, urun_id)
+                urun_adi = urun.urun_adi if urun else 'Bilinmiyor'
+                return jsonify({
+                    'success': False, 
+                    'error': f'İptal edilecek miktar kalan stoktan fazla! {urun_adi}: Kalan {stok.kalan_miktar}, İptal istenen {iptal_miktar}'
+                }), 400
+            
+            # Otel zimmet stoğundan düş
+            stok.toplam_miktar -= iptal_miktar
+            stok.kalan_miktar -= iptal_miktar
+            stok.son_guncelleme = get_kktc_now()
+            
+            # Ana depoya FIFO ile geri ekle
+            fifo_sonuc = FifoStokServisi.fifo_stok_giris(
+                otel_id=otel_id,
+                urun_id=urun_id,
+                miktar=iptal_miktar,
+                islem_tipi='zimmet_iade',
+                referans_id=stok.id,
+                kullanici_id=session.get('kullanici_id'),
+                birim_fiyat=0  # İade olduğu için fiyat 0
+            )
+            
+            if not fifo_sonuc.get('success'):
+                db.session.rollback()
+                return jsonify({
+                    'success': False, 
+                    'error': f'Ana depoya iade hatası: {fifo_sonuc.get("message", "Bilinmeyen hata")}'
+                }), 400
+            
+            # Eğer stok tamamen sıfırlandıysa kaydı sil
+            if stok.toplam_miktar <= 0 and stok.kalan_miktar <= 0:
+                db.session.delete(stok)
+            
+            db.session.commit()
+            
+            # Güncel ana depo stoğunu al
+            ana_depo_stok = UrunStok.query.filter_by(otel_id=otel_id, urun_id=urun_id).first()
+            yeni_ana_depo_stok = ana_depo_stok.mevcut_stok if ana_depo_stok else 0
+            
+            urun = db.session.get(Urun, urun_id)
+            urun_adi = urun.urun_adi if urun else 'Bilinmiyor'
+            
+            log_islem('iptal', 'otel_zimmet_stok', {
+                'otel_id': otel_id,
+                'urun_id': urun_id,
+                'urun_adi': urun_adi,
+                'iptal_miktar': iptal_miktar,
+                'yeni_zimmet_toplam': stok.toplam_miktar if stok else 0,
+                'yeni_ana_depo': yeni_ana_depo_stok
+            })
+            
+            return jsonify({
+                'success': True,
+                'message': f'{iptal_miktar} adet {urun_adi} zimmet iptali yapıldı ve ana depoya iade edildi',
+                'yeni_zimmet_toplam': stok.toplam_miktar if stok else 0,
+                'yeni_zimmet_kalan': stok.kalan_miktar if stok else 0,
+                'ana_depo_stok': yeni_ana_depo_stok
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            log_hata(e, modul='api_otel_zimmet_iptal')
             return jsonify({'success': False, 'error': str(e)}), 500
