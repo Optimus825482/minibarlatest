@@ -1,14 +1,12 @@
 {% extends "base.html" %} {% block title %}Stoklarım - Minibar Takip Sistemi{%
 endblock %} {% block page_title %}Stoklarım{% endblock %} {% block content %}
 <div class="space-y-6">
-  {% if not otel_secenekleri or otel_secenekleri|length <= 1 or secili_otel_id
-  %}
   <!-- Başlık ve İstatistikler -->
   <div
     class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6"
   >
     <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-      Depo Stok Durumu
+      Depo Stok Durumu {% if secili_otel_id %}<span class="text-lg font-normal text-slate-500">(Seçili Otel)</span>{% else %}<span class="text-lg font-normal text-slate-500">(Tüm Oteller)</span>{% endif %}
     </h2>
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -304,4 +302,4 @@ endblock %} {% block page_title %}Stoklarım{% endblock %} {% block content %}
     filtrele();
   }
 </script>
-{% endif %} {% endblock %}
+{% endblock %}
