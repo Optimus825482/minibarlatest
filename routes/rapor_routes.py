@@ -2114,3 +2114,191 @@ def otel_karsilastirma_raporu_olustur():
 
 # Üçüncü register_rapor_routes tanımı kaldırıldı - duplicate temizliği (29.12.2025)
 # Sadece dosya başındaki (satır 41) tanım kullanılıyor
+
+
+# =====================================================
+# KAT SORUMLUSU GÜN SONU RAPORU (Kendi Oteli İçin)
+# =====================================================
+
+@raporlar_bp.route('/kat-sorumlusu/gun-sonu-raporum')
+@login_required
+@role_required('kat_sorumlusu')
+def kat_sorumlusu_gun_sonu_raporum():
+    """Kat sorumlusu kendi gün sonu raporunu görüntüler"""
+    from flask import session
+    try:
+        kullanici_id = session.get('kullanici_id')
+        kullanici = Kullanici.query.get(kullanici_id)
+        
+        if not kullanici or not kullanici.otel_id:
+            flash('Otel atamanız bulunamadı.', 'danger')
+            return redirect(url_for('kat_sorumlusu_dashboard'))
+        
+        # Kat sorumlusunun oteli
+        otel = Otel.query.get(kullanici.otel_id)
+        
+        # Aynı oteldeki diğer kat sorumluları
+        personeller = Kullanici.query.filter(
+            Kullanici.rol == 'kat_sorumlusu',
+            Kullanici.aktif.is_(True),
+            Kullanici.otel_id == kullanici.otel_id
+        ).order_by(Kullanici.ad, Kullanici.soyad).all()
+        
+        return render_template('raporlar/kat_sorumlusu_gun_sonu_raporum.html',
+                             otel=otel,
+                             personeller=personeller,
+                             current_user_id=kullanici_id)
+    except Exception as e:
+        log_hata(e, modul='kat_sorumlusu_gun_sonu_raporum')
+        flash('Sayfa yüklenirken hata oluştu.', 'danger')
+        return redirect(url_for('kat_sorumlusu_dashboard'))
+
+
+@raporlar_bp.route('/kat-sorumlusu/gun-sonu-raporum-olustur', methods=['POST'])
+@login_required
+@role_required('kat_sorumlusu')
+def kat_sorumlusu_gun_sonu_raporum_olustur():
+    """Kat sorumlusu gün sonu raporu oluştur"""
+    from flask import session
+    from utils.rapor_servisleri import KatSorumlusuGunSonuRaporServisi
+    
+    try:
+        kullanici_id = session.get('kullanici_id')
+        kullanici = Kullanici.query.get(kullanici_id)
+        
+        if not kullanici or not kullanici.otel_id:
+            flash('Otel atamanız bulunamadı.', 'danger')
+            return redirect(url_for('kat_sorumlusu_dashboard'))
+        
+        otel_id = kullanici.otel_id
+        personel_ids_str = request.form.get('personel_ids', '')
+        tarih_str = request.form.get('tarih')
+        export_format = request.form.get('format', '')
+        
+        # Personel ID'lerini parse et
+        personel_ids = [int(x) for x in personel_ids_str.split(',') if x.strip().isdigit()] if personel_ids_str else None
+        
+        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date() if tarih_str else date.today()
+        
+        rapor = KatSorumlusuGunSonuRaporServisi.get_gun_sonu_raporu(
+            otel_id=otel_id,
+            personel_ids=personel_ids,
+            tarih=tarih
+        )
+        
+        if not rapor['success']:
+            flash(rapor.get('message', 'Rapor oluşturulamadı'), 'danger')
+            return redirect(url_for('raporlar.kat_sorumlusu_gun_sonu_raporum'))
+        
+        # Excel export
+        if export_format == 'excel':
+            return export_gun_sonu_excel(rapor)
+        
+        # PDF export
+        if export_format == 'pdf':
+            return export_gun_sonu_pdf(rapor)
+        
+        otel = Otel.query.get(otel_id)
+        personeller = Kullanici.query.filter(
+            Kullanici.rol == 'kat_sorumlusu',
+            Kullanici.aktif.is_(True),
+            Kullanici.otel_id == otel_id
+        ).order_by(Kullanici.ad, Kullanici.soyad).all()
+        
+        log_islem('view', 'kat_sorumlusu_gun_sonu_raporum', {
+            'otel_id': otel_id, 'tarih': tarih_str
+        })
+        
+        return render_template('raporlar/kat_sorumlusu_gun_sonu_raporum.html',
+                             otel=otel,
+                             personeller=personeller,
+                             rapor_verisi=rapor,
+                             secili_tarih=tarih_str,
+                             current_user_id=kullanici_id)
+        
+    except Exception as e:
+        log_hata(e, modul='kat_sorumlusu_gun_sonu_raporum_olustur')
+        flash('Rapor oluşturulamadı.', 'danger')
+        return redirect(url_for('raporlar.kat_sorumlusu_gun_sonu_raporum'))
+
+
+@raporlar_bp.route('/kat-sorumlusu/gun-sonu-excel')
+@login_required
+@role_required('kat_sorumlusu')
+def kat_sorumlusu_gun_sonu_excel():
+    """Kat sorumlusu gün sonu raporu Excel export"""
+    from flask import session
+    from utils.rapor_servisleri import KatSorumlusuGunSonuRaporServisi
+    
+    try:
+        kullanici_id = session.get('kullanici_id')
+        kullanici = Kullanici.query.get(kullanici_id)
+        
+        if not kullanici or not kullanici.otel_id:
+            flash('Otel atamanız bulunamadı.', 'danger')
+            return redirect(url_for('raporlar.kat_sorumlusu_gun_sonu_raporum'))
+        
+        otel_id = kullanici.otel_id
+        personel_ids_str = request.args.get('personel_ids', '')
+        tarih_str = request.args.get('tarih')
+        
+        personel_ids = [int(x) for x in personel_ids_str.split(',') if x.strip().isdigit()] if personel_ids_str else None
+        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date() if tarih_str else date.today()
+        
+        rapor = KatSorumlusuGunSonuRaporServisi.get_gun_sonu_raporu(
+            otel_id=otel_id,
+            personel_ids=personel_ids,
+            tarih=tarih
+        )
+        
+        if not rapor['success']:
+            flash('Rapor oluşturulamadı.', 'danger')
+            return redirect(url_for('raporlar.kat_sorumlusu_gun_sonu_raporum'))
+        
+        return export_gun_sonu_excel(rapor)
+        
+    except Exception as e:
+        log_hata(e, modul='kat_sorumlusu_gun_sonu_excel')
+        flash('Excel export başarısız.', 'danger')
+        return redirect(url_for('raporlar.kat_sorumlusu_gun_sonu_raporum'))
+
+
+@raporlar_bp.route('/kat-sorumlusu/gun-sonu-pdf')
+@login_required
+@role_required('kat_sorumlusu')
+def kat_sorumlusu_gun_sonu_pdf():
+    """Kat sorumlusu gün sonu raporu PDF export"""
+    from flask import session
+    from utils.rapor_servisleri import KatSorumlusuGunSonuRaporServisi
+    
+    try:
+        kullanici_id = session.get('kullanici_id')
+        kullanici = Kullanici.query.get(kullanici_id)
+        
+        if not kullanici or not kullanici.otel_id:
+            flash('Otel atamanız bulunamadı.', 'danger')
+            return redirect(url_for('raporlar.kat_sorumlusu_gun_sonu_raporum'))
+        
+        otel_id = kullanici.otel_id
+        personel_ids_str = request.args.get('personel_ids', '')
+        tarih_str = request.args.get('tarih')
+        
+        personel_ids = [int(x) for x in personel_ids_str.split(',') if x.strip().isdigit()] if personel_ids_str else None
+        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date() if tarih_str else date.today()
+        
+        rapor = KatSorumlusuGunSonuRaporServisi.get_gun_sonu_raporu(
+            otel_id=otel_id,
+            personel_ids=personel_ids,
+            tarih=tarih
+        )
+        
+        if not rapor['success']:
+            flash('Rapor oluşturulamadı.', 'danger')
+            return redirect(url_for('raporlar.kat_sorumlusu_gun_sonu_raporum'))
+        
+        return export_gun_sonu_pdf(rapor)
+        
+    except Exception as e:
+        log_hata(e, modul='kat_sorumlusu_gun_sonu_pdf')
+        flash('PDF export başarısız.', 'danger')
+        return redirect(url_for('raporlar.kat_sorumlusu_gun_sonu_raporum'))

@@ -1,0 +1,361 @@
+{% extends "base.html" %} {% block title %}Gün Sonu Raporum{% endblock %} {%
+block page_title %}Gün Sonu Raporum{% endblock %} {% block content %}
+<div class="space-y-6">
+  <!-- Rapor Filtre Formu -->
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3 class="text-lg leading-6 font-medium text-slate-900 mb-4">
+        <span class="text-blue-600">{{ otel.ad }}</span> - Gün Sonu Raporu
+      </h3>
+
+      <form
+        method="POST"
+        action="{{ url_for('raporlar.kat_sorumlusu_gun_sonu_raporum_olustur') }}"
+        id="raporForm"
+      >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <!-- Tarih Seçimi -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label
+              for="tarih"
+              class="block text-sm font-medium text-slate-700 mb-1"
+            >
+              Tarih <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              id="tarih"
+              name="tarih"
+              required
+              value="{{ secili_tarih or today }}"
+              class="h-11 appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            />
+          </div>
+          <div class="flex items-end">
+            <button
+              type="submit"
+              class="h-11 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <svg
+                class="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                ></path>
+              </svg>
+              Rapor Oluştur
+            </button>
+          </div>
+        </div>
+
+        <!-- Kat Sorumluları Checkbox'ları -->
+        <div class="mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-sm font-medium text-slate-700">
+              Kat Sorumluları (Opsiyonel - boş bırakılırsa tümü)
+            </label>
+            <button
+              type="button"
+              id="tumunuSecBtn"
+              class="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium rounded-md border border-blue-200 transition-colors"
+            >
+              Tümünü Seç/Kaldır
+            </button>
+          </div>
+
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <div class="flex flex-wrap gap-3">
+              {% for p in personeller %}
+              <label
+                class="inline-flex items-center cursor-pointer bg-white px-3 py-2 rounded-md border border-slate-200 hover:bg-blue-50 hover:border-blue-300 transition-colors {% if p.id == current_user_id %}ring-2 ring-blue-400{% endif %}"
+              >
+                <input type="checkbox" name="personel_checkbox" value="{{ p.id
+                }}" class="h-4 w-4 text-blue-600 border-slate-300 rounded
+                focus:ring-blue-500" {% if p.id == current_user_id %}checked{%
+                endif %}>
+                <span class="ml-2 text-sm text-slate-700">
+                  {{ p.ad }} {{ p.soyad }} {% if p.id == current_user_id %}<span
+                    class="text-blue-600 font-medium"
+                    >(Ben)</span
+                  >{% endif %}
+                </span>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+          <input type="hidden" id="personel_ids" name="personel_ids" value="" />
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% if rapor_verisi %}
+  <!-- Rapor Sonuçları -->
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <!-- Rapor Başlığı -->
+      <div class="text-center mb-6 pb-4 border-b border-slate-200">
+        <h2 class="text-2xl font-bold text-blue-800">
+          {{ rapor_verisi.otel_adi }}
+        </h2>
+        <h3 class="text-lg font-semibold text-slate-700 mt-1">
+          Gün Sonu Raporu
+        </h3>
+        <p class="text-slate-600 mt-1">{{ rapor_verisi.rapor_tarihi }}</p>
+        <p class="text-xs text-slate-400 mt-1">
+          Oluşturulma: {{ rapor_verisi.olusturma_zamani }}
+        </p>
+      </div>
+
+      <!-- Export Butonları -->
+      <div class="flex justify-end gap-2 mb-4">
+        <button
+          type="button"
+          onclick="exportExcel()"
+          class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+        >
+          <svg
+            class="w-4 h-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            ></path>
+          </svg>
+          Excel
+        </button>
+        <button
+          type="button"
+          onclick="exportPDF()"
+          class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+        >
+          <svg
+            class="w-4 h-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            ></path>
+          </svg>
+          PDF
+        </button>
+      </div>
+
+      {% if rapor_verisi.personeller %}
+      <!-- Her Personel İçin Bölüm -->
+      {% for personel in rapor_verisi.personeller %}
+      <div class="mb-6">
+        <!-- Personel Başlığı -->
+        <div
+          class="bg-slate-700 text-white px-4 py-3 rounded-t-lg flex justify-between items-center"
+        >
+          <span class="font-semibold">{{ personel.personel_adi }}</span>
+          <span
+            class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-bold"
+          >
+            Toplam: {{ personel.toplam_eklenen }} adet
+          </span>
+        </div>
+
+        <!-- Ürün Tablosu -->
+        <div
+          class="overflow-x-auto border border-t-0 border-slate-200 rounded-b-lg"
+        >
+          <table class="min-w-full divide-y divide-slate-200">
+            <thead class="bg-slate-600">
+              <tr>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider"
+                >
+                  Ürün Adı
+                </th>
+                <th
+                  class="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider"
+                >
+                  Minibarlara Eklenen
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-slate-200">
+              {% for urun in personel.urunler %}
+              <tr class="hover:bg-slate-50">
+                <td class="px-4 py-3 text-sm text-slate-900">
+                  {{ urun.urun_adi }}
+                </td>
+                <td
+                  class="px-4 py-3 text-sm text-slate-900 text-center font-semibold"
+                >
+                  {{ urun.toplam_eklenen }}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="2" class="px-4 py-8 text-center text-slate-500">
+                  Bu personel için kayıt bulunamadı
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endfor %}
+
+      <!-- Genel Toplam -->
+      {% if rapor_verisi.genel_toplam %}
+      <div class="mt-8">
+        <div
+          class="bg-slate-800 text-white px-4 py-3 rounded-t-lg flex justify-between items-center"
+        >
+          <span class="font-bold text-lg">GENEL TOPLAM</span>
+          <span
+            class="bg-slate-100 text-slate-800 px-3 py-1 rounded-full text-sm font-bold"
+          >
+            {{ rapor_verisi.genel_toplam_adet }} adet
+          </span>
+        </div>
+
+        <div
+          class="overflow-x-auto border border-t-0 border-slate-200 rounded-b-lg"
+        >
+          <table class="min-w-full divide-y divide-slate-200">
+            <thead class="bg-slate-700">
+              <tr>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider"
+                >
+                  Ürün Adı
+                </th>
+                <th
+                  class="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider"
+                >
+                  Toplam Eklenen
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-slate-200">
+              {% for urun in rapor_verisi.genel_toplam %}
+              <tr class="hover:bg-amber-50">
+                <td class="px-4 py-3 text-sm text-slate-900 font-medium">
+                  {{ urun.urun_adi }}
+                </td>
+                <td
+                  class="px-4 py-3 text-sm text-slate-900 text-center font-bold"
+                >
+                  {{ urun.toplam_eklenen }}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %} {% else %}
+      <div class="text-center py-12">
+        <svg
+          class="mx-auto h-12 w-12 text-slate-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          ></path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-slate-900">Veri Bulunamadı</h3>
+        <p class="mt-1 text-sm text-slate-500">
+          Seçilen tarih ve kriterlere uygun kayıt bulunamadı.
+        </p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %} {% block extra_scripts %}
+<script>
+  // Bugünün tarihini ayarla
+  document.addEventListener("DOMContentLoaded", function () {
+    const tarihInput = document.getElementById("tarih");
+    if (!tarihInput.value) {
+      const today = new Date().toISOString().split("T")[0];
+      tarihInput.value = today;
+    }
+
+    // Mevcut kullanıcıyı default seç
+    updatePersonelIds();
+  });
+
+  // Tümünü Seç/Kaldır butonu
+  document
+    .getElementById("tumunuSecBtn")
+    .addEventListener("click", function () {
+      const checkboxes = document.querySelectorAll(
+        'input[name="personel_checkbox"]'
+      );
+      if (checkboxes.length === 0) return;
+
+      const allChecked = Array.from(checkboxes).every((cb) => cb.checked);
+
+      checkboxes.forEach((cb) => {
+        cb.checked = !allChecked;
+      });
+
+      updatePersonelIds();
+    });
+
+  // Checkbox değişikliklerini dinle
+  document.querySelectorAll('input[name="personel_checkbox"]').forEach((cb) => {
+    cb.addEventListener("change", updatePersonelIds);
+  });
+
+  // Seçili personel ID'lerini güncelle
+  function updatePersonelIds() {
+    const checkboxes = document.querySelectorAll(
+      'input[name="personel_checkbox"]:checked'
+    );
+    const selectedIds = Array.from(checkboxes).map((cb) => cb.value);
+    document.getElementById("personel_ids").value = selectedIds.join(",");
+  }
+
+  // Form submit öncesi personel ID'lerini güncelle
+  document.getElementById("raporForm").addEventListener("submit", function (e) {
+    updatePersonelIds();
+  });
+
+  // Excel Export
+  function exportExcel() {
+    const tarih = document.getElementById("tarih").value;
+    const personelIds = document.getElementById("personel_ids").value;
+    window.location.href = `/raporlar/kat-sorumlusu/gun-sonu-excel?tarih=${tarih}&personel_ids=${personelIds}`;
+  }
+
+  // PDF Export
+  function exportPDF() {
+    const tarih = document.getElementById("tarih").value;
+    const personelIds = document.getElementById("personel_ids").value;
+    window.location.href = `/raporlar/kat-sorumlusu/gun-sonu-pdf?tarih=${tarih}&personel_ids=${personelIds}`;
+  }
+</script>
+{% endblock %}
