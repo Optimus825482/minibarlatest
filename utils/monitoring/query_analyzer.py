@@ -438,8 +438,8 @@ def after_cursor_execute(conn, cursor, statement, parameters, context, executema
         # Execution time hesapla
         total_time = time.time() - conn.info['query_start_time'].pop(-1)
         
-        # Sadece yavaş query'leri logla (>0.1s) veya tüm query'leri loglamak için threshold'u kaldır
-        if total_time > 0.01:  # 10ms üzeri query'leri logla
+        # Sadece yavaş query'leri logla (>100ms) - performans için optimize edildi
+        if total_time > 0.1:  # 100ms üzeri query'leri logla
             # Flask request context varsa endpoint bilgisini al
             endpoint = None
             user_id = None
@@ -484,7 +484,7 @@ def after_cursor_execute(conn, cursor, statement, parameters, context, executema
 
 def setup_query_logging():
     """Query logging'i aktif et"""
-    logger.info("✅ SQLAlchemy query logging aktif edildi (threshold: 10ms)")
+    logger.info("✅ SQLAlchemy query logging aktif edildi (threshold: 100ms)")
 
 
 # Otomatik olarak aktif et
