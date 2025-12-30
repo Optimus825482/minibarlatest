@@ -1705,7 +1705,7 @@ def export_gun_sonu_excel(rapor):
         row += 1
         
         # Tablo başlıkları
-        headers = ['Ürün Adı', 'Minibarlara Eklenen', 'Eklenen Odalar']
+        headers = ['Ürün Adı', 'Minibarlara Eklenen']
         for col, header in enumerate(headers, 1):
             cell = ws.cell(row=row, column=col, value=header)
             cell.font = header_font
@@ -1721,10 +1721,6 @@ def export_gun_sonu_excel(rapor):
             cell = ws.cell(row=row, column=2, value=urun['toplam_eklenen'])
             cell.border = thin_border
             cell.alignment = center_align
-            
-            # Odaları listele
-            oda_listesi = ", ".join([f"{o['oda_no']}({o['miktar']})" for o in urun.get('odalar', [])])
-            ws.cell(row=row, column=3, value=oda_listesi).border = thin_border
             row += 1
         
         row += 1
@@ -1758,7 +1754,6 @@ def export_gun_sonu_excel(rapor):
     # Sütun genişlikleri
     ws.column_dimensions['A'].width = 30
     ws.column_dimensions['B'].width = 20
-    ws.column_dimensions['C'].width = 50
     
     # Excel dosyasını oluştur
     excel_buffer = io.BytesIO()
@@ -1866,12 +1861,11 @@ def export_gun_sonu_pdf(rapor):
         elements.append(personel_header)
         
         # Ürün tablosu
-        urun_data = [['Ürün Adı', 'Minibarlara Eklenen', 'Eklenen Odalar']]
+        urun_data = [['Ürün Adı', 'Minibarlara Eklenen']]
         for urun in personel.get('urunler', []):
-            oda_listesi = ", ".join([f"{o['oda_no']}({o['miktar']})" for o in urun.get('odalar', [])])
-            urun_data.append([urun['urun_adi'], str(urun['toplam_eklenen']), oda_listesi])
+            urun_data.append([urun['urun_adi'], str(urun['toplam_eklenen'])])
         
-        urun_table = Table(urun_data, colWidths=[6*cm, 4*cm, 8*cm])
+        urun_table = Table(urun_data, colWidths=[10*cm, 6*cm])
         urun_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#475569')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
