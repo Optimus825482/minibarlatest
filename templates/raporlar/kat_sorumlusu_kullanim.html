@@ -87,7 +87,7 @@
                 <!-- Sol: Logo -->
                 <div class="flex-shrink-0">
                     {% if rapor_verisi.otel_logo %}
-                    <img src="{{ rapor_verisi.otel_logo }}" alt="{{ rapor_verisi.otel_adi }}" class="w-14 h-14 object-contain">
+                    <img src="data:image/png;base64,{{ rapor_verisi.otel_logo }}" alt="{{ rapor_verisi.otel_adi }}" class="w-14 h-14 object-contain">
                     {% else %}
                     <div class="w-14 h-14 bg-slate-100 rounded flex items-center justify-center">
                         <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

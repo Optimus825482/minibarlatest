@@ -109,7 +109,7 @@ block page_title %}Gün Sonu Raporum{% endblock %} {% block content %}
         <div class="flex-shrink-0 w-16 h-16">
           {% if rapor_verisi.otel_logo %}
           <img
-            src="{{ rapor_verisi.otel_logo }}"
+            src="data:image/png;base64,{{ rapor_verisi.otel_logo }}"
             alt="Otel Logo"
             class="w-16 h-16 object-contain rounded"
           />
