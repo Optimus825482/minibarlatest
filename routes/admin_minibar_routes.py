@@ -61,42 +61,39 @@ def register_admin_minibar_routes(app):
             oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
             gruplar = UrunGrup.query.filter_by(aktif=True).order_by(UrunGrup.grup_adi).all()
             
-            # Otel seçilmeden stok listesi gösterme
-            stok_listesi = []
-            if otel_id:
-                # Stok durumlarını getir (depo + zimmet) - Otel bazlı
-                stok_listesi = get_depo_stok_durumu(grup_id=grup_id, depo_sorumlusu_id=depo_id, otel_id=otel_id)
-                
-                # Excel export
-                if export_format == 'excel':
-                    excel_buffer = export_depo_stok_excel(stok_listesi)
-                    if excel_buffer:
-                        from datetime import datetime
-                        filename = f'depo_stoklari_{get_kktc_now().strftime("%Y%m%d_%H%M%S")}.xlsx'
-                        
-                        # Log kaydı
-                        log_islem('export', 'depo_stoklari', {
-                            'format': 'excel',
-                            'otel_id': otel_id,
-                            'kayit_sayisi': len(stok_listesi)
-                        })
-                        
-                        return send_file(
-                            excel_buffer,
-                            as_attachment=True,
-                            download_name=filename,
-                            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                        )
-                    else:
-                        flash('Excel dosyası oluşturulamadı.', 'danger')
-                        return redirect(url_for('admin_depo_stoklari'))
-                
-                # Log kaydı
-                log_islem('goruntuleme', 'depo_stoklari', {
-                    'otel_id': otel_id,
-                    'depo_id': depo_id,
-                    'kayit_sayisi': len(stok_listesi)
-                })
+            # Stok durumlarını getir - otel_id None ise tüm oteller
+            stok_listesi = get_depo_stok_durumu(grup_id=grup_id, depo_sorumlusu_id=depo_id, otel_id=otel_id)
+            
+            # Excel export
+            if export_format == 'excel':
+                excel_buffer = export_depo_stok_excel(stok_listesi)
+                if excel_buffer:
+                    from datetime import datetime
+                    filename = f'depo_stoklari_{get_kktc_now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+                    
+                    # Log kaydı
+                    log_islem('export', 'depo_stoklari', {
+                        'format': 'excel',
+                        'otel_id': otel_id,
+                        'kayit_sayisi': len(stok_listesi)
+                    })
+                    
+                    return send_file(
+                        excel_buffer,
+                        as_attachment=True,
+                        download_name=filename,
+                        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    )
+                else:
+                    flash('Excel dosyası oluşturulamadı.', 'danger')
+                    return redirect(url_for('admin_depo_stoklari'))
+            
+            # Log kaydı
+            log_islem('goruntuleme', 'depo_stoklari', {
+                'otel_id': otel_id,
+                'depo_id': depo_id,
+                'kayit_sayisi': len(stok_listesi)
+            })
             
             return render_template('sistem_yoneticisi/depo_stoklari.html',
                                  stok_listesi=stok_listesi,

@@ -2020,29 +2020,39 @@ def register_depo_routes(app):
         try:
             from utils.authorization import get_kullanici_otelleri, get_otel_filtreleme_secenekleri
             from models import UrunStok
+            from sqlalchemy import func
             
             # Kullanıcının erişebileceği oteller
             kullanici_otelleri = get_kullanici_otelleri()
             otel_secenekleri = get_otel_filtreleme_secenekleri()
+            otel_ids = [o.id for o in kullanici_otelleri]
             
-            # Seçili otel
+            # Seçili otel (None = Tümü)
             secili_otel_id = request.args.get('otel_id', type=int)
-            if not secili_otel_id and kullanici_otelleri:
-                secili_otel_id = kullanici_otelleri[0].id
             
             # Tüm ürünleri getir
             urunler = Urun.query.filter_by(aktif=True).order_by(Urun.urun_adi).all()
             
-            # Otel bazlı stok bilgilerini getir (UrunStok tablosundan)
+            # Otel bazlı veya toplam stok bilgilerini getir
             otel_stok_map = {}
             if secili_otel_id:
+                # Tek otel seçili
                 otel_stoklar = UrunStok.query.filter_by(otel_id=secili_otel_id).all()
                 otel_stok_map = {stok.urun_id: stok.mevcut_stok for stok in otel_stoklar}
+            else:
+                # Tüm oteller - toplam stok
+                toplam_stoklar = db.session.query(
+                    UrunStok.urun_id,
+                    func.sum(UrunStok.mevcut_stok).label('toplam')
+                ).filter(
+                    UrunStok.otel_id.in_(otel_ids)
+                ).group_by(UrunStok.urun_id).all()
+                otel_stok_map = {row.urun_id: row.toplam or 0 for row in toplam_stoklar}
             
             # Her ürün için stok bilgilerini hesapla
             stok_bilgileri = []
             for urun in urunler:
-                # Otel bazlı stok
+                # Otel bazlı veya toplam stok
                 mevcut_stok = otel_stok_map.get(urun.id, 0)
                 
                 # Kritik seviye kontrolü
@@ -2737,35 +2747,57 @@ def register_depo_routes(app):
                 tedarik = mevcut_tedarik
                 tedarik_no = tedarik.tedarik_no
             else:
-                # Yeni tedarik kaydı oluştur
+                # Yeni tedarik kaydı oluştur - Race condition korumalı
                 yeni_kayit = True
                 tarih_str = get_kktc_now().strftime('%Y%m%d')
                 
-                # Bugünkü son tedarik numarasını bul
-                son_tedarik = AnaDepoTedarik.query.filter(
-                    AnaDepoTedarik.tedarik_no.like(f'ADT-{tarih_str}-%'),
-                    AnaDepoTedarik.otel_id == otel_id
-                ).order_by(desc(AnaDepoTedarik.tedarik_no)).first()
+                # Retry mekanizması ile unique constraint hatalarını önle
+                max_retry = 5
+                tedarik = None
                 
-                if son_tedarik:
-                    son_no = int(son_tedarik.tedarik_no.split('-')[-1])
-                    yeni_no = son_no + 1
-                else:
-                    yeni_no = 1
+                for retry in range(max_retry):
+                    try:
+                        # Bugünkü son tedarik numarasını bul (FOR UPDATE ile kilitle)
+                        son_tedarik = db.session.query(AnaDepoTedarik).filter(
+                            AnaDepoTedarik.tedarik_no.like(f'ADT-{tarih_str}-%'),
+                            AnaDepoTedarik.otel_id == otel_id
+                        ).order_by(desc(AnaDepoTedarik.tedarik_no)).with_for_update().first()
+                        
+                        if son_tedarik:
+                            son_no = int(son_tedarik.tedarik_no.split('-')[-1])
+                            yeni_no = son_no + 1
+                        else:
+                            yeni_no = 1
+                        
+                        # Retry durumunda numara artır
+                        yeni_no += retry
+                        
+                        tedarik_no = f'ADT-{tarih_str}-{yeni_no:03d}'
+                        
+                        tedarik = AnaDepoTedarik(
+                            tedarik_no=tedarik_no,
+                            otel_id=otel_id,
+                            depo_sorumlusu_id=session['kullanici_id'],
+                            aciklama=aciklama,
+                            toplam_urun_sayisi=0,
+                            toplam_miktar=0,
+                            durum='aktif'
+                        )
+                        db.session.add(tedarik)
+                        db.session.flush()
+                        break  # Başarılı, döngüden çık
+                        
+                    except Exception as e:
+                        if 'duplicate key' in str(e).lower() or 'unique' in str(e).lower():
+                            db.session.rollback()
+                            if retry == max_retry - 1:
+                                raise Exception(f'Tedarik numarası oluşturulamadı. Lütfen tekrar deneyin.')
+                            continue
+                        else:
+                            raise
                 
-                tedarik_no = f'ADT-{tarih_str}-{yeni_no:03d}'
-                
-                tedarik = AnaDepoTedarik(
-                    tedarik_no=tedarik_no,
-                    otel_id=otel_id,
-                    depo_sorumlusu_id=session['kullanici_id'],
-                    aciklama=aciklama,
-                    toplam_urun_sayisi=0,
-                    toplam_miktar=0,
-                    durum='aktif'
-                )
-                db.session.add(tedarik)
-                db.session.flush()
+                if not tedarik:
+                    return jsonify({'success': False, 'error': 'Tedarik kaydı oluşturulamadı'}), 500
             
             # Detayları, stok girişlerini ve FIFO kayıtlarını oluştur
             eklenen_urun_sayisi = 0

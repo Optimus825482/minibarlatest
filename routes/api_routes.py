@@ -2785,9 +2785,10 @@ def register_api_routes(app):
     @login_required
     @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
     def api_otel_zimmet_ekle():
-        """Otel zimmet stoğuna yeni ürün ekle veya mevcut stoğu artır"""
+        """Otel zimmet stoğuna yeni ürün ekle veya mevcut stoğu artır - Ana depodan düşer"""
         try:
-            from models import OtelZimmetStok
+            from models import OtelZimmetStok, UrunStok
+            from utils.fifo_servisler import FifoStokServisi
             
             data = request.get_json()
             if not data:
@@ -2800,7 +2801,35 @@ def register_api_routes(app):
             if not otel_id or not urun_id or miktar <= 0:
                 return jsonify({'success': False, 'error': 'Otel, ürün ve miktar gerekli'}), 400
             
-            # Mevcut stok var mı kontrol et
+            # Ana depo stok kontrolü
+            ana_depo_stok = UrunStok.query.filter_by(otel_id=otel_id, urun_id=urun_id).first()
+            mevcut_ana_depo = ana_depo_stok.mevcut_stok if ana_depo_stok else 0
+            
+            if mevcut_ana_depo < miktar:
+                urun = db.session.get(Urun, urun_id)
+                urun_adi = urun.urun_adi if urun else 'Bilinmiyor'
+                return jsonify({
+                    'success': False, 
+                    'error': f'Ana depoda yetersiz stok! {urun_adi}: Mevcut {mevcut_ana_depo}, İstenen {miktar}'
+                }), 400
+            
+            # FIFO ile ana depodan stok çıkışı yap
+            fifo_sonuc = FifoStokServisi.fifo_stok_cikis(
+                otel_id=otel_id,
+                urun_id=urun_id,
+                miktar=miktar,
+                islem_tipi='zimmet_transfer',
+                referans_id=None,
+                kullanici_id=session.get('kullanici_id')
+            )
+            
+            if not fifo_sonuc['success']:
+                return jsonify({
+                    'success': False, 
+                    'error': f'Stok çıkışı hatası: {fifo_sonuc["message"]}'
+                }), 400
+            
+            # Otel zimmet stoğuna ekle
             stok = OtelZimmetStok.query.filter_by(otel_id=otel_id, urun_id=urun_id).first()
             
             if stok:
@@ -2822,18 +2851,25 @@ def register_api_routes(app):
             
             db.session.commit()
             
+            # Güncel ana depo stoğunu al
+            ana_depo_stok = UrunStok.query.filter_by(otel_id=otel_id, urun_id=urun_id).first()
+            yeni_ana_depo_stok = ana_depo_stok.mevcut_stok if ana_depo_stok else 0
+            
             log_islem('ekleme', 'otel_zimmet_stok', {
                 'otel_id': otel_id,
                 'urun_id': urun_id,
                 'miktar': miktar,
-                'yeni_toplam': stok.toplam_miktar
+                'yeni_toplam': stok.toplam_miktar,
+                'ana_depo_onceki': mevcut_ana_depo,
+                'ana_depo_sonraki': yeni_ana_depo_stok
             })
             
             return jsonify({
                 'success': True,
-                'message': f'{miktar} adet ürün eklendi',
+                'message': f'{miktar} adet ürün eklendi (Ana depodan düşüldü)',
                 'yeni_toplam': stok.toplam_miktar,
-                'yeni_kalan': stok.kalan_miktar
+                'yeni_kalan': stok.kalan_miktar,
+                'ana_depo_stok': yeni_ana_depo_stok
             })
             
         except Exception as e:

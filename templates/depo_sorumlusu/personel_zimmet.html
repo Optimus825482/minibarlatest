@@ -331,7 +331,11 @@ async function miktarOnaylaVeKaydet() {
         const data = await response.json();
         if (data.success) {
             const urun = urunListesi.find(u => u.id == urunId);
-            if (urun) urun.otel_zimmet_stok = (urun.otel_zimmet_stok || 0) + miktar;
+            if (urun) {
+                urun.otel_zimmet_stok = (urun.otel_zimmet_stok || 0) + miktar;
+                // Ana depo stoğunu da düşür
+                urun.ana_depo_stok = data.ana_depo_stok !== undefined ? data.ana_depo_stok : Math.max(0, (urun.ana_depo_stok || 0) - miktar);
+            }
             urunleriRenderle(seciliGrup === '' ? urunListesi : urunListesi.filter(u => u.grup_id == seciliGrup));
             miktarModalKapat();
             bildirimGoster(`${formatSayi(miktar)} adet ürün otel zimmetine eklendi.`, 'success');

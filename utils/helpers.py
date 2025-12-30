@@ -701,13 +701,18 @@ def get_depo_stok_durumu(grup_id=None, depo_sorumlusu_id=None, otel_id=None):
         # Otel bazlı stok durumlarını hesapla (UrunStok tablosundan)
         depo_stok_map = {}
         if otel_id:
-            # Otel bazlı stok - UrunStok tablosundan
+            # Tek otel bazlı stok - UrunStok tablosundan
             stok_query = UrunStok.query.filter_by(otel_id=otel_id)
             for stok in stok_query.all():
                 depo_stok_map[stok.urun_id] = stok.mevcut_stok
         else:
-            # Eski yöntem - tüm stoklar (geriye uyumluluk)
-            depo_stok_map = get_stok_toplamlari([urun.id for urun in urunler])
+            # Tüm otellerin toplam stoğu
+            from sqlalchemy import func
+            toplam_stoklar = db.session.query(
+                UrunStok.urun_id,
+                func.sum(UrunStok.mevcut_stok).label('toplam')
+            ).group_by(UrunStok.urun_id).all()
+            depo_stok_map = {row.urun_id: row.toplam or 0 for row in toplam_stoklar}
         
         # Kat sorumlusu zimmet stoklarını hesapla
         zimmet_query = db.session.query(
