@@ -131,30 +131,41 @@ class KatSorumlusuGunSonuRaporServisi:
     def get_gun_sonu_raporu(
         otel_id: int,
         personel_ids: list = None,
-        tarih: date = None
+        tarih: date = None,
+        baslangic_tarihi: date = None,
+        bitis_tarihi: date = None
     ) -> dict:
         """
-        Kat sorumlusu gün sonu raporu
+        Kat sorumlusu gün sonu raporu - Tarih aralığı destekli
         
         Args:
             otel_id: Otel ID (zorunlu)
             personel_ids: Kat sorumlusu ID listesi (çoklu seçim)
-            tarih: Rapor tarihi (varsayılan: bugün)
+            tarih: Tek tarih için (geriye uyumluluk)
+            baslangic_tarihi: Tarih aralığı başlangıcı
+            bitis_tarihi: Tarih aralığı bitişi
             
         Returns:
             dict: Gün sonu rapor verisi
         """
         try:
-            if not tarih:
-                tarih = date.today()
+            # Tarih aralığı belirleme
+            if baslangic_tarihi and bitis_tarihi:
+                # Tarih aralığı modu
+                tarih_baslangic = datetime.combine(baslangic_tarihi, datetime.min.time())
+                tarih_bitis = datetime.combine(bitis_tarihi, datetime.max.time())
+                rapor_tarihi_str = f"{baslangic_tarihi.strftime('%d.%m.%Y')} - {bitis_tarihi.strftime('%d.%m.%Y')}"
+            else:
+                # Tek tarih modu (geriye uyumluluk)
+                if not tarih:
+                    tarih = date.today()
+                tarih_baslangic = datetime.combine(tarih, datetime.min.time())
+                tarih_bitis = datetime.combine(tarih, datetime.max.time())
+                rapor_tarihi_str = tarih.strftime('%d.%m.%Y')
             
             otel = Otel.query.get(otel_id)
             if not otel:
                 return {'success': False, 'message': 'Otel bulunamadı'}
-            
-            # Tarih aralığı: Seçilen günün başı ve sonu
-            tarih_baslangic = datetime.combine(tarih, datetime.min.time())
-            tarih_bitis = datetime.combine(tarih, datetime.max.time())
             
             # Kat sorumlularını getir
             kat_sorumlusu_query = Kullanici.query.filter(
@@ -172,7 +183,7 @@ class KatSorumlusuGunSonuRaporServisi:
                 return {
                     'success': True,
                     'otel_adi': otel.ad,
-                    'rapor_tarihi': tarih.strftime('%d.%m.%Y'),
+                    'rapor_tarihi': rapor_tarihi_str,
                     'olusturma_zamani': get_kktc_now().strftime('%d.%m.%Y %H:%M'),
                     'personeller': [],
                     'genel_toplam': []
@@ -251,7 +262,7 @@ class KatSorumlusuGunSonuRaporServisi:
                 'otel_id': otel_id,
                 'otel_adi': otel.ad,
                 'otel_logo': otel.logo if otel.logo else None,
-                'rapor_tarihi': tarih.strftime('%d.%m.%Y'),
+                'rapor_tarihi': rapor_tarihi_str,
                 'olusturma_zamani': get_kktc_now().strftime('%d.%m.%Y %H:%M'),
                 'personeller': personel_raporlari,
                 'genel_toplam': genel_toplam_listesi,

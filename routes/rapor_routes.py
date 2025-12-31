@@ -1568,25 +1568,28 @@ def api_otel_kat_sorumlulari(otel_id):
 @login_required
 @role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
 def kat_sorumlusu_kullanim_raporu_olustur():
-    """Kat sorumlusu gün sonu raporu oluştur"""
+    """Kat sorumlusu gün sonu raporu oluştur - Tarih aralığı destekli"""
     try:
         from utils.rapor_servisleri import KatSorumlusuGunSonuRaporServisi
         
         otel_id = request.form.get('otel_id', type=int)
         personel_ids = request.form.getlist('personel_ids[]', type=int)
-        tarih_str = request.form.get('tarih')
+        baslangic_str = request.form.get('baslangic_tarihi')
+        bitis_str = request.form.get('bitis_tarihi')
         export_format = request.form.get('format', '')
         
         if not otel_id:
             flash('Lütfen otel seçin.', 'warning')
             return redirect(url_for('raporlar.kat_sorumlusu_kullanim_raporlari'))
         
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date() if tarih_str else date.today()
+        baslangic_tarihi = datetime.strptime(baslangic_str, '%Y-%m-%d').date() if baslangic_str else date.today()
+        bitis_tarihi = datetime.strptime(bitis_str, '%Y-%m-%d').date() if bitis_str else date.today()
         
         rapor = KatSorumlusuGunSonuRaporServisi.get_gun_sonu_raporu(
             otel_id=otel_id,
             personel_ids=personel_ids if personel_ids else None,
-            tarih=tarih
+            baslangic_tarihi=baslangic_tarihi,
+            bitis_tarihi=bitis_tarihi
         )
         
         if not rapor['success']:
@@ -1604,14 +1607,17 @@ def kat_sorumlusu_kullanim_raporu_olustur():
         oteller = get_kullanici_otelleri()
         
         log_islem('view', 'kat_sorumlusu_gun_sonu_raporu', {
-            'otel_id': otel_id, 'tarih': tarih_str
+            'otel_id': otel_id, 
+            'baslangic': baslangic_str,
+            'bitis': bitis_str
         })
         
         return render_template('raporlar/kat_sorumlusu_kullanim.html',
                              oteller=oteller,
                              rapor_verisi=rapor,
                              secili_otel_id=otel_id,
-                             secili_tarih=tarih_str)
+                             secili_baslangic=baslangic_str,
+                             secili_bitis=bitis_str)
         
     except Exception as e:
         log_hata(e, modul='kat_sorumlusu_kullanim_raporu_olustur')
@@ -1623,25 +1629,28 @@ def kat_sorumlusu_kullanim_raporu_olustur():
 @login_required
 @role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
 def kat_sorumlusu_kullanim_excel():
-    """Kat sorumlusu gün sonu raporu Excel export"""
+    """Kat sorumlusu gün sonu raporu Excel export - Tarih aralığı destekli"""
     try:
         from utils.rapor_servisleri import KatSorumlusuGunSonuRaporServisi
         
         otel_id = request.args.get('otel_id', type=int)
         personel_ids_str = request.args.get('personel_ids', '')
-        tarih_str = request.args.get('tarih')
+        baslangic_str = request.args.get('baslangic_tarihi')
+        bitis_str = request.args.get('bitis_tarihi')
         
         if not otel_id:
             flash('Lütfen otel seçin.', 'warning')
             return redirect(url_for('raporlar.kat_sorumlusu_kullanim_raporlari'))
         
         personel_ids = [int(x) for x in personel_ids_str.split(',') if x.strip().isdigit()] if personel_ids_str else None
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date() if tarih_str else date.today()
+        baslangic_tarihi = datetime.strptime(baslangic_str, '%Y-%m-%d').date() if baslangic_str else date.today()
+        bitis_tarihi = datetime.strptime(bitis_str, '%Y-%m-%d').date() if bitis_str else date.today()
         
         rapor = KatSorumlusuGunSonuRaporServisi.get_gun_sonu_raporu(
             otel_id=otel_id,
             personel_ids=personel_ids,
-            tarih=tarih
+            baslangic_tarihi=baslangic_tarihi,
+            bitis_tarihi=bitis_tarihi
         )
         
         if not rapor['success']:
@@ -1660,25 +1669,28 @@ def kat_sorumlusu_kullanim_excel():
 @login_required
 @role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
 def kat_sorumlusu_kullanim_pdf():
-    """Kat sorumlusu gün sonu raporu PDF export"""
+    """Kat sorumlusu gün sonu raporu PDF export - Tarih aralığı destekli"""
     try:
         from utils.rapor_servisleri import KatSorumlusuGunSonuRaporServisi
         
         otel_id = request.args.get('otel_id', type=int)
         personel_ids_str = request.args.get('personel_ids', '')
-        tarih_str = request.args.get('tarih')
+        baslangic_str = request.args.get('baslangic_tarihi')
+        bitis_str = request.args.get('bitis_tarihi')
         
         if not otel_id:
             flash('Lütfen otel seçin.', 'warning')
             return redirect(url_for('raporlar.kat_sorumlusu_kullanim_raporlari'))
         
         personel_ids = [int(x) for x in personel_ids_str.split(',') if x.strip().isdigit()] if personel_ids_str else None
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date() if tarih_str else date.today()
+        baslangic_tarihi = datetime.strptime(baslangic_str, '%Y-%m-%d').date() if baslangic_str else date.today()
+        bitis_tarihi = datetime.strptime(bitis_str, '%Y-%m-%d').date() if bitis_str else date.today()
         
         rapor = KatSorumlusuGunSonuRaporServisi.get_gun_sonu_raporu(
             otel_id=otel_id,
             personel_ids=personel_ids,
-            tarih=tarih
+            baslangic_tarihi=baslangic_tarihi,
+            bitis_tarihi=bitis_tarihi
         )
         
         if not rapor['success']:
@@ -2288,7 +2300,7 @@ def kat_sorumlusu_gun_sonu_raporum():
 @login_required
 @role_required('kat_sorumlusu')
 def kat_sorumlusu_gun_sonu_raporum_olustur():
-    """Kat sorumlusu gün sonu raporu oluştur"""
+    """Kat sorumlusu gün sonu raporu oluştur - Tarih aralığı destekli"""
     from flask import session
     from utils.rapor_servisleri import KatSorumlusuGunSonuRaporServisi
     
@@ -2302,18 +2314,22 @@ def kat_sorumlusu_gun_sonu_raporum_olustur():
         
         otel_id = kullanici.otel_id
         personel_ids_str = request.form.get('personel_ids', '')
-        tarih_str = request.form.get('tarih')
+        baslangic_str = request.form.get('baslangic_tarihi')
+        bitis_str = request.form.get('bitis_tarihi')
         export_format = request.form.get('format', '')
         
         # Personel ID'lerini parse et
         personel_ids = [int(x) for x in personel_ids_str.split(',') if x.strip().isdigit()] if personel_ids_str else None
         
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date() if tarih_str else date.today()
+        # Tarih aralığını parse et
+        baslangic_tarihi = datetime.strptime(baslangic_str, '%Y-%m-%d').date() if baslangic_str else date.today()
+        bitis_tarihi = datetime.strptime(bitis_str, '%Y-%m-%d').date() if bitis_str else date.today()
         
         rapor = KatSorumlusuGunSonuRaporServisi.get_gun_sonu_raporu(
             otel_id=otel_id,
             personel_ids=personel_ids,
-            tarih=tarih
+            baslangic_tarihi=baslangic_tarihi,
+            bitis_tarihi=bitis_tarihi
         )
         
         if not rapor['success']:
@@ -2336,14 +2352,17 @@ def kat_sorumlusu_gun_sonu_raporum_olustur():
         ).order_by(Kullanici.ad, Kullanici.soyad).all()
         
         log_islem('view', 'kat_sorumlusu_gun_sonu_raporum', {
-            'otel_id': otel_id, 'tarih': tarih_str
+            'otel_id': otel_id, 
+            'baslangic': baslangic_str,
+            'bitis': bitis_str
         })
         
         return render_template('raporlar/kat_sorumlusu_gun_sonu_raporum.html',
                              otel=otel,
                              personeller=personeller,
                              rapor_verisi=rapor,
-                             secili_tarih=tarih_str,
+                             secili_baslangic=baslangic_str,
+                             secili_bitis=bitis_str,
                              current_user_id=kullanici_id)
         
     except Exception as e:
@@ -2356,7 +2375,7 @@ def kat_sorumlusu_gun_sonu_raporum_olustur():
 @login_required
 @role_required('kat_sorumlusu')
 def kat_sorumlusu_gun_sonu_excel():
-    """Kat sorumlusu gün sonu raporu Excel export"""
+    """Kat sorumlusu gün sonu raporu Excel export - Tarih aralığı destekli"""
     from flask import session
     from utils.rapor_servisleri import KatSorumlusuGunSonuRaporServisi
     
@@ -2370,15 +2389,18 @@ def kat_sorumlusu_gun_sonu_excel():
         
         otel_id = kullanici.otel_id
         personel_ids_str = request.args.get('personel_ids', '')
-        tarih_str = request.args.get('tarih')
+        baslangic_str = request.args.get('baslangic_tarihi')
+        bitis_str = request.args.get('bitis_tarihi')
         
         personel_ids = [int(x) for x in personel_ids_str.split(',') if x.strip().isdigit()] if personel_ids_str else None
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date() if tarih_str else date.today()
+        baslangic_tarihi = datetime.strptime(baslangic_str, '%Y-%m-%d').date() if baslangic_str else date.today()
+        bitis_tarihi = datetime.strptime(bitis_str, '%Y-%m-%d').date() if bitis_str else date.today()
         
         rapor = KatSorumlusuGunSonuRaporServisi.get_gun_sonu_raporu(
             otel_id=otel_id,
             personel_ids=personel_ids,
-            tarih=tarih
+            baslangic_tarihi=baslangic_tarihi,
+            bitis_tarihi=bitis_tarihi
         )
         
         if not rapor['success']:
@@ -2397,7 +2419,7 @@ def kat_sorumlusu_gun_sonu_excel():
 @login_required
 @role_required('kat_sorumlusu')
 def kat_sorumlusu_gun_sonu_pdf():
-    """Kat sorumlusu gün sonu raporu PDF export"""
+    """Kat sorumlusu gün sonu raporu PDF export - Tarih aralığı destekli"""
     from flask import session
     from utils.rapor_servisleri import KatSorumlusuGunSonuRaporServisi
     
@@ -2411,15 +2433,18 @@ def kat_sorumlusu_gun_sonu_pdf():
         
         otel_id = kullanici.otel_id
         personel_ids_str = request.args.get('personel_ids', '')
-        tarih_str = request.args.get('tarih')
+        baslangic_str = request.args.get('baslangic_tarihi')
+        bitis_str = request.args.get('bitis_tarihi')
         
         personel_ids = [int(x) for x in personel_ids_str.split(',') if x.strip().isdigit()] if personel_ids_str else None
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date() if tarih_str else date.today()
+        baslangic_tarihi = datetime.strptime(baslangic_str, '%Y-%m-%d').date() if baslangic_str else date.today()
+        bitis_tarihi = datetime.strptime(bitis_str, '%Y-%m-%d').date() if bitis_str else date.today()
         
         rapor = KatSorumlusuGunSonuRaporServisi.get_gun_sonu_raporu(
             otel_id=otel_id,
             personel_ids=personel_ids,
-            tarih=tarih
+            baslangic_tarihi=baslangic_tarihi,
+            bitis_tarihi=bitis_tarihi
         )
         
         if not rapor['success']:
