@@ -258,7 +258,19 @@ class BildirimManager {
   async bildirimTiklandi(id) {
     // Okundu işaretle
     try {
-      await fetch(`/api/bildirimler/${id}/okundu`, { method: "POST" });
+      // CSRF token al
+      const csrfToken =
+        document
+          .querySelector('meta[name="csrf-token"]')
+          ?.getAttribute("content") || "";
+
+      await fetch(`/api/bildirimler/${id}/okundu`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+      });
 
       // Local state güncelle
       const bildirim = this.bildirimler.find((b) => b.id === id);
@@ -275,7 +287,19 @@ class BildirimManager {
 
   async tumunuOkunduIsaretle() {
     try {
-      await fetch("/api/bildirimler/tumunu-oku", { method: "POST" });
+      // CSRF token al
+      const csrfToken =
+        document
+          .querySelector('meta[name="csrf-token"]')
+          ?.getAttribute("content") || "";
+
+      await fetch("/api/bildirimler/tumunu-oku", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+      });
 
       // Local state güncelle
       this.bildirimler.forEach((b) => (b.okundu = true));
