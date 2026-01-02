@@ -1069,9 +1069,9 @@ async function dndOnayla() {
               </p>
               <p class="text-xs text-orange-700 dark:text-orange-300 mt-1">
                 Son kontrol: ${sonKontrol} • ${
-          dndSayisi >= 3
+          dndSayisi >= 2
             ? "✅ Minimum kontrol tamamlandı"
-            : `${3 - dndSayisi} kontrol daha gerekli`
+            : `${2 - dndSayisi} kontrol daha gerekli`
         }
               </p>
             </div>
@@ -1086,7 +1086,7 @@ async function dndOnayla() {
                 Bu oda DND olarak işaretlenecek.
               </p>
               <p class="text-xs text-orange-700 dark:text-orange-300 mt-1">
-                Gün içinde en az 3 kez DND kontrolü yapılmalıdır.
+                Gün içinde en az 2 kez DND kontrolü yapılmalıdır.
               </p>
             </div>
           </div>
@@ -1108,6 +1108,9 @@ function dndModalKapat() {
 
 // DND kaydı - Bağımsız DND sistemi
 async function dndKaydet() {
+  // Önce onay modal'ını kapat
+  dndModalKapat();
+
   try {
     const response = await fetch("/api/kat-sorumlusu/dnd-kaydet", {
       method: "POST",
@@ -1132,8 +1135,11 @@ async function dndKaydet() {
     const tamamlandi = data.min_kontrol_tamamlandi || data.otomatik_tamamlandi;
 
     if (tamamlandi) {
-      // 3+ kontrol tamamlandı - özel başarı dialog'u
+      // 2+ kontrol tamamlandı - özel başarı dialog'u
       dndTamamlandiDialogGoster(dndSayisi);
+    } else if (dndSayisi === 1) {
+      // İlk DND kaydı - bilgilendirme modal'ı göster
+      dndIlkKayitModalGoster();
     } else {
       // Normal DND kaydı
       toastGoster(`✅ ${data.message}`, "success");
@@ -1151,6 +1157,101 @@ async function dndKaydet() {
   } catch (error) {
     console.error("❌ DND kayıt hatası:", error);
     toastGoster(error.message, "error");
+  }
+}
+
+// İlk DND kaydı bilgilendirme modal'ı
+function dndIlkKayitModalGoster() {
+  const existingModal = document.getElementById("dndIlkKayitModal");
+  if (existingModal) existingModal.remove();
+
+  const odaNo =
+    document.getElementById("oda_no_text")?.textContent || mevcutOdaId;
+
+  const modal = document.createElement("div");
+  modal.id = "dndIlkKayitModal";
+  modal.className =
+    "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm";
+  modal.innerHTML = `
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full transform animate-modalSlideIn overflow-hidden">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4">
+        <div class="flex items-center space-x-3">
+          <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+            <i class="fas fa-door-closed text-2xl text-white"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-white">DND Kaydı Oluşturuldu</h3>
+            <p class="text-sm text-amber-100">Oda ${odaNo}</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Body -->
+      <div class="px-6 py-5">
+        <div class="flex items-start space-x-4">
+          <div class="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+            <i class="fas fa-info-circle text-amber-600 dark:text-amber-400"></i>
+          </div>
+          <div class="flex-1">
+            <p class="text-slate-700 dark:text-slate-200 font-medium mb-2">
+              Bu oda için görevin tamamlanması için:
+            </p>
+            <div class="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 border border-slate-200 dark:border-slate-600">
+              <div class="flex items-center space-x-3 mb-3">
+                <div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-sm">1</div>
+                <span class="text-slate-600 dark:text-slate-300 line-through">İlk DND kontrolü</span>
+                <i class="fas fa-check-circle text-green-500"></i>
+              </div>
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-sm">2</div>
+                <span class="text-slate-700 dark:text-slate-200 font-medium">Gün içinde 1 kontrol daha gerekli</span>
+              </div>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center">
+              <i class="fas fa-clock mr-2 text-amber-500"></i>
+              Lütfen gün içinde tekrar kontrol ediniz
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Footer -->
+      <div class="px-6 py-4 bg-slate-50 dark:bg-slate-700/30 border-t border-slate-200 dark:border-slate-600">
+        <button onclick="dndIlkKayitModalKapat()" 
+                class="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/25">
+          <i class="fas fa-check"></i>
+          <span>Anladım</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // ESC tuşu ile kapatma
+  const escHandler = (e) => {
+    if (e.key === "Escape") {
+      dndIlkKayitModalKapat();
+      document.removeEventListener("keydown", escHandler);
+    }
+  };
+  document.addEventListener("keydown", escHandler);
+
+  // Backdrop tıklama ile kapatma
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      dndIlkKayitModalKapat();
+    }
+  });
+}
+
+// İlk DND kaydı modal'ını kapat
+function dndIlkKayitModalKapat() {
+  const modal = document.getElementById("dndIlkKayitModal");
+  if (modal) {
+    modal.classList.add("animate-fadeOut");
+    setTimeout(() => modal.remove(), 200);
   }
 }
 
@@ -1188,9 +1289,9 @@ function dndBilgiGuncelle(dndSayisi, tamamlandi) {
   const bilgiText = document.getElementById("gorev_bilgi_text");
   if (bilgiText) {
     if (tamamlandi) {
-      bilgiText.innerHTML = `<span class="text-green-600 dark:text-green-400">✅ DND kontrolü tamamlandı (${dndSayisi}/3)</span>`;
+      bilgiText.innerHTML = `<span class="text-green-600 dark:text-green-400">✅ DND kontrolü tamamlandı (${dndSayisi}/2)</span>`;
     } else {
-      bilgiText.innerHTML = `<span class="text-orange-600 dark:text-orange-400">🚪 DND: ${dndSayisi}/3 kontrol yapıldı</span>`;
+      bilgiText.innerHTML = `<span class="text-orange-600 dark:text-orange-400">🚪 DND: ${dndSayisi}/2 kontrol yapıldı</span>`;
     }
   }
 }
