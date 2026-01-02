@@ -38,6 +38,10 @@ try:
 except ImportError:
     DashboardBildirimServisi = None
 
+# Cache + Eager Loading servisleri (1.1.2026)
+from utils.dashboard_data_service import DashboardDataService
+from utils.master_data_service import MasterDataService
+
 
 def register_dashboard_routes(app):
     """Dashboard route'larını kaydet"""
@@ -111,38 +115,36 @@ def register_dashboard_routes(app):
             except Exception as e:
                 print(f"Doluluk raporları hatası: {str(e)}")
         
-            # İstatistikler
-            toplam_kat = Kat.query.count()
-            toplam_oda = Oda.query.count()
-            toplam_kullanici = Kullanici.query.filter(
-                Kullanici.rol.in_(['admin', 'depo_sorumlusu', 'kat_sorumlusu']),
-                Kullanici.aktif.is_(True)
-            ).count()
-            toplam_personel = Kullanici.query.filter(
-                Kullanici.rol.in_(['depo_sorumlusu', 'kat_sorumlusu']),
-                Kullanici.aktif.is_(True)
-            ).count()
+            # İstatistikler - Cache + Eager Loading ile optimize edildi (1.1.2026)
+            # Genel istatistikler (cached)
+            genel_stats = DashboardDataService.get_genel_istatistikler()
+            toplam_kat = genel_stats['toplam_kat']
+            toplam_oda = genel_stats['toplam_oda']
+            toplam_kullanici = genel_stats['toplam_kullanici']
+            toplam_personel = genel_stats['toplam_personel']
+            admin_count = genel_stats['admin_count']
+            depo_count = genel_stats['depo_count']
+            kat_count = genel_stats['kat_count']
+            toplam_urun_grup = genel_stats['toplam_urun_grup']
+            toplam_urun = genel_stats['toplam_urun']
+            
+            # Kat-oda dağılımı (cached)
+            kat_oda = DashboardDataService.get_kat_oda_dagilimi()
+            kat_labels = kat_oda['kat_labels']
+            kat_oda_sayilari = kat_oda['kat_oda_sayilari']
+            
+            # Son eklenenler (eager loading)
+            son_eklenenler = DashboardDataService.get_son_eklenenler(5)
+            son_katlar = son_eklenenler['son_katlar']
+            son_odalar = son_eklenenler['son_odalar']
+            son_personeller = son_eklenenler['son_personeller']
+            son_urunler = son_eklenenler['son_urunler']
+            
+            # Ürün tüketim verileri (cached)
+            tuketim = DashboardDataService.get_urun_tuketim_verileri(30, 10)
+            urun_labels = tuketim['urun_labels']
+            urun_tuketim_miktarlari = tuketim['urun_tuketim_miktarlari']
         
-            # Son eklenen katlar
-            son_katlar = Kat.query.order_by(Kat.olusturma_tarihi.desc()).limit(5).all()
-        
-            # Son eklenen odalar
-            son_odalar = Oda.query.order_by(Oda.olusturma_tarihi.desc()).limit(5).all()
-        
-            # Grafik verileri
-            # Kullanıcı rol dağılımı
-            admin_count = Kullanici.query.filter_by(rol='admin', aktif=True).count()
-            depo_count = Kullanici.query.filter_by(rol='depo_sorumlusu', aktif=True).count()
-            kat_count = Kullanici.query.filter_by(rol='kat_sorumlusu', aktif=True).count()
-        
-            # Kat bazlı oda sayıları
-            katlar = Kat.query.filter_by(aktif=True).all()
-            kat_labels = [kat.kat_adi for kat in katlar]
-            kat_oda_sayilari = [len(kat.odalar) for kat in katlar]
-        
-            # Ürün grup sayıları (admin için)
-            toplam_urun_grup = UrunGrup.query.filter_by(aktif=True).count()
-            toplam_urun = Urun.query.filter_by(aktif=True).count()
             kritik_urunler = get_kritik_stok_urunler()
         
             # Gelişmiş stok durumları
@@ -162,15 +164,6 @@ def register_dashboard_routes(app):
                         'normal_sayi': 0
                     }
                 }
-        
-            # Son eklenen personeller (admin için)
-            son_personeller = Kullanici.query.filter(
-                Kullanici.rol.in_(['depo_sorumlusu', 'kat_sorumlusu']),
-                Kullanici.aktif.is_(True)
-            ).order_by(Kullanici.olusturma_tarihi.desc()).limit(5).all()
-        
-            # Son eklenen ürünler (admin için)
-            son_urunler = Urun.query.filter_by(aktif=True).order_by(Urun.olusturma_tarihi.desc()).limit(5).all()
         
             # Dashboard bildirimleri (Satın Alma Modülü)
             dashboard_bildirimleri = []
@@ -212,35 +205,11 @@ def register_dashboard_routes(app):
                 print(f"Ana depo tedarik sayısı hatası: {str(e)}")
                 db.session.rollback()
         
-            # Ürün bazlı tüketim verileri (Son 30 günün en çok tüketilen ürünleri)
-            urun_labels = []
-            urun_tuketim_miktarlari = []
+            # bugun değişkeni tanımlı değilse tanımla
             try:
+                bugun
+            except NameError:
                 bugun = get_kktc_now().date()
-                otuz_gun_once = bugun - timedelta(days=30)
-            
-                # Minibar işlemlerinden en çok tüketilen ürünleri al
-                urun_tuketim = db.session.query(
-                    Urun.urun_adi,
-                    db.func.sum(MinibarIslemDetay.tuketim).label('toplam_tuketim')
-                ).join(
-                    MinibarIslemDetay, MinibarIslemDetay.urun_id == Urun.id
-                ).join(
-                    MinibarIslem, MinibarIslem.id == MinibarIslemDetay.islem_id
-                ).filter(
-                    db.func.date(MinibarIslem.islem_tarihi) >= otuz_gun_once,
-                    MinibarIslemDetay.tuketim > 0
-                ).group_by(
-                    Urun.id, Urun.urun_adi
-                ).order_by(
-                    db.desc('toplam_tuketim')
-                ).limit(10).all()
-            
-                urun_labels = [u[0] for u in urun_tuketim]
-                urun_tuketim_miktarlari = [float(u[1] or 0) for u in urun_tuketim]
-            except Exception as e:
-                print(f"Ürün tüketim verileri hatası: {str(e)}")
-                db.session.rollback()  # Transaction'ı temizle
         
             # Günlük Yükleme Görev Özeti (Sistem Yöneticisi için)
             yukleme_gorev_ozeti = None
@@ -802,11 +771,18 @@ def register_dashboard_routes(app):
         
         kullanici_id = session['kullanici_id']
         
-        # Görev özeti - Bugün için
+        # Kullanıcının otelini al
+        kullanici_otelleri = get_kullanici_otelleri()
+        otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
+        
+        # Görev özeti - Bugün için (OTEL BAZLI)
         gorev_ozeti = None
         try:
             from utils.gorev_service import GorevService
-            gorev_ozeti = GorevService.get_task_summary(kullanici_id, date.today())
+            if otel_id:
+                gorev_ozeti = GorevService.get_task_summary(otel_id, date.today())
+            else:
+                gorev_ozeti = {'toplam': 0, 'tamamlanan': 0, 'bekleyen': 0, 'dnd': 0, 'tamamlanma_orani': 0}
         except Exception as e:
             print(f"Görev özeti hatası: {str(e)}")
             gorev_ozeti = {'toplam': 0, 'tamamlanan': 0, 'bekleyen': 0, 'dnd': 0, 'tamamlanma_orani': 0}
@@ -814,9 +790,7 @@ def register_dashboard_routes(app):
         # Doluluk raporu - Bugün için
         doluluk_raporu = None
         try:
-            kullanici_otelleri = get_kullanici_otelleri()
-            if kullanici_otelleri:
-                otel_id = kullanici_otelleri[0].id
+            if otel_id:
                 doluluk_raporu = OccupancyService.get_gunluk_doluluk_raporu(date.today(), otel_id)
                 # Doluluk oranı hesapla
                 if doluluk_raporu['toplam_oda'] > 0:

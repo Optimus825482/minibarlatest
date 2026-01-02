@@ -1,344 +1,527 @@
-{% extends "base.html" %}
-
-{% block title %}Otomatik Sipariş Önerileri - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Otomatik Sipariş Önerileri{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Otomatik Sipariş Önerileri - Minibar
+Takip Sistemi{% endblock %} {% block page_title %}Otomatik Sipariş Önerileri{%
+endblock %} {% block page_icon_bg %}bg-gradient-to-br from-indigo-500
+to-blue-600{% endblock %} {% block page_icon %}fas fa-magic{% endblock %} {%
+block content %}
 <div class="space-y-6">
-    <!-- Bilgilendirme Kartı -->
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg shadow-md border border-blue-200 dark:border-blue-800">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-start">
-                <div class="flex-shrink-0">
-                    <svg class="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <div class="ml-3 flex-1">
-                    <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100">Akıllı Sipariş Önerileri</h3>
-                    <div class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                        <p>Sistem, kritik stok seviyesindeki ürünler için otomatik sipariş önerileri oluşturur. 
-                        Öneriler, son 30 günlük tüketim ortalamasına ve en uygun tedarikçi fiyatlarına göre hesaplanır.</p>
-                    </div>
-                    <div class="mt-4 flex flex-wrap gap-4 text-sm">
-                        <div class="flex items-center">
-                            <span class="inline-block w-3 h-3 bg-red-500 rounded-full mr-2"></span>
-                            <span class="text-slate-700 dark:text-slate-300">Kritik Stok: <strong>{{ istatistikler.kritik }}</strong></span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="inline-block w-3 h-3 bg-yellow-500 rounded-full mr-2"></span>
-                            <span class="text-slate-700 dark:text-slate-300">Dikkat: <strong>{{ istatistikler.dikkat }}</strong></span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="inline-block w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
-                            <span class="text-slate-700 dark:text-slate-300">Toplam Öneri: <strong>{{ oneriler|length }}</strong></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  <!-- Bilgilendirme Kartı -->
+  <div
+    class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg shadow-md border border-blue-200 dark:border-blue-800"
+  >
+    <div class="px-4 py-5 sm:p-6">
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          <svg
+            class="h-6 w-6 text-blue-600 dark:text-blue-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            ></path>
+          </svg>
         </div>
+        <div class="ml-3 flex-1">
+          <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100">
+            Akıllı Sipariş Önerileri
+          </h3>
+          <div class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            <p>
+              Sistem, kritik stok seviyesindeki ürünler için otomatik sipariş
+              önerileri oluşturur. Öneriler, son 30 günlük tüketim ortalamasına
+              ve en uygun tedarikçi fiyatlarına göre hesaplanır.
+            </p>
+          </div>
+          <div class="mt-4 flex flex-wrap gap-4 text-sm">
+            <div class="flex items-center">
+              <span
+                class="inline-block w-3 h-3 bg-red-500 rounded-full mr-2"
+              ></span>
+              <span class="text-slate-700 dark:text-slate-300"
+                >Kritik Stok: <strong>{{ istatistikler.kritik }}</strong></span
+              >
+            </div>
+            <div class="flex items-center">
+              <span
+                class="inline-block w-3 h-3 bg-yellow-500 rounded-full mr-2"
+              ></span>
+              <span class="text-slate-700 dark:text-slate-300"
+                >Dikkat: <strong>{{ istatistikler.dikkat }}</strong></span
+              >
+            </div>
+            <div class="flex items-center">
+              <span
+                class="inline-block w-3 h-3 bg-blue-500 rounded-full mr-2"
+              ></span>
+              <span class="text-slate-700 dark:text-slate-300"
+                >Toplam Öneri: <strong>{{ oneriler|length }}</strong></span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Hızlı İşlemler -->
-    <div class="flex justify-between items-center">
-        <div class="flex space-x-3">
-            <button type="button" onclick="selectAllRecommendations()"
-                class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                Tümünü Seç
-            </button>
-            <button type="button" onclick="deselectAllRecommendations()"
-                class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-                Seçimi Temizle
-            </button>
-        </div>
-        <div>
-            <button type="button" onclick="createOrderFromSelected()"
-                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                </svg>
-                Seçilenleri Sipariş Et
-            </button>
-        </div>
+  <!-- Hızlı İşlemler -->
+  <div class="flex justify-between items-center">
+    <div class="flex space-x-3">
+      <button
+        type="button"
+        onclick="selectAllRecommendations()"
+        class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
+      >
+        <svg
+          class="w-4 h-4 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5 13l4 4L19 7"
+          ></path>
+        </svg>
+        Tümünü Seç
+      </button>
+      <button
+        type="button"
+        onclick="deselectAllRecommendations()"
+        class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
+      >
+        <svg
+          class="w-4 h-4 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+        Seçimi Temizle
+      </button>
     </div>
+    <div>
+      <button
+        type="button"
+        onclick="createOrderFromSelected()"
+        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
+      >
+        <svg
+          class="w-4 h-4 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+          ></path>
+        </svg>
+        Seçilenleri Sipariş Et
+      </button>
+    </div>
+  </div>
 
-    <!-- Öneri Kartları -->
-    {% if oneriler %}
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {% for oneri in oneriler %}
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md border-2 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-200 hover:shadow-lg recommendation-card"
-             data-urun-id="{{ oneri.urun_id }}"
-             data-urun-adi="{{ oneri.urun_adi }}"
-             data-miktar="{{ oneri.onerilen_miktar }}"
-             data-tedarikci-id="{{ oneri.en_uygun_tedarikci.tedarikci_id if oneri.en_uygun_tedarikci else '' }}"
-             data-birim-fiyat="{{ oneri.en_uygun_tedarikci.birim_fiyat if oneri.en_uygun_tedarikci else 0 }}">
-            
-            <!-- Seçim Checkbox -->
-            <div class="absolute top-3 right-3">
-                <input type="checkbox" 
-                       class="recommendation-checkbox w-5 h-5 text-blue-600 bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 dark:focus:ring-blue-600 focus:ring-2 cursor-pointer"
-                       onchange="updateSelectionCount()">
-            </div>
-            
-            <div class="p-5">
-                <!-- Başlık ve Durum -->
-                <div class="flex items-start justify-between mb-3 pr-8">
-                    <div>
-                        <h4 class="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">{{ oneri.urun_adi }}</h4>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ oneri.grup_adi }}</p>
-                    </div>
-                </div>
-                
-                <!-- Stok Durumu Badge -->
-                <div class="mb-3">
-                    {% if oneri.stok_durumu == 'kritik' %}
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                        </svg>
-                        Kritik Stok
-                    </span>
-                    {% else %}
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-                        </svg>
-                        Dikkat
-                    </span>
-                    {% endif %}
-                </div>
-                
-                <!-- Stok Bilgileri -->
-                <div class="space-y-2 mb-4">
-                    <div class="flex justify-between text-sm">
-                        <span class="text-slate-600 dark:text-slate-400">Mevcut Stok:</span>
-                        <span class="font-semibold text-red-600 dark:text-red-400">{{ oneri.mevcut_stok }} {{ oneri.birim }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-slate-600 dark:text-slate-400">Kritik Seviye:</span>
-                        <span class="font-medium text-slate-900 dark:text-slate-100">{{ oneri.kritik_seviye }} {{ oneri.birim }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-slate-600 dark:text-slate-400">Günlük Tüketim:</span>
-                        <span class="font-medium text-slate-900 dark:text-slate-100">{{ "%.1f"|format(oneri.tahmini_tuketim) }} {{ oneri.birim }}</span>
-                    </div>
-                </div>
-                
-                <!-- Progress Bar -->
-                <div class="mb-4">
-                    <div class="flex justify-between text-xs text-slate-600 dark:text-slate-400 mb-1">
-                        <span>Stok Durumu</span>
-                        <span>%{{ "%.0f"|format(oneri.stok_yuzde) }}</span>
-                    </div>
-                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                        <div class="h-2 rounded-full transition-all duration-500
-                            {% if oneri.stok_yuzde <= 25 %}bg-red-600
-                            {% elif oneri.stok_yuzde <= 50 %}bg-yellow-500
-                            {% else %}bg-green-500{% endif %}"
-                            style="width: {{ [oneri.stok_yuzde, 100]|min }}%">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Öneri Bilgileri -->
-                <div class="pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 mb-3">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-xs font-medium text-green-800 dark:text-green-300">Önerilen Sipariş</span>
-                            <span class="text-lg font-bold text-green-700 dark:text-green-400">{{ oneri.onerilen_miktar }} {{ oneri.birim }}</span>
-                        </div>
-                        <p class="text-xs text-green-700 dark:text-green-400">
-                            ~{{ oneri.gun_yetecek }} gün yetecek miktar
-                        </p>
-                    </div>
-                    
-                    {% if oneri.en_uygun_tedarikci %}
-                    <div class="space-y-2 text-sm">
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-600 dark:text-slate-400">Tedarikçi:</span>
-                            <span class="font-medium text-slate-900 dark:text-slate-100">{{ oneri.en_uygun_tedarikci.tedarikci_adi }}</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-600 dark:text-slate-400">Birim Fiyat:</span>
-                            <span class="font-semibold text-slate-900 dark:text-slate-100">{{ "%.2f"|format(oneri.en_uygun_tedarikci.birim_fiyat) }} ₺</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-600 dark:text-slate-400">Toplam Tutar:</span>
-                            <span class="font-bold text-blue-600 dark:text-blue-400">{{ "%.2f"|format(oneri.en_uygun_tedarikci.toplam_fiyat) }} ₺</span>
-                        </div>
-                        {% if oneri.en_uygun_tedarikci.performans_skoru %}
-                        <div class="flex items-center justify-between">
-                            <span class="text-slate-600 dark:text-slate-400">Performans:</span>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                                {% if oneri.en_uygun_tedarikci.performans_skoru >= 80 %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
-                                {% elif oneri.en_uygun_tedarikci.performans_skoru >= 60 %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
-                                {% else %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% endif %}">
-                                %{{ "%.0f"|format(oneri.en_uygun_tedarikci.performans_skoru) }}
-                            </span>
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% else %}
-                    <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3">
-                        <p class="text-xs text-yellow-800 dark:text-yellow-300">
-                            <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                            </svg>
-                            Tedarikçi fiyatı tanımlı değil
-                        </p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
+  <!-- Öneri Kartları -->
+  {% if oneriler %}
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {% for oneri in oneriler %}
+    <div
+      class="bg-white dark:bg-slate-800 rounded-lg shadow-md border-2 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-200 hover:shadow-lg recommendation-card"
+      data-urun-id="{{ oneri.urun_id }}"
+      data-urun-adi="{{ oneri.urun_adi }}"
+      data-miktar="{{ oneri.onerilen_miktar }}"
+      data-tedarikci-id="{{ oneri.en_uygun_tedarikci.tedarikci_id if oneri.en_uygun_tedarikci else '' }}"
+      data-birim-fiyat="{{ oneri.en_uygun_tedarikci.birim_fiyat if oneri.en_uygun_tedarikci else 0 }}"
+    >
+      <!-- Seçim Checkbox -->
+      <div class="absolute top-3 right-3">
+        <input
+          type="checkbox"
+          class="recommendation-checkbox w-5 h-5 text-blue-600 bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 dark:focus:ring-blue-600 focus:ring-2 cursor-pointer"
+          onchange="updateSelectionCount()"
+        />
+      </div>
+
+      <div class="p-5">
+        <!-- Başlık ve Durum -->
+        <div class="flex items-start justify-between mb-3 pr-8">
+          <div>
+            <h4
+              class="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1"
+            >
+              {{ oneri.urun_adi }}
+            </h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              {{ oneri.grup_adi }}
+            </p>
+          </div>
         </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-12 text-center">
-            <svg class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+
+        <!-- Stok Durumu Badge -->
+        <div class="mb-3">
+          {% if oneri.stok_durumu == 'kritik' %}
+          <span
+            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+          >
+            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fill-rule="evenodd"
+                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                clip-rule="evenodd"
+              ></path>
             </svg>
-            <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">Harika! Sipariş önerisi yok</h3>
-            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Tüm ürünler yeterli stok seviyesinde. Kritik stok durumu bulunmuyor.</p>
-            <div class="mt-6">
-                <a href="{{ url_for('depo_dashboard') }}"
-                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800">
-                    Dashboard'a Dön
-                </a>
-            </div>
+            Kritik Stok
+          </span>
+          {% else %}
+          <span
+            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+          >
+            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clip-rule="evenodd"
+              ></path>
+            </svg>
+            Dikkat
+          </span>
+          {% endif %}
         </div>
-    </div>
-    {% endif %}
 
-    <!-- Seçim Özeti (Sticky Footer) -->
-    <div id="selection-summary" class="hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t-2 border-blue-500 dark:border-blue-600 shadow-2xl z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <!-- Stok Bilgileri -->
+        <div class="space-y-2 mb-4">
+          <div class="flex justify-between text-sm">
+            <span class="text-slate-600 dark:text-slate-400">Mevcut Stok:</span>
+            <span class="font-semibold text-red-600 dark:text-red-400"
+              >{{ oneri.mevcut_stok }} {{ oneri.birim }}</span
+            >
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-slate-600 dark:text-slate-400"
+              >Kritik Seviye:</span
+            >
+            <span class="font-medium text-slate-900 dark:text-slate-100"
+              >{{ oneri.kritik_seviye }} {{ oneri.birim }}</span
+            >
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-slate-600 dark:text-slate-400"
+              >Günlük Tüketim:</span
+            >
+            <span class="font-medium text-slate-900 dark:text-slate-100"
+              >{{ "%.1f"|format(oneri.tahmini_tuketim) }} {{ oneri.birim
+              }}</span
+            >
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="mb-4">
+          <div
+            class="flex justify-between text-xs text-slate-600 dark:text-slate-400 mb-1"
+          >
+            <span>Stok Durumu</span>
+            <span>%{{ "%.0f"|format(oneri.stok_yuzde) }}</span>
+          </div>
+          <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+            <div
+              class="h-2 rounded-full transition-all duration-500 {% if oneri.stok_yuzde <= 25 %}bg-red-600 {% elif oneri.stok_yuzde <= 50 %}bg-yellow-500 {% else %}bg-green-500{% endif %}"
+              style="width: {{ [oneri.stok_yuzde, 100]|min }}%"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Öneri Bilgileri -->
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-700">
+          <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 mb-3">
+            <div class="flex justify-between items-center mb-2">
+              <span
+                class="text-xs font-medium text-green-800 dark:text-green-300"
+                >Önerilen Sipariş</span
+              >
+              <span class="text-lg font-bold text-green-700 dark:text-green-400"
+                >{{ oneri.onerilen_miktar }} {{ oneri.birim }}</span
+              >
+            </div>
+            <p class="text-xs text-green-700 dark:text-green-400">
+              ~{{ oneri.gun_yetecek }} gün yetecek miktar
+            </p>
+          </div>
+
+          {% if oneri.en_uygun_tedarikci %}
+          <div class="space-y-2 text-sm">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-6">
-                    <div>
-                        <span class="text-sm text-slate-600 dark:text-slate-400">Seçili Ürün:</span>
-                        <span id="selected-count" class="ml-2 text-lg font-bold text-slate-900 dark:text-slate-100">0</span>
-                    </div>
-                    <div>
-                        <span class="text-sm text-slate-600 dark:text-slate-400">Toplam Tutar:</span>
-                        <span id="selected-total" class="ml-2 text-lg font-bold text-blue-600 dark:text-blue-400">0.00 ₺</span>
-                    </div>
-                </div>
-                <div class="flex space-x-3">
-                    <button type="button" onclick="deselectAllRecommendations()"
-                        class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600">
-                        İptal
-                    </button>
-                    <button type="button" onclick="createOrderFromSelected()"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                        </svg>
-                        Sipariş Oluştur
-                    </button>
-                </div>
+              <span class="text-slate-600 dark:text-slate-400">Tedarikçi:</span>
+              <span class="font-medium text-slate-900 dark:text-slate-100"
+                >{{ oneri.en_uygun_tedarikci.tedarikci_adi }}</span
+              >
             </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-600 dark:text-slate-400"
+                >Birim Fiyat:</span
+              >
+              <span class="font-semibold text-slate-900 dark:text-slate-100"
+                >{{ "%.2f"|format(oneri.en_uygun_tedarikci.birim_fiyat) }}
+                ₺</span
+              >
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-600 dark:text-slate-400"
+                >Toplam Tutar:</span
+              >
+              <span class="font-bold text-blue-600 dark:text-blue-400"
+                >{{ "%.2f"|format(oneri.en_uygun_tedarikci.toplam_fiyat) }}
+                ₺</span
+              >
+            </div>
+            {% if oneri.en_uygun_tedarikci.performans_skoru %}
+            <div class="flex items-center justify-between">
+              <span class="text-slate-600 dark:text-slate-400"
+                >Performans:</span
+              >
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {% if oneri.en_uygun_tedarikci.performans_skoru >= 80 %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 {% elif oneri.en_uygun_tedarikci.performans_skoru >= 60 %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 {% else %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% endif %}"
+              >
+                %{{ "%.0f"|format(oneri.en_uygun_tedarikci.performans_skoru) }}
+              </span>
+            </div>
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3">
+            <p class="text-xs text-yellow-800 dark:text-yellow-300">
+              <svg
+                class="w-4 h-4 inline mr-1"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clip-rule="evenodd"
+                ></path>
+              </svg>
+              Tedarikçi fiyatı tanımlı değil
+            </p>
+          </div>
+          {% endif %}
         </div>
+      </div>
     </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-12 text-center">
+      <svg
+        class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        ></path>
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">
+        Harika! Sipariş önerisi yok
+      </h3>
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        Tüm ürünler yeterli stok seviyesinde. Kritik stok durumu bulunmuyor.
+      </p>
+      <div class="mt-6">
+        <a
+          href="{{ url_for('depo_dashboard') }}"
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
+        >
+          Dashboard'a Dön
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Seçim Özeti (Sticky Footer) -->
+  <div
+    id="selection-summary"
+    class="hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t-2 border-blue-500 dark:border-blue-600 shadow-2xl z-50"
+  >
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-6">
+          <div>
+            <span class="text-sm text-slate-600 dark:text-slate-400"
+              >Seçili Ürün:</span
+            >
+            <span
+              id="selected-count"
+              class="ml-2 text-lg font-bold text-slate-900 dark:text-slate-100"
+              >0</span
+            >
+          </div>
+          <div>
+            <span class="text-sm text-slate-600 dark:text-slate-400"
+              >Toplam Tutar:</span
+            >
+            <span
+              id="selected-total"
+              class="ml-2 text-lg font-bold text-blue-600 dark:text-blue-400"
+              >0.00 ₺</span
+            >
+          </div>
+        </div>
+        <div class="flex space-x-3">
+          <button
+            type="button"
+            onclick="deselectAllRecommendations()"
+            class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600"
+          >
+            İptal
+          </button>
+          <button
+            type="button"
+            onclick="createOrderFromSelected()"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
+          >
+            <svg
+              class="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              ></path>
+            </svg>
+            Sipariş Oluştur
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block extra_scripts %}
+{% endblock %} {% block extra_scripts %}
 <script>
-// Tüm önerileri seç
-function selectAllRecommendations() {
-    document.querySelectorAll('.recommendation-checkbox').forEach(checkbox => {
+  // Tüm önerileri seç
+  function selectAllRecommendations() {
+    document
+      .querySelectorAll(".recommendation-checkbox")
+      .forEach((checkbox) => {
         checkbox.checked = true;
-    });
+      });
     updateSelectionCount();
-}
+  }
 
-// Tüm seçimleri temizle
-function deselectAllRecommendations() {
-    document.querySelectorAll('.recommendation-checkbox').forEach(checkbox => {
+  // Tüm seçimleri temizle
+  function deselectAllRecommendations() {
+    document
+      .querySelectorAll(".recommendation-checkbox")
+      .forEach((checkbox) => {
         checkbox.checked = false;
-    });
+      });
     updateSelectionCount();
-}
+  }
 
-// Seçim sayısını güncelle
-function updateSelectionCount() {
-    const checkboxes = document.querySelectorAll('.recommendation-checkbox:checked');
+  // Seçim sayısını güncelle
+  function updateSelectionCount() {
+    const checkboxes = document.querySelectorAll(
+      ".recommendation-checkbox:checked"
+    );
     const count = checkboxes.length;
-    
-    let totalAmount = 0;
-    checkboxes.forEach(checkbox => {
-        const card = checkbox.closest('.recommendation-card');
-        const miktar = parseFloat(card.dataset.miktar) || 0;
-        const birimFiyat = parseFloat(card.dataset.birimFiyat) || 0;
-        totalAmount += miktar * birimFiyat;
-    });
-    
-    document.getElementById('selected-count').textContent = count;
-    document.getElementById('selected-total').textContent = totalAmount.toFixed(2) + ' ₺';
-    
-    const summary = document.getElementById('selection-summary');
-    if (count > 0) {
-        summary.classList.remove('hidden');
-    } else {
-        summary.classList.add('hidden');
-    }
-}
 
-// Seçilenleri sipariş et
-function createOrderFromSelected() {
-    const checkboxes = document.querySelectorAll('.recommendation-checkbox:checked');
-    
-    if (checkboxes.length === 0) {
-        alert('Lütfen en az bir ürün seçiniz!');
-        return;
+    let totalAmount = 0;
+    checkboxes.forEach((checkbox) => {
+      const card = checkbox.closest(".recommendation-card");
+      const miktar = parseFloat(card.dataset.miktar) || 0;
+      const birimFiyat = parseFloat(card.dataset.birimFiyat) || 0;
+      totalAmount += miktar * birimFiyat;
+    });
+
+    document.getElementById("selected-count").textContent = count;
+    document.getElementById("selected-total").textContent =
+      totalAmount.toFixed(2) + " ₺";
+
+    const summary = document.getElementById("selection-summary");
+    if (count > 0) {
+      summary.classList.remove("hidden");
+    } else {
+      summary.classList.add("hidden");
     }
-    
+  }
+
+  // Seçilenleri sipariş et
+  function createOrderFromSelected() {
+    const checkboxes = document.querySelectorAll(
+      ".recommendation-checkbox:checked"
+    );
+
+    if (checkboxes.length === 0) {
+      alert("Lütfen en az bir ürün seçiniz!");
+      return;
+    }
+
     // Seçili ürünleri topla
     const selectedProducts = [];
     const tedarikciler = new Set();
-    
-    checkboxes.forEach(checkbox => {
-        const card = checkbox.closest('.recommendation-card');
-        const tedarikciId = card.dataset.tedarikciId;
-        
-        if (!tedarikciId) {
-            alert(`"${card.dataset.urunAdi}" için tedarikçi fiyatı tanımlı değil!`);
-            return;
-        }
-        
-        tedarikciler.add(tedarikciId);
-        selectedProducts.push({
-            urun_id: card.dataset.urunId,
-            urun_adi: card.dataset.urunAdi,
-            miktar: card.dataset.miktar,
-            tedarikci_id: tedarikciId,
-            birim_fiyat: card.dataset.birimFiyat
-        });
+
+    checkboxes.forEach((checkbox) => {
+      const card = checkbox.closest(".recommendation-card");
+      const tedarikciId = card.dataset.tedarikciId;
+
+      if (!tedarikciId) {
+        alert(`"${card.dataset.urunAdi}" için tedarikçi fiyatı tanımlı değil!`);
+        return;
+      }
+
+      tedarikciler.add(tedarikciId);
+      selectedProducts.push({
+        urun_id: card.dataset.urunId,
+        urun_adi: card.dataset.urunAdi,
+        miktar: card.dataset.miktar,
+        tedarikci_id: tedarikciId,
+        birim_fiyat: card.dataset.birimFiyat,
+      });
     });
-    
+
     if (tedarikciler.size > 1) {
-        if (!confirm('Seçili ürünler farklı tedarikçilerden. Her tedarikçi için ayrı sipariş oluşturulacak. Devam etmek istiyor musunuz?')) {
-            return;
-        }
+      if (
+        !confirm(
+          "Seçili ürünler farklı tedarikçilerden. Her tedarikçi için ayrı sipariş oluşturulacak. Devam etmek istiyor musunuz?"
+        )
+      ) {
+        return;
+      }
     }
-    
+
     // Sipariş sayfasına yönlendir (query string ile)
     const params = new URLSearchParams();
-    params.append('oneriler', JSON.stringify(selectedProducts));
+    params.append("oneriler", JSON.stringify(selectedProducts));
     window.location.href = `{{ url_for('satin_alma_siparis') }}?${params.toString()}`;
-}
+  }
 
-// Sayfa yüklendiğinde
-document.addEventListener('DOMContentLoaded', function() {
+  // Sayfa yüklendiğinde
+  document.addEventListener("DOMContentLoaded", function () {
     updateSelectionCount();
-});
+  });
 </script>
 {% endblock %}

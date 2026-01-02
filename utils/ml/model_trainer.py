@@ -19,7 +19,7 @@ class ModelTrainer:
     
     def __init__(self, db):
         self.db = db
-        self.min_data_points = int(os.getenv('ML_MIN_DATA_POINTS', 30))  # 100'den 30'a düşürüldü
+        self.min_data_points = int(os.getenv('ML_MIN_DATA_POINTS', 10))  # 30'dan 10'a düşürüldü
         self.accuracy_threshold = float(os.getenv('ML_ACCURACY_THRESHOLD', 0.85))
         
         # ModelManager instance oluştur

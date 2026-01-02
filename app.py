@@ -1,8 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, make_response, jsonify, send_file
 from flask_wtf.csrf import CSRFProtect, CSRFError
-# Rate limiter devre dışı bırakıldı
-# from flask_limiter import Limiter
-# from flask_limiter.util import get_remote_address
 from datetime import datetime, timedelta, timezone
 import pytz
 
@@ -93,6 +90,32 @@ with app.app_context():
 # Cache devre dışı (Redis sadece Celery broker olarak kullanılıyor)
 cache = None
 logger.info("ℹ️ Cache devre dışı - Redis sadece Celery broker olarak kullanılıyor")
+
+# ============================================
+# RATE LIMITER INITIALIZATION
+# ============================================
+limiter = None
+if app.config.get('RATE_LIMIT_ENABLED', True):
+    try:
+        from utils.rate_limiter import init_rate_limiter, limiter as rate_limiter
+        limiter = init_rate_limiter(app)
+        logger.info("✅ Rate Limiter aktifleştirildi")
+    except Exception as e:
+        logger.warning(f"⚠️ Rate Limiter başlatılamadı: {str(e)}")
+else:
+    logger.info("ℹ️ Rate Limiter devre dışı (config)")
+
+# ============================================
+# CACHE MANAGER INITIALIZATION (Master Data Only)
+# ============================================
+cache_manager = None
+if app.config.get('CACHE_ENABLED', True):
+    try:
+        from utils.cache_manager import init_cache, cache_manager as cm
+        cache_manager = init_cache(app)
+        logger.info("✅ Cache Manager aktifleştirildi (sadece master data)")
+    except Exception as e:
+        logger.warning(f"⚠️ Cache Manager başlatılamadı: {str(e)}")
 
 # Query Logging - SQLAlchemy Event Listener
 try:
@@ -2911,6 +2934,12 @@ from utils.file_management_service import FileManagementService
 
 def start_scheduler():
     """Zamanlanmış görevleri başlat"""
+    # Debug modunda sadece child process'te (gerçek uygulama) çalıştır
+    # WERKZEUG_RUN_MAIN='true' sadece child process'te set edilir
+    is_reloader_process = os.environ.get('WERKZEUG_RUN_MAIN') is None
+    if is_reloader_process and app.debug:
+        return  # Ana reloader process'inde scheduler başlatma
+    
     scheduler = BackgroundScheduler()
     
     # Her gün saat 02:00'de eski dosyaları temizle
@@ -2926,23 +2955,23 @@ def start_scheduler():
     ml_enabled = os.getenv('ML_ENABLED', 'false').lower() == 'true'
     
     if ml_enabled:
-        # Her 15 dakikada veri toplama
-        data_collection_interval = int(os.getenv('ML_DATA_COLLECTION_INTERVAL', 900))  # 900 saniye = 15 dakika
+        # Sabah 08:00 - Akşam 20:00 arası her saat başı veri toplama
         scheduler.add_job(
             func=lambda: collect_ml_data(),
-            trigger='interval',
-            seconds=data_collection_interval,
+            trigger='cron',
+            hour='8-20',  # 08:00, 09:00, ..., 20:00
+            minute=0,
             id='ml_data_collection',
             name='ML Veri Toplama',
             replace_existing=True
         )
         
-        # Her 1 saatte anomali tespiti (5 dakikadan optimize edildi)
-        anomaly_check_interval = int(os.getenv('ML_ANOMALY_CHECK_INTERVAL', 3600))  # 3600 saniye = 1 saat
+        # Sabah 08:00 - Akşam 20:00 arası her saat başı anomali tespiti (30. dakikada)
         scheduler.add_job(
             func=lambda: detect_anomalies(),
-            trigger='interval',
-            seconds=anomaly_check_interval,
+            trigger='cron',
+            hour='8-20',  # 08:00, 09:00, ..., 20:00
+            minute=30,    # Veri toplamadan 30 dk sonra
             id='ml_anomaly_detection',
             name='ML Anomali Tespiti',
             replace_existing=True
@@ -2991,12 +3020,12 @@ def start_scheduler():
         )
         
         print("✅ ML Scheduler başlatıldı")
-        print(f"   - Veri toplama: Her {data_collection_interval//60} dakika")
-        print(f"   - Anomali tespiti: Her {anomaly_check_interval//60} dakika")
+        print("   - Veri toplama: 08:00-20:00 arası her saat başı")
+        print("   - Anomali tespiti: 08:30-20:30 arası her saat")
         print(f"   - Model eğitimi: {ml_training_schedule}")
-        print(f"   - Stok bitiş kontrolü: Günde 2 kez (09:00, 18:00)")
-        print(f"   - Alert temizleme: Her gece 03:00")
-        print(f"   - Model cleanup: Her gece 04:00")
+        print("   - Stok bitiş kontrolü: Günde 2 kez (09:00, 18:00)")
+        print("   - Alert temizleme: Her gece 03:00")
+        print("   - Model cleanup: Her gece 04:00")
     
     scheduler.start()
     print("✅ Scheduler başlatıldı (Günlük dosya temizleme: 02:00)")

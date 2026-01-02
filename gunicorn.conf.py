@@ -8,10 +8,11 @@ import os
 bind = f"0.0.0.0:{os.getenv('PORT', '5000')}"
 backlog = 2048
 
-# Worker Processes - MEMORY OPTIMIZED
-workers = int(os.getenv('GUNICORN_WORKERS', '1'))  # 1 worker (was 2)
+# Worker Processes - PERFORMANCE OPTIMIZED (29.12.2025)
+# Production için önerilen: workers = (2 * CPU cores) + 1
+workers = int(os.getenv('GUNICORN_WORKERS', '4'))  # 4 worker (increased from 1)
 worker_class = 'sync'  # sync worker (not gevent/eventlet)
-threads = int(os.getenv('GUNICORN_THREADS', '2'))  # 2 threads per worker (was 4)
+threads = int(os.getenv('GUNICORN_THREADS', '4'))  # 4 threads per worker (increased from 2)
 worker_connections = 1000
 max_requests = int(os.getenv('MAX_REQUESTS', '100'))  # Her 100 request'te worker restart (cache temizlenir)
 max_requests_jitter = int(os.getenv('MAX_REQUESTS_JITTER', '20'))  # Add randomness to prevent thundering herd

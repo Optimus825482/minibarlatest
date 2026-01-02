@@ -1,6 +1,7 @@
 {% extends "base.html" %} {% block title %}Depo Sorumlusu Panel - Minibar Takip
-Sistemi{% endblock %} {% block page_title %}Depo Sorumlusu Panel{% endblock %}
-{% block content %}
+Sistemi{% endblock %} {% block page_title %}Panel{% endblock %} {% block
+page_icon_bg %}bg-gradient-to-br from-slate-500 to-slate-700{% endblock %} {%
+block page_icon %}fas fa-th-large{% endblock %} {% block content %}
 <div class="space-y-6">
   <!-- Günlük Görevlerim Widget - Depo Sorumlusu -->
   {% set yukleme = yukleme_gorev_ozeti or {'toplam': 0, 'tamamlanan': 0,

@@ -30,8 +30,9 @@ class GorevService:
     @staticmethod
     def create_daily_tasks(otel_id: int, tarih: date) -> Dict:
         """
-        Günlük görevleri oluşturur.
-        In House, Arrivals ve Departures görevlerini ayrı ayrı oluşturur.
+        Günlük görevleri oluşturur - OTEL BAZLI (personel bazlı DEĞİL).
+        Her otel için günde sadece 3 görev: inhouse_kontrol, arrival_kontrol, departure_kontrol
+        Herhangi bir personel bu görevleri tamamlayabilir.
         
         Args:
             otel_id: Otel ID
@@ -49,30 +50,17 @@ class GorevService:
                 'hatalar': []
             }
             
-            # Otelin kat sorumlularını bul
-            kat_sorumluları = Kullanici.query.filter(
-                Kullanici.otel_id == otel_id,
-                Kullanici.rol == 'kat_sorumlusu',
-                Kullanici.aktif == True
-            ).all()
+            # In House görevleri (otel bazlı - tek görev)
+            inhouse_result = GorevService.create_inhouse_tasks(otel_id, tarih)
+            result['inhouse_gorev_sayisi'] = inhouse_result.get('oda_sayisi', 0)
             
-            if not kat_sorumluları:
-                result['hatalar'].append('Bu otel için aktif kat sorumlusu bulunamadı')
-                return result
+            # Arrivals görevleri (otel bazlı - tek görev)
+            arrival_result = GorevService.create_arrival_tasks(otel_id, tarih)
+            result['arrival_gorev_sayisi'] = arrival_result.get('oda_sayisi', 0)
             
-            # Her kat sorumlusu için görev oluştur
-            for personel in kat_sorumluları:
-                # In House görevleri
-                inhouse_result = GorevService.create_inhouse_tasks(otel_id, personel.id, tarih)
-                result['inhouse_gorev_sayisi'] += inhouse_result.get('oda_sayisi', 0)
-                
-                # Arrivals görevleri
-                arrival_result = GorevService.create_arrival_tasks(otel_id, personel.id, tarih)
-                result['arrival_gorev_sayisi'] += arrival_result.get('oda_sayisi', 0)
-                
-                # Departures görevleri
-                departure_result = GorevService.create_departure_tasks(otel_id, personel.id, tarih)
-                result['departure_gorev_sayisi'] += departure_result.get('oda_sayisi', 0)
+            # Departures görevleri (otel bazlı - tek görev)
+            departure_result = GorevService.create_departure_tasks(otel_id, tarih)
+            result['departure_gorev_sayisi'] = departure_result.get('oda_sayisi', 0)
             
             result['toplam_oda_sayisi'] = (
                 result['inhouse_gorev_sayisi'] + 
@@ -88,14 +76,13 @@ class GorevService:
             raise Exception(f"Günlük görev oluşturma hatası: {str(e)}")
     
     @staticmethod
-    def create_inhouse_tasks(otel_id: int, personel_id: int, tarih: date) -> Dict:
+    def create_inhouse_tasks(otel_id: int, tarih: date) -> Dict:
         """
-        In House kontrol görevlerini oluşturur.
-        Kalmaya devam eden misafirler için görev oluşturur.
+        In House kontrol görevlerini oluşturur - OTEL BAZLI.
+        Kalmaya devam eden misafirler için tek bir görev oluşturur.
         
         Args:
             otel_id: Otel ID
-            personel_id: Personel ID
             tarih: Görev tarihi
             
         Returns:
@@ -104,10 +91,9 @@ class GorevService:
         try:
             result = {'oda_sayisi': 0, 'gorev_id': None}
             
-            # Mevcut In House görev var mı kontrol et
+            # Mevcut In House görev var mı kontrol et (otel bazlı)
             mevcut_gorev = GunlukGorev.query.filter(
                 GunlukGorev.otel_id == otel_id,
-                GunlukGorev.personel_id == personel_id,
                 GunlukGorev.gorev_tarihi == tarih,
                 GunlukGorev.gorev_tipi == 'inhouse_kontrol'
             ).first()
@@ -128,10 +114,10 @@ class GorevService:
             if not inhouse_kayitlar:
                 return result
             
-            # Ana görev kaydı oluştur
+            # Ana görev kaydı oluştur (personel_id NULL - otel bazlı)
             gorev = GunlukGorev(
                 otel_id=otel_id,
-                personel_id=personel_id,
+                personel_id=None,  # Otel bazlı görev - herhangi bir personel tamamlayabilir
                 gorev_tarihi=tarih,
                 gorev_tipi='inhouse_kontrol',
                 durum='pending'
@@ -158,14 +144,13 @@ class GorevService:
             raise Exception(f"In House görev oluşturma hatası: {str(e)}")
     
     @staticmethod
-    def create_arrival_tasks(otel_id: int, personel_id: int, tarih: date) -> Dict:
+    def create_arrival_tasks(otel_id: int, tarih: date) -> Dict:
         """
-        Arrivals kontrol görevlerini oluşturur.
-        O gün giriş yapacak misafirler için görev oluşturur.
+        Arrivals kontrol görevlerini oluşturur - OTEL BAZLI.
+        O gün giriş yapacak misafirler için tek bir görev oluşturur.
         
         Args:
             otel_id: Otel ID
-            personel_id: Personel ID
             tarih: Görev tarihi
             
         Returns:
@@ -174,10 +159,9 @@ class GorevService:
         try:
             result = {'oda_sayisi': 0, 'gorev_id': None}
             
-            # Mevcut Arrivals görev var mı kontrol et
+            # Mevcut Arrivals görev var mı kontrol et (otel bazlı)
             mevcut_gorev = GunlukGorev.query.filter(
                 GunlukGorev.otel_id == otel_id,
-                GunlukGorev.personel_id == personel_id,
                 GunlukGorev.gorev_tarihi == tarih,
                 GunlukGorev.gorev_tipi == 'arrival_kontrol'
             ).first()
@@ -197,10 +181,10 @@ class GorevService:
             if not arrival_kayitlar:
                 return result
             
-            # Ana görev kaydı oluştur
+            # Ana görev kaydı oluştur (personel_id NULL - otel bazlı)
             gorev = GunlukGorev(
                 otel_id=otel_id,
-                personel_id=personel_id,
+                personel_id=None,  # Otel bazlı görev - herhangi bir personel tamamlayabilir
                 gorev_tarihi=tarih,
                 gorev_tipi='arrival_kontrol',
                 durum='pending'
@@ -228,15 +212,14 @@ class GorevService:
             raise Exception(f"Arrivals görev oluşturma hatası: {str(e)}")
     
     @staticmethod
-    def create_departure_tasks(otel_id: int, personel_id: int, tarih: date) -> Dict:
+    def create_departure_tasks(otel_id: int, tarih: date) -> Dict:
         """
-        Departures kontrol görevlerini oluşturur.
-        O gün çıkış yapacak misafirler için görev oluşturur.
+        Departures kontrol görevlerini oluşturur - OTEL BAZLI.
+        O gün çıkış yapacak misafirler için tek bir görev oluşturur.
         Öncelik sırası: Erken çıkış saati olan odalar önce kontrol edilir.
         
         Args:
             otel_id: Otel ID
-            personel_id: Personel ID
             tarih: Görev tarihi
             
         Returns:
@@ -245,10 +228,9 @@ class GorevService:
         try:
             result = {'oda_sayisi': 0, 'gorev_id': None}
             
-            # Mevcut Departures görev var mı kontrol et
+            # Mevcut Departures görev var mı kontrol et (otel bazlı)
             mevcut_gorev = GunlukGorev.query.filter(
                 GunlukGorev.otel_id == otel_id,
-                GunlukGorev.personel_id == personel_id,
                 GunlukGorev.gorev_tarihi == tarih,
                 GunlukGorev.gorev_tipi == 'departure_kontrol'
             ).first()
@@ -269,10 +251,10 @@ class GorevService:
             if not departure_kayitlar:
                 return result
             
-            # Ana görev kaydı oluştur
+            # Ana görev kaydı oluştur (personel_id NULL - otel bazlı)
             gorev = GunlukGorev(
                 otel_id=otel_id,
-                personel_id=personel_id,
+                personel_id=None,  # Otel bazlı görev - herhangi bir personel tamamlayabilir
                 gorev_tarihi=tarih,
                 gorev_tipi='departure_kontrol',
                 durum='pending'
@@ -464,12 +446,12 @@ class GorevService:
         }
     
     @staticmethod
-    def get_pending_tasks(personel_id: int, tarih: date) -> List[Dict]:
+    def get_pending_tasks(otel_id: int, tarih: date) -> List[Dict]:
         """
-        Bekleyen görevleri getirir.
+        Bekleyen görevleri getirir - OTEL BAZLI.
         
         Args:
-            personel_id: Personel ID
+            otel_id: Otel ID
             tarih: Görev tarihi
             
         Returns:
@@ -477,7 +459,7 @@ class GorevService:
         """
         try:
             gorevler = GunlukGorev.query.filter(
-                GunlukGorev.personel_id == personel_id,
+                GunlukGorev.otel_id == otel_id,
                 GunlukGorev.gorev_tarihi == tarih
             ).options(
                 joinedload(GunlukGorev.detaylar).joinedload(GorevDetay.oda).subqueryload(Oda.kat)
@@ -490,9 +472,6 @@ class GorevService:
                 bekleyen_detaylar.sort(key=lambda x: (x.oncelik_sirasi or 999))
                 
                 for detay in bekleyen_detaylar:
-                    # Kontrol başlangıç zamanını al
-                    kontrol_baslangic = GorevService._get_kontrol_baslangic(detay.oda_id, personel_id, tarih)
-                    
                     # Kat bilgisini al
                     kat_no = None
                     kat_adi = None
@@ -513,8 +492,7 @@ class GorevService:
                         'varis_saati': detay.varis_saati.isoformat() if detay.varis_saati else None,
                         'cikis_saati': detay.cikis_saati.isoformat() if detay.cikis_saati else None,
                         'oncelik_sirasi': detay.oncelik_sirasi,
-                        'kontrol_baslangic': kontrol_baslangic,
-                        'kaynak_silindi': detay.misafir_kayit_id is None  # Kaynak silindi göstergesi
+                        'kaynak_silindi': detay.misafir_kayit_id is None
                     }
                     
                     # Arrivals için geri sayım ekle
@@ -533,12 +511,12 @@ class GorevService:
             raise Exception(f"Bekleyen görev getirme hatası: {str(e)}")
     
     @staticmethod
-    def get_completed_tasks(personel_id: int, tarih: date) -> List[Dict]:
+    def get_completed_tasks(otel_id: int, tarih: date) -> List[Dict]:
         """
-        Tamamlanan görevleri getirir.
+        Tamamlanan görevleri getirir - OTEL BAZLI.
         
         Args:
-            personel_id: Personel ID
+            otel_id: Otel ID
             tarih: Görev tarihi
             
         Returns:
@@ -546,7 +524,7 @@ class GorevService:
         """
         try:
             gorevler = GunlukGorev.query.filter(
-                GunlukGorev.personel_id == personel_id,
+                GunlukGorev.otel_id == otel_id,
                 GunlukGorev.gorev_tarihi == tarih
             ).options(
                 joinedload(GunlukGorev.detaylar).joinedload(GorevDetay.oda).subqueryload(Oda.kat)
@@ -556,9 +534,6 @@ class GorevService:
             for gorev in gorevler:
                 tamamlanan_detaylar = [d for d in gorev.detaylar if d.durum == 'completed']
                 for detay in tamamlanan_detaylar:
-                    # Kontrol başlangıç, bitiş ve süre bilgilerini al
-                    kontrol_baslangic, kontrol_bitis, kontrol_suresi = GorevService._get_kontrol_zamanlari_ve_sure(detay.oda_id, personel_id, tarih)
-                    
                     # Kat bilgisini al
                     kat_no = None
                     kat_adi = None
@@ -575,11 +550,9 @@ class GorevService:
                         'oda_no': detay.oda.oda_no if detay.oda else None,
                         'oda_id': detay.oda_id,
                         'durum': detay.durum,
-                        'kontrol_baslangic': kontrol_baslangic,
-                        'kontrol_zamani': kontrol_bitis or (detay.kontrol_zamani.strftime('%H:%M') if detay.kontrol_zamani else None),
-                        'kontrol_suresi': kontrol_suresi,
+                        'kontrol_zamani': detay.kontrol_zamani.strftime('%H:%M') if detay.kontrol_zamani else None,
                         'dnd_sayisi': detay.dnd_sayisi,
-                        'kaynak_silindi': detay.misafir_kayit_id is None  # Kaynak silindi göstergesi
+                        'kaynak_silindi': detay.misafir_kayit_id is None
                     })
             
             return result
@@ -588,12 +561,12 @@ class GorevService:
             raise Exception(f"Tamamlanan görev getirme hatası: {str(e)}")
     
     @staticmethod
-    def get_dnd_tasks(personel_id: int, tarih: date) -> List[Dict]:
+    def get_dnd_tasks(otel_id: int, tarih: date) -> List[Dict]:
         """
-        DND durumundaki görevleri getirir.
+        DND durumundaki görevleri getirir - OTEL BAZLI.
         
         Args:
-            personel_id: Personel ID
+            otel_id: Otel ID
             tarih: Görev tarihi
             
         Returns:
@@ -601,7 +574,7 @@ class GorevService:
         """
         try:
             gorevler = GunlukGorev.query.filter(
-                GunlukGorev.personel_id == personel_id,
+                GunlukGorev.otel_id == otel_id,
                 GunlukGorev.gorev_tarihi == tarih
             ).options(
                 joinedload(GunlukGorev.detaylar).joinedload(GorevDetay.oda).subqueryload(Oda.kat),
@@ -636,7 +609,7 @@ class GorevService:
                         'dnd_sayisi': detay.dnd_sayisi,
                         'son_dnd_zamani': detay.son_dnd_zamani.isoformat() if detay.son_dnd_zamani else None,
                         'kontrol_gecmisi': kontrol_gecmisi,
-                        'kaynak_silindi': detay.misafir_kayit_id is None  # Kaynak silindi göstergesi
+                        'kaynak_silindi': detay.misafir_kayit_id is None
                     })
             
             return result
@@ -679,12 +652,12 @@ class GorevService:
             raise Exception(f"Ana görev durumu güncelleme hatası: {str(e)}")
     
     @staticmethod
-    def get_task_summary(personel_id: int, tarih: date) -> Dict:
+    def get_task_summary(otel_id: int, tarih: date) -> Dict:
         """
-        Personelin günlük görev özetini getirir.
+        Otelin günlük görev özetini getirir - OTEL BAZLI.
         
         Args:
-            personel_id: Personel ID
+            otel_id: Otel ID
             tarih: Görev tarihi
             
         Returns:
@@ -692,7 +665,7 @@ class GorevService:
         """
         try:
             gorevler = GunlukGorev.query.filter(
-                GunlukGorev.personel_id == personel_id,
+                GunlukGorev.otel_id == otel_id,
                 GunlukGorev.gorev_tarihi == tarih
             ).options(joinedload(GunlukGorev.detaylar)).all()
             

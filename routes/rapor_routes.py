@@ -51,12 +51,16 @@ def doluluk_raporlari():
     try:
         oteller = get_kullanici_otelleri()
         
-        # URL'den otel_id parametresini al
+        # URL'den parametreleri al
         otel_id = request.args.get('otel_id', type=int)
+        baslangic = request.args.get('baslangic', '')
+        bitis = request.args.get('bitis', '')
         
         return render_template('raporlar/doluluk_raporlari.html', 
                              oteller=oteller,
-                             secili_otel_id=otel_id)
+                             secili_otel_id=otel_id,
+                             secili_baslangic=baslangic,
+                             secili_bitis=bitis)
     except Exception as e:
         log_hata(e, modul='doluluk_raporlari')
         flash('Sayfa yüklenirken hata oluştu.', 'danger')
@@ -141,7 +145,10 @@ def doluluk_raporu_olustur():
         
         return render_template('raporlar/doluluk_raporlari.html', 
                              oteller=oteller, 
-                             rapor_verisi=rapor_verisi)
+                             rapor_verisi=rapor_verisi,
+                             secili_otel_id=otel_id,
+                             secili_baslangic=baslangic,
+                             secili_bitis=bitis)
         
     except Exception as e:
         log_hata(e, modul='doluluk_raporu_olustur')
@@ -1357,13 +1364,18 @@ def otel_zimmet_stok_raporu_olustur():
         if export_format == 'excel':
             return export_otel_zimmet_stok_excel(rapor)
         
+        # PDF export
+        if export_format == 'pdf':
+            return export_otel_zimmet_stok_pdf(rapor)
+        
         oteller = get_kullanici_otelleri()
         
         log_islem('view', 'otel_zimmet_stok_raporu', {'otel_id': otel_id})
         
         return render_template('raporlar/otel_zimmet_stok.html',
                              oteller=oteller,
-                             rapor_verisi=rapor)
+                             rapor_verisi=rapor,
+                             secili_otel_id=otel_id)
         
     except Exception as e:
         log_hata(e, modul='otel_zimmet_stok_raporu_olustur')
@@ -1524,6 +1536,290 @@ def export_otel_zimmet_stok_excel(rapor):
         as_attachment=True,
         download_name=filename,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+
+
+def export_otel_zimmet_stok_pdf(rapor):
+    """Otel zimmet stok raporunu PDF olarak export et - Dikey A4, her sayfada header ve sayfa numarası"""
+    import io
+    import base64
+    import os
+    from flask import send_file
+    from datetime import datetime
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm, mm
+    from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Table, TableStyle, Paragraph, Spacer, Image as RLImage, PageBreak
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.pdfgen import canvas
+    
+    # Türkçe karakter desteği için DejaVu font kaydet
+    font_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'fonts')
+    dejavu_path = os.path.join(font_path, 'DejaVuSans.ttf')
+    dejavu_bold_path = os.path.join(font_path, 'DejaVuSans-Bold.ttf')
+    
+    base_font = 'Helvetica'
+    bold_font = 'Helvetica-Bold'
+    
+    try:
+        if os.path.exists(dejavu_path):
+            if 'DejaVu' not in pdfmetrics.getRegisteredFontNames():
+                pdfmetrics.registerFont(TTFont('DejaVu', dejavu_path))
+            base_font = 'DejaVu'
+            
+            if os.path.exists(dejavu_bold_path):
+                if 'DejaVu-Bold' not in pdfmetrics.getRegisteredFontNames():
+                    pdfmetrics.registerFont(TTFont('DejaVu-Bold', dejavu_bold_path))
+                bold_font = 'DejaVu-Bold'
+            else:
+                bold_font = 'DejaVu'
+    except Exception as e:
+        print(f"Font kayıt hatası: {e}")
+    
+    pdf_buffer = io.BytesIO()
+    
+    # Sayfa boyutları - Dikey A4
+    page_width, page_height = A4
+    margin_left = 1.5*cm
+    margin_right = 1.5*cm
+    margin_top = 3*cm  # Header için alan
+    margin_bottom = 2*cm  # Footer için alan
+    
+    # Rapor tarihinden sadece tarih kısmını al (saat olmadan)
+    rapor_tarihi_raw = rapor.get('rapor_tarihi', '')
+    # Eğer tarih "02.01.2026 02:46" formatındaysa sadece "02.01.2026" al
+    rapor_tarihi_sadece = rapor_tarihi_raw.split(' ')[0] if ' ' in rapor_tarihi_raw else rapor_tarihi_raw
+    
+    # Rapor bilgilerini sakla (header/footer için)
+    rapor_bilgi = {
+        'rapor_tarihi': rapor_tarihi_sadece,
+        'base_font': base_font,
+        'bold_font': bold_font,
+        'current_otel': '',
+        'current_logo': None
+    }
+    
+    def header_footer(canvas_obj, doc):
+        """Her sayfada header ve footer çiz"""
+        canvas_obj.saveState()
+        
+        # Header - Üst kısım
+        # Sol: Otel adı (varsa)
+        if rapor_bilgi.get('current_otel'):
+            canvas_obj.setFont(bold_font, 10)
+            canvas_obj.setFillColor(colors.HexColor('#3B82F6'))
+            canvas_obj.drawString(margin_left, page_height - 1.2*cm, rapor_bilgi['current_otel'])
+        
+        # Orta: Rapor başlığı
+        canvas_obj.setFont(bold_font, 12)
+        canvas_obj.setFillColor(colors.HexColor('#1E3A5F'))
+        rapor_text = "Otel Zimmet Stok Raporu"
+        text_width = canvas_obj.stringWidth(rapor_text, bold_font, 12)
+        canvas_obj.drawString((page_width - text_width) / 2, page_height - 1.2*cm, rapor_text)
+        
+        # Sağ: Tarih (sadece tarih, saat yok)
+        canvas_obj.setFont(base_font, 9)
+        canvas_obj.setFillColor(colors.HexColor('#64748B'))
+        tarih_text = rapor_bilgi['rapor_tarihi']
+        tarih_width = canvas_obj.stringWidth(tarih_text, base_font, 9)
+        canvas_obj.drawString(page_width - margin_right - tarih_width, page_height - 1.2*cm, tarih_text)
+        
+        # Header altı çizgi
+        canvas_obj.setStrokeColor(colors.HexColor('#3B82F6'))
+        canvas_obj.setLineWidth(2)
+        canvas_obj.line(margin_left, page_height - 1.8*cm, page_width - margin_right, page_height - 1.8*cm)
+        
+        # Footer - Alt kısım
+        # Sol: Sadece tarih
+        canvas_obj.setFont(base_font, 8)
+        canvas_obj.setFillColor(colors.HexColor('#94A3B8'))
+        canvas_obj.drawString(margin_left, 1*cm, datetime.now().strftime('%d.%m.%Y'))
+        
+        # Sağ: Sayfa numarası
+        sayfa_text = f"Sayfa {doc.page}"
+        sayfa_width = canvas_obj.stringWidth(sayfa_text, base_font, 8)
+        canvas_obj.drawString(page_width - margin_right - sayfa_width, 1*cm, sayfa_text)
+        
+        # Footer üstü çizgi
+        canvas_obj.setStrokeColor(colors.HexColor('#E2E8F0'))
+        canvas_obj.setLineWidth(0.5)
+        canvas_obj.line(margin_left, 1.5*cm, page_width - margin_right, 1.5*cm)
+        
+        canvas_obj.restoreState()
+    
+    # Document oluştur
+    doc = BaseDocTemplate(
+        pdf_buffer,
+        pagesize=A4,
+        rightMargin=margin_right,
+        leftMargin=margin_left,
+        topMargin=margin_top,
+        bottomMargin=margin_bottom
+    )
+    
+    # Frame ve PageTemplate
+    frame = Frame(
+        margin_left, margin_bottom,
+        page_width - margin_left - margin_right,
+        page_height - margin_top - margin_bottom,
+        id='normal'
+    )
+    
+    template = PageTemplate(id='main', frames=frame, onPage=header_footer)
+    doc.addPageTemplates([template])
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Dikey A4 için sütun genişlikleri (toplam ~18cm)
+    col_widths = [5*cm, 1.5*cm, 1.8*cm, 2*cm, 1.8*cm, 1.8*cm, 2*cm, 2.1*cm]
+    
+    # Her otel için
+    for idx, otel in enumerate(rapor.get('oteller', [])):
+        if idx > 0:
+            elements.append(PageBreak())
+        
+        # Otel adını güncelle (header için)
+        rapor_bilgi['current_otel'] = otel['otel_ad']
+        
+        # Logo hazırla
+        logo_cell = ''
+        if otel.get('otel_logo'):
+            try:
+                logo_data = otel['otel_logo']
+                if ',' in logo_data:
+                    logo_data = logo_data.split(',')[1]
+                logo_bytes = base64.b64decode(logo_data)
+                logo_stream = io.BytesIO(logo_bytes)
+                logo_cell = RLImage(logo_stream, width=1.2*cm, height=1.2*cm)
+            except:
+                logo_cell = ''
+        
+        # Otel başlık - Logo ve Otel Adı yan yana, ortada, tabloya yapışık
+        otel_header_style = ParagraphStyle(
+            'OtelHeader',
+            fontName=bold_font,
+            fontSize=14,
+            textColor=colors.HexColor('#1E3A5F'),
+            alignment=TA_LEFT,
+            leading=16,
+            spaceBefore=0,
+            spaceAfter=0
+        )
+        
+        # Logo + Otel Adı tablosu - ortada, boşluksuz
+        otel_title_data = [[logo_cell, Paragraph(f"<b>{otel['otel_ad']}</b>", otel_header_style)]]
+        otel_title_table = Table(otel_title_data, colWidths=[1.5*cm, 16.5*cm])
+        otel_title_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (0, 0), 'CENTER'),
+            ('ALIGN', (1, 0), (1, 0), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        elements.append(otel_title_table)
+        
+        # Tablo başlıkları
+        table_data = [
+            ['Ürün Adı', 'Birim', 'Toplam', 'Kullanılan', 'Kalan', 'Kritik', 'Kullanım', 'Durum']
+        ]
+        
+        for urun in otel.get('urunler', []):
+            durum_map = {'stokout': 'TÜKENDİ', 'kritik': 'KRİTİK', 'dikkat': 'DİKKAT', 'normal': 'NORMAL'}
+            durum = durum_map.get(urun['stok_durumu'], 'NORMAL')
+            
+            table_data.append([
+                Paragraph(urun['urun_adi'], ParagraphStyle('Cell', fontName=base_font, fontSize=8)),
+                urun['birim'],
+                str(urun['toplam_miktar']),
+                str(urun['kullanilan_miktar']),
+                str(urun['kalan_miktar']),
+                str(urun['kritik_seviye']),
+                f"%{urun['kullanim_yuzdesi']}",
+                durum
+            ])
+        
+        table = Table(table_data, colWidths=col_widths, repeatRows=1)
+        
+        # Tablo stili
+        table_style = TableStyle([
+            # Header
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E3A5F')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), bold_font),
+            ('FONTSIZE', (0, 0), (-1, 0), 8),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING', (0, 0), (-1, 0), 8),
+            
+            # Body
+            ('FONTNAME', (0, 1), (-1, -1), base_font),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('ALIGN', (1, 1), (-1, -1), 'CENTER'),
+            ('ALIGN', (0, 1), (0, -1), 'LEFT'),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+            ('TOPPADDING', (0, 1), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+            
+            # Grid
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+            ('LINEBELOW', (0, 0), (-1, 0), 1.5, colors.HexColor('#1E3A5F')),
+            
+            # Alternating rows
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8FAFC')]),
+        ])
+        
+        # Durum hücrelerine renk
+        for i, urun in enumerate(otel.get('urunler', []), 1):
+            if urun['stok_durumu'] == 'stokout':
+                table_style.add('BACKGROUND', (7, i), (7, i), colors.HexColor('#FEE2E2'))
+                table_style.add('TEXTCOLOR', (7, i), (7, i), colors.HexColor('#991B1B'))
+                table_style.add('FONTNAME', (7, i), (7, i), bold_font)
+            elif urun['stok_durumu'] == 'kritik':
+                table_style.add('BACKGROUND', (7, i), (7, i), colors.HexColor('#FFEDD5'))
+                table_style.add('TEXTCOLOR', (7, i), (7, i), colors.HexColor('#9A3412'))
+                table_style.add('FONTNAME', (7, i), (7, i), bold_font)
+            elif urun['stok_durumu'] == 'dikkat':
+                table_style.add('BACKGROUND', (7, i), (7, i), colors.HexColor('#FEF9C3'))
+                table_style.add('TEXTCOLOR', (7, i), (7, i), colors.HexColor('#854D0E'))
+            else:
+                table_style.add('BACKGROUND', (7, i), (7, i), colors.HexColor('#DCFCE7'))
+                table_style.add('TEXTCOLOR', (7, i), (7, i), colors.HexColor('#166534'))
+            
+            # Kritik seviye altı kırmızı
+            if urun['kalan_miktar'] <= urun['kritik_seviye']:
+                table_style.add('TEXTCOLOR', (4, i), (4, i), colors.HexColor('#DC2626'))
+                table_style.add('FONTNAME', (4, i), (4, i), bold_font)
+        
+        table.setStyle(table_style)
+        elements.append(table)
+        
+        # Özet bilgi
+        elements.append(Spacer(1, 15))
+        ozet_style = ParagraphStyle('Ozet', fontName=base_font, fontSize=8, textColor=colors.HexColor('#64748B'), alignment=TA_LEFT)
+        toplam_urun = len(otel.get('urunler', []))
+        kritik_urun = sum(1 for u in otel.get('urunler', []) if u['stok_durumu'] in ['stokout', 'kritik'])
+        elements.append(Paragraph(f"Toplam {toplam_urun} ürün | {kritik_urun} ürün kritik/tükendi durumunda", ozet_style))
+    
+    # PDF oluştur
+    doc.build(elements)
+    pdf_buffer.seek(0)
+    
+    filename = f"otel_zimmet_stok_raporu_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    
+    log_islem('export', 'otel_zimmet_stok_raporu', {'format': 'pdf'})
+    
+    return send_file(
+        pdf_buffer,
+        as_attachment=True,
+        download_name=filename,
+        mimetype='application/pdf'
     )
 
 
@@ -2140,16 +2436,28 @@ def gunluk_gorev_detay_raporlari():
     """Günlük görev detay raporları sayfası"""
     try:
         oteller = get_kullanici_otelleri()
-        personeller = Kullanici.query.filter(
-            Kullanici.rol == 'kat_sorumlusu',
-            Kullanici.aktif.is_(True)
-        ).order_by(Kullanici.ad, Kullanici.soyad).all()
+        
+        # URL'den parametreleri al
+        otel_id = request.args.get('otel_id', type=int)
+        tarih = request.args.get('tarih', '')
+        
+        # Seçili otel adını bul
+        secili_otel_adi = None
+        if otel_id:
+            for otel in oteller:
+                if otel.id == otel_id:
+                    secili_otel_adi = otel.ad
+                    break
+        
         return render_template('raporlar/gunluk_gorev_detay.html', 
-                             oteller=oteller, personeller=personeller)
+                             oteller=oteller,
+                             secili_otel_id=otel_id,
+                             secili_otel_adi=secili_otel_adi,
+                             secili_tarih=tarih)
     except Exception as e:
         log_hata(e, modul='gunluk_gorev_detay_raporlari')
-        flash('Sayfa yüklenirken hata oluştu.', 'danger')
-        return redirect(url_for('raporlar.doluluk_raporlari'))
+        flash('Sayfa yüklenirken hata oluştu: ' + str(e), 'danger')
+        return redirect(url_for('sistem_yoneticisi_dashboard'))
 
 
 @raporlar_bp.route('/gunluk-gorev-detay-raporu-olustur', methods=['POST'])
@@ -2162,43 +2470,48 @@ def gunluk_gorev_detay_raporu_olustur():
         
         otel_id = request.form.get('otel_id', type=int)
         personel_ids_str = request.form.get('personel_ids', '')
-        baslangic = request.form.get('baslangic')
-        bitis = request.form.get('bitis')
+        tarih = request.form.get('tarih')
         
         # Personel ID'lerini parse et
         personel_ids = [int(x) for x in personel_ids_str.split(',') if x.strip().isdigit()] if personel_ids_str else None
         
-        baslangic_tarihi = datetime.strptime(baslangic, '%Y-%m-%d').date() if baslangic else None
-        bitis_tarihi = datetime.strptime(bitis, '%Y-%m-%d').date() if bitis else None
+        # Tek tarih - başlangıç ve bitiş aynı
+        tarih_obj = datetime.strptime(tarih, '%Y-%m-%d').date() if tarih else None
         
         rapor = GunlukGorevRaporServisi.get_gunluk_gorev_raporu(
             otel_id=otel_id,
             personel_ids=personel_ids,
-            baslangic_tarihi=baslangic_tarihi,
-            bitis_tarihi=bitis_tarihi
+            baslangic_tarihi=tarih_obj,
+            bitis_tarihi=tarih_obj
         )
         
         if not rapor['success']:
             flash(rapor.get('message', 'Rapor oluşturulamadı'), 'danger')
             return redirect(url_for('raporlar.gunluk_gorev_detay_raporlari'))
         
+        # Rapor verisine tarih bilgisi ekle
+        rapor['tarih'] = tarih
+        
         oteller = get_kullanici_otelleri()
-        personeller = Kullanici.query.filter(
-            Kullanici.rol == 'kat_sorumlusu',
-            Kullanici.aktif.is_(True)
-        ).order_by(Kullanici.ad, Kullanici.soyad).all()
+        
+        # Seçili otel adını bul
+        secili_otel_adi = None
+        if otel_id:
+            for otel in oteller:
+                if otel.id == otel_id:
+                    secili_otel_adi = otel.ad
+                    break
         
         log_islem('view', 'gunluk_gorev_detay_raporu', {
-            'otel_id': otel_id, 'personel_ids': personel_ids
+            'otel_id': otel_id, 'personel_ids': personel_ids, 'tarih': tarih
         })
         
         return render_template('raporlar/gunluk_gorev_detay.html',
                              oteller=oteller,
-                             personeller=personeller,
                              rapor_verisi=rapor,
                              secili_otel_id=otel_id,
-                             secili_baslangic=baslangic,
-                             secili_bitis=bitis)
+                             secili_otel_adi=secili_otel_adi,
+                             secili_tarih=tarih)
         
     except Exception as e:
         log_hata(e, modul='gunluk_gorev_detay_raporu_olustur')

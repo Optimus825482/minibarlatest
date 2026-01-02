@@ -1,65 +1,245 @@
 {% extends "base.html" %} {% block title %}Oda Bazlı Tüketim Raporu{% endblock
 %} {% block page_title %}Oda Bazlı Minibar Tüketim Raporu{% endblock %} {% block
-content %}
+page_icon_bg %}bg-gradient-to-br from-teal-500 to-cyan-600{% endblock %} {%
+block page_icon %}fas fa-door-open{% endblock %} {% block extra_head %}
+<!-- Moment.js ve DateRangePicker -->
+<script
+  type="text/javascript"
+  src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"
+></script>
+<script
+  type="text/javascript"
+  src="https://cdn.jsdelivr.net/momentjs/latest/locale/tr.js"
+></script>
+<link
+  rel="stylesheet"
+  type="text/css"
+  href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"
+/>
+<script
+  type="text/javascript"
+  src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"
+></script>
+<style>
+  /* DateRangePicker Dark Mode Tema */
+  .daterangepicker {
+    font-family: inherit;
+    border-radius: 0.75rem;
+    border: 1px solid #334155;
+    background-color: #1e293b;
+    color: #e2e8f0;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+  .daterangepicker::before,
+  .daterangepicker::after {
+    border-bottom-color: #334155;
+  }
+  .daterangepicker .calendar-table {
+    border: none;
+    background: #1e293b;
+    border-radius: 0.5rem;
+  }
+  .daterangepicker .calendar-table thead tr:first-child th {
+    color: #94a3b8;
+  }
+  .daterangepicker .calendar-table thead tr:last-child th {
+    color: #64748b;
+    font-weight: 500;
+  }
+  .daterangepicker td,
+  .daterangepicker th {
+    color: #e2e8f0;
+  }
+  .daterangepicker td.off,
+  .daterangepicker td.off.in-range,
+  .daterangepicker td.off.start-date,
+  .daterangepicker td.off.end-date {
+    color: #475569;
+    background-color: transparent;
+  }
+  .daterangepicker td.active,
+  .daterangepicker td.active:hover {
+    background-color: #2563eb;
+    border-color: #2563eb;
+    color: white;
+  }
+  .daterangepicker td.in-range {
+    background-color: #1e40af;
+    color: #dbeafe;
+  }
+  .daterangepicker td.available:hover {
+    background-color: #334155;
+    color: #fff;
+  }
+  .daterangepicker .ranges {
+    background: #0f172a;
+    border-right: 1px solid #334155;
+  }
+  .daterangepicker .ranges li {
+    padding: 10px 16px;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    margin: 4px 8px;
+    transition: all 0.15s ease;
+    color: #94a3b8;
+  }
+  .daterangepicker .ranges li:hover {
+    background-color: #334155;
+    color: #fff;
+  }
+  .daterangepicker .ranges li.active {
+    background-color: #2563eb;
+    color: white;
+  }
+  .daterangepicker .drp-buttons {
+    border-top: 1px solid #334155;
+    padding: 12px;
+    background: #0f172a;
+  }
+  .daterangepicker .drp-buttons .btn {
+    font-size: 0.875rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+  }
+  .daterangepicker .btn-default {
+    background-color: #334155;
+    color: #e2e8f0;
+    border: 1px solid #475569;
+  }
+  .daterangepicker .btn-default:hover {
+    background-color: #475569;
+  }
+  .daterangepicker .btn-primary {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+  }
+  .daterangepicker .btn-primary:hover {
+    background-color: #1d4ed8;
+  }
+  .daterangepicker .drp-selected {
+    font-size: 0.8rem;
+    color: #94a3b8;
+  }
+  .daterangepicker select.monthselect,
+  .daterangepicker select.yearselect {
+    font-size: 0.875rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.375rem;
+    border: 1px solid #475569;
+    background-color: #334155;
+    color: #e2e8f0;
+  }
+  .daterangepicker select.monthselect:focus,
+  .daterangepicker select.yearselect:focus {
+    outline: none;
+    border-color: #2563eb;
+  }
+  .daterangepicker th.month {
+    font-weight: 600;
+    color: #e2e8f0;
+  }
+  .daterangepicker th.prev span,
+  .daterangepicker th.next span {
+    border-color: #94a3b8;
+  }
+  .daterangepicker th.prev:hover span,
+  .daterangepicker th.next:hover span {
+    border-color: #fff;
+  }
+</style>
+{% endblock %} {% block content %}
 <div class="space-y-6">
-  <!-- Filtre Formu -->
+  <!-- Bilgilendirme Kartı -->
+  <div
+    class="bg-teal-50 dark:bg-teal-900/20 border-l-4 border-teal-400 p-4 rounded-r-lg"
+  >
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <i class="fas fa-info-circle text-teal-400"></i>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm text-teal-700 dark:text-teal-300">
+          <strong>Oda Bazlı Tüketim Raporu:</strong> Seçtiğiniz oteldeki tüm
+          odaların minibar tüketim kayıtlarını tarih aralığına göre
+          görüntüleyin.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtre Paneli -->
   <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
     <div class="px-4 py-5 sm:p-6">
-      <h3 class="text-lg font-medium text-slate-900 dark:text-white mb-4">
-        <i class="fas fa-filter mr-2 text-blue-600"></i>Rapor Filtresi
+      <h3
+        class="text-lg leading-6 font-medium text-slate-900 dark:text-white mb-6"
+      >
+        <i class="fas fa-filter mr-2 text-teal-600"></i>Rapor Filtreleri
       </h3>
+
       <form
         method="POST"
         action="{{ url_for('raporlar.oda_bazli_tuketim_raporu_olustur') }}"
-        class="space-y-4"
+        id="raporForm"
       >
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <input type="hidden" id="baslangic" name="baslangic" />
+        <input type="hidden" id="bitis" name="bitis" />
+
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <!-- Otel Seçimi -->
           <div>
             <label
-              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              for="otel_id"
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
             >
               Otel <span class="text-red-500">*</span>
             </label>
             <select
+              id="otel_id"
               name="otel_id"
               required
-              class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white shadow-sm"
+              class="h-11 appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
             >
-              <option value="">Otel Seçin</option>
+              <option value="">Otel seçiniz...</option>
               {% for otel in oteller %}
               <option value="{{ otel.id }}">{{ otel.ad }}</option>
               {% endfor %}
             </select>
           </div>
-          <div>
+
+          <!-- Tarih Aralığı -->
+          <div class="lg:col-span-2">
             <label
-              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
-              >Başlangıç</label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
             >
-            <input
-              type="date"
-              name="baslangic"
-              class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white shadow-sm"
-            />
+              Tarih Aralığı (Opsiyonel)
+            </label>
+            <div class="relative">
+              <input
+                type="text"
+                id="tarihAraligi"
+                readonly
+                class="h-11 appearance-none block w-full pl-10 pr-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm cursor-pointer hover:border-teal-400 transition-colors"
+                placeholder="Tarih seçin..."
+              />
+              <div
+                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+              >
+                <i class="fas fa-calendar-alt text-slate-400"></i>
+              </div>
+            </div>
           </div>
-          <div>
-            <label
-              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
-              >Bitiş</label
-            >
-            <input
-              type="date"
-              name="bitis"
-              class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white shadow-sm"
-            />
-          </div>
+
+          <!-- Rapor Getir Butonu -->
           <div class="flex items-end">
             <button
               type="submit"
-              class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              id="rapor_btn"
+              class="h-11 w-full px-6 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors"
             >
-              <i class="fas fa-search mr-2"></i>Rapor Oluştur
+              <i class="fas fa-chart-bar mr-2"></i>Rapor Oluştur
             </button>
           </div>
         </div>
@@ -68,7 +248,7 @@ content %}
   </div>
 
   {% if rapor_verisi %}
-  <!-- Tüketim Listesi Tablosu - Gruplu Görünüm -->
+  <!-- Tüketim Listesi Tablosu -->
   <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
     <div
       class="px-4 py-4 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700"
@@ -185,4 +365,95 @@ content %}
   </div>
   {% endif %}
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // DateRangePicker
+    moment.locale("tr");
+    $("#tarihAraligi").daterangepicker({
+      autoUpdateInput: false,
+      opens: "left",
+      alwaysShowCalendars: true,
+      showDropdowns: true,
+      linkedCalendars: false,
+      maxDate: moment(),
+      locale: {
+        format: "DD.MM.YYYY",
+        separator: " - ",
+        applyLabel: "Uygula",
+        cancelLabel: "Temizle",
+        fromLabel: "Başlangıç",
+        toLabel: "Bitiş",
+        customRangeLabel: "Özel Aralık",
+        weekLabel: "H",
+        daysOfWeek: ["Pz", "Pt", "Sa", "Ça", "Pe", "Cu", "Ct"],
+        monthNames: [
+          "Ocak",
+          "Şubat",
+          "Mart",
+          "Nisan",
+          "Mayıs",
+          "Haziran",
+          "Temmuz",
+          "Ağustos",
+          "Eylül",
+          "Ekim",
+          "Kasım",
+          "Aralık",
+        ],
+        firstDay: 1,
+      },
+      ranges: {
+        Bugün: [moment(), moment()],
+        Dün: [moment().subtract(1, "days"), moment().subtract(1, "days")],
+        "Bu Hafta": [moment().startOf("week"), moment().endOf("week")],
+        "Son 7 Gün": [moment().subtract(6, "days"), moment()],
+        "Son 15 Gün": [moment().subtract(14, "days"), moment()],
+        "Bu Ay": [moment().startOf("month"), moment().endOf("month")],
+        "Geçen Ay": [
+          moment().subtract(1, "month").startOf("month"),
+          moment().subtract(1, "month").endOf("month"),
+        ],
+        "Bu Yıl": [moment().startOf("year"), moment()],
+      },
+    });
+
+    $("#tarihAraligi").on("apply.daterangepicker", function (ev, picker) {
+      $(this).val(
+        picker.startDate.format("DD.MM.YYYY") +
+          " - " +
+          picker.endDate.format("DD.MM.YYYY")
+      );
+      document.getElementById("baslangic").value =
+        picker.startDate.format("YYYY-MM-DD");
+      document.getElementById("bitis").value =
+        picker.endDate.format("YYYY-MM-DD");
+    });
+
+    $("#tarihAraligi").on("cancel.daterangepicker", function () {
+      $(this).val("");
+      document.getElementById("baslangic").value = "";
+      document.getElementById("bitis").value = "";
+    });
+  });
+</script>
+
+<style>
+  @media print {
+    nav,
+    aside,
+    .no-print {
+      display: none !important;
+    }
+    body {
+      margin: 0;
+      padding: 20px;
+    }
+    * {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+</style>
+
 {% endblock %}

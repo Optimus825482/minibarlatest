@@ -1,666 +1,700 @@
 """
-Redis Cache Yönetim Modülü
-Fiyatlandırma ve Karlılık sistemleri için cache stratejileri
+Akıllı Cache Yönetim Modülü
+
+SADECE statik/master data için cache kullanır.
+Transactional data (stok, zimmet, DND) ASLA cache'lenmez!
+
+Cache'lenebilir veriler:
+- Ürün listesi (dropdown'lar için)
+- Setup tanımları
+- Otel/Kat/Oda listeleri
+- Kullanıcı yetkileri
+
+Cache'lenmemesi gerekenler:
+- Stok miktarları
+- Zimmet bakiyeleri
+- DND durumları
+- Görev durumları
+- Minibar içerikleri
+
+Kullanım:
+    from utils.cache_manager import cache_manager, cached_master_data
+    
+    # Decorator ile
+    @cached_master_data(timeout=300, key_prefix='urunler')
+    def get_urun_listesi():
+        return Urun.query.filter_by(aktif=True).all()
+    
+    # Manuel invalidation
+    cache_manager.invalidate('urunler')
 """
 
-from functools import wraps
-from flask import current_app
-from datetime import datetime, timezone
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
 import logging
-import json
+import hashlib
+from functools import wraps
+from typing import Optional, Any, Callable
+from flask import current_app
 
 logger = logging.getLogger(__name__)
 
-# Cache instance'ı lazy import ile al (circular import önleme)
+# Global cache instance
 _cache = None
-
-def get_cache():
-    """Cache instance'ını al (lazy loading)"""
-    global _cache
-    if _cache is None:
-        from app import cache
-        _cache = cache
-    return _cache
+_cache_enabled = False
 
 
 class CacheManager:
-    """Merkezi cache yönetim sınıfı"""
-    
-    @staticmethod
-    def get_cache():
-        """Cache instance'ını al"""
-        return get_cache()
-    
-    @staticmethod
-    def make_cache_key(*args, **kwargs):
-        """
-        Cache key oluştur
-        Args ve kwargs'tan unique bir key üretir
-        """
-        key_parts = [str(arg) for arg in args]
-        key_parts.extend([f"{k}={v}" for k, v in sorted(kwargs.items())])
-        return ":".join(key_parts)
-    
-    @staticmethod
-    def invalidate_pattern(pattern):
-        """
-        Pattern'e uyan tüm cache key'lerini temizle
-        Örnek: 'fiyat:urun:*' -> Tüm ürün fiyat cache'lerini temizle
-        """
-        try:
-            cache = CacheManager.get_cache()
-            if hasattr(cache.cache, '_client'):  # Redis backend
-                redis_client = cache.cache._client
-                prefix = current_app.config.get('CACHE_KEY_PREFIX', 'minibar_cache:')
-                full_pattern = f"{prefix}{pattern}"
-                
-                # SCAN kullan (keys() yerine - production için daha güvenli)
-                deleted_count = 0
-                cursor = 0
-                while True:
-                    cursor, keys = redis_client.scan(cursor, match=full_pattern, count=100)
-                    if keys:
-                        redis_client.delete(*keys)
-                        deleted_count += len(keys)
-                    if cursor == 0:
-                        break
-                
-                if deleted_count > 0:
-                    logger.info(f"✅ Cache pattern temizlendi: {pattern} ({deleted_count} key)")
-                return deleted_count
-            return 0
-        except Exception as e:
-            logger.error(f"❌ Cache pattern temizleme hatası: {e}")
-            return 0
-
-
-class TedarikciCache:
-    """Tedarikçi ve satın alma cache yönetimi"""
-    
-    @staticmethod
-    def get_tedarikci_performans_key(tedarikci_id, donem_baslangic, donem_bitis):
-        """Tedarikçi performans cache key'i oluştur"""
-        baslangic_str = donem_baslangic.strftime('%Y-%m-%d') if donem_baslangic else 'none'
-        bitis_str = donem_bitis.strftime('%Y-%m-%d') if donem_bitis else 'none'
-        return f"tedarikci:performans:{tedarikci_id}:{baslangic_str}:{bitis_str}"
-    
-    @staticmethod
-    def get_tedarikci_performans(tedarikci_id, donem_baslangic, donem_bitis):
-        """
-        Tedarikçi performans metriklerini cache'den getir
-        Cache miss durumunda None döner
-        """
-        try:
-            cache = CacheManager.get_cache()
-            key = TedarikciCache.get_tedarikci_performans_key(tedarikci_id, donem_baslangic, donem_bitis)
-            cached_data = cache.get(key)
-            
-            if cached_data:
-                logger.debug(f"✅ Cache HIT: {key}")
-                return cached_data
-            
-            logger.debug(f"❌ Cache MISS: {key}")
-            return None
-        except Exception as e:
-            logger.error(f"❌ Cache okuma hatası: {e}")
-            return None
-    
-    @staticmethod
-    def set_tedarikci_performans(tedarikci_id, donem_baslangic, donem_bitis, data, timeout=300):
-        """
-        Tedarikçi performans metriklerini cache'e kaydet
-        Varsayılan timeout: 5 dakika (300 saniye)
-        """
-        try:
-            cache = CacheManager.get_cache()
-            key = TedarikciCache.get_tedarikci_performans_key(tedarikci_id, donem_baslangic, donem_bitis)
-            cache.set(key, data, timeout=timeout)
-            logger.debug(f"✅ Cache SET: {key} (timeout: {timeout}s)")
-            return True
-        except Exception as e:
-            logger.error(f"❌ Cache yazma hatası: {e}")
-            return False
-    
-    @staticmethod
-    def invalidate_tedarikci_performans(tedarikci_id):
-        """Tedarikçi performans cache'ini temizle"""
-        try:
-            pattern = f"tedarikci:performans:{tedarikci_id}:*"
-            deleted = CacheManager.invalidate_pattern(pattern)
-            logger.info(f"✅ Tedarikçi {tedarikci_id} performans cache temizlendi ({deleted} key)")
-            return deleted
-        except Exception as e:
-            logger.error(f"❌ Cache temizleme hatası: {e}")
-            return 0
-    
-    @staticmethod
-    def get_fiyat_karsilastirma_key(urun_id, miktar):
-        """Fiyat karşılaştırma cache key'i oluştur"""
-        return f"tedarikci:fiyat_karsilastirma:urun:{urun_id}:miktar:{miktar}"
-    
-    @staticmethod
-    def get_fiyat_karsilastirma(urun_id, miktar):
-        """
-        Fiyat karşılaştırma sonuçlarını cache'den getir
-        Cache miss durumunda None döner
-        """
-        try:
-            cache = CacheManager.get_cache()
-            key = TedarikciCache.get_fiyat_karsilastirma_key(urun_id, miktar)
-            cached_data = cache.get(key)
-            
-            if cached_data:
-                logger.debug(f"✅ Cache HIT: {key}")
-                return cached_data
-            
-            logger.debug(f"❌ Cache MISS: {key}")
-            return None
-        except Exception as e:
-            logger.error(f"❌ Cache okuma hatası: {e}")
-            return None
-    
-    @staticmethod
-    def set_fiyat_karsilastirma(urun_id, miktar, data, timeout=600):
-        """
-        Fiyat karşılaştırma sonuçlarını cache'e kaydet
-        Varsayılan timeout: 10 dakika (600 saniye)
-        """
-        try:
-            cache = CacheManager.get_cache()
-            key = TedarikciCache.get_fiyat_karsilastirma_key(urun_id, miktar)
-            cache.set(key, data, timeout=timeout)
-            logger.debug(f"✅ Cache SET: {key} (timeout: {timeout}s)")
-            return True
-        except Exception as e:
-            logger.error(f"❌ Cache yazma hatası: {e}")
-            return False
-    
-    @staticmethod
-    def invalidate_fiyat_karsilastirma(urun_id=None):
-        """Fiyat karşılaştırma cache'ini temizle"""
-        try:
-            if urun_id:
-                pattern = f"tedarikci:fiyat_karsilastirma:urun:{urun_id}:*"
-            else:
-                pattern = "tedarikci:fiyat_karsilastirma:*"
-            deleted = CacheManager.invalidate_pattern(pattern)
-            logger.info(f"✅ Fiyat karşılaştırma cache temizlendi ({deleted} key)")
-            return deleted
-        except Exception as e:
-            logger.error(f"❌ Cache temizleme hatası: {e}")
-            return 0
-    
-    @staticmethod
-    def get_en_uygun_tedarikci_key(urun_id, miktar):
-        """En uygun tedarikçi cache key'i oluştur"""
-        return f"tedarikci:en_uygun:urun:{urun_id}:miktar:{miktar}"
-    
-    @staticmethod
-    def get_en_uygun_tedarikci(urun_id, miktar):
-        """
-        En uygun tedarikçi sonucunu cache'den getir
-        Cache miss durumunda None döner
-        """
-        try:
-            cache = CacheManager.get_cache()
-            key = TedarikciCache.get_en_uygun_tedarikci_key(urun_id, miktar)
-            cached_data = cache.get(key)
-            
-            if cached_data:
-                logger.debug(f"✅ Cache HIT: {key}")
-                return cached_data
-            
-            logger.debug(f"❌ Cache MISS: {key}")
-            return None
-        except Exception as e:
-            logger.error(f"❌ Cache okuma hatası: {e}")
-            return None
-    
-    @staticmethod
-    def set_en_uygun_tedarikci(urun_id, miktar, data, timeout=600):
-        """
-        En uygun tedarikçi sonucunu cache'e kaydet
-        Varsayılan timeout: 10 dakika (600 saniye)
-        """
-        try:
-            cache = CacheManager.get_cache()
-            key = TedarikciCache.get_en_uygun_tedarikci_key(urun_id, miktar)
-            cache.set(key, data, timeout=timeout)
-            logger.debug(f"✅ Cache SET: {key} (timeout: {timeout}s)")
-            return True
-        except Exception as e:
-            logger.error(f"❌ Cache yazma hatası: {e}")
-            return False
-    
-    @staticmethod
-    def invalidate_en_uygun_tedarikci(urun_id=None):
-        """En uygun tedarikçi cache'ini temizle"""
-        try:
-            if urun_id:
-                pattern = f"tedarikci:en_uygun:urun:{urun_id}:*"
-            else:
-                pattern = "tedarikci:en_uygun:*"
-            deleted = CacheManager.invalidate_pattern(pattern)
-            logger.info(f"✅ En uygun tedarikçi cache temizlendi ({deleted} key)")
-            return deleted
-        except Exception as e:
-            logger.error(f"❌ Cache temizleme hatası: {e}")
-            return 0
-
-
-class FiyatCache:
-    """Fiyatlandırma cache yönetimi"""
-    
-    @staticmethod
-    def get_urun_fiyat_key(urun_id, oda_id=None, tarih=None):
-        """Ürün fiyat cache key'i oluştur"""
-        tarih_str = tarih.strftime('%Y-%m-%d') if tarih else get_kktc_now().strftime('%Y-%m-%d')
-        oda_str = str(oda_id) if oda_id else 'default'
-        return f"fiyat:urun:{urun_id}:oda:{oda_str}:tarih:{tarih_str}"
-    
-    @staticmethod
-    def get_dinamik_fiyat(urun_id, oda_id=None, tarih=None, miktar=1):
-        """
-        Dinamik fiyat hesaplamasını cache'den getir
-        Cache miss durumunda None döner
-        """
-        try:
-            cache = CacheManager.get_cache()
-            key = FiyatCache.get_urun_fiyat_key(urun_id, oda_id, tarih)
-            cached_data = cache.get(key)
-            
-            if cached_data:
-                logger.debug(f"✅ Cache HIT: {key}")
-                return cached_data
-            
-            logger.debug(f"❌ Cache MISS: {key}")
-            return None
-            
-        except Exception as e:
-            logger.error(f"❌ Cache get hatası: {e}")
-            return None
-    
-    @staticmethod
-    def set_dinamik_fiyat(urun_id, fiyat_data, oda_id=None, tarih=None, timeout=None):
-        """
-        Dinamik fiyat hesaplamasını cache'e kaydet
-        
-        Args:
-            urun_id: Ürün ID
-            fiyat_data: Fiyat bilgileri dict
-            oda_id: Oda ID (opsiyonel)
-            tarih: Tarih (opsiyonel)
-            timeout: Cache timeout (saniye), None ise config'den alır
-        """
-        try:
-            cache = CacheManager.get_cache()
-            key = FiyatCache.get_urun_fiyat_key(urun_id, oda_id, tarih)
-            
-            if timeout is None:
-                timeout = current_app.config.get('CACHE_TIMEOUT_FIYAT', 3600)
-            
-            cache.set(key, fiyat_data, timeout=timeout)
-            logger.debug(f"✅ Cache SET: {key} (timeout: {timeout}s)")
-            return True
-            
-        except Exception as e:
-            logger.error(f"❌ Cache set hatası: {e}")
-            return False
-    
-    @staticmethod
-    def invalidate_urun_fiyat(urun_id):
-        """
-        Belirli bir ürünün tüm fiyat cache'lerini temizle
-        Fiyat güncellemelerinde kullanılır
-        """
-        try:
-            cache = CacheManager.get_cache()
-            pattern = f"fiyat:urun:{urun_id}:*"
-            
-            # Pattern matching ile tüm key'leri bul ve sil
-            if hasattr(cache.cache, '_client'):  # Redis backend
-                redis_client = cache.cache._client
-                prefix = current_app.config.get('CACHE_KEY_PREFIX', 'minibar_cache:')
-                full_pattern = f"{prefix}{pattern}"
-                
-                deleted_count = 0
-                cursor = 0
-                while True:
-                    cursor, keys = redis_client.scan(cursor, match=full_pattern, count=100)
-                    if keys:
-                        redis_client.delete(*keys)
-                        deleted_count += len(keys)
-                    if cursor == 0:
-                        break
-                
-                logger.info(f"✅ Ürün {urun_id} fiyat cache'i temizlendi ({deleted_count} key)")
-                return deleted_count
-            else:
-                # Simple cache için - tüm cache'i temizle
-                cache.clear()
-                logger.info(f"✅ Ürün {urun_id} için cache temizlendi (simple cache)")
-                return 1
-                
-        except Exception as e:
-            logger.error(f"❌ Fiyat cache invalidation hatası: {e}")
-            return 0
-    
-    @staticmethod
-    def invalidate_all_fiyat():
-        """Tüm fiyat cache'lerini temizle"""
-        try:
-            pattern = "fiyat:*"
-            count = CacheManager.invalidate_pattern(pattern)
-            logger.info(f"✅ Tüm fiyat cache'leri temizlendi ({count} key)")
-            return count
-        except Exception as e:
-            logger.error(f"❌ Tüm fiyat cache temizleme hatası: {e}")
-            return 0
-
-
-class KarCache:
-    """Karlılık analizi cache yönetimi"""
-    
-    @staticmethod
-    def get_donemsel_kar_key(otel_id, donem_tipi, baslangic, bitis):
-        """Dönemsel kar analizi cache key'i"""
-        baslangic_str = baslangic.strftime('%Y-%m-%d') if hasattr(baslangic, 'strftime') else str(baslangic)
-        bitis_str = bitis.strftime('%Y-%m-%d') if hasattr(bitis, 'strftime') else str(bitis)
-        return f"kar:donemsel:otel:{otel_id}:donem:{donem_tipi}:{baslangic_str}:{bitis_str}"
-    
-    @staticmethod
-    def get_donemsel_kar(otel_id, donem_tipi, baslangic, bitis):
-        """Dönemsel kar analizini cache'den getir"""
-        try:
-            cache = CacheManager.get_cache()
-            key = KarCache.get_donemsel_kar_key(otel_id, donem_tipi, baslangic, bitis)
-            cached_data = cache.get(key)
-            
-            if cached_data:
-                logger.debug(f"✅ Cache HIT: {key}")
-                return cached_data
-            
-            logger.debug(f"❌ Cache MISS: {key}")
-            return None
-            
-        except Exception as e:
-            logger.error(f"❌ Kar cache get hatası: {e}")
-            return None
-    
-    @staticmethod
-    def set_donemsel_kar(otel_id, donem_tipi, baslangic, bitis, kar_data, timeout=None):
-        """Dönemsel kar analizini cache'e kaydet"""
-        try:
-            cache = CacheManager.get_cache()
-            key = KarCache.get_donemsel_kar_key(otel_id, donem_tipi, baslangic, bitis)
-            
-            if timeout is None:
-                timeout = current_app.config.get('CACHE_TIMEOUT_KAR', 1800)
-            
-            cache.set(key, kar_data, timeout=timeout)
-            logger.debug(f"✅ Cache SET: {key} (timeout: {timeout}s)")
-            return True
-            
-        except Exception as e:
-            logger.error(f"❌ Kar cache set hatası: {e}")
-            return False
-    
-    @staticmethod
-    def get_urun_karlilik_key(urun_id, baslangic=None, bitis=None):
-        """Ürün karlılık cache key'i"""
-        baslangic_str = baslangic.strftime('%Y-%m-%d') if baslangic else 'all'
-        bitis_str = bitis.strftime('%Y-%m-%d') if bitis else 'all'
-        return f"kar:urun:{urun_id}:{baslangic_str}:{bitis_str}"
-    
-    @staticmethod
-    def get_urun_karlilik(urun_id, baslangic=None, bitis=None):
-        """Ürün karlılığını cache'den getir"""
-        try:
-            cache = CacheManager.get_cache()
-            key = KarCache.get_urun_karlilik_key(urun_id, baslangic, bitis)
-            cached_data = cache.get(key)
-            
-            if cached_data:
-                logger.debug(f"✅ Cache HIT: {key}")
-                return cached_data
-            
-            logger.debug(f"❌ Cache MISS: {key}")
-            return None
-            
-        except Exception as e:
-            logger.error(f"❌ Ürün karlılık cache get hatası: {e}")
-            return None
-    
-    @staticmethod
-    def set_urun_karlilik(urun_id, karlilik_data, baslangic=None, bitis=None, timeout=None):
-        """Ürün karlılığını cache'e kaydet"""
-        try:
-            cache = CacheManager.get_cache()
-            key = KarCache.get_urun_karlilik_key(urun_id, baslangic, bitis)
-            
-            if timeout is None:
-                timeout = current_app.config.get('CACHE_TIMEOUT_KAR', 1800)
-            
-            cache.set(key, karlilik_data, timeout=timeout)
-            logger.debug(f"✅ Cache SET: {key} (timeout: {timeout}s)")
-            return True
-            
-        except Exception as e:
-            logger.error(f"❌ Ürün karlılık cache set hatası: {e}")
-            return False
-    
-    @staticmethod
-    def invalidate_otel_kar(otel_id):
-        """Otel bazlı tüm kar cache'lerini temizle"""
-        try:
-            pattern = f"kar:*:otel:{otel_id}:*"
-            count = CacheManager.invalidate_pattern(pattern)
-            logger.info(f"✅ Otel {otel_id} kar cache'i temizlendi ({count} key)")
-            return count
-        except Exception as e:
-            logger.error(f"❌ Otel kar cache invalidation hatası: {e}")
-            return 0
-    
-    @staticmethod
-    def invalidate_urun_kar(urun_id):
-        """Ürün bazlı tüm kar cache'lerini temizle"""
-        try:
-            pattern = f"kar:urun:{urun_id}:*"
-            count = CacheManager.invalidate_pattern(pattern)
-            logger.info(f"✅ Ürün {urun_id} kar cache'i temizlendi ({count} key)")
-            return count
-        except Exception as e:
-            logger.error(f"❌ Ürün kar cache invalidation hatası: {e}")
-            return 0
-    
-    @staticmethod
-    def invalidate_all_kar():
-        """Tüm kar cache'lerini temizle"""
-        try:
-            pattern = "kar:*"
-            count = CacheManager.invalidate_pattern(pattern)
-            logger.info(f"✅ Tüm kar cache'leri temizlendi ({count} key)")
-            return count
-        except Exception as e:
-            logger.error(f"❌ Tüm kar cache temizleme hatası: {e}")
-            return 0
-
-
-class StokCache:
-    """Stok yönetimi cache'i"""
-    
-    @staticmethod
-    def get_stok_durum_key(urun_id, otel_id):
-        """Stok durumu cache key'i"""
-        return f"stok:durum:urun:{urun_id}:otel:{otel_id}"
-    
-    @staticmethod
-    def get_stok_durum(urun_id, otel_id):
-        """Stok durumunu cache'den getir"""
-        try:
-            cache = CacheManager.get_cache()
-            key = StokCache.get_stok_durum_key(urun_id, otel_id)
-            cached_data = cache.get(key)
-            
-            if cached_data:
-                logger.debug(f"✅ Cache HIT: {key}")
-                return cached_data
-            
-            logger.debug(f"❌ Cache MISS: {key}")
-            return None
-            
-        except Exception as e:
-            logger.error(f"❌ Stok cache get hatası: {e}")
-            return None
-    
-    @staticmethod
-    def set_stok_durum(urun_id, otel_id, stok_data, timeout=None):
-        """Stok durumunu cache'e kaydet"""
-        try:
-            cache = CacheManager.get_cache()
-            key = StokCache.get_stok_durum_key(urun_id, otel_id)
-            
-            if timeout is None:
-                timeout = current_app.config.get('CACHE_TIMEOUT_STOK', 300)
-            
-            cache.set(key, stok_data, timeout=timeout)
-            logger.debug(f"✅ Cache SET: {key} (timeout: {timeout}s)")
-            return True
-            
-        except Exception as e:
-            logger.error(f"❌ Stok cache set hatası: {e}")
-            return False
-    
-    @staticmethod
-    def invalidate_urun_stok(urun_id, otel_id=None):
-        """Ürün stok cache'ini temizle"""
-        try:
-            if otel_id:
-                pattern = f"stok:durum:urun:{urun_id}:otel:{otel_id}"
-            else:
-                pattern = f"stok:durum:urun:{urun_id}:*"
-            
-            count = CacheManager.invalidate_pattern(pattern)
-            logger.info(f"✅ Ürün {urun_id} stok cache'i temizlendi ({count} key)")
-            return count
-        except Exception as e:
-            logger.error(f"❌ Stok cache invalidation hatası: {e}")
-            return 0
-    
-    @staticmethod
-    def invalidate_otel_stok(otel_id):
-        """Otel bazlı tüm stok cache'lerini temizle"""
-        try:
-            pattern = f"stok:*:otel:{otel_id}"
-            count = CacheManager.invalidate_pattern(pattern)
-            logger.info(f"✅ Otel {otel_id} stok cache'i temizlendi ({count} key)")
-            return count
-        except Exception as e:
-            logger.error(f"❌ Otel stok cache invalidation hatası: {e}")
-            return 0
-
-
-def cache_with_invalidation(cache_class, get_method, set_method, invalidate_on=None):
     """
-    Cache decorator with automatic invalidation
+    Redis tabanlı cache yöneticisi.
+    Sadece master data için kullanılır.
+    """
+    
+    # Cache key prefix'leri
+    PREFIX = "minibar:"
+    
+    # TTL değerleri (saniye)
+    TTL_SHORT = 60          # 1 dakika - Sık değişen master data
+    TTL_MEDIUM = 300        # 5 dakika - Normal master data
+    TTL_LONG = 600          # 10 dakika - Nadiren değişen data
+    TTL_VERY_LONG = 3600    # 1 saat - Statik data
+    
+    # Cache'lenebilir key'ler ve TTL'leri
+    ALLOWED_KEYS = {
+        'urunler': TTL_MEDIUM,           # Ürün listesi
+        'urun_gruplari': TTL_LONG,       # Ürün grupları
+        'setuplar': TTL_LONG,            # Setup tanımları
+        'setup_icerik': TTL_LONG,        # Setup içerikleri
+        'oteller': TTL_VERY_LONG,        # Otel listesi
+        'katlar': TTL_LONG,              # Kat listesi
+        'odalar': TTL_MEDIUM,            # Oda listesi
+        'oda_tipleri': TTL_VERY_LONG,    # Oda tipleri
+        'kullanici_yetki': TTL_SHORT,    # Kullanıcı yetkileri
+    }
+    
+    # ASLA cache'lenmemesi gerekenler (güvenlik için)
+    BLACKLISTED_KEYS = [
+        'stok',
+        'zimmet',
+        'dnd',
+        'gorev',
+        'minibar_icerik',
+        'bakiye',
+        'miktar',
+    ]
+    
+    def __init__(self, redis_client=None):
+        self.redis = redis_client
+        self.enabled = redis_client is not None
+        
+    def _make_key(self, key: str, *args) -> str:
+        """Cache key oluştur"""
+        if args:
+            # Argümanları hash'le
+            args_hash = hashlib.md5(str(args).encode()).hexdigest()[:8]
+            return f"{self.PREFIX}{key}:{args_hash}"
+        return f"{self.PREFIX}{key}"
+    
+    def _is_allowed(self, key: str) -> bool:
+        """Key cache'lenebilir mi kontrol et"""
+        # Blacklist kontrolü
+        for blacklisted in self.BLACKLISTED_KEYS:
+            if blacklisted in key.lower():
+                logger.warning(f"⚠️ Cache BLOCKED: '{key}' blacklist'te!")
+                return False
+        return True
+    
+    def get(self, key: str, *args) -> Optional[Any]:
+        """Cache'den veri al"""
+        if not self.enabled:
+            return None
+            
+        if not self._is_allowed(key):
+            return None
+            
+        try:
+            import pickle
+            cache_key = self._make_key(key, *args)
+            data = self.redis.get(cache_key)
+            if data:
+                logger.debug(f"✅ Cache HIT: {cache_key}")
+                return pickle.loads(data)
+            logger.debug(f"❌ Cache MISS: {cache_key}")
+            return None
+        except Exception as e:
+            logger.error(f"Cache get hatası: {str(e)}")
+            return None
+    
+    def set(self, key: str, value: Any, timeout: Optional[int] = None, *args) -> bool:
+        """Cache'e veri yaz"""
+        if not self.enabled:
+            return False
+            
+        if not self._is_allowed(key):
+            return False
+            
+        try:
+            import pickle
+            cache_key = self._make_key(key, *args)
+            
+            # TTL belirle
+            if timeout is None:
+                timeout = self.ALLOWED_KEYS.get(key, self.TTL_MEDIUM)
+            
+            data = pickle.dumps(value)
+            self.redis.setex(cache_key, timeout, data)
+            logger.debug(f"✅ Cache SET: {cache_key} (TTL: {timeout}s)")
+            return True
+        except Exception as e:
+            logger.error(f"Cache set hatası: {str(e)}")
+            return False
+    
+    def invalidate(self, key: str, *args) -> bool:
+        """Cache'i invalidate et"""
+        if not self.enabled:
+            return False
+            
+        try:
+            if args:
+                # Spesifik key'i sil
+                cache_key = self._make_key(key, *args)
+                self.redis.delete(cache_key)
+                logger.info(f"🗑️ Cache invalidated: {cache_key}")
+            else:
+                # Pattern ile tüm ilgili key'leri sil
+                pattern = f"{self.PREFIX}{key}:*"
+                keys = self.redis.keys(pattern)
+                if keys:
+                    self.redis.delete(*keys)
+                    logger.info(f"🗑️ Cache invalidated: {len(keys)} keys matching '{pattern}'")
+                    
+                # Base key'i de sil
+                base_key = f"{self.PREFIX}{key}"
+                self.redis.delete(base_key)
+            return True
+        except Exception as e:
+            logger.error(f"Cache invalidate hatası: {str(e)}")
+            return False
+    
+    def invalidate_all(self) -> bool:
+        """Tüm cache'i temizle"""
+        if not self.enabled:
+            return False
+            
+        try:
+            pattern = f"{self.PREFIX}*"
+            keys = self.redis.keys(pattern)
+            if keys:
+                self.redis.delete(*keys)
+                logger.info(f"🗑️ Tüm cache temizlendi: {len(keys)} keys")
+            return True
+        except Exception as e:
+            logger.error(f"Cache invalidate_all hatası: {str(e)}")
+            return False
+    
+    def get_stats(self) -> dict:
+        """Cache istatistiklerini al"""
+        if not self.enabled:
+            return {'enabled': False}
+            
+        try:
+            pattern = f"{self.PREFIX}*"
+            keys = self.redis.keys(pattern)
+            
+            # Key'leri kategorize et
+            stats = {
+                'enabled': True,
+                'total_keys': len(keys),
+                'categories': {}
+            }
+            
+            for key in keys:
+                key_str = key.decode() if isinstance(key, bytes) else key
+                # Prefix'i çıkar ve kategoriyi bul
+                category = key_str.replace(self.PREFIX, '').split(':')[0]
+                stats['categories'][category] = stats['categories'].get(category, 0) + 1
+            
+            return stats
+        except Exception as e:
+            logger.error(f"Cache stats hatası: {str(e)}")
+            return {'enabled': True, 'error': str(e)}
+
+
+# Global instance
+cache_manager = CacheManager()
+
+
+def init_cache(app):
+    """
+    Cache sistemini başlat.
     
     Args:
-        cache_class: Cache sınıfı (FiyatCache, KarCache, vb.)
-        get_method: Cache'den veri çekme metodu adı
-        set_method: Cache'e veri kaydetme metodu adı
-        invalidate_on: Hangi işlemlerde cache'i temizleyeceği (list)
-    
-    Kullanım:
-        @cache_with_invalidation(FiyatCache, 'get_dinamik_fiyat', 'set_dinamik_fiyat')
-        def hesapla_fiyat(urun_id, oda_id):
-            # Hesaplama
-            return fiyat_data
-    """
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            try:
-                # Cache'den veri çekmeyi dene
-                get_func = getattr(cache_class, get_method)
-                cached_result = get_func(*args, **kwargs)
-                
-                if cached_result is not None:
-                    return cached_result
-                
-                # Cache miss - Fonksiyonu çalıştır
-                result = func(*args, **kwargs)
-                
-                # Sonucu cache'e kaydet
-                set_func = getattr(cache_class, set_method)
-                set_func(*args, result, **kwargs)
-                
-                return result
-                
-            except Exception as e:
-                logger.error(f"❌ Cache decorator hatası: {e}")
-                # Cache hatası durumunda direkt fonksiyonu çalıştır
-                return func(*args, **kwargs)
+        app: Flask application instance
         
+    Returns:
+        CacheManager: Configured cache manager
+    """
+    global cache_manager, _cache_enabled
+    
+    # Cache'i aktifleştir mi?
+    cache_enabled = app.config.get('CACHE_ENABLED', True)
+    is_development = app.config.get('IS_DEVELOPMENT', False)
+    
+    if not cache_enabled:
+        logger.info("ℹ️ Cache devre dışı (config)")
+        cache_manager = CacheManager(None)
+        _cache_enabled = False
+        return cache_manager
+    
+    try:
+        import redis
+        
+        # Redis URL'i config'den al
+        redis_url = app.config.get('REDIS_URL') or app.config.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+        
+        # Redis client oluştur
+        redis_client = redis.from_url(
+            redis_url,
+            socket_connect_timeout=5,
+            socket_timeout=5,
+            decode_responses=False  # Pickle için binary gerekli
+        )
+        
+        # Bağlantıyı test et
+        redis_client.ping()
+        
+        cache_manager = CacheManager(redis_client)
+        _cache_enabled = True
+        logger.info(f"✅ Cache aktif (Redis: {redis_url[:30]}...)")
+        
+        return cache_manager
+        
+    except Exception as e:
+        logger.warning(f"⚠️ Redis bağlantısı başarısız, cache devre dışı: {str(e)}")
+        cache_manager = CacheManager(None)
+        _cache_enabled = False
+        return cache_manager
+
+
+def cached_master_data(timeout: Optional[int] = None, key_prefix: str = None):
+    """
+    Master data için cache decorator.
+    
+    SADECE statik/master data için kullanın!
+    Stok, zimmet, DND gibi transactional data için KULLANMAYIN!
+    
+    Args:
+        timeout: Cache TTL (saniye). None ise key'e göre otomatik belirlenir.
+        key_prefix: Cache key prefix'i
+        
+    Usage:
+        @cached_master_data(key_prefix='urunler')
+        def get_urun_listesi():
+            return Urun.query.filter_by(aktif=True).all()
+    """
+    def decorator(f: Callable):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            global cache_manager
+            
+            # Cache key oluştur
+            key = key_prefix or f.__name__
+            
+            # Cache'den dene
+            cached_value = cache_manager.get(key, *args, *kwargs.values())
+            if cached_value is not None:
+                return cached_value
+            
+            # Fonksiyonu çalıştır
+            result = f(*args, **kwargs)
+            
+            # Cache'e yaz
+            cache_manager.set(key, result, timeout, *args, *kwargs.values())
+            
+            return result
         return wrapper
     return decorator
 
 
-# Cache istatistikleri
-class CacheStats:
-    """Cache performans istatistikleri"""
-    
-    @staticmethod
-    def get_cache_info():
-        """Cache bilgilerini getir"""
-        try:
-            cache = CacheManager.get_cache()
-            
-            info = {
-                'cache_type': current_app.config.get('CACHE_TYPE'),
-                'default_timeout': current_app.config.get('CACHE_DEFAULT_TIMEOUT'),
-                'fiyat_timeout': current_app.config.get('CACHE_TIMEOUT_FIYAT'),
-                'kar_timeout': current_app.config.get('CACHE_TIMEOUT_KAR'),
-                'stok_timeout': current_app.config.get('CACHE_TIMEOUT_STOK'),
-            }
-            
-            # Redis backend ise istatistikleri ekle
-            if hasattr(cache.cache, '_client'):
-                redis_client = cache.cache._client
-                redis_info = redis_client.info('stats')
-                info['redis_stats'] = {
-                    'total_connections_received': redis_info.get('total_connections_received', 0),
-                    'total_commands_processed': redis_info.get('total_commands_processed', 0),
-                    'keyspace_hits': redis_info.get('keyspace_hits', 0),
-                    'keyspace_misses': redis_info.get('keyspace_misses', 0),
-                }
-                
-                # Hit rate hesapla
-                hits = redis_info.get('keyspace_hits', 0)
-                misses = redis_info.get('keyspace_misses', 0)
-                total = hits + misses
-                info['redis_stats']['hit_rate'] = round((hits / total * 100), 2) if total > 0 else 0
-            
-            return info
-            
-        except Exception as e:
-            logger.error(f"❌ Cache info hatası: {e}")
-            return {'error': str(e)}
-    
-    @staticmethod
-    def clear_all_cache():
-        """Tüm cache'i temizle (Dikkatli kullan!)"""
-        try:
-            cache = CacheManager.get_cache()
-            cache.clear()
-            logger.warning("⚠️ TÜM CACHE TEMİZLENDİ!")
-            return True
-        except Exception as e:
-            logger.error(f"❌ Cache temizleme hatası: {e}")
-            return False
+# ============================================
+# CACHE INVALIDATION HELPERS
+# ============================================
 
+def invalidate_urun_cache():
+    """Ürün cache'ini temizle"""
+    cache_manager.invalidate('urunler')
+    cache_manager.invalidate('urun_gruplari')
+
+
+def invalidate_setup_cache():
+    """Setup cache'ini temizle"""
+    cache_manager.invalidate('setuplar')
+    cache_manager.invalidate('setup_icerik')
+
+
+def invalidate_otel_cache():
+    """Otel/Kat/Oda cache'ini temizle"""
+    cache_manager.invalidate('oteller')
+    cache_manager.invalidate('katlar')
+    cache_manager.invalidate('odalar')
+    cache_manager.invalidate('oda_tipleri')
+
+
+def invalidate_all_master_data():
+    """Tüm master data cache'ini temizle"""
+    invalidate_urun_cache()
+    invalidate_setup_cache()
+    invalidate_otel_cache()
+
+
+# ============================================
+# TEDARİKÇİ CACHE HELPERS
+# ============================================
+
+class TedarikciCache:
+    """
+    Tedarikçi verisi için cache yönetimi.
+    Performans ve fiyat karşılaştırma verileri için kullanılır.
+    """
+    
+    # Cache key prefix'leri
+    PREFIX_PERFORMANS = "tedarikci:performans:"
+    PREFIX_EN_UYGUN = "tedarikci:en_uygun:"
+    PREFIX_FIYAT = "tedarikci:fiyat:"
+    
+    # TTL değerleri
+    TTL_PERFORMANS = 300    # 5 dakika
+    TTL_EN_UYGUN = 600      # 10 dakika
+    TTL_FIYAT = 300         # 5 dakika
+    
+    @classmethod
+    def _make_key(cls, prefix: str, *args) -> str:
+        """Cache key oluştur"""
+        key_parts = [str(arg) for arg in args if arg is not None]
+        return f"{prefix}{':'.join(key_parts)}"
+    
+    @classmethod
+    def get_tedarikci_performans(cls, tedarikci_id: int, baslangic=None, bitis=None):
+        """Tedarikçi performans verisini cache'den al"""
+        global cache_manager
+        if not cache_manager.enabled:
+            return None
+        
+        key = cls._make_key(cls.PREFIX_PERFORMANS, tedarikci_id, 
+                           str(baslangic) if baslangic else '', 
+                           str(bitis) if bitis else '')
+        return cache_manager.get(key)
+    
+    @classmethod
+    def set_tedarikci_performans(cls, tedarikci_id: int, baslangic, bitis, data, timeout=None):
+        """Tedarikçi performans verisini cache'e yaz"""
+        global cache_manager
+        if not cache_manager.enabled:
+            return
+        
+        key = cls._make_key(cls.PREFIX_PERFORMANS, tedarikci_id,
+                           str(baslangic) if baslangic else '',
+                           str(bitis) if bitis else '')
+        cache_manager.set(key, data, timeout or cls.TTL_PERFORMANS)
+    
+    @classmethod
+    def invalidate_tedarikci_performans(cls, tedarikci_id: int):
+        """Tedarikçi performans cache'ini temizle"""
+        global cache_manager
+        if not cache_manager.enabled:
+            return
+        
+        pattern = f"{cls.PREFIX_PERFORMANS}{tedarikci_id}:*"
+        try:
+            if cache_manager.redis:
+                keys = cache_manager.redis.keys(pattern)
+                if keys:
+                    cache_manager.redis.delete(*keys)
+                    logger.debug(f"Tedarikçi {tedarikci_id} performans cache temizlendi")
+        except Exception as e:
+            logger.warning(f"Tedarikçi cache invalidation hatası: {e}")
+    
+    @classmethod
+    def get_en_uygun_tedarikci(cls, urun_id: int, miktar: int = None):
+        """En uygun tedarikçi verisini cache'den al"""
+        global cache_manager
+        if not cache_manager.enabled:
+            return None
+        
+        key = cls._make_key(cls.PREFIX_EN_UYGUN, urun_id, miktar or 0)
+        return cache_manager.get(key)
+    
+    @classmethod
+    def set_en_uygun_tedarikci(cls, urun_id: int, miktar: int, data, timeout=None):
+        """En uygun tedarikçi verisini cache'e yaz"""
+        global cache_manager
+        if not cache_manager.enabled:
+            return
+        
+        key = cls._make_key(cls.PREFIX_EN_UYGUN, urun_id, miktar or 0)
+        cache_manager.set(key, data, timeout or cls.TTL_EN_UYGUN)
+    
+    @classmethod
+    def invalidate_en_uygun_tedarikci(cls, urun_id: int):
+        """En uygun tedarikçi cache'ini temizle"""
+        global cache_manager
+        if not cache_manager.enabled:
+            return
+        
+        pattern = f"{cls.PREFIX_EN_UYGUN}{urun_id}:*"
+        try:
+            if cache_manager.redis:
+                keys = cache_manager.redis.keys(pattern)
+                if keys:
+                    cache_manager.redis.delete(*keys)
+                    logger.debug(f"Ürün {urun_id} en uygun tedarikçi cache temizlendi")
+        except Exception as e:
+            logger.warning(f"En uygun tedarikçi cache invalidation hatası: {e}")
+    
+    @classmethod
+    def get_fiyat_karsilastirma(cls, urun_id: int):
+        """Fiyat karşılaştırma verisini cache'den al"""
+        global cache_manager
+        if not cache_manager.enabled:
+            return None
+        
+        key = cls._make_key(cls.PREFIX_FIYAT, urun_id)
+        return cache_manager.get(key)
+    
+    @classmethod
+    def set_fiyat_karsilastirma(cls, urun_id: int, data, timeout=None):
+        """Fiyat karşılaştırma verisini cache'e yaz"""
+        global cache_manager
+        if not cache_manager.enabled:
+            return
+        
+        key = cls._make_key(cls.PREFIX_FIYAT, urun_id)
+        cache_manager.set(key, data, timeout or cls.TTL_FIYAT)
+    
+    @classmethod
+    def invalidate_fiyat_karsilastirma(cls, urun_id: int):
+        """Fiyat karşılaştırma cache'ini temizle"""
+        global cache_manager
+        if not cache_manager.enabled:
+            return
+        
+        key = cls._make_key(cls.PREFIX_FIYAT, urun_id)
+        cache_manager.invalidate(key)
+        logger.debug(f"Ürün {urun_id} fiyat karşılaştırma cache temizlendi")
+
+
+# ============================================
+# FİYAT CACHE HELPERS
+# ============================================
+
+class FiyatCache:
+    """
+    Fiyat verisi için cache yönetimi.
+    Ürün fiyatları ve sezon fiyatlandırması için kullanılır.
+    """
+    
+    PREFIX_URUN_FIYAT = "fiyat:urun:"
+    PREFIX_SEZON = "fiyat:sezon:"
+    PREFIX_BEDELSIZ = "fiyat:bedelsiz:"
+    
+    TTL_FIYAT = 300  # 5 dakika
+    
+    @classmethod
+    def _make_key(cls, prefix: str, *args) -> str:
+        key_parts = [str(arg) for arg in args if arg is not None]
+        return f"{prefix}{':'.join(key_parts)}"
+    
+    @classmethod
+    def get_urun_fiyat(cls, urun_id: int, oda_tipi_id: int = None):
+        global cache_manager
+        if not cache_manager.enabled:
+            return None
+        key = cls._make_key(cls.PREFIX_URUN_FIYAT, urun_id, oda_tipi_id or 0)
+        return cache_manager.get(key)
+    
+    @classmethod
+    def set_urun_fiyat(cls, urun_id: int, oda_tipi_id: int, data, timeout=None):
+        global cache_manager
+        if not cache_manager.enabled:
+            return
+        key = cls._make_key(cls.PREFIX_URUN_FIYAT, urun_id, oda_tipi_id or 0)
+        cache_manager.set(key, data, timeout or cls.TTL_FIYAT)
+    
+    @classmethod
+    def invalidate_urun_fiyat(cls, urun_id: int):
+        global cache_manager
+        if not cache_manager.enabled:
+            return
+        pattern = f"{cls.PREFIX_URUN_FIYAT}{urun_id}:*"
+        try:
+            if cache_manager.redis:
+                keys = cache_manager.redis.keys(pattern)
+                if keys:
+                    cache_manager.redis.delete(*keys)
+        except Exception as e:
+            logger.warning(f"Fiyat cache invalidation hatası: {e}")
+    
+    @classmethod
+    def get_sezon_carpani(cls, otel_id: int, tarih=None):
+        global cache_manager
+        if not cache_manager.enabled:
+            return None
+        key = cls._make_key(cls.PREFIX_SEZON, otel_id, str(tarih) if tarih else '')
+        return cache_manager.get(key)
+    
+    @classmethod
+    def set_sezon_carpani(cls, otel_id: int, tarih, data, timeout=None):
+        global cache_manager
+        if not cache_manager.enabled:
+            return
+        key = cls._make_key(cls.PREFIX_SEZON, otel_id, str(tarih) if tarih else '')
+        cache_manager.set(key, data, timeout or cls.TTL_FIYAT)
+
+
+class KarCache:
+    """
+    Karlılık verisi için cache yönetimi.
+    Dönemsel kar analizleri için kullanılır.
+    """
+    
+    PREFIX_DONEMSEL = "kar:donemsel:"
+    PREFIX_URUN = "kar:urun:"
+    
+    TTL_KAR = 300  # 5 dakika
+    
+    @classmethod
+    def _make_key(cls, prefix: str, *args) -> str:
+        key_parts = [str(arg) for arg in args if arg is not None]
+        return f"{prefix}{':'.join(key_parts)}"
+    
+    @classmethod
+    def get_donemsel_kar(cls, otel_id: int, baslangic, bitis):
+        global cache_manager
+        if not cache_manager.enabled:
+            return None
+        key = cls._make_key(cls.PREFIX_DONEMSEL, otel_id, str(baslangic), str(bitis))
+        return cache_manager.get(key)
+    
+    @classmethod
+    def set_donemsel_kar(cls, otel_id: int, baslangic, bitis, data, timeout=None):
+        global cache_manager
+        if not cache_manager.enabled:
+            return
+        key = cls._make_key(cls.PREFIX_DONEMSEL, otel_id, str(baslangic), str(bitis))
+        cache_manager.set(key, data, timeout or cls.TTL_KAR)
+    
+    @classmethod
+    def invalidate_otel_kar(cls, otel_id: int):
+        global cache_manager
+        if not cache_manager.enabled:
+            return
+        pattern = f"{cls.PREFIX_DONEMSEL}{otel_id}:*"
+        try:
+            if cache_manager.redis:
+                keys = cache_manager.redis.keys(pattern)
+                if keys:
+                    cache_manager.redis.delete(*keys)
+        except Exception as e:
+            logger.warning(f"Kar cache invalidation hatası: {e}")
+    
+    @classmethod
+    def get_urun_kar(cls, urun_id: int, baslangic=None, bitis=None):
+        global cache_manager
+        if not cache_manager.enabled:
+            return None
+        key = cls._make_key(cls.PREFIX_URUN, urun_id, 
+                           str(baslangic) if baslangic else '',
+                           str(bitis) if bitis else '')
+        return cache_manager.get(key)
+    
+    @classmethod
+    def set_urun_kar(cls, urun_id: int, baslangic, bitis, data, timeout=None):
+        global cache_manager
+        if not cache_manager.enabled:
+            return
+        key = cls._make_key(cls.PREFIX_URUN, urun_id,
+                           str(baslangic) if baslangic else '',
+                           str(bitis) if bitis else '')
+        cache_manager.set(key, data, timeout or cls.TTL_KAR)
+
+
+# ============================================
+# CACHE STATS
+# ============================================
+
+class CacheStats:
+    """
+    Cache istatistikleri için yardımcı sınıf.
+    """
+    
+    @classmethod
+    def get_cache_info(cls) -> dict:
+        """
+        Cache durumu ve istatistiklerini döndür.
+        
+        Returns:
+            dict: Cache bilgileri
+        """
+        global cache_manager
+        
+        if not cache_manager or not cache_manager.enabled:
+            return {
+                'enabled': False,
+                'message': 'Cache devre dışı'
+            }
+        
+        try:
+            return cache_manager.get_stats()
+        except Exception as e:
+            return {
+                'enabled': True,
+                'error': str(e)
+            }
+    
+    @classmethod
+    def get_hit_rate(cls) -> float:
+        """
+        Cache hit oranını döndür.
+        
+        Returns:
+            float: Hit oranı (0-100)
+        """
+        global cache_manager
+        
+        if not cache_manager or not cache_manager.enabled:
+            return 0.0
+        
+        try:
+            if cache_manager.redis:
+                info = cache_manager.redis.info('stats')
+                hits = info.get('keyspace_hits', 0)
+                misses = info.get('keyspace_misses', 0)
+                total = hits + misses
+                if total > 0:
+                    return (hits / total) * 100
+            return 0.0
+        except Exception:
+            return 0.0
+    
+    @classmethod
+    def get_memory_usage(cls) -> dict:
+        """
+        Cache bellek kullanımını döndür.
+        
+        Returns:
+            dict: Bellek bilgileri
+        """
+        global cache_manager
+        
+        if not cache_manager or not cache_manager.enabled:
+            return {'used': 0, 'peak': 0}
+        
+        try:
+            if cache_manager.redis:
+                info = cache_manager.redis.info('memory')
+                return {
+                    'used': info.get('used_memory_human', '0B'),
+                    'peak': info.get('used_memory_peak_human', '0B'),
+                    'used_bytes': info.get('used_memory', 0)
+                }
+            return {'used': 0, 'peak': 0}
+        except Exception:
+            return {'used': 0, 'peak': 0}

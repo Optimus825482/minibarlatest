@@ -998,37 +998,6 @@ def register_admin_routes(app):
             return redirect(url_for('sistem_yoneticisi_dashboard'))
     
     
-    @app.route('/karlilik-dashboard', methods=['GET'])
-    @login_required
-    @role_required('sistem_yoneticisi', 'admin')
-    def karlilik_dashboard():
-        """
-        Karlılık dashboard sayfası
-        
-        Özellikler:
-        - Özet kartlar (Günlük kar, Aylık kar, Kar marjı, ROI)
-        - Trend grafikleri
-        - En karlı ürünler tablosu
-        """
-        try:
-            from models import Otel
-            
-            # Otelleri getir (filtre için)
-            oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
-            
-            log_islem('goruntuleme', 'karlilik_dashboard', 'Karlılık dashboard görüntülendi')
-            
-            return render_template(
-                'admin/karlilik_dashboard.html',
-                oteller=oteller
-            )
-            
-        except Exception as e:
-            log_hata(e, modul='karlilik_dashboard')
-            flash('Sayfa yüklenirken bir hata oluştu', 'danger')
-            return redirect(url_for('sistem_yoneticisi_dashboard'))
-    
-    
     @app.route('/kampanya-yonetimi', methods=['GET'])
     @login_required
     @role_required('sistem_yoneticisi', 'admin')

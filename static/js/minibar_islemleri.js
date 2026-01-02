@@ -82,6 +82,7 @@ function renderIslemler(islemler) {
         setup_kontrol: "Tüketim İkamesi",
         ekstra_ekleme: "Ekstra Ekleme",
         ekstra_tuketim: "Ekstra Tüketim",
+        sarfiyat_yok: "Sarfiyat Yok",
       }[islem.islem_tipi] || islem.islem_tipi;
 
     const islemTipiClass =
@@ -89,6 +90,7 @@ function renderIslemler(islemler) {
         setup_kontrol: "bg-blue-100 text-blue-800",
         ekstra_ekleme: "bg-orange-100 text-orange-800",
         ekstra_tuketim: "bg-red-100 text-red-800",
+        sarfiyat_yok: "bg-emerald-100 text-emerald-800",
       }[islem.islem_tipi] || "bg-slate-100 text-slate-800";
 
     tr.innerHTML = `
@@ -149,6 +151,52 @@ function formatTarih(tarihStr) {
 // Detay göster
 function detayGoster(islem) {
   const detayIcerik = document.getElementById("detay_icerik");
+
+  // Sarfiyat Yok işlemi için özel görünüm
+  if (islem.islem_tipi === "sarfiyat_yok") {
+    let html = `
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Oda</label>
+            <p class="mt-1 text-base text-slate-900">${islem.oda_no}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Tarih/Saat</label>
+            <p class="mt-1 text-base text-slate-900">${formatTarih(
+              islem.islem_tarihi
+            )}</p>
+          </div>
+        </div>
+
+        <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+          <div class="flex items-center">
+            <svg class="w-6 h-6 text-emerald-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+              <p class="text-sm font-medium text-emerald-800">Sarfiyat Yok</p>
+              <p class="text-sm text-emerald-600">Oda kontrol edildi, tüketim tespit edilmedi.</p>
+            </div>
+          </div>
+        </div>
+
+        ${
+          islem.aciklama
+            ? `
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Açıklama</label>
+            <p class="mt-1 text-sm text-slate-600">${islem.aciklama}</p>
+          </div>
+        `
+            : ""
+        }
+      </div>
+    `;
+    detayIcerik.innerHTML = html;
+    document.getElementById("detayModal").classList.remove("hidden");
+    return;
+  }
 
   let html = `
     <div class="space-y-4">

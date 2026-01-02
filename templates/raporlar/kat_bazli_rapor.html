@@ -1,434 +1,677 @@
-{% extends "base.html" %}
-
-{% block title %}Kat Bazlı Tüketim Raporu - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Kat Bazlı Tüketim Raporu{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Kat Bazlı Tüketim Raporu - Minibar
+Takip Sistemi{% endblock %} {% block page_title %}Kat Bazlı Tüketim Raporu{%
+endblock %} {% block page_icon_bg %}bg-gradient-to-br from-pink-500
+to-rose-600{% endblock %} {% block page_icon %}fas fa-building{% endblock %} {%
+block extra_head %}
+<!-- Moment.js ve DateRangePicker -->
+<script
+  type="text/javascript"
+  src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"
+></script>
+<script
+  type="text/javascript"
+  src="https://cdn.jsdelivr.net/momentjs/latest/locale/tr.js"
+></script>
+<link
+  rel="stylesheet"
+  type="text/css"
+  href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"
+/>
+<script
+  type="text/javascript"
+  src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"
+></script>
+<style>
+  /* DateRangePicker Dark Mode Tema */
+  .daterangepicker {
+    font-family: inherit;
+    border-radius: 0.75rem;
+    border: 1px solid #334155;
+    background-color: #1e293b;
+    color: #e2e8f0;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+  .daterangepicker::before,
+  .daterangepicker::after {
+    border-bottom-color: #334155;
+  }
+  .daterangepicker .calendar-table {
+    border: none;
+    background: #1e293b;
+    border-radius: 0.5rem;
+  }
+  .daterangepicker .calendar-table thead tr:first-child th {
+    color: #94a3b8;
+  }
+  .daterangepicker .calendar-table thead tr:last-child th {
+    color: #64748b;
+    font-weight: 500;
+  }
+  .daterangepicker td,
+  .daterangepicker th {
+    color: #e2e8f0;
+  }
+  .daterangepicker td.off,
+  .daterangepicker td.off.in-range,
+  .daterangepicker td.off.start-date,
+  .daterangepicker td.off.end-date {
+    color: #475569;
+    background-color: transparent;
+  }
+  .daterangepicker td.active,
+  .daterangepicker td.active:hover {
+    background-color: #2563eb;
+    border-color: #2563eb;
+    color: white;
+  }
+  .daterangepicker td.in-range {
+    background-color: #1e40af;
+    color: #dbeafe;
+  }
+  .daterangepicker td.available:hover {
+    background-color: #334155;
+    color: #fff;
+  }
+  .daterangepicker .ranges {
+    background: #0f172a;
+    border-right: 1px solid #334155;
+  }
+  .daterangepicker .ranges li {
+    padding: 10px 16px;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    margin: 4px 8px;
+    transition: all 0.15s ease;
+    color: #94a3b8;
+  }
+  .daterangepicker .ranges li:hover {
+    background-color: #334155;
+    color: #fff;
+  }
+  .daterangepicker .ranges li.active {
+    background-color: #2563eb;
+    color: white;
+  }
+  .daterangepicker .drp-buttons {
+    border-top: 1px solid #334155;
+    padding: 12px;
+    background: #0f172a;
+  }
+  .daterangepicker .drp-buttons .btn {
+    font-size: 0.875rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+  }
+  .daterangepicker .btn-default {
+    background-color: #334155;
+    color: #e2e8f0;
+    border: 1px solid #475569;
+  }
+  .daterangepicker .btn-default:hover {
+    background-color: #475569;
+  }
+  .daterangepicker .btn-primary {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+  }
+  .daterangepicker .btn-primary:hover {
+    background-color: #1d4ed8;
+  }
+  .daterangepicker .drp-selected {
+    font-size: 0.8rem;
+    color: #94a3b8;
+  }
+  .daterangepicker select.monthselect,
+  .daterangepicker select.yearselect {
+    font-size: 0.875rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.375rem;
+    border: 1px solid #475569;
+    background-color: #334155;
+    color: #e2e8f0;
+  }
+  .daterangepicker select.monthselect:focus,
+  .daterangepicker select.yearselect:focus {
+    outline: none;
+    border-color: #2563eb;
+  }
+  .daterangepicker th.month {
+    font-weight: 600;
+    color: #e2e8f0;
+  }
+  .daterangepicker th.prev span,
+  .daterangepicker th.next span {
+    border-color: #94a3b8;
+  }
+  .daterangepicker th.prev:hover span,
+  .daterangepicker th.next:hover span {
+    border-color: #fff;
+  }
+</style>
+{% endblock %} {% block content %}
 <div class="space-y-6">
-    <!-- Bilgilendirme Kartı -->
-    <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
-        <div class="flex">
-            <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                        clip-rule="evenodd" />
-                </svg>
-            </div>
-            <div class="ml-3">
-                <p class="text-sm text-blue-700">
-                    <strong>Kat Bazlı Rapor:</strong> Seçtiğiniz kattaki tüm odaların minibar durumlarını ve toplam
-                    tüketim istatistiklerini görüntüleyin.
-                </p>
-            </div>
+  <!-- Bilgilendirme Kartı -->
+  <div
+    class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 p-4 rounded-r-lg"
+  >
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <i class="fas fa-info-circle text-blue-400"></i>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm text-blue-700 dark:text-blue-300">
+          <strong>Kat Bazlı Rapor:</strong> Seçtiğiniz oteldeki kattaki tüm
+          odaların minibar durumlarını ve toplam tüketim istatistiklerini
+          görüntüleyin.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtre Paneli -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3
+        class="text-lg leading-6 font-medium text-slate-900 dark:text-white mb-6"
+      >
+        Rapor Filtreleri
+      </h3>
+
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <!-- Otel Seçimi -->
+        <div>
+          <label
+            for="otel_id"
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+          >
+            Otel <span class="text-red-500">*</span>
+          </label>
+          <select
+            id="otel_id"
+            required
+            class="h-11 appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          >
+            <option value="">Otel seçiniz...</option>
+            {% for otel in oteller %}
+            <option value="{{ otel.id }}">{{ otel.ad }}</option>
+            {% endfor %}
+          </select>
         </div>
+
+        <!-- Kat Seçimi -->
+        <div>
+          <label
+            for="kat_id"
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+          >
+            Kat <span class="text-red-500">*</span>
+          </label>
+          <select
+            id="kat_id"
+            required
+            disabled
+            class="h-11 appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-100 dark:bg-slate-600 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          >
+            <option value="">Önce otel seçiniz...</option>
+          </select>
+        </div>
+
+        <!-- Tarih Aralığı -->
+        <div>
+          <label
+            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+          >
+            Tarih Aralığı (Opsiyonel)
+          </label>
+          <div class="relative">
+            <input
+              type="text"
+              id="tarihAraligi"
+              readonly
+              class="h-11 appearance-none block w-full pl-10 pr-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm cursor-pointer hover:border-blue-400 transition-colors"
+              placeholder="Tarih seçin..."
+            />
+            <div
+              class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+            >
+              <i class="fas fa-calendar-alt text-slate-400"></i>
+            </div>
+          </div>
+          <input type="hidden" id="baslangic_tarih" />
+          <input type="hidden" id="bitis_tarih" />
+        </div>
+
+        <!-- Rapor Getir Butonu -->
+        <div class="flex items-end">
+          <button
+            type="button"
+            id="rapor_getir_btn"
+            class="h-11 w-full px-6 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed"
+            disabled
+          >
+            <i class="fas fa-chart-bar mr-2"></i>Rapor Getir
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Yükleniyor Göstergesi -->
+  <div id="loading_indicator" class="hidden text-center py-8">
+    <div
+      class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"
+    ></div>
+    <p class="mt-4 text-slate-600 dark:text-slate-400">Rapor yükleniyor...</p>
+  </div>
+
+  <!-- Rapor Sonuçları -->
+  <div id="rapor_sonuclari" class="hidden space-y-6">
+    <!-- Özet Kartlar -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div
+              class="flex-shrink-0 w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center"
+            >
+              <i class="fas fa-building text-xl text-blue-600"></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Seçili Kat
+              </p>
+              <p
+                class="text-lg font-semibold text-slate-900 dark:text-white"
+                id="ozet_kat_adi"
+              >
+                -
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div
+              class="flex-shrink-0 w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center"
+            >
+              <i class="fas fa-door-open text-xl text-green-600"></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Toplam Oda
+              </p>
+              <p
+                class="text-lg font-semibold text-slate-900 dark:text-white"
+                id="ozet_oda_sayisi"
+              >
+                0
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div
+              class="flex-shrink-0 w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center"
+            >
+              <i class="fas fa-boxes text-xl text-purple-600"></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Ürün Çeşidi
+              </p>
+              <p
+                class="text-lg font-semibold text-slate-900 dark:text-white"
+                id="ozet_urun_cesidi"
+              >
+                0
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Filtre Paneli -->
-    <div class="bg-white shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 mb-6">Rapor Filtreleri</h3>
-
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                <!-- Kat Seçimi -->
-                <div>
-                    <label for="kat_id" class="block text-sm font-medium text-slate-700">
-                        Kat <span class="text-red-500">*</span>
-                    </label>
-                    <div class="mt-1">
-                        <select id="kat_id" required
-                            class="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            <option value="">Kat seçiniz...</option>
-                            {% for kat in katlar %}
-                            <option value="{{ kat.id }}">{{ kat.kat_adi }} - {{ kat.otel.ad if kat.otel else 'Otel Yok'
-                                }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Başlangıç Tarihi (Opsiyonel) -->
-                <div>
-                    <label for="baslangic_tarih" class="block text-sm font-medium text-slate-700">
-                        Başlangıç Tarihi (Opsiyonel)
-                    </label>
-                    <div class="mt-1">
-                        <input type="date" id="baslangic_tarih"
-                            class="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                    </div>
-                </div>
-
-                <!-- Bitiş Tarihi (Opsiyonel) -->
-                <div>
-                    <label for="bitis_tarih" class="block text-sm font-medium text-slate-700">
-                        Bitiş Tarihi (Opsiyonel)
-                    </label>
-                    <div class="mt-1">
-                        <input type="date" id="bitis_tarih"
-                            class="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-6 flex justify-end">
-                <button type="button" id="rapor_getir_btn"
-                    class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    <svg class="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    Rapor Getir
-                </button>
-            </div>
+    <!-- Ürün Tüketim Özeti -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <h3
+          class="text-lg leading-6 font-medium text-slate-900 dark:text-white mb-4"
+        >
+          Ürün Bazlı Toplam Tüketim
+        </h3>
+        <div class="overflow-x-auto">
+          <table
+            id="urun-ozeti-table"
+            class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
+          >
+            <thead class="bg-slate-50 dark:bg-slate-700">
+              <tr>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+                >
+                  #
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+                >
+                  Ürün Adı
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+                >
+                  Toplam Tüketim
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+                >
+                  Birim
+                </th>
+              </tr>
+            </thead>
+            <tbody
+              id="urun_ozeti_tbody"
+              class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+            ></tbody>
+          </table>
         </div>
+      </div>
     </div>
 
-    <!-- Yükleniyor Göstergesi -->
-    <div id="loading_indicator" class="hidden text-center py-8">
-        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p class="mt-4 text-slate-600">Rapor yükleniyor...</p>
+    <!-- Oda Detayları -->
+    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <h3
+          class="text-lg leading-6 font-medium text-slate-900 dark:text-white mb-4"
+        >
+          Oda Bazlı Detay
+        </h3>
+        <div class="space-y-4" id="oda_detaylari"></div>
+      </div>
     </div>
 
-    <!-- Rapor Sonuçları -->
-    <div id="rapor_sonuclari" class="hidden space-y-6">
-        <!-- Özet Kartlar -->
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            <!-- Kat Bilgisi -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-slate-500 truncate">Seçili Kat</dt>
-                                <dd class="text-lg font-semibold text-slate-900" id="ozet_kat_adi">-</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Oda Sayısı -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-slate-500 truncate">Toplam Oda</dt>
-                                <dd class="text-lg font-semibold text-slate-900" id="ozet_oda_sayisi">0</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Ürün Çeşidi -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <svg class="h-8 w-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-slate-500 truncate">Ürün Çeşidi</dt>
-                                <dd class="text-lg font-semibold text-slate-900" id="ozet_urun_cesidi">0</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Ürün Tüketim Özeti -->
-        <div class="bg-white shadow rounded-lg">
-            <div class="px-4 py-5 sm:p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-lg leading-6 font-medium text-slate-900">Ürün Bazlı Toplam Tüketim</h3>
-                    <div class="flex items-center gap-2 text-sm text-slate-600">
-                        <span id="urun-count-badge" class="font-medium" data-stats-for="urun-ozeti-table"
-                            data-stat="total">0 ürün</span>
-                    </div>
-                </div>
-                <div class="table-wrapper">
-                    <table id="urun-ozeti-table" class="min-w-full divide-y divide-slate-200">
-                        <thead class="bg-slate-50">
-                            <tr>
-                                <th
-                                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                    #</th>
-                                <th
-                                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                    Ürün Adı</th>
-                                <th
-                                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                    Toplam Tüketim</th>
-                                <th
-                                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">
-                                    Birim</th>
-                            </tr>
-                        </thead>
-                        <tbody id="urun_ozeti_tbody" class="bg-white divide-y divide-slate-200">
-                            <!-- Veriler buraya yüklenecek -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Oda Detayları -->
-        <div class="bg-white shadow rounded-lg">
-            <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-slate-900 mb-6">Oda Bazlı Detay</h3>
-                <div class="space-y-4" id="oda_detaylari">
-                    <!-- Oda detayları buraya yüklenecek -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Yazdır/İndir Butonları -->
-        <div class="flex justify-end gap-3">
-            <button type="button" onclick="window.print()"
-                class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500">
-                <svg class="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-                Yazdır
-            </button>
-        </div>
+    <!-- Yazdır Butonu -->
+    <div class="flex justify-end">
+      <button
+        type="button"
+        onclick="window.print()"
+        class="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700"
+      >
+        <i class="fas fa-print mr-2"></i>Yazdır
+      </button>
     </div>
+  </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        document.getElementById('rapor_getir_btn').addEventListener('click', raporGetir);
+  document.addEventListener("DOMContentLoaded", function () {
+    const otelSelect = document.getElementById("otel_id");
+    const katSelect = document.getElementById("kat_id");
+    const raporBtn = document.getElementById("rapor_getir_btn");
+
+    // Otel değişince katları yükle
+    otelSelect.addEventListener("change", async function () {
+      const otelId = this.value;
+      katSelect.innerHTML = '<option value="">Yükleniyor...</option>';
+      katSelect.disabled = true;
+      raporBtn.disabled = true;
+
+      if (!otelId) {
+        katSelect.innerHTML = '<option value="">Önce otel seçiniz...</option>';
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/otelin-katlari?otel_id=${otelId}`);
+        const data = await response.json();
+
+        if (data.success && data.katlar.length > 0) {
+          katSelect.innerHTML = '<option value="">Kat seçiniz...</option>';
+          data.katlar.forEach((kat) => {
+            katSelect.innerHTML += `<option value="${kat.id}">${kat.kat_adi}</option>`;
+          });
+          katSelect.disabled = false;
+          katSelect.classList.remove("bg-slate-100", "dark:bg-slate-600");
+          katSelect.classList.add("bg-white", "dark:bg-slate-700");
+        } else {
+          katSelect.innerHTML =
+            '<option value="">Bu otelde kat bulunamadı</option>';
+        }
+      } catch (error) {
+        console.error("Kat yükleme hatası:", error);
+        katSelect.innerHTML = '<option value="">Hata oluştu</option>';
+      }
     });
 
-    async function raporGetir() {
-        const katId = document.getElementById('kat_id').value;
-        const baslangicTarih = document.getElementById('baslangic_tarih').value;
-        const bitisTarih = document.getElementById('bitis_tarih').value;
+    // Kat seçilince butonu aktif et
+    katSelect.addEventListener("change", function () {
+      raporBtn.disabled = !this.value;
+    });
 
-        if (!katId) {
-            alert('Lütfen bir kat seçiniz!');
-            return;
+    // DateRangePicker
+    moment.locale("tr");
+    $("#tarihAraligi").daterangepicker({
+      autoUpdateInput: false,
+      opens: "left",
+      alwaysShowCalendars: true,
+      showDropdowns: true,
+      linkedCalendars: false,
+      maxDate: moment(),
+      locale: {
+        format: "DD.MM.YYYY",
+        separator: " - ",
+        applyLabel: "Uygula",
+        cancelLabel: "Temizle",
+        fromLabel: "Başlangıç",
+        toLabel: "Bitiş",
+        customRangeLabel: "Özel Aralık",
+        weekLabel: "H",
+        daysOfWeek: ["Pz", "Pt", "Sa", "Ça", "Pe", "Cu", "Ct"],
+        monthNames: [
+          "Ocak",
+          "Şubat",
+          "Mart",
+          "Nisan",
+          "Mayıs",
+          "Haziran",
+          "Temmuz",
+          "Ağustos",
+          "Eylül",
+          "Ekim",
+          "Kasım",
+          "Aralık",
+        ],
+        firstDay: 1,
+      },
+      ranges: {
+        Bugün: [moment(), moment()],
+        Dün: [moment().subtract(1, "days"), moment().subtract(1, "days")],
+        "Bu Hafta": [moment().startOf("week"), moment().endOf("week")],
+        "Son 7 Gün": [moment().subtract(6, "days"), moment()],
+        "Son 15 Gün": [moment().subtract(14, "days"), moment()],
+        "Bu Ay": [moment().startOf("month"), moment().endOf("month")],
+        "Geçen Ay": [
+          moment().subtract(1, "month").startOf("month"),
+          moment().subtract(1, "month").endOf("month"),
+        ],
+        "Bu Yıl": [moment().startOf("year"), moment()],
+      },
+    });
+
+    $("#tarihAraligi").on("apply.daterangepicker", function (ev, picker) {
+      $(this).val(
+        picker.startDate.format("DD.MM.YYYY") +
+          " - " +
+          picker.endDate.format("DD.MM.YYYY")
+      );
+      document.getElementById("baslangic_tarih").value =
+        picker.startDate.format("YYYY-MM-DD");
+      document.getElementById("bitis_tarih").value =
+        picker.endDate.format("YYYY-MM-DD");
+    });
+
+    $("#tarihAraligi").on("cancel.daterangepicker", function () {
+      $(this).val("");
+      document.getElementById("baslangic_tarih").value = "";
+      document.getElementById("bitis_tarih").value = "";
+    });
+
+    // Rapor Getir
+    raporBtn.addEventListener("click", raporGetir);
+  });
+
+  async function raporGetir() {
+    const katId = document.getElementById("kat_id").value;
+    const baslangicTarih = document.getElementById("baslangic_tarih").value;
+    const bitisTarih = document.getElementById("bitis_tarih").value;
+
+    if (!katId) {
+      alert("Lütfen bir kat seçiniz!");
+      return;
+    }
+
+    const loadingIndicator = document.getElementById("loading_indicator");
+    const raporSonuclari = document.getElementById("rapor_sonuclari");
+
+    loadingIndicator.classList.remove("hidden");
+    raporSonuclari.classList.add("hidden");
+
+    try {
+      let url = `/api/kat-rapor-veri?kat_id=${katId}`;
+      if (baslangicTarih) url += `&baslangic_tarih=${baslangicTarih}`;
+      if (bitisTarih) url += `&bitis_tarih=${bitisTarih}`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.success) {
+        document.getElementById("ozet_kat_adi").textContent = data.kat_adi;
+        document.getElementById("ozet_oda_sayisi").textContent =
+          data.oda_sayisi;
+        document.getElementById("ozet_urun_cesidi").textContent =
+          data.urun_ozeti.length;
+
+        // Ürün özeti tablosu
+        const urunTbody = document.getElementById("urun_ozeti_tbody");
+        urunTbody.innerHTML = "";
+
+        if (data.urun_ozeti.length === 0) {
+          urunTbody.innerHTML =
+            '<tr><td colspan="4" class="px-4 py-4 text-center text-slate-500">Veri bulunamadı</td></tr>';
+        } else {
+          data.urun_ozeti.forEach((urun, index) => {
+            urunTbody.innerHTML += `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700">
+              <td class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">${
+                index + 1
+              }</td>
+              <td class="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">${
+                urun.urun_adi
+              }</td>
+              <td class="px-4 py-3"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">${
+                urun.toplam_tuketim
+              }</span></td>
+              <td class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">${
+                urun.birim
+              }</td>
+            </tr>`;
+          });
         }
 
-        // Loading göster - Null kontrolü ile
-        const loadingIndicator = document.getElementById('loading_indicator');
-        const raporSonuclari = document.getElementById('rapor_sonuclari');
+        // Oda detayları
+        const odaDetaylari = document.getElementById("oda_detaylari");
+        odaDetaylari.innerHTML = "";
 
-        if (loadingIndicator) loadingIndicator.classList.remove('hidden');
-        if (raporSonuclari) raporSonuclari.classList.add('hidden');
-
-        try {
-            let url = `/api/kat-rapor-veri?kat_id=${katId}`;
-            if (baslangicTarih) url += `&baslangic_tarih=${baslangicTarih}`;
-            if (bitisTarih) url += `&bitis_tarih=${bitisTarih}`;
-
-            const response = await fetch(url);
-            const data = await response.json();
-
-            if (data.success) {
-                // Özet kartları güncelle - Null kontrolü ile
-                const ozetKatAdi = document.getElementById('ozet_kat_adi');
-                const ozetOdaSayisi = document.getElementById('ozet_oda_sayisi');
-                const ozetUrunCesidi = document.getElementById('ozet_urun_cesidi');
-                const urunCountBadge = document.getElementById('urun-count-badge');
-
-                if (ozetKatAdi) ozetKatAdi.textContent = data.kat_adi;
-                if (ozetOdaSayisi) ozetOdaSayisi.textContent = data.oda_sayisi;
-                if (ozetUrunCesidi) ozetUrunCesidi.textContent = data.urun_ozeti.length;
-                if (urunCountBadge) urunCountBadge.textContent = `${data.urun_ozeti.length} ürün`;
-
-                // Ürün özeti tablosunu doldur
-                const urunTbody = document.getElementById('urun_ozeti_tbody');
-                if (!urunTbody) {
-                    console.error('urun_ozeti_tbody elementi bulunamadı!');
-                    return;
-                }
-                urunTbody.innerHTML = '';
-
-                if (data.urun_ozeti.length === 0) {
-                    urunTbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-slate-500">Veri bulunamadı</td></tr>';
-                } else {
-                    data.urun_ozeti.forEach((urun, index) => {
-                        const tr = document.createElement('tr');
-                        tr.className = 'hover:bg-slate-50 transition-colors duration-150';
-                        tr.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${index + 1}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
-                            📦 ${urun.urun_adi}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
-                                🔻 ${urun.toplam_tuketim}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden md:table-cell">
-                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-700">
-                                ${urun.birim}
-                            </span>
-                        </td>
-                    `;
-                        urunTbody.appendChild(tr);
-                    });
-                }
-
-                // Oda detaylarını doldur
-                const odaDetaylari = document.getElementById('oda_detaylari');
-                if (!odaDetaylari) {
-                    console.error('oda_detaylari elementi bulunamadı!');
-                    return;
-                }
-                odaDetaylari.innerHTML = '';
-
-                if (data.odalar.length === 0) {
-                    odaDetaylari.innerHTML = '<p class="text-center text-slate-500">Bu katta oda bulunamadı</p>';
-                } else {
-                    data.odalar.forEach(oda => {
-                        const odaDiv = document.createElement('div');
-                        odaDiv.className = 'border border-slate-200 rounded-lg p-4';
-
-                        let urunlerHTML = '';
-                        if (oda.urunler.length === 0) {
-                            urunlerHTML = '<p class="text-sm text-slate-500 mt-2">Bu odada henüz minibar işlemi yapılmamış</p>';
-                        } else {
-                            urunlerHTML = `
-                            <div class="mt-3 table-wrapper">
-                                <table class="min-w-full text-sm">
-                                    <thead class="bg-slate-50">
-                                        <tr>
-                                            <th class="px-3 py-2 text-left text-xs font-medium text-slate-500">Ürün</th>
-                                            <th class="px-3 py-2 text-left text-xs font-medium text-slate-500">Mevcut</th>
-                                            <th class="px-3 py-2 text-left text-xs font-medium text-slate-500">Tüketim</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-200">
-                        `;
-
-                            oda.urunler.forEach(urun => {
-                                urunlerHTML += `
-                                <tr>
-                                    <td class="px-3 py-2">${urun.urun_adi}</td>
-                                    <td class="px-3 py-2">${urun.mevcut_stok} ${urun.birim}</td>
-                                    <td class="px-3 py-2 font-semibold ${urun.tuketim > 0 ? 'text-red-600' : 'text-green-600'}">${urun.tuketim} ${urun.birim}</td>
-                                </tr>
-                            `;
-                            });
-
-                            urunlerHTML += `
-                                    </tbody>
-                                </table>
-                            </div>
-                        `;
-                        }
-
-                        odaDiv.innerHTML = `
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h4 class="text-base font-semibold text-slate-900">Oda ${oda.oda_no}</h4>
-                                <p class="text-sm text-slate-500">Son İşlem: ${oda.son_islem_tarih}</p>
-                                ${oda.toplam_tuketim_adedi > 0 ?
-                                `<p class="text-sm text-red-600 font-medium mt-1">Toplam Tüketim: ${oda.toplam_tuketim_adedi} Adet</p>` :
-                                '<p class="text-sm text-green-600 font-medium mt-1">Tüketim Yok</p>'
-                            }
-                            </div>
-                        </div>
-                        ${urunlerHTML}
-                    `;
-
-                        odaDetaylari.appendChild(odaDiv);
-                    });
-                }
-
-                // Sonuçları göster
-                if (loadingIndicator) loadingIndicator.classList.add('hidden');
-                if (raporSonuclari) raporSonuclari.classList.remove('hidden');
-
+        if (data.odalar.length === 0) {
+          odaDetaylari.innerHTML =
+            '<p class="text-center text-slate-500">Bu katta oda bulunamadı</p>';
+        } else {
+          data.odalar.forEach((oda) => {
+            let urunlerHTML = "";
+            if (oda.urunler.length === 0) {
+              urunlerHTML =
+                '<p class="text-sm text-slate-500 mt-2">Bu odada henüz minibar işlemi yapılmamış</p>';
             } else {
-                alert('Hata: ' + data.error);
-                if (loadingIndicator) loadingIndicator.classList.add('hidden');
+              urunlerHTML = `<div class="mt-3 overflow-x-auto"><table class="min-w-full text-sm">
+              <thead class="bg-slate-50 dark:bg-slate-700"><tr>
+                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-300">Ürün</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-300">Mevcut</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-300">Tüketim</th>
+              </tr></thead><tbody class="divide-y divide-slate-200 dark:divide-slate-700">`;
+              oda.urunler.forEach((urun) => {
+                urunlerHTML += `<tr>
+                <td class="px-3 py-2 text-slate-900 dark:text-white">${
+                  urun.urun_adi
+                }</td>
+                <td class="px-3 py-2 text-slate-600 dark:text-slate-400">${
+                  urun.mevcut_stok
+                } ${urun.birim}</td>
+                <td class="px-3 py-2 font-semibold ${
+                  urun.tuketim > 0 ? "text-red-600" : "text-green-600"
+                }">${urun.tuketim} ${urun.birim}</td>
+              </tr>`;
+              });
+              urunlerHTML += "</tbody></table></div>";
             }
 
-        } catch (error) {
-            console.error('Rapor yüklenirken hata:', error);
-            alert('Rapor yüklenirken bir hata oluştu!');
-            if (loadingIndicator) loadingIndicator.classList.add('hidden');
+            odaDetaylari.innerHTML += `
+            <div class="border border-slate-200 dark:border-slate-700 rounded-lg p-4">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h4 class="text-base font-semibold text-slate-900 dark:text-white">Oda ${
+                    oda.oda_no
+                  }</h4>
+                  <p class="text-sm text-slate-500 dark:text-slate-400">Son İşlem: ${
+                    oda.son_islem_tarih
+                  }</p>
+                  ${
+                    oda.toplam_tuketim_adedi > 0
+                      ? `<p class="text-sm text-red-600 font-medium mt-1">Toplam Tüketim: ${oda.toplam_tuketim_adedi} Adet</p>`
+                      : '<p class="text-sm text-green-600 font-medium mt-1">Tüketim Yok</p>'
+                  }
+                </div>
+              </div>
+              ${urunlerHTML}
+            </div>`;
+          });
         }
+
+        loadingIndicator.classList.add("hidden");
+        raporSonuclari.classList.remove("hidden");
+      } else {
+        alert("Hata: " + data.error);
+        loadingIndicator.classList.add("hidden");
+      }
+    } catch (error) {
+      console.error("Rapor yüklenirken hata:", error);
+      alert("Rapor yüklenirken bir hata oluştu!");
+      loadingIndicator.classList.add("hidden");
     }
+  }
 </script>
 
 <style>
-    @media print {
-
-        /* Menü ve yan paneli gizle */
-        nav,
-        aside,
-        .no-print {
-            display: none !important;
-        }
-
-        /* Sayfa düzeni */
-        body {
-            margin: 0;
-            padding: 20px;
-        }
-
-        /* Renkleri yazdırmada göster */
-        * {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
+  @media print {
+    nav,
+    aside,
+    .no-print {
+      display: none !important;
     }
+    body {
+      margin: 0;
+      padding: 20px;
+    }
+    * {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
 </style>
 
-{% endblock %}
-
-{% block extra_scripts %}
-<script>
-    // TableSearchFilter için dinamik init fonksiyonu
-    let tableSearchInstance = null;
-
-    // Orijinal raporGetir fonksiyonunu kaydet
-    const originalRaporGetir = window.raporGetir;
-
-    // raporGetir'i override et
-    window.raporGetir = async function () {
-        await originalRaporGetir();
-
-        // Eğer tablo doluysa TableSearchFilter'ı init et
-        setTimeout(() => {
-            const tbody = document.getElementById('urun_ozeti_tbody');
-            if (tbody && tbody.children.length > 0 && tbody.children[0].cells.length > 1) {
-                // Önceki instance'ı temizle
-                if (tableSearchInstance) {
-                    tableSearchInstance = null;
-                }
-
-                // Yeni instance oluştur
-                tableSearchInstance = new TableSearchFilter('urun-ozeti-table', {
-                    searchPlaceholder: 'Ürünlerde ara (ürün adı, birim)...',
-                    defaultItemsPerPage: 25,
-                    skipTableReload: true // Dinamik tablo olduğu için yeniden yükleme atla
-                });
-            }
-        }, 100);
-    };
-</script>
 {% endblock %}

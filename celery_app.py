@@ -79,7 +79,8 @@ def make_celery(app=None):
         backend=result_backend
     )
     
-    # Celery konfigürasyonu
+    # Celery konfigürasyonu - Config'den değerler alınıyor (29.12.2025)
+    # Magic numbers config.py'ye taşındı
     celery.conf.update(
         task_serializer='json',
         result_serializer='json',
@@ -87,10 +88,10 @@ def make_celery(app=None):
         timezone='UTC',
         enable_utc=True,
         task_track_started=True,
-        task_time_limit=3600,  # 1 saat max
-        task_soft_time_limit=3000,  # 50 dakika soft limit
-        worker_prefetch_multiplier=1,
-        worker_max_tasks_per_child=1000,
+        task_time_limit=int(os.getenv('CELERY_TASK_TIME_LIMIT', '3600')),  # 1 saat max (config'den)
+        task_soft_time_limit=int(os.getenv('CELERY_TASK_SOFT_TIME_LIMIT', '3000')),  # 50 dakika soft limit
+        worker_prefetch_multiplier=int(os.getenv('CELERY_WORKER_PREFETCH', '1')),
+        worker_max_tasks_per_child=int(os.getenv('CELERY_MAX_TASKS_PER_CHILD', '1000')),
         broker_connection_retry_on_startup=True,  # Celery 6.0 uyarısını kaldır
     )
     
@@ -1482,15 +1483,17 @@ celery.conf.beat_schedule = {
     # ML ANALİZ SİSTEMİ SCHEDULE
     # ============================================
     
-    # ML Veri Toplama - Her 15 dakikada bir
+    # ML Veri Toplama - Sabah 08:00 - Akşam 20:00 arası her saat başı
+    # UTC saat = KKTC saat - 2 (yaz saati) veya - 3 (kış saati)
+    # KKTC 08:00-20:00 = UTC 06:00-18:00 (kış) veya 05:00-17:00 (yaz)
     'ml-veri-toplama': {
         'task': 'ml.veri_toplama',
-        'schedule': 900.0,  # 15 dakika
+        'schedule': crontab(hour='5-17', minute=0),  # UTC 05:00-17:00 = KKTC ~08:00-20:00
     },
-    # ML Anomali Tespiti - Her 5 dakikada bir
+    # ML Anomali Tespiti - Sabah 08:30 - Akşam 20:30 arası her saat (veri toplamadan 30dk sonra)
     'ml-anomali-tespiti': {
         'task': 'ml.anomali_tespiti',
-        'schedule': 300.0,  # 5 dakika
+        'schedule': crontab(hour='5-17', minute=30),  # UTC 05:30-17:30 = KKTC ~08:30-20:30
     },
     # ML Model Eğitimi - Her gece 00:00'da (UTC 22:00 = KKTC 00:00)
     'ml-model-egitimi': {

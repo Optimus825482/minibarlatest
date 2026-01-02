@@ -111,8 +111,8 @@
                 </div>
             </div>
             <a href="{{ url_for('raporlar.stok_excel', tip='mevcut', otel_id=mevcut_stok_raporu.otel_id or '') }}"
-                class="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-medium rounded-lg transition-all shadow-md flex items-center gap-2">
-                <i class="fas fa-file-excel text-xl"></i>
+                class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-all shadow-md flex items-center gap-2">
+                <img src="{{ url_for('static', filename='icons/ms-excel-icon-19.png') }}" alt="Excel" class="w-8 h-8 rounded">
                 <span>Excel İndir</span>
             </a>
         </div>
@@ -168,8 +168,8 @@
                 </div>
             </div>
             <a href="{{ url_for('raporlar.stok_excel', tip='hareketler', otel_id=stok_hareketleri_raporu.otel_id or '', baslangic=stok_hareketleri_raporu.baslangic, bitis=stok_hareketleri_raporu.bitis) }}"
-                class="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-medium rounded-lg transition-all shadow-md flex items-center gap-2">
-                <i class="fas fa-file-excel text-xl"></i>
+                class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-all shadow-md flex items-center gap-2">
+                <img src="{{ url_for('static', filename='icons/ms-excel-icon-19.png') }}" alt="Excel" class="w-8 h-8 rounded">
                 <span>Excel İndir</span>
             </a>
         </div>

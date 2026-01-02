@@ -207,7 +207,7 @@ def gunluk_doluluk_yazdir():
 def kat_doluluk_detay(kat_id):
     """Kat bazlı detaylı doluluk raporu"""
     try:
-        from models import Kat, Oda, MisafirKayit, GorevDetay, GunlukGorev, MinibarIslem, DNDKontrol
+        from models import Kat, Oda, MisafirKayit, GorevDetay, GunlukGorev, MinibarIslem, DNDKontrol, OdaDNDKayit
         from sqlalchemy import and_, or_, func
         
         # Tarihi al
@@ -278,23 +278,41 @@ def kat_doluluk_detay(kat_id):
         # DND bilgilerini al (DND odaları için sayı ve son DND zamanı)
         dnd_bilgileri = {}  # oda_id -> {'dnd_sayisi': int, 'son_dnd_zamani': datetime}
         
-        # Bugünkü görev detaylarından DND bilgilerini al
+        # 1. Önce BAĞIMSIZ DND tablosundan (oda_dnd_kayitlari) bugünkü kayıtları al
+        bagimsiz_dnd_kayitlari = OdaDNDKayit.query.filter(
+            OdaDNDKayit.oda_id.in_(oda_ids),
+            OdaDNDKayit.kayit_tarihi == secili_tarih
+        ).all()
+        
+        for dnd_kayit in bagimsiz_dnd_kayitlari:
+            dnd_bilgileri[dnd_kayit.oda_id] = {
+                'dnd_sayisi': dnd_kayit.dnd_sayisi,
+                'son_dnd_zamani': dnd_kayit.son_dnd_zamani
+            }
+            # Kontrol durumunu da güncelle
+            if dnd_kayit.durum == 'tamamlandi':
+                kontrol_edilen_odalar[dnd_kayit.oda_id] = 'completed'
+            else:
+                kontrol_edilen_odalar[dnd_kayit.oda_id] = 'dnd'
+        
+        # 2. Eski görev sisteminden de DND bilgilerini al (geriye uyumluluk)
         for detay in gorev_detaylari_db:
             if detay.oda_id in oda_ids and detay.durum == 'dnd_pending':
-                # DNDKontrol tablosundan bu görev için DND kayıtlarını say
-                dnd_kayitlari = DNDKontrol.query.filter_by(gorev_detay_id=detay.id).order_by(DNDKontrol.kontrol_zamani.desc()).all()
-                
-                if dnd_kayitlari:
-                    dnd_bilgileri[detay.oda_id] = {
-                        'dnd_sayisi': len(dnd_kayitlari),
-                        'son_dnd_zamani': dnd_kayitlari[0].kontrol_zamani  # En son DND kaydı
-                    }
-                elif detay.dnd_sayisi and detay.dnd_sayisi > 0:
-                    # DNDKontrol kaydı yoksa GorevDetay'daki dnd_sayisi'nı kullan
-                    dnd_bilgileri[detay.oda_id] = {
-                        'dnd_sayisi': detay.dnd_sayisi,
-                        'son_dnd_zamani': detay.son_dnd_zamani
-                    }
+                # Eğer bağımsız DND kaydı yoksa, eski sistemden al
+                if detay.oda_id not in dnd_bilgileri:
+                    # DNDKontrol tablosundan bu görev için DND kayıtlarını say
+                    dnd_kayitlari = DNDKontrol.query.filter_by(gorev_detay_id=detay.id).order_by(DNDKontrol.kontrol_zamani.desc()).all()
+                    
+                    if dnd_kayitlari:
+                        dnd_bilgileri[detay.oda_id] = {
+                            'dnd_sayisi': len(dnd_kayitlari),
+                            'son_dnd_zamani': dnd_kayitlari[0].kontrol_zamani
+                        }
+                    elif detay.dnd_sayisi and detay.dnd_sayisi > 0:
+                        dnd_bilgileri[detay.oda_id] = {
+                            'dnd_sayisi': detay.dnd_sayisi,
+                            'son_dnd_zamani': detay.son_dnd_zamani
+                        }
         
         # Her oda için doluluk durumunu kontrol et
         oda_detaylari = []
@@ -368,11 +386,21 @@ def kat_doluluk_detay(kat_id):
             # DND bilgilerini al
             dnd_info = dnd_bilgileri.get(oda.id, None)
             
+            # Görev durumunu belirle - bağımsız DND varsa onu kullan
+            # Boş odalar için de DND kaydı olabilir
+            gorev_durumu_final = gorev_durumlari.get(oda.id, 'pending') if misafir else None
+            if dnd_info and dnd_info['dnd_sayisi'] > 0:
+                # Bağımsız DND kaydı varsa, gorev_durumu'nu dnd_pending olarak ayarla
+                gorev_durumu_final = 'dnd_pending'
+                # Boş oda için de kontrol_durumu'nu dnd olarak ayarla
+                if not misafir:
+                    kontrol_durumu = 'dnd'
+            
             oda_detaylari.append({
                 'oda': oda,
                 'durum': durum,
                 'misafir': misafir_info,
-                'gorev_durumu': gorev_durumlari.get(oda.id, 'pending') if misafir else None,
+                'gorev_durumu': gorev_durumu_final,
                 'kontrol_durumu': kontrol_durumu,  # 'completed', 'dnd' veya None
                 'varis_saati': varis_saati,
                 'cikis_saati': cikis_saati,
@@ -431,7 +459,7 @@ def doluluk_onizle():
         from utils.excel_service import ExcelProcessingService
         from utils.file_management_service import FileManagementService
         from utils.authorization import get_kullanici_otelleri
-        from models import Oda, Kat, MisafirKayit
+        from models import Oda, Kat, MisafirKayit, Otel
         import tempfile
         import os
         from collections import defaultdict
@@ -501,6 +529,39 @@ def doluluk_onizle():
                 col_indices['giris_saati'] = idx
             elif header_str == 'Dep.Time':
                 col_indices['cikis_saati'] = idx
+
+        # Önce dosyadaki tüm oda numaralarını topla (otel tespiti için)
+        dosyadaki_odalar = set()
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            if not any(row):
+                continue
+            oda_no = str(row[col_indices['oda_no']]).strip() if col_indices.get('oda_no') is not None and row[col_indices['oda_no']] else None
+            if oda_no and oda_no != 'None':
+                dosyadaki_odalar.add(oda_no)
+
+        # Otel tespiti - dosyadaki oda numaralarına bakarak hangi otele ait olduğunu bul
+        tespit_edilen_otel = None
+        tespit_edilen_otel_adi = None
+        otel_eslesme_oranlari = {}
+        
+        # Tüm otelleri ve odalarını al
+        tum_oteller = Otel.query.filter_by(aktif=True).all()
+        for otel in tum_oteller:
+            otel_odalari = {oda.oda_no for oda in Oda.query.join(Kat).filter(Kat.otel_id == otel.id).all()}
+            if otel_odalari:
+                eslesen_odalar = dosyadaki_odalar & otel_odalari
+                eslesme_orani = len(eslesen_odalar) / len(dosyadaki_odalar) * 100 if dosyadaki_odalar else 0
+                otel_eslesme_oranlari[otel.id] = {
+                    'otel_adi': otel.ad,
+                    'eslesen': len(eslesen_odalar),
+                    'toplam_dosya': len(dosyadaki_odalar),
+                    'oran': eslesme_orani
+                }
+                # En yüksek eşleşme oranına sahip oteli seç
+                if eslesme_orani > 50:  # En az %50 eşleşme olmalı
+                    if tespit_edilen_otel is None or eslesme_orani > otel_eslesme_oranlari.get(tespit_edilen_otel, {}).get('oran', 0):
+                        tespit_edilen_otel = otel.id
+                        tespit_edilen_otel_adi = otel.ad
 
         # Validasyon için veriler
         toplam_satir = 0
@@ -602,7 +663,11 @@ def doluluk_onizle():
             "uyarilar": uyarilar[:20],  # İlk 20 uyarı
             "dosya_adi": file.filename,
             "duplicate_sayisi": len(duplicate_odalar),
-            "bulunamayan_oda_sayisi": len(bulunamayan_odalar)
+            "bulunamayan_oda_sayisi": len(bulunamayan_odalar),
+            # Otel tespiti bilgileri
+            "tespit_edilen_otel_id": tespit_edilen_otel,
+            "tespit_edilen_otel_adi": tespit_edilen_otel_adi,
+            "otel_eslesme_oranlari": otel_eslesme_oranlari
         })
 
     except Exception as e:

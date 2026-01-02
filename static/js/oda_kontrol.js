@@ -1029,7 +1029,7 @@ async function sarfiyatYokKaydet() {
 }
 
 // DND onaylama - Modal ile
-function dndOnayla() {
+async function dndOnayla() {
   if (!mevcutOdaId) {
     toastGoster("Lütfen önce bir oda seçin", "warning");
     return;
@@ -1041,6 +1041,59 @@ function dndOnayla() {
   // Modal içeriğini güncelle
   document.getElementById("dnd_modal_oda_no").textContent = odaNo;
 
+  // Mevcut DND durumunu kontrol et
+  try {
+    const response = await fetch(`/api/kat-sorumlusu/dnd-durum/${mevcutOdaId}`);
+    const data = await response.json();
+
+    const bilgiDiv = document.getElementById("dnd_sayisi_bilgi");
+    if (bilgiDiv) {
+      if (data.success && data.dnd_durumu) {
+        const dndSayisi = data.dnd_durumu.dnd_sayisi;
+        const sonKontrol = data.dnd_durumu.son_dnd_zamani
+          ? new Date(data.dnd_durumu.son_dnd_zamani).toLocaleTimeString(
+              "tr-TR",
+              { hour: "2-digit", minute: "2-digit" }
+            )
+          : "-";
+
+        bilgiDiv.innerHTML = `
+          <div class="flex items-start space-x-3">
+            <i class="fas fa-info-circle text-orange-600 dark:text-orange-400 mt-0.5"></i>
+            <div>
+              <p class="text-sm font-medium text-orange-900 dark:text-orange-100">
+                Bu oda bugün <strong>${dndSayisi}</strong> kez DND olarak işaretlenmiş.
+              </p>
+              <p class="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                Son kontrol: ${sonKontrol} • ${
+          dndSayisi >= 3
+            ? "✅ Minimum kontrol tamamlandı"
+            : `${3 - dndSayisi} kontrol daha gerekli`
+        }
+              </p>
+            </div>
+          </div>
+        `;
+      } else {
+        bilgiDiv.innerHTML = `
+          <div class="flex items-start space-x-3">
+            <i class="fas fa-info-circle text-orange-600 dark:text-orange-400 mt-0.5"></i>
+            <div>
+              <p class="text-sm font-medium text-orange-900 dark:text-orange-100">
+                Bu oda DND olarak işaretlenecek.
+              </p>
+              <p class="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                Gün içinde en az 3 kez DND kontrolü yapılmalıdır.
+              </p>
+            </div>
+          </div>
+        `;
+      }
+    }
+  } catch (error) {
+    console.error("DND durum kontrolü hatası:", error);
+  }
+
   // Modal'ı göster
   document.getElementById("dndModal").classList.remove("hidden");
 }
@@ -1050,7 +1103,7 @@ function dndModalKapat() {
   document.getElementById("dndModal").classList.add("hidden");
 }
 
-// DND kaydı
+// DND kaydı - Bağımsız DND sistemi
 async function dndKaydet() {
   try {
     const response = await fetch("/api/kat-sorumlusu/dnd-kaydet", {
@@ -1061,7 +1114,7 @@ async function dndKaydet() {
       },
       body: JSON.stringify({
         oda_id: mevcutOdaId,
-        gorev_detay_id: mevcutGorevDetayId,
+        gorev_detay_id: mevcutGorevDetayId, // Opsiyonel - varsa bağlanır
       }),
     });
 
@@ -1071,22 +1124,71 @@ async function dndKaydet() {
       throw new Error(data.error || "DND kaydı yapılamadı");
     }
 
-    toastGoster(`✅ ${data.message}`, "success");
+    // Başarı mesajı göster
+    const dndSayisi = data.dnd_sayisi;
+    const tamamlandi = data.min_kontrol_tamamlandi || data.otomatik_tamamlandi;
 
-    // Görev panelini gizle
-    const panel = document.getElementById("gorev_islemleri");
-    if (panel) panel.classList.add("hidden");
+    if (tamamlandi) {
+      // 3+ kontrol tamamlandı - özel başarı dialog'u
+      dndTamamlandiDialogGoster(dndSayisi);
+    } else {
+      // Normal DND kaydı
+      toastGoster(`✅ ${data.message}`, "success");
+    }
 
-    // Görev detay ID'yi temizle
-    mevcutGorevDetayId = null;
+    // DND sayısını UI'da güncelle (görev panelinde)
+    dndBilgiGuncelle(dndSayisi, tamamlandi);
 
-    // 2 saniye sonra görev listesine yönlendir
-    setTimeout(() => {
-      window.location.href = "/gorevler/yonetim";
-    }, 2000);
+    // Görev bağlıysa ve tamamlandıysa yönlendir
+    if (tamamlandi && mevcutGorevDetayId) {
+      setTimeout(() => {
+        window.location.href = "/gorevler/yonetim";
+      }, 2500);
+    }
   } catch (error) {
     console.error("❌ DND kayıt hatası:", error);
     toastGoster(error.message, "error");
+  }
+}
+
+// DND tamamlandı dialog'u
+function dndTamamlandiDialogGoster(dndSayisi) {
+  const existingDialog = document.getElementById("dndTamamlandiDialog");
+  if (existingDialog) existingDialog.remove();
+
+  const dialog = document.createElement("div");
+  dialog.id = "dndTamamlandiDialog";
+  dialog.className =
+    "fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none";
+
+  dialog.innerHTML = `
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 max-w-xs w-full text-center transform animate-successPop pointer-events-auto">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+        <i class="fas fa-check-double text-3xl text-green-500"></i>
+      </div>
+      <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">DND Kontrolü Tamamlandı!</h3>
+      <p class="text-sm text-slate-600 dark:text-slate-400 mb-2">Bu oda için ${dndSayisi} kontrol yapıldı</p>
+      <p class="text-2xl font-bold text-green-600 dark:text-green-400">✓ Minimum kontrol sağlandı</p>
+    </div>
+  `;
+
+  document.body.appendChild(dialog);
+
+  setTimeout(() => {
+    dialog.classList.add("animate-fadeOut");
+    setTimeout(() => dialog.remove(), 300);
+  }, 2500);
+}
+
+// DND bilgisini UI'da güncelle
+function dndBilgiGuncelle(dndSayisi, tamamlandi) {
+  const bilgiText = document.getElementById("gorev_bilgi_text");
+  if (bilgiText) {
+    if (tamamlandi) {
+      bilgiText.innerHTML = `<span class="text-green-600 dark:text-green-400">✅ DND kontrolü tamamlandı (${dndSayisi}/3)</span>`;
+    } else {
+      bilgiText.innerHTML = `<span class="text-orange-600 dark:text-orange-400">🚪 DND: ${dndSayisi}/3 kontrol yapıldı</span>`;
+    }
   }
 }
 

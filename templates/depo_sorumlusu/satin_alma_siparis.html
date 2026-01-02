@@ -1,6 +1,7 @@
 {% extends "base.html" %} {% block title %}Satın Alma Siparişi - Minibar Takip
 Sistemi{% endblock %} {% block page_title %}Satın Alma Siparişleri{% endblock %}
-{% block content %}
+{% block page_icon_bg %}bg-gradient-to-br from-teal-500 to-cyan-600{% endblock
+%} {% block page_icon %}fas fa-shopping-cart{% endblock %} {% block content %}
 <div class="space-y-6">
   {% if otel_secenekleri and otel_secenekleri|length > 1 and not secili_otel_id
   %}

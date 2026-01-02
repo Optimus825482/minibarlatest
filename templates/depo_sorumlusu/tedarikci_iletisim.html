@@ -1,330 +1,553 @@
-{% extends "base.html" %}
-
-{% block title %}Tedarikçi İletişim - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Tedarikçi İletişim: {{ tedarikci.tedarikci_adi }}{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Tedarikçi İletişim - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}Tedarikçi İletişim: {{
+tedarikci.tedarikci_adi }}{% endblock %} {% block page_icon_bg
+%}bg-gradient-to-br from-green-500 to-emerald-600{% endblock %} {% block
+page_icon %}fas fa-phone-alt{% endblock %} {% block content %}
 <div class="space-y-6">
-    <!-- Geri Dön Butonu -->
-    <div>
-        <a href="{{ url_for('siparis_listesi') }}"
-            class="inline-flex items-center px-3 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-            </svg>
-            Sipariş Listesine Dön
-        </a>
-    </div>
+  <!-- Geri Dön Butonu -->
+  <div>
+    <a
+      href="{{ url_for('siparis_listesi') }}"
+      class="inline-flex items-center px-3 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
+    >
+      <svg
+        class="w-4 h-4 mr-2"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M10 19l-7-7m0 0l7-7m-7 7h18"
+        ></path>
+      </svg>
+      Sipariş Listesine Dön
+    </a>
+  </div>
 
-    <!-- Tedarikçi Bilgileri -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4">Tedarikçi Bilgileri</h3>
-            
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Tedarikçi Adı</dt>
-                    <dd class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{{ tedarikci.tedarikci_adi }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Telefon</dt>
-                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
-                        {% if tedarikci.telefon %}
-                        <a href="tel:{{ tedarikci.telefon }}" class="text-blue-600 dark:text-blue-400 hover:underline">
-                            {{ tedarikci.telefon }}
-                        </a>
-                        {% else %}-{% endif %}
-                    </dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">E-posta</dt>
-                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
-                        {% if tedarikci.email %}
-                        <a href="mailto:{{ tedarikci.email }}" class="text-blue-600 dark:text-blue-400 hover:underline">
-                            {{ tedarikci.email }}
-                        </a>
-                        {% else %}-{% endif %}
-                    </dd>
-                </div>
-                {% if tedarikci.adres %}
-                <div class="sm:col-span-3">
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Adres</dt>
-                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">{{ tedarikci.adres }}</dd>
-                </div>
-                {% endif %}
-            </div>
+  <!-- Tedarikçi Bilgileri -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3
+        class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4"
+      >
+        Tedarikçi Bilgileri
+      </h3>
+
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div>
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Tedarikçi Adı
+          </dt>
+          <dd
+            class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100"
+          >
+            {{ tedarikci.tedarikci_adi }}
+          </dd>
         </div>
-    </div>
-
-    <!-- Yeni İletişim Kaydı Formu -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4">Yeni İletişim Kaydı</h3>
-            
-            <form method="POST" action="{{ url_for('tedarikci_iletisim', tedarikci_id=tedarikci.id) }}">
-                {{ form.hidden_tag() }}
-                
-                <div class="grid grid-cols-1 gap-6">
-                    <!-- İlgili Sipariş -->
-                    <div>
-                        {{ form.siparis_id.label(class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2") }}
-                        {{ form.siparis_id(class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 sm:text-sm") }}
-                        {% if form.siparis_id.errors %}
-                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ form.siparis_id.errors[0] }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Konu -->
-                    <div>
-                        {{ form.konu.label(class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2") }}
-                        {{ form.konu(class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 sm:text-sm", placeholder="Örn: Teslimat Tarihi Değişikliği") }}
-                        {% if form.konu.errors %}
-                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ form.konu.errors[0] }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- İletişim Tarihi -->
-                    <div>
-                        {{ form.iletisim_tarihi.label(class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2") }}
-                        {{ form.iletisim_tarihi(class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 sm:text-sm") }}
-                        {% if form.iletisim_tarihi.errors %}
-                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ form.iletisim_tarihi.errors[0] }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Açıklama -->
-                    <div>
-                        {{ form.aciklama.label(class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2") }}
-                        {{ form.aciklama(class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 sm:text-sm", rows="4", placeholder="İletişim detaylarını buraya yazın...") }}
-                        {% if form.aciklama.errors %}
-                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ form.aciklama.errors[0] }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Submit Butonu -->
-                    <div class="flex justify-end">
-                        <button type="submit"
-                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            İletişim Kaydı Ekle
-                        </button>
-                    </div>
-                </div>
-            </form>
+        <div>
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Telefon
+          </dt>
+          <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
+            {% if tedarikci.telefon %}
+            <a
+              href="tel:{{ tedarikci.telefon }}"
+              class="text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {{ tedarikci.telefon }}
+            </a>
+            {% else %}-{% endif %}
+          </dd>
         </div>
+        <div>
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            E-posta
+          </dt>
+          <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
+            {% if tedarikci.email %}
+            <a
+              href="mailto:{{ tedarikci.email }}"
+              class="text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {{ tedarikci.email }}
+            </a>
+            {% else %}-{% endif %}
+          </dd>
+        </div>
+        {% if tedarikci.adres %}
+        <div class="sm:col-span-3">
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Adres
+          </dt>
+          <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
+            {{ tedarikci.adres }}
+          </dd>
+        </div>
+        {% endif %}
+      </div>
     </div>
+  </div>
 
-    <!-- İletişim Geçmişi -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4">İletişim Geçmişi</h3>
-            
-            {% if iletisim_kayitlari %}
-            <div class="flow-root">
-                <ul class="-mb-8">
-                    {% for kayit in iletisim_kayitlari %}
-                    <li>
-                        <div class="relative pb-8">
-                            {% if not loop.last %}
-                            <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-slate-200 dark:bg-slate-700" aria-hidden="true"></span>
-                            {% endif %}
-                            <div class="relative flex space-x-3">
-                                <div>
-                                    <span class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white dark:ring-slate-800">
-                                        <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
-                                        </svg>
-                                    </span>
-                                </div>
-                                <div class="min-w-0 flex-1">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="text-sm font-medium text-slate-900 dark:text-slate-100">{{ kayit.konu }}</p>
-                                            {% if kayit.siparis %}
-                                            <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                                                İlgili Sipariş: 
-                                                <a href="{{ url_for('siparis_detay', siparis_id=kayit.siparis.id) }}" 
-                                                   class="text-blue-600 dark:text-blue-400 hover:underline">
-                                                    {{ kayit.siparis.siparis_no }}
-                                                </a>
-                                            </p>
-                                            {% endif %}
-                                        </div>
-                                        <div class="text-right text-sm whitespace-nowrap text-slate-500 dark:text-slate-400">
-                                            <time datetime="{{ kayit.iletisim_tarihi.isoformat() }}">
-                                                {{ kayit.iletisim_tarihi.strftime('%d.%m.%Y %H:%M') }}
-                                            </time>
-                                        </div>
-                                    </div>
-                                    <div class="mt-2 text-sm text-slate-700 dark:text-slate-300">
-                                        <p>{{ kayit.aciklama }}</p>
-                                    </div>
-                                    <div class="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                                        Kaydeden: {{ kayit.kullanici.ad }} {{ kayit.kullanici.soyad }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% else %}
-            <div class="text-center py-12">
-                <svg class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">Henüz iletişim kaydı yok</h3>
-                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Yukarıdaki formu kullanarak ilk iletişim kaydını ekleyin.</p>
-            </div>
+  <!-- Yeni İletişim Kaydı Formu -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3
+        class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4"
+      >
+        Yeni İletişim Kaydı
+      </h3>
+
+      <form
+        method="POST"
+        action="{{ url_for('tedarikci_iletisim', tedarikci_id=tedarikci.id) }}"
+      >
+        {{ form.hidden_tag() }}
+
+        <div class="grid grid-cols-1 gap-6">
+          <!-- İlgili Sipariş -->
+          <div>
+            {{ form.siparis_id.label(class="block text-sm font-medium
+            text-slate-700 dark:text-slate-300 mb-2") }} {{
+            form.siparis_id(class="mt-1 block w-full rounded-md border-slate-300
+            dark:border-slate-600 shadow-sm focus:border-blue-500
+            focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100
+            sm:text-sm") }} {% if form.siparis_id.errors %}
+            <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+              {{ form.siparis_id.errors[0] }}
+            </p>
             {% endif %}
-        </div>
-    </div>
+          </div>
 
-    <!-- Tedarikçi Belgeleri -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100">Tedarikçi Belgeleri</h3>
-                <button type="button" onclick="document.getElementById('dokuman-upload-form').classList.toggle('hidden')"
-                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+          <!-- Konu -->
+          <div>
+            {{ form.konu.label(class="block text-sm font-medium text-slate-700
+            dark:text-slate-300 mb-2") }} {{ form.konu(class="mt-1 block w-full
+            rounded-md border-slate-300 dark:border-slate-600 shadow-sm
+            focus:border-blue-500 focus:ring-blue-500 dark:bg-slate-700
+            dark:text-slate-100 sm:text-sm", placeholder="Örn: Teslimat Tarihi
+            Değişikliği") }} {% if form.konu.errors %}
+            <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+              {{ form.konu.errors[0] }}
+            </p>
+            {% endif %}
+          </div>
+
+          <!-- İletişim Tarihi -->
+          <div>
+            {{ form.iletisim_tarihi.label(class="block text-sm font-medium
+            text-slate-700 dark:text-slate-300 mb-2") }} {{
+            form.iletisim_tarihi(class="mt-1 block w-full rounded-md
+            border-slate-300 dark:border-slate-600 shadow-sm
+            focus:border-blue-500 focus:ring-blue-500 dark:bg-slate-700
+            dark:text-slate-100 sm:text-sm") }} {% if
+            form.iletisim_tarihi.errors %}
+            <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+              {{ form.iletisim_tarihi.errors[0] }}
+            </p>
+            {% endif %}
+          </div>
+
+          <!-- Açıklama -->
+          <div>
+            {{ form.aciklama.label(class="block text-sm font-medium
+            text-slate-700 dark:text-slate-300 mb-2") }} {{
+            form.aciklama(class="mt-1 block w-full rounded-md border-slate-300
+            dark:border-slate-600 shadow-sm focus:border-blue-500
+            focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100
+            sm:text-sm", rows="4", placeholder="İletişim detaylarını buraya
+            yazın...") }} {% if form.aciklama.errors %}
+            <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+              {{ form.aciklama.errors[0] }}
+            </p>
+            {% endif %}
+          </div>
+
+          <!-- Submit Butonu -->
+          <div class="flex justify-end">
+            <button
+              type="submit"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            >
+              <svg
+                class="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 4v16m8-8H4"
+                ></path>
+              </svg>
+              İletişim Kaydı Ekle
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- İletişim Geçmişi -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3
+        class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4"
+      >
+        İletişim Geçmişi
+      </h3>
+
+      {% if iletisim_kayitlari %}
+      <div class="flow-root">
+        <ul class="-mb-8">
+          {% for kayit in iletisim_kayitlari %}
+          <li>
+            <div class="relative pb-8">
+              {% if not loop.last %}
+              <span
+                class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-slate-200 dark:bg-slate-700"
+                aria-hidden="true"
+              ></span>
+              {% endif %}
+              <div class="relative flex space-x-3">
+                <div>
+                  <span
+                    class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white dark:ring-slate-800"
+                  >
+                    <svg
+                      class="h-5 w-5 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                      ></path>
                     </svg>
-                    Belge Yükle
-                </button>
-            </div>
-
-            <!-- Belge Yükleme Formu -->
-            <div id="dokuman-upload-form" class="hidden mb-6 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                <form method="POST" action="{{ url_for('tedarikci_dokuman_yukle') }}" enctype="multipart/form-data">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                    <input type="hidden" name="tedarikci_id" value="{{ tedarikci.id }}" />
-                    
-                    <div class="grid grid-cols-1 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Belge Tipi</label>
-                            <select name="dokuman_tipi" required
-                                class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 sm:text-sm">
-                                <option value="">Seçiniz...</option>
-                                <option value="fatura">Fatura</option>
-                                <option value="irsaliye">İrsaliye</option>
-                                <option value="sozlesme">Sözleşme</option>
-                                <option value="diger">Diğer</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">İlgili Sipariş (Opsiyonel)</label>
-                            <select name="siparis_id"
-                                class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 sm:text-sm">
-                                <option value="">Seçiniz...</option>
-                                {% for siparis in tedarikci_siparisleri %}
-                                <option value="{{ siparis.id }}">{{ siparis.siparis_no }} - {{ siparis.siparis_tarihi.strftime('%d.%m.%Y') }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Dosya</label>
-                            <input type="file" name="dosya" required accept=".pdf,.xlsx,.xls,.jpg,.jpeg,.png"
-                                class="mt-1 block w-full text-sm text-slate-500 dark:text-slate-400
-                                    file:mr-4 file:py-2 file:px-4
-                                    file:rounded-md file:border-0
-                                    file:text-sm file:font-semibold
-                                    file:bg-blue-50 file:text-blue-700
-                                    dark:file:bg-blue-900 dark:file:text-blue-200
-                                    hover:file:bg-blue-100 dark:hover:file:bg-blue-800
-                                    file:cursor-pointer file:transition-colors" />
-                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">PDF, Excel veya Resim (Maks. 10MB)</p>
-                        </div>
-                        
-                        <div class="flex justify-end space-x-2">
-                            <button type="button" onclick="document.getElementById('dokuman-upload-form').classList.add('hidden')"
-                                class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
-                                İptal
-                            </button>
-                            <button type="submit"
-                                class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors">
-                                Yükle
-                            </button>
-                        </div>
+                  </span>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p
+                        class="text-sm font-medium text-slate-900 dark:text-slate-100"
+                      >
+                        {{ kayit.konu }}
+                      </p>
+                      {% if kayit.siparis %}
+                      <p
+                        class="mt-0.5 text-xs text-slate-500 dark:text-slate-400"
+                      >
+                        İlgili Sipariş:
+                        <a
+                          href="{{ url_for('siparis_detay', siparis_id=kayit.siparis.id) }}"
+                          class="text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          {{ kayit.siparis.siparis_no }}
+                        </a>
+                      </p>
+                      {% endif %}
                     </div>
-                </form>
+                    <div
+                      class="text-right text-sm whitespace-nowrap text-slate-500 dark:text-slate-400"
+                    >
+                      <time datetime="{{ kayit.iletisim_tarihi.isoformat() }}">
+                        {{ kayit.iletisim_tarihi.strftime('%d.%m.%Y %H:%M') }}
+                      </time>
+                    </div>
+                  </div>
+                  <div class="mt-2 text-sm text-slate-700 dark:text-slate-300">
+                    <p>{{ kayit.aciklama }}</p>
+                  </div>
+                  <div class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    Kaydeden: {{ kayit.kullanici.ad }} {{ kayit.kullanici.soyad
+                    }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% else %}
+      <div class="text-center py-12">
+        <svg
+          class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+          ></path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">
+          Henüz iletişim kaydı yok
+        </h3>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Yukarıdaki formu kullanarak ilk iletişim kaydını ekleyin.
+        </p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Tedarikçi Belgeleri -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3
+          class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100"
+        >
+          Tedarikçi Belgeleri
+        </h3>
+        <button
+          type="button"
+          onclick="document.getElementById('dokuman-upload-form').classList.toggle('hidden')"
+          class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
+        >
+          <svg
+            class="w-4 h-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+            ></path>
+          </svg>
+          Belge Yükle
+        </button>
+      </div>
+
+      <!-- Belge Yükleme Formu -->
+      <div
+        id="dokuman-upload-form"
+        class="hidden mb-6 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg"
+      >
+        <form
+          method="POST"
+          action="{{ url_for('tedarikci_dokuman_yukle') }}"
+          enctype="multipart/form-data"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <input type="hidden" name="tedarikci_id" value="{{ tedarikci.id }}" />
+
+          <div class="grid grid-cols-1 gap-4">
+            <div>
+              <label
+                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                >Belge Tipi</label
+              >
+              <select
+                name="dokuman_tipi"
+                required
+                class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 sm:text-sm"
+              >
+                <option value="">Seçiniz...</option>
+                <option value="fatura">Fatura</option>
+                <option value="irsaliye">İrsaliye</option>
+                <option value="sozlesme">Sözleşme</option>
+                <option value="diger">Diğer</option>
+              </select>
             </div>
 
-            <!-- Belge Listesi -->
-            {% if dokumanlar %}
-            <div class="table-wrapper">
-                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                    <thead class="bg-slate-50 dark:bg-slate-700">
-                        <tr>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Dosya Adı</th>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Belge Tipi</th>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                İlgili Sipariş</th>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Yüklenme Tarihi</th>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                İşlemler</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                        {% for dokuman in dokumanlar %}
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium text-slate-900 dark:text-slate-100">
-                                <div class="flex items-center">
-                                    <svg class="w-5 h-5 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                    </svg>
-                                    {{ dokuman.dosya_adi }}
-                                </div>
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                    {% if dokuman.dokuman_tipi == 'fatura' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
-                                    {% elif dokuman.dokuman_tipi == 'irsaliye' %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
-                                    {% elif dokuman.dokuman_tipi == 'sozlesme' %}bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200
-                                    {% else %}bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200{% endif %}">
-                                    {{ dokuman.dokuman_tipi|title }}
-                                </span>
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                                {% if dokuman.siparis %}
-                                <a href="{{ url_for('siparis_detay', siparis_id=dokuman.siparis.id) }}" 
-                                   class="text-blue-600 dark:text-blue-400 hover:underline">
-                                    {{ dokuman.siparis.siparis_no }}
-                                </a>
-                                {% else %}-{% endif %}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                                {{ dokuman.yuklenme_tarihi.strftime('%d.%m.%Y %H:%M') }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ url_for('tedarikci_dokuman_indir', dokuman_id=dokuman.id) }}"
-                                    class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-3">
-                                    İndir
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div>
+              <label
+                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                >İlgili Sipariş (Opsiyonel)</label
+              >
+              <select
+                name="siparis_id"
+                class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 sm:text-sm"
+              >
+                <option value="">Seçiniz...</option>
+                {% for siparis in tedarikci_siparisleri %}
+                <option value="{{ siparis.id }}">
+                  {{ siparis.siparis_no }} - {{
+                  siparis.siparis_tarihi.strftime('%d.%m.%Y') }}
+                </option>
+                {% endfor %}
+              </select>
             </div>
-            {% else %}
-            <div class="text-center py-12">
-                <svg class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">Henüz belge yok</h3>
-                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Yukarıdaki butonu kullanarak belge yükleyin.</p>
+
+            <div>
+              <label
+                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                >Dosya</label
+              >
+              <input
+                type="file"
+                name="dosya"
+                required
+                accept=".pdf,.xlsx,.xls,.jpg,.jpeg,.png"
+                class="mt-1 block w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 dark:file:bg-blue-900 dark:file:text-blue-200 hover:file:bg-blue-100 dark:hover:file:bg-blue-800 file:cursor-pointer file:transition-colors"
+              />
+              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                PDF, Excel veya Resim (Maks. 10MB)
+              </p>
             </div>
-            {% endif %}
-        </div>
+
+            <div class="flex justify-end space-x-2">
+              <button
+                type="button"
+                onclick="document.getElementById('dokuman-upload-form').classList.add('hidden')"
+                class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
+              >
+                İptal
+              </button>
+              <button
+                type="submit"
+                class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
+              >
+                Yükle
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Belge Listesi -->
+      {% if dokumanlar %}
+      <div class="table-wrapper">
+        <table
+          class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
+        >
+          <thead class="bg-slate-50 dark:bg-slate-700">
+            <tr>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                Dosya Adı
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                Belge Tipi
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                İlgili Sipariş
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                Yüklenme Tarihi
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                İşlemler
+              </th>
+            </tr>
+          </thead>
+          <tbody
+            class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+          >
+            {% for dokuman in dokumanlar %}
+            <tr
+              class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+            >
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium text-slate-900 dark:text-slate-100"
+              >
+                <div class="flex items-center">
+                  <svg
+                    class="w-5 h-5 mr-2 text-slate-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    ></path>
+                  </svg>
+                  {{ dokuman.dosya_adi }}
+                </div>
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+              >
+                <span
+                  class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {% if dokuman.dokuman_tipi == 'fatura' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 {% elif dokuman.dokuman_tipi == 'irsaliye' %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 {% elif dokuman.dokuman_tipi == 'sozlesme' %}bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 {% else %}bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200{% endif %}"
+                >
+                  {{ dokuman.dokuman_tipi|title }}
+                </span>
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+              >
+                {% if dokuman.siparis %}
+                <a
+                  href="{{ url_for('siparis_detay', siparis_id=dokuman.siparis.id) }}"
+                  class="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {{ dokuman.siparis.siparis_no }}
+                </a>
+                {% else %}-{% endif %}
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+              >
+                {{ dokuman.yuklenme_tarihi.strftime('%d.%m.%Y %H:%M') }}
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium"
+              >
+                <a
+                  href="{{ url_for('tedarikci_dokuman_indir', dokuman_id=dokuman.id) }}"
+                  class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-3"
+                >
+                  İndir
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-12">
+        <svg
+          class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          ></path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">
+          Henüz belge yok
+        </h3>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Yukarıdaki butonu kullanarak belge yükleyin.
+        </p>
+      </div>
+      {% endif %}
     </div>
+  </div>
 </div>
 {% endblock %}

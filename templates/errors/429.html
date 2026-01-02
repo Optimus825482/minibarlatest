@@ -1,98 +1,76 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block title %}Çok Fazla İstek - Minibar Takip{%
+endblock %} {% block content %}
+<div class="container-fluid py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="card shadow-lg border-0">
+        <div class="card-body text-center p-5">
+          <!-- Icon -->
+          <div class="mb-4">
+            <i
+              class="fas fa-hourglass-half text-warning"
+              style="font-size: 5rem"
+            ></i>
+          </div>
 
-{% block title %}Çok Fazla İstek - 429{% endblock %}
+          <!-- Title -->
+          <h1 class="display-4 fw-bold text-warning mb-3">429</h1>
+          <h4 class="mb-3">Çok Fazla İstek</h4>
 
-{% block content %}
-<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-        <div class="text-center">
-            <!-- Icon -->
-            <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-yellow-100 mb-4">
-                <svg class="h-16 w-16 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </div>
+          <!-- Message -->
+          <p class="text-muted mb-4">
+            Kısa sürede çok fazla istek gönderdiniz. Lütfen biraz bekleyip
+            tekrar deneyin.
+          </p>
 
-            <!-- Error Title -->
-            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                Çok Fazla İstek
-            </h2>
+          <!-- Timer -->
+          <div class="alert alert-light border mb-4">
+            <i class="fas fa-clock me-2"></i>
+            <span id="countdown">Lütfen bekleyin...</span>
+          </div>
 
-            <!-- Error Code -->
-            <p class="mt-2 text-center text-sm text-gray-600">
-                Hata Kodu: <span class="font-mono bg-gray-100 px-2 py-1 rounded">429</span>
-            </p>
-
-            <!-- Error Message -->
-            <div class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm text-yellow-700">
-                            <strong>Çok fazla istek gönderdiniz.</strong><br>
-                            Lütfen birkaç dakika bekleyip tekrar deneyin.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Additional Info -->
-            <div class="mt-6 text-left bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                <h3 class="text-sm font-semibold text-gray-700 mb-2">Güvenlik Önlemi</h3>
-                <ul class="text-sm text-gray-600 space-y-1 list-disc list-inside">
-                    <li>Kötüye kullanımı önlemek için istek limiti uygulanmaktadır</li>
-                    <li>Login: Maksimum 5 deneme/dakika</li>
-                    <li>Diğer işlemler: Maksimum 50 istek/saat</li>
-                    <li>Limit yenilenir, lütfen bekleyin</li>
-                </ul>
-            </div>
-
-            <!-- Actions -->
-            <div class="mt-6 flex flex-col space-y-3">
-                <a href="{{ url_for('index') }}"
-                   class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                    </svg>
-                    Ana Sayfaya Dön
-                </a>
-
-                <button onclick="history.back()"
-                        class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                    </svg>
-                    Geri Dön
-                </button>
-            </div>
-
-            <!-- Help Text -->
-            <div class="mt-8 text-center">
-                <p class="text-xs text-gray-500">
-                    Sorun devam ederse lütfen sistem yöneticisine başvurun.
-                </p>
-            </div>
+          <!-- Actions -->
+          <div class="d-grid gap-2">
+            <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
+              <i class="fas fa-home me-2"></i>Ana Sayfaya Dön
+            </a>
+            <button
+              onclick="window.location.reload()"
+              class="btn btn-outline-secondary"
+            >
+              <i class="fas fa-sync-alt me-2"></i>Sayfayı Yenile
+            </button>
+          </div>
         </div>
+      </div>
+
+      <!-- Help Text -->
+      <div class="text-center mt-4">
+        <small class="text-muted">
+          <i class="fas fa-info-circle me-1"></i>
+          Bu koruma sistemi, sunucumuzu aşırı yükten korumak için aktiftir.
+        </small>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- Auto redirect after 30 seconds -->
 <script>
-    setTimeout(function() {
-        window.location.href = "{{ url_for('index') }}";
-    }, 30000);  // 30 saniye
+  // 60 saniye geri sayım
+  let seconds = 60;
+  const countdownEl = document.getElementById("countdown");
 
-    // Countdown timer
-    let seconds = 30;
-    const countdown = setInterval(function() {
-        seconds--;
-        if (seconds <= 0) {
-            clearInterval(countdown);
-        }
-    }, 1000);
+  function updateCountdown() {
+    if (seconds > 0) {
+      countdownEl.innerHTML = `<strong>${seconds}</strong> saniye sonra tekrar deneyebilirsiniz`;
+      seconds--;
+      setTimeout(updateCountdown, 1000);
+    } else {
+      countdownEl.innerHTML =
+        '<span class="text-success"><i class="fas fa-check-circle me-1"></i>Şimdi tekrar deneyebilirsiniz!</span>';
+    }
+  }
+
+  updateCountdown();
 </script>
 {% endblock %}

@@ -514,7 +514,15 @@ class ExcelProcessingService:
     @staticmethod
     def _create_tasks_after_upload(otel_id, dosya_tipi, basarili_satir):
         """
-        Excel yükleme sonrası görevleri oluşturur
+        Excel yükleme sonrası görevleri oluşturur.
+        
+        MANTIK: 3 dosya da (inhouse, arrivals, departures) yüklenince görevler oluşturulur.
+        Her dosya yüklendiğinde YuklemeGorev tablosu kontrol edilir.
+        3'ü de 'completed' ise görevler oluşturulur.
+        
+        NOT: Bu fonksiyon process_excel_file() içinden çağrılıyor ve YuklemeGorev tablosu
+        henüz güncellenmemiş oluyor. Bu yüzden mevcut yüklenen dosya tipini de 'completed'
+        olarak sayıyoruz.
         
         Args:
             otel_id: Otel ID
@@ -525,12 +533,56 @@ class ExcelProcessingService:
             return
         
         try:
-            from utils.gorev_service import GorevService
-            from utils.bildirim_service import BildirimService
+            from models import YuklemeGorev
             from datetime import date
             
-            # Bugün için görevleri oluştur
             tarih = date.today()
+            
+            # Mevcut yüklenen dosya tipini YuklemeGorev formatına çevir
+            # (process_excel_file 'in_house' döndürür, YuklemeGorev 'inhouse' bekler)
+            dosya_tipi_map = {
+                'in_house': 'inhouse',
+                'arrivals': 'arrivals',
+                'departures': 'departures'
+            }
+            mevcut_dosya_tipi = dosya_tipi_map.get(dosya_tipi, dosya_tipi)
+            
+            print(f"📊 Otel {otel_id} - Mevcut yüklenen dosya: {mevcut_dosya_tipi}")
+            
+            # 3 dosya tipi için yükleme durumlarını kontrol et
+            # NOT: Mevcut yüklenen dosyayı 'completed' olarak say (henüz DB'de güncellenmemiş)
+            yukleme_durumlari = {}
+            for tip in ['inhouse', 'arrivals', 'departures']:
+                if tip == mevcut_dosya_tipi:
+                    # Mevcut yüklenen dosya - başarılı olduğu için 'completed' say
+                    yukleme_durumlari[tip] = 'completed'
+                else:
+                    # Diğer dosyalar - DB'den kontrol et
+                    yukleme = YuklemeGorev.query.filter(
+                        YuklemeGorev.otel_id == otel_id,
+                        YuklemeGorev.gorev_tarihi == tarih,
+                        YuklemeGorev.dosya_tipi == tip
+                    ).first()
+                    yukleme_durumlari[tip] = yukleme.durum if yukleme else 'pending'
+            
+            print(f"📊 Otel {otel_id} - Yükleme durumları (mevcut dahil): {yukleme_durumlari}")
+            
+            # 3 dosya da yüklendi mi kontrol et
+            tum_dosyalar_yuklendi = all(
+                durum == 'completed' for durum in yukleme_durumlari.values()
+            )
+            
+            if not tum_dosyalar_yuklendi:
+                eksik_dosyalar = [tip for tip, durum in yukleme_durumlari.items() if durum != 'completed']
+                print(f"⏳ Otel {otel_id} - Eksik dosyalar: {eksik_dosyalar}. Görevler henüz oluşturulmayacak.")
+                return
+            
+            # 3 dosya da yüklendi - görevleri oluştur
+            print(f"✅ Otel {otel_id} - 3 dosya da yüklendi! Görevler oluşturuluyor...")
+            
+            from utils.gorev_service import GorevService
+            from utils.bildirim_service import BildirimService
+            
             result = GorevService.create_daily_tasks(otel_id, tarih)
             
             # Kat sorumlularına bildirim gönder
@@ -542,23 +594,21 @@ class ExcelProcessingService:
                     Kullanici.aktif == True
                 ).all()
                 
-                # Görev tipi ve oda sayısını belirle
-                if dosya_tipi == 'in_house':
-                    gorev_tipi = 'inhouse_kontrol'
-                    oda_sayisi = result.get('inhouse_gorev_sayisi', 0)
-                elif dosya_tipi == 'arrivals':
-                    gorev_tipi = 'arrival_kontrol'
-                    oda_sayisi = result.get('arrival_gorev_sayisi', 0)
-                else:  # departures
-                    gorev_tipi = 'departure_kontrol'
-                    oda_sayisi = result.get('departure_gorev_sayisi', 0)
+                # Tüm görev tipleri için bildirim gönder
+                gorev_tipleri = [
+                    ('inhouse_kontrol', result.get('inhouse_gorev_sayisi', 0)),
+                    ('arrival_kontrol', result.get('arrival_gorev_sayisi', 0)),
+                    ('departure_kontrol', result.get('departure_gorev_sayisi', 0))
+                ]
                 
                 for ks in kat_sorumluları:
-                    BildirimService.send_task_created_notification(
-                        personel_id=ks.id,
-                        gorev_tipi=gorev_tipi,
-                        oda_sayisi=oda_sayisi
-                    )
+                    for gorev_tipi, oda_sayisi in gorev_tipleri:
+                        if oda_sayisi > 0:
+                            BildirimService.send_task_created_notification(
+                                personel_id=ks.id,
+                                gorev_tipi=gorev_tipi,
+                                oda_sayisi=oda_sayisi
+                            )
             
             print(f"✅ Görevler oluşturuldu: {result}")
             

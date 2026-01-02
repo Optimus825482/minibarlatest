@@ -236,7 +236,32 @@ def register_kat_sorumlusu_routes(app):
                 
                 db.session.commit()
                 audit_create('minibar_islem', islem.id, islem)
-                flash('Minibar işlemi başarıyla kaydedildi. Zimmetinizden düşürülen ürünler güncellendi.', 'success')
+                
+                # GÖREV TAMAMLAMA ENTEGRASYONu - Minibar işlemi yapıldığında ilgili görevi tamamla
+                try:
+                    from utils.gorev_service import GorevService
+                    from models import GorevDetay, GunlukGorev
+                    from datetime import date
+                    
+                    # Bugünkü görevlerde bu oda var mı kontrol et
+                    gorev_detay = GorevDetay.query.join(GunlukGorev).filter(
+                        GunlukGorev.otel_id == kullanici_oteli.id,
+                        GunlukGorev.gorev_tarihi == date.today(),
+                        GorevDetay.oda_id == oda_id,
+                        GorevDetay.durum.in_(['pending', 'in_progress', 'dnd_pending'])
+                    ).first()
+                    
+                    if gorev_detay:
+                        # Görevi tamamla
+                        GorevService.complete_task(gorev_detay.id, kullanici_id, f'Minibar {islem_tipi} işlemi yapıldı')
+                        flash('Minibar işlemi başarıyla kaydedildi ve görev tamamlandı. ✓', 'success')
+                    else:
+                        flash('Minibar işlemi başarıyla kaydedildi. Zimmetinizden düşürülen ürünler güncellendi.', 'success')
+                except Exception as gorev_err:
+                    # Görev tamamlama hatası ana işlemi etkilemesin
+                    print(f"Görev tamamlama hatası: {str(gorev_err)}")
+                    flash('Minibar işlemi başarıyla kaydedildi. Zimmetinizden düşürülen ürünler güncellendi.', 'success')
+                
                 log_islem(
                     kullanici_id=kullanici_id,
                     modul='minibar',
@@ -384,26 +409,63 @@ def register_kat_sorumlusu_routes(app):
     def kat_bazli_rapor():
         """Kat bazlı tüketim raporu sayfası"""
         from utils.authorization import get_kullanici_otelleri
+        from models import Otel
         kullanici_id = session['kullanici_id']
         kullanici_rol = session.get('rol')
         
-        # Kullanıcının erişebileceği otellerin katlarını getir
+        # Kullanıcının erişebileceği otelleri getir
         kullanici_otelleri = get_kullanici_otelleri(kullanici_id)
         otel_idleri = [otel.id for otel in kullanici_otelleri]
         
+        # Otelleri template'e gönder
         if otel_idleri:
-            katlar = Kat.query.options(
-                db.joinedload(Kat.otel)
-            ).filter(
-                Kat.otel_id.in_(otel_idleri),
-                Kat.aktif == True
-            ).order_by(Kat.otel_id, Kat.kat_no).all()
+            oteller = Otel.query.filter(
+                Otel.id.in_(otel_idleri),
+                Otel.aktif == True
+            ).order_by(Otel.ad).all()
         else:
-            katlar = []
+            oteller = []
             if kullanici_rol == 'kat_sorumlusu':
                 flash('Otel atamanız bulunamadı. Lütfen yöneticinizle iletişime geçin.', 'warning')
         
-        return render_template('raporlar/kat_bazli_rapor.html', katlar=katlar)
+        return render_template('raporlar/kat_bazli_rapor.html', oteller=oteller)
+    
+    @app.route('/api/otelin-katlari', methods=['GET'])
+    @login_required
+    @role_required('kat_sorumlusu', 'admin', 'depo_sorumlusu')
+    def api_otelin_katlari():
+        """Seçilen otele ait katları JSON olarak döndür"""
+        try:
+            otel_id = request.args.get('otel_id', type=int)
+            if not otel_id:
+                return jsonify({'success': False, 'error': 'Otel ID gerekli'})
+            
+            # Kullanıcının bu otele erişim yetkisi var mı kontrol et
+            from utils.authorization import get_kullanici_otelleri
+            kullanici_id = session['kullanici_id']
+            kullanici_otelleri = get_kullanici_otelleri(kullanici_id)
+            otel_idleri = [otel.id for otel in kullanici_otelleri]
+            
+            if otel_id not in otel_idleri:
+                return jsonify({'success': False, 'error': 'Bu otele erişim yetkiniz yok'})
+            
+            katlar = Kat.query.filter_by(
+                otel_id=otel_id,
+                aktif=True
+            ).order_by(Kat.kat_no).all()
+            
+            kat_listesi = []
+            for kat in katlar:
+                kat_listesi.append({
+                    'id': kat.id,
+                    'kat_adi': f"{kat.kat_no}. Kat" if kat.kat_no else kat.kat_adi,
+                    'kat_no': kat.kat_no
+                })
+            
+            return jsonify({'success': True, 'katlar': kat_listesi})
+        except Exception as e:
+            log_hata(e, modul='api_otelin_katlari')
+            return jsonify({'success': False, 'error': str(e)})
     
     @app.route('/zimmetim')
     @login_required
@@ -523,7 +585,8 @@ def register_kat_sorumlusu_routes(app):
                 OdaTipiNotFoundError,
                 SetupNotFoundError
             )
-            from models import OtelZimmetStok
+            from models import OtelZimmetStok, GorevDetay, GunlukGorev
+            from datetime import date
             
             # Oda setup durumunu getir
             sonuc = oda_setup_durumu_getir(oda_id)
@@ -548,6 +611,58 @@ def register_kat_sorumlusu_routes(app):
                     }
             
             sonuc['kat_sorumlusu_stok'] = zimmet_stoklar
+            
+            # Bugünkü minibar işlemlerini getir
+            bugun = date.today()
+            bugunun_islemleri = MinibarIslem.query.options(
+                selectinload(MinibarIslem.detaylar).joinedload(MinibarIslemDetay.urun)
+            ).filter(
+                MinibarIslem.oda_id == oda_id,
+                db.func.date(MinibarIslem.islem_tarihi) == bugun
+            ).order_by(MinibarIslem.islem_tarihi.desc()).all()
+            
+            gunluk_islemler = []
+            for islem in bugunun_islemleri:
+                islem_detaylari = []
+                for detay in islem.detaylar:
+                    islem_detaylari.append({
+                        'urun_id': detay.urun_id,
+                        'urun_adi': detay.urun.urun_adi if detay.urun else 'Bilinmiyor',
+                        'eklenen_miktar': detay.eklenen_miktar or 0,
+                        'tuketim': detay.tuketim or 0,
+                        'ekstra_miktar': detay.ekstra_miktar or 0
+                    })
+                
+                gunluk_islemler.append({
+                    'islem_id': islem.id,
+                    'islem_tipi': islem.islem_tipi,
+                    'islem_tarihi': islem.islem_tarihi.strftime('%H:%M') if islem.islem_tarihi else None,
+                    'aciklama': islem.aciklama,
+                    'detaylar': islem_detaylari
+                })
+            
+            sonuc['gunluk_islemler'] = gunluk_islemler
+            sonuc['bugun_islem_yapildi'] = len(gunluk_islemler) > 0
+            
+            # Görev durumunu getir (OTEL BAZLI)
+            gorev_durumu = None
+            if kullanici and kullanici.otel_id:
+                gorev_detay = GorevDetay.query.join(GunlukGorev).filter(
+                    GunlukGorev.otel_id == kullanici.otel_id,
+                    GunlukGorev.gorev_tarihi == bugun,
+                    GorevDetay.oda_id == oda_id
+                ).first()
+                
+                if gorev_detay:
+                    gorev_durumu = {
+                        'detay_id': gorev_detay.id,
+                        'durum': gorev_detay.durum,
+                        'gorev_tipi': gorev_detay.gorev.gorev_tipi if gorev_detay.gorev else None,
+                        'dnd_sayisi': gorev_detay.dnd_sayisi,
+                        'kontrol_zamani': gorev_detay.kontrol_zamani.strftime('%H:%M') if gorev_detay.kontrol_zamani else None
+                    }
+            
+            sonuc['gorev_durumu'] = gorev_durumu
             
             # Audit log
             audit_create(
@@ -671,7 +786,8 @@ def register_kat_sorumlusu_routes(app):
                 )
                 
                 # Tüketimi kaydet (zimmet_detay_id artık kullanılmıyor, kullanım personel_zimmet_kullanim'da)
-                tuketim_kaydet(
+                # tuketim_kaydet artık görev tamamlama işlemini de yapıyor
+                islem = tuketim_kaydet(
                     oda_id=oda_id,
                     urun_id=urun_id,
                     miktar=tuketim,
@@ -686,47 +802,8 @@ def register_kat_sorumlusu_routes(app):
                 oda = Oda.query.get(oda_id)
                 urun = Urun.query.get(urun_id)
                 
-                # Görev tamamlama - Ürün eklendiğinde görev tamamlanır
-                gorev_tamamlandi = False
-                try:
-                    from models import GorevDetay, GorevDurumLog, GunlukGorev
-                    from datetime import date
-                    
-                    bugun = date.today()
-                    detay = GorevDetay.query.join(GunlukGorev).filter(
-                        GunlukGorev.personel_id == kullanici_id,
-                        GunlukGorev.gorev_tarihi == bugun,
-                        GorevDetay.oda_id == oda_id,
-                        GorevDetay.durum != 'completed'
-                    ).first()
-                    
-                    if detay:
-                        onceki_durum = detay.durum
-                        detay.durum = 'completed'
-                        detay.kontrol_zamani = get_kktc_now()
-                        detay.notlar = f'Ürün eklendi: {urun.urun_adi} x{eklenen_miktar}'
-                        
-                        log = GorevDurumLog(
-                            gorev_detay_id=detay.id,
-                            onceki_durum=onceki_durum,
-                            yeni_durum='completed',
-                            degistiren_id=kullanici_id,
-                            aciklama=f'Ürün eklendi: {urun.urun_adi} x{eklenen_miktar} - Oda kontrol ile tamamlandı'
-                        )
-                        db.session.add(log)
-                        
-                        gorev = detay.gorev
-                        if gorev:
-                            tamamlanan = sum(1 for d in gorev.detaylar if d.durum == 'completed')
-                            if tamamlanan == len(gorev.detaylar):
-                                gorev.durum = 'completed'
-                                gorev.tamamlanma_tarihi = get_kktc_now()
-                            elif tamamlanan > 0:
-                                gorev.durum = 'in_progress'
-                        
-                        gorev_tamamlandi = True
-                except Exception as e:
-                    print(f"Görev tamamlama hatası: {str(e)}")
+                # Görev tamamlama durumunu al
+                gorev_tamamlandi = getattr(islem, 'gorev_tamamlandi', False)
                 
                 # Audit log
                 audit_create(
@@ -1615,9 +1692,9 @@ def register_kat_sorumlusu_routes(app):
             islem = MinibarIslem(
                 oda_id=oda_id,
                 personel_id=kullanici_id,
-                islem_tipi='kontrol',
+                islem_tipi='sarfiyat_yok',
                 islem_tarihi=get_kktc_now(),
-                aciklama='Sarfiyat yok - Kontrol tamamlandı'
+                aciklama='Sarfiyat yok - Oda kontrol edildi, tüketim tespit edilmedi'
             )
             db.session.add(islem)
             db.session.flush()
@@ -1659,43 +1736,61 @@ def register_kat_sorumlusu_routes(app):
                 except Exception as e:
                     print(f"Görev tamamlama hatası: {str(e)}")
             else:
-                # Görev detay ID verilmemişse, bugünkü görevi bul ve tamamla
+                # Görev detay ID verilmemişse, bugünkü OTEL BAZLI görevi bul ve tamamla
                 try:
                     from models import GorevDetay, GorevDurumLog, GunlukGorev
+                    from utils.authorization import get_kat_sorumlusu_otel
                     
                     bugun = date.today()
-                    detay = GorevDetay.query.join(GunlukGorev).filter(
-                        GunlukGorev.personel_id == kullanici_id,
-                        GunlukGorev.gorev_tarihi == bugun,
-                        GorevDetay.oda_id == oda_id,
-                        GorevDetay.durum != 'completed'
-                    ).first()
                     
-                    if detay:
-                        onceki_durum = detay.durum
-                        detay.durum = 'completed'
-                        detay.kontrol_zamani = get_kktc_now()
-                        detay.notlar = 'Sarfiyat yok - Oda kontrol ile tamamlandı'
+                    # Kullanıcının otelini al (OTEL BAZLI görevler için)
+                    kullanici_oteli = get_kat_sorumlusu_otel(kullanici_id)
+                    
+                    if kullanici_oteli:
+                        # Debug log
+                        print(f"🔍 Sarfiyat Yok - Görev Arama: Otel={kullanici_oteli.id}, Tarih={bugun}, Oda={oda_id}")
                         
-                        log = GorevDurumLog(
-                            gorev_detay_id=detay.id,
-                            onceki_durum=onceki_durum,
-                            yeni_durum='completed',
-                            degistiren_id=kullanici_id,
-                            aciklama='Sarfiyat yok - Oda kontrol ile tamamlandı'
-                        )
-                        db.session.add(log)
+                        # OTEL BAZLI görevlerde personel_id NULL olabilir, otel_id ile sorgula
+                        detay = GorevDetay.query.join(GunlukGorev).filter(
+                            GunlukGorev.otel_id == kullanici_oteli.id,
+                            GunlukGorev.gorev_tarihi == bugun,
+                            GorevDetay.oda_id == oda_id,
+                            GorevDetay.durum.in_(['pending', 'in_progress', 'dnd_pending'])
+                        ).first()
                         
-                        gorev = detay.gorev
-                        if gorev:
-                            tamamlanan = sum(1 for d in gorev.detaylar if d.durum == 'completed')
-                            if tamamlanan == len(gorev.detaylar):
-                                gorev.durum = 'completed'
-                                gorev.tamamlanma_tarihi = get_kktc_now()
-                            elif tamamlanan > 0:
-                                gorev.durum = 'in_progress'
-                        
-                        gorev_tamamlandi = True
+                        if detay:
+                            print(f"✅ Görev detay bulundu: ID={detay.id}, Durum={detay.durum}")
+                            onceki_durum = detay.durum
+                            detay.durum = 'completed'
+                            detay.kontrol_zamani = get_kktc_now()
+                            detay.notlar = 'Sarfiyat yok - Oda kontrol ile tamamlandı'
+                            
+                            log = GorevDurumLog(
+                                gorev_detay_id=detay.id,
+                                onceki_durum=onceki_durum,
+                                yeni_durum='completed',
+                                degistiren_id=kullanici_id,
+                                aciklama='Sarfiyat yok - Oda kontrol ile tamamlandı'
+                            )
+                            db.session.add(log)
+                            
+                            gorev = detay.gorev
+                            if gorev:
+                                tamamlanan = sum(1 for d in gorev.detaylar if d.durum == 'completed')
+                                if tamamlanan == len(gorev.detaylar):
+                                    gorev.durum = 'completed'
+                                    gorev.tamamlanma_tarihi = get_kktc_now()
+                                elif tamamlanan > 0:
+                                    gorev.durum = 'in_progress'
+                            
+                            gorev_tamamlandi = True
+                        else:
+                            # Görev var mı kontrol et
+                            gorev_sayisi = GunlukGorev.query.filter(
+                                GunlukGorev.otel_id == kullanici_oteli.id,
+                                GunlukGorev.gorev_tarihi == bugun
+                            ).count()
+                            print(f"⚠️ Görev detay bulunamadı! Otel {kullanici_oteli.id} için bugün {gorev_sayisi} görev var.")
                 except Exception as e:
                     print(f"Otomatik görev tamamlama hatası: {str(e)}")
             
@@ -1856,11 +1951,26 @@ def register_kat_sorumlusu_routes(app):
     @role_required('kat_sorumlusu')
     def api_dnd_kaydet():
         """
-        Oda için DND kaydı oluşturur
-        3 kez DND kaydı yapılırsa görev otomatik tamamlanır
+        Oda için DND kaydı oluşturur - BAĞIMSIZ DND SİSTEMİ
+        
+        Görev atanmamış odalar için de DND kaydı yapılabilir.
+        Görev varsa otomatik olarak bağlanır ve senkronize edilir.
+        3 kez DND kontrolü yapılırsa kayıt tamamlanır.
+        
+        Request Body:
+            {
+                "oda_id": 101,
+                "gorev_detay_id": 45,  // Opsiyonel
+                "notlar": "Kapıda tabela var"  // Opsiyonel
+            }
+        
+        Returns:
+            JSON: İşlem sonucu
         """
         try:
-            from models import GorevDetay, GunlukGorev, DNDKontrol, GorevDurumLog
+            from utils.dnd_service import DNDService, OdaNotFoundError, DNDServiceError
+            from utils.authorization import get_kat_sorumlusu_otel
+            from models import GorevDetay, GunlukGorev
             from datetime import date
             
             data = request.get_json()
@@ -1869,104 +1979,161 @@ def register_kat_sorumlusu_routes(app):
             
             oda_id = data.get('oda_id')
             gorev_detay_id = data.get('gorev_detay_id')
+            notlar = data.get('notlar')
             
             if not oda_id:
                 return jsonify({'success': False, 'error': 'Oda ID gerekli'}), 400
             
             kullanici_id = session.get('kullanici_id')
             bugun = date.today()
-            simdi = get_kktc_now()
             
-            # Oda bilgisini al
-            oda = db.session.get(Oda, oda_id)
-            if not oda:
-                return jsonify({'success': False, 'error': 'Oda bulunamadı'}), 404
+            # Kullanıcının otelini al (OTEL BAZLI görevler için)
+            kullanici_oteli = get_kat_sorumlusu_otel(kullanici_id)
+            if not kullanici_oteli:
+                return jsonify({'success': False, 'error': 'Otel atamanız bulunamadı'}), 400
             
-            # Görev detayını bul veya oluştur
-            detay = None
-            if gorev_detay_id:
-                detay = GorevDetay.query.get(gorev_detay_id)
-            
-            if not detay:
-                # Bugünkü görevi bul
+            # Görev detay ID verilmediyse, bugünkü OTEL BAZLI görevi bulmaya çalış
+            if not gorev_detay_id:
+                # OTEL BAZLI görevlerde personel_id NULL olabilir, otel_id ile sorgula
                 detay = GorevDetay.query.join(GunlukGorev).filter(
-                    GunlukGorev.personel_id == kullanici_id,
+                    GunlukGorev.otel_id == kullanici_oteli.id,
                     GunlukGorev.gorev_tarihi == bugun,
-                    GorevDetay.oda_id == oda_id
+                    GorevDetay.oda_id == oda_id,
+                    GorevDetay.durum.in_(['pending', 'in_progress', 'dnd_pending'])
                 ).first()
-            
-            if not detay:
-                return jsonify({'success': False, 'error': 'Bu oda için görev bulunamadı'}), 404
-            
-            # DND sayısını artır
-            onceki_durum = detay.durum
-            detay.dnd_sayisi += 1
-            detay.son_dnd_zamani = simdi
-            detay.durum = 'dnd_pending'
-            
-            # DND kontrol kaydı oluştur
-            dnd_kontrol = DNDKontrol(
-                gorev_detay_id=detay.id,
-                kontrol_eden_id=kullanici_id,
-                notlar=f'DND kontrolü #{detay.dnd_sayisi}'
-            )
-            db.session.add(dnd_kontrol)
-            
-            mesaj = f'Oda {oda.oda_no} DND olarak işaretlendi ({detay.dnd_sayisi}/3)'
-            otomatik_tamamlandi = False
-            
-            # 3 kez DND kontrolü yapıldıysa otomatik tamamla
-            if detay.dnd_sayisi >= 3:
-                detay.durum = 'completed'
-                detay.kontrol_zamani = simdi
-                detay.notlar = '3 kez DND kontrolü yapıldı - Otomatik tamamlandı (Kontrol edilmedi)'
-                mesaj = f'Oda {oda.oda_no} - 3. DND kontrolü tamamlandı!'
-                otomatik_tamamlandi = True
                 
-                # Ana görevin durumunu güncelle
-                gorev = detay.gorev
-                if gorev:
-                    tamamlanan = sum(1 for d in gorev.detaylar if d.durum == 'completed')
-                    if tamamlanan == len(gorev.detaylar):
-                        gorev.durum = 'completed'
-                        gorev.tamamlanma_tarihi = simdi
-                    elif tamamlanan > 0:
-                        gorev.durum = 'in_progress'
+                # Debug log
+                print(f"🔍 DND Görev Arama - Otel: {kullanici_oteli.id}, Tarih: {bugun}, Oda: {oda_id}")
+                if detay:
+                    print(f"✅ Görev detay bulundu: ID={detay.id}, Durum={detay.durum}")
+                    gorev_detay_id = detay.id
+                else:
+                    # Görev var mı kontrol et
+                    gorev_sayisi = GunlukGorev.query.filter(
+                        GunlukGorev.otel_id == kullanici_oteli.id,
+                        GunlukGorev.gorev_tarihi == bugun
+                    ).count()
+                    print(f"⚠️ Görev detay bulunamadı! Otel {kullanici_oteli.id} için bugün {gorev_sayisi} görev var.")
             
-            # Log kaydı oluştur
-            log = GorevDurumLog(
-                gorev_detay_id=detay.id,
-                onceki_durum=onceki_durum,
-                yeni_durum=detay.durum,
-                degistiren_id=kullanici_id,
-                aciklama=f'DND kontrolü #{detay.dnd_sayisi}'
+            # Bağımsız DND servisini kullan
+            result = DNDService.kaydet(
+                oda_id=oda_id,
+                personel_id=kullanici_id,
+                notlar=notlar,
+                gorev_detay_id=gorev_detay_id
             )
-            db.session.add(log)
-            
-            db.session.commit()
             
             # Audit log
             audit_create(
-                tablo_adi='gorev_detay',
-                kayit_id=detay.id,
+                tablo_adi='oda_dnd_kayitlari',
+                kayit_id=result['dnd_kayit_id'],
                 yeni_deger={
                     'oda_id': oda_id,
-                    'dnd_sayisi': detay.dnd_sayisi,
-                    'durum': detay.durum
+                    'dnd_sayisi': result['dnd_sayisi'],
+                    'durum': result['durum'],
+                    'gorev_bagli': gorev_detay_id is not None
                 },
-                aciklama=f"Oda {oda.oda_no} - DND kontrolü #{detay.dnd_sayisi}"
+                aciklama=result['mesaj']
             )
             
             return jsonify({
                 'success': True,
-                'message': mesaj,
-                'dnd_sayisi': detay.dnd_sayisi,
-                'otomatik_tamamlandi': otomatik_tamamlandi
+                'message': result['mesaj'],
+                'dnd_sayisi': result['dnd_sayisi'],
+                'min_kontrol_tamamlandi': result['min_kontrol_tamamlandi'],
+                'otomatik_tamamlandi': result['min_kontrol_tamamlandi'],
+                'gorev_guncellendi': result.get('gorev_guncellendi', False)
+            })
+            
+        except OdaNotFoundError as e:
+            return jsonify({'success': False, 'error': str(e)}), 404
+            
+        except DNDServiceError as e:
+            log_hata(e, modul='api_dnd_kaydet')
+            return jsonify({'success': False, 'error': str(e)}), 500
+            
+        except Exception as e:
+            log_hata(e, modul='api_dnd_kaydet')
+            return jsonify({'success': False, 'error': f'Beklenmeyen hata: {str(e)}'}), 500
+    
+    
+    @app.route('/api/kat-sorumlusu/dnd-durum/<int:oda_id>', methods=['GET'])
+    @login_required
+    @role_required('kat_sorumlusu')
+    def api_dnd_durum(oda_id):
+        """
+        Odanın güncel DND durumunu getirir.
+        
+        Args:
+            oda_id: Oda ID
+            
+        Returns:
+            JSON: DND durumu veya null
+        """
+        try:
+            from utils.dnd_service import DNDService
+            
+            durum = DNDService.oda_durumu(oda_id)
+            
+            return jsonify({
+                'success': True,
+                'dnd_durumu': durum
             })
             
         except Exception as e:
-            db.session.rollback()
-            log_hata(e, modul='api_dnd_kaydet')
+            log_hata(e, modul='api_dnd_durum')
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    
+    @app.route('/api/kat-sorumlusu/dnd-liste', methods=['GET'])
+    @login_required
+    @role_required('kat_sorumlusu')
+    def api_dnd_liste():
+        """
+        Kat sorumlusunun otelindeki günlük DND listesini getirir.
+        
+        Query Params:
+            tarih: YYYY-MM-DD formatında tarih (opsiyonel, varsayılan: bugün)
+            sadece_aktif: true/false (opsiyonel, varsayılan: false)
+            
+        Returns:
+            JSON: DND kayıtları listesi
+        """
+        try:
+            from utils.dnd_service import DNDService
+            from utils.authorization import get_kat_sorumlusu_otel
+            from datetime import datetime
+            
+            kullanici_id = session.get('kullanici_id')
+            kullanici_oteli = get_kat_sorumlusu_otel(kullanici_id)
+            
+            if not kullanici_oteli:
+                return jsonify({'success': False, 'error': 'Otel atamanız bulunamadı'}), 403
+            
+            # Tarih parametresi
+            tarih_str = request.args.get('tarih')
+            if tarih_str:
+                tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
+            else:
+                tarih = None  # Bugün
+            
+            # Sadece aktif filtresi
+            sadece_aktif = request.args.get('sadece_aktif', 'false').lower() == 'true'
+            
+            liste = DNDService.gunluk_liste(
+                otel_id=kullanici_oteli.id,
+                tarih=tarih,
+                sadece_aktif=sadece_aktif
+            )
+            
+            return jsonify({
+                'success': True,
+                'dnd_kayitlari': liste,
+                'toplam': len(liste)
+            })
+            
+        except Exception as e:
+            log_hata(e, modul='api_dnd_liste')
             return jsonify({'success': False, 'error': str(e)}), 500
 
     @app.route('/api/kat-sorumlusu/bugun-eklemeler/<int:oda_id>', methods=['GET'])
@@ -2034,19 +2201,28 @@ def register_kat_sorumlusu_routes(app):
         """
         try:
             from utils.gorev_service import GorevService
+            from utils.authorization import get_kullanici_otelleri
             from datetime import date
             
             kullanici_id = session.get('kullanici_id')
             kullanici = Kullanici.query.get(kullanici_id)
             
+            # Kullanıcının otelini al (OTEL BAZLI görevler için)
+            kullanici_otelleri = get_kullanici_otelleri()
+            otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
+            
             tarih_str = request.args.get('tarih', date.today().isoformat())
             tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
             
-            # Görev özetini al
-            ozet = GorevService.get_task_summary(kullanici_id, tarih)
+            if not otel_id:
+                flash('Otel atamanız bulunamadı.', 'danger')
+                return redirect(url_for('dashboard'))
             
-            # Bekleyen görevleri al
-            bekleyen = GorevService.get_pending_tasks(kullanici_id, tarih)
+            # Görev özetini al (OTEL BAZLI)
+            ozet = GorevService.get_task_summary(otel_id, tarih)
+            
+            # Bekleyen görevleri al (OTEL BAZLI)
+            bekleyen = GorevService.get_pending_tasks(otel_id, tarih)
             
             # Öncelik sıralaması: Önce kata göre, sonra Arrivals/Departures zamana göre
             def oncelik_sirala(g):
@@ -2060,11 +2236,11 @@ def register_kat_sorumlusu_routes(app):
             
             bekleyen.sort(key=oncelik_sirala)
             
-            # Tamamlanan görevleri al
-            tamamlanan = GorevService.get_completed_tasks(kullanici_id, tarih)
+            # Tamamlanan görevleri al (OTEL BAZLI)
+            tamamlanan = GorevService.get_completed_tasks(otel_id, tarih)
             
-            # DND görevleri al
-            dnd_gorevler = GorevService.get_dnd_tasks(kullanici_id, tarih)
+            # DND görevleri al (OTEL BAZLI)
+            dnd_gorevler = GorevService.get_dnd_tasks(otel_id, tarih)
             
             return render_template(
                 'kat_sorumlusu/gorev_listesi.html',

@@ -763,17 +763,14 @@ class TedarikciServisi:
             ).all()
 
             if not fiyatlar:
-                logger.warning(f"Ürün için aktif tedarikçi fiyatı bulunamadı: {urun_id}")
+                # Fiyat takibi yapılmıyor, sessizce None döndür
                 return None
 
             # Minimum miktar kontrolü - uygun fiyatları filtrele
             uygun_fiyatlar = [f for f in fiyatlar if miktar >= f.minimum_miktar]
 
             if not uygun_fiyatlar:
-                logger.warning(
-                    f"Ürün için minimum miktar şartını sağlayan tedarikçi yok: "
-                    f"urun_id={urun_id}, miktar={miktar}"
-                )
+                # Fiyat takibi yapılmıyor, sessizce None döndür
                 return None
 
             # Her tedarikçi için skor hesapla
@@ -816,7 +813,7 @@ class TedarikciServisi:
                 })
 
             if not tedarikci_skorlari:
-                logger.warning(f"Ürün için aktif tedarikçi bulunamadı: {urun_id}")
+                # Fiyat takibi yapılmıyor, sessizce None döndür
                 return None
 
             # Fiyat skorunu hesapla (normalize edilmiş)

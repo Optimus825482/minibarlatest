@@ -122,9 +122,13 @@ class BackupService:
             
             logger.info(f"Yedekleme başlatılıyor: {filename}")
             
-            # pg_dump komutu
-            env = os.environ.copy()
-            env['PGPASSWORD'] = db_config['password']
+            # pg_dump komutu - GÜVENLİ: PGPASSWORD sadece subprocess env'de
+            # Process listing'de şifre görünmez
+            safe_env = {
+                'PGPASSWORD': db_config['password'],
+                'PATH': os.environ.get('PATH', ''),
+                'LANG': os.environ.get('LANG', 'en_US.UTF-8'),
+            }
             
             # pg_dump çalıştır
             cmd = [
@@ -141,7 +145,7 @@ class BackupService:
             
             result = subprocess.run(
                 cmd,
-                env=env,
+                env=safe_env,  # Sadece gerekli env vars
                 capture_output=True,
                 text=True,
                 timeout=600  # 10 dakika timeout
@@ -311,9 +315,12 @@ class BackupService:
             
             logger.info(f"Yedek geri yükleniyor: {backup.filename}")
             
-            # psql ile geri yükle
-            env = os.environ.copy()
-            env['PGPASSWORD'] = db_config['password']
+            # psql ile geri yükle - GÜVENLİ: PGPASSWORD sadece subprocess env'de
+            safe_env = {
+                'PGPASSWORD': db_config['password'],
+                'PATH': os.environ.get('PATH', ''),
+                'LANG': os.environ.get('LANG', 'en_US.UTF-8'),
+            }
             
             cmd = [
                 'psql',
@@ -326,7 +333,7 @@ class BackupService:
             
             result = subprocess.run(
                 cmd,
-                env=env,
+                env=safe_env,  # Sadece gerekli env vars
                 capture_output=True,
                 text=True,
                 timeout=1800  # 30 dakika timeout

@@ -69,15 +69,25 @@ def gorev_listesi():
     GET /gorevler
     """
     try:
+        from utils.authorization import get_kullanici_otelleri
+        
         kullanici = get_current_user()
         tarih_str = request.args.get('tarih', date.today().isoformat())
         tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
         
-        # Görev özetini al
-        ozet = GorevService.get_task_summary(kullanici.id, tarih)
+        # Kullanıcının otelini al (OTEL BAZLI görevler için)
+        kullanici_otelleri = get_kullanici_otelleri()
+        otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
         
-        # Bekleyen görevleri al
-        bekleyen = GorevService.get_pending_tasks(kullanici.id, tarih)
+        if not otel_id:
+            flash('Otel atamanız bulunamadı.', 'danger')
+            return redirect(url_for('dashboard'))
+        
+        # Görev özetini al (OTEL BAZLI)
+        ozet = GorevService.get_task_summary(otel_id, tarih)
+        
+        # Bekleyen görevleri al (OTEL BAZLI)
+        bekleyen = GorevService.get_pending_tasks(otel_id, tarih)
         
         # Öncelik sıralaması: Önce kata göre, sonra Arrivals/Departures zamana göre karışık, sonra In House
         def oncelik_sirala(g):
@@ -93,11 +103,11 @@ def gorev_listesi():
         
         bekleyen.sort(key=oncelik_sirala)
         
-        # Tamamlanan görevleri al
-        tamamlanan = GorevService.get_completed_tasks(kullanici.id, tarih)
+        # Tamamlanan görevleri al (OTEL BAZLI)
+        tamamlanan = GorevService.get_completed_tasks(otel_id, tarih)
         
-        # DND görevleri al
-        dnd_gorevler = GorevService.get_dnd_tasks(kullanici.id, tarih)
+        # DND görevleri al (OTEL BAZLI)
+        dnd_gorevler = GorevService.get_dnd_tasks(otel_id, tarih)
         
         return render_template(
             'kat_sorumlusu/gorev_listesi.html',
@@ -123,22 +133,32 @@ def gorev_yonetimi():
     GET /gorevler/yonetim
     """
     try:
+        from utils.authorization import get_kullanici_otelleri
+        
         kullanici = get_current_user()
         tarih_str = request.args.get('tarih', date.today().isoformat())
         tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
         filtre_durum = request.args.get('durum', '')
         filtre_tip = request.args.get('tip', '')
         
+        # Kullanıcının otelini al (OTEL BAZLI görevler için)
+        kullanici_otelleri = get_kullanici_otelleri()
+        otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
+        
+        if not otel_id:
+            flash('Otel atamanız bulunamadı.', 'danger')
+            return redirect(url_for('dashboard'))
+        
         # Gün adını hesapla
         gun_adlari = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']
         gun_adi = gun_adlari[tarih.weekday()]
         
-        # Görev özetini al
-        ozet = GorevService.get_task_summary(kullanici.id, tarih)
+        # Görev özetini al (OTEL BAZLI)
+        ozet = GorevService.get_task_summary(otel_id, tarih)
         
-        # Tüm görevleri al ve birleştir
-        bekleyen = GorevService.get_pending_tasks(kullanici.id, tarih)
-        tamamlanan = GorevService.get_completed_tasks(kullanici.id, tarih)
+        # Tüm görevleri al ve birleştir (OTEL BAZLI)
+        bekleyen = GorevService.get_pending_tasks(otel_id, tarih)
+        tamamlanan = GorevService.get_completed_tasks(otel_id, tarih)
         
         # Tüm görevleri birleştir
         tum_gorevler = bekleyen + tamamlanan
@@ -188,15 +208,25 @@ def inhouse_gorevler():
     GET /gorevler/inhouse
     """
     try:
+        from utils.authorization import get_kullanici_otelleri
+        
         kullanici = get_current_user()
         tarih_str = request.args.get('tarih', date.today().isoformat())
         tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
         
-        # Sadece In House görevleri filtrele
-        bekleyen = GorevService.get_pending_tasks(kullanici.id, tarih)
+        # Kullanıcının otelini al (OTEL BAZLI görevler için)
+        kullanici_otelleri = get_kullanici_otelleri()
+        otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
+        
+        if not otel_id:
+            flash('Otel atamanız bulunamadı.', 'danger')
+            return redirect(url_for('dashboard'))
+        
+        # Sadece In House görevleri filtrele (OTEL BAZLI)
+        bekleyen = GorevService.get_pending_tasks(otel_id, tarih)
         inhouse_bekleyen = [g for g in bekleyen if g['gorev_tipi'] == 'inhouse_kontrol']
         
-        tamamlanan = GorevService.get_completed_tasks(kullanici.id, tarih)
+        tamamlanan = GorevService.get_completed_tasks(otel_id, tarih)
         inhouse_tamamlanan = [g for g in tamamlanan if g['gorev_tipi'] == 'inhouse_kontrol']
         
         return render_template(
@@ -221,15 +251,25 @@ def arrivals_gorevler():
     GET /gorevler/arrivals
     """
     try:
+        from utils.authorization import get_kullanici_otelleri
+        
         kullanici = get_current_user()
         tarih_str = request.args.get('tarih', date.today().isoformat())
         tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
         
-        # Sadece Arrivals görevleri filtrele
-        bekleyen = GorevService.get_pending_tasks(kullanici.id, tarih)
+        # Kullanıcının otelini al (OTEL BAZLI görevler için)
+        kullanici_otelleri = get_kullanici_otelleri()
+        otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
+        
+        if not otel_id:
+            flash('Otel atamanız bulunamadı.', 'danger')
+            return redirect(url_for('dashboard'))
+        
+        # Sadece Arrivals görevleri filtrele (OTEL BAZLI)
+        bekleyen = GorevService.get_pending_tasks(otel_id, tarih)
         arrivals_bekleyen = [g for g in bekleyen if g['gorev_tipi'] == 'arrival_kontrol']
         
-        tamamlanan = GorevService.get_completed_tasks(kullanici.id, tarih)
+        tamamlanan = GorevService.get_completed_tasks(otel_id, tarih)
         arrivals_tamamlanan = [g for g in tamamlanan if g['gorev_tipi'] == 'arrival_kontrol']
         
         return render_template(
@@ -254,11 +294,21 @@ def dnd_listesi():
     GET /gorevler/dnd
     """
     try:
+        from utils.authorization import get_kullanici_otelleri
+        
         kullanici = get_current_user()
         tarih_str = request.args.get('tarih', date.today().isoformat())
         tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
         
-        dnd_gorevler = GorevService.get_dnd_tasks(kullanici.id, tarih)
+        # Kullanıcının otelini al (OTEL BAZLI görevler için)
+        kullanici_otelleri = get_kullanici_otelleri()
+        otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
+        
+        if not otel_id:
+            flash('Otel atamanız bulunamadı.', 'danger')
+            return redirect(url_for('dashboard'))
+        
+        dnd_gorevler = GorevService.get_dnd_tasks(otel_id, tarih)
         
         return render_template(
             'kat_sorumlusu/dnd_listesi.html',
@@ -700,10 +750,19 @@ def api_bekleyen_gorevler():
     GET /gorevler/api/bekleyen
     """
     try:
+        from utils.authorization import get_kullanici_otelleri
+        
         kullanici = get_current_user()
         tarih = date.today()
         
-        ozet = GorevService.get_task_summary(kullanici.id, tarih)
+        # Kullanıcının otelini al (OTEL BAZLI görevler için)
+        kullanici_otelleri = get_kullanici_otelleri()
+        otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
+        
+        if not otel_id:
+            return jsonify({'success': False, 'error': 'Otel ataması bulunamadı'}), 400
+        
+        ozet = GorevService.get_task_summary(otel_id, tarih)
         
         return jsonify({
             'success': True,
@@ -771,6 +830,8 @@ def gorev_yazdir():
     GET /gorevler/yazdir
     """
     try:
+        from utils.authorization import get_kullanici_otelleri
+        
         kullanici = get_current_user()
         tarih_str = request.args.get('tarih', date.today().isoformat())
         tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
@@ -779,12 +840,20 @@ def gorev_yazdir():
         gun_adlari = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']
         gun_adi = gun_adlari[tarih.weekday()]
         
-        # Görev özetini al
-        ozet = GorevService.get_task_summary(kullanici.id, tarih)
+        # Kullanıcının otelini al (OTEL BAZLI görevler için)
+        kullanici_otelleri = get_kullanici_otelleri()
+        otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
         
-        # Tüm görevleri al
-        bekleyen = GorevService.get_pending_tasks(kullanici.id, tarih)
-        tamamlanan = GorevService.get_completed_tasks(kullanici.id, tarih)
+        if not otel_id:
+            flash('Otel atamanız bulunamadı.', 'danger')
+            return redirect(url_for('gorev.gorev_yonetimi'))
+        
+        # Görev özetini al (OTEL BAZLI)
+        ozet = GorevService.get_task_summary(otel_id, tarih)
+        
+        # Tüm görevleri al (OTEL BAZLI)
+        bekleyen = GorevService.get_pending_tasks(otel_id, tarih)
+        tamamlanan = GorevService.get_completed_tasks(otel_id, tarih)
         tum_gorevler = bekleyen + tamamlanan
         
         # Sıralama: Önce bekleyenler (öncelik sırasına göre), sonra DND, en son tamamlananlar
@@ -973,13 +1042,18 @@ def api_oncelik_plani():
     """
     try:
         from utils.gorev_oncelik_service import GorevOncelikService
+        from utils.authorization import get_kullanici_otelleri
         
         kullanici = get_current_user()
         tarih_str = request.args.get('tarih', date.today().isoformat())
         tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
         
-        # Kullanıcının otel ID'sini al
-        otel_id = kullanici.otel_id if kullanici.otel_id else None
+        # Kullanıcının otelini al (OTEL BAZLI görevler için)
+        kullanici_otelleri = get_kullanici_otelleri()
+        otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
+        
+        if not otel_id:
+            return jsonify({'success': False, 'error': 'Otel atamanız bulunamadı.'}), 400
         
         plan = GorevOncelikService.get_oncelikli_gorev_plani(
             kullanici.id, tarih, otel_id

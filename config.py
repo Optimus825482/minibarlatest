@@ -126,3 +126,25 @@ class Config:
     CELERY_ACCEPT_CONTENT = ['json']
     CELERY_TIMEZONE = 'UTC'
     CELERY_ENABLE_UTC = True
+    
+    # Celery Task Limits (29.12.2025 - Magic numbers config'e taşındı)
+    CELERY_TASK_TIME_LIMIT = int(os.getenv('CELERY_TASK_TIME_LIMIT', '3600'))  # 1 saat max
+    CELERY_TASK_SOFT_TIME_LIMIT = int(os.getenv('CELERY_TASK_SOFT_TIME_LIMIT', '3000'))  # 50 dakika soft
+    CELERY_WORKER_PREFETCH = int(os.getenv('CELERY_WORKER_PREFETCH', '1'))
+    CELERY_MAX_TASKS_PER_CHILD = int(os.getenv('CELERY_MAX_TASKS_PER_CHILD', '1000'))
+    
+    # ============================================
+    # CACHE CONFIGURATION (Master Data Only)
+    # ============================================
+    # Cache SADECE master data için kullanılır (ürün listesi, setup tanımları, otel/kat/oda listeleri)
+    # Stok, zimmet, DND gibi transactional data ASLA cache'lenmez!
+    CACHE_ENABLED = os.getenv('CACHE_ENABLED', 'true').lower() == 'true'
+    REDIS_URL = os.getenv('REDIS_URL', CELERY_BROKER_URL)
+    
+    # ============================================
+    # RATE LIMITING CONFIGURATION
+    # ============================================
+    RATE_LIMIT_ENABLED = os.getenv('RATE_LIMIT_ENABLED', 'true').lower() == 'true'
+    RATE_LIMIT_DEFAULT = os.getenv('RATE_LIMIT_DEFAULT', '200 per day, 60 per hour')
+    RATE_LIMIT_LOGIN = os.getenv('RATE_LIMIT_LOGIN', '5 per minute')
+    RATE_LIMIT_API = os.getenv('RATE_LIMIT_API', '100 per minute')

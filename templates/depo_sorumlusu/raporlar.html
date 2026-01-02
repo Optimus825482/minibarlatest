@@ -2,6 +2,8 @@
 
 {% block title %}Raporlar - Depo Sorumlusu{% endblock %}
 {% block page_title %}Raporlar{% endblock %}
+{% block page_icon_bg %}bg-gradient-to-br from-rose-500 to-pink-600{% endblock %}
+{% block page_icon %}fas fa-chart-bar{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -32,6 +34,10 @@
                                 %}selected{% endif %}>Minibar Tüketim Raporu</option>
                             <option value="minibar_kontrol_odalar" {% if request.args.get('rapor_tipi')=='minibar_kontrol_odalar'
                                 %}selected{% endif %}>Günlük Minibar Kontrolü Yapılan Odalar</option>
+                            <option value="kat_bazli_tuketim" {% if request.args.get('rapor_tipi')=='kat_bazli_tuketim'
+                                %}selected{% endif %}>Kat Bazlı Tüketim Raporu</option>
+                            <option value="oda_bazli_tuketim" {% if request.args.get('rapor_tipi')=='oda_bazli_tuketim'
+                                %}selected{% endif %}>Oda Bazlı Tüketim Raporu</option>
                             <option value="urun_grup" {% if request.args.get('rapor_tipi')=='urun_grup' %}selected{%
                                 endif %}>Ürün Grubu Bazlı Rapor</option>
                             <option value="ozet" {% if request.args.get('rapor_tipi')=='ozet' %}selected{% endif %}>
@@ -733,6 +739,14 @@
             document.getElementById( 'tarih_filter' ).style.display = 'block';
             document.getElementById( 'tarih_filter2' ).style.display = 'block';
             document.getElementById( 'personel_filter' ).style.display = 'block';
+        } else if ( raporTipi === 'kat_bazli_tuketim' ) {
+            // Kat Bazlı Tüketim Raporu sayfasına yönlendir
+            window.location.href = '{{ url_for("kat_bazli_rapor") }}';
+            return;
+        } else if ( raporTipi === 'oda_bazli_tuketim' ) {
+            // Oda Bazlı Tüketim Raporu sayfasına yönlendir
+            window.location.href = '{{ url_for("raporlar.oda_bazli_tuketim_raporlari") }}';
+            return;
         }
     } );
 

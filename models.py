@@ -439,7 +439,7 @@ class MinibarIslem(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     oda_id = db.Column(db.Integer, db.ForeignKey('odalar.id'), nullable=False)
     personel_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'), nullable=False)
-    islem_tipi = db.Column(db.Enum('ilk_dolum', 'yeniden_dolum', 'eksik_tamamlama', 'sayim', 'duzeltme', 'kontrol', 'doldurma', 'ek_dolum', 'setup_kontrol', 'ekstra_ekleme', 'ekstra_tuketim', name='minibar_islem_tipi'), nullable=False)
+    islem_tipi = db.Column(db.Enum('ilk_dolum', 'yeniden_dolum', 'eksik_tamamlama', 'sayim', 'duzeltme', 'kontrol', 'doldurma', 'ek_dolum', 'setup_kontrol', 'ekstra_ekleme', 'ekstra_tuketim', 'sarfiyat_yok', name='minibar_islem_tipi'), nullable=False)
     islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     aciklama = db.Column(db.Text)
     
@@ -2102,6 +2102,88 @@ class OdaKontrolKaydi(db.Model):
     
     def __repr__(self):
         return f'<OdaKontrolKaydi #{self.id} - Oda {self.oda_id} - {self.kontrol_tipi}>'
+
+
+# ============================================
+# BAĞIMSIZ DND SİSTEMİ
+# ============================================
+
+class OdaDNDKayit(db.Model):
+    """
+    Bağımsız DND (Do Not Disturb) kayıtları.
+    Görev sisteminden bağımsız çalışır - görev atanmamış odalar için de DND kaydı yapılabilir.
+    Her oda için günde tek kayıt tutulur, kontroller ayrı tabloda saklanır.
+    """
+    __tablename__ = 'oda_dnd_kayitlari'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    oda_id = db.Column(db.Integer, db.ForeignKey('odalar.id', ondelete='CASCADE'), nullable=False)
+    otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=False)
+    kayit_tarihi = db.Column(db.Date, nullable=False)
+    
+    # DND durumu
+    dnd_sayisi = db.Column(db.Integer, default=0, nullable=False)
+    ilk_dnd_zamani = db.Column(db.DateTime(timezone=True), nullable=True)
+    son_dnd_zamani = db.Column(db.DateTime(timezone=True), nullable=True)
+    
+    # Durum: aktif, tamamlandi (3+ kontrol yapıldı), iptal
+    durum = db.Column(db.String(20), default='aktif', nullable=False)
+    
+    # Görev entegrasyonu (opsiyonel - varsa bağlanır, yoksa null)
+    gorev_detay_id = db.Column(db.Integer, db.ForeignKey('gorev_detaylari.id', ondelete='SET NULL'), nullable=True)
+    
+    # Sistem bilgileri
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
+    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    
+    # İlişkiler
+    oda = db.relationship('Oda', backref='dnd_kayitlari')
+    otel = db.relationship('Otel', backref='dnd_kayitlari')
+    gorev_detay = db.relationship('GorevDetay', backref='dnd_kayit')
+    kontroller = db.relationship('OdaDNDKontrol', backref='dnd_kayit', lazy='dynamic', cascade='all, delete-orphan')
+    
+    __table_args__ = (
+        db.UniqueConstraint('oda_id', 'kayit_tarihi', name='uq_oda_dnd_tarih'),
+        db.Index('idx_oda_dnd_oda_tarih', 'oda_id', 'kayit_tarihi'),
+        db.Index('idx_oda_dnd_otel_tarih', 'otel_id', 'kayit_tarihi'),
+        db.Index('idx_oda_dnd_durum', 'durum'),
+        db.Index('idx_oda_dnd_gorev', 'gorev_detay_id'),
+    )
+    
+    @property
+    def min_kontrol_tamamlandi(self):
+        """Minimum 3 kontrol yapıldı mı?"""
+        return self.dnd_sayisi >= 3
+    
+    def __repr__(self):
+        return f'<OdaDNDKayit #{self.id} - Oda {self.oda_id} - {self.dnd_sayisi}/3 - {self.durum}>'
+
+
+class OdaDNDKontrol(db.Model):
+    """
+    DND kontrol detayları - Her DND kontrolü için ayrı kayıt.
+    Hangi personel, ne zaman, kaçıncı kontrol yaptı bilgisini tutar.
+    """
+    __tablename__ = 'oda_dnd_kontrolleri'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    dnd_kayit_id = db.Column(db.Integer, db.ForeignKey('oda_dnd_kayitlari.id', ondelete='CASCADE'), nullable=False)
+    kontrol_no = db.Column(db.Integer, nullable=False)  # 1, 2, 3...
+    kontrol_eden_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    kontrol_zamani = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
+    notlar = db.Column(db.Text, nullable=True)
+    
+    # İlişkiler
+    kontrol_eden = db.relationship('Kullanici', backref='dnd_kontrol_kayitlari')
+    
+    __table_args__ = (
+        db.Index('idx_dnd_kontrol_kayit', 'dnd_kayit_id'),
+        db.Index('idx_dnd_kontrol_zaman', 'kontrol_zamani'),
+        db.Index('idx_dnd_kontrol_personel', 'kontrol_eden_id'),
+    )
+    
+    def __repr__(self):
+        return f'<OdaDNDKontrol #{self.id} - Kayıt {self.dnd_kayit_id} - Kontrol #{self.kontrol_no}>'
 
 
 # ============================================

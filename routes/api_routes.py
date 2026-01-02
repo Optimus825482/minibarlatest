@@ -2901,9 +2901,14 @@ def register_api_routes(app):
     @login_required
     @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
     def api_otel_zimmet_islemleri():
-        """Otel zimmet işlemlerini listele - Her işlem için ayrı kart"""
+        """Otel zimmet işlemlerini listele - Güne göre gruplu, en yeni en üstte
+        
+        OtelZimmetStok tablosundaki son_guncelleme tarihine göre GÜN BAZLI gruplama yapar.
+        Her gün için ayrı bir kart gösterilir.
+        """
         try:
             from models import OtelZimmetStok, Otel
+            from sqlalchemy import func, desc
             
             otel_id = request.args.get('otel_id', type=int)
             if not otel_id:
@@ -2921,33 +2926,56 @@ def register_api_routes(app):
             ).all()
             personel_adlari = [f"{p.ad} {p.soyad}" for p in personeller]
             
-            # Otel zimmet stoklarını getir
-            stoklar = OtelZimmetStok.query.filter_by(otel_id=otel_id).join(Urun).order_by(Urun.urun_adi).all()
+            # Otel zimmet stoklarını al
+            stoklar = OtelZimmetStok.query.filter_by(otel_id=otel_id).join(Urun).all()
             
             if not stoklar:
                 return jsonify({'success': True, 'islemler': []})
             
-            # Tek bir "işlem" olarak göster (otel bazlı ortak havuz)
-            urunler = []
-            for s in stoklar:
-                urunler.append({
-                    'urun_id': s.urun_id,
-                    'urun_adi': s.urun.urun_adi if s.urun else 'Bilinmiyor',
-                    'eklenen': s.toplam_miktar,
+            # GÜN BAZLI gruplama (son_guncelleme tarihine göre)
+            tarih_gruplari = {}
+            for stok in stoklar:
+                if not stok.son_guncelleme:
+                    continue
+                    
+                # Sadece gün bazında grupla (YYYY-MM-DD)
+                tarih_key = stok.son_guncelleme.strftime('%Y-%m-%d')
+                tarih_gosterim = stok.son_guncelleme.strftime('%d.%m.%Y')
+                
+                if tarih_key not in tarih_gruplari:
+                    tarih_gruplari[tarih_key] = {
+                        'tarih_key': tarih_key,
+                        'tarih': tarih_gosterim,
+                        'urunler': []
+                    }
+                
+                tarih_gruplari[tarih_key]['urunler'].append({
+                    'urun_id': stok.urun_id,
+                    'urun_adi': stok.urun.urun_adi if stok.urun else 'Bilinmiyor',
+                    'eklenen': stok.toplam_miktar,
                     'onceki': 0,
-                    'toplam': s.kalan_miktar
+                    'toplam': stok.kalan_miktar
                 })
             
-            islem = {
-                'id': otel_id,
-                'otel_adi': otel.ad,
-                'personeller': personel_adlari,
-                'urun_cesidi': len(urunler),
-                'tarih': stoklar[0].son_guncelleme.strftime('%d.%m.%Y %H:%M') if stoklar and stoklar[0].son_guncelleme else '-',
-                'urunler': urunler
-            }
+            # İşlemleri oluştur (en yeni gün en üstte)
+            islemler = []
+            for tarih_key in sorted(tarih_gruplari.keys(), reverse=True):
+                grup = tarih_gruplari[tarih_key]
+                urunler = grup['urunler']
+                
+                # Ürünleri ada göre sırala
+                urunler.sort(key=lambda x: x['urun_adi'])
+                
+                islemler.append({
+                    'id': f"{otel_id}_{tarih_key}",
+                    'otel_adi': otel.ad,
+                    'personeller': personel_adlari,
+                    'urun_cesidi': len(urunler),
+                    'tarih': grup['tarih'],
+                    'urunler': urunler
+                })
             
-            return jsonify({'success': True, 'islemler': [islem]})
+            return jsonify({'success': True, 'islemler': islemler})
             
         except Exception as e:
             log_hata(e, modul='api_otel_zimmet_islemleri')
@@ -3247,10 +3275,10 @@ def register_api_routes(app):
                 otel_id=otel_id,
                 urun_id=urun_id,
                 miktar=iptal_miktar,
-                islem_tipi='zimmet_iade',
+                kaynak_tipi='iade',
                 referans_id=stok.id,
                 kullanici_id=session.get('kullanici_id'),
-                birim_fiyat=0  # İade olduğu için fiyat 0
+                aciklama=f'Zimmet iadesi - Otel ID: {otel_id}'
             )
             
             if not fifo_sonuc.get('success'):
@@ -3294,3 +3322,94 @@ def register_api_routes(app):
             db.session.rollback()
             log_hata(e, modul='api_otel_zimmet_iptal')
             return jsonify({'success': False, 'error': str(e)}), 500
+
+
+    # AJAX endpoint - Görev detay odaları (kat bazlı)
+    @app.route('/api/gorev-detay-odalar')
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
+    def api_gorev_detay_odalar():
+        """Görev tipine göre odaları kat bazlı getir"""
+        try:
+            from models import GunlukGorev, GorevDetay, Kat
+            from datetime import datetime
+            
+            otel_id = request.args.get('otel_id', type=int)
+            tarih_str = request.args.get('tarih')
+            gorev_tipi = request.args.get('gorev_tipi')
+            
+            if not otel_id or not tarih_str or not gorev_tipi:
+                return jsonify({'success': False, 'message': 'Eksik parametreler'}), 400
+            
+            # Tarih parse
+            try:
+                tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'success': False, 'message': 'Geçersiz tarih formatı'}), 400
+            
+            # Görevi bul
+            gorev = GunlukGorev.query.filter(
+                GunlukGorev.otel_id == otel_id,
+                GunlukGorev.gorev_tarihi == tarih,
+                GunlukGorev.gorev_tipi == gorev_tipi
+            ).first()
+            
+            if not gorev:
+                return jsonify({'success': True, 'katlar': [], 'message': 'Görev bulunamadı'})
+            
+            # Görev detaylarını kat bazlı grupla
+            detaylar = GorevDetay.query.filter(
+                GorevDetay.gorev_id == gorev.id
+            ).join(Oda).join(Kat).order_by(Kat.kat_no, Oda.oda_no).all()
+            
+            # Kat bazlı gruplama
+            kat_dict = {}
+            for detay in detaylar:
+                kat = detay.oda.kat
+                kat_id = kat.id
+                
+                if kat_id not in kat_dict:
+                    kat_dict[kat_id] = {
+                        'kat_id': kat_id,
+                        'kat_no': kat.kat_no,
+                        'kat_adi': kat.kat_adi or f'Kat {kat.kat_no}',
+                        'odalar': [],
+                        'toplam': 0,
+                        'tamamlanan': 0,
+                        'bekleyen': 0,
+                        'dnd': 0,
+                        'iptal': 0
+                    }
+                
+                kat_dict[kat_id]['odalar'].append({
+                    'detay_id': detay.id,
+                    'oda_id': detay.oda_id,
+                    'oda_no': detay.oda.oda_no,
+                    'durum': detay.durum,
+                    'dnd_sayisi': detay.dnd_sayisi
+                })
+                
+                kat_dict[kat_id]['toplam'] += 1
+                if detay.durum == 'completed':
+                    kat_dict[kat_id]['tamamlanan'] += 1
+                elif detay.durum == 'dnd_pending':
+                    kat_dict[kat_id]['dnd'] += 1
+                elif detay.durum == 'incomplete':
+                    kat_dict[kat_id]['iptal'] += 1
+                else:
+                    kat_dict[kat_id]['bekleyen'] += 1
+            
+            # Kat numarasına göre sırala
+            katlar = sorted(kat_dict.values(), key=lambda x: x['kat_no'])
+            
+            return jsonify({
+                'success': True,
+                'katlar': katlar,
+                'gorev_id': gorev.id,
+                'gorev_tipi': gorev_tipi,
+                'tarih': tarih_str
+            })
+            
+        except Exception as e:
+            log_hata(e, modul='api_gorev_detay_odalar')
+            return jsonify({'success': False, 'message': str(e)}), 500

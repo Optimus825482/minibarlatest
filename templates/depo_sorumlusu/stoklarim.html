@@ -1,12 +1,28 @@
-{% extends "base.html" %} {% block title %}Stoklarım - Minibar Takip Sistemi{%
-endblock %} {% block page_title %}Stoklarım{% endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}Stoklarım - Minibar Takip Sistemi{% endblock %}
+{% block page_title %}Stoklarım{% endblock %}
+{% block page_icon_bg %}bg-gradient-to-br from-emerald-500 to-teal-600{% endblock %}
+{% block page_icon %}fas fa-boxes{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Bu sayfada header'daki otel seçimini gizle */
+  #header_otel_secim { display: none !important; }
+</style>
+{% endblock %}
+
+{% block content %}
 <div class="space-y-6">
   <!-- Başlık ve İstatistikler -->
   <div
     class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6"
   >
     <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-      Depo Stok Durumu {% if secili_otel_id %}<span class="text-lg font-normal text-slate-500">(Seçili Otel)</span>{% else %}<span class="text-lg font-normal text-slate-500">(Tüm Oteller)</span>{% endif %}
+      {% if secili_otel_id and secili_otel_adi %}
+      <i class="fas fa-hotel mr-2 text-indigo-500"></i>{{ secili_otel_adi }} - Depo Stok Durumu
+      {% else %}
+      <i class="fas fa-globe mr-2 text-amber-500"></i>Tüm Oteller - Depo Stok Durumu
+      {% endif %}
     </h2>
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -150,33 +166,53 @@ endblock %} {% block page_title %}Stoklarım{% endblock %} {% block content %}
     class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden"
   >
     <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700" id="stok_tablosu">
         <thead class="bg-slate-50 dark:bg-slate-900">
           <tr>
             <th
-              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors select-none"
+              data-sort="urun" onclick="sirala('urun')"
             >
-              Ürün
+              <div class="flex items-center gap-2">
+                Ürün
+                <i class="fas fa-sort text-slate-400 sort-icon" data-col="urun"></i>
+              </div>
             </th>
             <th
-              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors select-none"
+              data-sort="grup" onclick="sirala('grup')"
             >
-              Grup
+              <div class="flex items-center justify-center gap-2">
+                Grup
+                <i class="fas fa-sort text-slate-400 sort-icon" data-col="grup"></i>
+              </div>
             </th>
             <th
-              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors select-none"
+              data-sort="stok" onclick="sirala('stok')"
             >
-              Mevcut Stok
+              <div class="flex items-center justify-center gap-2">
+                Mevcut Stok
+                <i class="fas fa-sort text-slate-400 sort-icon" data-col="stok"></i>
+              </div>
             </th>
             <th
-              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors select-none"
+              data-sort="kritik" onclick="sirala('kritik')"
             >
-              Kritik Seviye
+              <div class="flex items-center justify-center gap-2">
+                Kritik Seviye
+                <i class="fas fa-sort text-slate-400 sort-icon" data-col="kritik"></i>
+              </div>
             </th>
             <th
-              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors select-none"
+              data-sort="durum" onclick="sirala('durum')"
             >
-              Durum
+              <div class="flex items-center justify-center gap-2">
+                Durum
+                <i class="fas fa-sort text-slate-400 sort-icon" data-col="durum"></i>
+              </div>
             </th>
           </tr>
         </thead>
@@ -188,6 +224,9 @@ endblock %} {% block page_title %}Stoklarım{% endblock %} {% block content %}
           <tr
             data-durum="{{ item.durum }}"
             data-urun-adi="{{ item.urun.urun_adi|lower }}"
+            data-grup="{{ item.urun.grup.grup_adi|lower if item.urun.grup else '' }}"
+            data-stok="{{ item.mevcut_stok }}"
+            data-kritik="{{ item.kritik_seviye }}"
           >
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center">
@@ -255,6 +294,9 @@ endblock %} {% block page_title %}Stoklarım{% endblock %} {% block content %}
 </div>
 
 <script>
+  // Sıralama durumu
+  let siralaDurum = { kolon: null, yon: 'asc' };
+  
   // Otel değiştirme
   function otelDegistir(otelId) {
     if (otelId) {
@@ -265,11 +307,9 @@ endblock %} {% block page_title %}Stoklarım{% endblock %} {% block content %}
   }
 
   // Durum filtreleme
-  document
-    .getElementById("durum_filtre")
-    .addEventListener("change", function () {
-      filtrele();
-    });
+  document.getElementById("durum_filtre").addEventListener("change", function () {
+    filtrele();
+  });
 
   // Ürün arama
   document.getElementById("urun_ara").addEventListener("input", function () {
@@ -297,9 +337,81 @@ endblock %} {% block page_title %}Stoklarım{% endblock %} {% block content %}
   }
 
   function filtreleriTemizle() {
+    // Otel filtresini de temizle
+    document.getElementById("otel_filtre").value = "";
     document.getElementById("durum_filtre").value = "tumu";
     document.getElementById("urun_ara").value = "";
-    filtrele();
+    // Sayfayı yeniden yükle (otel filtresi için)
+    window.location.href = '/depo-stoklarim';
+  }
+  
+  // Tablo sıralama fonksiyonu
+  function sirala(kolon) {
+    const tbody = document.getElementById('stok_listesi');
+    const satirlar = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Sıralama yönünü belirle
+    if (siralaDurum.kolon === kolon) {
+      siralaDurum.yon = siralaDurum.yon === 'asc' ? 'desc' : 'asc';
+    } else {
+      siralaDurum.kolon = kolon;
+      siralaDurum.yon = 'asc';
+    }
+    
+    // İkonları güncelle
+    document.querySelectorAll('.sort-icon').forEach(icon => {
+      icon.className = 'fas fa-sort text-slate-400 sort-icon';
+      icon.dataset.col = icon.dataset.col;
+    });
+    
+    const aktifIcon = document.querySelector(`.sort-icon[data-col="${kolon}"]`);
+    if (aktifIcon) {
+      aktifIcon.className = `fas fa-sort-${siralaDurum.yon === 'asc' ? 'up' : 'down'} text-blue-500 sort-icon`;
+    }
+    
+    // Sıralama
+    satirlar.sort((a, b) => {
+      let degerA, degerB;
+      
+      switch(kolon) {
+        case 'urun':
+          degerA = a.dataset.urunAdi || '';
+          degerB = b.dataset.urunAdi || '';
+          break;
+        case 'grup':
+          degerA = a.dataset.grup || '';
+          degerB = b.dataset.grup || '';
+          break;
+        case 'stok':
+          degerA = parseInt(a.dataset.stok) || 0;
+          degerB = parseInt(b.dataset.stok) || 0;
+          break;
+        case 'kritik':
+          degerA = parseInt(a.dataset.kritik) || 0;
+          degerB = parseInt(b.dataset.kritik) || 0;
+          break;
+        case 'durum':
+          // Durum sıralaması: tukendi > kritik > yeterli
+          const durumSira = { 'tukendi': 0, 'kritik': 1, 'yeterli': 2 };
+          degerA = durumSira[a.dataset.durum] ?? 3;
+          degerB = durumSira[b.dataset.durum] ?? 3;
+          break;
+        default:
+          return 0;
+      }
+      
+      // Sayısal karşılaştırma
+      if (typeof degerA === 'number' && typeof degerB === 'number') {
+        return siralaDurum.yon === 'asc' ? degerA - degerB : degerB - degerA;
+      }
+      
+      // String karşılaştırma (Türkçe desteği)
+      const karsilastir = degerA.localeCompare(degerB, 'tr', { sensitivity: 'base' });
+      return siralaDurum.yon === 'asc' ? karsilastir : -karsilastir;
+    });
+    
+    // DOM'u güncelle
+    satirlar.forEach(satir => tbody.appendChild(satir));
   }
 </script>
 {% endblock %}

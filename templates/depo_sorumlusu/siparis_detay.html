@@ -1,376 +1,602 @@
-{% extends "base.html" %}
-
-{% block title %}Sipariş Detayı - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Sipariş Detayı: {{ siparis.siparis_no }}{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Sipariş Detayı - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}Sipariş Detayı: {{
+siparis.siparis_no }}{% endblock %} {% block page_icon_bg %}bg-gradient-to-br
+from-teal-500 to-cyan-600{% endblock %} {% block page_icon %}fas
+fa-file-invoice{% endblock %} {% block content %}
 <div class="space-y-6">
-    <!-- Geri Dön Butonu -->
-    <div>
-        <a href="{{ url_for('siparis_listesi') }}"
-            class="inline-flex items-center px-3 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+  <!-- Geri Dön Butonu -->
+  <div>
+    <a
+      href="{{ url_for('siparis_listesi') }}"
+      class="inline-flex items-center px-3 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
+    >
+      <svg
+        class="w-4 h-4 mr-2"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M10 19l-7-7m0 0l7-7m-7 7h18"
+        ></path>
+      </svg>
+      Sipariş Listesine Dön
+    </a>
+  </div>
+
+  <!-- Sipariş Bilgileri -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h3
+          class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100"
+        >
+          Sipariş Bilgileri
+        </h3>
+        <div class="flex space-x-2">
+          <!-- Excel Export Butonu -->
+          <a
+            href="{{ url_for('siparis_excel_export', siparis_id=siparis.id) }}"
+            class="inline-flex items-center px-3 py-2 border border-green-300 dark:border-green-700 text-sm font-medium rounded-md text-green-700 dark:text-green-300 bg-white dark:bg-slate-700 hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors"
+          >
+            <svg
+              class="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              ></path>
             </svg>
-            Sipariş Listesine Dön
-        </a>
+            Satın Alma Excel'i İndir
+          </a>
+          {% if siparis.durum == 'onaylandi' %}
+          <a
+            href="{{ url_for('satin_alma_giris', siparis_id=siparis.id) }}"
+            class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 transition-colors"
+          >
+            <svg
+              class="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+              ></path>
+            </svg>
+            Satın Alma Girişi Yap
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div>
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Sipariş No
+          </dt>
+          <dd
+            class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100"
+          >
+            {{ siparis.siparis_no }}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Tedarikçi
+          </dt>
+          <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
+            {{ siparis.tedarikci.tedarikci_adi }}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Durum
+          </dt>
+          <dd class="mt-1">
+            {% if siparis.durum == 'beklemede' %}
+            <span
+              class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+            >
+              Beklemede
+            </span>
+            {% elif siparis.durum == 'onaylandi' %}
+            <span
+              class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+            >
+              Onaylandı
+            </span>
+            {% elif siparis.durum == 'teslim_alindi' %}
+            <span
+              class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+            >
+              Teslim Alındı
+            </span>
+            {% elif siparis.durum == 'kismi_teslim' %}
+            <span
+              class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200"
+            >
+              Kısmi Teslim
+            </span>
+            {% elif siparis.durum == 'iptal' %}
+            <span
+              class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+            >
+              İptal
+            </span>
+            {% endif %}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Sipariş Tarihi
+          </dt>
+          <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
+            {{ siparis.siparis_tarihi.strftime('%d.%m.%Y %H:%M') }}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Tahmini Teslimat
+          </dt>
+          <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
+            {{ siparis.tahmini_teslimat_tarihi.strftime('%d.%m.%Y') if
+            siparis.tahmini_teslimat_tarihi else '-' }} {% if
+            siparis.gecikme_durumu %}
+            <span
+              class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+            >
+              Gecikme!
+            </span>
+            {% endif %}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Gerçekleşen Teslimat
+          </dt>
+          <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
+            {{ siparis.gerceklesen_teslimat_tarihi.strftime('%d.%m.%Y') if
+            siparis.gerceklesen_teslimat_tarihi else '-' }}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Oluşturan
+          </dt>
+          <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
+            {{ siparis.olusturan.ad }} {{ siparis.olusturan.soyad if
+            siparis.olusturan else '-' }}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Onaylayan
+          </dt>
+          <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
+            {{ siparis.onaylayan.ad }} {{ siparis.onaylayan.soyad if
+            siparis.onaylayan else '-' }}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Toplam Tutar
+          </dt>
+          <dd class="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">
+            {{ "%.2f"|format(siparis.toplam_tutar) }} ₺
+          </dd>
+        </div>
+        {% if siparis.aciklama %}
+        <div class="sm:col-span-3">
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Açıklama
+          </dt>
+          <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
+            {{ siparis.aciklama }}
+          </dd>
+        </div>
+        {% endif %}
+      </div>
     </div>
+  </div>
 
-    <!-- Sipariş Bilgileri -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100">Sipariş Bilgileri</h3>
-                <div class="flex space-x-2">
-                    <!-- Excel Export Butonu -->
-                    <a href="{{ url_for('siparis_excel_export', siparis_id=siparis.id) }}"
-                        class="inline-flex items-center px-3 py-2 border border-green-300 dark:border-green-700 text-sm font-medium rounded-md text-green-700 dark:text-green-300 bg-white dark:bg-slate-700 hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        Satın Alma Excel'i İndir
-                    </a>
-                    {% if siparis.durum == 'onaylandi' %}
-                    <a href="{{ url_for('satin_alma_giris', siparis_id=siparis.id) }}"
-                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 transition-colors">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-                        </svg>
-                        Satın Alma Girişi Yap
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
+  <!-- Sipariş Detayları -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3
+        class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4"
+      >
+        Sipariş Ürünleri
+      </h3>
 
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Sipariş No</dt>
-                    <dd class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{{ siparis.siparis_no }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Tedarikçi</dt>
-                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">{{ siparis.tedarikci.tedarikci_adi }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Durum</dt>
-                    <dd class="mt-1">
-                        {% if siparis.durum == 'beklemede' %}
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                            Beklemede
-                        </span>
-                        {% elif siparis.durum == 'onaylandi' %}
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                            Onaylandı
-                        </span>
-                        {% elif siparis.durum == 'teslim_alindi' %}
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                            Teslim Alındı
-                        </span>
-                        {% elif siparis.durum == 'kismi_teslim' %}
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
-                            Kısmi Teslim
-                        </span>
-                        {% elif siparis.durum == 'iptal' %}
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                            İptal
-                        </span>
-                        {% endif %}
-                    </dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Sipariş Tarihi</dt>
-                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">{{ siparis.siparis_tarihi.strftime('%d.%m.%Y %H:%M') }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Tahmini Teslimat</dt>
-                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
-                        {{ siparis.tahmini_teslimat_tarihi.strftime('%d.%m.%Y') if siparis.tahmini_teslimat_tarihi else '-' }}
-                        {% if siparis.gecikme_durumu %}
-                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                            Gecikme!
-                        </span>
-                        {% endif %}
-                    </dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Gerçekleşen Teslimat</dt>
-                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
-                        {{ siparis.gerceklesen_teslimat_tarihi.strftime('%d.%m.%Y') if siparis.gerceklesen_teslimat_tarihi else '-' }}
-                    </dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Oluşturan</dt>
-                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
-                        {{ siparis.olusturan.ad }} {{ siparis.olusturan.soyad if siparis.olusturan else '-' }}
-                    </dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Onaylayan</dt>
-                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">
-                        {{ siparis.onaylayan.ad }} {{ siparis.onaylayan.soyad if siparis.onaylayan else '-' }}
-                    </dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Toplam Tutar</dt>
-                    <dd class="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">{{ "%.2f"|format(siparis.toplam_tutar) }} ₺</dd>
-                </div>
-                {% if siparis.aciklama %}
-                <div class="sm:col-span-3">
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Açıklama</dt>
-                    <dd class="mt-1 text-sm text-slate-900 dark:text-slate-100">{{ siparis.aciklama }}</dd>
-                </div>
+      <div class="table-wrapper">
+        <table
+          class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
+        >
+          <thead class="bg-slate-50 dark:bg-slate-700">
+            <tr>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                Ürün
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                Miktar
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                Birim Fiyat
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                Toplam
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                Teslim Alınan
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                Durum
+              </th>
+            </tr>
+          </thead>
+          <tbody
+            class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+          >
+            {% for detay in siparis.detaylar %}
+            <tr
+              class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+            >
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100"
+              >
+                {{ detay.urun.urun_adi }}
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+              >
+                {{ detay.miktar }} {{ detay.urun.birim }}
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+              >
+                {{ "%.2f"|format(detay.birim_fiyat) }} ₺
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-slate-100"
+              >
+                {{ "%.2f"|format(detay.toplam_fiyat) }} ₺
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+              >
+                {{ detay.teslim_alinan_miktar }} {{ detay.urun.birim }}
+              </td>
+              <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                {% if detay.teslim_alinan_miktar == 0 %}
+                <span
+                  class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200"
+                >
+                  Bekliyor
+                </span>
+                {% elif detay.teslim_alinan_miktar < detay.miktar %}
+                <span
+                  class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                >
+                  Kısmi
+                </span>
+                {% else %}
+                <span
+                  class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                >
+                  Tamamlandı
+                </span>
                 {% endif %}
-            </div>
-        </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot class="bg-slate-50 dark:bg-slate-700">
+            <tr>
+              <td
+                colspan="3"
+                class="px-3 sm:px-6 py-3 text-right text-sm font-medium text-slate-900 dark:text-slate-100"
+              >
+                Genel Toplam:
+              </td>
+              <td
+                colspan="3"
+                class="px-3 sm:px-6 py-3 text-sm font-bold text-slate-900 dark:text-slate-100"
+              >
+                {{ "%.2f"|format(siparis.toplam_tutar) }} ₺
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
+  </div>
 
-    <!-- Sipariş Detayları -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4">Sipariş Ürünleri</h3>
-            
-            <div class="table-wrapper">
-                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                    <thead class="bg-slate-50 dark:bg-slate-700">
-                        <tr>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Ürün</th>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Miktar</th>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Birim Fiyat</th>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Toplam</th>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Teslim Alınan</th>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Durum</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                        {% for detay in siparis.detaylar %}
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">
-                                {{ detay.urun.urun_adi }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                                {{ detay.miktar }} {{ detay.urun.birim }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                                {{ "%.2f"|format(detay.birim_fiyat) }} ₺
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                {{ "%.2f"|format(detay.toplam_fiyat) }} ₺
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                                {{ detay.teslim_alinan_miktar }} {{ detay.urun.birim }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                                {% if detay.teslim_alinan_miktar == 0 %}
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200">
-                                    Bekliyor
-                                </span>
-                                {% elif detay.teslim_alinan_miktar < detay.miktar %}
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                                    Kısmi
-                                </span>
-                                {% else %}
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                    Tamamlandı
-                                </span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                    <tfoot class="bg-slate-50 dark:bg-slate-700">
-                        <tr>
-                            <td colspan="3" class="px-3 sm:px-6 py-3 text-right text-sm font-medium text-slate-900 dark:text-slate-100">
-                                Genel Toplam:
-                            </td>
-                            <td colspan="3" class="px-3 sm:px-6 py-3 text-sm font-bold text-slate-900 dark:text-slate-100">
-                                {{ "%.2f"|format(siparis.toplam_tutar) }} ₺
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
-    </div>
+  <!-- Durum Geçmişi -->
+  {% if siparis.durum_gecmisi %}
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3
+        class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4"
+      >
+        Durum Geçmişi
+      </h3>
 
-    <!-- Durum Geçmişi -->
-    {% if siparis.durum_gecmisi %}
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4">Durum Geçmişi</h3>
-            
-            <div class="flow-root">
-                <ul class="-mb-8">
-                    {% for gecmis in siparis.durum_gecmisi %}
-                    <li>
-                        <div class="relative pb-8">
-                            {% if not loop.last %}
-                            <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-slate-200 dark:bg-slate-700" aria-hidden="true"></span>
-                            {% endif %}
-                            <div class="relative flex space-x-3">
-                                <div>
-                                    <span class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white dark:ring-slate-800
-                                        {% if gecmis.durum == 'beklemede' %}bg-yellow-500
-                                        {% elif gecmis.durum == 'onaylandi' %}bg-blue-500
-                                        {% elif gecmis.durum == 'teslim_alindi' %}bg-green-500
-                                        {% elif gecmis.durum == 'iptal' %}bg-red-500
-                                        {% else %}bg-slate-500{% endif %}">
-                                        <svg class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                        </svg>
-                                    </span>
-                                </div>
-                                <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                                    <div>
-                                        <p class="text-sm text-slate-500 dark:text-slate-400">
-                                            Durum <span class="font-medium text-slate-900 dark:text-slate-100">{{ gecmis.durum }}</span> olarak güncellendi
-                                        </p>
-                                    </div>
-                                    <div class="text-right text-sm whitespace-nowrap text-slate-500 dark:text-slate-400">
-                                        <time datetime="{{ gecmis.tarih.isoformat() }}">{{ gecmis.tarih.strftime('%d.%m.%Y %H:%M') }}</time>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
+      <div class="flow-root">
+        <ul class="-mb-8">
+          {% for gecmis in siparis.durum_gecmisi %}
+          <li>
+            <div class="relative pb-8">
+              {% if not loop.last %}
+              <span
+                class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-slate-200 dark:bg-slate-700"
+                aria-hidden="true"
+              ></span>
+              {% endif %}
+              <div class="relative flex space-x-3">
+                <div>
+                  <span
+                    class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white dark:ring-slate-800 {% if gecmis.durum == 'beklemede' %}bg-yellow-500 {% elif gecmis.durum == 'onaylandi' %}bg-blue-500 {% elif gecmis.durum == 'teslim_alindi' %}bg-green-500 {% elif gecmis.durum == 'iptal' %}bg-red-500 {% else %}bg-slate-500{% endif %}"
+                  >
+                    <svg
+                      class="h-5 w-5 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clip-rule="evenodd"
+                      ></path>
+                    </svg>
+                  </span>
+                </div>
+                <div
+                  class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4"
+                >
+                  <div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                      Durum
+                      <span
+                        class="font-medium text-slate-900 dark:text-slate-100"
+                        >{{ gecmis.durum }}</span
+                      >
+                      olarak güncellendi
+                    </p>
+                  </div>
+                  <div
+                    class="text-right text-sm whitespace-nowrap text-slate-500 dark:text-slate-400"
+                  >
+                    <time datetime="{{ gecmis.tarih.isoformat() }}"
+                      >{{ gecmis.tarih.strftime('%d.%m.%Y %H:%M') }}</time
+                    >
+                  </div>
+                </div>
+              </div>
             </div>
-        </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
     </div>
-    {% endif %}
+  </div>
+  {% endif %}
 
-    <!-- Satın Alma İşlemleri -->
-    {% if satin_alma_islemleri %}
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4">
-                <i class="fas fa-file-invoice-dollar mr-2"></i>
-                Satın Alma İşlemleri
-            </h3>
-            
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                    <thead class="bg-slate-50 dark:bg-slate-700">
-                        <tr>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                İşlem No
-                            </th>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                Tedarikçi
-                            </th>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                İşlem Tarihi
-                            </th>
-                            <th class="px-3 sm:px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                Toplam Tutar
-                            </th>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                Oluşturan
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                        {% for islem in satin_alma_islemleri %}
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">
-                                {{ islem.islem_no }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                                {{ islem.tedarikci.tedarikci_adi }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                                {{ islem.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-slate-100 text-right">
-                                {{ "%.2f"|format(islem.toplam_tutar) }} ₺
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                                {{ islem.olusturan.ad }} {{ islem.olusturan.soyad if islem.olusturan else '-' }}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    {% endif %}
+  <!-- Satın Alma İşlemleri -->
+  {% if satin_alma_islemleri %}
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3
+        class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4"
+      >
+        <i class="fas fa-file-invoice-dollar mr-2"></i>
+        Satın Alma İşlemleri
+      </h3>
 
-    <!-- İlgili Stok Hareketleri -->
-    {% if stok_hareketleri %}
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4">
-                <i class="fas fa-exchange-alt mr-2"></i>
-                İlgili Stok Hareketleri
-            </h3>
-            
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                    <thead class="bg-slate-50 dark:bg-slate-700">
-                        <tr>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                Tarih
-                            </th>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                Ürün
-                            </th>
-                            <th class="px-3 sm:px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                Tip
-                            </th>
-                            <th class="px-3 sm:px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                Miktar
-                            </th>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                Açıklama
-                            </th>
-                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                İşlem Yapan
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                        {% for hareket in stok_hareketleri %}
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                                {{ hareket.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">
-                                {{ hareket.urun.urun_adi }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
-                                {% if hareket.hareket_tipi == 'giris' %}
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                    <i class="fas fa-arrow-down mr-1"></i>Giriş
-                                </span>
-                                {% else %}
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                                    <i class="fas fa-arrow-up mr-1"></i>Çıkış
-                                </span>
-                                {% endif %}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-slate-100 text-right">
-                                {{ hareket.miktar }} {{ hareket.urun.birim }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm text-slate-500 dark:text-slate-400">
-                                {{ hareket.aciklama }}
-                            </td>
-                            <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                                {{ hareket.islem_yapan.ad }} {{ hareket.islem_yapan.soyad if hareket.islem_yapan else '-' }}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+      <div class="overflow-x-auto">
+        <table
+          class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
+        >
+          <thead class="bg-slate-50 dark:bg-slate-700">
+            <tr>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              >
+                İşlem No
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              >
+                Tedarikçi
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              >
+                İşlem Tarihi
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              >
+                Toplam Tutar
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              >
+                Oluşturan
+              </th>
+            </tr>
+          </thead>
+          <tbody
+            class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+          >
+            {% for islem in satin_alma_islemleri %}
+            <tr
+              class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+            >
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100"
+              >
+                {{ islem.islem_no }}
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+              >
+                {{ islem.tedarikci.tedarikci_adi }}
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+              >
+                {{ islem.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-slate-100 text-right"
+              >
+                {{ "%.2f"|format(islem.toplam_tutar) }} ₺
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+              >
+                {{ islem.olusturan.ad }} {{ islem.olusturan.soyad if
+                islem.olusturan else '-' }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
-    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- İlgili Stok Hareketleri -->
+  {% if stok_hareketleri %}
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3
+        class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100 mb-4"
+      >
+        <i class="fas fa-exchange-alt mr-2"></i>
+        İlgili Stok Hareketleri
+      </h3>
+
+      <div class="overflow-x-auto">
+        <table
+          class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
+        >
+          <thead class="bg-slate-50 dark:bg-slate-700">
+            <tr>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              >
+                Tarih
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              >
+                Ürün
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              >
+                Tip
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              >
+                Miktar
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              >
+                Açıklama
+              </th>
+              <th
+                class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              >
+                İşlem Yapan
+              </th>
+            </tr>
+          </thead>
+          <tbody
+            class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+          >
+            {% for hareket in stok_hareketleri %}
+            <tr
+              class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+            >
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+              >
+                {{ hareket.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100"
+              >
+                {{ hareket.urun.urun_adi }}
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center"
+              >
+                {% if hareket.hareket_tipi == 'giris' %}
+                <span
+                  class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                >
+                  <i class="fas fa-arrow-down mr-1"></i>Giriş
+                </span>
+                {% else %}
+                <span
+                  class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                >
+                  <i class="fas fa-arrow-up mr-1"></i>Çıkış
+                </span>
+                {% endif %}
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-slate-100 text-right"
+              >
+                {{ hareket.miktar }} {{ hareket.urun.birim }}
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 text-sm text-slate-500 dark:text-slate-400"
+              >
+                {{ hareket.aciklama }}
+              </td>
+              <td
+                class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+              >
+                {{ hareket.islem_yapan.ad }} {{ hareket.islem_yapan.soyad if
+                hareket.islem_yapan else '-' }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

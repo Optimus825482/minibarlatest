@@ -1,6 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Otel Zimmet Atama{% endblock %}
-{% block page_title %}Otel Zimmet Atama{% endblock %}
+{% block page_title %}Personel Zimmet{% endblock %}
+{% block page_icon_bg %}bg-gradient-to-br from-orange-500 to-amber-600{% endblock %}
+{% block page_icon %}fas fa-user-tag{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Bu sayfada header'daki otel seçimini gizle */
+  #header_otel_secim { display: none !important; }
+</style>
+{% endblock %}
 
 {% block content %}
 <style>
@@ -56,11 +65,22 @@
 </div>
 
 <!-- Zimmet Atama Modal -->
-<div id="zimmet_modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+<div id="zimmet_modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
     <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col" onclick="event.stopPropagation()">
-        <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
-            <h3 class="text-xl font-bold text-white"><i class="fas fa-hotel mr-2"></i><span id="modal_otel_adi">Otel</span> - Zimmet Ekle</h3>
-            <button type="button" onclick="modalKapat()" class="text-white text-3xl leading-none">&times;</button>
+        <div class="px-4 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 flex items-center justify-between">
+            <div class="flex items-center gap-2 min-w-[140px]">
+                <i class="fas fa-boxes text-white/80"></i>
+                <span class="text-white/90 text-sm font-medium">Zimmet Atama</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <i class="fas fa-hotel text-white"></i>
+                <span id="modal_otel_adi" class="text-white font-bold text-lg">Otel</span>
+            </div>
+            <div class="min-w-[140px] flex justify-end">
+                <button type="button" onclick="modalKapat()" class="w-8 h-8 flex items-center justify-center bg-white/20 hover:bg-red-500 rounded-lg text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
         </div>
         <div class="flex-1 overflow-y-auto p-6">
             <div id="grup_butonlari" class="flex flex-wrap gap-2 mb-4"></div>
@@ -113,28 +133,21 @@
     </div>
 </div>
 
-<!-- Zimmet İptal Modal -->
+<!-- Zimmet İptal Onay Modal -->
 <div id="iptal_modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4" style="background: rgba(0,0,0,0.5);">
     <div class="bg-slate-800 rounded-xl shadow-2xl w-full max-w-sm" onclick="event.stopPropagation()">
         <div class="px-6 py-4 rounded-t-xl bg-red-600">
             <h4 id="iptal_urun_adi" class="text-lg font-bold text-white text-center"></h4>
-            <p id="iptal_urun_stok" class="text-sm text-white/80 text-center mt-1"></p>
         </div>
-        <div class="p-6">
+        <div class="p-6 text-center">
             <input type="hidden" id="iptal_urun_id">
-            <input type="hidden" id="iptal_max_miktar">
-            <label class="block text-sm font-medium text-slate-300 mb-2 text-center">İptal Edilecek Miktar</label>
-            <input type="number" id="iptal_miktar_input" min="1" value="1" class="w-full px-4 py-4 text-3xl text-center border-2 border-slate-600 rounded-lg bg-slate-700 text-white font-bold">
-            <div class="grid grid-cols-3 gap-2 mt-3">
-                <button type="button" class="iptal-miktar-btn px-3 py-2 bg-red-500 text-white rounded-lg font-bold" data-miktar="1">1</button>
-                <button type="button" class="iptal-miktar-btn px-3 py-2 bg-red-500 text-white rounded-lg font-bold" data-miktar="5">5</button>
-                <button type="button" class="iptal-miktar-btn px-3 py-2 bg-red-500 text-white rounded-lg font-bold" data-miktar="10">10</button>
-                <button type="button" class="iptal-miktar-btn px-3 py-2 bg-red-600 text-white rounded-lg font-bold" data-miktar="20">20</button>
-                <button type="button" class="iptal-miktar-btn px-3 py-2 bg-red-600 text-white rounded-lg font-bold" data-miktar="50">50</button>
-                <button type="button" class="iptal-tumunu-btn px-3 py-2 bg-red-700 text-white rounded-lg font-bold">Tümü</button>
-            </div>
-            <p class="text-yellow-400 text-sm text-center mt-3"><i class="fas fa-exclamation-triangle mr-1"></i>İptal edilen ürünler ana depoya iade edilir</p>
-            <div class="flex gap-3 mt-4">
+            <input type="hidden" id="iptal_miktar">
+            <div class="text-5xl mb-4">⚠️</div>
+            <p class="text-white text-lg mb-2">Bu üründen</p>
+            <p class="text-3xl font-bold text-red-400 mb-2"><span id="iptal_miktar_goster">0</span> adet</p>
+            <p class="text-white text-lg mb-4">iptal edilecek</p>
+            <p class="text-yellow-400 text-sm"><i class="fas fa-info-circle mr-1"></i>İptal edilen ürünler ana depoya iade edilir</p>
+            <div class="flex gap-3 mt-6">
                 <button type="button" onclick="iptalModalKapat()" class="flex-1 py-3 bg-slate-500 text-white rounded-lg font-bold text-lg">Vazgeç</button>
                 <button type="button" onclick="zimmetIptalOnayla()" class="flex-1 py-3 bg-red-600 text-white rounded-lg font-bold text-lg">İptal Et</button>
             </div>
@@ -168,11 +181,9 @@ function formatSayi(sayi) { return (sayi || 0).toLocaleString('tr-TR'); }
 // Zimmet İptal Fonksiyonları
 function zimmetIptalModalAc(urunAdi, urunId, kalanMiktar) {
     document.getElementById('iptal_urun_id').value = urunId;
-    document.getElementById('iptal_max_miktar').value = kalanMiktar;
+    document.getElementById('iptal_miktar').value = kalanMiktar;
     document.getElementById('iptal_urun_adi').textContent = urunAdi;
-    document.getElementById('iptal_urun_stok').textContent = `Kalan Stok: ${formatSayi(kalanMiktar)}`;
-    document.getElementById('iptal_miktar_input').value = 1;
-    document.getElementById('iptal_miktar_input').max = kalanMiktar;
+    document.getElementById('iptal_miktar_goster').textContent = formatSayi(kalanMiktar);
     document.getElementById('iptal_modal').classList.remove('hidden');
 }
 
@@ -180,11 +191,9 @@ function iptalModalKapat() { document.getElementById('iptal_modal').classList.ad
 
 async function zimmetIptalOnayla() {
     const urunId = document.getElementById('iptal_urun_id').value;
-    const miktar = parseInt(document.getElementById('iptal_miktar_input').value) || 0;
-    const maxMiktar = parseInt(document.getElementById('iptal_max_miktar').value) || 0;
+    const miktar = parseInt(document.getElementById('iptal_miktar').value) || 0;
     
-    if (miktar <= 0) { bildirimGoster('Geçerli bir miktar giriniz!', 'warning'); return; }
-    if (miktar > maxMiktar) { bildirimGoster(`En fazla ${maxMiktar} adet iptal edilebilir!`, 'warning'); return; }
+    if (miktar <= 0) { bildirimGoster('Geçerli bir miktar yok!', 'warning'); return; }
     
     try {
         const response = await fetch('/api/otel-zimmet-iptal', {
@@ -242,20 +251,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     document.querySelector('.miktar-sifirla').addEventListener('click', () => document.getElementById('miktar_input').value = 0);
-    
-    // İptal modal butonları
-    document.querySelectorAll('.iptal-miktar-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const input = document.getElementById('iptal_miktar_input');
-            const maxMiktar = parseInt(document.getElementById('iptal_max_miktar').value) || 0;
-            const yeniMiktar = parseInt(this.dataset.miktar);
-            input.value = Math.min(yeniMiktar, maxMiktar);
-        });
-    });
-    document.querySelector('.iptal-tumunu-btn')?.addEventListener('click', () => {
-        const maxMiktar = parseInt(document.getElementById('iptal_max_miktar').value) || 0;
-        document.getElementById('iptal_miktar_input').value = maxMiktar;
-    });
     
     document.getElementById('urun_ara')?.addEventListener('input', function() {
         const q = this.value.toLowerCase();

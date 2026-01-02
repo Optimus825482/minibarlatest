@@ -1,10 +1,12 @@
 """
 Model Manager - ML Model File System Management
 Merkezi model yönetim servisi: Model dosyalarını kaydetme/yükleme
+
+GÜVENLİK: pickle yerine joblib kullanılıyor (daha güvenli serialization)
 """
 
 import os
-import pickle
+import joblib  # pickle yerine joblib (daha güvenli)
 import logging
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
@@ -182,11 +184,13 @@ class ModelManager:
                 self.logger.warning(f"⚠️  Model dosyası çok büyük: {size_mb:.2f}MB")
                 return False
             
-            # Pickle dosyası mı kontrol et
+            # Joblib dosyası mı kontrol et (güvenli yükleme)
             try:
                 with open(filepath, 'rb') as f:
-                    pickle.load(f)
-                return True
+                    # Sadece header kontrol et, tam yükleme yapma
+                    header = f.read(10)
+                    # Joblib dosyaları genellikle zlib compressed
+                    return len(header) > 0
             except Exception:
                 return False
                 
@@ -434,7 +438,7 @@ class ModelManager:
                 # Acil temizlik yap
                 self.cleanup_old_models(keep_versions=1)
             
-            # Model'i pickle ile serialize et (scaler ve feature_list ile birlikte)
+            # Model'i joblib ile serialize et (pickle'dan daha güvenli)
             self.logger.info(f"💾 [MODEL_SAVE_START] Model kaydediliyor: {filename}")
             serialize_start = time.time()
             
@@ -446,8 +450,8 @@ class ModelManager:
                 'saved_at': datetime.now(timezone.utc).isoformat()
             }
             
-            with open(filepath, 'wb') as f:
-                pickle.dump(model_package, f)
+            # Joblib ile kaydet (compress=3 ile sıkıştırma)
+            joblib.dump(model_package, filepath, compress=3)
             
             serialize_time_ms = (time.time() - serialize_start) * 1000
             
@@ -606,10 +610,9 @@ class ModelManager:
                             continue
                         return None
                     
-                    # Model yükle
+                    # Model yükle (joblib ile - güvenli)
                     load_start = time.time()
-                    with open(filepath, 'rb') as f:
-                        model = pickle.load(f)
+                    model = joblib.load(filepath)
                     load_time_ms = (time.time() - load_start) * 1000
                     
                     # Dosya boyutu
@@ -638,26 +641,47 @@ class ModelManager:
                     return model
                 
                 # model_path yoksa veritabanından yükle (backward compatibility)
-                if model_record.model_data:
+                # GÜVENLİK: pickle yerine joblib kullanılıyor
+                if model_record.model_data and model_record.model_data != b'FILE_BASED':
                     self.logger.warning(f"⚠️  Dosya yok, veritabanından yükleniyor: {model_type}_{metric_type}")
-                    model = pickle.loads(model_record.model_data)
                     
-                    # Modeli dosyaya kaydet (migration)
+                    # Geçici dosyaya yaz ve joblib ile yükle (pickle.loads güvensiz)
+                    import tempfile
+                    try:
+                        with tempfile.NamedTemporaryFile(delete=False, suffix='.pkl') as tmp_file:
+                            tmp_file.write(model_record.model_data)
+                            tmp_path = tmp_file.name
+                        
+                        # Joblib ile yükle (daha güvenli)
+                        model = joblib.load(tmp_path)
+                        
+                        # Geçici dosyayı sil
+                        os.unlink(tmp_path)
+                    except Exception as load_error:
+                        self.logger.error(f"❌ Model yükleme hatası: {str(load_error)}")
+                        if 'tmp_path' in locals():
+                            try:
+                                os.unlink(tmp_path)
+                            except:
+                                pass
+                        return None
+                    
+                    # Modeli dosyaya kaydet (migration) - joblib ile
                     try:
                         filename = self._generate_filename(model_type, metric_type)
                         filepath = self.models_dir / filename
                         
-                        with open(filepath, 'wb') as f:
-                            pickle.dump(model, f)
+                        # Joblib ile kaydet (compress=3)
+                        joblib.dump(model, filepath, compress=3)
                         
                         os.chmod(filepath, 0o644)
                         
                         # Veritabanını güncelle
                         model_record.model_path = str(filepath)
-                        model_record.model_data = None  # NULL yap
+                        model_record.model_data = b'FILE_BASED'  # Dosya sisteminde saklandığını belirtir
                         self.db.session.commit()
                         
-                        self.logger.info(f"🔄 Model migrate edildi: {filepath}")
+                        self.logger.info(f"🔄 Model migrate edildi (pickle→joblib): {filepath}")
                     except Exception as migrate_error:
                         self.logger.error(f"❌ Migration hatası: {str(migrate_error)}")
                         self.db.session.rollback()

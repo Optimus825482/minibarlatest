@@ -1,6 +1,8 @@
 {% extends "base.html" %} {% block title %}Kat Sorumlusu Siparişleri - Minibar
 Takip Sistemi{% endblock %} {% block page_title %}Kat Sorumlusu Siparişleri{%
-endblock %} {% block content %}
+endblock %} {% block page_icon_bg %}bg-gradient-to-br from-cyan-500
+to-blue-600{% endblock %} {% block page_icon %}fas fa-clipboard-list{% endblock
+%} {% block content %}
 <div class="space-y-6">
   {% if not otel_secenekleri or otel_secenekleri|length <= 1 or secili_otel_id
   %}

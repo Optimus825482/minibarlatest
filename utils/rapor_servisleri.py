@@ -547,14 +547,13 @@ class GunlukGorevRaporServisi:
         personel_ids: list = None
     ) -> dict:
         """
-        Günlük görev tamamlama raporu
+        Günlük görev tamamlama raporu - OTEL BAZLI
+        Görevler otele atanır, herhangi bir kat sorumlusu tamamlayabilir.
         
         Args:
             otel_id: Otel ID (opsiyonel)
             baslangic_tarihi: Başlangıç tarihi
             bitis_tarihi: Bitiş tarihi
-            personel_id: Personel ID (opsiyonel, tekil)
-            personel_ids: Personel ID listesi (opsiyonel, çoklu)
             
         Returns:
             dict: Rapor verisi
@@ -565,45 +564,34 @@ class GunlukGorevRaporServisi:
             if not bitis_tarihi:
                 bitis_tarihi = date.today()
             
-            # Günlük görev özeti
+            # OTEL BAZLI görev özeti (personel_id artık NULL)
             query = db.session.query(
                 GunlukGorev.gorev_tarihi,
+                GunlukGorev.gorev_tipi,
                 Otel.id.label('otel_id'),
                 Otel.ad.label('otel_ad'),
-                Kullanici.id.label('personel_id'),
-                Kullanici.ad.label('personel_ad'),
-                Kullanici.soyad.label('personel_soyad'),
                 func.count(GorevDetay.id).label('toplam_gorev'),
-                func.sum(case((GorevDetay.durum == 'tamamlandi', 1), else_=0)).label('tamamlanan'),
-                func.sum(case((GorevDetay.durum == 'beklemede', 1), else_=0)).label('bekleyen'),
-                func.sum(case((GorevDetay.durum == 'dnd', 1), else_=0)).label('dnd'),
-                func.sum(case((GorevDetay.durum == 'iptal', 1), else_=0)).label('iptal'),
-                func.sum(case((GorevDetay.durum == 'incomplete', 1), else_=0)).label('tamamlanmadi')
+                func.sum(case((GorevDetay.durum == 'completed', 1), else_=0)).label('tamamlanan'),
+                func.sum(case((GorevDetay.durum == 'pending', 1), else_=0)).label('bekleyen'),
+                func.sum(case((GorevDetay.durum == 'dnd_pending', 1), else_=0)).label('dnd'),
+                func.sum(case((GorevDetay.durum == 'incomplete', 1), else_=0)).label('iptal')
             ).join(
-                GorevDetay, GunlukGorev.id == GorevDetay.gunluk_gorev_id
+                GorevDetay, GunlukGorev.id == GorevDetay.gorev_id
             ).join(
-                Kullanici, GunlukGorev.personel_id == Kullanici.id
-            ).join(
-                Otel, Kullanici.otel_id == Otel.id
+                Otel, GunlukGorev.otel_id == Otel.id
             ).filter(
                 GunlukGorev.gorev_tarihi >= baslangic_tarihi,
                 GunlukGorev.gorev_tarihi <= bitis_tarihi
             )
             
             if otel_id:
-                query = query.filter(Kullanici.otel_id == otel_id)
-            
-            # Çoklu personel ID desteği
-            if personel_ids:
-                query = query.filter(GunlukGorev.personel_id.in_(personel_ids))
-            elif personel_id:
-                query = query.filter(GunlukGorev.personel_id == personel_id)
+                query = query.filter(GunlukGorev.otel_id == otel_id)
             
             query = query.group_by(
                 GunlukGorev.gorev_tarihi,
-                Otel.id, Otel.ad,
-                Kullanici.id, Kullanici.ad, Kullanici.soyad
-            ).order_by(desc(GunlukGorev.gorev_tarihi), Otel.ad, Kullanici.ad)
+                GunlukGorev.gorev_tipi,
+                Otel.id, Otel.ad
+            ).order_by(desc(GunlukGorev.gorev_tarihi), Otel.ad, GunlukGorev.gorev_tipi)
             
             sonuclar = query.all()
             
@@ -620,16 +608,22 @@ class GunlukGorevRaporServisi:
                         'bekleyen': 0,
                         'dnd': 0,
                         'iptal': 0,
-                        'tamamlanmadi': 0,
                         'tamamlanma_orani': 0,
-                        'personeller': []
+                        'gorev_tipleri': []
                     }
                 
                 tamamlanma_orani = round((row.tamamlanan / row.toplam_gorev * 100), 1) if row.toplam_gorev > 0 else 0
                 
-                gunler[tarih_str]['personeller'].append({
-                    'personel_id': row.personel_id,
-                    'ad_soyad': f"{row.personel_ad} {row.personel_soyad}",
+                # Görev tipi etiketleri
+                gorev_tipi_label = {
+                    'inhouse_kontrol': 'In House',
+                    'arrival_kontrol': 'Arrivals',
+                    'departure_kontrol': 'Departures'
+                }.get(row.gorev_tipi, row.gorev_tipi)
+                
+                gunler[tarih_str]['gorev_tipleri'].append({
+                    'gorev_tipi': row.gorev_tipi,
+                    'gorev_tipi_label': gorev_tipi_label,
                     'otel_id': row.otel_id,
                     'otel_ad': row.otel_ad,
                     'toplam': row.toplam_gorev,
@@ -637,7 +631,6 @@ class GunlukGorevRaporServisi:
                     'bekleyen': row.bekleyen,
                     'dnd': row.dnd,
                     'iptal': row.iptal,
-                    'tamamlanmadi': row.tamamlanmadi,
                     'tamamlanma_orani': tamamlanma_orani
                 })
                 
@@ -646,7 +639,6 @@ class GunlukGorevRaporServisi:
                 gunler[tarih_str]['bekleyen'] += row.bekleyen
                 gunler[tarih_str]['dnd'] += row.dnd
                 gunler[tarih_str]['iptal'] += row.iptal
-                gunler[tarih_str]['tamamlanmadi'] += row.tamamlanmadi
             
             # Tamamlanma oranlarını hesapla
             for gun in gunler.values():
@@ -658,6 +650,7 @@ class GunlukGorevRaporServisi:
             # Genel özet
             toplam_gorev = sum(g['toplam_gorev'] for g in gunler_list)
             toplam_tamamlanan = sum(g['tamamlanan'] for g in gunler_list)
+            toplam_bekleyen = sum(g['bekleyen'] for g in gunler_list)
             
             return {
                 'success': True,
@@ -667,6 +660,7 @@ class GunlukGorevRaporServisi:
                 'toplam_gun': len(gunler),
                 'genel_toplam_gorev': toplam_gorev,
                 'genel_tamamlanan': toplam_tamamlanan,
+                'genel_bekleyen': toplam_bekleyen,
                 'genel_tamamlanma_orani': round((toplam_tamamlanan / toplam_gorev * 100), 1) if toplam_gorev > 0 else 0,
                 'gunler': gunler_list
             }

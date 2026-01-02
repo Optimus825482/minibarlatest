@@ -74,12 +74,12 @@ class GorevOncelikService:
     @staticmethod
     def get_oncelikli_gorev_plani(personel_id: int, tarih: date, otel_id: int = None) -> Dict:
         """
-        Personel için akıllı görev öncelik planı oluşturur.
+        Otel için akıllı görev öncelik planı oluşturur.
         
         Args:
-            personel_id: Kat sorumlusu ID
+            personel_id: Kat sorumlusu ID (artık kullanılmıyor - geriye uyumluluk için)
             tarih: Görev tarihi
-            otel_id: Otel ID (opsiyonel)
+            otel_id: Otel ID (ZORUNLU - otel bazlı görevler için)
             
         Returns:
             Dict: Önceliklendirilmiş görev planı
@@ -88,9 +88,24 @@ class GorevOncelikService:
             simdi = get_kktc_now()
             bugun = simdi.date()
             
-            # Tüm görevleri al
+            # otel_id yoksa boş döndür
+            if not otel_id:
+                return {
+                    'success': True,
+                    'plan': [],
+                    'kat_plani': {},
+                    'ozet': {
+                        'toplam': 0,
+                        'kritik': 0,
+                        'normal': 0
+                    },
+                    'baslangic_kat': None,
+                    'briefing': 'Otel bilgisi bulunamadı.'
+                }
+            
+            # OTEL BAZLI görevleri al (personel_id yerine otel_id kullan)
             gorevler = GunlukGorev.query.filter(
-                GunlukGorev.personel_id == personel_id,
+                GunlukGorev.otel_id == otel_id,
                 GunlukGorev.gorev_tarihi == tarih
             ).all()
             

@@ -1,6 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Ana Depo Tedarik - Minibar Takip Sistemi{% endblock %}
 {% block page_title %}Ana Depo Tedarik{% endblock %}
+{% block page_icon_bg %}bg-gradient-to-br from-purple-500 to-violet-600{% endblock %}
+{% block page_icon %}fas fa-warehouse{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Bu sayfada header'daki otel seçimini gizle */
+  #header_otel_secim { display: none !important; }
+</style>
+{% endblock %}
+
 {% block content %}
 <style>
   .urun-card { min-height: 120px; }
@@ -9,34 +19,128 @@
   .durum-aktif { background: #dcfce7; color: #166534; }
   .durum-iptal { background: #fee2e2; color: #991b1b; }
   .grup-btn-sm { padding: 4px 10px; font-size: 11px; }
+  
+  /* PWA/Mobile optimizations */
+  @media (max-width: 640px) {
+    .action-btn-group { 
+      flex-direction: column; 
+      width: 100%; 
+      gap: 12px;
+    }
+    .action-btn-group > * { width: 100%; }
+    .action-btn-group button,
+    .action-btn-group > div > button { 
+      min-height: 52px;
+      font-size: 15px;
+    }
+    .filter-group { flex-wrap: wrap; }
+  }
+  
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .action-btn-group {
+      gap: 12px;
+    }
+    .action-btn-group button,
+    .action-btn-group > div > button {
+      min-height: 48px;
+    }
+  }
 </style>
 
-<div class="space-y-6">
+<div class="space-y-4 sm:space-y-6">
   <!-- Üst Bar: Filtreler -->
-  <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <select id="ayFiltre" class="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm">
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow p-3 sm:p-4">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4">
+      <!-- Sol: Filtreler -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3 filter-group">
+        <select id="ayFiltre" class="px-2 sm:px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm flex-1 sm:flex-none min-w-[80px]">
           {% for ay_no, ay_adi in aylar %}
           <option value="{{ ay_no }}" {% if ay_no == secili_ay %}selected{% endif %}>{{ ay_adi }}</option>
           {% endfor %}
         </select>
-        <select id="yilFiltre" class="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm">
+        <select id="yilFiltre" class="px-2 sm:px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm flex-1 sm:flex-none min-w-[70px]">
           {% for yil in yillar %}
           <option value="{{ yil }}" {% if yil == secili_yil %}selected{% endif %}>{{ yil }}</option>
           {% endfor %}
         </select>
-        <button onclick="filtrele()" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium text-sm">
-          <i class="fas fa-filter mr-1"></i>Filtrele
+        <button onclick="filtrele()" class="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg font-medium text-sm whitespace-nowrap">
+          <i class="fas fa-filter mr-1"></i><span class="hidden xs:inline">Filtrele</span>
         </button>
-        <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+        <label class="flex items-center gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
           <input type="checkbox" id="tumIslemler" {% if tum_islemler %}checked{% endif %} onchange="filtrele()" class="rounded">
-          Tüm İşlemler
+          <span class="hidden sm:inline">Tüm İşlemler</span>
+          <span class="sm:hidden">Tümü</span>
         </label>
       </div>
-      <button onclick="yeniTedarikModalAc()" class="px-6 py-3 bg-blue-700 text-white rounded-xl font-bold shadow-lg text-base flex items-center gap-2 border-2 border-emerald-400">
-        <i class="fas fa-plus-circle text-lg"></i>Yeni Tedarik İşlemi
-      </button>
+      
+      <!-- Sağ: Otel Seçimi + Yeni Tedarik -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 action-btn-group w-full lg:w-auto">
+        <!-- Otel Seçimi - Profesyonel & Büyük -->
+        {% if otel_secenekleri and otel_secenekleri|length > 1 %}
+        <div class="relative flex-1 sm:flex-none" id="otelDropdownContainer">
+          <button type="button" onclick="toggleOtelDropdown()" id="otelDropdownBtn"
+            class="w-full sm:w-auto min-w-[200px] flex items-center justify-between gap-3 px-5 py-3 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-white rounded-xl text-base font-semibold border border-slate-500 cursor-pointer transition-all shadow-md hover:shadow-lg">
+            <div class="flex items-center gap-3">
+              {% if not secili_otel_id or secili_otel_id == 0 %}
+              <div class="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                <i class="fas fa-globe text-amber-400 text-lg"></i>
+              </div>
+              <span class="truncate max-w-[160px] sm:max-w-[180px]">Tüm Oteller</span>
+              {% else %}
+              <div class="w-9 h-9 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+                <i class="fas fa-hotel text-indigo-400 text-lg"></i>
+              </div>
+              {% for otel in otel_secenekleri %}
+                {% if secili_otel_id == otel.id %}
+                <span class="truncate max-w-[160px] sm:max-w-[180px]">{{ otel.ad }}</span>
+                {% endif %}
+              {% endfor %}
+              {% endif %}
+            </div>
+            <i class="fas fa-chevron-down text-slate-400 text-sm transition-transform" id="otelDropdownArrow"></i>
+          </button>
+          
+          <!-- Dropdown Menu -->
+          <div id="otelDropdownMenu" class="hidden absolute top-full left-0 right-0 sm:left-auto sm:right-0 mt-2 sm:min-w-[280px] bg-slate-800 border border-slate-600 rounded-xl shadow-2xl z-50 overflow-hidden">
+            <div class="px-4 py-2 border-b border-slate-700">
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Otel Seçin</span>
+            </div>
+            <!-- Tüm Oteller Seçeneği -->
+            <div onclick="selectOtel('')" 
+              class="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all hover:bg-slate-700 {% if not secili_otel_id or secili_otel_id == 0 %}bg-amber-600/20 border-l-4 border-amber-500{% else %}border-l-4 border-transparent{% endif %}">
+              <div class="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                <i class="fas fa-globe text-amber-400"></i>
+              </div>
+              <span class="text-white font-medium truncate flex-1">Tüm Oteller</span>
+              {% if not secili_otel_id or secili_otel_id == 0 %}
+              <i class="fas fa-check text-emerald-400"></i>
+              {% endif %}
+            </div>
+            {% for otel in otel_secenekleri %}
+            <div onclick="selectOtel({{ otel.id }})" 
+              class="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all hover:bg-slate-700 {% if secili_otel_id == otel.id %}bg-indigo-600/20 border-l-4 border-indigo-500{% else %}border-l-4 border-transparent{% endif %}">
+              <div class="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+                <i class="fas fa-hotel text-indigo-400"></i>
+              </div>
+              <span class="text-white font-medium truncate flex-1">{{ otel.ad }}</span>
+              {% if secili_otel_id == otel.id %}
+              <i class="fas fa-check text-emerald-400"></i>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        <input type="hidden" id="otelFiltre" value="{{ secili_otel_id }}">
+        {% endif %}
+        
+        <!-- Yeni Tedarik Butonu - Profesyonel & Büyük -->
+        <button onclick="yeniTedarikModalAc()" class="w-full sm:w-auto min-w-[180px] flex items-center justify-center gap-3 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white border border-slate-600 rounded-xl font-bold text-base cursor-pointer transition-all shadow-md hover:shadow-lg">
+          <div class="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
+            <i class="fas fa-plus bg-green-600 text-white text-lg"></i>
+          </div>
+          <span>Yeni Tedarik</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -179,6 +283,23 @@
   </div>
 </div>
 
+<!-- Otel Seçim Uyarı Modal -->
+<div id="otelSecimUyariModal" title="Otel Seçimi Gerekli" style="display: none;">
+  <div class="text-center py-4">
+    <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+      <i class="fas fa-hotel text-4xl text-amber-500"></i>
+    </div>
+    <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-3">Önce Otel Seçmelisiniz</h4>
+    <p class="text-slate-600 dark:text-slate-400 mb-4">
+      Yeni tedarik işlemi başlatmak için lütfen önce bir otel seçin.
+    </p>
+    <p class="text-sm text-slate-500 dark:text-slate-500">
+      <i class="fas fa-info-circle mr-1"></i>
+      "Tüm Oteller" seçiliyken tedarik işlemi yapılamaz.
+    </p>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_scripts %}
@@ -188,6 +309,7 @@ let sepet = {};
 let tumUrunler = [];
 let modalUrun = null;
 const otelId = {{ secili_otel_id|default('null', true) }};
+const otelAdi = '{% for otel in otel_secenekleri %}{% if secili_otel_id == otel.id %}{{ otel.ad }}{% endif %}{% endfor %}';
 
 // Bildirim Modal Fonksiyonları
 function bildirimGoster(mesaj, tip = 'info', baslik = null) {
@@ -255,24 +377,110 @@ $(document).ready(function() {
   });
 });
 
+// Otel Dropdown Toggle
+function toggleOtelDropdown() {
+  const menu = document.getElementById('otelDropdownMenu');
+  const arrow = document.getElementById('otelDropdownArrow');
+  menu.classList.toggle('hidden');
+  arrow.classList.toggle('rotate-180');
+}
+
+// Otel Seç
+function selectOtel(otelId) {
+  document.getElementById('otelDropdownMenu').classList.add('hidden');
+  document.getElementById('otelDropdownArrow').classList.remove('rotate-180');
+  otelDegistir(otelId);
+}
+
+// Dropdown dışına tıklanınca kapat
+document.addEventListener('click', function(e) {
+  const container = document.getElementById('otelDropdownContainer');
+  if (container && !container.contains(e.target)) {
+    document.getElementById('otelDropdownMenu')?.classList.add('hidden');
+    document.getElementById('otelDropdownArrow')?.classList.remove('rotate-180');
+  }
+});
+
+// Otel Değiştir
+function otelDegistir(otelId) {
+  const ay = document.getElementById('ayFiltre').value;
+  const yil = document.getElementById('yilFiltre').value;
+  const tum = document.getElementById('tumIslemler').checked ? 1 : 0;
+  // Boş string veya null ise otel_id parametresi eklenmez (Tüm Oteller)
+  const otelParam = otelId ? '&otel_id=' + otelId : '';
+  window.location.href = `{{ url_for('ana_depo_tedarik') }}?ay=${ay}&yil=${yil}&tum=${tum}${otelParam}`;
+}
+
 // Filtre
 function filtrele() {
   const ay = document.getElementById('ayFiltre').value;
   const yil = document.getElementById('yilFiltre').value;
   const tum = document.getElementById('tumIslemler').checked ? 1 : 0;
-  window.location.href = `{{ url_for('ana_depo_tedarik') }}?ay=${ay}&yil=${yil}&tum=${tum}`;
+  const otelInput = document.getElementById('otelFiltre');
+  const otelId = otelInput ? otelInput.value : '';
+  window.location.href = `{{ url_for('ana_depo_tedarik') }}?ay=${ay}&yil=${yil}&tum=${tum}${otelId ? '&otel_id=' + otelId : ''}`;
 }
 
 // Modal Aç
 function yeniTedarikModalAc() {
+  // Tüm Oteller seçiliyse uyarı göster
+  if (!otelId) {
+    $('#otelSecimUyariModal').dialog({
+      modal: true,
+      width: 420,
+      title: '⚠️ Otel Seçimi Gerekli',
+      draggable: false,
+      resizable: false,
+      buttons: {
+        'Tamam': function() {
+          $(this).dialog('close');
+        }
+      },
+      open: function() {
+        // Dialog butonlarını stillendir
+        $(this).closest('.ui-dialog').find('.ui-dialog-buttonset button').addClass('px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold');
+      }
+    });
+    return;
+  }
+  
   loadTumUrunler();
+  // Modal başlığına otel adını ekle
+  const modalTitle = otelAdi ? `Yeni Tedarik İşlemi - ${otelAdi}` : 'Yeni Tedarik İşlemi';
   $('#yeniTedarikModal').dialog({
     modal: true,
+    title: modalTitle,
     width: Math.min(1000, $(window).width() - 40),
     height: Math.min(650, $(window).height() - 40),
     draggable: false,
     resizable: false,
-    buttons: {}
+    buttons: {},
+    open: function() {
+      // Header'a Kapat butonu ekle
+      const titlebar = $(this).closest('.ui-dialog').find('.ui-dialog-titlebar');
+      if (!titlebar.find('.custom-close-btn').length) {
+        titlebar.append(`
+          <button type="button" class="custom-close-btn" onclick="$('#yeniTedarikModal').dialog('close')" 
+            style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+                   background: #ef4444; color: white; border: none; border-radius: 6px;
+                   padding: 6px 16px; font-size: 13px; font-weight: 500; cursor: pointer;
+                   display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            Kapat
+          </button>
+        `);
+        // Hover efekti
+        titlebar.find('.custom-close-btn').hover(
+          function() { $(this).css('background', '#dc2626'); },
+          function() { $(this).css('background', '#ef4444'); }
+        );
+        // Varsayılan X butonunu gizle
+        titlebar.find('.ui-dialog-titlebar-close').hide();
+      }
+    }
   });
 }
 

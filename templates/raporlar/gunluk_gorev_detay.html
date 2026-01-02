@@ -1,315 +1,511 @@
-{% extends "base.html" %}
-
-{% block title %}Günlük Görev Detay Raporu{% endblock %}
-{% block page_title %}Günlük Görev Tamamlama Raporu{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Günlük Görev Detay Raporu{% endblock
+%} {% block page_title %}Günlük Görev Tamamlama Raporu{% endblock %} {% block
+page_icon_bg %}bg-gradient-to-br from-amber-500 to-orange-600{% endblock %} {%
+block page_icon %}fas fa-tasks{% endblock %} {% block content %}
 <div class="space-y-6">
-    <!-- Filtre Formu -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg font-medium text-slate-900 dark:text-white mb-4">
-                <i class="fas fa-filter mr-2 text-slate-600"></i>Rapor Filtresi
-            </h3>
-            <form method="POST" action="{{ url_for('raporlar.gunluk_gorev_detay_raporu_olustur') }}" id="raporForm" class="space-y-4">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                
-                <!-- Üst Satır: Otel ve Tarihler -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            Otel <span class="text-red-500">*</span>
-                        </label>
-                        <select id="otel_id" name="otel_id" required
-                            class="h-11 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white shadow-sm focus:ring-slate-500 focus:border-slate-500">
-                            <option value="">Otel seçiniz...</option>
-                            {% for otel in oteller %}
-                            <option value="{{ otel.id }}" {% if secili_otel_id == otel.id %}selected{% endif %}>
-                                {{ otel.ad }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            Başlangıç Tarihi <span class="text-red-500">*</span>
-                        </label>
-                        <input type="date" id="baslangic" name="baslangic" required
-                            value="{{ secili_baslangic or '' }}"
-                            class="h-11 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white shadow-sm focus:ring-slate-500 focus:border-slate-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            Bitiş Tarihi <span class="text-red-500">*</span>
-                        </label>
-                        <input type="date" id="bitis" name="bitis" required
-                            value="{{ secili_bitis or '' }}"
-                            class="h-11 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white shadow-sm focus:ring-slate-500 focus:border-slate-500">
-                    </div>
-                </div>
-                
-                <!-- Alt Satır: Kat Sorumluları Checkbox'ları -->
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                            Kat Sorumluları
-                        </label>
-                        <button type="button" id="tumunuSecBtn" 
-                            class="px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-md border border-slate-300 dark:border-slate-600 transition-colors">
-                            Tümünü Seç/Kaldır
-                        </button>
-                    </div>
-                    
-                    <div id="katSorumlulariContainer" class="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 min-h-[60px]">
-                        <p class="text-sm text-slate-500 dark:text-slate-400 italic" id="katSorumlulariPlaceholder">
-                            Önce otel seçiniz...
-                        </p>
-                        <div id="katSorumlulariCheckboxes" class="flex flex-wrap gap-3 hidden">
-                            <!-- Checkbox'lar AJAX ile doldurulacak -->
-                        </div>
-                    </div>
-                    <input type="hidden" id="personel_ids" name="personel_ids" value="">
-                </div>
-                
-                <div class="flex justify-end">
-                    <button type="submit"
-                        class="inline-flex items-center px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition font-medium">
-                        <i class="fas fa-search mr-2"></i>Rapor Oluştur
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    {% if rapor_verisi %}
-    <!-- Özet Kartları -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="bg-gradient-to-br from-slate-600 to-slate-700 rounded-xl p-4 text-white">
-            <p class="text-slate-200 text-sm">Toplam Gün</p>
-            <p class="text-2xl font-bold">{{ rapor_verisi.toplam_gun }}</p>
-        </div>
-        <div class="bg-gradient-to-br from-slate-500 to-slate-600 rounded-xl p-4 text-white">
-            <p class="text-slate-200 text-sm">Toplam Görev</p>
-            <p class="text-2xl font-bold">{{ rapor_verisi.genel_toplam_gorev }}</p>
-        </div>
-        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 text-white">
-            <p class="text-emerald-100 text-sm">Tamamlanan</p>
-            <p class="text-2xl font-bold">{{ rapor_verisi.genel_tamamlanan }}</p>
-        </div>
-        <div class="bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl p-4 text-white">
-            <p class="text-slate-200 text-sm">Tamamlanma Oranı</p>
-            <p class="text-2xl font-bold">%{{ rapor_verisi.genel_tamamlanma_orani }}</p>
-        </div>
-    </div>
-
-    <!-- Günlük Detaylar -->
-    {% for gun in rapor_verisi.gunler %}
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
-        <div class="px-4 py-4 bg-slate-700 text-white">
-            <div class="flex items-center justify-between flex-wrap gap-2">
-                <h3 class="text-lg font-semibold">
-                    <i class="fas fa-calendar-day mr-2"></i>{{ gun.tarih }}
-                </h3>
-                <div class="flex items-center gap-3 text-sm">
-                    <span class="px-3 py-1 bg-slate-600 rounded-full">
-                        <i class="fas fa-tasks mr-1"></i>{{ gun.toplam_gorev }} görev
-                    </span>
-                    <span class="px-3 py-1 bg-emerald-600 rounded-full">
-                        <i class="fas fa-check mr-1"></i>{{ gun.tamamlanan }} tamamlandı
-                    </span>
-                    <span class="px-3 py-1 {% if gun.tamamlanma_orani >= 80 %}bg-emerald-500{% elif gun.tamamlanma_orani >= 50 %}bg-yellow-500{% else %}bg-red-500{% endif %} rounded-full font-semibold">
-                        <i class="fas fa-percentage mr-1"></i>%{{ gun.tamamlanma_orani }}
-                    </span>
-                </div>
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-4 sm:p-5">
+      <div class="flex flex-wrap items-center gap-4">
+        <div class="relative" id="otelDropdownContainer">
+          <button
+            type="button"
+            onclick="toggleOtelDropdown()"
+            id="otelDropdownBtn"
+            class="min-w-[200px] flex items-center justify-between gap-3 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-semibold border border-slate-500 cursor-pointer transition-all shadow-md"
+          >
+            <div class="flex items-center gap-2">
+              {% if not secili_otel_id %}
+              <div
+                class="w-7 h-7 rounded bg-amber-500/20 flex items-center justify-center"
+              >
+                <i class="fas fa-hotel text-amber-400 text-sm"></i>
+              </div>
+              <span class="truncate">Otel Seçiniz</span>
+              {% else %}
+              <div
+                class="w-7 h-7 rounded bg-indigo-500/20 flex items-center justify-center"
+              >
+                <i class="fas fa-hotel text-indigo-400 text-sm"></i>
+              </div>
+              {% for otel in oteller %}{% if secili_otel_id == otel.id %}<span
+                class="truncate"
+                >{{ otel.ad }}</span
+              >{% endif %}{% endfor %} {% endif %}
             </div>
+            <i
+              class="fas fa-chevron-down text-slate-400 text-xs transition-transform"
+              id="otelDropdownArrow"
+            ></i>
+          </button>
+          <div
+            id="otelDropdownMenu"
+            class="hidden absolute top-full left-0 mt-2 min-w-[250px] bg-slate-800 border border-slate-600 rounded-lg shadow-2xl z-50 overflow-hidden"
+          >
+            <div class="px-3 py-2 border-b border-slate-700">
+              <span
+                class="text-xs font-semibold text-slate-400 uppercase tracking-wider"
+                >Otel Seçin</span
+              >
+            </div>
+            {% for otel in oteller %}
+            <div
+              onclick="selectOtel({{ otel.id }})"
+              class="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all hover:bg-slate-700 {% if secili_otel_id == otel.id %}bg-indigo-600/20 border-l-4 border-indigo-500{% else %}border-l-4 border-transparent{% endif %}"
+            >
+              <div
+                class="w-6 h-6 rounded bg-indigo-500/20 flex items-center justify-center"
+              >
+                <i class="fas fa-hotel text-indigo-400 text-xs"></i>
+              </div>
+              <span class="text-white font-medium truncate flex-1 text-sm"
+                >{{ otel.ad }}</span
+              >
+              {% if secili_otel_id == otel.id %}<i
+                class="fas fa-check text-emerald-400 text-sm"
+              ></i
+              >{% endif %}
+            </div>
+            {% endfor %}
+          </div>
         </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                <thead class="bg-slate-600">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase">Personel</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase">Otel</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-white uppercase">Toplam</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-white uppercase">Tamamlanan</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-white uppercase">Bekleyen</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-white uppercase">DND</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-white uppercase">İptal</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-white uppercase">Oran</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                    {% for personel in gun.personeller %}
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
-                        <td class="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">
-                            {{ personel.ad_soyad }}
-                        </td>
-                        <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
-                            {{ personel.otel_ad }}
-                        </td>
-                        <td class="px-4 py-3 text-sm text-center text-slate-700 dark:text-slate-300 font-semibold">
-                            {{ personel.toplam }}
-                        </td>
-                        <td class="px-4 py-3 text-sm text-center text-emerald-600 font-semibold">
-                            {{ personel.tamamlanan }}
-                        </td>
-                        <td class="px-4 py-3 text-sm text-center text-yellow-600">
-                            {{ personel.bekleyen }}
-                        </td>
-                        <td class="px-4 py-3 text-sm text-center text-orange-600">
-                            {{ personel.dnd }}
-                        </td>
-                        <td class="px-4 py-3 text-sm text-center text-red-600">
-                            {{ personel.iptal }}
-                        </td>
-                        <td class="px-4 py-3 text-sm text-center">
-                            <span class="px-2 py-1 rounded-full text-xs font-semibold 
-                                {% if personel.tamamlanma_orani >= 80 %}bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400
-                                {% elif personel.tamamlanma_orani >= 50 %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400
-                                {% else %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400{% endif %}">
-                                %{{ personel.tamamlanma_orani }}
-                            </span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div
+          class="flex items-center gap-2 bg-slate-100 dark:bg-slate-700 rounded-lg px-3 py-2"
+        >
+          <i class="fas fa-calendar-day text-amber-500"></i>
+          <span class="text-sm font-medium text-slate-600 dark:text-slate-300"
+            >Tarih:</span
+          >
+          <input
+            type="date"
+            id="tarihInput"
+            value="{{ secili_tarih or '' }}"
+            onchange="onTarihChange()"
+            class="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-amber-500 w-36"
+          />
         </div>
+      </div>
     </div>
-    {% endfor %}
-    
-    {% if rapor_verisi.gunler|length == 0 %}
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-12 text-center">
-        <i class="fas fa-search text-5xl text-slate-300 dark:text-slate-600 mb-4"></i>
-        <p class="text-slate-500 dark:text-slate-400">Seçilen dönemde görev kaydı bulunamadı.</p>
-    </div>
-    {% endif %}
+  </div>
 
-    <div class="text-center text-sm text-slate-500 dark:text-slate-400">
-        <i class="fas fa-clock mr-1"></i>Rapor Tarihi: {{ rapor_verisi.rapor_tarihi }} | 
-        Dönem: {{ rapor_verisi.baslangic }} - {{ rapor_verisi.bitis }}
+  {% if rapor_verisi %}
+  <!-- Seçilen Otel Başlığı -->
+  {% if secili_otel_adi %}
+  <div
+    class="bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-xl p-4 shadow-lg"
+  >
+    <div class="flex items-center gap-3">
+      <div
+        class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center"
+      >
+        <i class="fas fa-hotel text-white text-xl"></i>
+      </div>
+      <div>
+        <p class="text-indigo-200 text-sm">Seçilen Otel</p>
+        <h2 class="text-white text-xl font-bold">{{ secili_otel_adi }}</h2>
+      </div>
     </div>
-    {% else %}
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-12 text-center">
-        <i class="fas fa-clipboard-list text-5xl text-slate-300 dark:text-slate-600 mb-4"></i>
-        <p class="text-slate-500 dark:text-slate-400">Rapor oluşturmak için yukarıdaki formu kullanın.</p>
+  </div>
+  {% endif %}
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="bg-slate-700 rounded-xl p-4 text-white">
+      <p class="text-slate-300 text-sm">Toplam Görev</p>
+      <p class="text-2xl font-bold">{{ rapor_verisi.genel_toplam_gorev }}</p>
     </div>
-    {% endif %}
+    <div class="bg-emerald-600 rounded-xl p-4 text-white">
+      <p class="text-emerald-100 text-sm">Tamamlanan</p>
+      <p class="text-2xl font-bold">{{ rapor_verisi.genel_tamamlanan }}</p>
+    </div>
+    <div class="bg-yellow-600 rounded-xl p-4 text-white">
+      <p class="text-yellow-100 text-sm">Bekleyen</p>
+      <p class="text-2xl font-bold">{{ rapor_verisi.genel_bekleyen or 0 }}</p>
+    </div>
+    <div class="bg-slate-800 rounded-xl p-4 text-white">
+      <p class="text-slate-300 text-sm">Tamamlanma Oranı</p>
+      <p class="text-2xl font-bold">
+        %{{ rapor_verisi.genel_tamamlanma_orani }}
+      </p>
+    </div>
+  </div>
+
+  {% for gun in rapor_verisi.gunler %}
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+    <div class="px-4 py-3 bg-slate-700 text-white">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <h3 class="text-base font-semibold">
+          <i class="fas fa-calendar-day mr-2"></i>{{ gun.tarih }}
+        </h3>
+        <div class="flex items-center gap-2 text-sm">
+          <span class="px-2 py-1 bg-slate-600 rounded-full text-xs"
+            ><i class="fas fa-tasks mr-1"></i>{{ gun.toplam_gorev }}</span
+          >
+          <span class="px-2 py-1 bg-emerald-600 rounded-full text-xs"
+            ><i class="fas fa-check mr-1"></i>{{ gun.tamamlanan }}</span
+          >
+          <span
+            class="px-2 py-1 {% if gun.tamamlanma_orani >= 80 %}bg-emerald-500{% elif gun.tamamlanma_orani >= 50 %}bg-yellow-500{% else %}bg-red-500{% endif %} rounded-full text-xs font-semibold"
+            >%{{ gun.tamamlanma_orani }}</span
+          >
+        </div>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+        <thead class="bg-slate-100 dark:bg-slate-900">
+          <tr>
+            <th
+              class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase"
+            >
+              Görev Tipi
+            </th>
+            <th
+              class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase"
+            >
+              Otel
+            </th>
+            <th
+              class="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase"
+            >
+              Toplam
+            </th>
+            <th
+              class="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase"
+            >
+              Tamamlanan
+            </th>
+            <th
+              class="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase"
+            >
+              Bekleyen
+            </th>
+            <th
+              class="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase"
+            >
+              DND
+            </th>
+            <th
+              class="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase"
+            >
+              İptal
+            </th>
+            <th
+              class="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase"
+            >
+              Oran
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+          {% for gorev in gun.gorev_tipleri %}
+          <tr
+            class="hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer transition-colors"
+            onclick="showGorevDetay('{{ gorev.gorev_tipi }}', '{{ gorev.gorev_tipi_label }}', {{ gorev.otel_id }}, '{{ gun.tarih_iso }}')"
+          >
+            <td
+              class="px-4 py-2 text-sm font-medium text-slate-900 dark:text-white"
+            >
+              <span class="inline-flex items-center gap-1.5">
+                {% if gorev.gorev_tipi == 'inhouse_kontrol' %}
+                <i class="fas fa-home text-blue-500"></i>
+                {% elif gorev.gorev_tipi == 'arrival_kontrol' %}
+                <i class="fas fa-plane-arrival text-emerald-500"></i>
+                {% elif gorev.gorev_tipi == 'departure_kontrol' %}
+                <i class="fas fa-plane-departure text-orange-500"></i>
+                {% endif %} {{ gorev.gorev_tipi_label }}
+                <i class="fas fa-chevron-right text-slate-400 text-xs ml-1"></i>
+              </span>
+            </td>
+            <td class="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">
+              {{ gorev.otel_ad }}
+            </td>
+            <td
+              class="px-4 py-2 text-sm text-center text-slate-700 dark:text-slate-300 font-semibold"
+            >
+              {{ gorev.toplam }}
+            </td>
+            <td
+              class="px-4 py-2 text-sm text-center text-emerald-600 font-semibold"
+            >
+              {{ gorev.tamamlanan }}
+            </td>
+            <td class="px-4 py-2 text-sm text-center text-yellow-600">
+              {{ gorev.bekleyen }}
+            </td>
+            <td class="px-4 py-2 text-sm text-center text-orange-600">
+              {{ gorev.dnd }}
+            </td>
+            <td class="px-4 py-2 text-sm text-center text-red-600">
+              {{ gorev.iptal }}
+            </td>
+            <td class="px-4 py-2 text-sm text-center">
+              <span
+                class="px-2 py-0.5 rounded-full text-xs font-semibold {% if gorev.tamamlanma_orani >= 80 %}bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400{% elif gorev.tamamlanma_orani >= 50 %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400{% else %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400{% endif %}"
+                >%{{ gorev.tamamlanma_orani }}</span
+              >
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %} {% if rapor_verisi.gunler|length == 0 %}
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-8 text-center">
+    <i
+      class="fas fa-search text-4xl text-slate-300 dark:text-slate-600 mb-3"
+    ></i>
+    <p class="text-slate-500 dark:text-slate-400">
+      Seçilen tarihte görev kaydı bulunamadı.
+    </p>
+  </div>
+  {% endif %} {% else %}
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-8 text-center">
+    <i
+      class="fas fa-clipboard-list text-4xl text-slate-300 dark:text-slate-600 mb-3"
+    ></i>
+    <p class="text-slate-500 dark:text-slate-400">
+      Rapor oluşturmak için otel ve tarih seçin.
+    </p>
+  </div>
+  {% endif %}
 </div>
 
+<!-- Görev Detay Modal -->
+<div id="gorevDetayModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+  <div
+    class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0"
+  >
+    <div
+      class="fixed inset-0 transition-opacity bg-slate-900/75"
+      onclick="closeGorevDetayModal()"
+    ></div>
+    <div
+      class="relative inline-block w-full max-w-4xl overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-slate-800 rounded-xl shadow-2xl"
+    >
+      <!-- Modal Header -->
+      <div class="px-6 py-4 bg-slate-700 text-white">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div
+              id="modalIcon"
+              class="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-500/20"
+            >
+              <i class="fas fa-home text-blue-400"></i>
+            </div>
+            <div>
+              <h3 id="modalTitle" class="text-lg font-semibold">
+                Görev Detayları
+              </h3>
+              <p id="modalSubtitle" class="text-sm text-slate-300">
+                Kat bazlı oda listesi
+              </p>
+            </div>
+          </div>
+          <button
+            onclick="closeGorevDetayModal()"
+            class="p-2 hover:bg-slate-600 rounded-lg transition-colors"
+          >
+            <i class="fas fa-times text-slate-300"></i>
+          </button>
+        </div>
+      </div>
+      <!-- Modal Body -->
+      <div id="modalBody" class="p-6 max-h-[70vh] overflow-y-auto">
+        <div class="flex items-center justify-center py-8">
+          <i class="fas fa-spinner fa-spin text-2xl text-slate-400"></i>
+          <span class="ml-2 text-slate-500">Yükleniyor...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-{% endblock %}
-
-{% block extra_scripts %}
 <script>
-// Bugünün tarihini ayarla
-document.addEventListener('DOMContentLoaded', function() {
-    const baslangicInput = document.getElementById('baslangic');
-    const bitisInput = document.getElementById('bitis');
-    
-    if (!baslangicInput.value) {
-        const today = new Date().toISOString().split('T')[0];
-        baslangicInput.value = today;
-        bitisInput.value = today;
-    }
-    
-    // Otel seçiliyse kat sorumlularını yükle
-    const otelSelect = document.getElementById('otel_id');
-    if (otelSelect.value) {
-        loadKatSorumlulari(otelSelect.value);
-    }
-});
+  var seciliOtelId = null;
+  var seciliTarih = "";
+  {% if secili_otel_id is not none and secili_otel_id %}
+  seciliOtelId = {{ secili_otel_id }};
+  {% endif %}
+  seciliTarih = "{{ secili_tarih|default('', true) }}";
 
-// Otel değiştiğinde kat sorumlularını yükle
-document.getElementById('otel_id').addEventListener('change', function() {
-    loadKatSorumlulari(this.value);
-});
+  function toggleOtelDropdown() {
+      var menu = document.getElementById('otelDropdownMenu');
+      var arrow = document.getElementById('otelDropdownArrow');
+      if (menu) menu.classList.toggle('hidden');
+      if (arrow) arrow.classList.toggle('rotate-180');
+  }
 
-// Kat sorumlularını AJAX ile yükle - Checkbox formatında
-function loadKatSorumlulari(otelId) {
-    const container = document.getElementById('katSorumlulariCheckboxes');
-    const placeholder = document.getElementById('katSorumlulariPlaceholder');
-    
-    if (!otelId) {
-        container.classList.add('hidden');
-        placeholder.classList.remove('hidden');
-        placeholder.textContent = 'Önce otel seçiniz...';
-        return;
-    }
-    
-    placeholder.textContent = 'Yükleniyor...';
-    placeholder.classList.remove('hidden');
-    container.classList.add('hidden');
-    
-    fetch(`/raporlar/api/otel-kat-sorumlulari/${otelId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.personeller.length > 0) {
-                container.innerHTML = '';
-                
-                data.personeller.forEach(p => {
-                    const label = document.createElement('label');
-                    label.className = 'inline-flex items-center cursor-pointer bg-white dark:bg-slate-800 px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-slate-400 transition-colors';
-                    
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.name = 'personel_checkbox';
-                    checkbox.value = p.id;
-                    checkbox.checked = true; // Default hepsi seçili
-                    checkbox.className = 'h-4 w-4 text-slate-600 border-slate-300 rounded focus:ring-slate-500';
-                    checkbox.addEventListener('change', updatePersonelIds);
-                    
-                    const span = document.createElement('span');
-                    span.className = 'ml-2 text-sm text-slate-700 dark:text-slate-300';
-                    span.textContent = p.ad_soyad;
-                    
-                    label.appendChild(checkbox);
-                    label.appendChild(span);
-                    container.appendChild(label);
-                });
-                
-                placeholder.classList.add('hidden');
-                container.classList.remove('hidden');
-                
-                // Hepsini seçili olarak işaretle
-                updatePersonelIds();
-            } else {
-                placeholder.textContent = 'Bu otelde kat sorumlusu bulunamadı';
-                placeholder.classList.remove('hidden');
-                container.classList.add('hidden');
-            }
-        })
-        .catch(err => {
-            console.error('Kat sorumluları yüklenemedi:', err);
-            placeholder.textContent = 'Hata oluştu, tekrar deneyin';
-            placeholder.classList.remove('hidden');
-            container.classList.add('hidden');
-        });
-}
+  function selectOtel(otelId) {
+      var menu = document.getElementById('otelDropdownMenu');
+      var arrow = document.getElementById('otelDropdownArrow');
+      if (menu) menu.classList.add('hidden');
+      if (arrow) arrow.classList.remove('rotate-180');
+      var tarihInput = document.getElementById('tarihInput');
+      var tarih = tarihInput ? tarihInput.value : '';
+      if (!tarih) tarih = new Date().toISOString().split('T')[0];
+      submitRapor(otelId, tarih);
+  }
 
-// Tümünü Seç/Kaldır butonu
-document.getElementById('tumunuSecBtn').addEventListener('click', function() {
-    const checkboxes = document.querySelectorAll('input[name="personel_checkbox"]');
-    if (checkboxes.length === 0) return;
-    
-    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-    
-    checkboxes.forEach(cb => {
-        cb.checked = !allChecked;
-    });
-    
-    updatePersonelIds();
-});
+  function onTarihChange() {
+      if (!seciliOtelId) { alert('Lütfen önce otel seçin!'); return; }
+      var tarihInput = document.getElementById('tarihInput');
+      var tarih = tarihInput ? tarihInput.value : '';
+      if (tarih) submitRapor(seciliOtelId, tarih);
+  }
 
-// Seçili personel ID'lerini güncelle
-function updatePersonelIds() {
-    const checkboxes = document.querySelectorAll('input[name="personel_checkbox"]:checked');
-    const selectedIds = Array.from(checkboxes).map(cb => cb.value);
-    document.getElementById('personel_ids').value = selectedIds.join(',');
-}
+  function submitRapor(otelId, tarih) {
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '{{ url_for("raporlar.gunluk_gorev_detay_raporu_olustur") }}';
+      var csrf = document.createElement('input');
+      csrf.type = 'hidden'; csrf.name = 'csrf_token'; csrf.value = '{{ csrf_token() }}';
+      form.appendChild(csrf);
+      var otelInput = document.createElement('input');
+      otelInput.type = 'hidden'; otelInput.name = 'otel_id'; otelInput.value = otelId;
+      form.appendChild(otelInput);
+      var tarihInputHidden = document.createElement('input');
+      tarihInputHidden.type = 'hidden'; tarihInputHidden.name = 'tarih'; tarihInputHidden.value = tarih;
+      form.appendChild(tarihInputHidden);
+      document.body.appendChild(form);
+      form.submit();
+  }
 
-// Form submit öncesi personel ID'lerini güncelle
-document.getElementById('raporForm').addEventListener('submit', function(e) {
-    updatePersonelIds();
-});
+  function showGorevDetay(gorevTipi, gorevTipiLabel, otelId, tarih) {
+      var modal = document.getElementById('gorevDetayModal');
+      var modalTitle = document.getElementById('modalTitle');
+      var modalSubtitle = document.getElementById('modalSubtitle');
+      var modalIcon = document.getElementById('modalIcon');
+      var modalBody = document.getElementById('modalBody');
+
+      // Icon ve renk ayarla
+      var iconClass = 'fa-home';
+      var iconColor = 'text-blue-400';
+      var bgColor = 'bg-blue-500/20';
+      if (gorevTipi === 'arrival_kontrol') {
+          iconClass = 'fa-plane-arrival';
+          iconColor = 'text-emerald-400';
+          bgColor = 'bg-emerald-500/20';
+      } else if (gorevTipi === 'departure_kontrol') {
+          iconClass = 'fa-plane-departure';
+          iconColor = 'text-orange-400';
+          bgColor = 'bg-orange-500/20';
+      }
+
+      modalIcon.className = 'w-10 h-10 rounded-lg flex items-center justify-center ' + bgColor;
+      modalIcon.innerHTML = '<i class="fas ' + iconClass + ' ' + iconColor + '"></i>';
+      modalTitle.textContent = gorevTipiLabel + ' Görevleri';
+      modalSubtitle.textContent = 'Kat bazlı oda listesi - ' + tarih;
+
+      // Loading göster
+      modalBody.innerHTML = '<div class="flex items-center justify-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-slate-400"></i><span class="ml-2 text-slate-500">Yükleniyor...</span></div>';
+
+      // Modal'ı aç
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+
+      // API'den veri çek
+      fetch('/api/gorev-detay-odalar?otel_id=' + otelId + '&tarih=' + tarih + '&gorev_tipi=' + gorevTipi)
+          .then(function(response) { return response.json(); })
+          .then(function(data) {
+              if (data.success) {
+                  renderGorevDetaylar(data.katlar, gorevTipi);
+              } else {
+                  modalBody.innerHTML = '<div class="text-center py-8 text-red-500"><i class="fas fa-exclamation-circle text-2xl mb-2"></i><p>' + (data.message || 'Veri yüklenemedi') + '</p></div>';
+              }
+          })
+          .catch(function(error) {
+              modalBody.innerHTML = '<div class="text-center py-8 text-red-500"><i class="fas fa-exclamation-circle text-2xl mb-2"></i><p>Bağlantı hatası</p></div>';
+          });
+  }
+
+  function renderGorevDetaylar(katlar, gorevTipi) {
+      var modalBody = document.getElementById('modalBody');
+
+      if (!katlar || katlar.length === 0) {
+          modalBody.innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fas fa-inbox text-4xl mb-3"></i><p>Bu görev tipi için oda bulunamadı.</p></div>';
+          return;
+      }
+
+      var html = '<div class="space-y-4">';
+
+      katlar.forEach(function(kat) {
+          html += '<div class="bg-slate-50 dark:bg-slate-900/50 rounded-lg overflow-hidden">';
+          html += '<div class="px-4 py-3 bg-slate-200 dark:bg-slate-700 flex items-center justify-between">';
+          html += '<div class="flex items-center gap-2">';
+          html += '<i class="fas fa-layer-group text-indigo-500"></i>';
+          html += '<span class="font-semibold text-slate-700 dark:text-white">' + kat.kat_adi + '</span>';
+          html += '</div>';
+          html += '<div class="flex items-center gap-2 text-sm">';
+          html += '<span class="px-2 py-0.5 bg-slate-300 dark:bg-slate-600 rounded text-slate-700 dark:text-slate-300">' + kat.toplam + ' oda</span>';
+          html += '<span class="px-2 py-0.5 bg-emerald-500 text-white rounded">' + kat.tamamlanan + ' ✓</span>';
+          html += '<span class="px-2 py-0.5 bg-yellow-500 text-white rounded">' + kat.bekleyen + ' ⏳</span>';
+          if (kat.dnd > 0) html += '<span class="px-2 py-0.5 bg-orange-500 text-white rounded">' + kat.dnd + ' DND</span>';
+          html += '</div></div>';
+
+          html += '<div class="p-3 grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">';
+          kat.odalar.forEach(function(oda) {
+              var durumClass = 'bg-yellow-100 text-yellow-800 border-yellow-300';
+              var durumIcon = '⏳';
+              if (oda.durum === 'completed') {
+                  durumClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                  durumIcon = '✓';
+              } else if (oda.durum === 'dnd_pending') {
+                  durumClass = 'bg-orange-100 text-orange-800 border-orange-300';
+                  durumIcon = '🚫';
+              } else if (oda.durum === 'incomplete') {
+                  durumClass = 'bg-red-100 text-red-800 border-red-300';
+                  durumIcon = '✗';
+              }
+              html += '<div class="px-2 py-1.5 rounded border text-center text-sm font-medium ' + durumClass + '" title="' + oda.oda_no + ' - ' + oda.durum + '">';
+              html += oda.oda_no + ' <span class="text-xs">' + durumIcon + '</span>';
+              html += '</div>';
+          });
+          html += '</div></div>';
+      });
+
+      html += '</div>';
+
+      // Özet bilgi
+      var toplamOda = 0, tamamlanan = 0, bekleyen = 0, dnd = 0;
+      katlar.forEach(function(k) { toplamOda += k.toplam; tamamlanan += k.tamamlanan; bekleyen += k.bekleyen; dnd += k.dnd; });
+
+      html += '<div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between text-sm">';
+      html += '<div class="flex items-center gap-4">';
+      html += '<span class="text-slate-500">Toplam: <strong class="text-slate-700 dark:text-white">' + toplamOda + '</strong></span>';
+      html += '<span class="text-emerald-600">Tamamlanan: <strong>' + tamamlanan + '</strong></span>';
+      html += '<span class="text-yellow-600">Bekleyen: <strong>' + bekleyen + '</strong></span>';
+      if (dnd > 0) html += '<span class="text-orange-600">DND: <strong>' + dnd + '</strong></span>';
+      html += '</div>';
+      var oran = toplamOda > 0 ? Math.round((tamamlanan / toplamOda) * 100) : 0;
+      html += '<div class="px-3 py-1 rounded-full text-xs font-semibold ' + (oran >= 80 ? 'bg-emerald-100 text-emerald-800' : oran >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') + '">%' + oran + '</div>';
+      html += '</div>';
+
+      modalBody.innerHTML = html;
+  }
+
+  function closeGorevDetayModal() {
+      var modal = document.getElementById('gorevDetayModal');
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+      var tarihInput = document.getElementById('tarihInput');
+      if (tarihInput && !tarihInput.value) tarihInput.value = new Date().toISOString().split('T')[0];
+      document.addEventListener('click', function(e) {
+          var container = document.getElementById('otelDropdownContainer');
+          if (container && !container.contains(e.target)) {
+              var menu = document.getElementById('otelDropdownMenu');
+              var arrow = document.getElementById('otelDropdownArrow');
+              if (menu) menu.classList.add('hidden');
+              if (arrow) arrow.classList.remove('rotate-180');
+          }
+      });
+
+      // ESC tuşu ile modal kapat
+      document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') closeGorevDetayModal();
+      });
+  });
 </script>
 {% endblock %}

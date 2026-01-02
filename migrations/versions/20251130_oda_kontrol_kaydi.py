@@ -1,7 +1,7 @@
 """Oda kontrol kayıtları tablosu
 
 Revision ID: oda_kontrol_kaydi
-Revises: 
+Revises: gorevlendirme_001
 Create Date: 2025-11-30
 
 """
@@ -11,7 +11,7 @@ from datetime import datetime
 
 # revision identifiers
 revision = 'oda_kontrol_kaydi'
-down_revision = None
+down_revision = 'gorevlendirme_001'
 branch_labels = None
 depends_on = None
 

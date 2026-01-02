@@ -417,7 +417,7 @@ def minibar_stok_guncelle(oda_id, urun_id, yeni_miktar, ekstra_miktar=0):
 def tuketim_kaydet(oda_id, urun_id, miktar, personel_id, islem_tipi='setup_kontrol',
                    eklenen_miktar=0, ekstra_miktar=0, zimmet_detay_id=None):
     """
-    Tüketimi minibar_islem tablosuna kaydeder
+    Tüketimi minibar_islem tablosuna kaydeder ve ilgili görevi tamamlar
     
     Args:
         oda_id (int): Oda ID
@@ -460,7 +460,71 @@ def tuketim_kaydet(oda_id, urun_id, miktar, personel_id, islem_tipi='setup_kontr
             zimmet_detay_id=zimmet_detay_id
         )
         db.session.add(detay)
+        
+        # GÖREV TAMAMLAMA ENTEGRASYONu - Minibar işlemi yapıldığında ilgili görevi tamamla
+        gorev_tamamlandi = False
+        try:
+            from models import GorevDetay, GorevDurumLog, GunlukGorev, Kullanici, Urun
+            from datetime import date
+            
+            bugun = date.today()
+            kullanici = Kullanici.query.get(personel_id)
+            
+            if kullanici and kullanici.otel_id:
+                # OTEL BAZLI görevlerde otel_id ile sorgula
+                gorev_detay = GorevDetay.query.join(GunlukGorev).filter(
+                    GunlukGorev.otel_id == kullanici.otel_id,
+                    GunlukGorev.gorev_tarihi == bugun,
+                    GorevDetay.oda_id == oda_id,
+                    GorevDetay.durum.in_(['pending', 'in_progress', 'dnd_pending'])
+                ).first()
+                
+                if gorev_detay:
+                    onceki_durum = gorev_detay.durum
+                    gorev_detay.durum = 'completed'
+                    gorev_detay.kontrol_zamani = get_kktc_now()
+                    
+                    # Ürün bilgisini al
+                    urun = Urun.query.get(urun_id)
+                    urun_adi = urun.urun_adi if urun else 'Ürün'
+                    
+                    if miktar > 0:
+                        gorev_detay.notlar = f'Tüketim kaydedildi: {urun_adi} x{miktar}'
+                    elif eklenen_miktar > 0:
+                        gorev_detay.notlar = f'Ürün eklendi: {urun_adi} x{eklenen_miktar}'
+                    else:
+                        gorev_detay.notlar = f'{islem_tipi} işlemi yapıldı'
+                    
+                    # Log kaydı
+                    log = GorevDurumLog(
+                        gorev_detay_id=gorev_detay.id,
+                        onceki_durum=onceki_durum,
+                        yeni_durum='completed',
+                        degistiren_id=personel_id,
+                        aciklama=gorev_detay.notlar
+                    )
+                    db.session.add(log)
+                    
+                    # Ana görev durumunu güncelle
+                    gorev = gorev_detay.gorev
+                    if gorev:
+                        tamamlanan = sum(1 for d in gorev.detaylar if d.durum == 'completed')
+                        if tamamlanan == len(gorev.detaylar):
+                            gorev.durum = 'completed'
+                            gorev.tamamlanma_tarihi = get_kktc_now()
+                        elif tamamlanan > 0:
+                            gorev.durum = 'in_progress'
+                    
+                    gorev_tamamlandi = True
+                    logger.info(f"Görev tamamlandı: oda_id={oda_id}, gorev_detay_id={gorev_detay.id}")
+        except Exception as gorev_err:
+            # Görev tamamlama hatası ana işlemi etkilemesin
+            logger.warning(f"Görev tamamlama hatası (işlem devam ediyor): {str(gorev_err)}")
+        
         db.session.commit()
+        
+        # İşlem objesine görev bilgisini ekle
+        islem.gorev_tamamlandi = gorev_tamamlandi
         
         return islem
         

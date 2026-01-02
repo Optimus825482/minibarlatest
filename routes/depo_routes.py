@@ -2030,6 +2030,14 @@ def register_depo_routes(app):
             # Seçili otel (None = Tümü)
             secili_otel_id = request.args.get('otel_id', type=int)
             
+            # Seçili otel adını bul
+            secili_otel_adi = None
+            if secili_otel_id:
+                for otel in otel_secenekleri:
+                    if otel.id == secili_otel_id:
+                        secili_otel_adi = otel.ad
+                        break
+            
             # Tüm ürünleri getir
             urunler = Urun.query.filter_by(aktif=True).order_by(Urun.urun_adi).all()
             
@@ -2073,7 +2081,8 @@ def register_depo_routes(app):
             return render_template('depo_sorumlusu/stoklarim.html',
                                  stok_bilgileri=stok_bilgileri,
                                  otel_secenekleri=otel_secenekleri,
-                                 secili_otel_id=secili_otel_id)
+                                 secili_otel_id=secili_otel_id,
+                                 secili_otel_adi=secili_otel_adi)
                                  
         except Exception as e:
             log_hata(e, modul='depo_stoklarim')
@@ -2607,9 +2616,16 @@ def register_depo_routes(app):
             kullanici_otelleri = get_kullanici_otelleri()
             otel_secenekleri = get_otel_filtreleme_secenekleri()
             
-            secili_otel_id = request.args.get('otel_id', type=int)
-            if not secili_otel_id and kullanici_otelleri:
-                secili_otel_id = kullanici_otelleri[0].id
+            # otel_id parametresi: None = Tüm Oteller, sayı = belirli otel
+            otel_id_param = request.args.get('otel_id', '')
+            if otel_id_param == '' or otel_id_param is None:
+                # URL'de otel_id yok = Tüm Oteller
+                secili_otel_id = None
+            else:
+                try:
+                    secili_otel_id = int(otel_id_param)
+                except (ValueError, TypeError):
+                    secili_otel_id = None
             
             # Ay/Yıl filtresi
             bugun = get_kktc_now()
@@ -2624,10 +2640,11 @@ def register_depo_routes(app):
                 db.joinedload(AnaDepoTedarik.detaylar).joinedload(AnaDepoTedarikDetay.urun)
             )
             
-            # Otel filtresi
+            # Otel filtresi - kullanıcının erişebildiği oteller
             otel_ids = [o.id for o in kullanici_otelleri]
             query = query.filter(AnaDepoTedarik.otel_id.in_(otel_ids))
             
+            # Belirli bir otel seçiliyse filtrele
             if secili_otel_id:
                 query = query.filter(AnaDepoTedarik.otel_id == secili_otel_id)
             
