@@ -2070,6 +2070,24 @@ def register_kat_sorumlusu_routes(app):
             
             db.session.commit()
             
+            # Bildirim gönder - Sarfiyat yok ise depo sorumlusuna
+            if kontrol_tipi == 'sarfiyat_yok':
+                try:
+                    from utils.bildirim_service import sarfiyat_yok_bildirimi
+                    from models import Oda, Kullanici
+                    oda = Oda.query.get(oda_id)
+                    personel = Kullanici.query.get(kullanici_id)
+                    if oda and personel:
+                        sarfiyat_yok_bildirimi(
+                            otel_id=oda.kat.otel_id,
+                            oda_no=oda.oda_no,
+                            personel_adi=personel.ad_soyad,
+                            oda_id=oda_id,
+                            gonderen_id=kullanici_id
+                        )
+                except Exception as bildirim_err:
+                    print(f"Sarfiyat yok bildirim hatası: {bildirim_err}")
+            
             return jsonify({
                 'success': True,
                 'message': 'Kontrol tamamlandı',
@@ -2172,6 +2190,25 @@ def register_kat_sorumlusu_routes(app):
                 },
                 aciklama=result['mesaj']
             )
+            
+            # Depo sorumlusuna bildirim gönder
+            try:
+                from utils.bildirim_service import bildirim_olustur
+                from models import Oda
+                oda = Oda.query.get(oda_id)
+                oda_no = oda.oda_numarasi if oda else oda_id
+                
+                bildirim_olustur(
+                    hedef_rol='depo_sorumlusu',
+                    hedef_otel_id=kullanici_oteli.id,
+                    bildirim_tipi='dnd_kayit',
+                    baslik='DND Kaydı',
+                    mesaj=f'Oda {oda_no} için DND kaydı yapıldı ({result["dnd_sayisi"]}/3)',
+                    oda_id=oda_id,
+                    gonderen_id=kullanici_id
+                )
+            except Exception as bildirim_err:
+                print(f"⚠️ DND bildirim hatası: {bildirim_err}")
             
             return jsonify({
                 'success': True,

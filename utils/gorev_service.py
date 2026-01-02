@@ -69,6 +69,22 @@ class GorevService:
             )
             
             db.session.commit()
+            
+            # Bildirim gönder - Kat sorumlularına
+            if result['toplam_oda_sayisi'] > 0:
+                try:
+                    from utils.bildirim_service import gorev_olusturuldu_bildirimi
+                    from models import Otel
+                    otel = Otel.query.get(otel_id)
+                    otel_adi = otel.ad if otel else f"Otel #{otel_id}"
+                    gorev_olusturuldu_bildirimi(
+                        otel_id=otel_id,
+                        otel_adi=otel_adi,
+                        gorev_sayisi=result['toplam_oda_sayisi']
+                    )
+                except Exception as bildirim_err:
+                    print(f"Bildirim gönderme hatası: {bildirim_err}")
+            
             return result
             
         except Exception as e:
@@ -361,6 +377,25 @@ class GorevService:
             GorevService._update_main_task_status(detay.gorev_id)
             
             db.session.commit()
+            
+            # Bildirim gönder - Depo sorumlusuna
+            try:
+                from utils.bildirim_service import gorev_tamamlandi_bildirimi
+                from models import Oda, Kullanici
+                oda = Oda.query.get(detay.oda_id)
+                personel = Kullanici.query.get(personel_id)
+                if oda and personel:
+                    gorev_tamamlandi_bildirimi(
+                        otel_id=oda.kat.otel_id,
+                        oda_no=oda.oda_no,
+                        personel_adi=personel.ad_soyad,
+                        gorev_id=detay.gorev_id,
+                        oda_id=detay.oda_id,
+                        gonderen_id=personel_id
+                    )
+            except Exception as bildirim_err:
+                print(f"Bildirim gönderme hatası: {bildirim_err}")
+            
             return True
             
         except Exception as e:
@@ -432,6 +467,25 @@ class GorevService:
             GorevService._update_main_task_status(detay.gorev_id)
             
             db.session.commit()
+            
+            # Bildirim gönder - Depo sorumlusuna
+            try:
+                from utils.bildirim_service import dnd_bildirimi
+                from models import Oda, Kullanici
+                oda = Oda.query.get(detay.oda_id)
+                personel = Kullanici.query.get(personel_id)
+                if oda and personel:
+                    dnd_bildirimi(
+                        otel_id=oda.kat.otel_id,
+                        oda_no=oda.oda_no,
+                        personel_adi=personel.ad_soyad,
+                        deneme_sayisi=detay.dnd_sayisi,
+                        oda_id=detay.oda_id,
+                        gonderen_id=personel_id
+                    )
+            except Exception as bildirim_err:
+                print(f"DND bildirim gönderme hatası: {bildirim_err}")
+            
             return result
             
         except Exception as e:

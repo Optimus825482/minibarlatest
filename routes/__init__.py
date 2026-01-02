@@ -117,6 +117,10 @@ def register_all_routes(app):
     from routes.gorev_routes import gorev_bp
     app.register_blueprint(gorev_bp)
     
+    # Bildirim Sistemi Routes
+    from routes.bildirim_routes import register_bildirim_routes
+    register_bildirim_routes(app)
+    
     # Sistem Ayarları Routes
     from routes.sistem_ayarlari_routes import register_sistem_ayarlari_routes
     register_sistem_ayarlari_routes(app)

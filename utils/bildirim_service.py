@@ -1,200 +1,116 @@
 """
-Görevlendirme Sistemi - BildirimService
-Görev bildirimleri ve uyarıların yönetimi
+Bildirim Service - Real-time bildirim yönetimi
+
+Bu modül uygulama içi bildirimleri yönetir:
+- Bildirim oluşturma
+- Bildirim okuma
+- Okundu işaretleme
+- SSE stream desteği
 """
 
-from datetime import datetime, date, timezone, timedelta
+from datetime import datetime, timedelta
+from typing import List, Optional, Dict, Any
 import pytz
 
-# KKTC Timezone
+from models import db
+
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
+
 def get_kktc_now():
     return datetime.now(KKTC_TZ)
-from typing import List, Dict, Optional
-from sqlalchemy import and_, or_, func
-from sqlalchemy.orm import joinedload
 
-from models import (
-    db, GunlukGorev, GorevDetay, DNDKontrol, YuklemeGorev,
-    Kullanici, Otel, SistemLog
-)
+
+class BildirimTipi:
+    """Bildirim tipleri"""
+    GOREV_OLUSTURULDU = 'gorev_olusturuldu'
+    GOREV_TAMAMLANDI = 'gorev_tamamlandi'
+    DND_KAYDI = 'dnd_kaydi'
+    SARFIYAT_YOK = 'sarfiyat_yok'
+    DOLULUK_YUKLENDI = 'doluluk_yuklendi'
 
 
 class BildirimService:
-    """Bildirim yönetim servisi"""
-    
-    # Bildirim tipleri
-    BILDIRIM_TIPLERI = {
-        'gorev_olusturuldu': 'Yeni görev oluşturuldu',
-        'gorev_tamamlandi': 'Görev tamamlandı',
-        'dnd_isaretlendi': 'Oda DND olarak işaretlendi',
-        'dnd_tamamlanmadi': 'DND görev tamamlanmadı',
-        'yukleme_bekliyor': 'Yükleme görevi bekliyor',
-        'yukleme_tamamlandi': 'Yükleme tamamlandı',
-        'yukleme_eksik': 'Eksik yükleme tespit edildi'
-    }
+    """Bildirim işlemleri için service class"""
     
     @staticmethod
-    def send_task_notification(personel_id: int, mesaj: str, tip: str, ilgili_id: int = None) -> bool:
+    def bildirim_olustur(
+        hedef_rol: str,
+        bildirim_tipi: str,
+        baslik: str,
+        mesaj: str = None,
+        hedef_otel_id: int = None,
+        hedef_kullanici_id: int = None,
+        oda_id: int = None,
+        gorev_id: int = None,
+        gonderen_id: int = None
+    ) -> int:
         """
-        Görev bildirimi gönderir.
+        Yeni bildirim oluşturur
         
         Args:
-            personel_id: Bildirim gönderilecek personel ID
-            mesaj: Bildirim mesajı
-            tip: Bildirim tipi
-            ilgili_id: İlgili kayıt ID (görev, oda vb.)
+            hedef_rol: 'depo_sorumlusu' veya 'kat_sorumlusu'
+            bildirim_tipi: BildirimTipi enum değeri
+            baslik: Bildirim başlığı
+            mesaj: Detaylı mesaj (opsiyonel)
+            hedef_otel_id: Hedef otel ID (opsiyonel)
+            hedef_kullanici_id: Belirli kullanıcıya gönderim (opsiyonel)
+            oda_id: İlişkili oda ID (opsiyonel)
+            gorev_id: İlişkili görev ID (opsiyonel)
+            gonderen_id: Gönderen kullanıcı ID (opsiyonel)
             
         Returns:
-            bool: Başarılı ise True
+            int: Oluşturulan bildirim ID
         """
         try:
-            # Personel kontrolü
-            personel = Kullanici.query.get(personel_id)
-            if not personel:
-                raise ValueError("Personel bulunamadı")
+            sql = """
+                INSERT INTO bildirimler 
+                (hedef_rol, bildirim_tipi, baslik, mesaj, hedef_otel_id, 
+                 hedef_kullanici_id, oda_id, gorev_id, gonderen_id, olusturma_tarihi)
+                VALUES (:hedef_rol, :bildirim_tipi, :baslik, :mesaj, :hedef_otel_id,
+                        :hedef_kullanici_id, :oda_id, :gorev_id, :gonderen_id, :olusturma_tarihi)
+                RETURNING id
+            """
             
-            # Sistem log'a kaydet (bildirim olarak)
-            log = SistemLog(
-                kullanici_id=personel_id,
-                islem_tipi='bildirim',
-                modul='gorevlendirme',
-                islem_detay={
-                    'tip': tip,
+            result = db.session.execute(
+                db.text(sql),
+                {
+                    'hedef_rol': hedef_rol,
+                    'bildirim_tipi': bildirim_tipi,
+                    'baslik': baslik,
                     'mesaj': mesaj,
-                    'ilgili_id': ilgili_id,
-                    'okundu': False,
-                    'olusturma_zamani': get_kktc_now().isoformat()
+                    'hedef_otel_id': hedef_otel_id,
+                    'hedef_kullanici_id': hedef_kullanici_id,
+                    'oda_id': oda_id,
+                    'gorev_id': gorev_id,
+                    'gonderen_id': gonderen_id,
+                    'olusturma_tarihi': get_kktc_now()
                 }
             )
-            db.session.add(log)
             db.session.commit()
             
-            return True
+            row = result.fetchone()
+            return row[0] if row else None
             
         except Exception as e:
             db.session.rollback()
-            raise Exception(f"Bildirim gönderme hatası: {str(e)}")
+            print(f"Bildirim oluşturma hatası: {e}")
+            return None
     
     @staticmethod
-    def send_dnd_incomplete_notification(gorev_detay_ids: List[int]) -> bool:
+    def kullanici_bildirimlerini_getir(
+        kullanici_id: int,
+        kullanici_rol: str,
+        otel_id: int = None,
+        sadece_okunmamis: bool = False,
+        limit: int = 50
+    ) -> List[Dict[str, Any]]:
         """
-        Tamamlanmayan DND bildirimi gönderir.
+        Kullanıcının bildirimlerini getirir
         
         Args:
-            gorev_detay_ids: Tamamlanmayan DND görev detay ID'leri
-            
-        Returns:
-            bool: Başarılı ise True
-        """
-        try:
-            if not gorev_detay_ids:
-                return True
-            
-            # Görev detaylarını al
-            detaylar = GorevDetay.query.filter(
-                GorevDetay.id.in_(gorev_detay_ids)
-            ).options(
-                joinedload(GorevDetay.oda),
-                joinedload(GorevDetay.gorev).joinedload(GunlukGorev.personel)
-            ).all()
-            
-            # Her detay için bildirim oluştur
-            for detay in detaylar:
-                if not detay.gorev or not detay.gorev.personel:
-                    continue
-                
-                oda_no = detay.oda.oda_no if detay.oda else 'Bilinmiyor'
-                ilk_dnd_zamani = detay.dnd_kontroller[0].kontrol_zamani.strftime('%H:%M') if detay.dnd_kontroller else 'Bilinmiyor'
-                
-                mesaj = f"Oda {oda_no} - DND görev tamamlanmadı. İlk DND: {ilk_dnd_zamani}, Kontrol sayısı: {detay.dnd_sayisi}"
-                
-                # Kat sorumlusuna bildirim
-                BildirimService.send_task_notification(
-                    personel_id=detay.gorev.personel_id,
-                    mesaj=mesaj,
-                    tip='dnd_tamamlanmadi',
-                    ilgili_id=detay.id
-                )
-                
-                # Sistem yöneticilerine bildirim
-                sistem_yoneticileri = Kullanici.query.filter(
-                    Kullanici.rol == 'sistem_yoneticisi',
-                    Kullanici.aktif == True
-                ).all()
-                
-                for yonetici in sistem_yoneticileri:
-                    BildirimService.send_task_notification(
-                        personel_id=yonetici.id,
-                        mesaj=mesaj,
-                        tip='dnd_tamamlanmadi',
-                        ilgili_id=detay.id
-                    )
-            
-            return True
-            
-        except Exception as e:
-            db.session.rollback()
-            raise Exception(f"DND bildirim gönderme hatası: {str(e)}")
-    
-    @staticmethod
-    def send_upload_warning(depo_sorumlusu_id: int, dosya_tipi: str, otel_id: int = None) -> bool:
-        """
-        Yükleme uyarısı gönderir.
-        
-        Args:
-            depo_sorumlusu_id: Depo sorumlusu ID
-            dosya_tipi: 'inhouse' veya 'arrivals'
-            otel_id: Otel ID (opsiyonel)
-            
-        Returns:
-            bool: Başarılı ise True
-        """
-        try:
-            # Otel adını al
-            otel_adi = ''
-            if otel_id:
-                otel = Otel.query.get(otel_id)
-                otel_adi = f" ({otel.ad})" if otel else ''
-            
-            dosya_tipi_adi = 'In House' if dosya_tipi == 'inhouse' else 'Arrivals'
-            mesaj = f"{dosya_tipi_adi} dosyası{otel_adi} henüz yüklenmedi. Lütfen yükleme yapınız."
-            
-            # Depo sorumlusuna bildirim
-            BildirimService.send_task_notification(
-                personel_id=depo_sorumlusu_id,
-                mesaj=mesaj,
-                tip='yukleme_bekliyor',
-                ilgili_id=otel_id
-            )
-            
-            # Sistem yöneticilerine bildirim
-            sistem_yoneticileri = Kullanici.query.filter(
-                Kullanici.rol == 'sistem_yoneticisi',
-                Kullanici.aktif == True
-            ).all()
-            
-            for yonetici in sistem_yoneticileri:
-                BildirimService.send_task_notification(
-                    personel_id=yonetici.id,
-                    mesaj=mesaj,
-                    tip='yukleme_eksik',
-                    ilgili_id=otel_id
-                )
-            
-            return True
-            
-        except Exception as e:
-            db.session.rollback()
-            raise Exception(f"Yükleme uyarısı gönderme hatası: {str(e)}")
-    
-    @staticmethod
-    def get_notifications(personel_id: int, sadece_okunmamis: bool = False, limit: int = 50) -> List[Dict]:
-        """
-        Personel bildirimlerini getirir.
-        
-        Args:
-            personel_id: Personel ID
+            kullanici_id: Kullanıcı ID
+            kullanici_rol: Kullanıcı rolü
+            otel_id: Otel ID (kat sorumlusu için)
             sadece_okunmamis: Sadece okunmamış bildirimleri getir
             limit: Maksimum bildirim sayısı
             
@@ -202,114 +118,263 @@ class BildirimService:
             List[Dict]: Bildirim listesi
         """
         try:
-            query = SistemLog.query.filter(
-                SistemLog.kullanici_id == personel_id,
-                SistemLog.islem_tipi == 'bildirim',
-                SistemLog.modul == 'gorevlendirme'
-            ).order_by(SistemLog.islem_tarihi.desc())
+            sql = """
+                SELECT id, hedef_rol, bildirim_tipi, baslik, mesaj, 
+                       okundu, olusturma_tarihi, oda_id, gorev_id
+                FROM bildirimler
+                WHERE (hedef_rol = :hedef_rol OR hedef_kullanici_id = :kullanici_id)
+            """
+            
+            params = {
+                'hedef_rol': kullanici_rol,
+                'kullanici_id': kullanici_id,
+                'limit': limit
+            }
+            
+            if otel_id:
+                sql += " AND (hedef_otel_id = :otel_id OR hedef_otel_id IS NULL)"
+                params['otel_id'] = otel_id
             
             if sadece_okunmamis:
-                # JSONB içinde okundu=False olanları filtrele
-                query = query.filter(
-                    SistemLog.islem_detay['okundu'].astext == 'false'
-                )
+                sql += " AND okundu = FALSE"
             
-            bildirimler = query.limit(limit).all()
+            # Son 24 saat
+            sql += " AND olusturma_tarihi > NOW() - INTERVAL '24 hours'"
+            sql += " ORDER BY olusturma_tarihi DESC LIMIT :limit"
             
-            result = []
-            for bildirim in bildirimler:
-                detay = bildirim.islem_detay or {}
-                result.append({
-                    'id': bildirim.id,
-                    'tip': detay.get('tip'),
-                    'mesaj': detay.get('mesaj'),
-                    'ilgili_id': detay.get('ilgili_id'),
-                    'okundu': detay.get('okundu', False),
-                    'tarih': bildirim.islem_tarihi.isoformat() if bildirim.islem_tarihi else None
+            result = db.session.execute(db.text(sql), params)
+            
+            bildirimler = []
+            for row in result:
+                bildirimler.append({
+                    'id': row[0],
+                    'hedef_rol': row[1],
+                    'bildirim_tipi': row[2],
+                    'baslik': row[3],
+                    'mesaj': row[4],
+                    'okundu': row[5],
+                    'olusturma_tarihi': row[6].isoformat() if row[6] else None,
+                    'oda_id': row[7],
+                    'gorev_id': row[8]
                 })
             
-            return result
+            return bildirimler
             
         except Exception as e:
-            raise Exception(f"Bildirim getirme hatası: {str(e)}")
+            print(f"Bildirim getirme hatası: {e}")
+            return []
     
     @staticmethod
-    def mark_notification_read(bildirim_id: int) -> bool:
-        """
-        Bildirimi okundu olarak işaretler.
-        
-        Args:
-            bildirim_id: Bildirim (SistemLog) ID
-            
-        Returns:
-            bool: Başarılı ise True
-        """
+    def okunmamis_sayisi(kullanici_id: int, kullanici_rol: str, otel_id: int = None) -> int:
+        """Okunmamış bildirim sayısını döndürür"""
         try:
-            bildirim = SistemLog.query.get(bildirim_id)
-            if not bildirim:
-                raise ValueError("Bildirim bulunamadı")
+            sql = """
+                SELECT COUNT(*) FROM bildirimler
+                WHERE (hedef_rol = :hedef_rol OR hedef_kullanici_id = :kullanici_id)
+                AND okundu = FALSE
+                AND olusturma_tarihi > NOW() - INTERVAL '24 hours'
+            """
             
-            if bildirim.islem_detay:
-                bildirim.islem_detay = {
-                    **bildirim.islem_detay,
-                    'okundu': True,
-                    'okunma_zamani': get_kktc_now().isoformat()
-                }
-                db.session.commit()
+            params = {
+                'hedef_rol': kullanici_rol,
+                'kullanici_id': kullanici_id
+            }
             
+            if otel_id:
+                sql = sql.replace(
+                    "AND okundu = FALSE",
+                    "AND (hedef_otel_id = :otel_id OR hedef_otel_id IS NULL) AND okundu = FALSE"
+                )
+                params['otel_id'] = otel_id
+            
+            result = db.session.execute(db.text(sql), params)
+            row = result.fetchone()
+            return row[0] if row else 0
+            
+        except Exception as e:
+            print(f"Okunmamış sayısı hatası: {e}")
+            return 0
+    
+    @staticmethod
+    def okundu_isaretle(bildirim_id: int) -> bool:
+        """Bildirimi okundu olarak işaretler"""
+        try:
+            sql = "UPDATE bildirimler SET okundu = TRUE WHERE id = :id"
+            db.session.execute(db.text(sql), {'id': bildirim_id})
+            db.session.commit()
             return True
-            
         except Exception as e:
             db.session.rollback()
-            raise Exception(f"Bildirim okundu işaretleme hatası: {str(e)}")
+            print(f"Okundu işaretleme hatası: {e}")
+            return False
     
     @staticmethod
-    def get_unread_count(personel_id: int) -> int:
-        """
-        Okunmamış bildirim sayısını getirir.
-        
-        Args:
-            personel_id: Personel ID
-            
-        Returns:
-            int: Okunmamış bildirim sayısı
-        """
+    def tumunu_okundu_isaretle(kullanici_id: int, kullanici_rol: str, otel_id: int = None) -> bool:
+        """Tüm bildirimleri okundu olarak işaretler"""
         try:
-            count = SistemLog.query.filter(
-                SistemLog.kullanici_id == personel_id,
-                SistemLog.islem_tipi == 'bildirim',
-                SistemLog.modul == 'gorevlendirme',
-                SistemLog.islem_detay['okundu'].astext == 'false'
-            ).count()
+            sql = """
+                UPDATE bildirimler SET okundu = TRUE
+                WHERE (hedef_rol = :hedef_rol OR hedef_kullanici_id = :kullanici_id)
+                AND okundu = FALSE
+            """
             
-            return count
+            params = {
+                'hedef_rol': kullanici_rol,
+                'kullanici_id': kullanici_id
+            }
             
+            if otel_id:
+                sql = sql.replace(
+                    "AND okundu = FALSE",
+                    "AND (hedef_otel_id = :otel_id OR hedef_otel_id IS NULL) AND okundu = FALSE"
+                )
+                params['otel_id'] = otel_id
+            
+            db.session.execute(db.text(sql), params)
+            db.session.commit()
+            return True
         except Exception as e:
-            raise Exception(f"Okunmamış bildirim sayısı getirme hatası: {str(e)}")
+            db.session.rollback()
+            print(f"Tümünü okundu işaretleme hatası: {e}")
+            return False
     
     @staticmethod
-    def send_task_created_notification(personel_id: int, gorev_tipi: str, oda_sayisi: int) -> bool:
+    def yeni_bildirimler_var_mi(
+        kullanici_id: int,
+        kullanici_rol: str,
+        otel_id: int = None,
+        son_kontrol: datetime = None
+    ) -> List[Dict[str, Any]]:
         """
-        Görev oluşturuldu bildirimi gönderir.
-        
-        Args:
-            personel_id: Personel ID
-            gorev_tipi: Görev tipi
-            oda_sayisi: Oda sayısı
-            
-        Returns:
-            bool: Başarılı ise True
+        Son kontrolden sonra gelen yeni bildirimleri getirir (SSE için)
         """
         try:
-            tip_adi = 'In House' if gorev_tipi == 'inhouse_kontrol' else 'Arrivals'
-            mesaj = f"Yeni {tip_adi} görevleri oluşturuldu. Toplam {oda_sayisi} oda kontrol edilecek."
+            sql = """
+                SELECT id, hedef_rol, bildirim_tipi, baslik, mesaj, 
+                       okundu, olusturma_tarihi, oda_id, gorev_id
+                FROM bildirimler
+                WHERE (hedef_rol = :hedef_rol OR hedef_kullanici_id = :kullanici_id)
+                AND okundu = FALSE
+            """
             
-            return BildirimService.send_task_notification(
-                personel_id=personel_id,
-                mesaj=mesaj,
-                tip='gorev_olusturuldu'
-            )
+            params = {
+                'hedef_rol': kullanici_rol,
+                'kullanici_id': kullanici_id
+            }
+            
+            if otel_id:
+                sql += " AND (hedef_otel_id = :otel_id OR hedef_otel_id IS NULL)"
+                params['otel_id'] = otel_id
+            
+            if son_kontrol:
+                sql += " AND olusturma_tarihi > :son_kontrol"
+                params['son_kontrol'] = son_kontrol
+            
+            sql += " ORDER BY olusturma_tarihi DESC LIMIT 10"
+            
+            result = db.session.execute(db.text(sql), params)
+            
+            bildirimler = []
+            for row in result:
+                bildirimler.append({
+                    'id': row[0],
+                    'hedef_rol': row[1],
+                    'bildirim_tipi': row[2],
+                    'baslik': row[3],
+                    'mesaj': row[4],
+                    'okundu': row[5],
+                    'olusturma_tarihi': row[6].isoformat() if row[6] else None,
+                    'oda_id': row[7],
+                    'gorev_id': row[8]
+                })
+            
+            return bildirimler
             
         except Exception as e:
-            raise Exception(f"Görev oluşturuldu bildirimi hatası: {str(e)}")
+            print(f"Yeni bildirim kontrolü hatası: {e}")
+            return []
 
+
+# Yardımcı fonksiyonlar - Kolay kullanım için
+def gorev_olusturuldu_bildirimi(otel_id: int, otel_adi: str, gorev_sayisi: int, gonderen_id: int = None):
+    """Görev oluşturulduğunda kat sorumlularına bildirim gönderir"""
+    return BildirimService.bildirim_olustur(
+        hedef_rol='kat_sorumlusu',
+        bildirim_tipi=BildirimTipi.GOREV_OLUSTURULDU,
+        baslik=f"📋 {otel_adi} için {gorev_sayisi} yeni görev",
+        mesaj=f"Bugün için {gorev_sayisi} oda kontrol görevi oluşturuldu.",
+        hedef_otel_id=otel_id,
+        gonderen_id=gonderen_id
+    )
+
+
+def gorev_tamamlandi_bildirimi(
+    otel_id: int,
+    oda_no: str,
+    personel_adi: str,
+    gorev_id: int = None,
+    oda_id: int = None,
+    gonderen_id: int = None
+):
+    """Görev tamamlandığında depo sorumlusuna bildirim gönderir"""
+    return BildirimService.bildirim_olustur(
+        hedef_rol='depo_sorumlusu',
+        bildirim_tipi=BildirimTipi.GOREV_TAMAMLANDI,
+        baslik=f"✅ Oda {oda_no} kontrolü tamamlandı",
+        mesaj=f"{personel_adi} tarafından kontrol edildi.",
+        hedef_otel_id=otel_id,
+        gorev_id=gorev_id,
+        oda_id=oda_id,
+        gonderen_id=gonderen_id
+    )
+
+
+def dnd_bildirimi(
+    otel_id: int,
+    oda_no: str,
+    personel_adi: str,
+    deneme_sayisi: int,
+    oda_id: int = None,
+    gonderen_id: int = None
+):
+    """DND kaydı oluşturulduğunda depo sorumlusuna bildirim gönderir"""
+    return BildirimService.bildirim_olustur(
+        hedef_rol='depo_sorumlusu',
+        bildirim_tipi=BildirimTipi.DND_KAYDI,
+        baslik=f"🚫 Oda {oda_no} DND ({deneme_sayisi}. deneme)",
+        mesaj=f"{personel_adi} tarafından DND olarak işaretlendi.",
+        hedef_otel_id=otel_id,
+        oda_id=oda_id,
+        gonderen_id=gonderen_id
+    )
+
+
+def sarfiyat_yok_bildirimi(
+    otel_id: int,
+    oda_no: str,
+    personel_adi: str,
+    oda_id: int = None,
+    gonderen_id: int = None
+):
+    """Sarfiyat yok kaydı oluşturulduğunda depo sorumlusuna bildirim gönderir"""
+    return BildirimService.bildirim_olustur(
+        hedef_rol='depo_sorumlusu',
+        bildirim_tipi=BildirimTipi.SARFIYAT_YOK,
+        baslik=f"✔️ Oda {oda_no} sarfiyat yok",
+        mesaj=f"{personel_adi} tarafından kontrol edildi, sarfiyat yok.",
+        hedef_otel_id=otel_id,
+        oda_id=oda_id,
+        gonderen_id=gonderen_id
+    )
+
+
+def doluluk_yuklendi_bildirimi(otel_id: int, otel_adi: str, tarih: str, gonderen_id: int = None):
+    """Doluluk bilgileri yüklendiğinde kat sorumlularına bildirim gönderir"""
+    return BildirimService.bildirim_olustur(
+        hedef_rol='kat_sorumlusu',
+        bildirim_tipi=BildirimTipi.DOLULUK_YUKLENDI,
+        baslik=f"📊 {otel_adi} doluluk bilgileri yüklendi",
+        mesaj=f"{tarih} için doluluk bilgileri güncellendi.",
+        hedef_otel_id=otel_id,
+        gonderen_id=gonderen_id
+    )
