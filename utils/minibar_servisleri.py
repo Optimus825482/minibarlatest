@@ -517,6 +517,24 @@ def tuketim_kaydet(oda_id, urun_id, miktar, personel_id, islem_tipi='setup_kontr
                     
                     gorev_tamamlandi = True
                     logger.info(f"Görev tamamlandı: oda_id={oda_id}, gorev_detay_id={gorev_detay.id}")
+                    
+                    # Bildirim gönder
+                    try:
+                        from utils.bildirim_service import gorev_tamamlandi_bildirimi
+                        oda = Oda.query.get(oda_id)
+                        if oda and kullanici:
+                            personel_adi = f"{kullanici.ad} {kullanici.soyad}"
+                            gorev_tamamlandi_bildirimi(
+                                otel_id=kullanici.otel_id,
+                                oda_no=oda.oda_no,
+                                personel_adi=personel_adi,
+                                gorev_id=gorev_detay.gorev_id,
+                                oda_id=oda_id,
+                                gonderen_id=personel_id
+                            )
+                            logger.info(f"✅ Görev tamamlandı bildirimi gönderildi: Oda {oda.oda_no}")
+                    except Exception as bildirim_err:
+                        logger.warning(f"Bildirim gönderme hatası: {bildirim_err}")
         except Exception as gorev_err:
             # Görev tamamlama hatası ana işlemi etkilemesin
             logger.warning(f"Görev tamamlama hatası (işlem devam ediyor): {str(gorev_err)}")

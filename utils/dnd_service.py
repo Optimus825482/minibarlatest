@@ -248,8 +248,52 @@ class DNDService:
                         gorev.tamamlanma_tarihi = simdi
                     elif tamamlanan > 0:
                         gorev.durum = 'in_progress'
+                
+                # DND tamamlandı bildirimi gönder
+                try:
+                    from utils.bildirim_service import dnd_bildirimi
+                    from models import Oda, Kullanici, Kat
+                    oda = Oda.query.get(detay.oda_id)
+                    personel = Kullanici.query.get(personel_id)
+                    if oda and personel:
+                        kat = Kat.query.get(oda.kat_id)
+                        otel_id = kat.otel_id if kat else None
+                        if otel_id:
+                            personel_adi = f"{personel.ad} {personel.soyad}"
+                            dnd_bildirimi(
+                                otel_id=otel_id,
+                                oda_no=oda.oda_no,
+                                personel_adi=personel_adi,
+                                deneme_sayisi=dnd_sayisi,
+                                oda_id=detay.oda_id,
+                                gonderen_id=personel_id
+                            )
+                except Exception:
+                    pass  # Bildirim hatası ana işlemi etkilemesin
             else:
                 detay.durum = 'dnd_pending'
+                
+                # DND beklemede bildirimi gönder
+                try:
+                    from utils.bildirim_service import dnd_bildirimi
+                    from models import Oda, Kullanici, Kat
+                    oda = Oda.query.get(detay.oda_id)
+                    personel = Kullanici.query.get(personel_id)
+                    if oda and personel:
+                        kat = Kat.query.get(oda.kat_id)
+                        otel_id = kat.otel_id if kat else None
+                        if otel_id:
+                            personel_adi = f"{personel.ad} {personel.soyad}"
+                            dnd_bildirimi(
+                                otel_id=otel_id,
+                                oda_no=oda.oda_no,
+                                personel_adi=personel_adi,
+                                deneme_sayisi=dnd_sayisi,
+                                oda_id=detay.oda_id,
+                                gonderen_id=personel_id
+                            )
+                except Exception:
+                    pass  # Bildirim hatası ana işlemi etkilemesin
             
             # Log kaydı
             log = GorevDurumLog(
