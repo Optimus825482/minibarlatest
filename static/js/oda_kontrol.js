@@ -236,6 +236,9 @@ async function setupListesiYukle(odaId) {
     document.getElementById("toplam_setup").textContent = data.setuplar.length;
     odaBilgileriDiv.classList.remove("hidden");
 
+    // Kontrol durumu badge'ini göster
+    kontrolDurumuBadgeGoster(data.kontrol_durumu);
+
     renderSetupListesi(data.setuplar);
 
     setupListesiDiv.classList.remove("hidden");
@@ -1322,4 +1325,54 @@ function setupAsimiUyariGoster(
   `;
 
   document.body.appendChild(dialog);
+}
+
+  document.body.appendChild(dialog);
+}
+
+// Kontrol durumu badge'ini göster
+function kontrolDurumuBadgeGoster(kontrolDurumu) {
+  const badgeContainer = document.getElementById("kontrol_durumu_badge");
+  const badgeContent = document.getElementById("kontrol_badge_content");
+  
+  if (!badgeContainer || !badgeContent) return;
+  
+  if (!kontrolDurumu) {
+    badgeContainer.classList.add("hidden");
+    return;
+  }
+  
+  let badgeClass = "";
+  let icon = "";
+  let text = "";
+  
+  switch (kontrolDurumu.durum) {
+    case "completed":
+      badgeClass = "bg-green-500 text-white";
+      icon = '<i class="fas fa-check-circle mr-2"></i>';
+      text = `✅ ${kontrolDurumu.tip}`;
+      break;
+    case "dnd":
+      badgeClass = "bg-orange-500 text-white";
+      icon = '<i class="fas fa-door-closed mr-2"></i>';
+      text = `🚫 ${kontrolDurumu.tip}`;
+      break;
+    case "sarfiyat_yok":
+      badgeClass = "bg-blue-500 text-white";
+      icon = '<i class="fas fa-check mr-2"></i>';
+      text = `✔️ ${kontrolDurumu.tip}`;
+      break;
+    default:
+      badgeContainer.classList.add("hidden");
+      return;
+  }
+  
+  // Saat bilgisi varsa ekle
+  if (kontrolDurumu.saat) {
+    text += ` - ${kontrolDurumu.saat}`;
+  }
+  
+  badgeContent.className = `inline-flex items-center px-4 py-2 rounded-full text-sm font-bold ${badgeClass}`;
+  badgeContent.innerHTML = `${icon}${text}`;
+  badgeContainer.classList.remove("hidden");
 }

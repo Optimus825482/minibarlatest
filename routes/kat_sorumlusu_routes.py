@@ -664,6 +664,73 @@ def register_kat_sorumlusu_routes(app):
             
             sonuc['gorev_durumu'] = gorev_durumu
             
+            # Bugünkü kontrol durumunu getir (oda_kontrol_kayitlari + gorev_detaylari)
+            from models import OdaKontrolKaydi, OdaDNDKayit
+            
+            kontrol_durumu = None
+            
+            # 1. Önce görev detaylarından kontrol et (DND veya completed)
+            if gorev_durumu:
+                if gorev_durumu['durum'] == 'completed':
+                    kontrol_durumu = {
+                        'durum': 'completed',
+                        'saat': gorev_durumu['kontrol_zamani'],
+                        'tip': 'Kontrol Edildi'
+                    }
+                elif gorev_durumu['durum'] == 'dnd_pending' and gorev_durumu['dnd_sayisi'] > 0:
+                    kontrol_durumu = {
+                        'durum': 'dnd',
+                        'saat': gorev_durumu['kontrol_zamani'],
+                        'tip': f"DND ({gorev_durumu['dnd_sayisi']}. deneme)"
+                    }
+            
+            # 2. Bağımsız DND kayıtlarını kontrol et
+            if not kontrol_durumu:
+                dnd_kayit = OdaDNDKayit.query.filter(
+                    OdaDNDKayit.oda_id == oda_id,
+                    OdaDNDKayit.kayit_tarihi == bugun
+                ).first()
+                
+                if dnd_kayit:
+                    kontrol_durumu = {
+                        'durum': 'dnd',
+                        'saat': dnd_kayit.son_kontrol_zamani.strftime('%H:%M') if dnd_kayit.son_kontrol_zamani else None,
+                        'tip': f"DND ({dnd_kayit.kontrol_sayisi}. deneme)"
+                    }
+            
+            # 3. Oda kontrol kayıtlarından kontrol et (sarfiyat_yok veya urun_eklendi)
+            if not kontrol_durumu:
+                kontrol_kayit = OdaKontrolKaydi.query.filter(
+                    OdaKontrolKaydi.oda_id == oda_id,
+                    OdaKontrolKaydi.kontrol_tarihi == bugun,
+                    OdaKontrolKaydi.bitis_zamani.isnot(None)
+                ).order_by(OdaKontrolKaydi.bitis_zamani.desc()).first()
+                
+                if kontrol_kayit:
+                    if kontrol_kayit.kontrol_tipi == 'sarfiyat_yok':
+                        kontrol_durumu = {
+                            'durum': 'sarfiyat_yok',
+                            'saat': kontrol_kayit.bitis_zamani.strftime('%H:%M') if kontrol_kayit.bitis_zamani else None,
+                            'tip': 'Sarfiyat Yok'
+                        }
+                    else:
+                        kontrol_durumu = {
+                            'durum': 'completed',
+                            'saat': kontrol_kayit.bitis_zamani.strftime('%H:%M') if kontrol_kayit.bitis_zamani else None,
+                            'tip': 'Kontrol Edildi'
+                        }
+            
+            # 4. Bugünkü minibar işlemlerinden kontrol et
+            if not kontrol_durumu and len(gunluk_islemler) > 0:
+                son_islem = gunluk_islemler[0]  # En son işlem
+                kontrol_durumu = {
+                    'durum': 'completed',
+                    'saat': son_islem['islem_tarihi'],
+                    'tip': 'Kontrol Edildi'
+                }
+            
+            sonuc['kontrol_durumu'] = kontrol_durumu
+            
             # Audit log
             audit_create(
                 tablo_adi='oda_setup',
