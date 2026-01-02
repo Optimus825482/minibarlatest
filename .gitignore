@@ -77,6 +77,10 @@ templates/railway_sync.html
 route_list.txt
 scripts/
 
+# Sunucu bağlantı scriptleri (şifre içerir!)
+scripts/sunucu_*.py
+sunucu_*.py
+
 # Test files
 tests/
 .pytest_cache/

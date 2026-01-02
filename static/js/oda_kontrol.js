@@ -1327,25 +1327,22 @@ function setupAsimiUyariGoster(
   document.body.appendChild(dialog);
 }
 
-  document.body.appendChild(dialog);
-}
-
 // Kontrol durumu badge'ini göster
 function kontrolDurumuBadgeGoster(kontrolDurumu) {
   const badgeContainer = document.getElementById("kontrol_durumu_badge");
   const badgeContent = document.getElementById("kontrol_badge_content");
-  
+
   if (!badgeContainer || !badgeContent) return;
-  
+
   if (!kontrolDurumu) {
     badgeContainer.classList.add("hidden");
     return;
   }
-  
+
   let badgeClass = "";
   let icon = "";
   let text = "";
-  
+
   switch (kontrolDurumu.durum) {
     case "completed":
       badgeClass = "bg-green-500 text-white";
@@ -1366,12 +1363,12 @@ function kontrolDurumuBadgeGoster(kontrolDurumu) {
       badgeContainer.classList.add("hidden");
       return;
   }
-  
+
   // Saat bilgisi varsa ekle
   if (kontrolDurumu.saat) {
     text += ` - ${kontrolDurumu.saat}`;
   }
-  
+
   badgeContent.className = `inline-flex items-center px-4 py-2 rounded-full text-sm font-bold ${badgeClass}`;
   badgeContent.innerHTML = `${icon}${text}`;
   badgeContainer.classList.remove("hidden");
