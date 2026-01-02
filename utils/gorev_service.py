@@ -451,7 +451,7 @@ class GorevService:
             detay.durum = 'dnd_pending'
             
             # Minimum kontrol durumu
-            min_kontrol_tamamlandi = detay.dnd_sayisi >= 3
+            min_kontrol_tamamlandi = detay.dnd_sayisi >= 2
             
             result = {
                 'dnd_sayisi': detay.dnd_sayisi,

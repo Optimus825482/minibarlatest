@@ -59,7 +59,7 @@ class DNDService:
     """
     
     # Sabitler
-    MIN_KONTROL_SAYISI = 3  # Minimum kontrol sayısı
+    MIN_KONTROL_SAYISI = 2  # Minimum kontrol sayısı
     DURUM_AKTIF = 'aktif'
     DURUM_TAMAMLANDI = 'tamamlandi'
     DURUM_IPTAL = 'iptal'
@@ -88,7 +88,7 @@ class DNDService:
                 'dnd_sayisi': 2,
                 'min_kontrol_tamamlandi': False,
                 'durum': 'aktif',
-                'mesaj': 'DND kaydı oluşturuldu (2/3)'
+                'mesaj': 'DND kaydı oluşturuldu (1/2)'
             }
             
         Raises:

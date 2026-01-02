@@ -710,14 +710,14 @@ def dnd_tamamlanmayan_kontrol_task():
                 # Görevi incomplete olarak işaretle
                 onceki_durum = detay.durum
                 detay.durum = 'incomplete'
-                detay.notlar = f'DND kontrolü tamamlanmadı ({detay.dnd_sayisi}/3 kontrol yapıldı)'
+                detay.notlar = f'DND kontrolü tamamlanmadı ({detay.dnd_sayisi}/2 kontrol yapıldı)'
                 
                 # Log kaydı oluştur
                 log = GorevDurumLog(
                     gorev_detay_id=detay.id,
                     onceki_durum=onceki_durum,
                     yeni_durum='incomplete',
-                    aciklama=f'Gün sonu - DND kontrolü tamamlanmadı ({detay.dnd_sayisi}/3)'
+                    aciklama=f'Gün sonu - DND kontrolü tamamlanmadı ({detay.dnd_sayisi}/2)'
                 )
                 db.session.add(log)
                 incomplete_sayisi += 1

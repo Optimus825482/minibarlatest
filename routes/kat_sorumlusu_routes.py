@@ -1309,7 +1309,7 @@ def register_kat_sorumlusu_routes(app):
                         'oda_no': dnd.oda.oda_no if dnd.oda else 'Bilinmiyor',
                         'islem_tipi': 'dnd',
                         'islem_tarihi': dnd.olusturma_tarihi.isoformat() if dnd.olusturma_tarihi else dnd.kayit_tarihi.isoformat(),
-                        'aciklama': f'DND - {dnd.dnd_sayisi}/3 kontrol yapıldı',
+                        'aciklama': f'DND - {dnd.dnd_sayisi}/2 kontrol yapıldı',
                         'urun_sayisi': 0,
                         'dnd_sayisi': dnd.dnd_sayisi,
                         'dnd_durum': dnd.durum,
@@ -2213,7 +2213,7 @@ def register_kat_sorumlusu_routes(app):
                     hedef_otel_id=kullanici_oteli.id,
                     bildirim_tipi='dnd_kayit',
                     baslik=f'🚫 Oda {oda_no} DND',
-                    mesaj=f'Oda {oda_no} için DND kaydı yapıldı ({result["dnd_sayisi"]}/3)',
+                    mesaj=f'Oda {oda_no} için DND kaydı yapıldı ({result["dnd_sayisi"]}/2)',
                     oda_id=oda_id,
                     gonderen_id=kullanici_id
                 )

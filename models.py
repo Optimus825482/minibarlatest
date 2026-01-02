@@ -2159,11 +2159,11 @@ class OdaDNDKayit(db.Model):
     
     @property
     def min_kontrol_tamamlandi(self):
-        """Minimum 3 kontrol yapıldı mı?"""
-        return self.dnd_sayisi >= 3
+        """Minimum 2 kontrol yapıldı mı?"""
+        return self.dnd_sayisi >= 2
     
     def __repr__(self):
-        return f'<OdaDNDKayit #{self.id} - Oda {self.oda_id} - {self.dnd_sayisi}/3 - {self.durum}>'
+        return f'<OdaDNDKayit #{self.id} - Oda {self.oda_id} - {self.dnd_sayisi}/2 - {self.durum}>'
 
 
 class OdaDNDKontrol(db.Model):

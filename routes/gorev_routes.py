@@ -369,7 +369,7 @@ def gorev_dnd(gorev_detay_id):
         if result.get('min_kontrol_tamamlandi'):
             flash(f'Oda DND - {result["dnd_sayisi"]}. kontrol kaydedildi. (Min. kontrol tamamlandı)', 'info')
         else:
-            flash(f'Oda DND olarak işaretlendi. ({result["dnd_sayisi"]}/3 kontrol)', 'warning')
+            flash(f'Oda DND olarak işaretlendi. ({result["dnd_sayisi"]}/2 kontrol)', 'warning')
         
         # AJAX isteği ise JSON döndür
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
