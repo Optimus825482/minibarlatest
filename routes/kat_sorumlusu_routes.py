@@ -694,8 +694,8 @@ def register_kat_sorumlusu_routes(app):
                 if dnd_kayit:
                     kontrol_durumu = {
                         'durum': 'dnd',
-                        'saat': dnd_kayit.son_kontrol_zamani.strftime('%H:%M') if dnd_kayit.son_kontrol_zamani else None,
-                        'tip': f"DND ({dnd_kayit.kontrol_sayisi}. deneme)"
+                        'saat': dnd_kayit.son_dnd_zamani.strftime('%H:%M') if dnd_kayit.son_dnd_zamani else None,
+                        'tip': f"DND ({dnd_kayit.dnd_sayisi}. deneme)"
                     }
             
             # 3. Oda kontrol kayıtlarından kontrol et (sarfiyat_yok veya urun_eklendi)
