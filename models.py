@@ -679,6 +679,7 @@ class MisafirKayit(db.Model):
         db.Index('idx_misafir_oda_tarih', 'oda_id', 'giris_tarihi', 'cikis_tarihi'),
         db.Index('idx_misafir_giris', 'giris_tarihi'),
         db.Index('idx_misafir_cikis', 'cikis_tarihi'),
+        db.Index('idx_misafir_oda_kayit_tipi', 'oda_id', 'kayit_tipi'),  # UPSERT için
     )
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -699,6 +700,7 @@ class MisafirKayit(db.Model):
     
     # Sistem Bilgileri
     olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
+    guncelleme_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)  # UPSERT için
     olusturan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'))
     
     # İlişkiler

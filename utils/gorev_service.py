@@ -80,6 +80,7 @@ class GorevService:
         """
         In House kontrol görevlerini oluşturur - OTEL BAZLI.
         Kalmaya devam eden misafirler için tek bir görev oluşturur.
+        UNIQUE ODA BAZLI: Her oda için sadece bir görev detayı (en güncel kayıt)
         
         Args:
             otel_id: Otel ID
@@ -103,12 +104,25 @@ class GorevService:
                 result['oda_sayisi'] = len(mevcut_gorev.detaylar)
                 return result
             
-            # In House misafir kayıtlarını bul (bugün içinde olan ve in_house tipinde)
-            inhouse_kayitlar = MisafirKayit.query.join(Oda).join(Oda.kat).filter(
+            # UNIQUE ODA BAZLI: Her oda için en güncel kaydı al
+            # Subquery ile her oda için en son oluşturulan kaydı bul
+            from sqlalchemy import func as sql_func
+            
+            # En güncel kayıtları bul (oda_id bazında)
+            subquery = db.session.query(
+                MisafirKayit.oda_id,
+                sql_func.max(MisafirKayit.id).label('max_id')
+            ).join(Oda).join(Oda.kat).filter(
                 MisafirKayit.kayit_tipi == 'in_house',
                 MisafirKayit.giris_tarihi <= tarih,
                 MisafirKayit.cikis_tarihi >= tarih,
                 Oda.kat.has(otel_id=otel_id)
+            ).group_by(MisafirKayit.oda_id).subquery()
+            
+            # Unique oda bazlı kayıtları al
+            inhouse_kayitlar = MisafirKayit.query.join(
+                subquery, 
+                MisafirKayit.id == subquery.c.max_id
             ).all()
             
             if not inhouse_kayitlar:
@@ -127,7 +141,7 @@ class GorevService:
             
             result['gorev_id'] = gorev.id
             
-            # Her oda için detay oluştur
+            # Her UNIQUE oda için detay oluştur
             for kayit in inhouse_kayitlar:
                 detay = GorevDetay(
                     gorev_id=gorev.id,
@@ -148,6 +162,7 @@ class GorevService:
         """
         Arrivals kontrol görevlerini oluşturur - OTEL BAZLI.
         O gün giriş yapacak misafirler için tek bir görev oluşturur.
+        UNIQUE ODA BAZLI: Her oda için sadece bir görev detayı (en güncel kayıt)
         
         Args:
             otel_id: Otel ID
@@ -171,11 +186,21 @@ class GorevService:
                 result['oda_sayisi'] = len(mevcut_gorev.detaylar)
                 return result
             
-            # Arrivals misafir kayıtlarını bul (bugün giriş yapacaklar)
-            arrival_kayitlar = MisafirKayit.query.join(Oda).join(Oda.kat).filter(
+            # UNIQUE ODA BAZLI: Her oda için en güncel kaydı al
+            from sqlalchemy import func as sql_func
+            
+            subquery = db.session.query(
+                MisafirKayit.oda_id,
+                sql_func.max(MisafirKayit.id).label('max_id')
+            ).join(Oda).join(Oda.kat).filter(
                 MisafirKayit.kayit_tipi == 'arrival',
                 MisafirKayit.giris_tarihi == tarih,
                 Oda.kat.has(otel_id=otel_id)
+            ).group_by(MisafirKayit.oda_id).subquery()
+            
+            arrival_kayitlar = MisafirKayit.query.join(
+                subquery,
+                MisafirKayit.id == subquery.c.max_id
             ).all()
             
             if not arrival_kayitlar:
@@ -194,7 +219,7 @@ class GorevService:
             
             result['gorev_id'] = gorev.id
             
-            # Her oda için detay oluştur (varış saati ile birlikte)
+            # Her UNIQUE oda için detay oluştur (varış saati ile birlikte)
             for kayit in arrival_kayitlar:
                 detay = GorevDetay(
                     gorev_id=gorev.id,
@@ -216,6 +241,7 @@ class GorevService:
         """
         Departures kontrol görevlerini oluşturur - OTEL BAZLI.
         O gün çıkış yapacak misafirler için tek bir görev oluşturur.
+        UNIQUE ODA BAZLI: Her oda için sadece bir görev detayı (en güncel kayıt)
         Öncelik sırası: Erken çıkış saati olan odalar önce kontrol edilir.
         
         Args:
@@ -240,12 +266,22 @@ class GorevService:
                 result['oda_sayisi'] = len(mevcut_gorev.detaylar)
                 return result
             
-            # Departures misafir kayıtlarını bul (bugün çıkış yapacaklar)
-            # Çıkış saatine göre sıralı
-            departure_kayitlar = MisafirKayit.query.join(Oda).join(Oda.kat).filter(
+            # UNIQUE ODA BAZLI: Her oda için en güncel kaydı al
+            from sqlalchemy import func as sql_func
+            
+            subquery = db.session.query(
+                MisafirKayit.oda_id,
+                sql_func.max(MisafirKayit.id).label('max_id')
+            ).join(Oda).join(Oda.kat).filter(
                 MisafirKayit.kayit_tipi == 'departure',
                 MisafirKayit.cikis_tarihi == tarih,
                 Oda.kat.has(otel_id=otel_id)
+            ).group_by(MisafirKayit.oda_id).subquery()
+            
+            # Çıkış saatine göre sıralı
+            departure_kayitlar = MisafirKayit.query.join(
+                subquery,
+                MisafirKayit.id == subquery.c.max_id
             ).order_by(MisafirKayit.cikis_saati.asc().nullslast()).all()
             
             if not departure_kayitlar:

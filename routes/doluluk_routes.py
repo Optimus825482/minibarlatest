@@ -776,6 +776,71 @@ def doluluk_yukle():
                     db.session.add(yukleme_gorev)
                 
                 db.session.commit()
+                
+                # 🔥 KRİTİK: YuklemeGorev güncellendikten SONRA görev oluşturma kontrolü yap
+                # 3 dosya da yüklendiyse günlük görevleri oluştur
+                try:
+                    from utils.gorev_service import GorevService
+                    
+                    # 3 dosya tipi için yükleme durumlarını kontrol et
+                    yukleme_durumlari = {}
+                    for tip in ['inhouse', 'arrivals', 'departures']:
+                        yukleme = YuklemeGorev.query.filter(
+                            YuklemeGorev.otel_id == otel_id,
+                            YuklemeGorev.gorev_tarihi == date.today(),
+                            YuklemeGorev.dosya_tipi == tip
+                        ).first()
+                        yukleme_durumlari[tip] = yukleme.durum if yukleme else 'pending'
+                    
+                    print(f"📊 Otel {otel_id} - Yükleme durumları: {yukleme_durumlari}")
+                    
+                    # 3 dosya da yüklendi mi kontrol et
+                    tum_dosyalar_yuklendi = all(
+                        durum == 'completed' for durum in yukleme_durumlari.values()
+                    )
+                    
+                    if tum_dosyalar_yuklendi:
+                        print(f"✅ Otel {otel_id} - 3 dosya da yüklendi! Görevler oluşturuluyor...")
+                        gorev_result = GorevService.create_daily_tasks(otel_id, date.today())
+                        print(f"✅ Görevler oluşturuldu: {gorev_result}")
+                        
+                        # Kat sorumlularına bildirim gönder
+                        if gorev_result.get('toplam_oda_sayisi', 0) > 0:
+                            try:
+                                from utils.bildirim_service import BildirimService
+                                from models import Kullanici
+                                
+                                kat_sorumluları = Kullanici.query.filter(
+                                    Kullanici.otel_id == otel_id,
+                                    Kullanici.rol == 'kat_sorumlusu',
+                                    Kullanici.aktif == True
+                                ).all()
+                                
+                                gorev_tipleri = [
+                                    ('inhouse_kontrol', gorev_result.get('inhouse_gorev_sayisi', 0)),
+                                    ('arrival_kontrol', gorev_result.get('arrival_gorev_sayisi', 0)),
+                                    ('departure_kontrol', gorev_result.get('departure_gorev_sayisi', 0))
+                                ]
+                                
+                                for ks in kat_sorumluları:
+                                    for gorev_tipi, oda_sayisi in gorev_tipleri:
+                                        if oda_sayisi > 0:
+                                            BildirimService.send_task_created_notification(
+                                                personel_id=ks.id,
+                                                gorev_tipi=gorev_tipi,
+                                                oda_sayisi=oda_sayisi
+                                            )
+                            except Exception as bildirim_err:
+                                print(f"⚠️ Bildirim gönderme hatası: {bildirim_err}")
+                    else:
+                        eksik_dosyalar = [tip for tip, durum in yukleme_durumlari.items() if durum != 'completed']
+                        print(f"⏳ Otel {otel_id} - Eksik dosyalar: {eksik_dosyalar}. Görevler henüz oluşturulmayacak.")
+                        
+                except Exception as gorev_olusturma_err:
+                    print(f"⚠️ Görev oluşturma hatası: {gorev_olusturma_err}")
+                    import traceback
+                    traceback.print_exc()
+                    
             except Exception as gorev_err:
                 print(f"YuklemeGorev güncelleme hatası: {gorev_err}")
             

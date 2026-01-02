@@ -211,38 +211,51 @@ class ExcelProcessingService:
                         hatalar.append(f"Satır {row_idx}: Oda '{row_data['oda_no']}' bulunamadı veya oluşturulamadı")
                         continue
                     
-                    # DUPLICATE KONTROLÜ - Aynı oda + giriş + çıkış tarihi + kayıt tipi var mı?
-                    # NOT: Aynı oda için farklı kayıt tipleri olabilir (örn: sabah departure, akşam arrival)
+                    # UPSERT MANTIĞI - Aynı oda + kayıt tipi için:
+                    # 1. Mevcut kayıt varsa GÜNCELLE (en güncel bilgi)
+                    # 2. Yoksa yeni kayıt EKLE
+                    # NOT: Oda bazlı unique kayıt tutuyoruz, tarih farkı önemli değil
                     giris_date = row_data['giris_tarihi'].date() if isinstance(row_data['giris_tarihi'], datetime) else row_data['giris_tarihi']
                     cikis_date = row_data['cikis_tarihi'].date() if isinstance(row_data['cikis_tarihi'], datetime) else row_data['cikis_tarihi']
                     
+                    # Aynı oda + kayıt tipi için mevcut kayıt var mı?
+                    # Tarih kontrolü: Yeni yüklenen dosyanın tarihleri ile çakışan kayıt
                     mevcut_kayit = MisafirKayit.query.filter(
                         MisafirKayit.oda_id == oda.id,
-                        db.func.date(MisafirKayit.giris_tarihi) == giris_date,
-                        db.func.date(MisafirKayit.cikis_tarihi) == cikis_date,
-                        MisafirKayit.kayit_tipi == kayit_tipi  # Kayıt tipini de kontrol et
+                        MisafirKayit.kayit_tipi == kayit_tipi,
+                        # Tarih çakışması kontrolü: mevcut kayıt ile yeni kayıt aynı döneme denk geliyor mu?
+                        MisafirKayit.giris_tarihi <= cikis_date,
+                        MisafirKayit.cikis_tarihi >= giris_date
                     ).first()
                     
                     if mevcut_kayit:
-                        # Kayıt zaten var, atla (duplicate)
-                        hatali_satir += 1
-                        hatalar.append(f"Satır {row_idx}: Oda {row_data['oda_no']} için bu tarih aralığında {kayit_tipi} kaydı zaten mevcut (Duplicate - atlandı)")
-                        continue
-                    
-                    # MisafirKayit oluştur
-                    misafir_kayit = MisafirKayit(
-                        oda_id=oda.id,
-                        islem_kodu=islem_kodu,
-                        misafir_sayisi=row_data['misafir_sayisi'],
-                        giris_tarihi=giris_date,
-                        giris_saati=row_data.get('giris_saati'),
-                        cikis_tarihi=cikis_date,
-                        cikis_saati=row_data.get('cikis_saati'),  # Departures için çıkış saati
-                        kayit_tipi=kayit_tipi,
-                        olusturan_id=user_id
-                    )
-                    
-                    db.session.add(misafir_kayit)
+                        # UPSERT: Mevcut kaydı güncelle (en güncel bilgi)
+                        mevcut_kayit.giris_tarihi = giris_date
+                        mevcut_kayit.cikis_tarihi = cikis_date
+                        mevcut_kayit.misafir_sayisi = row_data['misafir_sayisi']
+                        mevcut_kayit.islem_kodu = islem_kodu  # Son yükleme kodu
+                        if row_data.get('giris_saati'):
+                            mevcut_kayit.giris_saati = row_data['giris_saati']
+                        if row_data.get('cikis_saati'):
+                            mevcut_kayit.cikis_saati = row_data['cikis_saati']
+                        # Güncelleme zamanını kaydet
+                        mevcut_kayit.guncelleme_tarihi = get_kktc_now()
+                        basarili_satir += 1
+                    else:
+                        # INSERT: Yeni kayıt oluştur
+                        misafir_kayit = MisafirKayit(
+                            oda_id=oda.id,
+                            islem_kodu=islem_kodu,
+                            misafir_sayisi=row_data['misafir_sayisi'],
+                            giris_tarihi=giris_date,
+                            giris_saati=row_data.get('giris_saati'),
+                            cikis_tarihi=cikis_date,
+                            cikis_saati=row_data.get('cikis_saati'),
+                            kayit_tipi=kayit_tipi,
+                            olusturan_id=user_id
+                        )
+                        db.session.add(misafir_kayit)
+                        basarili_satir += 1
                     basarili_satir += 1
                     
                 except Exception as e:
