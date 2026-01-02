@@ -678,60 +678,91 @@ def register_dashboard_routes(app):
         except Exception as e:
             print(f"Yükleme görev özeti hatası: {str(e)}")
         
-        # Oda kontrol görevleri özeti (tüm yüklemeler tamamlandığında göster)
+        # Oda kontrol görevleri özeti (tüm yüklemeler tamamlandığında göster) - OTEL BAZLI
         oda_kontrol_ozeti = None
+        oda_kontrol_ozeti_otel_bazli = []  # Her otel için ayrı özet
         try:
             if yukleme_gorev_ozeti and yukleme_gorev_ozeti.get('tamamlanma_orani') == 100:
-                from models import GunlukGorev, GorevDetay
+                from models import GunlukGorev, GorevDetay, Otel
                 from utils.authorization import get_kullanici_otelleri
                 
                 kullanici_otelleri = get_kullanici_otelleri()
                 otel_ids = [o.id for o in kullanici_otelleri] if kullanici_otelleri else []
                 
                 if otel_ids:
-                    # Bugünkü görevleri al
-                    bugun_gorevler = GunlukGorev.query.filter(
-                        GunlukGorev.otel_id.in_(otel_ids),
-                        db.func.date(GunlukGorev.gorev_tarihi) == bugun
-                    ).all()
-                    
-                    gorev_ids = [g.id for g in bugun_gorevler]
-                    
-                    # Oda bazlı detayları al (GorevDetay tablosundan)
-                    if gorev_ids:
-                        detaylar = GorevDetay.query.filter(
-                            GorevDetay.gorev_id.in_(gorev_ids)
+                    # Her otel için ayrı özet oluştur
+                    for otel in kullanici_otelleri:
+                        # Bu otelin bugünkü görevlerini al
+                        otel_gorevler = GunlukGorev.query.filter(
+                            GunlukGorev.otel_id == otel.id,
+                            db.func.date(GunlukGorev.gorev_tarihi) == bugun
                         ).all()
                         
-                        toplam = len(detaylar)
-                        tamamlanan_oda = len([d for d in detaylar if d.durum == 'completed'])
-                        bekleyen_oda = len([d for d in detaylar if d.durum == 'pending'])
-                        devam_eden = len([d for d in detaylar if d.durum == 'in_progress'])
+                        gorev_ids = [g.id for g in otel_gorevler]
                         
-                        # Görev tiplerine göre oda sayılarını hesapla
-                        gorev_tip_map = {g.id: g.gorev_tipi for g in bugun_gorevler}
+                        if gorev_ids:
+                            detaylar = GorevDetay.query.filter(
+                                GorevDetay.gorev_id.in_(gorev_ids)
+                            ).all()
+                            
+                            toplam = len(detaylar)
+                            tamamlanan_oda = len([d for d in detaylar if d.durum == 'completed'])
+                            bekleyen_oda = len([d for d in detaylar if d.durum == 'pending'])
+                            devam_eden = len([d for d in detaylar if d.durum == 'in_progress'])
+                            
+                            # Görev tiplerine göre oda sayılarını hesapla
+                            gorev_tip_map = {g.id: g.gorev_tipi for g in otel_gorevler}
+                            
+                            inhouse_detaylar = [d for d in detaylar if gorev_tip_map.get(d.gorev_id) == 'inhouse_kontrol']
+                            arrival_detaylar = [d for d in detaylar if gorev_tip_map.get(d.gorev_id) == 'arrival_kontrol']
+                            departure_detaylar = [d for d in detaylar if gorev_tip_map.get(d.gorev_id) == 'departure_kontrol']
+                            
+                            inhouse = len(inhouse_detaylar)
+                            arrival = len(arrival_detaylar)
+                            departure = len(departure_detaylar)
+                            
+                            inhouse_tamamlanan = len([d for d in inhouse_detaylar if d.durum == 'completed'])
+                            arrival_tamamlanan = len([d for d in arrival_detaylar if d.durum == 'completed'])
+                            departure_tamamlanan = len([d for d in departure_detaylar if d.durum == 'completed'])
+                            
+                            otel_ozet = {
+                                'otel_id': otel.id,
+                                'otel_ad': otel.ad,
+                                'otel_logo': otel.logo if hasattr(otel, 'logo') else None,
+                                'toplam': toplam,
+                                'tamamlanan': tamamlanan_oda,
+                                'bekleyen': bekleyen_oda,
+                                'devam_eden': devam_eden,
+                                'tamamlanma_orani': int((tamamlanan_oda / toplam) * 100) if toplam > 0 else 0,
+                                'inhouse': {'toplam': inhouse, 'tamamlanan': inhouse_tamamlanan},
+                                'arrival': {'toplam': arrival, 'tamamlanan': arrival_tamamlanan},
+                                'departure': {'toplam': departure, 'tamamlanan': departure_tamamlanan}
+                            }
+                            oda_kontrol_ozeti_otel_bazli.append(otel_ozet)
+                    
+                    # Toplam özet (eski format - geriye uyumluluk için)
+                    if oda_kontrol_ozeti_otel_bazli:
+                        toplam_tum = sum(o['toplam'] for o in oda_kontrol_ozeti_otel_bazli)
+                        tamamlanan_tum = sum(o['tamamlanan'] for o in oda_kontrol_ozeti_otel_bazli)
+                        bekleyen_tum = sum(o['bekleyen'] for o in oda_kontrol_ozeti_otel_bazli)
+                        devam_eden_tum = sum(o['devam_eden'] for o in oda_kontrol_ozeti_otel_bazli)
                         
-                        inhouse_detaylar = [d for d in detaylar if gorev_tip_map.get(d.gorev_id) == 'inhouse_kontrol']
-                        arrival_detaylar = [d for d in detaylar if gorev_tip_map.get(d.gorev_id) == 'arrival_kontrol']
-                        departure_detaylar = [d for d in detaylar if gorev_tip_map.get(d.gorev_id) == 'departure_kontrol']
-                        
-                        inhouse = len(inhouse_detaylar)
-                        arrival = len(arrival_detaylar)
-                        departure = len(departure_detaylar)
-                        
-                        inhouse_tamamlanan = len([d for d in inhouse_detaylar if d.durum == 'completed'])
-                        arrival_tamamlanan = len([d for d in arrival_detaylar if d.durum == 'completed'])
-                        departure_tamamlanan = len([d for d in departure_detaylar if d.durum == 'completed'])
+                        inhouse_toplam = sum(o['inhouse']['toplam'] for o in oda_kontrol_ozeti_otel_bazli)
+                        inhouse_tamamlanan = sum(o['inhouse']['tamamlanan'] for o in oda_kontrol_ozeti_otel_bazli)
+                        arrival_toplam = sum(o['arrival']['toplam'] for o in oda_kontrol_ozeti_otel_bazli)
+                        arrival_tamamlanan = sum(o['arrival']['tamamlanan'] for o in oda_kontrol_ozeti_otel_bazli)
+                        departure_toplam = sum(o['departure']['toplam'] for o in oda_kontrol_ozeti_otel_bazli)
+                        departure_tamamlanan = sum(o['departure']['tamamlanan'] for o in oda_kontrol_ozeti_otel_bazli)
                         
                         oda_kontrol_ozeti = {
-                            'toplam': toplam,
-                            'tamamlanan': tamamlanan_oda,
-                            'bekleyen': bekleyen_oda,
-                            'devam_eden': devam_eden,
-                            'tamamlanma_orani': int((tamamlanan_oda / toplam) * 100) if toplam > 0 else 0,
-                            'inhouse': {'toplam': inhouse, 'tamamlanan': inhouse_tamamlanan},
-                            'arrival': {'toplam': arrival, 'tamamlanan': arrival_tamamlanan},
-                            'departure': {'toplam': departure, 'tamamlanan': departure_tamamlanan}
+                            'toplam': toplam_tum,
+                            'tamamlanan': tamamlanan_tum,
+                            'bekleyen': bekleyen_tum,
+                            'devam_eden': devam_eden_tum,
+                            'tamamlanma_orani': int((tamamlanan_tum / toplam_tum) * 100) if toplam_tum > 0 else 0,
+                            'inhouse': {'toplam': inhouse_toplam, 'tamamlanan': inhouse_tamamlanan},
+                            'arrival': {'toplam': arrival_toplam, 'tamamlanan': arrival_tamamlanan},
+                            'departure': {'toplam': departure_toplam, 'tamamlanan': departure_tamamlanan}
                         }
         except Exception as e:
             print(f"Oda kontrol özeti hatası: {str(e)}")
@@ -756,7 +787,8 @@ def register_dashboard_routes(app):
                              dashboard_bildirimleri=dashboard_bildirimleri,
                              bildirim_sayilari=bildirim_sayilari,
                              yukleme_gorev_ozeti=yukleme_gorev_ozeti,
-                             oda_kontrol_ozeti=oda_kontrol_ozeti)
+                             oda_kontrol_ozeti=oda_kontrol_ozeti,
+                             oda_kontrol_ozeti_otel_bazli=oda_kontrol_ozeti_otel_bazli)
 
     
     @app.route('/kat-sorumlusu')

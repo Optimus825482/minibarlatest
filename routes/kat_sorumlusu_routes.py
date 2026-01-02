@@ -1118,71 +1118,141 @@ def register_kat_sorumlusu_routes(app):
     @login_required
     @role_required('kat_sorumlusu')
     def api_minibar_islemlerim():
-        """Kat sorumlusunun yaptığı minibar işlemlerini listele"""
+        """Kat sorumlusunun yaptığı minibar işlemlerini listele (DND kayıtları dahil)"""
         try:
             from datetime import date, datetime
+            from models import OdaDNDKayit, OdaDNDKontrol
             
             kullanici_id = session.get('kullanici_id')
+            kullanici = Kullanici.query.get(kullanici_id)
             
             # Filtreler
             tarih_str = request.args.get('tarih')
             oda_no = request.args.get('oda')
             islem_tipi = request.args.get('islem_tipi')
             
-            # Query oluştur - Optimized (N+1 problemi çözüldü)
-            query = MinibarIslem.query.options(
-                joinedload(MinibarIslem.oda).joinedload(Oda.kat),
-                joinedload(MinibarIslem.personel),
-                selectinload(MinibarIslem.detaylar).joinedload(MinibarIslemDetay.urun)
-            ).filter_by(personel_id=kullanici_id)
-            
-            # Tarih filtresi
-            if tarih_str:
-                tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
-                query = query.filter(db.func.date(MinibarIslem.islem_tarihi) == tarih)
-            
-            # Oda filtresi
-            if oda_no:
-                query = query.join(Oda).filter(Oda.oda_no.ilike(f'%{oda_no}%'))
-            
-            # İşlem tipi filtresi
-            if islem_tipi:
-                query = query.filter(MinibarIslem.islem_tipi == islem_tipi)
-            
-            # Sıralama
-            islemler = query.order_by(MinibarIslem.islem_tarihi.desc()).all()
-            
             # Bugünün tarihi
             bugun = date.today()
             
             # Sonuçları hazırla
             sonuc = []
-            for islem in islemler:
-                islem_tarihi = islem.islem_tarihi.date() if hasattr(islem.islem_tarihi, 'date') else islem.islem_tarihi
-                ayni_gun = islem_tarihi == bugun
+            
+            # ============================================
+            # 1. MİNİBAR İŞLEMLERİ
+            # ============================================
+            if islem_tipi != 'dnd':  # DND filtresi değilse minibar işlemlerini getir
+                query = MinibarIslem.query.options(
+                    joinedload(MinibarIslem.oda).joinedload(Oda.kat),
+                    joinedload(MinibarIslem.personel),
+                    selectinload(MinibarIslem.detaylar).joinedload(MinibarIslemDetay.urun)
+                ).filter_by(personel_id=kullanici_id)
                 
-                # Detayları getir
-                detaylar = []
-                for detay in islem.detaylar:
-                    detaylar.append({
-                        'urun_adi': detay.urun.urun_adi,
-                        'setup_miktari': detay.setup_miktari or 0,
-                        'baslangic_stok': detay.baslangic_stok,
-                        'eklenen_miktar': detay.eklenen_miktar,
-                        'tuketim': detay.tuketim,
-                        'bitis_stok': detay.bitis_stok
+                # Tarih filtresi
+                if tarih_str:
+                    tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
+                    query = query.filter(db.func.date(MinibarIslem.islem_tarihi) == tarih)
+                
+                # Oda filtresi
+                if oda_no:
+                    query = query.join(Oda).filter(Oda.oda_no.ilike(f'%{oda_no}%'))
+                
+                # İşlem tipi filtresi
+                if islem_tipi:
+                    query = query.filter(MinibarIslem.islem_tipi == islem_tipi)
+                
+                # Sıralama
+                islemler = query.order_by(MinibarIslem.islem_tarihi.desc()).all()
+                
+                for islem in islemler:
+                    islem_tarihi = islem.islem_tarihi.date() if hasattr(islem.islem_tarihi, 'date') else islem.islem_tarihi
+                    ayni_gun = islem_tarihi == bugun
+                    
+                    # Detayları getir
+                    detaylar = []
+                    for detay in islem.detaylar:
+                        detaylar.append({
+                            'urun_adi': detay.urun.urun_adi,
+                            'setup_miktari': detay.setup_miktari or 0,
+                            'baslangic_stok': detay.baslangic_stok,
+                            'eklenen_miktar': detay.eklenen_miktar,
+                            'tuketim': detay.tuketim,
+                            'bitis_stok': detay.bitis_stok
+                        })
+                    
+                    sonuc.append({
+                        'id': islem.id,
+                        'kayit_tipi': 'minibar',
+                        'oda_no': islem.oda.oda_no,
+                        'islem_tipi': islem.islem_tipi,
+                        'islem_tarihi': islem.islem_tarihi.isoformat(),
+                        'aciklama': islem.aciklama,
+                        'urun_sayisi': len(detaylar),
+                        'detaylar': detaylar,
+                        'ayni_gun': ayni_gun
                     })
+            
+            # ============================================
+            # 2. DND KAYITLARI
+            # ============================================
+            if not islem_tipi or islem_tipi == 'dnd':  # Tümü veya DND filtresi
+                # Kullanıcının kontrol ettiği DND kayıtlarını getir
+                dnd_query = db.session.query(OdaDNDKayit).join(
+                    OdaDNDKontrol, OdaDNDKayit.id == OdaDNDKontrol.dnd_kayit_id
+                ).filter(
+                    OdaDNDKontrol.kontrol_eden_id == kullanici_id
+                ).options(
+                    joinedload(OdaDNDKayit.oda),
+                    joinedload(OdaDNDKayit.otel)
+                ).distinct()
                 
-                sonuc.append({
-                    'id': islem.id,
-                    'oda_no': islem.oda.oda_no,
-                    'islem_tipi': islem.islem_tipi,
-                    'islem_tarihi': islem.islem_tarihi.isoformat(),
-                    'aciklama': islem.aciklama,
-                    'urun_sayisi': len(detaylar),
-                    'detaylar': detaylar,
-                    'ayni_gun': ayni_gun
-                })
+                # Tarih filtresi
+                if tarih_str:
+                    tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
+                    dnd_query = dnd_query.filter(OdaDNDKayit.kayit_tarihi == tarih)
+                
+                # Oda filtresi
+                if oda_no:
+                    dnd_query = dnd_query.join(Oda, OdaDNDKayit.oda_id == Oda.id).filter(
+                        Oda.oda_no.ilike(f'%{oda_no}%')
+                    )
+                
+                dnd_kayitlari = dnd_query.order_by(OdaDNDKayit.olusturma_tarihi.desc()).all()
+                
+                for dnd in dnd_kayitlari:
+                    # Bu kullanıcının yaptığı kontrolleri getir
+                    kontroller = OdaDNDKontrol.query.filter_by(
+                        dnd_kayit_id=dnd.id,
+                        kontrol_eden_id=kullanici_id
+                    ).order_by(OdaDNDKontrol.kontrol_no).all()
+                    
+                    ayni_gun = dnd.kayit_tarihi == bugun
+                    
+                    # Kontrol detayları
+                    kontrol_detaylari = []
+                    for k in kontroller:
+                        kontrol_detaylari.append({
+                            'kontrol_no': k.kontrol_no,
+                            'kontrol_zamani': k.kontrol_zamani.isoformat() if k.kontrol_zamani else None,
+                            'notlar': k.notlar
+                        })
+                    
+                    sonuc.append({
+                        'id': dnd.id,
+                        'kayit_tipi': 'dnd',
+                        'oda_no': dnd.oda.oda_no if dnd.oda else 'Bilinmiyor',
+                        'islem_tipi': 'dnd',
+                        'islem_tarihi': dnd.olusturma_tarihi.isoformat() if dnd.olusturma_tarihi else dnd.kayit_tarihi.isoformat(),
+                        'aciklama': f'DND - {dnd.dnd_sayisi}/3 kontrol yapıldı',
+                        'urun_sayisi': 0,
+                        'dnd_sayisi': dnd.dnd_sayisi,
+                        'dnd_durum': dnd.durum,
+                        'kontroller': kontrol_detaylari,
+                        'detaylar': [],
+                        'ayni_gun': ayni_gun
+                    })
+            
+            # Tarihe göre sırala (en yeni en üstte)
+            sonuc.sort(key=lambda x: x['islem_tarihi'], reverse=True)
             
             return jsonify({
                 'success': True,

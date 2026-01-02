@@ -77,6 +77,54 @@ function renderIslemler(islemler) {
     const tr = document.createElement("tr");
     tr.className = "hover:bg-slate-50 transition-colors";
 
+    // DND kaydı için özel görünüm
+    if (islem.kayit_tipi === "dnd" || islem.islem_tipi === "dnd") {
+      const dndDurum =
+        islem.dnd_durum === "tamamlandi"
+          ? "Tamamlandı"
+          : islem.dnd_durum === "iptal"
+          ? "İptal"
+          : "Aktif";
+      const dndClass =
+        islem.dnd_durum === "tamamlandi"
+          ? "bg-green-100 text-green-800"
+          : islem.dnd_durum === "iptal"
+          ? "bg-red-100 text-red-800"
+          : "bg-yellow-100 text-yellow-800";
+
+      tr.innerHTML = `
+        <td class="px-4 py-3 text-sm text-slate-900">
+          ${formatTarih(islem.islem_tarihi)}
+        </td>
+        <td class="px-4 py-3 text-sm font-medium text-slate-900">
+          ${islem.oda_no}
+        </td>
+        <td class="px-4 py-3">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+            🚫 DND (${islem.dnd_sayisi || 0}/3)
+          </span>
+        </td>
+        <td class="px-4 py-3">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${dndClass}">
+            ${dndDurum}
+          </span>
+        </td>
+        <td class="px-4 py-3 text-center">
+          <button
+            onclick='detayGoster(${JSON.stringify(islem).replace(
+              /'/g,
+              "&#39;"
+            )})'
+            class="inline-flex items-center px-3 py-1.5 bg-slate-600 text-white text-xs font-medium rounded-lg hover:bg-slate-700 transition-colors"
+          >
+            Detay
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+      return;
+    }
+
     const islemTipiText =
       {
         setup_kontrol: "Tüketim İkamesi",
@@ -151,6 +199,95 @@ function formatTarih(tarihStr) {
 // Detay göster
 function detayGoster(islem) {
   const detayIcerik = document.getElementById("detay_icerik");
+
+  // DND kaydı için özel görünüm
+  if (islem.kayit_tipi === "dnd" || islem.islem_tipi === "dnd") {
+    const dndDurum =
+      islem.dnd_durum === "tamamlandi"
+        ? "Tamamlandı"
+        : islem.dnd_durum === "iptal"
+        ? "İptal"
+        : "Aktif";
+    const dndClass =
+      islem.dnd_durum === "tamamlandi"
+        ? "bg-green-50 border-green-200"
+        : islem.dnd_durum === "iptal"
+        ? "bg-red-50 border-red-200"
+        : "bg-yellow-50 border-yellow-200";
+    const dndIconClass =
+      islem.dnd_durum === "tamamlandi"
+        ? "text-green-600"
+        : islem.dnd_durum === "iptal"
+        ? "text-red-600"
+        : "text-yellow-600";
+
+    let html = `
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Oda</label>
+            <p class="mt-1 text-base text-slate-900">${islem.oda_no}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Tarih</label>
+            <p class="mt-1 text-base text-slate-900">${formatTarih(
+              islem.islem_tarihi
+            )}</p>
+          </div>
+        </div>
+
+        <div class="${dndClass} border rounded-lg p-4">
+          <div class="flex items-center">
+            <svg class="w-8 h-8 ${dndIconClass} mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+            </svg>
+            <div>
+              <p class="text-lg font-semibold text-slate-800">DND - Rahatsız Etmeyin</p>
+              <p class="text-sm text-slate-600">${
+                islem.dnd_sayisi || 0
+              }/3 kontrol yapıldı - ${dndDurum}</p>
+            </div>
+          </div>
+        </div>
+    `;
+
+    // Kontrol detayları
+    if (islem.kontroller && islem.kontroller.length > 0) {
+      html += `
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Kontrol Geçmişi</label>
+          <div class="space-y-2">
+      `;
+
+      islem.kontroller.forEach((k) => {
+        html += `
+          <div class="flex items-center justify-between bg-slate-50 rounded-lg p-3">
+            <div class="flex items-center">
+              <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-800 text-sm font-medium mr-3">
+                ${k.kontrol_no}
+              </span>
+              <span class="text-sm text-slate-700">${
+                k.kontrol_no
+              }. Kontrol</span>
+            </div>
+            <span class="text-sm text-slate-500">${
+              k.kontrol_zamani ? formatTarih(k.kontrol_zamani) : "-"
+            }</span>
+          </div>
+        `;
+      });
+
+      html += `
+          </div>
+        </div>
+      `;
+    }
+
+    html += `</div>`;
+    detayIcerik.innerHTML = html;
+    document.getElementById("detayModal").classList.remove("hidden");
+    return;
+  }
 
   // Sarfiyat Yok işlemi için özel görünüm
   if (islem.islem_tipi === "sarfiyat_yok") {

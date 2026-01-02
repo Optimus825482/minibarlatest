@@ -30,7 +30,7 @@ from sqlalchemy.orm import joinedload
 
 from models import (
     db, Oda, Otel, Kullanici, OdaDNDKayit, OdaDNDKontrol,
-    GorevDetay, GunlukGorev, GorevDurumLog
+    GorevDetay, GunlukGorev, GorevDurumLog, OdaKontrolKaydi
 )
 
 
@@ -147,6 +147,17 @@ class DNDService:
                 notlar=notlar or f'DND kontrolü #{dnd_kayit.dnd_sayisi}'
             )
             db.session.add(kontrol)
+            
+            # oda_kontrol_kayitlari tablosuna da DND kaydı ekle
+            oda_kontrol_kaydi = OdaKontrolKaydi(
+                oda_id=oda_id,
+                personel_id=personel_id,
+                kontrol_tarihi=bugun,
+                baslangic_zamani=simdi,
+                bitis_zamani=simdi,  # DND için başlangıç ve bitiş aynı
+                kontrol_tipi='dnd'
+            )
+            db.session.add(oda_kontrol_kaydi)
             
             # Minimum kontrol tamamlandı mı?
             min_kontrol_tamamlandi = dnd_kayit.dnd_sayisi >= DNDService.MIN_KONTROL_SAYISI

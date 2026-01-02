@@ -7,7 +7,171 @@ block page_icon %}fas fa-th-large{% endblock %} {% block content %}
   {% set yukleme = yukleme_gorev_ozeti or {'toplam': 0, 'tamamlanan': 0,
   'bekleyen': 0, 'tamamlanma_orani': 0, 'inhouse_durum': 'pending',
   'arrivals_durum': 'pending', 'departures_durum': 'pending'} %} {% if
-  yukleme.tamamlanma_orani == 100 and oda_kontrol_ozeti %}
+  yukleme.tamamlanma_orani == 100 and oda_kontrol_ozeti_otel_bazli %}
+  <!-- Kat Sorumlusu Görevleri İlerleme Widget - OTEL BAZLI -->
+  <div
+    class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg shadow-lg border border-blue-200 dark:border-blue-800 p-6"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center space-x-3">
+        <div
+          class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg"
+        >
+          <i class="fas fa-tasks text-white text-xl"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-blue-900 dark:text-blue-100">
+            Kat Sorumlusu Görevleri
+          </h3>
+          <p class="text-sm text-blue-700 dark:text-blue-300">
+            {{ now().strftime('%d.%m.%Y') }} - Oda Kontrolleri
+          </p>
+        </div>
+      </div>
+      <a
+        href="{{ url_for('gorev.depo_personel_gorevler') }}"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium text-sm"
+      >
+        <i class="fas fa-users mr-2"></i>Detay
+      </a>
+    </div>
+
+    <!-- Otel Seçici Tabs -->
+    {% if oda_kontrol_ozeti_otel_bazli|length > 1 %}
+    <div
+      class="flex flex-wrap gap-2 mb-4 border-b border-blue-200 dark:border-blue-700 pb-3"
+    >
+      {% for otel_ozet in oda_kontrol_ozeti_otel_bazli %}
+      <button
+        onclick="showOtelGorev({{ otel_ozet.otel_id }})"
+        id="otel_tab_{{ otel_ozet.otel_id }}"
+        class="otel-gorev-tab px-4 py-2 rounded-lg text-sm font-medium transition-all {% if loop.first %}bg-blue-600 text-white{% else %}bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-blue-100{% endif %}"
+      >
+        {{ otel_ozet.otel_ad }}
+        <span
+          class="ml-2 px-2 py-0.5 rounded-full text-xs {% if otel_ozet.tamamlanma_orani == 100 %}bg-green-200 text-green-800{% elif otel_ozet.tamamlanma_orani >= 50 %}bg-blue-200 text-blue-800{% else %}bg-yellow-200 text-yellow-800{% endif %}"
+        >
+          %{{ otel_ozet.tamamlanma_orani }}
+        </span>
+      </button>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Her Otel İçin Görev Detayları -->
+    {% for otel_ozet in oda_kontrol_ozeti_otel_bazli %}
+    <div
+      id="otel_gorev_{{ otel_ozet.otel_id }}"
+      class="otel-gorev-content {% if not loop.first %}hidden{% endif %}"
+    >
+      {% if oda_kontrol_ozeti_otel_bazli|length == 1 %}
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-lg font-semibold text-blue-900 dark:text-blue-100"
+          >{{ otel_ozet.otel_ad }}</span
+        >
+        <span
+          class="text-2xl font-bold {% if otel_ozet.tamamlanma_orani == 100 %}text-green-600{% elif otel_ozet.tamamlanma_orani >= 50 %}text-blue-600{% else %}text-yellow-600{% endif %}"
+          >%{{ otel_ozet.tamamlanma_orani }}</span
+        >
+      </div>
+      {% endif %}
+
+      <div class="mb-4">
+        <div class="w-full bg-blue-100 dark:bg-blue-900/50 rounded-full h-3">
+          <div
+            class="bg-gradient-to-r from-blue-500 to-indigo-500 h-3 rounded-full transition-all duration-500"
+            style="width: {{ otel_ozet.tamamlanma_orani }}%"
+          ></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4 mb-4">
+        <div
+          class="bg-white dark:bg-slate-800 rounded-lg p-4 border border-blue-200 dark:border-blue-700 text-center"
+        >
+          <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            {{ otel_ozet.inhouse.tamamlanan }}/{{ otel_ozet.inhouse.toplam }}
+          </div>
+          <div class="text-sm text-slate-600 dark:text-slate-400">In House</div>
+          <div class="mt-1 w-full bg-blue-100 rounded-full h-1">
+            <div
+              class="bg-blue-500 h-1 rounded-full"
+              style="width: {% if otel_ozet.inhouse.toplam > 0 %}{{ (otel_ozet.inhouse.tamamlanan / otel_ozet.inhouse.toplam * 100)|int }}{% else %}0{% endif %}%"
+            ></div>
+          </div>
+        </div>
+        <div
+          class="bg-white dark:bg-slate-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700 text-center"
+        >
+          <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+            {{ otel_ozet.arrival.tamamlanan }}/{{ otel_ozet.arrival.toplam }}
+          </div>
+          <div class="text-sm text-slate-600 dark:text-slate-400">Arrivals</div>
+          <div class="mt-1 w-full bg-purple-100 rounded-full h-1">
+            <div
+              class="bg-purple-500 h-1 rounded-full"
+              style="width: {% if otel_ozet.arrival.toplam > 0 %}{{ (otel_ozet.arrival.tamamlanan / otel_ozet.arrival.toplam * 100)|int }}{% else %}0{% endif %}%"
+            ></div>
+          </div>
+        </div>
+        <div
+          class="bg-white dark:bg-slate-800 rounded-lg p-4 border border-orange-200 dark:border-orange-700 text-center"
+        >
+          <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">
+            {{ otel_ozet.departure.tamamlanan }}/{{ otel_ozet.departure.toplam
+            }}
+          </div>
+          <div class="text-sm text-slate-600 dark:text-slate-400">
+            Departures
+          </div>
+          <div class="mt-1 w-full bg-orange-100 rounded-full h-1">
+            <div
+              class="bg-orange-500 h-1 rounded-full"
+              style="width: {% if otel_ozet.departure.toplam > 0 %}{{ (otel_ozet.departure.tamamlanan / otel_ozet.departure.toplam * 100)|int }}{% else %}0{% endif %}%"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="flex items-center justify-between text-sm bg-white dark:bg-slate-800 rounded-lg p-3 border border-blue-200 dark:border-blue-700"
+      >
+        <span class="flex items-center"
+          ><i class="fas fa-check-circle text-green-500 mr-2"></i
+          ><strong class="mr-1">{{ otel_ozet.tamamlanan }}</strong>
+          Tamamlandı</span
+        >
+        <span class="flex items-center"
+          ><i class="fas fa-spinner text-blue-500 mr-2"></i
+          ><strong class="mr-1">{{ otel_ozet.devam_eden }}</strong> Devam
+          Ediyor</span
+        >
+        <span class="flex items-center"
+          ><i class="fas fa-clock text-yellow-500 mr-2"></i
+          ><strong class="mr-1">{{ otel_ozet.bekleyen }}</strong> Bekliyor</span
+        >
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <script>
+    function showOtelGorev(otelId) {
+      document
+        .querySelectorAll(".otel-gorev-content")
+        .forEach((el) => el.classList.add("hidden"));
+      document.querySelectorAll(".otel-gorev-tab").forEach((el) => {
+        el.classList.remove("bg-blue-600", "text-white");
+        el.classList.add("bg-white", "text-slate-700");
+      });
+      document
+        .getElementById("otel_gorev_" + otelId)
+        .classList.remove("hidden");
+      var activeTab = document.getElementById("otel_tab_" + otelId);
+      activeTab.classList.remove("bg-white", "text-slate-700");
+      activeTab.classList.add("bg-blue-600", "text-white");
+    }
+  </script>
+  {% elif yukleme.tamamlanma_orani == 100 and oda_kontrol_ozeti %}
   <!-- Kat Sorumlusu Görevleri İlerleme Widget (Yüklemeler tamamlandığında göster) -->
   <div
     class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg shadow-lg border border-blue-200 dark:border-blue-800 p-6"
