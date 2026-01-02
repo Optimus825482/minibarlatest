@@ -2074,19 +2074,28 @@ def register_kat_sorumlusu_routes(app):
             if kontrol_tipi == 'sarfiyat_yok':
                 try:
                     from utils.bildirim_service import sarfiyat_yok_bildirimi
-                    from models import Oda, Kullanici
+                    from models import Oda, Kullanici, Kat
                     oda = Oda.query.get(oda_id)
                     personel = Kullanici.query.get(kullanici_id)
                     if oda and personel:
-                        sarfiyat_yok_bildirimi(
-                            otel_id=oda.kat.otel_id,
-                            oda_no=oda.oda_no,
-                            personel_adi=personel.ad_soyad,
-                            oda_id=oda_id,
-                            gonderen_id=kullanici_id
-                        )
+                        # Kat üzerinden otel_id al
+                        kat = Kat.query.get(oda.kat_id)
+                        otel_id = kat.otel_id if kat else None
+                        if otel_id:
+                            sarfiyat_yok_bildirimi(
+                                otel_id=otel_id,
+                                oda_no=oda.oda_no,
+                                personel_adi=personel.ad_soyad,
+                                oda_id=oda_id,
+                                gonderen_id=kullanici_id
+                            )
+                            print(f"✅ Sarfiyat yok bildirimi gönderildi: Oda {oda.oda_no}")
+                        else:
+                            print(f"⚠️ Otel ID bulunamadı: oda_id={oda_id}")
                 except Exception as bildirim_err:
-                    print(f"Sarfiyat yok bildirim hatası: {bildirim_err}")
+                    print(f"❌ Sarfiyat yok bildirim hatası: {bildirim_err}")
+                    import traceback
+                    traceback.print_exc()
             
             return jsonify({
                 'success': True,
@@ -2196,19 +2205,22 @@ def register_kat_sorumlusu_routes(app):
                 from utils.bildirim_service import bildirim_olustur
                 from models import Oda
                 oda = Oda.query.get(oda_id)
-                oda_no = oda.oda_numarasi if oda else oda_id
+                oda_no = oda.oda_no if oda else str(oda_id)
                 
                 bildirim_olustur(
                     hedef_rol='depo_sorumlusu',
                     hedef_otel_id=kullanici_oteli.id,
                     bildirim_tipi='dnd_kayit',
-                    baslik='DND Kaydı',
+                    baslik=f'🚫 Oda {oda_no} DND',
                     mesaj=f'Oda {oda_no} için DND kaydı yapıldı ({result["dnd_sayisi"]}/3)',
                     oda_id=oda_id,
                     gonderen_id=kullanici_id
                 )
+                print(f"✅ DND bildirimi gönderildi: Oda {oda_no}")
             except Exception as bildirim_err:
-                print(f"⚠️ DND bildirim hatası: {bildirim_err}")
+                print(f"❌ DND bildirim hatası: {bildirim_err}")
+                import traceback
+                traceback.print_exc()
             
             return jsonify({
                 'success': True,

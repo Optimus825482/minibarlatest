@@ -381,20 +381,27 @@ class GorevService:
             # Bildirim gönder - Depo sorumlusuna
             try:
                 from utils.bildirim_service import gorev_tamamlandi_bildirimi
-                from models import Oda, Kullanici
+                from models import Oda, Kullanici, Kat
                 oda = Oda.query.get(detay.oda_id)
                 personel = Kullanici.query.get(personel_id)
                 if oda and personel:
-                    gorev_tamamlandi_bildirimi(
-                        otel_id=oda.kat.otel_id,
-                        oda_no=oda.oda_no,
-                        personel_adi=personel.ad_soyad,
-                        gorev_id=detay.gorev_id,
-                        oda_id=detay.oda_id,
-                        gonderen_id=personel_id
-                    )
+                    # Kat üzerinden otel_id al (lazy loading sorunu için)
+                    kat = Kat.query.get(oda.kat_id)
+                    otel_id = kat.otel_id if kat else None
+                    if otel_id:
+                        gorev_tamamlandi_bildirimi(
+                            otel_id=otel_id,
+                            oda_no=oda.oda_no,
+                            personel_adi=personel.ad_soyad,
+                            gorev_id=detay.gorev_id,
+                            oda_id=detay.oda_id,
+                            gonderen_id=personel_id
+                        )
+                        print(f"✅ Görev tamamlandı bildirimi gönderildi: Oda {oda.oda_no}")
             except Exception as bildirim_err:
-                print(f"Bildirim gönderme hatası: {bildirim_err}")
+                print(f"❌ Bildirim gönderme hatası: {bildirim_err}")
+                import traceback
+                traceback.print_exc()
             
             return True
             
@@ -471,20 +478,27 @@ class GorevService:
             # Bildirim gönder - Depo sorumlusuna
             try:
                 from utils.bildirim_service import dnd_bildirimi
-                from models import Oda, Kullanici
+                from models import Oda, Kullanici, Kat
                 oda = Oda.query.get(detay.oda_id)
                 personel = Kullanici.query.get(personel_id)
                 if oda and personel:
-                    dnd_bildirimi(
-                        otel_id=oda.kat.otel_id,
-                        oda_no=oda.oda_no,
-                        personel_adi=personel.ad_soyad,
-                        deneme_sayisi=detay.dnd_sayisi,
-                        oda_id=detay.oda_id,
-                        gonderen_id=personel_id
-                    )
+                    # Kat üzerinden otel_id al (lazy loading sorunu için)
+                    kat = Kat.query.get(oda.kat_id)
+                    otel_id = kat.otel_id if kat else None
+                    if otel_id:
+                        dnd_bildirimi(
+                            otel_id=otel_id,
+                            oda_no=oda.oda_no,
+                            personel_adi=personel.ad_soyad,
+                            deneme_sayisi=detay.dnd_sayisi,
+                            oda_id=detay.oda_id,
+                            gonderen_id=personel_id
+                        )
+                        print(f"✅ DND bildirimi gönderildi: Oda {oda.oda_no}")
             except Exception as bildirim_err:
-                print(f"DND bildirim gönderme hatası: {bildirim_err}")
+                print(f"❌ DND bildirim gönderme hatası: {bildirim_err}")
+                import traceback
+                traceback.print_exc()
             
             return result
             
