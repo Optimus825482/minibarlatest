@@ -200,6 +200,11 @@ class Kullanici(db.Model):
         """Şifre kontrolü"""
         return check_password_hash(self.sifre_hash, sifre)
     
+    @property
+    def ad_soyad(self):
+        """Ad ve soyadı birleştirerek döndürür"""
+        return f"{self.ad} {self.soyad}"
+    
     def __repr__(self):
         return f'<Kullanici {self.kullanici_adi} ({self.rol})>'
 

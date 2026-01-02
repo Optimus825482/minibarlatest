@@ -389,10 +389,11 @@ class GorevService:
                     kat = Kat.query.get(oda.kat_id)
                     otel_id = kat.otel_id if kat else None
                     if otel_id:
+                        personel_adi = f"{personel.ad} {personel.soyad}"
                         gorev_tamamlandi_bildirimi(
                             otel_id=otel_id,
                             oda_no=oda.oda_no,
-                            personel_adi=personel.ad_soyad,
+                            personel_adi=personel_adi,
                             gorev_id=detay.gorev_id,
                             oda_id=detay.oda_id,
                             gonderen_id=personel_id
@@ -486,10 +487,11 @@ class GorevService:
                     kat = Kat.query.get(oda.kat_id)
                     otel_id = kat.otel_id if kat else None
                     if otel_id:
+                        personel_adi = f"{personel.ad} {personel.soyad}"
                         dnd_bildirimi(
                             otel_id=otel_id,
                             oda_no=oda.oda_no,
-                            personel_adi=personel.ad_soyad,
+                            personel_adi=personel_adi,
                             deneme_sayisi=detay.dnd_sayisi,
                             oda_id=detay.oda_id,
                             gonderen_id=personel_id

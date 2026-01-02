@@ -2082,10 +2082,11 @@ def register_kat_sorumlusu_routes(app):
                         kat = Kat.query.get(oda.kat_id)
                         otel_id = kat.otel_id if kat else None
                         if otel_id:
+                            personel_adi = f"{personel.ad} {personel.soyad}"
                             sarfiyat_yok_bildirimi(
                                 otel_id=otel_id,
                                 oda_no=oda.oda_no,
-                                personel_adi=personel.ad_soyad,
+                                personel_adi=personel_adi,
                                 oda_id=oda_id,
                                 gonderen_id=kullanici_id
                             )

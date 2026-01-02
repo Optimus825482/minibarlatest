@@ -485,7 +485,7 @@ def depo_personel_gorevler():
                         'kat_adi': kat.kat_adi if kat else '-',
                         'durum': detay.durum,
                         'dnd_sayisi': detay.dnd_sayisi or 0,
-                        'tamamlanma_zamani': detay.tamamlanma_zamani.strftime('%H:%M') if detay.tamamlanma_zamani else None
+                        'tamamlanma_zamani': detay.kontrol_zamani.strftime('%H:%M') if detay.kontrol_zamani else None
                     })
                 
                 # Görev tipi label
