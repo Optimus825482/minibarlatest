@@ -422,40 +422,108 @@ def depo_gorevler():
 @rol_gerekli('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
 def depo_personel_gorevler():
     """
-    Personel görev durumları
+    Otel bazlı görev durumları - Depo sorumlusu için
     GET /gorevler/depo/personel-gorevler
     """
     try:
+        from utils.authorization import get_kullanici_otelleri
+        from models import GunlukGorev, GorevDetay, Otel, Kat, Oda
+        from sqlalchemy import func
+        
         kullanici = get_current_user()
         tarih_str = request.args.get('tarih', date.today().isoformat())
         tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
         
-        # Bağlı kat sorumlularını bul
-        kat_sorumluları = Kullanici.query.filter(
-            Kullanici.depo_sorumlusu_id == kullanici.id,
-            Kullanici.rol == 'kat_sorumlusu',
-            Kullanici.aktif == True
-        ).all()
+        # Kullanıcının erişebildiği otelleri al
+        kullanici_otelleri = get_kullanici_otelleri()
+        otel_ids = [o.id for o in kullanici_otelleri] if kullanici_otelleri else []
         
-        personel_ozetleri = []
-        for ks in kat_sorumluları:
-            ozet = GorevService.get_task_summary(ks.id, tarih)
-            personel_ozetleri.append({
-                'personel_id': ks.id,
-                'personel_adi': f"{ks.ad} {ks.soyad}",
-                **ozet
-            })
+        # Seçili otel (varsa)
+        secili_otel_id = request.args.get('otel_id', type=int)
+        if secili_otel_id and secili_otel_id not in otel_ids:
+            secili_otel_id = otel_ids[0] if otel_ids else None
+        elif not secili_otel_id and otel_ids:
+            secili_otel_id = otel_ids[0]
+        
+        otel_gorev_detaylari = []
+        
+        for otel in kullanici_otelleri:
+            # Bu otelin bugünkü görevlerini al
+            gorevler = GunlukGorev.query.filter(
+                GunlukGorev.otel_id == otel.id,
+                GunlukGorev.gorev_tarihi == tarih
+            ).all()
+            
+            otel_ozet = {
+                'otel_id': otel.id,
+                'otel_adi': otel.ad,
+                'gorev_tipleri': []
+            }
+            
+            for gorev in gorevler:
+                # Görev detaylarını al
+                detaylar = GorevDetay.query.filter(
+                    GorevDetay.gorev_id == gorev.id
+                ).all()
+                
+                # Durum sayıları
+                toplam = len(detaylar)
+                tamamlanan = sum(1 for d in detaylar if d.durum == 'completed')
+                bekleyen = sum(1 for d in detaylar if d.durum == 'pending')
+                devam_eden = sum(1 for d in detaylar if d.durum == 'in_progress')
+                dnd = sum(1 for d in detaylar if d.durum == 'dnd_pending')
+                
+                # Oda detayları
+                oda_detaylari = []
+                for detay in detaylar:
+                    oda = Oda.query.get(detay.oda_id)
+                    kat = Kat.query.get(oda.kat_id) if oda else None
+                    oda_detaylari.append({
+                        'detay_id': detay.id,
+                        'oda_id': detay.oda_id,
+                        'oda_no': oda.oda_no if oda else '-',
+                        'kat_adi': kat.kat_adi if kat else '-',
+                        'durum': detay.durum,
+                        'dnd_sayisi': detay.dnd_sayisi or 0,
+                        'tamamlanma_zamani': detay.tamamlanma_zamani.strftime('%H:%M') if detay.tamamlanma_zamani else None
+                    })
+                
+                # Görev tipi label
+                gorev_tipi_labels = {
+                    'inhouse_kontrol': 'In House',
+                    'arrival_kontrol': 'Arrivals',
+                    'departure_kontrol': 'Departures'
+                }
+                
+                otel_ozet['gorev_tipleri'].append({
+                    'gorev_id': gorev.id,
+                    'gorev_tipi': gorev.gorev_tipi,
+                    'gorev_tipi_label': gorev_tipi_labels.get(gorev.gorev_tipi, gorev.gorev_tipi),
+                    'toplam': toplam,
+                    'tamamlanan': tamamlanan,
+                    'bekleyen': bekleyen,
+                    'devam_eden': devam_eden,
+                    'dnd': dnd,
+                    'tamamlanma_orani': round((tamamlanan / toplam * 100), 1) if toplam > 0 else 0,
+                    'oda_detaylari': oda_detaylari
+                })
+            
+            otel_gorev_detaylari.append(otel_ozet)
         
         return render_template(
-            'depo_sorumlusu/personel_gorevler.html',
-            personel_ozetleri=personel_ozetleri,
+            'depo_sorumlusu/otel_gorev_detay.html',
+            otel_gorev_detaylari=otel_gorev_detaylari,
+            secili_otel_id=secili_otel_id,
             tarih=tarih,
-            kullanici=kullanici
+            kullanici=kullanici,
+            kullanici_otelleri=kullanici_otelleri
         )
         
     except Exception as e:
-        flash(f'Personel görevleri yüklenirken hata oluştu: {str(e)}', 'danger')
-        return redirect(url_for('dashboard'))
+        import traceback
+        traceback.print_exc()
+        flash(f'Görev detayları yüklenirken hata oluştu: {str(e)}', 'danger')
+        return redirect(url_for('depo_dashboard'))
 
 
 @gorev_bp.route('/depo/gorev-raporlari')
