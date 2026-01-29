@@ -379,7 +379,7 @@ function createUrunCard(urun) {
       <span class="w-8 h-8 rounded-full bg-indigo-500 text-white text-sm font-bold flex items-center justify-center">${
         urun.setup_miktari
       }</span>
-      <span class="text-base font-bold text-slate-800 dark:text-white truncate flex-1 text-center mx-2" title="${
+      <span class="text-lg font-medium text-slate-900 dark:text-white truncate flex-1 text-center mx-2" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;" title="${
         urun.urun_adi
       }">${urun.urun_adi}</span>
       ${bugunBadge}
@@ -460,7 +460,7 @@ function ekstraDialogAc(urunId, urunAdi, setupMiktari, ekstraMiktar, setupId) {
   dialog.innerHTML = `
     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-xs p-4 animate-slideUp">
       <div class="text-center mb-3">
-        <p class="text-sm font-bold text-slate-900 dark:text-white">${urunAdi}</p>
+        <p class="text-base font-medium text-slate-900 dark:text-white" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">${urunAdi}</p>
         <p class="text-xs text-slate-500">Ekstra Ekle</p>
       </div>
       
@@ -1385,7 +1385,7 @@ function successDialogGoster(urunAdi, miktar, tip = "tuketim") {
         <i class="fas fa-${ikon} text-3xl text-${renk}-500"></i>
       </div>
       <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">${baslik}</h3>
-      <p class="text-sm text-slate-600 dark:text-slate-400 mb-2">${urunAdi}</p>
+      <p class="text-base font-medium text-slate-900 dark:text-white mb-2" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">${urunAdi}</p>
       <p class="text-3xl font-bold text-${renk}-600 dark:text-${renk}-400">+${miktar}</p>
     </div>
   `;
@@ -1469,7 +1469,7 @@ function setupAsimiUyariGoster(
         <i class="fas fa-exclamation-triangle text-3xl text-red-500"></i>
       </div>
       <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Setup Miktarı Aşılamaz!</h3>
-      <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4">${urunAdi}</p>
+      <p class="text-base font-medium text-slate-900 dark:text-white mb-4" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">${urunAdi}</p>
       
       <div class="bg-slate-100 dark:bg-slate-700 rounded-xl p-4 mb-4 space-y-2">
         <div class="flex justify-between text-sm">
