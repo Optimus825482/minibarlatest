@@ -376,7 +376,7 @@ function createUrunCard(urun) {
   card.innerHTML = `
     <!-- Üst Satır: Setup Miktarı | Ürün Adı | Bugün Eklenen -->
     <div class="flex items-center justify-between mb-2">
-      <span class="w-7 h-7 rounded-full bg-gradient-to-b from-blue-500 to-blue-600 text-white text-xs font-bold flex items-center justify-center shadow-md">${
+      <span class="w-7 h-7 rounded-full bg-gradient-to-b from-indigo-500 to-indigo-600 text-white text-xs font-bold flex items-center justify-center shadow-md">${
         urun.setup_miktari
       }</span>
       <span class="text-base font-medium text-slate-100 dark:text-slate-100 truncate flex-1 text-center mx-2" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;" title="${
