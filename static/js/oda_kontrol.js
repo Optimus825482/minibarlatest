@@ -35,7 +35,7 @@ async function temaRenkleriniYukle() {
       }
     }
   } catch (error) {
-    console.error("❌ Tema renkleri yüklenemedi:", error);
+    console.warn("⚠️ Tema renkleri yüklenemedi, default kullanılıyor:", error);
   }
 
   // Fallback: Default tema
@@ -45,6 +45,7 @@ async function temaRenkleriniYukle() {
     button: "#0284C7",
     buttonHover: "#2563EB",
   };
+  console.log("🎨 Default tema kullanılıyor");
   return aktifTemaRenkleri;
 }
 

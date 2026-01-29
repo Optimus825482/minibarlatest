@@ -41,13 +41,21 @@ def register_kullanici_ayarlari_routes(app):
             from models.kullanici import Kullanici
             
             kullanici_id = session.get('kullanici_id')
+            if not kullanici_id:
+                return jsonify({
+                    'success': True,
+                    'tema_renk_1': '#2563EB',
+                    'tema_renk_2': '#0284C7'
+                })
+            
             kullanici = Kullanici.query.get(kullanici_id)
             
             if not kullanici:
                 return jsonify({
-                    'success': False,
-                    'error': 'Kullanıcı bulunamadı'
-                }), 404
+                    'success': True,
+                    'tema_renk_1': '#2563EB',
+                    'tema_renk_2': '#0284C7'
+                })
             
             return jsonify({
                 'success': True,
@@ -55,10 +63,15 @@ def register_kullanici_ayarlari_routes(app):
                 'tema_renk_2': kullanici.tema_renk_2 or '#0284C7'
             })
         except Exception as e:
+            import traceback
+            print(f"❌ Tema renkleri hatası: {str(e)}")
+            print(traceback.format_exc())
+            # Hata olsa bile default renkleri dön
             return jsonify({
-                'success': False,
-                'error': str(e)
-            }), 500
+                'success': True,
+                'tema_renk_1': '#2563EB',
+                'tema_renk_2': '#0284C7'
+            })
     
     @app.route('/api/kullanici/tema-kaydet', methods=['POST'])
     @login_required
