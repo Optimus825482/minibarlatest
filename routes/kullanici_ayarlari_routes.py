@@ -3,10 +3,12 @@ Kullanıcı Ayarları Routes
 Tema, renk ve kişisel tercihler
 """
 
-from flask import render_template, request, jsonify, flash, redirect, url_for
+from flask import render_template, request, jsonify, flash, redirect, url_for, session
 from models.base import db
 from models.kullanici import Kullanici
 from utils.decorators import login_required
+import re
+import traceback
 
 def register_kullanici_ayarlari_routes(app):
     """Kullanıcı ayarları route'larını kaydet"""
@@ -15,16 +17,11 @@ def register_kullanici_ayarlari_routes(app):
     @login_required
     def kullanici_ayarlari():
         """Kullanıcı ayarları sayfası"""
-        from flask import session
-        from models.kullanici import Kullanici
-        
-        # Session'dan kullanıcı bilgilerini al
         kullanici_id = session.get('kullanici_id')
         if not kullanici_id:
             flash('Giriş yapmalısınız.', 'warning')
             return redirect(url_for('login'))
         
-        # Kullanıcıyı veritabanından çek
         kullanici = Kullanici.query.get(kullanici_id)
         if not kullanici:
             flash('Kullanıcı bulunamadı.', 'danger')
@@ -37,9 +34,6 @@ def register_kullanici_ayarlari_routes(app):
     def api_tema_renkleri():
         """Kullanıcının tema renklerini getir"""
         try:
-            from flask import session
-            from models.kullanici import Kullanici
-            
             kullanici_id = session.get('kullanici_id')
             if not kullanici_id:
                 return jsonify({
@@ -49,7 +43,6 @@ def register_kullanici_ayarlari_routes(app):
                 })
             
             kullanici = Kullanici.query.get(kullanici_id)
-            
             if not kullanici:
                 return jsonify({
                     'success': True,
@@ -63,10 +56,8 @@ def register_kullanici_ayarlari_routes(app):
                 'tema_renk_2': kullanici.tema_renk_2 or '#0284C7'
             })
         except Exception as e:
-            import traceback
             print(f"❌ Tema renkleri hatası: {str(e)}")
             print(traceback.format_exc())
-            # Hata olsa bile default renkleri dön
             return jsonify({
                 'success': True,
                 'tema_renk_1': '#2563EB',
@@ -78,9 +69,6 @@ def register_kullanici_ayarlari_routes(app):
     def api_tema_kaydet():
         """Tema renklerini kaydet"""
         try:
-            from flask import session
-            from models.kullanici import Kullanici
-            
             data = request.get_json()
             tema_renk_1 = data.get('tema_renk_1')
             tema_renk_2 = data.get('tema_renk_2')
@@ -91,18 +79,22 @@ def register_kullanici_ayarlari_routes(app):
                     'message': 'Tema renkleri eksik!'
                 }), 400
             
-            # Renk formatını kontrol et (#RRGGBB)
-            import re
+            # Renk formatını kontrol et
             if not re.match(r'^#[0-9A-Fa-f]{6}$', tema_renk_1) or not re.match(r'^#[0-9A-Fa-f]{6}$', tema_renk_2):
                 return jsonify({
                     'success': False,
-                    'message': 'Geçersiz renk formatı! (#RRGGBB formatında olmalı)'
+                    'message': 'Geçersiz renk formatı!'
                 }), 400
             
-            # Kullanıcının tema renklerini güncelle
+            # Kullanıcıyı güncelle
             kullanici_id = session.get('kullanici_id')
-            kullanici = Kullanici.query.get(kullanici_id)
+            if not kullanici_id:
+                return jsonify({
+                    'success': False,
+                    'message': 'Oturum bulunamadı!'
+                }), 401
             
+            kullanici = Kullanici.query.get(kullanici_id)
             if not kullanici:
                 return jsonify({
                     'success': False,
@@ -113,6 +105,8 @@ def register_kullanici_ayarlari_routes(app):
             kullanici.tema_renk_2 = tema_renk_2
             db.session.commit()
             
+            print(f"✅ Tema kaydedildi - Kullanıcı: {kullanici.kullanici_adi}, Badge: {tema_renk_1}, Buton: {tema_renk_2}")
+            
             return jsonify({
                 'success': True,
                 'message': '✅ Tema renkleri kaydedildi!'
@@ -120,6 +114,8 @@ def register_kullanici_ayarlari_routes(app):
             
         except Exception as e:
             db.session.rollback()
+            print(f"❌ Tema kaydetme hatası: {str(e)}")
+            print(traceback.format_exc())
             return jsonify({
                 'success': False,
                 'message': f'Hata: {str(e)}'

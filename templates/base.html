@@ -2496,7 +2496,7 @@
   <div id="temaAyarlariModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" onclick="temaAyarlariModalKapat()"></div>
     <div class="fixed inset-0 flex items-center justify-center p-4">
-      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-3xl transform transition-all max-h-[90vh] overflow-y-auto">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-xl transform transition-all max-h-[90vh] overflow-y-auto">
         <!-- Header -->
         <div class="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700 sticky top-0 bg-white dark:bg-slate-800 z-10">
           <div class="flex items-center gap-3">
@@ -2517,63 +2517,66 @@
           </button>
         </div>
 
+        <!-- Sticky Renk Seçim Tabları -->
+        <div class="sticky top-[73px] z-20 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-3">
+          <div class="flex gap-2">
+            <button 
+              id="badge-tab" 
+              onclick="renkSecimTipiDegistir('badge')"
+              class="flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-all border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+              <div class="flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                </svg>
+                <span>Badge Rengi</span>
+              </div>
+            </button>
+            <button 
+              id="button-tab" 
+              onclick="renkSecimTipiDegistir('button')"
+              class="flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-all border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600">
+              <div class="flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
+                </svg>
+                <span>Buton Rengi</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
         <!-- Content -->
         <div class="p-6">
           <!-- Özel Renk Seçimi -->
-          <div class="mb-6 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border-2 border-purple-200 dark:border-purple-700">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
-              </svg>
-              Özel Renk Seçimi
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- Badge Rengi -->
-              <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Setup Miktarı Badge Rengi
-                </label>
-                <div class="flex items-center gap-3">
-                  <input 
-                    type="color" 
-                    id="badge-color-picker" 
-                    value="#2563EB"
-                    onchange="badgeRenkSecildi(this.value)"
-                    class="w-16 h-16 rounded-lg cursor-pointer border-2 border-slate-300 dark:border-slate-600"
-                  />
-                  <div class="flex-1">
-                    <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Hex Kod:</div>
-                    <div id="badge-hex-display" class="text-lg font-mono font-bold text-slate-900 dark:text-white">#2563EB</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Buton Rengi -->
-              <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Buton Rengi
-                </label>
-                <div class="flex items-center gap-3">
-                  <input 
-                    type="color" 
-                    id="button-color-picker" 
-                    value="#0284C7"
-                    onchange="butonRenkSecildi(this.value)"
-                    class="w-16 h-16 rounded-lg cursor-pointer border-2 border-slate-300 dark:border-slate-600"
-                  />
-                  <div class="flex-1">
-                    <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Hex Kod:</div>
-                    <div id="button-hex-display" class="text-lg font-mono font-bold text-slate-900 dark:text-white">#0284C7</div>
-                  </div>
-                </div>
+          <div id="renk-secim-alani" class="mb-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg border-2 border-blue-200 dark:border-blue-700">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+                </svg>
+                <span id="renk-secim-baslik">Badge Rengi Seçin</span>
+              </h3>
+              <div id="aktif-hex-display" class="text-xs font-mono font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-800 px-3 py-1 rounded-md border border-slate-200 dark:border-slate-700">#2563EB</div>
+            </div>
+            <div class="flex items-center gap-3">
+              <input 
+                type="color" 
+                id="aktif-color-picker" 
+                value="#2563EB"
+                onchange="aktifRenkSecildi(this.value)"
+                class="w-16 h-16 rounded-lg cursor-pointer border-2 border-slate-300 dark:border-slate-600 shadow-lg"
+              />
+              <div class="flex-1 text-xs text-slate-600 dark:text-slate-400">
+                <p class="mb-1">💡 <strong>İpucu:</strong> Renk seçiciyi tıklayarak istediğiniz rengi seçin</p>
+                <p>Veya aşağıdaki hazır temalardan birini seçebilirsiniz</p>
               </div>
             </div>
           </div>
 
           <!-- Hazır Temalar -->
-          <div class="mb-6">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="mb-4">
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
               </svg>
               Hazır Temalar
