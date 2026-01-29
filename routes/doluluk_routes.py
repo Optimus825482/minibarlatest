@@ -278,10 +278,11 @@ def kat_doluluk_detay(kat_id):
         # DND bilgilerini al (DND odaları için sayı ve son DND zamanı)
         dnd_bilgileri = {}  # oda_id -> {'dnd_sayisi': int, 'son_dnd_zamani': datetime}
         
-        # 1. Önce BAĞIMSIZ DND tablosundan (oda_dnd_kayitlari) bugünkü kayıtları al
+        # 1. Önce BAĞIMSIZ DND tablosundan (oda_dnd_kayitlari) bugünkü AKTİF kayıtları al
         bagimsiz_dnd_kayitlari = OdaDNDKayit.query.filter(
             OdaDNDKayit.oda_id.in_(oda_ids),
-            OdaDNDKayit.kayit_tarihi == secili_tarih
+            OdaDNDKayit.kayit_tarihi == secili_tarih,
+            OdaDNDKayit.durum == 'aktif'  # ✅ SADECE AKTİF KAYITLAR
         ).all()
         
         for dnd_kayit in bagimsiz_dnd_kayitlari:

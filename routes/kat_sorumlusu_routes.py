@@ -684,11 +684,12 @@ def register_kat_sorumlusu_routes(app):
                         'tip': f"DND ({gorev_durumu['dnd_sayisi']}. deneme)"
                     }
             
-            # 2. Bağımsız DND kayıtlarını kontrol et
+            # 2. Bağımsız DND kayıtlarını kontrol et (SADECE AKTİF)
             if not kontrol_durumu:
                 dnd_kayit = OdaDNDKayit.query.filter(
                     OdaDNDKayit.oda_id == oda_id,
-                    OdaDNDKayit.kayit_tarihi == bugun
+                    OdaDNDKayit.kayit_tarihi == bugun,
+                    OdaDNDKayit.durum == 'aktif'  # ✅ SADECE AKTİF KAYITLAR
                 ).first()
                 
                 if dnd_kayit:
