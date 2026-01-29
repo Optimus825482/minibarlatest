@@ -666,5 +666,177 @@ block content %}
 </script>
 <!-- Akıllı Öncelik Planı Modal -->
 {% include 'kat_sorumlusu/gorev_oncelik_modal.html' %}
+
+<!-- Güncelleme Bildirimi Modal -->
+<div id="guncellemeModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] items-center justify-center p-4" onclick="if(event.target === this) guncellemeModalKapat()">
+  <div class="modal-content bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl shadow-2xl max-w-2xl w-full border-2 border-indigo-500/30 overflow-hidden">
+    <!-- Header - Gradient Background -->
+    <div class="relative bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-8 py-6">
+      <div class="absolute inset-0 bg-black/10"></div>
+      <div class="relative flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <div class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-xl">
+            <i class="fas fa-sparkles text-white text-3xl"></i>
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold text-white mb-1">Yeni Güncellemeler! 🎉</h2>
+            <p class="text-indigo-100 text-sm">Sistem iyileştirmeleri ve yenilikler</p>
+          </div>
+        </div>
+        <button onclick="guncellemeModalKapat()" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all group">
+          <i class="fas fa-times text-white text-lg group-hover:rotate-90 transition-transform"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="px-8 py-6 space-y-5 max-h-[60vh] overflow-y-auto">
+      <!-- Güncelleme Listesi -->
+      <div class="space-y-4">
+        <!-- Güncelleme 1 -->
+        <div class="bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl p-4 border border-green-500/20">
+          <div class="flex items-start space-x-3">
+            <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg">
+              <i class="fas fa-check text-white text-sm"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-base font-bold text-white mb-1">Züber Ürünleri Kaldırıldı</h3>
+              <p class="text-sm text-slate-300 leading-relaxed">Talebiniz üzerine <span class="text-green-400 font-semibold">Züber ürünleri tüm setup'lardan</span> kaldırılmıştır. Artık minibar kontrollerinde görünmeyecektir.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Güncelleme 2 -->
+        <div class="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-xl p-4 border border-blue-500/20">
+          <div class="flex items-start space-x-3">
+            <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg">
+              <i class="fas fa-font text-white text-sm"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-base font-bold text-white mb-1">Yazı Tipi Güncellendi</h3>
+              <p class="text-sm text-slate-300 leading-relaxed">Oda kontrol ekranındaki ürün isimleri <span class="text-blue-400 font-semibold">Roboto Medium</span> font ailesi ile daha okunabilir hale getirildi.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Güncelleme 3 -->
+        <div class="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-4 border border-purple-500/20">
+          <div class="flex items-start space-x-3">
+            <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg">
+              <i class="fas fa-tint text-white text-sm"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-base font-bold text-white mb-1">Merit Royal 313 - Cam Su Çıkarıldı</h3>
+              <p class="text-sm text-slate-300 leading-relaxed">Merit Royal 313 numaralı odanın <span class="text-purple-400 font-semibold">sıcak setup listesinden cam su ürünü</span> kaldırılmıştır.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Güncelleme 4 -->
+        <div class="bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-xl p-4 border border-orange-500/20">
+          <div class="flex items-start space-x-3">
+            <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg">
+              <i class="fas fa-door-closed text-white text-sm"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-base font-bold text-white mb-1">DND Otomatik Kaldırma</h3>
+              <p class="text-sm text-slate-300 leading-relaxed">DND kaydı yapıldıktan sonra <span class="text-orange-400 font-semibold">sarfiyat yok veya minibar ürün ekleme</span> işlemi yapıldığında DND kaydı otomatik olarak kaldırılır.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Güncelleme 5 -->
+        <div class="bg-gradient-to-r from-amber-500/10 to-yellow-500/10 rounded-xl p-4 border border-amber-500/20">
+          <div class="flex items-start space-x-3">
+            <div class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg">
+              <i class="fas fa-calendar-check text-white text-sm"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-base font-bold text-white mb-1">Boş Oda Tarih Bilgisi</h3>
+              <p class="text-sm text-slate-300 leading-relaxed">Boş odalarda yeni misafir girişine kadar <span class="text-amber-400 font-semibold">son çıkış tarihi ve son kontrol tarihi</span> sabit kalacak şekilde güncellendi.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bilgi Notu -->
+      <div class="bg-indigo-500/10 rounded-xl p-4 border border-indigo-500/20">
+        <div class="flex items-start space-x-3">
+          <i class="fas fa-info-circle text-indigo-400 text-lg mt-0.5"></i>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Bu güncellemeler <span class="text-indigo-400 font-semibold">30 Ocak 2026</span> tarihinde sisteme eklenmiştir. Herhangi bir sorun yaşarsanız lütfen sistem yöneticinize bildirin.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="bg-slate-800/50 px-8 py-5 border-t border-slate-700/50">
+      <div class="flex items-center justify-between">
+        <p class="text-sm text-slate-400">
+          <i class="fas fa-heart text-red-500 mr-1"></i>
+          İyi çalışmalar dileriz!
+        </p>
+        <button onclick="guncellemeModalKapat()" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/25 active:scale-95">
+          <i class="fas fa-check-circle mr-2"></i>Anladım, Teşekkürler!
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="{{ url_for('static', filename='js/gorev_oncelik.js') }}"?v={{ cache_version | default('1.0') }}></script>
+<script src="{{ url_for('static', filename='js/guncelleme_modal.js') }}?v={{ cache_version | default('1.0') }}"></script>
+
+<style>
+  /* Modal Animasyonları */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(100px) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes slideOutDown {
+    from {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(100px) scale(0.9);
+    }
+  }
+
+  .animate-slideInUp {
+    animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-slideOutDown {
+    animation: slideOutDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Scrollbar Styling */
+  #guncellemeModal .overflow-y-auto::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  #guncellemeModal .overflow-y-auto::-webkit-scrollbar-track {
+    background: rgba(51, 65, 85, 0.3);
+    border-radius: 10px;
+  }
+
+  #guncellemeModal .overflow-y-auto::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.5);
+    border-radius: 10px;
+  }
+
+  #guncellemeModal .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.7);
+  }
+</style>
 {% endblock %}
