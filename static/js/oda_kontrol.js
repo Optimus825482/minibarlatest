@@ -379,7 +379,7 @@ function createUrunCard(urun) {
       <span class="w-7 h-7 rounded-full bg-gradient-to-b from-indigo-500 to-indigo-600 text-white text-xs font-bold flex items-center justify-center shadow-md">${
         urun.setup_miktari
       }</span>
-      <span class="text-base font-medium text-slate-100 dark:text-slate-100 truncate flex-1 text-center mx-2" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;" title="${
+      <span class="text-lg font-medium text-slate-100 dark:text-slate-100 truncate flex-1 text-center mx-2" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;" title="${
         urun.urun_adi
       }">${urun.urun_adi}</span>
       ${bugunBadge}
@@ -458,34 +458,34 @@ function ekstraDialogAc(urunId, urunAdi, setupMiktari, ekstraMiktar, setupId) {
   };
 
   dialog.innerHTML = `
-    <div class="bg-slate-800 dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-xs animate-slideUp overflow-hidden">
+    <div class="bg-slate-800 dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-sm animate-slideUp overflow-hidden">
       <!-- Header -->
-      <div class="bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2.5 text-center">
-        <p class="text-sm font-semibold text-white truncate" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">${urunAdi}</p>
-        <p class="text-xs text-amber-100">Ekstra Ekle</p>
+      <div class="bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-3 text-center">
+        <p class="text-base font-semibold text-white" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">${urunAdi}</p>
+        <p class="text-xs text-amber-100 mt-0.5">Ekstra Ekle</p>
       </div>
       
       <!-- Content -->
-      <div class="p-4">
+      <div class="p-5">
         <!-- Miktar Girişi -->
-        <div class="flex gap-2 mb-3">
+        <div class="flex gap-3 mb-4">
           <input type="number" id="ekstraDialogInput" min="1" value="1" inputmode="numeric"
-            class="flex-1 px-3 py-2.5 text-center text-2xl font-bold border-2 border-slate-600 rounded-lg bg-slate-900 text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/50">
+            class="flex-1 px-4 py-3 text-center text-3xl font-bold border-2 border-slate-600 rounded-lg bg-slate-900 text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/50">
           <button onclick="hizliEkstraEkle(parseInt(document.getElementById('ekstraDialogInput').value))"
-            class="px-4 py-2.5 bg-gradient-to-b from-amber-500 to-amber-600 text-white font-bold rounded-lg hover:from-amber-600 hover:to-amber-700 active:scale-95 transition-all shadow-md text-sm">
+            class="px-6 py-3 bg-gradient-to-b from-amber-500 to-amber-600 text-white font-bold rounded-lg hover:from-amber-600 hover:to-amber-700 active:scale-95 transition-all shadow-md">
             Ekle
           </button>
         </div>
         
         <!-- Stok Bilgisi -->
-        <div class="text-center text-xs text-slate-400 mb-3 py-2 bg-slate-900/50 rounded-lg">
+        <div class="text-center text-sm text-slate-400 mb-4 py-2.5 bg-slate-900/50 rounded-lg">
           Stok: <strong class="${
             zimmetStok?.miktar > 0 ? "text-emerald-400" : "text-red-400"
           }">${zimmetStok?.miktar || 0}</strong>
         </div>
         
         <!-- İptal Butonu -->
-        <button onclick="ekstraDialogKapat()" class="w-full py-2 text-sm font-medium rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 transition-all">
+        <button onclick="ekstraDialogKapat()" class="w-full py-2.5 text-sm font-semibold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 transition-all">
           İptal
         </button>
       </div>
