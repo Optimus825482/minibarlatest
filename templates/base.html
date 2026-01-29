@@ -1613,15 +1613,14 @@
 
             <!-- Kullanıcı Ayarları -->
             {% if current_user %}
-            <a href="{{ url_for('kullanici_ayarlari') }}"
+            <button onclick="temaAyarlariModalAc()"
               class="p-2 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-colors"
-              title="Ayarlarım">
+              title="Tema Ayarları">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
               </svg>
-            </a>
+            </button>
             {% endif %}
 
             <!-- Logout -->
@@ -2492,6 +2491,183 @@
 
   <!-- Bildirim Manager -->
   <script src="{{ url_for('static', filename='js/bildirim_manager.js') }}"></script>
+
+  <!-- Tema Ayarları Modal -->
+  <div id="temaAyarlariModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" onclick="temaAyarlariModalKapat()"></div>
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-3xl transform transition-all max-h-[90vh] overflow-y-auto">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700 sticky top-0 bg-white dark:bg-slate-800 z-10">
+          <div class="flex items-center gap-3">
+            <div class="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Renk Teması</h3>
+              <p class="text-sm text-slate-600 dark:text-slate-400">Oda kontrol ekranında kullanılacak renkleri seçin</p>
+            </div>
+          </div>
+          <button onclick="temaAyarlariModalKapat()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6">
+          <!-- Tema Seçenekleri -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <!-- Tema 1: Mavi + Turkuaz -->
+            <button onclick="temaUygula('#2563EB', '#0284C7', 'Mavi + Turkuaz')" 
+              class="tema-kart p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-400 transition-all group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="font-medium text-slate-900 dark:text-white">Mavi + Turkuaz</span>
+                <span class="text-xs text-slate-500 dark:text-slate-400">Profesyonel</span>
+              </div>
+              <div class="flex gap-2">
+                <div class="flex-1 h-12 rounded-md" style="background: #2563EB;"></div>
+                <div class="flex-1 h-12 rounded-md" style="background: linear-gradient(180deg, #38BDF8, #0284C7);"></div>
+              </div>
+            </button>
+
+            <!-- Tema 2: Yeşil + Emerald -->
+            <button onclick="temaUygula('#16A34A', '#059669', 'Yeşil + Emerald')" 
+              class="tema-kart p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-green-500 dark:hover:border-green-400 transition-all group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="font-medium text-slate-900 dark:text-white">Yeşil + Emerald</span>
+                <span class="text-xs text-slate-500 dark:text-slate-400">Canlı</span>
+              </div>
+              <div class="flex gap-2">
+                <div class="flex-1 h-12 rounded-md" style="background: #16A34A;"></div>
+                <div class="flex-1 h-12 rounded-md" style="background: linear-gradient(180deg, #34D399, #059669);"></div>
+              </div>
+            </button>
+
+            <!-- Tema 3: Mor + Purple -->
+            <button onclick="temaUygula('#9333EA', '#7C3AED', 'Mor + Purple')" 
+              class="tema-kart p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-purple-500 dark:hover:border-purple-400 transition-all group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="font-medium text-slate-900 dark:text-white">Mor + Purple</span>
+                <span class="text-xs text-slate-500 dark:text-slate-400">Modern</span>
+              </div>
+              <div class="flex gap-2">
+                <div class="flex-1 h-12 rounded-md" style="background: #9333EA;"></div>
+                <div class="flex-1 h-12 rounded-md" style="background: linear-gradient(180deg, #A78BFA, #7C3AED);"></div>
+              </div>
+            </button>
+
+            <!-- Tema 4: Turuncu + Orange -->
+            <button onclick="temaUygula('#EA580C', '#C2410C', 'Turuncu + Orange')" 
+              class="tema-kart p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-orange-500 dark:hover:border-orange-400 transition-all group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="font-medium text-slate-900 dark:text-white">Turuncu + Orange</span>
+                <span class="text-xs text-slate-500 dark:text-slate-400">Enerjik</span>
+              </div>
+              <div class="flex gap-2">
+                <div class="flex-1 h-12 rounded-md" style="background: #EA580C;"></div>
+                <div class="flex-1 h-12 rounded-md" style="background: linear-gradient(180deg, #FB923C, #C2410C);"></div>
+              </div>
+            </button>
+
+            <!-- Tema 5: Kırmızı + Red -->
+            <button onclick="temaUygula('#DC2626', '#B91C1C', 'Kırmızı + Red')" 
+              class="tema-kart p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-red-500 dark:hover:border-red-400 transition-all group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="font-medium text-slate-900 dark:text-white">Kırmızı + Red</span>
+                <span class="text-xs text-slate-500 dark:text-slate-400">Güçlü</span>
+              </div>
+              <div class="flex gap-2">
+                <div class="flex-1 h-12 rounded-md" style="background: #DC2626;"></div>
+                <div class="flex-1 h-12 rounded-md" style="background: linear-gradient(180deg, #F87171, #B91C1C);"></div>
+              </div>
+            </button>
+
+            <!-- Tema 6: Pembe + Pink -->
+            <button onclick="temaUygula('#DB2777', '#BE185D', 'Pembe + Pink')" 
+              class="tema-kart p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-pink-500 dark:hover:border-pink-400 transition-all group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="font-medium text-slate-900 dark:text-white">Pembe + Pink</span>
+                <span class="text-xs text-slate-500 dark:text-slate-400">Yumuşak</span>
+              </div>
+              <div class="flex gap-2">
+                <div class="flex-1 h-12 rounded-md" style="background: #DB2777;"></div>
+                <div class="flex-1 h-12 rounded-md" style="background: linear-gradient(180deg, #F472B6, #BE185D);"></div>
+              </div>
+            </button>
+
+            <!-- Tema 7: Sarı + Yellow -->
+            <button onclick="temaUygula('#CA8A04', '#A16207', 'Sarı + Yellow')" 
+              class="tema-kart p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-yellow-500 dark:hover:border-yellow-400 transition-all group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="font-medium text-slate-900 dark:text-white">Sarı + Yellow</span>
+                <span class="text-xs text-slate-500 dark:text-slate-400">Neşeli</span>
+              </div>
+              <div class="flex gap-2">
+                <div class="flex-1 h-12 rounded-md" style="background: #CA8A04;"></div>
+                <div class="flex-1 h-12 rounded-md" style="background: linear-gradient(180deg, #FDE047, #A16207);"></div>
+              </div>
+            </button>
+
+            <!-- Tema 8: Lacivert + Indigo -->
+            <button onclick="temaUygula('#4F46E5', '#4338CA', 'Lacivert + Indigo')" 
+              class="tema-kart p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-indigo-600 dark:hover:border-indigo-500 transition-all group">
+              <div class="flex items-center justify-between mb-3">
+                <span class="font-medium text-slate-900 dark:text-white">Lacivert + Indigo</span>
+                <span class="text-xs text-slate-500 dark:text-slate-400">Klasik</span>
+              </div>
+              <div class="flex gap-2">
+                <div class="flex-1 h-12 rounded-md" style="background: #4F46E5;"></div>
+                <div class="flex-1 h-12 rounded-md" style="background: linear-gradient(180deg, #818CF8, #4338CA);"></div>
+              </div>
+            </button>
+          </div>
+
+          <!-- Önizleme -->
+          <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-6 mb-6">
+            <h3 class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4">Önizleme</h3>
+            <div class="flex items-center gap-4">
+              <!-- Badge Önizleme -->
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-slate-600 dark:text-slate-400">Setup Miktarı:</span>
+                <div id="tema-preview-badge" class="w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-medium" 
+                  style="background: #2563EB;">
+                  2
+                </div>
+              </div>
+              
+              <!-- Buton Önizleme -->
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-slate-600 dark:text-slate-400">Buton:</span>
+                <button id="tema-preview-button" class="px-4 py-1 rounded-md text-white text-sm font-medium shadow-sm" 
+                  style="background: linear-gradient(180deg, #0284C7, #0284C7);">
+                  Ekle
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-end gap-3 p-6 border-t border-slate-200 dark:border-slate-700 sticky bottom-0 bg-white dark:bg-slate-800">
+          <button onclick="temaAyarlariModalKapat()" 
+            class="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-all">
+            İptal
+          </button>
+          <button onclick="temaKaydet()" 
+            class="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium rounded-lg shadow-lg transition-all">
+            💾 Kaydet
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tema Modal Script -->
+  <script src="{{ url_for('static', filename='js/tema_modal.js') }}"></script>
 
   {% block extra_scripts %}{% endblock %}
 </body>
