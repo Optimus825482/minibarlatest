@@ -10,6 +10,10 @@ let aktifRenkTipi = "badge"; // 'badge' veya 'button'
 
 // Tema ayarları modalını aç
 function temaAyarlariModalAc() {
+  // Modal'ı önce göster
+  document.getElementById("temaAyarlariModal").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+
   // Mevcut tema renklerini yükle
   fetch("/api/kullanici/tema-renkleri")
     .then((response) => response.json())
@@ -18,15 +22,13 @@ function temaAyarlariModalAc() {
         secilenTemaRenk1 = data.tema_renk_1;
         secilenTemaRenk2 = data.tema_renk_2;
 
-        // Aktif renk picker'ı güncelle
-        renkSecimTipiDegistir("badge");
+        // Aktif renk picker'ı güncelle (DOM'da artık var)
+        setTimeout(() => {
+          renkSecimTipiDegistir("badge");
+        }, 50);
       }
     })
     .catch((error) => console.error("Tema renkleri yüklenemedi:", error));
-
-  // Modal'ı göster
-  document.getElementById("temaAyarlariModal").classList.remove("hidden");
-  document.body.style.overflow = "hidden";
 }
 
 // Tema ayarları modalını kapat
