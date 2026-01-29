@@ -402,7 +402,29 @@ function createUrunCard(urun) {
       ${butonlar.join("")}
     </div>
     
-    <!-- Ekstra Butonu -->
+    <!-- Ekstra ve Sıfırla Butonları -->
+    ${
+      urun.ekstra_miktar > 0
+        ? `
+    <div class="grid grid-cols-2 gap-1.5">
+      <button onclick="ekstraDialogAc(${urun.urun_id}, '${urun.urun_adi.replace(
+        /'/g,
+        "\\'",
+      )}', ${urun.setup_miktari}, ${urun.ekstra_miktar || 0}, ${urun.setup_id})"
+        class="py-1.5 text-xs font-semibold rounded-md bg-gradient-to-b from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 active:scale-95 transition-all shadow-sm">
+        + Ekstra
+      </button>
+      <button onclick="ekstraSifirlaModalAc(${
+        urun.urun_id
+      }, '${urun.urun_adi.replace(/'/g, "\\'")}', ${urun.ekstra_miktar}, ${
+        urun.setup_id
+      })"
+        class="py-1.5 text-xs font-semibold rounded-md bg-gradient-to-b from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 active:scale-95 transition-all shadow-sm">
+        Sıfırla
+      </button>
+    </div>
+    `
+        : `
     <button onclick="ekstraDialogAc(${urun.urun_id}, '${urun.urun_adi.replace(
       /'/g,
       "\\'",
@@ -410,20 +432,7 @@ function createUrunCard(urun) {
       class="w-full py-1.5 text-xs font-semibold rounded-md bg-gradient-to-b from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 active:scale-95 transition-all shadow-sm">
       + Ekstra
     </button>
-    
-    ${
-      urun.ekstra_miktar > 0
-        ? `
-      <button onclick="ekstraSifirlaModalAc(${
-        urun.urun_id
-      }, '${urun.urun_adi.replace(/'/g, "\\'")}', ${urun.ekstra_miktar}, ${
-        urun.setup_id
-      })"
-        class="w-full mt-1.5 py-1.5 text-xs font-semibold rounded-md bg-gradient-to-b from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 active:scale-95 transition-all shadow-sm">
-        Sıfırla
-      </button>
     `
-        : ""
     }
   `;
 
