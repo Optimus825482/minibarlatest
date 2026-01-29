@@ -56,12 +56,29 @@ document.addEventListener("DOMContentLoaded", function () {
   // Görev listesinden gelen oda kontrolü
   if (gorevOdaId && gorevDetayId) {
     console.log(
-      `📋 Görev parametreleri bulundu: Oda=${gorevOdaId}, Detay=${gorevDetayId}`
+      `📋 Görev parametreleri bulundu: Oda=${gorevOdaId}, Detay=${gorevDetayId}`,
     );
     mevcutGorevDetayId = gorevDetayId;
     gorevOdaKontrolBaslat(gorevOdaId);
   }
+
+  // Ekstra güvenlik: 1 saniye sonra tüm panelleri kontrol et
+  setTimeout(panelKontrolEt, 1000);
 });
+
+// Panel kontrol fonksiyonu - DND butonunun görünür olduğundan emin ol
+function panelKontrolEt() {
+  if (!mevcutOdaId) return; // Oda seçilmemişse kontrol etme
+
+  const panel = document.getElementById("gorev_islemleri");
+  if (panel && panel.classList.contains("hidden")) {
+    console.warn(
+      "🔧 [Panel Kontrol] DND butonu gizli bulundu, gösteriliyor...",
+    );
+    panel.classList.remove("hidden");
+    panel.style.display = "";
+  }
+}
 
 // Kat seçildiğinde
 async function katSecildi() {
@@ -129,6 +146,16 @@ async function odaSecildi() {
 
   // Görev işlemleri panelini göster (oda seçildiğinde her zaman)
   gorevIslemleriGoster();
+
+  // Fallback: 200ms sonra tekrar kontrol et (timing sorunu için)
+  setTimeout(() => {
+    const panel = document.getElementById("gorev_islemleri");
+    if (panel && panel.classList.contains("hidden")) {
+      console.warn("⚠️ Panel hala gizli, tekrar gösteriliyor...");
+      panel.classList.remove("hidden");
+      panel.style.display = "";
+    }
+  }, 200);
 }
 
 // Oda seçimine geri dön
@@ -246,6 +273,10 @@ async function setupListesiYukle(odaId) {
   } catch (error) {
     console.error("❌ Setup yükleme hatası:", error);
     toastGoster(error.message, "error");
+
+    // HATA OLSA BİLE DND butonunu göster
+    console.log("⚠️ Hata oldu ama DND butonu yine de gösteriliyor");
+    gorevIslemleriGoster();
   } finally {
     loadingDiv.classList.add("hidden");
   }
@@ -320,11 +351,11 @@ function createUrunCard(urun) {
     const aktif = stokVar && zimmetStok.miktar >= i;
     butonlar.push(`
       <button onclick="hizliUrunEkle(${urun.urun_id}, '${urun.urun_adi.replace(
-      /'/g,
-      "\\'"
-    )}', ${urun.setup_miktari}, ${urun.ekstra_miktar || 0}, ${
-      urun.setup_id
-    }, ${i})"
+        /'/g,
+        "\\'",
+      )}', ${urun.setup_miktari}, ${urun.ekstra_miktar || 0}, ${
+        urun.setup_id
+      }, ${i})"
         class="py-1.5 text-s font-bold rounded transition-all ${
           aktif
             ? "bg-indigo-600 text-white active:bg-indigo-700"
@@ -373,9 +404,9 @@ function createUrunCard(urun) {
     
     <!-- Ekstra Butonu -->
     <button onclick="ekstraDialogAc(${urun.urun_id}, '${urun.urun_adi.replace(
-    /'/g,
-    "\\'"
-  )}', ${urun.setup_miktari}, ${urun.ekstra_miktar || 0}, ${urun.setup_id})"
+      /'/g,
+      "\\'",
+    )}', ${urun.setup_miktari}, ${urun.ekstra_miktar || 0}, ${urun.setup_id})"
       class="w-full py-1.5 text-s font-medium rounded bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 active:bg-orange-200">
       + Ekstra
     </button>
@@ -386,8 +417,8 @@ function createUrunCard(urun) {
       <button onclick="ekstraSifirlaModalAc(${
         urun.urun_id
       }, '${urun.urun_adi.replace(/'/g, "\\'")}', ${urun.ekstra_miktar}, ${
-            urun.setup_id
-          })"
+        urun.setup_id
+      })"
         class="w-full mt-1 py-1.5 text-xs font-medium rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 active:bg-red-200">
         Sıfırla
       </button>
@@ -515,7 +546,7 @@ async function hizliUrunEkle(
   setupMiktari,
   ekstraMiktar,
   setupId,
-  miktar
+  miktar,
 ) {
   // Bugün eklenen miktarı kontrol et
   const bugunEklenen = bugunEklemeler[urunId] || 0;
@@ -527,7 +558,7 @@ async function hizliUrunEkle(
       urunAdi,
       setupMiktari,
       bugunEklenen,
-      kalanEklenebilir
+      kalanEklenebilir,
     );
     return;
   }
@@ -639,7 +670,7 @@ function ekstraEkleModalAc(
   urunAdi,
   setupMiktari,
   ekstraMiktar,
-  setupId
+  setupId,
 ) {
   modalData = {
     oda_id: mevcutOdaId,
@@ -659,7 +690,7 @@ function ekstraEkleModalAc(
   setTextIfExists("ekstra_modal_setup_miktari", setupMiktari);
   setTextIfExists(
     "ekstra_modal_mevcut_miktar",
-    setupMiktari + (ekstraMiktar || 0)
+    setupMiktari + (ekstraMiktar || 0),
   );
 
   const inputMiktar = document.getElementById("ekstra_modal_miktar");
@@ -711,7 +742,7 @@ function getCsrfToken() {
 // API çağrıları
 async function urunEkle() {
   const eklenenMiktar = parseInt(
-    document.getElementById("modal_eklenen_miktar").value
+    document.getElementById("modal_eklenen_miktar").value,
   );
 
   if (!eklenenMiktar || eklenenMiktar <= 0) {
@@ -755,7 +786,7 @@ async function urunEkle() {
 
 async function ekstraEkle() {
   const ekstraMiktar = parseInt(
-    document.getElementById("ekstra_modal_miktar").value
+    document.getElementById("ekstra_modal_miktar").value,
   );
 
   if (!ekstraMiktar || ekstraMiktar <= 0) {
@@ -880,6 +911,16 @@ async function odaSetupDurumuYukle(odaId) {
   await setupListesiYukle(odaId);
   // Görev işlemleri panelini göster
   gorevIslemleriGoster();
+
+  // Fallback: 200ms sonra tekrar kontrol et
+  setTimeout(() => {
+    const panel = document.getElementById("gorev_islemleri");
+    if (panel && panel.classList.contains("hidden")) {
+      console.warn("⚠️ [QR] Panel hala gizli, tekrar gösteriliyor...");
+      panel.classList.remove("hidden");
+      panel.style.display = "";
+    }
+  }, 200);
 }
 
 // Toast mesajı göster
@@ -889,10 +930,10 @@ function toastGoster(mesaj, tip = "info") {
     tip === "success"
       ? "bg-green-500"
       : tip === "error"
-      ? "bg-red-500"
-      : tip === "warning"
-      ? "bg-orange-500"
-      : "bg-blue-500"
+        ? "bg-red-500"
+        : tip === "warning"
+          ? "bg-orange-500"
+          : "bg-blue-500"
   }`;
   toast.textContent = mesaj;
 
@@ -936,6 +977,16 @@ async function gorevOdaKontrolBaslat(odaId) {
     // Görev işlemleri panelini göster
     gorevIslemleriGoster();
 
+    // Fallback: 200ms sonra tekrar kontrol et
+    setTimeout(() => {
+      const panel = document.getElementById("gorev_islemleri");
+      if (panel && panel.classList.contains("hidden")) {
+        console.warn("⚠️ [Görev] Panel hala gizli, tekrar gösteriliyor...");
+        panel.classList.remove("hidden");
+        panel.style.display = "";
+      }
+    }, 200);
+
     // URL'yi temizle
     const cleanUrl = window.location.pathname;
     window.history.replaceState({}, document.title, cleanUrl);
@@ -949,17 +1000,34 @@ async function gorevOdaKontrolBaslat(odaId) {
 
 // Görev işlemleri panelini göster
 function gorevIslemleriGoster() {
+  console.log("🔍 gorevIslemleriGoster çağrıldı - Oda ID:", mevcutOdaId);
+
   const panel = document.getElementById("gorev_islemleri");
-  if (panel && mevcutOdaId) {
-    panel.classList.remove("hidden");
-    const bilgiText = document.getElementById("gorev_bilgi_text");
-    const odaNo = document.getElementById("oda_no_text")?.textContent || "";
-    if (bilgiText) {
-      if (mevcutGorevDetayId) {
-        bilgiText.textContent = `Oda ${odaNo} için minibar kontrol görevi`;
-      } else {
-        bilgiText.textContent = `Oda ${odaNo} için hızlı kontrol`;
-      }
+
+  if (!panel) {
+    console.error("❌ gorev_islemleri elementi bulunamadı!");
+    return;
+  }
+
+  if (!mevcutOdaId) {
+    console.warn("⚠️ Oda seçilmemiş, panel gösterilemiyor");
+    return;
+  }
+
+  // Tüm hidden class'larını kaldır ve inline style'ı temizle
+  panel.classList.remove("hidden");
+  panel.style.display = ""; // Inline style override'ı temizle
+
+  console.log("✅ DND butonu gösterildi - Oda:", mevcutOdaId);
+
+  const bilgiText = document.getElementById("gorev_bilgi_text");
+  const odaNo = document.getElementById("oda_no_text")?.textContent || "";
+
+  if (bilgiText) {
+    if (mevcutGorevDetayId) {
+      bilgiText.textContent = `Oda ${odaNo} için minibar kontrol görevi`;
+    } else {
+      bilgiText.textContent = `Oda ${odaNo} için hızlı kontrol`;
     }
   }
 }
@@ -1056,7 +1124,7 @@ async function dndOnayla() {
         const sonKontrol = data.dnd_durumu.son_dnd_zamani
           ? new Date(data.dnd_durumu.son_dnd_zamani).toLocaleTimeString(
               "tr-TR",
-              { hour: "2-digit", minute: "2-digit" }
+              { hour: "2-digit", minute: "2-digit" },
             )
           : "-";
 
@@ -1069,10 +1137,10 @@ async function dndOnayla() {
               </p>
               <p class="text-xs text-orange-700 dark:text-orange-300 mt-1">
                 Son kontrol: ${sonKontrol} • ${
-          dndSayisi >= 2
-            ? "✅ Minimum kontrol tamamlandı"
-            : `${2 - dndSayisi} kontrol daha gerekli`
-        }
+                  dndSayisi >= 2
+                    ? "✅ Minimum kontrol tamamlandı"
+                    : `${2 - dndSayisi} kontrol daha gerekli`
+                }
               </p>
             </div>
           </div>
@@ -1381,7 +1449,7 @@ function setupAsimiUyariGoster(
   urunAdi,
   setupMiktari,
   bugunEklenen,
-  kalanEklenebilir
+  kalanEklenebilir,
 ) {
   // Mevcut dialog varsa kaldır
   const existingDialog = document.getElementById("setupAsimiDialog");
