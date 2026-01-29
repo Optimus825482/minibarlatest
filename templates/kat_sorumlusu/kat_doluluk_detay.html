@@ -225,10 +225,26 @@ Doluluk Detayı{% endblock %} {% block content %}
               ></i>
               {% endif %}
             </div>
+
+            <!-- ✅ YENİ: SON ÇIKIŞ TARİHİ (Üstte) -->
+            {% if oda_detay.son_cikis_tarihi %}
+            <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">
+              <i class="fas fa-sign-out-alt mr-1"></i>Son Çıkış: {{
+              oda_detay.son_cikis_tarihi.strftime('%d.%m.%Y') }}
+            </div>
+            {% endif %}
+
             <div class="text-sm text-slate-500 dark:text-slate-400">
               <i class="fas fa-door-open mr-1"></i>Boş
             </div>
-            {% if oda_detay.kontrol_durumu %}
+
+            <!-- ✅ YENİ: SON KONTROL TARİHİ (Altta) -->
+            {% if oda_detay.son_kontrol_tarihi %}
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <i class="fas fa-clipboard-check mr-1"></i>Son Kontrol: {{
+              oda_detay.son_kontrol_tarihi.strftime('%d.%m %H:%M') }}
+            </div>
+            {% endif %} {% if oda_detay.kontrol_durumu %}
             <div
               class="mt-2 text-xs {% if oda_detay.kontrol_durumu == 'dnd' %}text-orange-600 dark:text-orange-400{% else %}text-green-600 dark:text-green-400{% endif %} font-medium"
             >
@@ -530,7 +546,7 @@ Doluluk Detayı{% endblock %} {% block content %}
         timer.classList.remove(
           "bg-emerald-600",
           "bg-purple-600",
-          "bg-yellow-500"
+          "bg-yellow-500",
         );
         timer.classList.add("bg-gray-500");
       } else {
@@ -540,7 +556,7 @@ Doluluk Detayı{% endblock %} {% block content %}
         const saniye = Math.floor((fark % (1000 * 60)) / 1000);
 
         timer.textContent = `${String(saat).padStart(2, "0")}:${String(
-          dakika
+          dakika,
         ).padStart(2, "0")}:${String(saniye).padStart(2, "0")}`;
 
         // 30 dakikadan az kaldıysa uyarı rengi
@@ -582,7 +598,7 @@ Doluluk Detayı{% endblock %} {% block content %}
       const saniye = Math.floor((gecenSure % (1000 * 60)) / 1000);
 
       timer.textContent = `${String(saat).padStart(2, "0")}:${String(
-        dakika
+        dakika,
       ).padStart(2, "0")}:${String(saniye).padStart(2, "0")}`;
 
       // 1 saatten fazla geçtiyse kırmızı uyarı

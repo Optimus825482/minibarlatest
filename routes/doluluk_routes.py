@@ -380,6 +380,22 @@ def kat_doluluk_detay(kat_id):
                 }
             else:
                 bos_sayisi += 1
+                
+                # ✅ YENİ: BOŞ ODALAR İÇİN SON ÇIKIŞ TARİHİ VE SON KONTROL TARİHİ
+                # Son çıkış yapan misafiri bul (bugünden önceki en son çıkış)
+                son_misafir = MisafirKayit.query.filter(
+                    MisafirKayit.oda_id == oda.id,
+                    MisafirKayit.cikis_tarihi < secili_tarih
+                ).order_by(MisafirKayit.cikis_tarihi.desc()).first()
+                
+                son_cikis_tarihi = son_misafir.cikis_tarihi if son_misafir else None
+                
+                # Son minibar kontrol tarihini bul (herhangi bir işlem)
+                son_kontrol = MinibarIslem.query.filter(
+                    MinibarIslem.oda_id == oda.id
+                ).order_by(MinibarIslem.islem_tarihi.desc()).first()
+                
+                son_kontrol_tarihi = son_kontrol.islem_tarihi if son_kontrol else None
             
             # Kontrol durumunu belirle (hem dolu hem boş odalar için)
             kontrol_durumu = kontrol_edilen_odalar.get(oda.id, None)
@@ -406,7 +422,10 @@ def kat_doluluk_detay(kat_id):
                 'varis_saati': varis_saati,
                 'cikis_saati': cikis_saati,
                 'dnd_sayisi': dnd_info['dnd_sayisi'] if dnd_info else None,
-                'son_dnd_zamani': dnd_info['son_dnd_zamani'].isoformat() if dnd_info and dnd_info['son_dnd_zamani'] else None
+                'son_dnd_zamani': dnd_info['son_dnd_zamani'].isoformat() if dnd_info and dnd_info['son_dnd_zamani'] else None,
+                # ✅ YENİ: BOŞ ODALAR İÇİN EK BİLGİLER
+                'son_cikis_tarihi': son_cikis_tarihi if not misafir else None,
+                'son_kontrol_tarihi': son_kontrol_tarihi if not misafir else None
             })
         
         return render_template("kat_sorumlusu/kat_doluluk_detay.html",
