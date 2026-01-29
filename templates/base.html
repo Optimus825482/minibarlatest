@@ -2690,33 +2690,44 @@
             </button>
           </div>
 
+        </div>
+
+        <!-- Sticky Önizleme + Footer -->
+        <div class="sticky bottom-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 z-10">
           <!-- Önizleme -->
-          <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-6 mb-6">
-            <h3 class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4">Önizleme</h3>
-            <div class="flex items-center gap-4">
-              <!-- Badge Önizleme -->
-              <div class="flex items-center gap-2">
-                <span class="text-sm text-slate-600 dark:text-slate-400">Setup Miktarı:</span>
-                <div id="tema-preview-badge" class="w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-medium" 
-                  style="background: #2563EB;">
-                  2
+          <div class="px-6 py-4 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                Önizleme
+              </h3>
+              <div class="flex items-center gap-4">
+                <!-- Badge Önizleme -->
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-600 dark:text-slate-400">Setup:</span>
+                  <div id="tema-preview-badge" class="w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-medium shadow-lg" 
+                    style="background: #2563EB;">
+                    2
+                  </div>
                 </div>
-              </div>
-              
-              <!-- Buton Önizleme -->
-              <div class="flex items-center gap-2">
-                <span class="text-sm text-slate-600 dark:text-slate-400">Buton:</span>
-                <button id="tema-preview-button" class="px-4 py-1 rounded-md text-white text-sm font-medium shadow-sm" 
-                  style="background: linear-gradient(180deg, #0284C7, #0284C7);">
-                  Ekle
-                </button>
+                
+                <!-- Buton Önizleme -->
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-600 dark:text-slate-400">Buton:</span>
+                  <button id="tema-preview-button" class="px-4 py-1.5 rounded-md text-white text-sm font-medium shadow-lg" 
+                    style="background: linear-gradient(180deg, #0284C7, #0284C7);">
+                    Ekle
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Footer -->
-        <div class="flex justify-end gap-3 p-6 border-t border-slate-200 dark:border-slate-700 sticky bottom-0 bg-white dark:bg-slate-800">
+          <!-- Footer Butonları -->
+          <div class="flex justify-end gap-3 px-6 py-4">
           <button onclick="temaAyarlariModalKapat()" 
             class="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-all">
             İptal
