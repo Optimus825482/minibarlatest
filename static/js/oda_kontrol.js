@@ -358,10 +358,12 @@ function createUrunCard(urun) {
       }, ${i})"
         class="py-1 text-sm font-semibold rounded-md transition-all shadow-sm ${
           aktif
-            ? "text-white hover:opacity-90 active:scale-95"
+            ? "text-white active:scale-95"
             : "bg-gradient-to-b from-slate-700 to-slate-800 text-slate-500 cursor-not-allowed"
         }"
-        style="${aktif ? "background: linear-gradient(180deg, #34D399, #059669); color: #FFFFFF;" : ""}"
+        style="${aktif ? "background: linear-gradient(180deg, #38BDF8, #0284C7); color: #FFFFFF;" : ""}"
+        onmouseover="${aktif ? "this.style.background='linear-gradient(180deg, #60A5FA, #2563EB)'" : ""}"
+        onmouseout="${aktif ? "this.style.background='linear-gradient(180deg, #38BDF8, #0284C7)'" : ""}"
         ${!aktif ? "disabled" : ""}>
         +${i}
       </button>
@@ -371,7 +373,7 @@ function createUrunCard(urun) {
   // Bugünkü ekleme badge'i (sağ tarafta, yanıp sönme yok)
   const bugunBadge =
     bugunEklenen > 0
-      ? `<span class="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shadow-md" style="background: #16A34A; color: #ECFDF5;">+${bugunEklenen}</span>`
+      ? `<span class="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shadow-md" style="background: #2563EB; color: #FFFFFF;">+${bugunEklenen}</span>`
       : `<span class="w-7 h-7"></span>`;
 
   card.innerHTML = `
