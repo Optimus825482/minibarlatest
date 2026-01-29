@@ -1,0 +1,327 @@
+{% extends "base.html" %} {% block title %}Ayarlarım - Minibar Takip{% endblock
+%} {% block content %}
+<div class="max-w-4xl mx-auto">
+  <!-- Başlık -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Ayarlarım</h1>
+    <p class="text-slate-600 dark:text-slate-400 mt-1">
+      Kişisel tercihlerinizi ve tema ayarlarınızı yönetin
+    </p>
+  </div>
+
+  <!-- Tema Ayarları Kartı -->
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+    <div class="flex items-center gap-3 mb-6">
+      <div
+        class="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg"
+      >
+        <svg
+          class="w-6 h-6 text-white"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
+          ></path>
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-xl font-semibold text-slate-900 dark:text-white">
+          Renk Teması
+        </h2>
+        <p class="text-sm text-slate-600 dark:text-slate-400">
+          Oda kontrol ekranında kullanılacak renkleri seçin
+        </p>
+      </div>
+    </div>
+
+    <!-- Tema Seçenekleri -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <!-- Tema 1: Mavi + Turkuaz -->
+      <button
+        onclick="temaUygula('#2563EB', '#0284C7', 'Mavi + Turkuaz')"
+        class="tema-kart p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-400 transition-all group"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-medium text-slate-900 dark:text-white"
+            >Mavi + Turkuaz</span
+          >
+          <span class="text-xs text-slate-500 dark:text-slate-400"
+            >Profesyonel</span
+          >
+        </div>
+        <div class="flex gap-2">
+          <div class="flex-1 h-12 rounded-md" style="background: #2563eb"></div>
+          <div
+            class="flex-1 h-12 rounded-md"
+            style="background: linear-gradient(180deg, #38bdf8, #0284c7)"
+          ></div>
+        </div>
+      </button>
+
+      <!-- Tema 2: Yeşil + Emerald -->
+      <button
+        onclick="temaUygula('#16A34A', '#059669', 'Yeşil + Emerald')"
+        class="tema-kart p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-green-500 dark:hover:border-green-400 transition-all group"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-medium text-slate-900 dark:text-white"
+            >Yeşil + Emerald</span
+          >
+          <span class="text-xs text-slate-500 dark:text-slate-400">Canlı</span>
+        </div>
+        <div class="flex gap-2">
+          <div class="flex-1 h-12 rounded-md" style="background: #16a34a"></div>
+          <div
+            class="flex-1 h-12 rounded-md"
+            style="background: linear-gradient(180deg, #34d399, #059669)"
+          ></div>
+        </div>
+      </button>
+
+      <!-- Tema 3: Mor + Purple -->
+      <button
+        onclick="temaUygula('#9333EA', '#7C3AED', 'Mor + Purple')"
+        class="tema-kart p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-purple-500 dark:hover:border-purple-400 transition-all group"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-medium text-slate-900 dark:text-white"
+            >Mor + Purple</span
+          >
+          <span class="text-xs text-slate-500 dark:text-slate-400">Modern</span>
+        </div>
+        <div class="flex gap-2">
+          <div class="flex-1 h-12 rounded-md" style="background: #9333ea"></div>
+          <div
+            class="flex-1 h-12 rounded-md"
+            style="background: linear-gradient(180deg, #a78bfa, #7c3aed)"
+          ></div>
+        </div>
+      </button>
+
+      <!-- Tema 4: Turuncu + Orange -->
+      <button
+        onclick="temaUygula('#EA580C', '#C2410C', 'Turuncu + Orange')"
+        class="tema-kart p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-orange-500 dark:hover:border-orange-400 transition-all group"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-medium text-slate-900 dark:text-white"
+            >Turuncu + Orange</span
+          >
+          <span class="text-xs text-slate-500 dark:text-slate-400"
+            >Enerjik</span
+          >
+        </div>
+        <div class="flex gap-2">
+          <div class="flex-1 h-12 rounded-md" style="background: #ea580c"></div>
+          <div
+            class="flex-1 h-12 rounded-md"
+            style="background: linear-gradient(180deg, #fb923c, #c2410c)"
+          ></div>
+        </div>
+      </button>
+
+      <!-- Tema 5: Kırmızı + Red -->
+      <button
+        onclick="temaUygula('#DC2626', '#B91C1C', 'Kırmızı + Red')"
+        class="tema-kart p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-red-500 dark:hover:border-red-400 transition-all group"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-medium text-slate-900 dark:text-white"
+            >Kırmızı + Red</span
+          >
+          <span class="text-xs text-slate-500 dark:text-slate-400">Güçlü</span>
+        </div>
+        <div class="flex gap-2">
+          <div class="flex-1 h-12 rounded-md" style="background: #dc2626"></div>
+          <div
+            class="flex-1 h-12 rounded-md"
+            style="background: linear-gradient(180deg, #f87171, #b91c1c)"
+          ></div>
+        </div>
+      </button>
+
+      <!-- Tema 6: Pembe + Pink -->
+      <button
+        onclick="temaUygula('#DB2777', '#BE185D', 'Pembe + Pink')"
+        class="tema-kart p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-pink-500 dark:hover:border-pink-400 transition-all group"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-medium text-slate-900 dark:text-white"
+            >Pembe + Pink</span
+          >
+          <span class="text-xs text-slate-500 dark:text-slate-400"
+            >Yumuşak</span
+          >
+        </div>
+        <div class="flex gap-2">
+          <div class="flex-1 h-12 rounded-md" style="background: #db2777"></div>
+          <div
+            class="flex-1 h-12 rounded-md"
+            style="background: linear-gradient(180deg, #f472b6, #be185d)"
+          ></div>
+        </div>
+      </button>
+
+      <!-- Tema 7: Sarı + Yellow -->
+      <button
+        onclick="temaUygula('#CA8A04', '#A16207', 'Sarı + Yellow')"
+        class="tema-kart p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-yellow-500 dark:hover:border-yellow-400 transition-all group"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-medium text-slate-900 dark:text-white"
+            >Sarı + Yellow</span
+          >
+          <span class="text-xs text-slate-500 dark:text-slate-400">Neşeli</span>
+        </div>
+        <div class="flex gap-2">
+          <div class="flex-1 h-12 rounded-md" style="background: #ca8a04"></div>
+          <div
+            class="flex-1 h-12 rounded-md"
+            style="background: linear-gradient(180deg, #fde047, #a16207)"
+          ></div>
+        </div>
+      </button>
+
+      <!-- Tema 8: Lacivert + Indigo -->
+      <button
+        onclick="temaUygula('#4F46E5', '#4338CA', 'Lacivert + Indigo')"
+        class="tema-kart p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg hover:border-indigo-600 dark:hover:border-indigo-500 transition-all group"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-medium text-slate-900 dark:text-white"
+            >Lacivert + Indigo</span
+          >
+          <span class="text-xs text-slate-500 dark:text-slate-400">Klasik</span>
+        </div>
+        <div class="flex gap-2">
+          <div class="flex-1 h-12 rounded-md" style="background: #4f46e5"></div>
+          <div
+            class="flex-1 h-12 rounded-md"
+            style="background: linear-gradient(180deg, #818cf8, #4338ca)"
+          ></div>
+        </div>
+      </button>
+    </div>
+
+    <!-- Önizleme -->
+    <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-6 mb-6">
+      <h3 class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4">
+        Önizleme
+      </h3>
+      <div class="flex items-center gap-4">
+        <!-- Badge Önizleme -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-slate-600 dark:text-slate-400"
+            >Setup Miktarı:</span
+          >
+          <div
+            id="preview-badge"
+            class="w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-medium"
+            style="background: {{ current_user.tema_renk_1 or '#2563EB' }};"
+          >
+            2
+          </div>
+        </div>
+
+        <!-- Buton Önizleme -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-slate-600 dark:text-slate-400">Buton:</span>
+          <button
+            id="preview-button"
+            class="px-4 py-1 rounded-md text-white text-sm font-medium shadow-sm"
+            style="background: linear-gradient(180deg, {{ current_user.tema_renk_2 or '#0284C7' }}, {{ current_user.tema_renk_2 or '#0284C7' }});"
+          >
+            Ekle
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kaydet Butonu -->
+    <div class="flex justify-end">
+      <button
+        onclick="temaKaydet()"
+        class="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium rounded-lg shadow-lg transition-all"
+      >
+        💾 Kaydet
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let secilenTemaRenk1 = '{{ current_user.tema_renk_1 or "#2563EB" }}';
+  let secilenTemaRenk2 = '{{ current_user.tema_renk_2 or "#0284C7" }}';
+
+  function temaUygula(renk1, renk2, temaAdi) {
+    secilenTemaRenk1 = renk1;
+    secilenTemaRenk2 = renk2;
+
+    // Önizlemeyi güncelle
+    document.getElementById("preview-badge").style.background = renk1;
+    document.getElementById("preview-button").style.background =
+      `linear-gradient(180deg, ${renk2}, ${renk2})`;
+
+    // Bildirim göster
+    showToast(
+      `🎨 ${temaAdi} teması seçildi. Kaydet butonuna tıklayın.`,
+      "info",
+    );
+  }
+
+  async function temaKaydet() {
+    try {
+      const response = await fetch("/api/kullanici/tema-kaydet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": document.querySelector('meta[name="csrf-token"]')
+            .content,
+        },
+        body: JSON.stringify({
+          tema_renk_1: secilenTemaRenk1,
+          tema_renk_2: secilenTemaRenk2,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showToast(data.message, "success");
+        // 1 saniye sonra sayfayı yenile
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        showToast(data.message, "error");
+      }
+    } catch (error) {
+      console.error("Tema kaydetme hatası:", error);
+      showToast("❌ Tema kaydedilemedi!", "error");
+    }
+  }
+
+  // Toast bildirimi
+  function showToast(message, type = "info") {
+    const toast = document.createElement("div");
+    toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 ${
+      type === "success"
+        ? "bg-green-500"
+        : type === "error"
+          ? "bg-red-500"
+          : "bg-blue-500"
+    }`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
+  }
+</script>
+{% endblock %}

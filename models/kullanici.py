@@ -42,6 +42,10 @@ class Kullanici(db.Model):
     olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     son_giris = db.Column(db.DateTime(timezone=True))
     
+    # Tema ayarları
+    tema_renk_1 = db.Column(db.String(7), default='#2563EB')  # Badge rengi
+    tema_renk_2 = db.Column(db.String(7), default='#0284C7')  # Buton rengi
+    
     # Kat sorumlusu için tek otel ilişkisi
     otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='SET NULL'), nullable=True)
     

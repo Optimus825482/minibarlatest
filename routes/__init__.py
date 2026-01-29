@@ -125,6 +125,10 @@ def register_all_routes(app):
     from routes.sistem_ayarlari_routes import register_sistem_ayarlari_routes
     register_sistem_ayarlari_routes(app)
     
+    # Kullanıcı Ayarları Routes (Tema Sistemi)
+    from routes.kullanici_ayarlari_routes import register_kullanici_ayarlari_routes
+    register_kullanici_ayarlari_routes(app)
+    
     # API endpoint'lerini CSRF'den muaf tut
     # Blueprint'leri register ettikten sonra CSRF exempt yap
     if hasattr(app, 'extensions') and 'csrf' in app.extensions:

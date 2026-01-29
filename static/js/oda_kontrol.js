@@ -14,9 +14,66 @@ let acikAkordiyonlar = new Set(); // Açık akordiyonları takip et
 let mevcutGorevDetayId = null; // Görev detay ID (görev listesinden gelirse)
 let katDetayGeriDonUrl = null; // Kat detaylarından gelindiyse geri dönüş URL'i
 
+// Tema renkleri (dinamik olarak yüklenecek)
+let aktifTemaRenkleri = null;
+
+// Tema renklerini API'den yükle
+async function temaRenkleriniYukle() {
+  try {
+    const response = await fetch("/api/kullanici/tema-renkleri");
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        aktifTemaRenkleri = {
+          name: "Kullanıcı Teması",
+          badge: data.tema_renk_1,
+          button: data.tema_renk_2,
+          buttonHover: lightenColor(data.tema_renk_2, 20), // %20 daha açık
+        };
+        console.log("🎨 Kullanıcı teması yüklendi:", aktifTemaRenkleri);
+        return aktifTemaRenkleri;
+      }
+    }
+  } catch (error) {
+    console.error("❌ Tema renkleri yüklenemedi:", error);
+  }
+
+  // Fallback: Default tema
+  aktifTemaRenkleri = {
+    name: "Mavi + Turkuaz (Default)",
+    badge: "#2563EB",
+    button: "#0284C7",
+    buttonHover: "#2563EB",
+  };
+  return aktifTemaRenkleri;
+}
+
+// Rengi açıklaştır (lighten)
+function lightenColor(hex, percent) {
+  const num = parseInt(hex.replace("#", ""), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = (num >> 16) + amt;
+  const G = ((num >> 8) & 0x00ff) + amt;
+  const B = (num & 0x0000ff) + amt;
+  return (
+    "#" +
+    (
+      0x1000000 +
+      (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+      (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+      (B < 255 ? (B < 1 ? 0 : B) : 255)
+    )
+      .toString(16)
+      .slice(1)
+  );
+}
+
 // Sayfa yüklendiğinde
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
   console.log("✅ Oda Kontrol sistemi yüklendi");
+
+  // Tema renklerini yükle
+  await temaRenkleriniYukle();
 
   const katSelect = document.getElementById("kat_id");
   const odaSelect = document.getElementById("oda_id");
@@ -347,6 +404,14 @@ function createUrunCard(urun) {
   // Dinamik buton sayısı (setup miktarına göre, max 4)
   const butonSayisi = Math.min(urun.setup_miktari, 4);
   const butonlar = [];
+  const tema = aktifTemaRenkleri || {
+    buton_gradient_start: "#38BDF8",
+    buton_gradient_end: "#0284C7",
+    buton_hover_start: "#60A5FA",
+    buton_hover_end: "#2563EB",
+    buton_text: "#FFFFFF",
+  };
+
   for (let i = 1; i <= butonSayisi; i++) {
     const aktif = stokVar && zimmetStok.miktar >= i;
     butonlar.push(`
@@ -358,12 +423,12 @@ function createUrunCard(urun) {
       }, ${i})"
         class="py-1 text-sm font-semibold rounded-md transition-all shadow-sm ${
           aktif
-            ? "text-white active:scale-95"
+            ? "active:scale-95"
             : "bg-gradient-to-b from-slate-700 to-slate-800 text-slate-500 cursor-not-allowed"
         }"
-        style="${aktif ? "background: linear-gradient(180deg, #38BDF8, #0284C7); color: #FFFFFF;" : ""}"
-        onmouseover="${aktif ? "this.style.background='linear-gradient(180deg, #60A5FA, #2563EB)'" : ""}"
-        onmouseout="${aktif ? "this.style.background='linear-gradient(180deg, #38BDF8, #0284C7)'" : ""}"
+        style="${aktif ? `background: linear-gradient(180deg, ${tema.buton_gradient_start}, ${tema.buton_gradient_end}); color: ${tema.buton_text};` : ""}"
+        onmouseover="${aktif ? `this.style.background='linear-gradient(180deg, ${tema.buton_hover_start}, ${tema.buton_hover_end})'` : ""}"
+        onmouseout="${aktif ? `this.style.background='linear-gradient(180deg, ${tema.buton_gradient_start}, ${tema.buton_gradient_end})'` : ""}"
         ${!aktif ? "disabled" : ""}>
         +${i}
       </button>
@@ -371,9 +436,13 @@ function createUrunCard(urun) {
   }
 
   // Bugünkü ekleme badge'i (sağ tarafta, yanıp sönme yok)
+  const tema = aktifTemaRenkleri || {
+    badge_bg: "#2563EB",
+    badge_text: "#FFFFFF",
+  };
   const bugunBadge =
     bugunEklenen > 0
-      ? `<span class="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shadow-md" style="background: #2563EB; color: #FFFFFF;">+${bugunEklenen}</span>`
+      ? `<span class="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shadow-md" style="background: ${tema.badge_bg}; color: ${tema.badge_text};">+${bugunEklenen}</span>`
       : `<span class="w-7 h-7"></span>`;
 
   card.innerHTML = `
