@@ -872,6 +872,20 @@ def register_kat_sorumlusu_routes(app):
                 # Görev tamamlama durumunu al
                 gorev_tamamlandi = getattr(islem, 'gorev_tamamlandi', False)
                 
+                # DND otomatik tamamlama - Oda DND durumundaysa tamamla
+                try:
+                    from utils.dnd_service import DNDService
+                    dnd_sonuc = DNDService.otomatik_tamamla(
+                        oda_id=oda_id,
+                        personel_id=kullanici_id,
+                        islem_tipi='urun_eklendi'
+                    )
+                    if dnd_sonuc and dnd_sonuc.get('success'):
+                        print(f"✅ DND otomatik tamamlandı: {dnd_sonuc.get('mesaj')}")
+                except Exception as e:
+                    print(f"⚠️ DND otomatik tamamlama hatası: {str(e)}")
+                    # Hata olsa bile ana işlemi etkilemesin
+                
                 # Audit log
                 audit_create(
                     tablo_adi='minibar_islem',
@@ -1932,6 +1946,20 @@ def register_kat_sorumlusu_routes(app):
                     print(f"Otomatik görev tamamlama hatası: {str(e)}")
             
             db.session.commit()
+            
+            # DND otomatik tamamlama - Oda DND durumundaysa tamamla
+            try:
+                from utils.dnd_service import DNDService
+                dnd_sonuc = DNDService.otomatik_tamamla(
+                    oda_id=oda_id,
+                    personel_id=kullanici_id,
+                    islem_tipi='sarfiyat_yok'
+                )
+                if dnd_sonuc and dnd_sonuc.get('success'):
+                    print(f"✅ DND otomatik tamamlandı: {dnd_sonuc.get('mesaj')}")
+            except Exception as e:
+                print(f"⚠️ DND otomatik tamamlama hatası: {str(e)}")
+                # Hata olsa bile ana işlemi etkilemesin
             
             # Audit log
             audit_create(

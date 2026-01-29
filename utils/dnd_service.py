@@ -538,3 +538,94 @@ class DNDService:
         except Exception as e:
             db.session.rollback()
             raise DNDServiceError(f"DND iptal hatası: {str(e)}")
+    
+    @staticmethod
+    def otomatik_tamamla(
+        oda_id: int,
+        personel_id: int,
+        islem_tipi: str = 'urun_eklendi',
+        tarih: Optional[date] = None
+    ) -> Optional[Dict]:
+        """
+        DND durumundaki odada ürün eklendiğinde veya sarfiyat yok girildiğinde
+        DND kaydını otomatik olarak tamamlar/iptal eder.
+        
+        Args:
+            oda_id: Oda ID
+            personel_id: İşlemi yapan personel ID
+            islem_tipi: İşlem tipi ('urun_eklendi' veya 'sarfiyat_yok')
+            tarih: Tarih (varsayılan: bugün)
+            
+        Returns:
+            Dict veya None: İşlem sonucu (DND kaydı yoksa None)
+            {
+                'success': True,
+                'dnd_kayit_id': 123,
+                'onceki_durum': 'aktif',
+                'yeni_durum': 'tamamlandi',
+                'mesaj': 'DND kaydı otomatik tamamlandı'
+            }
+        """
+        if tarih is None:
+            tarih = get_kktc_now().date()
+        
+        try:
+            # Bugünkü aktif DND kaydını bul
+            dnd_kayit = OdaDNDKayit.query.filter_by(
+                oda_id=oda_id,
+                kayit_tarihi=tarih,
+                durum=DNDService.DURUM_AKTIF
+            ).first()
+            
+            if not dnd_kayit:
+                # DND kaydı yoksa veya zaten tamamlanmışsa işlem yapma
+                return None
+            
+            simdi = get_kktc_now()
+            onceki_durum = dnd_kayit.durum
+            
+            # DND kaydını tamamla
+            dnd_kayit.durum = DNDService.DURUM_TAMAMLANDI
+            dnd_kayit.guncelleme_tarihi = simdi
+            
+            # Tamamlama notu ekle
+            sebep_mesaji = {
+                'urun_eklendi': 'Ürün eklendi - Oda artık DND değil',
+                'sarfiyat_yok': 'Sarfiyat yok kaydı girildi - Oda kontrol edildi'
+            }.get(islem_tipi, 'Oda kontrolü yapıldı')
+            
+            tamamlama_kontrol = OdaDNDKontrol(
+                dnd_kayit_id=dnd_kayit.id,
+                kontrol_no=dnd_kayit.dnd_sayisi + 1,  # Son kontrol
+                kontrol_eden_id=personel_id,
+                kontrol_zamani=simdi,
+                notlar=f'OTOMATIK TAMAMLANDI: {sebep_mesaji}'
+            )
+            db.session.add(tamamlama_kontrol)
+            
+            # Görev entegrasyonu - varsa görev detayını da tamamla
+            if dnd_kayit.gorev_detay_id:
+                DNDService._gorev_entegrasyonu(
+                    dnd_kayit.gorev_detay_id,
+                    dnd_kayit.dnd_sayisi,
+                    personel_id,
+                    simdi,
+                    min_kontrol_tamamlandi=True  # Otomatik tamamlama
+                )
+            
+            db.session.commit()
+            
+            return {
+                'success': True,
+                'dnd_kayit_id': dnd_kayit.id,
+                'onceki_durum': onceki_durum,
+                'yeni_durum': dnd_kayit.durum,
+                'mesaj': f'DND kaydı otomatik tamamlandı ({sebep_mesaji})',
+                'dnd_sayisi': dnd_kayit.dnd_sayisi
+            }
+            
+        except Exception as e:
+            db.session.rollback()
+            # Hata olsa bile ana işlemi etkilemesin, sadece log
+            print(f"⚠️ DND otomatik tamamlama hatası: {str(e)}")
+            return None
