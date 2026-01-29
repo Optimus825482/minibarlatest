@@ -291,26 +291,26 @@ function renderSetupListesi(setuplar) {
     // Setup başlığı
     const setupDiv = document.createElement("div");
     setupDiv.className =
-      "bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden mb-4";
+      "bg-slate-800/80 dark:bg-slate-800/80 rounded-xl shadow-sm border border-slate-700/50 dark:border-slate-700/50 overflow-hidden mb-4 backdrop-blur-sm";
 
     const headerClass = setup.dolap_ici
-      ? "bg-gradient-to-r from-indigo-500 to-purple-600"
-      : "bg-gradient-to-r from-pink-500 to-rose-600";
+      ? "bg-gradient-to-r from-slate-700 to-slate-800"
+      : "bg-gradient-to-r from-slate-600 to-slate-700";
 
     const dolapBilgisi = setup.dolap_ici
       ? `Dolap ${setup.dolap_no}`
       : "Dolap Dışı";
 
     setupDiv.innerHTML = `
-      <div class="${headerClass} text-white px-4 py-3">
+      <div class="${headerClass} text-white px-4 py-3 border-b border-slate-700/50">
         <div class="flex items-center justify-between">
           <div>
-            <h3 class="text-base font-bold">${setup.setup_adi}</h3>
-            <p class="text-xs opacity-80">${dolapBilgisi} • ${setup.urunler.length} ürün</p>
+            <h3 class="text-base font-semibold text-slate-100">${setup.setup_adi}</h3>
+            <p class="text-xs text-slate-300">${dolapBilgisi} • ${setup.urunler.length} ürün</p>
           </div>
         </div>
       </div>
-      <div class="p-3">
+      <div class="p-3 bg-slate-900/30">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="setup-grid-${index}"></div>
       </div>
     `;
@@ -334,7 +334,7 @@ function renderSetupListesi(setuplar) {
 function createUrunCard(urun) {
   const card = document.createElement("div");
   card.className =
-    "bg-slate-50 dark:bg-slate-900 rounded-lg p-3 border border-slate-200 dark:border-slate-700 relative";
+    "bg-slate-800/50 dark:bg-slate-800/50 rounded-lg p-3 border border-slate-700/50 dark:border-slate-700/50 relative backdrop-blur-sm hover:border-slate-600 transition-all";
 
   // Zimmet stok kontrolü
   const zimmetStok = zimmetStoklar[urun.urun_id];
@@ -358,8 +358,8 @@ function createUrunCard(urun) {
       }, ${i})"
         class="py-1.5 text-s font-bold rounded transition-all ${
           aktif
-            ? "bg-indigo-600 text-white active:bg-indigo-700"
-            : "bg-slate-300 dark:bg-slate-600 text-slate-400 cursor-not-allowed"
+            ? "bg-blue-600/90 text-white hover:bg-blue-600 active:bg-blue-700"
+            : "bg-slate-700/50 text-slate-500 cursor-not-allowed"
         }"
         ${!aktif ? "disabled" : ""}>
         +${i}
@@ -370,16 +370,16 @@ function createUrunCard(urun) {
   // Bugünkü ekleme badge'i (sağ tarafta, yanıp sönme yok)
   const bugunBadge =
     bugunEklenen > 0
-      ? `<span class="w-8 h-8 rounded-full bg-green-500 text-white text-sm font-bold flex items-center justify-center shadow-md">+${bugunEklenen}</span>`
+      ? `<span class="w-8 h-8 rounded-full bg-emerald-600/90 text-white text-sm font-bold flex items-center justify-center shadow-md">+${bugunEklenen}</span>`
       : `<span class="w-8 h-8"></span>`;
 
   card.innerHTML = `
     <!-- Üst Satır: Setup Miktarı | Ürün Adı | Bugün Eklenen -->
     <div class="flex items-center justify-between mb-2">
-      <span class="w-8 h-8 rounded-full bg-indigo-500 text-white text-sm font-bold flex items-center justify-center">${
+      <span class="w-8 h-8 rounded-full bg-blue-600/90 text-white text-sm font-bold flex items-center justify-center shadow-sm">${
         urun.setup_miktari
       }</span>
-      <span class="text-lg font-medium text-slate-900 dark:text-white truncate flex-1 text-center mx-2" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;" title="${
+      <span class="text-lg font-medium text-slate-100 dark:text-slate-100 truncate flex-1 text-center mx-2" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;" title="${
         urun.urun_adi
       }">${urun.urun_adi}</span>
       ${bugunBadge}
@@ -387,12 +387,12 @@ function createUrunCard(urun) {
     
     <!-- Stok ve Ekstra Bilgisi -->
     <div class="flex justify-between text-xs mb-2">
-      <span class="text-slate-500 dark:text-slate-400">Stok: <strong class="${
-        stokVar ? "text-green-600" : "text-red-500"
+      <span class="text-slate-400 dark:text-slate-400">Stok: <strong class="${
+        stokVar ? "text-emerald-400" : "text-red-400"
       }">${zimmetStok?.miktar || 0}</strong></span>
       ${
         urun.ekstra_miktar > 0
-          ? `<span class="text-orange-500 font-bold">+${urun.ekstra_miktar} ekstra</span>`
+          ? `<span class="text-amber-400 font-bold">+${urun.ekstra_miktar} ekstra</span>`
           : ""
       }
     </div>
@@ -407,7 +407,7 @@ function createUrunCard(urun) {
       /'/g,
       "\\'",
     )}', ${urun.setup_miktari}, ${urun.ekstra_miktar || 0}, ${urun.setup_id})"
-      class="w-full py-1.5 text-s font-medium rounded bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 active:bg-orange-200">
+      class="w-full py-1.5 text-s font-medium rounded bg-amber-600/20 dark:bg-amber-600/20 text-amber-400 dark:text-amber-400 hover:bg-amber-600/30 active:bg-amber-600/40 transition-all">
       + Ekstra
     </button>
     
@@ -419,7 +419,7 @@ function createUrunCard(urun) {
       }, '${urun.urun_adi.replace(/'/g, "\\'")}', ${urun.ekstra_miktar}, ${
         urun.setup_id
       })"
-        class="w-full mt-1 py-1.5 text-xs font-medium rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 active:bg-red-200">
+        class="w-full mt-1 py-1.5 text-xs font-medium rounded bg-red-600/20 dark:bg-red-600/20 text-red-400 dark:text-red-400 hover:bg-red-600/30 active:bg-red-600/40 transition-all">
         Sıfırla
       </button>
     `
