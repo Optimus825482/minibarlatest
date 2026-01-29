@@ -436,13 +436,13 @@ function createUrunCard(urun) {
   }
 
   // Bugünkü ekleme badge'i (sağ tarafta, yanıp sönme yok)
-  const tema = aktifTemaRenkleri || {
+  const temaBadge = aktifTemaRenkleri || {
     badge_bg: "#2563EB",
     badge_text: "#FFFFFF",
   };
   const bugunBadge =
     bugunEklenen > 0
-      ? `<span class="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shadow-md" style="background: ${tema.badge_bg}; color: ${tema.badge_text};">+${bugunEklenen}</span>`
+      ? `<span class="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shadow-md" style="background: ${temaBadge.badge_bg}; color: ${temaBadge.badge_text};">+${bugunEklenen}</span>`
       : `<span class="w-7 h-7"></span>`;
 
   card.innerHTML = `

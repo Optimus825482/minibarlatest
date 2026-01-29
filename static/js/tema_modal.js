@@ -1,9 +1,10 @@
 /**
  * Tema Ayarları Modal Sistemi
+ * Badge ve Buton renklerini ayrı ayrı seçebilme
  */
 
-let secilenTemaRenk1 = "#2563EB";
-let secilenTemaRenk2 = "#0284C7";
+let secilenTemaRenk1 = "#2563EB"; // Badge rengi
+let secilenTemaRenk2 = "#0284C7"; // Buton rengi
 
 // Tema ayarları modalını aç
 function temaAyarlariModalAc() {
@@ -14,11 +15,13 @@ function temaAyarlariModalAc() {
       if (data.success) {
         secilenTemaRenk1 = data.tema_renk_1;
         secilenTemaRenk2 = data.tema_renk_2;
+
+        // Color picker'ları güncelle
+        document.getElementById("badge-color-picker").value = secilenTemaRenk1;
+        document.getElementById("button-color-picker").value = secilenTemaRenk2;
+
         // Önizlemeyi güncelle
-        document.getElementById("tema-preview-badge").style.background =
-          secilenTemaRenk1;
-        document.getElementById("tema-preview-button").style.background =
-          `linear-gradient(180deg, ${secilenTemaRenk2}, ${secilenTemaRenk2})`;
+        onizlemeGuncelle();
       }
     })
     .catch((error) => console.error("Tema renkleri yüklenemedi:", error));
@@ -34,18 +37,45 @@ function temaAyarlariModalKapat() {
   document.body.style.overflow = "";
 }
 
-// Tema uygula (önizleme)
+// Hazır tema uygula
 function temaUygula(renk1, renk2, temaAdi) {
   secilenTemaRenk1 = renk1;
   secilenTemaRenk2 = renk2;
 
+  // Color picker'ları güncelle
+  document.getElementById("badge-color-picker").value = renk1;
+  document.getElementById("button-color-picker").value = renk2;
+
   // Önizlemeyi güncelle
-  document.getElementById("tema-preview-badge").style.background = renk1;
-  document.getElementById("tema-preview-button").style.background =
-    `linear-gradient(180deg, ${renk2}, ${renk2})`;
+  onizlemeGuncelle();
 
   // Bildirim göster
-  showToast(`🎨 ${temaAdi} teması seçildi. Kaydet butonuna tıklayın.`, "info");
+  showToast(`🎨 ${temaAdi} teması seçildi`, "info");
+}
+
+// Color picker'dan renk seçildiğinde
+function badgeRenkSecildi(renk) {
+  secilenTemaRenk1 = renk;
+  onizlemeGuncelle();
+}
+
+function butonRenkSecildi(renk) {
+  secilenTemaRenk2 = renk;
+  onizlemeGuncelle();
+}
+
+// Önizlemeyi güncelle
+function onizlemeGuncelle() {
+  document.getElementById("tema-preview-badge").style.background =
+    secilenTemaRenk1;
+  document.getElementById("tema-preview-button").style.background =
+    `linear-gradient(180deg, ${secilenTemaRenk2}, ${secilenTemaRenk2})`;
+
+  // Hex kodlarını göster
+  document.getElementById("badge-hex-display").textContent =
+    secilenTemaRenk1.toUpperCase();
+  document.getElementById("button-hex-display").textContent =
+    secilenTemaRenk2.toUpperCase();
 }
 
 // Tema kaydet
@@ -86,7 +116,7 @@ async function temaKaydet() {
 // Toast bildirimi
 function showToast(message, type = "info") {
   const toast = document.createElement("div");
-  toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 ${
+  toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-[60] ${
     type === "success"
       ? "bg-green-500"
       : type === "error"

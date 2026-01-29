@@ -2519,6 +2519,67 @@
 
         <!-- Content -->
         <div class="p-6">
+          <!-- Özel Renk Seçimi -->
+          <div class="mb-6 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border-2 border-purple-200 dark:border-purple-700">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+              </svg>
+              Özel Renk Seçimi
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Badge Rengi -->
+              <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Setup Miktarı Badge Rengi
+                </label>
+                <div class="flex items-center gap-3">
+                  <input 
+                    type="color" 
+                    id="badge-color-picker" 
+                    value="#2563EB"
+                    onchange="badgeRenkSecildi(this.value)"
+                    class="w-16 h-16 rounded-lg cursor-pointer border-2 border-slate-300 dark:border-slate-600"
+                  />
+                  <div class="flex-1">
+                    <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Hex Kod:</div>
+                    <div id="badge-hex-display" class="text-lg font-mono font-bold text-slate-900 dark:text-white">#2563EB</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Buton Rengi -->
+              <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Buton Rengi
+                </label>
+                <div class="flex items-center gap-3">
+                  <input 
+                    type="color" 
+                    id="button-color-picker" 
+                    value="#0284C7"
+                    onchange="butonRenkSecildi(this.value)"
+                    class="w-16 h-16 rounded-lg cursor-pointer border-2 border-slate-300 dark:border-slate-600"
+                  />
+                  <div class="flex-1">
+                    <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">Hex Kod:</div>
+                    <div id="button-hex-display" class="text-lg font-mono font-bold text-slate-900 dark:text-white">#0284C7</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hazır Temalar -->
+          <div class="mb-6">
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+              </svg>
+              Hazır Temalar
+            </h3>
+          </div>
+
           <!-- Tema Seçenekleri -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <!-- Tema 1: Mavi + Turkuaz -->
