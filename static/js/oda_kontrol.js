@@ -358,9 +358,10 @@ function createUrunCard(urun) {
       }, ${i})"
         class="py-1 text-sm font-semibold rounded-md transition-all shadow-sm ${
           aktif
-            ? "bg-gradient-to-b from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 active:scale-95"
+            ? "text-white hover:opacity-90 active:scale-95"
             : "bg-gradient-to-b from-slate-700 to-slate-800 text-slate-500 cursor-not-allowed"
         }"
+        style="${aktif ? "background: linear-gradient(180deg, #34D399, #059669); color: #FFFFFF;" : ""}"
         ${!aktif ? "disabled" : ""}>
         +${i}
       </button>
@@ -370,7 +371,7 @@ function createUrunCard(urun) {
   // Bugünkü ekleme badge'i (sağ tarafta, yanıp sönme yok)
   const bugunBadge =
     bugunEklenen > 0
-      ? `<span class="w-7 h-7 rounded-full bg-gradient-to-b from-emerald-500 to-emerald-600 text-white text-xs font-bold flex items-center justify-center shadow-md">+${bugunEklenen}</span>`
+      ? `<span class="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shadow-md" style="background: #16A34A; color: #ECFDF5;">+${bugunEklenen}</span>`
       : `<span class="w-7 h-7"></span>`;
 
   card.innerHTML = `
