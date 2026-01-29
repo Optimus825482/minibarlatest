@@ -460,12 +460,12 @@ function createUrunCard(urun) {
     
     <!-- Stok ve Ekstra Bilgisi -->
     <div class="flex justify-between text-xs mb-2">
-      <span class="text-slate-400 dark:text-slate-400">Stok: <strong class="${
+      <span class="text-slate-300 dark:text-slate-300">Stok: <strong class="text-base ${
         stokVar ? "text-emerald-400" : "text-red-400"
       }">${zimmetStok?.miktar || 0}</strong></span>
       ${
         urun.ekstra_miktar > 0
-          ? `<span class="text-amber-400 font-bold">+${urun.ekstra_miktar} ekstra</span>`
+          ? `<span class="text-amber-400 font-bold text-sm">+${urun.ekstra_miktar} ekstra</span>`
           : ""
       }
     </div>
