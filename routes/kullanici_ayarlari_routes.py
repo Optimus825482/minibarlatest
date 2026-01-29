@@ -4,8 +4,7 @@ Tema, renk ve kişisel tercihler
 """
 
 from flask import render_template, request, jsonify, flash, redirect, url_for, session
-from models.base import db
-from models.kullanici import Kullanici
+from models import db, Kullanici  # Ana models.py'den import
 from utils.decorators import login_required
 import re
 import traceback
