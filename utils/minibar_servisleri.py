@@ -539,6 +539,23 @@ def tuketim_kaydet(oda_id, urun_id, miktar, personel_id, islem_tipi='setup_kontr
             # Görev tamamlama hatası ana işlemi etkilemesin
             logger.warning(f"Görev tamamlama hatası (işlem devam ediyor): {str(gorev_err)}")
         
+        # ✅ YENİ: DND otomatik tamamlama - COMMIT ÖNCESINDE (aynı transaction içinde)
+        try:
+            from utils.dnd_service import DNDService
+            dnd_sonuc = DNDService.otomatik_tamamla(
+                oda_id=oda_id,
+                personel_id=personel_id,
+                islem_tipi='urun_eklendi',
+                auto_commit=False  # Aynı transaction içinde, commit dışarıda yapılacak
+            )
+            if dnd_sonuc and dnd_sonuc.get('success'):
+                logger.info(f"✅ DND otomatik tamamlandı: {dnd_sonuc.get('mesaj')}")
+            else:
+                logger.debug(f"ℹ️ DND otomatik tamamlama: Aktif DND kaydı yok veya zaten tamamlanmış")
+        except Exception as dnd_err:
+            logger.warning(f"⚠️ DND otomatik tamamlama hatası: {str(dnd_err)}")
+            # Hata olsa bile ana işlemi etkilemesin
+        
         db.session.commit()
         
         # İşlem objesine görev bilgisini ekle

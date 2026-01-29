@@ -546,7 +546,8 @@ class DNDService:
         oda_id: int,
         personel_id: int,
         islem_tipi: str = 'urun_eklendi',
-        tarih: Optional[date] = None
+        tarih: Optional[date] = None,
+        auto_commit: bool = False  # ✅ YENİ: Otomatik commit kontrolü
     ) -> Optional[Dict]:
         """
         DND durumundaki odada ürün eklendiğinde veya sarfiyat yok girildiğinde
@@ -557,6 +558,7 @@ class DNDService:
             personel_id: İşlemi yapan personel ID
             islem_tipi: İşlem tipi ('urun_eklendi' veya 'sarfiyat_yok')
             tarih: Tarih (varsayılan: bugün)
+            auto_commit: True ise otomatik commit yapar, False ise çağıran fonksiyon commit yapmalı
             
         Returns:
             Dict veya None: İşlem sonucu (DND kaydı yoksa None)
@@ -615,7 +617,9 @@ class DNDService:
                     min_kontrol_tamamlandi=True  # Otomatik tamamlama
                 )
             
-            db.session.commit()
+            # ✅ YENİ: Sadece auto_commit=True ise commit yap
+            if auto_commit:
+                db.session.commit()
             
             return {
                 'success': True,
@@ -627,7 +631,8 @@ class DNDService:
             }
             
         except Exception as e:
-            db.session.rollback()
+            if auto_commit:
+                db.session.rollback()
             # Hata olsa bile ana işlemi etkilemesin, sadece log
             print(f"⚠️ DND otomatik tamamlama hatası: {str(e)}")
             return None
