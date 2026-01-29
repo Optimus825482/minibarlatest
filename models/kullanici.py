@@ -53,17 +53,18 @@ class Kullanici(db.Model):
     depo_sorumlusu_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
     
     # İlişkiler
-    # PersonelZimmet lazy string olarak tanımlandı - circular import önleme
-    zimmet_kayitlari = db.relationship('PersonelZimmet', 
-                                       foreign_keys='PersonelZimmet.personel_id',
-                                       backref='personel', 
-                                       lazy='dynamic',
-                                       overlaps="personel")
-    teslim_ettigi_zimmetler = db.relationship('PersonelZimmet',
-                                              foreign_keys='PersonelZimmet.teslim_eden_id',
-                                              lazy='dynamic',
-                                              overlaps="personel,zimmet_kayitlari")
-    minibar_islemleri = db.relationship('MinibarIslem', backref='personel', lazy='dynamic')
+    # NOT: PersonelZimmet relationship'leri yoruma alındı - circular import sorunu
+    # Tema sistemi için gerekli değil
+    # zimmet_kayitlari = db.relationship('PersonelZimmet', 
+    #                                    foreign_keys='PersonelZimmet.personel_id',
+    #                                    backref='personel', 
+    #                                    lazy='dynamic',
+    #                                    overlaps="personel")
+    # teslim_ettigi_zimmetler = db.relationship('PersonelZimmet',
+    #                                           foreign_keys='PersonelZimmet.teslim_eden_id',
+    #                                           lazy='dynamic',
+    #                                           overlaps="personel,zimmet_kayitlari")
+    # minibar_islemleri = db.relationship('MinibarIslem', backref='personel', lazy='dynamic')
     
     # Otel ilişkileri
     otel = db.relationship('Otel', foreign_keys=[otel_id], backref='kat_sorumlu_kullanicilar')
