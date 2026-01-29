@@ -222,7 +222,7 @@
           <div
             id="preview-badge"
             class="w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-medium"
-            style="background: {{ current_user.tema_renk_1 or '#2563EB' }};"
+            style="background: #2563eb"
           >
             2
           </div>
@@ -234,7 +234,7 @@
           <button
             id="preview-button"
             class="px-4 py-1 rounded-md text-white text-sm font-medium shadow-sm"
-            style="background: linear-gradient(180deg, {{ current_user.tema_renk_2 or '#0284C7' }}, {{ current_user.tema_renk_2 or '#0284C7' }});"
+            style="background: linear-gradient(180deg, #0284c7, #0284c7)"
           >
             Ekle
           </button>
@@ -255,8 +255,25 @@
 </div>
 
 <script>
-  let secilenTemaRenk1 = '{{ current_user.tema_renk_1 or "#2563EB" }}';
-  let secilenTemaRenk2 = '{{ current_user.tema_renk_2 or "#0284C7" }}';
+  // API'den tema renklerini yükle
+  let secilenTemaRenk1 = "#2563EB";
+  let secilenTemaRenk2 = "#0284C7";
+
+  // Sayfa yüklendiğinde mevcut tema renklerini al
+  fetch("/api/kullanici/tema-renkleri")
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        secilenTemaRenk1 = data.tema_renk_1;
+        secilenTemaRenk2 = data.tema_renk_2;
+        // Önizlemeyi güncelle
+        document.getElementById("preview-badge").style.background =
+          secilenTemaRenk1;
+        document.getElementById("preview-button").style.background =
+          `linear-gradient(180deg, ${secilenTemaRenk2}, ${secilenTemaRenk2})`;
+      }
+    })
+    .catch((error) => console.error("Tema renkleri yüklenemedi:", error));
 
   function temaUygula(renk1, renk2, temaAdi) {
     secilenTemaRenk1 = renk1;
