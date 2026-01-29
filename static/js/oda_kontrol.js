@@ -334,7 +334,7 @@ function renderSetupListesi(setuplar) {
 function createUrunCard(urun) {
   const card = document.createElement("div");
   card.className =
-    "bg-slate-800/50 dark:bg-slate-800/50 rounded-lg p-3 border border-slate-700/50 dark:border-slate-700/50 relative backdrop-blur-sm hover:border-slate-600 transition-all";
+    "bg-slate-800/70 dark:bg-slate-800/70 rounded-lg p-2.5 border border-slate-700 dark:border-slate-700 relative backdrop-blur-sm hover:border-slate-600 transition-all shadow-md hover:shadow-lg";
 
   // Zimmet stok kontrolü
   const zimmetStok = zimmetStoklar[urun.urun_id];
@@ -356,10 +356,10 @@ function createUrunCard(urun) {
       )}', ${urun.setup_miktari}, ${urun.ekstra_miktar || 0}, ${
         urun.setup_id
       }, ${i})"
-        class="py-1.5 text-s font-bold rounded transition-all ${
+        class="py-1 text-sm font-semibold rounded-md transition-all shadow-sm ${
           aktif
-            ? "bg-blue-600/90 text-white hover:bg-blue-600 active:bg-blue-700"
-            : "bg-slate-700/50 text-slate-500 cursor-not-allowed"
+            ? "bg-gradient-to-b from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 active:scale-95"
+            : "bg-gradient-to-b from-slate-700 to-slate-800 text-slate-500 cursor-not-allowed"
         }"
         ${!aktif ? "disabled" : ""}>
         +${i}
@@ -370,16 +370,16 @@ function createUrunCard(urun) {
   // Bugünkü ekleme badge'i (sağ tarafta, yanıp sönme yok)
   const bugunBadge =
     bugunEklenen > 0
-      ? `<span class="w-8 h-8 rounded-full bg-emerald-600/90 text-white text-sm font-bold flex items-center justify-center shadow-md">+${bugunEklenen}</span>`
-      : `<span class="w-8 h-8"></span>`;
+      ? `<span class="w-7 h-7 rounded-full bg-gradient-to-b from-emerald-500 to-emerald-600 text-white text-xs font-bold flex items-center justify-center shadow-md">+${bugunEklenen}</span>`
+      : `<span class="w-7 h-7"></span>`;
 
   card.innerHTML = `
     <!-- Üst Satır: Setup Miktarı | Ürün Adı | Bugün Eklenen -->
     <div class="flex items-center justify-between mb-2">
-      <span class="w-8 h-8 rounded-full bg-blue-600/90 text-white text-sm font-bold flex items-center justify-center shadow-sm">${
+      <span class="w-7 h-7 rounded-full bg-gradient-to-b from-blue-500 to-blue-600 text-white text-xs font-bold flex items-center justify-center shadow-md">${
         urun.setup_miktari
       }</span>
-      <span class="text-lg font-medium text-slate-100 dark:text-slate-100 truncate flex-1 text-center mx-2" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;" title="${
+      <span class="text-base font-medium text-slate-100 dark:text-slate-100 truncate flex-1 text-center mx-2" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;" title="${
         urun.urun_adi
       }">${urun.urun_adi}</span>
       ${bugunBadge}
@@ -398,7 +398,7 @@ function createUrunCard(urun) {
     </div>
     
     <!-- Hızlı Ekleme Butonları -->
-    <div class="grid grid-cols-${butonSayisi} gap-1 mb-2">
+    <div class="grid grid-cols-${butonSayisi} gap-1.5 mb-2">
       ${butonlar.join("")}
     </div>
     
@@ -407,7 +407,7 @@ function createUrunCard(urun) {
       /'/g,
       "\\'",
     )}', ${urun.setup_miktari}, ${urun.ekstra_miktar || 0}, ${urun.setup_id})"
-      class="w-full py-1.5 text-s font-medium rounded bg-amber-600/20 dark:bg-amber-600/20 text-amber-400 dark:text-amber-400 hover:bg-amber-600/30 active:bg-amber-600/40 transition-all">
+      class="w-full py-1.5 text-xs font-semibold rounded-md bg-gradient-to-b from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 active:scale-95 transition-all shadow-sm">
       + Ekstra
     </button>
     
@@ -419,7 +419,7 @@ function createUrunCard(urun) {
       }, '${urun.urun_adi.replace(/'/g, "\\'")}', ${urun.ekstra_miktar}, ${
         urun.setup_id
       })"
-        class="w-full mt-1 py-1.5 text-xs font-medium rounded bg-red-600/20 dark:bg-red-600/20 text-red-400 dark:text-red-400 hover:bg-red-600/30 active:bg-red-600/40 transition-all">
+        class="w-full mt-1.5 py-1.5 text-xs font-semibold rounded-md bg-gradient-to-b from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 active:scale-95 transition-all shadow-sm">
         Sıfırla
       </button>
     `
@@ -458,31 +458,37 @@ function ekstraDialogAc(urunId, urunAdi, setupMiktari, ekstraMiktar, setupId) {
   };
 
   dialog.innerHTML = `
-    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-xs p-4 animate-slideUp">
-      <div class="text-center mb-3">
-        <p class="text-base font-medium text-slate-900 dark:text-white" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">${urunAdi}</p>
-        <p class="text-xs text-slate-500">Ekstra Ekle</p>
+    <div class="bg-slate-800 dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-xs animate-slideUp overflow-hidden">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2.5 text-center">
+        <p class="text-sm font-semibold text-white truncate" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">${urunAdi}</p>
+        <p class="text-xs text-amber-100">Ekstra Ekle</p>
       </div>
       
-      <!-- Miktar Girişi -->
-      <div class="flex gap-2 mb-3">
-        <input type="number" id="ekstraDialogInput" min="1" value="1" inputmode="numeric"
-          class="flex-1 px-3 py-3 text-center text-xl font-bold border-2 border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 dark:text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200">
-        <button onclick="hizliEkstraEkle(parseInt(document.getElementById('ekstraDialogInput').value))"
-          class="px-5 py-3 bg-orange-600 text-white font-bold rounded-lg active:bg-orange-700 active:scale-95 transition-all">
-          Ekle
+      <!-- Content -->
+      <div class="p-4">
+        <!-- Miktar Girişi -->
+        <div class="flex gap-2 mb-3">
+          <input type="number" id="ekstraDialogInput" min="1" value="1" inputmode="numeric"
+            class="flex-1 px-3 py-2.5 text-center text-2xl font-bold border-2 border-slate-600 rounded-lg bg-slate-900 text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/50">
+          <button onclick="hizliEkstraEkle(parseInt(document.getElementById('ekstraDialogInput').value))"
+            class="px-4 py-2.5 bg-gradient-to-b from-amber-500 to-amber-600 text-white font-bold rounded-lg hover:from-amber-600 hover:to-amber-700 active:scale-95 transition-all shadow-md text-sm">
+            Ekle
+          </button>
+        </div>
+        
+        <!-- Stok Bilgisi -->
+        <div class="text-center text-xs text-slate-400 mb-3 py-2 bg-slate-900/50 rounded-lg">
+          Stok: <strong class="${
+            zimmetStok?.miktar > 0 ? "text-emerald-400" : "text-red-400"
+          }">${zimmetStok?.miktar || 0}</strong>
+        </div>
+        
+        <!-- İptal Butonu -->
+        <button onclick="ekstraDialogKapat()" class="w-full py-2 text-sm font-medium rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 transition-all">
+          İptal
         </button>
       </div>
-      
-      <div class="text-center text-xs text-slate-500 mb-3">
-        Stok: <strong class="${
-          zimmetStok?.miktar > 0 ? "text-green-600" : "text-red-500"
-        }">${zimmetStok?.miktar || 0}</strong>
-      </div>
-      
-      <button onclick="ekstraDialogKapat()" class="w-full py-2 text-sm font-medium rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-        İptal
-      </button>
     </div>
   `;
 
