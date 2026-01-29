@@ -351,7 +351,7 @@ function createUrunCard(urun) {
   for (let i = 1; i <= butonSayisi; i++) {
     const aktif = stokVar && zimmetStok.miktar >= i;
     butonlar.push(`
-      <button onclick="hizliUrunEkle(${urun.urun_id}, '${urun.urun_adi.replace(
+      <button style="background-color:#2b00fa ;" onclick="hizliUrunEkle(${urun.urun_id}, '${urun.urun_adi.replace(
         /'/g,
         "\\'",
       )}', ${urun.setup_miktari}, ${urun.ekstra_miktar || 0}, ${
