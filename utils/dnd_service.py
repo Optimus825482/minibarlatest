@@ -313,14 +313,14 @@ class DNDService:
     @staticmethod
     def oda_durumu(oda_id: int, tarih: Optional[date] = None) -> Optional[Dict]:
         """
-        Odanın DND durumunu sorgular.
+        Odanın AKTIF DND durumunu sorgular.
         
         Args:
             oda_id: Oda ID
             tarih: Sorgulanacak tarih (varsayılan: bugün)
             
         Returns:
-            Dict veya None: DND durumu
+            Dict veya None: AKTIF DND durumu (tamamlanmış veya iptal edilmiş kayıtlar döndürülmez)
             {
                 'dnd_kayit_id': 123,
                 'dnd_sayisi': 2,
@@ -334,9 +334,11 @@ class DNDService:
         if tarih is None:
             tarih = get_kktc_now().date()
         
+        # SADECE AKTİF DND kayıtlarını getir
         dnd_kayit = OdaDNDKayit.query.filter_by(
             oda_id=oda_id,
-            kayit_tarihi=tarih
+            kayit_tarihi=tarih,
+            durum=DNDService.DURUM_AKTIF  # ✅ Sadece aktif olanlar
         ).first()
         
         if not dnd_kayit:
