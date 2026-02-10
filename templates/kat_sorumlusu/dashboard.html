@@ -27,13 +27,13 @@ block content %}
       <div class="flex items-center space-x-2">
         <button
           onclick="openOncelikModal()"
-          class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-colors font-medium text-sm"
+          class="btn-touch-secondary bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white transition-colors"
         >
           <i class="fas fa-brain mr-2"></i>Öncelik Planı
         </button>
         <a
           href="{{ url_for('kat_sorumlusu_gorev_listesi') }}"
-          class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors font-medium text-sm"
+          class="btn-touch-secondary bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
         >
           <i class="fas fa-arrow-right mr-2"></i>Tümünü Gör
         </a>
@@ -61,36 +61,42 @@ block content %}
     <!-- Görev Sayıları -->
     <div class="grid grid-cols-4 gap-3">
       <div
-        class="bg-white dark:bg-slate-800 rounded-lg p-3 text-center border border-slate-200 dark:border-slate-700"
+        class="bg-white dark:bg-slate-800 rounded-xl p-4 text-center border border-slate-200 dark:border-slate-700 card-touch"
       >
-        <div class="text-2xl font-bold text-slate-900 dark:text-white">
+        <div class="text-3xl font-bold text-slate-900 dark:text-white">
           {{ gorev.toplam }}
         </div>
-        <div class="text-xs text-slate-500 dark:text-slate-400">Toplam</div>
+        <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Toplam
+        </div>
       </div>
       <div
-        class="bg-green-50 dark:bg-green-900/30 rounded-lg p-3 text-center border border-green-200 dark:border-green-800"
+        class="bg-green-50 dark:bg-green-900/30 rounded-xl p-4 text-center border border-green-200 dark:border-green-800 card-touch"
       >
-        <div class="text-2xl font-bold text-green-700 dark:text-green-300">
+        <div class="text-3xl font-bold text-green-700 dark:text-green-300">
           {{ gorev.tamamlanan }}
         </div>
-        <div class="text-xs text-green-600 dark:text-green-400">Tamamlanan</div>
+        <div class="text-sm text-green-600 dark:text-green-400 mt-1">
+          Tamamlanan
+        </div>
       </div>
       <div
-        class="bg-yellow-50 dark:bg-yellow-900/30 rounded-lg p-3 text-center border border-yellow-200 dark:border-yellow-800"
+        class="bg-yellow-50 dark:bg-yellow-900/30 rounded-xl p-4 text-center border border-yellow-200 dark:border-yellow-800 card-touch"
       >
-        <div class="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
+        <div class="text-3xl font-bold text-yellow-700 dark:text-yellow-300">
           {{ gorev.bekleyen }}
         </div>
-        <div class="text-xs text-yellow-600 dark:text-yellow-400">Bekleyen</div>
+        <div class="text-sm text-yellow-600 dark:text-yellow-400 mt-1">
+          Bekleyen
+        </div>
       </div>
       <div
-        class="bg-orange-50 dark:bg-orange-900/30 rounded-lg p-3 text-center border border-orange-200 dark:border-orange-800"
+        class="bg-orange-50 dark:bg-orange-900/30 rounded-xl p-4 text-center border border-orange-200 dark:border-orange-800 card-touch"
       >
-        <div class="text-2xl font-bold text-orange-700 dark:text-orange-300">
+        <div class="text-3xl font-bold text-orange-700 dark:text-orange-300">
           {{ gorev.dnd }}
         </div>
-        <div class="text-xs text-orange-600 dark:text-orange-400">DND</div>
+        <div class="text-sm text-orange-600 dark:text-orange-400 mt-1">DND</div>
       </div>
     </div>
   </div>
@@ -306,17 +312,17 @@ block content %}
         {% endif %}
       </div>
 
-      <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
         <!-- Oda Kontrol -->
         <a
           href="{{ url_for('oda_kontrol') }}"
-          class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 border-indigo-100 dark:border-indigo-900 hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+          class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 border-indigo-100 dark:border-indigo-900 hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-xl transition-all duration-300 quick-action-touch"
         >
           <div class="flex flex-col items-center text-center space-y-3">
             <div
-              class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300"
+              class="action-icon bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg group-hover:scale-110 transition-transform duration-300"
             >
-              <i class="fas fa-clipboard-check text-white text-2xl"></i>
+              <i class="fas fa-clipboard-check text-white"></i>
             </div>
             <div>
               <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">
@@ -337,13 +343,13 @@ block content %}
         <!-- Zimmet Stoklarım -->
         <a
           href="{{ url_for('kat_sorumlusu_zimmet_stoklarim') }}"
-          class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 border-green-100 dark:border-green-900 hover:border-green-400 dark:hover:border-green-600 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+          class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 border-green-100 dark:border-green-900 hover:border-green-400 dark:hover:border-green-600 hover:shadow-xl transition-all duration-300 quick-action-touch"
         >
           <div class="flex flex-col items-center text-center space-y-3">
             <div
-              class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 relative"
+              class="action-icon bg-gradient-to-br from-green-500 to-green-600 shadow-lg group-hover:scale-110 transition-transform duration-300 relative"
             >
-              <i class="fas fa-boxes text-white text-2xl"></i>
+              <i class="fas fa-boxes text-white"></i>
               {% if zimmet_toplam > 0 %}
               <span
                 class="absolute -top-1 -right-1 w-6 h-6 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-md"
@@ -371,13 +377,13 @@ block content %}
         <!-- Kritik Stoklar -->
         <a
           href="{{ url_for('kat_sorumlusu_kritik_stoklar') }}"
-          class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 {% if kritik_stok_sayisi > 0 %}border-red-400 dark:border-red-600 ring-2 ring-red-200 dark:ring-red-800{% else %}border-red-100 dark:border-red-900{% endif %} hover:border-red-400 dark:hover:border-red-600 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+          class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 {% if kritik_stok_sayisi > 0 %}border-red-400 dark:border-red-600 ring-2 ring-red-200 dark:ring-red-800{% else %}border-red-100 dark:border-red-900{% endif %} hover:border-red-400 dark:hover:border-red-600 hover:shadow-xl transition-all duration-300 quick-action-touch"
         >
           <div class="flex flex-col items-center text-center space-y-3">
             <div
-              class="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 relative {% if kritik_stok_sayisi > 0 %}animate-pulse{% endif %}"
+              class="action-icon bg-gradient-to-br from-red-500 to-red-600 shadow-lg group-hover:scale-110 transition-transform duration-300 relative {% if kritik_stok_sayisi > 0 %}animate-pulse{% endif %}"
             >
-              <i class="fas fa-exclamation-triangle text-white text-2xl"></i>
+              <i class="fas fa-exclamation-triangle text-white"></i>
               {% if kritik_stok_sayisi > 0 %}
               <span
                 class="absolute -top-1 -right-1 w-6 h-6 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-md"
@@ -409,13 +415,13 @@ block content %}
         <!-- Sipariş Hazırla -->
         <a
           href="{{ url_for('kat_sorumlusu_siparis_hazirla') }}"
-          class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 border-purple-100 dark:border-purple-900 hover:border-purple-400 dark:hover:border-purple-600 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+          class="group relative bg-white dark:bg-slate-800 p-5 rounded-xl border-2 border-purple-100 dark:border-purple-900 hover:border-purple-400 dark:hover:border-purple-600 hover:shadow-xl transition-all duration-300 quick-action-touch"
         >
           <div class="flex flex-col items-center text-center space-y-3">
             <div
-              class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300"
+              class="action-icon bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg group-hover:scale-110 transition-transform duration-300"
             >
-              <i class="fas fa-shopping-cart text-white text-2xl"></i>
+              <i class="fas fa-shopping-cart text-white"></i>
             </div>
             <div>
               <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">
@@ -441,16 +447,16 @@ block content %}
     <!-- Toplam Zimmet Ürün Sayısı -->
     <a
       href="{{ url_for('kat_sorumlusu_zimmet_stoklarim') }}"
-      class="bg-white overflow-hidden shadow rounded-lg cursor-pointer"
+      class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-xl cursor-pointer card-touch"
     >
-      <div class="p-4 md:p-5">
+      <div class="p-5">
         <div class="flex items-center">
           <div class="flex-shrink-0">
             <div
-              class="w-10 h-10 md:w-12 md:h-12 bg-blue-500 rounded-md flex items-center justify-center"
+              class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center"
             >
               <svg
-                class="w-6 h-6 md:w-7 md:h-7 text-white"
+                class="w-7 h-7 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -464,12 +470,14 @@ block content %}
               </svg>
             </div>
           </div>
-          <div class="ml-5 w-0 flex-1">
+          <div class="ml-4 w-0 flex-1">
             <dl>
-              <dt class="text-sm font-medium text-slate-500 truncate">
+              <dt
+                class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate"
+              >
                 Toplam Zimmet Ürün
               </dt>
-              <dd class="text-lg font-medium text-slate-900">
+              <dd class="text-2xl font-bold text-slate-900 dark:text-white">
                 {{ zimmet_toplam }}
               </dd>
             </dl>
@@ -643,59 +651,71 @@ block content %}
       <div class="overflow-hidden">
         <table
           id="son-minibar-islemler-table"
-          class="min-w-full divide-y divide-slate-200"
+          class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet"
+          style="table-layout: fixed"
         >
-          <thead class="bg-slate-50">
+          <thead class="bg-slate-50 dark:bg-slate-700">
             <tr>
               <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                style="width: 18%"
               >
                 Oda
-                <span
-                  class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
-                >
-                  {{ son_islemler|length }} işlem
-                </span>
               </th>
               <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                style="width: 28%"
               >
                 İşlem Tipi
               </th>
               <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell"
+                class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hide-tablet"
+                style="width: 30%"
               >
                 Açıklama
               </th>
               <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell"
+                class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hide-tablet"
+                style="width: 24%"
               >
                 Tarih
               </th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-slate-200">
+          <tbody
+            class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+          >
             {% for islem in son_islemler %}
-            <tr class="hover:bg-slate-50 transition-colors duration-150">
+            <tr
+              class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors duration-150"
+            >
               <td
-                class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900"
+                class="px-3 py-3 text-sm font-medium text-slate-900 dark:text-white"
               >
                 🚪 {{ islem.oda.oda_no }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td class="px-2 py-3">
                 <span
-                  class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full {% if islem.islem_tipi == 'ilk_dolum' %}bg-blue-100 text-blue-800 {% elif islem.islem_tipi == 'kontrol' %}bg-yellow-100 text-yellow-800 {% else %}bg-green-100 text-green-800{% endif %}"
+                  class="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full {% if islem.islem_tipi == 'ilk_dolum' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 {% elif islem.islem_tipi == 'kontrol' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 {% elif islem.islem_tipi == 'setup_disi_ekleme' %}bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-900/30 dark:text-fuchsia-400 {% elif islem.islem_tipi == 'setup_kontrol' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 {% elif islem.islem_tipi == 'ekstra_ekleme' %}bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 {% elif islem.islem_tipi == 'ekstra_tuketim' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 {% elif islem.islem_tipi == 'sarfiyat_yok' %}bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 {% else %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400{% endif %}"
                 >
-                  {% if islem.islem_tipi == 'ilk_dolum' %}🔵{% elif
-                  islem.islem_tipi == 'kontrol' %}🟡{% else %}🟢{% endif %} {{
-                  islem.islem_tipi.replace('_', ' ').title() }}
+                  {% if islem.islem_tipi == 'setup_disi_ekleme' %}🟣 Setup Dışı
+                  Ekleme{% elif islem.islem_tipi == 'setup_kontrol' %}🔵 Tüketim
+                  İkamesi{% elif islem.islem_tipi == 'ekstra_ekleme' %}🟠 Ekstra
+                  Ekleme{% elif islem.islem_tipi == 'ekstra_tuketim' %}🔴 Ekstra
+                  Tüketim{% elif islem.islem_tipi == 'sarfiyat_yok' %}🟢
+                  Sarfiyat Yok{% elif islem.islem_tipi == 'ilk_dolum' %}🔵 İlk
+                  Dolum{% elif islem.islem_tipi == 'kontrol' %}🟡 Kontrol{% else
+                  %}🟢 {{ islem.islem_tipi.replace('_', ' ').title() }}{% endif
+                  %}
                 </span>
               </td>
-              <td class="px-6 py-4 text-sm text-slate-500 hidden md:table-cell">
+              <td
+                class="px-2 py-3 text-sm text-slate-500 dark:text-slate-400 hide-tablet truncate"
+              >
                 📝 {{ islem.aciklama or '-' }}
               </td>
               <td
-                class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden lg:table-cell"
+                class="px-2 py-3 text-sm text-slate-500 dark:text-slate-400 hide-tablet"
               >
                 📅 {{ islem.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}
               </td>

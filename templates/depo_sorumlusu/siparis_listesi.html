@@ -190,7 +190,7 @@ Sistemi{% endblock %} {% block page_title %}Satın Alma Siparişleri{% endblock 
         Yeni Sipariş Oluştur
       </button>
       <a
-        href="{{ url_for('otomatik_siparis_onerileri') }}"
+        href="{{ url_for('kat_sorumlusu_siparisler') }}"
         class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 shadow-sm text-sm font-medium rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
       >
         <svg
@@ -221,44 +221,45 @@ Sistemi{% endblock %} {% block page_title %}Satın Alma Siparişleri{% endblock 
       </h3>
 
       {% if siparisler %}
-      <div class="overflow-x-auto">
+      <div class="overflow-hidden">
         <table
-          class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
+          class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet"
+          style="table-layout: fixed"
         >
           <thead class="bg-slate-50 dark:bg-slate-700">
             <tr>
               <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
               >
                 Sipariş Tarihi
               </th>
               <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
               >
                 Tedarikçi
               </th>
               <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
               >
                 Ürün Adedi
               </th>
               <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
               >
                 Toplam Miktar
               </th>
               <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
               >
                 Durum
               </th>
               <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
               >
                 Tedarik Tarihi
               </th>
               <th
-                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
               >
                 İşlemler
               </th>
@@ -272,29 +273,29 @@ Sistemi{% endblock %} {% block page_title %}Satın Alma Siparişleri{% endblock 
               class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
             >
               <td
-                class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+                class="px-3 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
               >
                 {{ siparis['siparis_tarihi'].strftime('%d.%m.%Y') if
                 siparis['siparis_tarihi'] else '-' }}
               </td>
               <td
-                class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100"
+                class="px-3 py-3 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100"
               >
                 {{ siparis.tedarikci.tedarikci_adi if siparis.tedarikci else
                 'Belirtilmemiş' }}
               </td>
               <td
-                class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+                class="px-3 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
               >
                 {{ siparis.detaylar|length }} Ürün
               </td>
               <td
-                class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+                class="px-3 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
               >
                 {% set toplam_miktar = siparis.detaylar|sum(attribute='miktar')
                 %} {{ toplam_miktar }} Adet
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td class="px-3 py-3 whitespace-nowrap">
                 {% if siparis.durum == 'beklemede' %}
                 <span
                   class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
@@ -322,14 +323,14 @@ Sistemi{% endblock %} {% block page_title %}Satın Alma Siparişleri{% endblock 
                 {% endif %}
               </td>
               <td
-                class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+                class="px-3 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
               >
                 {% if siparis.durum == 'teslim_alindi' and
                 siparis.gerceklesen_teslimat_tarihi %} {{
                 siparis.gerceklesen_teslimat_tarihi.strftime('%d.%m.%Y') }} {%
                 else %} - {% endif %}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+              <td class="px-3 py-3 whitespace-nowrap text-sm space-x-2">
                 <a
                   href="{{ url_for('siparis_detay', siparis_id=siparis.id) }}"
                   class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
@@ -380,7 +381,7 @@ Sistemi{% endblock %} {% block page_title %}Satın Alma Siparişleri{% endblock 
         </p>
         <div class="mt-6">
           <a
-            href="{{ url_for('satin_alma_siparis') }}"
+            href="{{ url_for('kat_sorumlusu_siparisler') }}"
             class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
           >
             <svg

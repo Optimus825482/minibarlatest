@@ -218,9 +218,9 @@ fa-calendar-alt{% endblock %} {% block content %}
 
       {% if yukleme_gecmisi %}
       <!-- Desktop Tablo -->
-      <div class="hidden lg:block overflow-x-auto">
+      <div class="hidden lg:block overflow-hidden">
         <table
-          class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
+          class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;"
         >
           <thead class="bg-slate-50 dark:bg-slate-900">
             <tr>
@@ -640,10 +640,10 @@ fa-calendar-alt{% endblock %} {% block content %}
               ></span>
             </div>
             <div
-              class="overflow-x-auto max-h-40 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg"
+              class="overflow-hidden max-h-40 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg"
             >
               <table
-                class="min-w-full divide-y divide-slate-200 dark:divide-slate-700 text-sm"
+                class="w-full divide-y divide-slate-200 dark:divide-slate-700 text-sm"
               >
                 <thead class="bg-slate-50 dark:bg-slate-900 sticky top-0">
                   <tr>

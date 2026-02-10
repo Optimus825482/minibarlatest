@@ -16,7 +16,7 @@ block page_title %}Minibar İşlemlerim{% endblock %} {% block content %}
           <input
             type="date"
             id="filtre_tarih"
-            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base input-touch"
           />
         </div>
 
@@ -30,7 +30,7 @@ block page_title %}Minibar İşlemlerim{% endblock %} {% block content %}
             type="text"
             id="filtre_oda"
             placeholder="Oda No..."
-            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base input-touch"
           />
         </div>
 
@@ -42,13 +42,14 @@ block page_title %}Minibar İşlemlerim{% endblock %} {% block content %}
           >
           <select
             id="filtre_islem_tipi"
-            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base select-touch"
           >
             <option value="">Tümü</option>
             <option value="setup_kontrol">Tüketim İkamesi</option>
             <option value="ekstra_ekleme">Ekstra Ekleme</option>
             <option value="ekstra_tuketim">Ekstra Tüketim</option>
             <option value="sarfiyat_yok">Sarfiyat Yok</option>
+            <option value="setup_disi_ekleme">Setup Dışı Ekleme</option>
             <option value="dnd">DND Kaydı</option>
           </select>
         </div>
@@ -56,7 +57,7 @@ block page_title %}Minibar İşlemlerim{% endblock %} {% block content %}
         <div class="flex items-end">
           <button
             onclick="islemleriYukle()"
-            class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            class="w-full px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors text-base font-semibold btn-touch-primary"
           >
             Filtrele
           </button>
@@ -83,33 +84,23 @@ block page_title %}Minibar İşlemlerim{% endblock %} {% block content %}
       </div>
 
       <!-- İşlemler Tablosu -->
-      <div id="islemler_container" class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-slate-200">
-          <thead class="bg-slate-50">
+      <div id="islemler_container" class="overflow-hidden">
+        <table class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-touch table-compact-tablet" style="table-layout: fixed;">
+          <thead class="bg-slate-50 dark:bg-slate-700">
             <tr>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase"
-              >
+              <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase" style="width: 22%;">
                 Tarih/Saat
               </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase"
-              >
+              <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase" style="width: 12%;">
                 Oda
               </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase"
-              >
+              <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase" style="width: 20%;">
                 İşlem Tipi
               </th>
-              <th
-                class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase"
-              >
+              <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase" style="width: 32%;">
                 Ürünler
               </th>
-              <th
-                class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
-              >
+              <th class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase" style="width: 14%;">
                 İşlem
               </th>
             </tr>
@@ -147,14 +138,14 @@ block page_title %}Minibar İşlemlerim{% endblock %} {% block content %}
   class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
 >
   <div
-    class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+    class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl max-w-2xl w-full max-h-[85vh] overflow-y-auto scroll-smooth-touch"
   >
     <div class="p-6">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-slate-900">İşlem Detayı</h3>
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">İşlem Detayı</h3>
         <button
           onclick="detayModalKapat()"
-          class="text-slate-400 hover:text-slate-600"
+          class="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 touch-target"
         >
           <svg
             class="w-6 h-6"
@@ -214,13 +205,13 @@ block page_title %}Minibar İşlemlerim{% endblock %} {% block content %}
       <div class="flex justify-end space-x-3">
         <button
           onclick="silModalKapat()"
-          class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors"
+          class="px-5 py-3 bg-slate-200 text-slate-700 rounded-xl hover:bg-slate-300 transition-colors text-base font-semibold btn-touch-secondary"
         >
           İptal
         </button>
         <button
           onclick="islemSil()"
-          class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          class="px-5 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors text-base font-semibold btn-touch-primary"
         >
           Sil
         </button>

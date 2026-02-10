@@ -88,6 +88,12 @@ tests/
 # Claude cache
 .claude/
 
+# Hypothesis test cache
+.hypothesis/
+
+# Agent configs (IDE specific)
+.agent/
+
 # Minibar Project Presentation (separate project)
 minibarproject/
 

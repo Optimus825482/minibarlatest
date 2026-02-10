@@ -71,9 +71,9 @@ page_icon %}fas fa-tag{% endblock %} {% block content %}
     >
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-      <div class="overflow-x-auto">
+      <div class="overflow-hidden">
         <table
-          class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
+          class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;"
         >
           <thead class="bg-slate-50 dark:bg-slate-900">
             <tr>
@@ -208,7 +208,7 @@ page_icon %}fas fa-tag{% endblock %} {% block content %}
         {% if satin_alma.siparis_id %}
         <a
           href="{{ url_for('siparis_detay', siparis_id=satin_alma.siparis_id) }}"
-          class="px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-semibold transition-colors"
+          class="px-3 py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-semibold transition-colors"
         >
           <i class="fas fa-times mr-2"></i>
           Şimdi Değil
@@ -216,7 +216,7 @@ page_icon %}fas fa-tag{% endblock %} {% block content %}
         {% endif %}
         <button
           type="submit"
-          class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors"
+          class="px-3 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors"
         >
           <i class="fas fa-check mr-2"></i>
           Satış Fiyatlarını Kaydet

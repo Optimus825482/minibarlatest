@@ -120,7 +120,7 @@ function renderKatPlani(katPlani) {
   
   siraliKatlar.forEach((kat, index) => {
     const katDiv = document.createElement('div');
-    katDiv.className = 'bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4';
+    katDiv.className = 'bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 card-touch';
     
     let kritikBadge = '';
     if (kat.kritik_gorev > 0) {
@@ -153,7 +153,7 @@ function renderOncelikListesi(plan) {
   
   plan.forEach(function(gorev) {
     const gorevDiv = document.createElement('div');
-    gorevDiv.className = 'flex items-center p-3 rounded-lg border-2 ' + getOncelikBorderClass(gorev.oncelik_tipi);
+    gorevDiv.className = 'flex items-center p-4 rounded-xl border-2 touch-manipulation ' + getOncelikBorderClass(gorev.oncelik_tipi);
     
     let kalanSureText = '';
     if (gorev.kalan_sure_dakika !== null && gorev.kalan_sure_dakika !== undefined) {

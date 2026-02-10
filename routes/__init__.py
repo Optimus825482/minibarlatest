@@ -97,10 +97,6 @@ def register_all_routes(app):
     from routes.developer_routes import developer_bp
     app.register_blueprint(developer_bp)
     
-    # Fiyatlandırma Routes
-    from routes.fiyatlandirma_routes import fiyatlandirma_bp
-    app.register_blueprint(fiyatlandirma_bp)
-    
     # Stok Yönetimi Routes
     from routes.stok_routes import stok_bp
     app.register_blueprint(stok_bp)
@@ -136,11 +132,10 @@ def register_all_routes(app):
         csrf_protect.exempt(restore_bp)
         csrf_protect.exempt(restore_v2_bp)
         csrf_protect.exempt(developer_bp)
-        csrf_protect.exempt(fiyatlandirma_bp)
         csrf_protect.exempt(stok_bp)
         csrf_protect.exempt(celery_bp)
         csrf_protect.exempt(db_optimization_bp)
-        print("✅ CSRF exemptions uygulandı (restore, restore_v2, developer, fiyatlandirma, stok, celery, db_optimization)")
+        print("✅ CSRF exemptions uygulandı (restore, restore_v2, developer, stok, celery, db_optimization)")
     else:
         print("⚠️ CSRF extension bulunamadı")
     

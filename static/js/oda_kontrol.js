@@ -266,7 +266,7 @@ async function setupListesiYukle(odaId) {
     // Kontrol durumu badge'ini göster
     kontrolDurumuBadgeGoster(data.kontrol_durumu);
 
-    renderSetupListesi(data.setuplar);
+    renderSetupListesi(data.setuplar, data.gunluk_islemler || []);
 
     setupListesiDiv.classList.remove("hidden");
     console.log(`✅ ${data.setuplar.length} setup yüklendi`);
@@ -283,35 +283,76 @@ async function setupListesiYukle(odaId) {
 }
 
 // Setup listesini render et - Setup bazlı gruplu görünüm
-function renderSetupListesi(setuplar) {
+function renderSetupListesi(setuplar, gunlukIslemler) {
   const container = document.getElementById("setup_listesi");
   container.innerHTML = "";
 
+  // Setup Dışı Ürün Ekle butonu — EN ÜSTTE
+  const setupDisiDiv = document.createElement("div");
+  setupDisiDiv.className = "mb-4";
+  setupDisiDiv.innerHTML = `
+    <button onclick="setupDisiDialogAc()"
+      class="w-full h-14 text-lg font-bold rounded-2xl bg-gradient-to-r from-violet-600 to-purple-700 text-white border border-violet-500/40 hover:from-violet-700 hover:to-purple-800 active:scale-[0.98] transition-all shadow-lg shadow-violet-600/20 touch-manipulation flex items-center justify-center gap-3">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+      </svg>
+      Setup Dışı Ürün Ekle
+    </button>
+  `;
+  container.appendChild(setupDisiDiv);
+
+  // Setup'lar — Accordion yapısı (varsayılan kapalı)
   setuplar.forEach((setup, index) => {
-    // Setup başlığı
     const setupDiv = document.createElement("div");
     setupDiv.className =
-      "bg-slate-800/80 dark:bg-slate-800/80 rounded-xl shadow-sm border border-slate-700/50 dark:border-slate-700/50 overflow-hidden mb-4 backdrop-blur-sm";
+      "rounded-2xl shadow-md border border-slate-700/60 overflow-hidden mb-3";
 
-    const headerClass = setup.dolap_ici
-      ? "bg-gradient-to-r from-slate-700 to-slate-800"
-      : "bg-gradient-to-r from-slate-600 to-slate-700";
+    // Dolap içi/dışı için farklı renk şeması — TAM CLASS KULLANIMI (Tailwind JIT uyumlu)
+    const isDolap = setup.dolap_ici;
+    const headerBg = isDolap
+      ? "bg-gradient-to-r from-sky-900/80 via-slate-800 to-slate-800"
+      : "bg-gradient-to-r from-amber-900/60 via-slate-800 to-slate-800";
 
-    const dolapBilgisi = setup.dolap_ici
-      ? `Dolap ${setup.dolap_no}`
-      : "Dolap Dışı";
+    const iconBoxClass = isDolap
+      ? "bg-sky-500/20 border-sky-500/30"
+      : "bg-amber-500/20 border-amber-500/30";
+
+    const iconTextClass = isDolap ? "text-sky-400" : "text-amber-400";
+
+    const badgeBgClass = isDolap
+      ? "bg-sky-500/20 text-sky-300 border-sky-500/20"
+      : "bg-amber-500/20 text-amber-300 border-amber-500/20";
+
+    const dolapIcon = isDolap
+      ? `<svg class="w-5 h-5 ${iconTextClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 3h14a1 1 0 011 1v16a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1zm7 0v18M9 10h.01M15 10h.01"></path></svg>`
+      : `<svg class="w-5 h-5 ${iconTextClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>`;
+
+    const dolapBilgisi = isDolap ? `Dolap ${setup.dolap_no}` : "Dolap Dışı";
+
+    const isOpen = acikAkordiyonlar.has(index);
 
     setupDiv.innerHTML = `
-      <div class="${headerClass} text-white px-4 py-3 border-b border-slate-700/50">
-        <div class="flex items-center justify-between">
-          <div>
-            <h3 class="text-base font-semibold text-slate-100">${setup.setup_adi}</h3>
-            <p class="text-xs text-slate-300">${dolapBilgisi} • ${setup.urunler.length} ürün</p>
+      <button onclick="setupAccordionToggle(${index})" class="w-full ${headerBg} text-white px-4 py-4 flex items-center justify-between touch-manipulation active:opacity-90 transition-all">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl ${iconBoxClass} border flex items-center justify-center flex-shrink-0">
+            ${dolapIcon}
+          </div>
+          <div class="text-left">
+            <h3 class="text-base font-bold text-white leading-tight">${setup.setup_adi}</h3>
+            <p class="text-xs text-slate-400 mt-0.5">${dolapBilgisi} • ${setup.urunler.length} ürün</p>
           </div>
         </div>
-      </div>
-      <div class="p-3 bg-slate-900/30">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="setup-grid-${index}"></div>
+        <div class="flex items-center gap-2.5 flex-shrink-0">
+          <span class="min-w-[28px] h-7 px-2 rounded-lg ${badgeBgClass} text-xs font-bold flex items-center justify-center border">${setup.urunler.length}</span>
+          <svg id="accordion-icon-${index}" class="w-5 h-5 text-slate-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+      </button>
+      <div id="accordion-body-${index}" class="bg-slate-900/40 ${isOpen ? "" : "hidden"}">
+        <div class="p-3">
+          <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4" id="setup-grid-${index}"></div>
+        </div>
       </div>
     `;
 
@@ -328,13 +369,83 @@ function renderSetupListesi(setuplar) {
       gridContainer.appendChild(card);
     });
   });
+
+  // Setup Dışı Eklenen Ürünler — Bugünkü
+  const setupDisiIslemler = (gunlukIslemler || []).filter(
+    (i) => i.islem_tipi === "setup_disi_ekleme",
+  );
+
+  if (setupDisiIslemler.length > 0) {
+    const sdDiv = document.createElement("div");
+    sdDiv.className =
+      "mt-4 rounded-2xl overflow-hidden border border-fuchsia-500/30";
+
+    // Tüm detayları topla
+    let sdUrunlerHtml = "";
+    let toplamAdet = 0;
+    setupDisiIslemler.forEach((islem) => {
+      (islem.detaylar || []).forEach((d) => {
+        const miktar = d.eklenen_miktar || d.ekstra_miktar || 0;
+        if (miktar <= 0) return;
+        toplamAdet += miktar;
+        sdUrunlerHtml += `
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-slate-700/40 last:border-b-0">
+            <div class="flex items-center gap-2 min-w-0 flex-1">
+              <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:#d946ef;"></span>
+              <span class="text-sm text-white truncate" style="font-family:'Roboto',system-ui,sans-serif;">${d.urun_adi}</span>
+            </div>
+            <div class="flex items-center gap-3 flex-shrink-0">
+              <span class="text-sm font-bold" style="color:#d946ef;">x${miktar}</span>
+              <span class="text-[10px] text-slate-500">${islem.islem_tarihi || ""}</span>
+            </div>
+          </div>`;
+      });
+    });
+
+    sdDiv.innerHTML = `
+      <div class="px-4 py-3 flex items-center justify-between" style="background:linear-gradient(to right,#701a75,#1e293b);">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(217,70,239,0.25);border:1px solid rgba(217,70,239,0.4);">
+            <svg class="w-4 h-4" style="color:#e879f9;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-white">Setup Dışı Eklenenler</p>
+            <p class="text-[11px]" style="color:#c084fc;">Bugün eklenen ürünler</p>
+          </div>
+        </div>
+        <span class="min-w-[28px] h-7 px-2 rounded-lg text-xs font-bold flex items-center justify-center" style="background:rgba(217,70,239,0.2);color:#e879f9;border:1px solid rgba(217,70,239,0.3);">${toplamAdet}</span>
+      </div>
+      <div style="background:#0f172a;">
+        ${sdUrunlerHtml}
+      </div>
+    `;
+
+    container.appendChild(sdDiv);
+  }
+}
+
+// Accordion toggle
+function setupAccordionToggle(index) {
+  const body = document.getElementById(`accordion-body-${index}`);
+  const icon = document.getElementById(`accordion-icon-${index}`);
+  if (!body) return;
+
+  if (body.classList.contains("hidden")) {
+    body.classList.remove("hidden");
+    icon?.classList.add("rotate-180");
+    acikAkordiyonlar.add(index);
+  } else {
+    body.classList.add("hidden");
+    icon?.classList.remove("rotate-180");
+    acikAkordiyonlar.delete(index);
+  }
 }
 
 // Ürün kartı oluştur - Kompakt ve Pratik + Bugünkü Ekleme Badge
 function createUrunCard(urun) {
   const card = document.createElement("div");
   card.className =
-    "bg-slate-800/70 dark:bg-slate-800/70 rounded-lg p-2.5 border border-slate-700 dark:border-slate-700 relative backdrop-blur-sm hover:border-slate-600 transition-all shadow-md hover:shadow-lg";
+    "bg-slate-800/70 dark:bg-slate-800/70 rounded-2xl p-5 border border-slate-700 dark:border-slate-700 relative backdrop-blur-sm hover:border-slate-600 transition-all shadow-md hover:shadow-lg";
 
   // Zimmet stok kontrolü
   const zimmetStok = zimmetStoklar[urun.urun_id];
@@ -350,17 +461,24 @@ function createUrunCard(urun) {
 
   for (let i = 1; i <= butonSayisi; i++) {
     const aktif = stokVar && zimmetStok.miktar >= i;
+    // Tek buton varsa full genişlik (col-span-2), değilse normal
+    const spanClass =
+      butonSayisi === 1
+        ? "col-span-2"
+        : butonSayisi === 3 && i === 3
+          ? "col-span-2"
+          : "";
     butonlar.push(`
-      <button style="background-color:#2b00fa ;" onclick="hizliUrunEkle(${urun.urun_id}, '${urun.urun_adi.replace(
+      <button onclick="hizliUrunEkle(${urun.urun_id}, '${urun.urun_adi.replace(
         /'/g,
         "\\'",
       )}', ${urun.setup_miktari}, ${urun.ekstra_miktar || 0}, ${
         urun.setup_id
       }, ${i})"
-        class="py-1 text-sm font-semibold rounded-md transition-all shadow-sm ${
+        class="${spanClass} h-14 text-lg font-bold rounded-xl transition-all shadow-md touch-manipulation ${
           aktif
-            ? "bg-gradient-to-b from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 active:scale-95"
-            : "bg-gradient-to-b from-slate-700 to-slate-800 text-slate-500 cursor-not-allowed"
+            ? "bg-gradient-to-b from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800 active:scale-95 border border-blue-400/30"
+            : "bg-gradient-to-b from-slate-700 to-slate-800 text-slate-500 cursor-not-allowed border border-slate-600/30"
         }"
         ${!aktif ? "disabled" : ""}>
         +${i}
@@ -368,38 +486,32 @@ function createUrunCard(urun) {
     `);
   }
 
-  // Bugünkü ekleme badge'i (sağ tarafta, yanıp sönme yok)
+  // Bugünkü ekleme badge'i (sağ tarafta)
   const bugunBadge =
     bugunEklenen > 0
-      ? `<span class="w-7 h-7 rounded-full bg-gradient-to-b from-blue-500 to-blue-600 text-white text-xs font-bold flex items-center justify-center shadow-md">+${bugunEklenen}</span>`
-      : `<span class="w-7 h-7"></span>`;
+      ? `<span class="w-9 h-9 rounded-full bg-gradient-to-b from-green-500 to-green-600 text-white text-sm font-bold flex items-center justify-center shadow-md flex-shrink-0">+${bugunEklenen}</span>`
+      : `<span class="w-9 h-9 flex-shrink-0"></span>`;
 
   card.innerHTML = `
     <!-- Üst Satır: Setup Miktarı | Ürün Adı | Bugün Eklenen -->
-    <div class="flex items-center justify-between mb-2">
-      <span class="w-7 h-7 rounded-full bg-gradient-to-b from-indigo-500 to-indigo-600 text-white text-xs font-bold flex items-center justify-center shadow-md">${
+    <div class="flex items-center justify-between mb-4">
+      <span class="w-9 h-9 rounded-full bg-gradient-to-b from-indigo-500 to-indigo-600 text-white text-sm font-bold flex items-center justify-center shadow-md flex-shrink-0">${
         urun.setup_miktari
       }</span>
-      <span class="text-lg font-medium text-slate-100 dark:text-slate-100 truncate flex-1 text-center mx-2" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;" title="${
+      <span class="text-base font-semibold text-slate-100 flex-1 text-center mx-2 leading-snug break-words line-clamp-2" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;" title="${
         urun.urun_adi
       }">${urun.urun_adi}</span>
       ${bugunBadge}
     </div>
     
-    <!-- Stok ve Ekstra Bilgisi -->
-    <div class="flex justify-between text-xs mb-2">
-      <span class="text-slate-300 dark:text-slate-300">Stok: <strong class="text-base ${
-        stokVar ? "text-emerald-400" : "text-red-400"
-      }">${zimmetStok?.miktar || 0}</strong></span>
-      ${
-        urun.ekstra_miktar > 0
-          ? `<span class="text-amber-400 font-bold text-sm">+${urun.ekstra_miktar} ekstra</span>`
-          : ""
-      }
-    </div>
+    ${
+      urun.ekstra_miktar > 0
+        ? `<div class="text-center mb-3"><span class="text-amber-400 font-bold text-base">+${urun.ekstra_miktar} ekstra</span></div>`
+        : ""
+    }
     
-    <!-- Hızlı Ekleme Butonları -->
-    <div class="grid grid-cols-${butonSayisi} gap-1.5 mb-2">
+    <!-- Hızlı Ekleme Butonları — Sabit 2 sütun grid -->
+    <div class="grid grid-cols-2 gap-2.5 mb-3">
       ${butonlar.join("")}
     </div>
     
@@ -407,12 +519,12 @@ function createUrunCard(urun) {
     ${
       urun.ekstra_miktar > 0
         ? `
-    <div class="grid grid-cols-2 gap-1.5">
+    <div class="grid grid-cols-2 gap-2.5">
       <button onclick="ekstraDialogAc(${urun.urun_id}, '${urun.urun_adi.replace(
         /'/g,
         "\\'",
       )}', ${urun.setup_miktari}, ${urun.ekstra_miktar || 0}, ${urun.setup_id})"
-        class="py-1.5 text-xs font-semibold rounded-md bg-gradient-to-b from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 active:scale-95 transition-all shadow-sm">
+        class="h-12 text-base font-bold rounded-xl bg-gradient-to-b from-orange-500 to-orange-600 text-white border border-orange-400/50 hover:from-orange-600 hover:to-orange-700 active:scale-95 transition-all shadow-md shadow-orange-500/20 touch-manipulation">
         + Ekstra
       </button>
       <button onclick="ekstraSifirlaModalAc(${
@@ -420,7 +532,7 @@ function createUrunCard(urun) {
       }, '${urun.urun_adi.replace(/'/g, "\\'")}', ${urun.ekstra_miktar}, ${
         urun.setup_id
       })"
-        class="py-1.5 text-xs font-semibold rounded-md bg-gradient-to-b from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 active:scale-95 transition-all shadow-sm">
+        class="h-12 text-base font-bold rounded-xl bg-gradient-to-b from-red-500 to-red-600 text-white border border-red-400/50 hover:from-red-600 hover:to-red-700 active:scale-95 transition-all shadow-md shadow-red-500/20 touch-manipulation">
         Sıfırla
       </button>
     </div>
@@ -430,7 +542,7 @@ function createUrunCard(urun) {
       /'/g,
       "\\'",
     )}', ${urun.setup_miktari}, ${urun.ekstra_miktar || 0}, ${urun.setup_id})"
-      class="w-full py-1.5 text-xs font-semibold rounded-md bg-gradient-to-b from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 active:scale-95 transition-all shadow-sm">
+      class="w-full h-12 text-base font-bold rounded-xl bg-gradient-to-b from-orange-500 to-orange-600 text-white border border-orange-400/50 hover:from-orange-600 hover:to-orange-700 active:scale-95 transition-all shadow-md shadow-orange-500/20 touch-manipulation">
       + Ekstra
     </button>
     `
@@ -467,35 +579,70 @@ function ekstraDialogAc(urunId, urunAdi, setupMiktari, ekstraMiktar, setupId) {
     if (e.target === dialog) ekstraDialogKapat();
   };
 
+  const stokMiktar = zimmetStok?.miktar || 0;
+  const stokRenk = stokMiktar > 0 ? "text-emerald-400" : "text-red-400";
+
   dialog.innerHTML = `
-    <div class="bg-slate-800 dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-sm animate-slideUp overflow-hidden">
+    <div class="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm animate-slideUp overflow-hidden">
       <!-- Header -->
-      <div class="bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-3 text-center">
-        <p class="text-base font-semibold text-white" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">${urunAdi}</p>
-        <p class="text-xs text-amber-100 mt-0.5">Ekstra Ekle</p>
+      <div class="bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-4 text-center">
+        <p class="text-lg font-bold text-white" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">${urunAdi}</p>
+        <p class="text-sm text-orange-100 mt-0.5 font-medium">Ekstra Ekle</p>
       </div>
       
       <!-- Content -->
-      <div class="p-5">
-        <!-- Miktar Girişi -->
-        <div class="flex gap-3 mb-4">
-          <input type="number" id="ekstraDialogInput" min="1" value="1" inputmode="numeric"
-            class="flex-1 px-4 py-3 text-center text-3xl font-bold border-2 border-slate-600 rounded-lg bg-slate-900 text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/50">
-          <button onclick="hizliEkstraEkle(parseInt(document.getElementById('ekstraDialogInput').value))"
-            class="px-6 py-3 bg-gradient-to-b from-amber-500 to-amber-600 text-white font-bold rounded-lg hover:from-amber-600 hover:to-amber-700 active:scale-95 transition-all shadow-md">
-            Ekle
+      <div class="p-5 space-y-4">
+        <!-- Stepper: [-] Miktar [+] -->
+        <div class="flex items-center justify-center gap-3">
+          <button onclick="ekstraStepperAzalt()"
+            class="w-14 h-14 rounded-xl bg-slate-700 hover:bg-slate-600 active:scale-90 transition-all flex items-center justify-center touch-manipulation border border-slate-600">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M20 12H4"></path>
+            </svg>
           </button>
+          <input type="number" id="ekstraDialogInput" min="1" value="1" inputmode="numeric"
+            class="w-24 h-14 text-center text-3xl font-bold border-2 border-slate-600 rounded-xl bg-slate-900 text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/50 touch-manipulation">
+          <button onclick="ekstraStepperArtir(${stokMiktar})"
+            class="w-14 h-14 rounded-xl bg-slate-700 hover:bg-slate-600 active:scale-90 transition-all flex items-center justify-center touch-manipulation border border-slate-600">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Hızlı Ekleme Butonları -->
+        <div class="grid grid-cols-4 gap-2">
+          ${[1, 2, 3, 5]
+            .map(
+              (n) => `
+            <button onclick="document.getElementById('ekstraDialogInput').value=${n}"
+              class="py-3 text-base font-bold rounded-xl transition-all touch-manipulation active:scale-90
+              ${
+                stokMiktar >= n
+                  ? "bg-gradient-to-b from-slate-600 to-slate-700 text-white hover:from-orange-500 hover:to-orange-600 border border-slate-500 hover:border-orange-400"
+                  : "bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700"
+              }"
+              ${stokMiktar < n ? "disabled" : ""}>
+              +${n}
+            </button>
+          `,
+            )
+            .join("")}
         </div>
         
         <!-- Stok Bilgisi -->
-        <div class="text-center text-sm text-slate-400 mb-4 py-2.5 bg-slate-900/50 rounded-lg">
-          Stok: <strong class="${
-            zimmetStok?.miktar > 0 ? "text-emerald-400" : "text-red-400"
-          }">${zimmetStok?.miktar || 0}</strong>
+        <div class="text-center text-sm text-slate-400 py-2 bg-slate-900/50 rounded-lg">
+          Zimmet Stok: <strong class="${stokRenk} text-base">${stokMiktar}</strong>
         </div>
         
+        <!-- Ekle Butonu -->
+        <button onclick="hizliEkstraEkle(parseInt(document.getElementById('ekstraDialogInput').value))"
+          class="w-full py-4 text-lg font-bold rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 active:scale-95 transition-all shadow-lg shadow-orange-500/30 touch-manipulation">
+          ✓ Ekstra Ekle
+        </button>
+
         <!-- İptal Butonu -->
-        <button onclick="ekstraDialogKapat()" class="w-full py-2.5 text-sm font-semibold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 transition-all">
+        <button onclick="ekstraDialogKapat()" class="w-full py-3 text-sm font-semibold rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 transition-all touch-manipulation active:scale-95">
           İptal
         </button>
       </div>
@@ -508,6 +655,19 @@ function ekstraDialogAc(urunId, urunAdi, setupMiktari, ekstraMiktar, setupId) {
 function ekstraDialogKapat() {
   const dialog = document.getElementById("ekstraDialog");
   if (dialog) dialog.remove();
+}
+
+// Stepper fonksiyonları
+function ekstraStepperAzalt() {
+  const input = document.getElementById("ekstraDialogInput");
+  const val = parseInt(input.value) || 1;
+  if (val > 1) input.value = val - 1;
+}
+
+function ekstraStepperArtir(maxStok) {
+  const input = document.getElementById("ekstraDialogInput");
+  const val = parseInt(input.value) || 0;
+  if (val < maxStok) input.value = val + 1;
 }
 
 // Hızlı ekstra ekleme
@@ -545,8 +705,17 @@ async function hizliEkstraEkle(miktar) {
       throw new Error(data.error || "Ekstra eklenemedi");
     }
 
-    // Success dialog göster
-    successDialogGoster(modalData.urun_adi, miktar, "ekstra");
+    // Kalan stoğu hesapla (setupListesiYukle stokları yenileyecek, önceden kaydet)
+    const kalanStokEkstra =
+      (zimmetStoklar[modalData.urun_id]?.miktar || 0) - miktar;
+
+    // Success dialog göster (kalan stok bilgisiyle)
+    successDialogGoster(
+      modalData.urun_adi,
+      miktar,
+      "ekstra",
+      kalanStokEkstra >= 0 ? kalanStokEkstra : 0,
+    );
     ekstraDialogKapat();
     await setupListesiYukle(mevcutOdaId);
   } catch (error) {
@@ -618,8 +787,9 @@ async function hizliUrunEkle(
     // Kartı güncelle (DOM manipülasyonu)
     kartGuncelle(urunId, setupMiktari, ekstraMiktar, setupId, urunAdi);
 
-    // Success dialog göster
-    successDialogGoster(urunAdi, miktar, "tuketim");
+    // Success dialog göster (kalan stok bilgisiyle)
+    const kalanStok = zimmetStoklar[urunId]?.miktar || 0;
+    successDialogGoster(urunAdi, miktar, "tuketim", kalanStok);
   } catch (error) {
     console.error("❌ Hızlı ekleme hatası:", error);
     toastGoster(error.message, "error");
@@ -833,6 +1003,15 @@ async function ekstraEkle() {
     }
 
     toastGoster(data.message, "success");
+    // Kalan stok bilgisiyle success dialog da göster
+    const kalanStokModal =
+      (zimmetStoklar[modalData.urun_id]?.miktar || 0) - ekstraMiktar;
+    successDialogGoster(
+      modalData.urun_adi,
+      ekstraMiktar,
+      "ekstra",
+      kalanStokModal >= 0 ? kalanStokModal : 0,
+    );
     ekstraEkleModalKapat();
     await setupListesiYukle(mevcutOdaId);
   } catch (error) {
@@ -1381,7 +1560,12 @@ function dndBilgiGuncelle(dndSayisi, tamamlandi) {
 }
 
 // Success Dialog - Ortada gösterilir
-function successDialogGoster(urunAdi, miktar, tip = "tuketim") {
+function successDialogGoster(
+  urunAdi,
+  miktar,
+  tip = "tuketim",
+  kalanStok = null,
+) {
   // Mevcut dialog varsa kaldır
   const existingDialog = document.getElementById("successDialog");
   if (existingDialog) existingDialog.remove();
@@ -1389,6 +1573,16 @@ function successDialogGoster(urunAdi, miktar, tip = "tuketim") {
   const renk = tip === "ekstra" ? "orange" : "green";
   const ikon = tip === "ekstra" ? "plus-circle" : "check-circle";
   const baslik = tip === "ekstra" ? "Ekstra Eklendi" : "Tüketim Kaydedildi";
+
+  // Kalan stok bilgisi
+  const kalanStokHtml =
+    kalanStok !== null
+      ? `
+      <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+        <p class="text-sm text-slate-500 dark:text-slate-400">Kalan Stoğunuz</p>
+        <p class="text-2xl font-bold ${kalanStok > 0 ? "text-emerald-500" : "text-red-500"}">${kalanStok}</p>
+      </div>`
+      : "";
 
   const dialog = document.createElement("div");
   dialog.id = "successDialog";
@@ -1403,16 +1597,20 @@ function successDialogGoster(urunAdi, miktar, tip = "tuketim") {
       <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">${baslik}</h3>
       <p class="text-base font-medium text-slate-900 dark:text-white mb-2" style="font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;">${urunAdi}</p>
       <p class="text-3xl font-bold text-${renk}-600 dark:text-${renk}-400">+${miktar}</p>
+      ${kalanStokHtml}
     </div>
   `;
 
   document.body.appendChild(dialog);
 
-  // 1.5 saniye sonra otomatik kapat
-  setTimeout(() => {
-    dialog.classList.add("animate-fadeOut");
-    setTimeout(() => dialog.remove(), 300);
-  }, 1500);
+  // 2 saniye sonra otomatik kapat (kalan stok varsa biraz daha uzun)
+  setTimeout(
+    () => {
+      dialog.classList.add("animate-fadeOut");
+      setTimeout(() => dialog.remove(), 300);
+    },
+    kalanStok !== null ? 2000 : 1500,
+  );
 }
 
 // Bugünkü eklemeleri takip eden global obje
@@ -1557,4 +1755,420 @@ function kontrolDurumuBadgeGoster(kontrolDurumu) {
   badgeContent.className = `inline-flex items-center px-4 py-2 rounded-full text-sm font-bold ${badgeClass}`;
   badgeContent.innerHTML = `${icon}${text}`;
   badgeContainer.classList.remove("hidden");
+}
+
+// ============================================================================
+// SETUP DIŞI ÜRÜN EKLEME
+// ============================================================================
+
+let setupDisiUrunler = null; // Cache
+
+// Setup Dışı Ürün Ekle dialog'unu aç
+async function setupDisiDialogAc() {
+  if (!mevcutOdaId) {
+    toastGoster("Önce bir oda seçin", "warning");
+    return;
+  }
+
+  // Mevcut dialog varsa kaldır
+  const existing = document.getElementById("setupDisiDialog");
+  if (existing) existing.remove();
+
+  // Dialog oluştur
+  const dialog = document.createElement("div");
+  dialog.id = "setupDisiDialog";
+  dialog.className =
+    "fixed inset-0 bg-slate-950/95 z-50 flex items-end sm:items-center justify-center";
+  dialog.onclick = (e) => {
+    if (e.target === dialog) setupDisiDialogKapat();
+  };
+
+  dialog.innerHTML = `
+    <div class="bg-slate-900 w-full max-w-lg rounded-t-3xl sm:rounded-2xl shadow-2xl max-h-[90vh] flex flex-col animate-slideUp overflow-hidden border border-slate-700/60">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 px-5 py-5 flex-shrink-0">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+              </svg>
+            </div>
+            <div class="min-w-0">
+              <h3 class="text-lg font-bold text-white">Setup Dışı Ürün Ekle</h3>
+              <p class="text-sm text-white/70 mt-0.5">Stoğunuzdaki ürünleri ekleyin</p>
+            </div>
+          </div>
+          <button onclick="setupDisiDialogKapat()" class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-all touch-manipulation active:scale-90 flex-shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Arama -->
+      <div class="px-4 py-3 border-b border-slate-700/60 flex-shrink-0 bg-slate-900">
+        <div class="relative">
+          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input type="text" id="setupDisiArama" placeholder="Ürün ara..." oninput="setupDisiFiltrele(this.value)"
+            class="w-full pl-11 pr-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 text-base touch-manipulation transition-all">
+        </div>
+      </div>
+
+      <!-- Ürün Listesi -->
+      <div id="setupDisiUrunListesi" class="flex-1 overflow-y-auto px-4 py-3" style="min-height: 200px; max-height: 55vh;">
+        <div class="flex flex-col items-center justify-center py-12 gap-3">
+          <div class="w-12 h-12 rounded-full bg-violet-500/20 flex items-center justify-center">
+            <div class="animate-spin w-6 h-6 border-2 border-violet-400 border-t-transparent rounded-full"></div>
+          </div>
+          <span class="text-sm text-slate-400">Ürünler yükleniyor...</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(dialog);
+
+  // Ürünleri yükle
+  await setupDisiUrunleriYukle();
+}
+
+// Dialog kapat
+function setupDisiDialogKapat() {
+  const dialog = document.getElementById("setupDisiDialog");
+  if (dialog) dialog.remove();
+}
+
+// Ürünleri API'den yükle
+async function setupDisiUrunleriYukle() {
+  try {
+    const response = await fetch(
+      `/api/kat-sorumlusu/zimmet-urunler?oda_id=${mevcutOdaId}`,
+    );
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "Ürünler yüklenemedi");
+    }
+
+    setupDisiUrunler = data.gruplar;
+    setupDisiListeRender(setupDisiUrunler);
+  } catch (error) {
+    console.error("❌ Setup dışı ürün yükleme hatası:", error);
+    const container = document.getElementById("setupDisiUrunListesi");
+    if (container) {
+      container.innerHTML = `
+        <div class="text-center py-8 text-red-400">
+          <svg class="w-10 h-10 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+          <p>${error.message}</p>
+        </div>`;
+    }
+  }
+}
+
+// Ürün listesini render et
+function setupDisiListeRender(gruplar, filtre = "") {
+  const container = document.getElementById("setupDisiUrunListesi");
+  if (!container) return;
+
+  const filtreLC = filtre.toLowerCase().trim();
+  let html = "";
+  let toplamGosterilen = 0;
+
+  // Kategori renkleri — statik class'lar (Tailwind JIT uyumlu)
+  const kategoriStilleri = [
+    {
+      dot: "bg-violet-400",
+      text: "text-violet-400",
+      badge: "bg-violet-500/20 text-violet-300",
+    },
+    {
+      dot: "bg-cyan-400",
+      text: "text-cyan-400",
+      badge: "bg-cyan-500/20 text-cyan-300",
+    },
+    {
+      dot: "bg-rose-400",
+      text: "text-rose-400",
+      badge: "bg-rose-500/20 text-rose-300",
+    },
+    {
+      dot: "bg-amber-400",
+      text: "text-amber-400",
+      badge: "bg-amber-500/20 text-amber-300",
+    },
+    {
+      dot: "bg-emerald-400",
+      text: "text-emerald-400",
+      badge: "bg-emerald-500/20 text-emerald-300",
+    },
+    {
+      dot: "bg-sky-400",
+      text: "text-sky-400",
+      badge: "bg-sky-500/20 text-sky-300",
+    },
+    {
+      dot: "bg-fuchsia-400",
+      text: "text-fuchsia-400",
+      badge: "bg-fuchsia-500/20 text-fuchsia-300",
+    },
+    {
+      dot: "bg-lime-400",
+      text: "text-lime-400",
+      badge: "bg-lime-500/20 text-lime-300",
+    },
+  ];
+
+  const grupAdlari = Object.keys(gruplar).sort();
+
+  grupAdlari.forEach((grupAdi, grupIndex) => {
+    const urunler = gruplar[grupAdi].filter((u) => {
+      if (!filtreLC) return true;
+      return u.urun_adi.toLowerCase().includes(filtreLC);
+    });
+
+    if (urunler.length === 0) return;
+    toplamGosterilen += urunler.length;
+
+    const stil = kategoriStilleri[grupIndex % kategoriStilleri.length];
+
+    // Kategori başlığı
+    html += `<div class="mb-3 mt-1">
+      <div class="flex items-center gap-2 mb-2 px-1">
+        <span class="w-2.5 h-2.5 rounded-full ${stil.dot} flex-shrink-0"></span>
+        <p class="text-xs font-bold ${stil.text} uppercase tracking-widest flex-1">${grupAdi}</p>
+        <span class="text-[10px] font-bold ${stil.badge} px-2 py-0.5 rounded-full">${urunler.length}</span>
+      </div>`;
+
+    for (const urun of urunler) {
+      const setupBadge = urun.setup_urunu
+        ? `<span class="text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded">Setup</span>`
+        : "";
+
+      // Stok renk — basit ve net
+      let stokClass;
+      if (urun.stok > 10) {
+        stokClass = "text-emerald-400";
+      } else if (urun.stok > 0) {
+        stokClass = "text-amber-400";
+      } else {
+        stokClass = "text-red-400";
+      }
+
+      html += `
+      <button onclick="setupDisiUrunSec(${urun.urun_id}, '${urun.urun_adi.replace(/'/g, "\\'")}', ${urun.stok})"
+        class="w-full flex items-center px-3 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl mb-1.5 transition-all touch-manipulation active:scale-[0.98] border border-slate-700/50 hover:border-violet-500/40 text-left group"
+        ${urun.stok <= 0 ? 'disabled style="opacity:0.35;pointer-events:none;"' : ""}>
+        <div class="flex-1 min-w-0 mr-2 overflow-hidden">
+          <p class="text-sm font-semibold text-white truncate" style="font-family: 'Roboto', system-ui, sans-serif;">${urun.urun_adi}</p>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span class="text-[11px] text-slate-500">${urun.birim}</span>
+            ${setupBadge}
+          </div>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <div class="text-right">
+            <p class="text-base font-bold ${stokClass} tabular-nums leading-none">${urun.stok}</p>
+            <p class="text-[9px] text-slate-500 mt-0.5 uppercase font-semibold">stok</p>
+          </div>
+          <svg class="w-4 h-4 text-slate-600 group-hover:text-violet-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </div>
+      </button>`;
+    }
+
+    html += `</div>`;
+  });
+
+  if (toplamGosterilen === 0) {
+    html = `
+      <div class="text-center py-12">
+        <div class="w-14 h-14 mx-auto mb-3 rounded-2xl bg-slate-800 flex items-center justify-center">
+          <svg class="w-7 h-7 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-2.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+        </div>
+        <p class="text-sm font-medium text-slate-400">${filtreLC ? "Aramanızla eşleşen ürün bulunamadı" : "Stoğunuzda ürün bulunmuyor"}</p>
+      </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+// Arama filtresi
+function setupDisiFiltrele(deger) {
+  if (setupDisiUrunler) {
+    setupDisiListeRender(setupDisiUrunler, deger);
+  }
+}
+
+// Ürün seçildiğinde — miktar giriş dialog'u
+function setupDisiUrunSec(urunId, urunAdi, stok) {
+  // Ürün listesi dialog'unu kapat
+  setupDisiDialogKapat();
+
+  // Miktar dialog'u oluştur
+  const dialog = document.createElement("div");
+  dialog.id = "setupDisiMiktarDialog";
+  dialog.className =
+    "fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4";
+  dialog.onclick = (e) => {
+    if (e.target === dialog) setupDisiMiktarKapat();
+  };
+
+  dialog.innerHTML = `
+    <div class="bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm animate-slideUp overflow-hidden border border-slate-700/60">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 px-5 py-4 text-center">
+        <p class="text-lg font-bold text-white truncate" style="font-family: 'Roboto', system-ui, sans-serif;">${urunAdi}</p>
+        <p class="text-sm text-white/70 mt-0.5">Setup Dışı Ürün Ekleme</p>
+      </div>
+
+      <!-- Content -->
+      <div class="p-5 space-y-4">
+        <!-- Stepper -->
+        <div class="flex items-center justify-center gap-3">
+          <button onclick="sdMiktarAzalt()"
+            class="w-14 h-14 rounded-xl active:scale-90 transition-all flex items-center justify-center touch-manipulation"
+            style="background:#dc2626;box-shadow:0 4px 12px rgba(220,38,38,0.4);">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M20 12H4"></path></svg>
+          </button>
+          <input type="number" id="sdMiktarInput" min="1" max="${stok}" value="1" inputmode="numeric"
+            class="w-24 h-14 text-center text-3xl font-bold rounded-xl text-white touch-manipulation"
+            style="background:#1e293b;border:2px solid #7c3aed;">
+          <button onclick="sdMiktarArtir(${stok})"
+            class="w-14 h-14 rounded-xl active:scale-90 transition-all flex items-center justify-center touch-manipulation"
+            style="background:#059669;box-shadow:0 4px 12px rgba(5,150,105,0.4);">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+          </button>
+        </div>
+
+        <!-- Hızlı Butonlar -->
+        <div class="grid grid-cols-4 gap-2">
+          ${[1, 2, 3, 5]
+            .map(
+              (n) => `
+            <button onclick="document.getElementById('sdMiktarInput').value=${n}"
+              class="py-3 text-base font-bold rounded-xl transition-all touch-manipulation active:scale-90 text-white"
+              style="${
+                stok >= n
+                  ? "background:#7c3aed;box-shadow:0 4px 10px rgba(124,58,237,0.35);"
+                  : "background:#1e293b;color:#475569;cursor:not-allowed;border:1px solid #334155;"
+              }"
+              ${stok < n ? "disabled" : ""}>+${n}</button>
+          `,
+            )
+            .join("")}
+        </div>
+
+        <!-- Stok Bilgisi -->
+        <div class="text-center text-sm py-2.5 rounded-xl" style="background:#1e293b;border:1px solid #334155;color:#cbd5e1;">
+          Zimmet Stok: <strong style="color:${stok > 0 ? "#34d399" : "#f87171"};font-size:1.125rem;">${stok}</strong>
+        </div>
+
+        <!-- Ekle Butonu -->
+        <button onclick="setupDisiUrunKaydet(${urunId}, '${urunAdi.replace(/'/g, "\\'")}')"
+          class="w-full py-4 text-lg font-bold rounded-xl text-white active:scale-95 transition-all touch-manipulation"
+          style="background:linear-gradient(to right,#059669,#16a34a);box-shadow:0 6px 20px rgba(5,150,105,0.4);">
+          ✓ Ekle
+        </button>
+
+        <!-- Geri / İptal -->
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="setupDisiMiktarKapat(); setupDisiDialogAc();"
+            class="py-3 text-sm font-semibold rounded-xl text-white transition-all touch-manipulation active:scale-95"
+            style="background:#475569;box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+            ← Geri
+          </button>
+          <button onclick="setupDisiMiktarKapat()"
+            class="py-3 text-sm font-semibold rounded-xl text-white transition-all touch-manipulation active:scale-95"
+            style="background:#475569;box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+            İptal
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(dialog);
+}
+
+// Miktar dialog kapat
+function setupDisiMiktarKapat() {
+  const dialog = document.getElementById("setupDisiMiktarDialog");
+  if (dialog) dialog.remove();
+}
+
+// Stepper fonksiyonları
+function sdMiktarAzalt() {
+  const input = document.getElementById("sdMiktarInput");
+  const val = parseInt(input.value) || 1;
+  if (val > 1) input.value = val - 1;
+}
+
+function sdMiktarArtir(maxStok) {
+  const input = document.getElementById("sdMiktarInput");
+  const val = parseInt(input.value) || 0;
+  if (val < maxStok) input.value = val + 1;
+}
+
+// API'ye kaydet
+async function setupDisiUrunKaydet(urunId, urunAdi) {
+  const miktar = parseInt(document.getElementById("sdMiktarInput").value);
+
+  if (!miktar || miktar <= 0) {
+    toastGoster("Geçerli bir miktar girin", "warning");
+    return;
+  }
+
+  // Butonu disable et
+  const btn = document.querySelector(
+    '#setupDisiMiktarDialog button[onclick*="setupDisiUrunKaydet"]',
+  );
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML =
+      '<span class="animate-spin inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"></span> Kaydediliyor...';
+  }
+
+  try {
+    const response = await fetch("/api/kat-sorumlusu/setup-disi-urun-ekle", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
+      body: JSON.stringify({
+        oda_id: mevcutOdaId,
+        urun_id: urunId,
+        miktar: miktar,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "Ürün eklenemedi");
+    }
+
+    // Dialog kapat
+    setupDisiMiktarKapat();
+
+    // Kalan stok
+    const kalanStok = data.zimmet_kalan;
+
+    // Success dialog göster
+    successDialogGoster(urunAdi, miktar, "ekstra", kalanStok);
+
+    // Cache temizle (bir sonraki açılışta yeniden yüklensin)
+    setupDisiUrunler = null;
+
+    // Setup listesini yenile
+    await setupListesiYukle(mevcutOdaId);
+  } catch (error) {
+    console.error("❌ Setup dışı ürün ekleme hatası:", error);
+    toastGoster(error.message, "error");
+
+    // Butonu tekrar aktif et
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = "✓ Ekle";
+    }
+  }
 }

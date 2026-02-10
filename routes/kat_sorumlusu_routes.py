@@ -2461,3 +2461,229 @@ def register_kat_sorumlusu_routes(app):
             log_hata(e, modul='kat_sorumlusu_gorev_listesi')
             flash(f'Görev listesi yüklenirken hata oluştu: {str(e)}', 'danger')
             return redirect(url_for('dashboard'))
+
+    # ============================================================================
+    # SETUP DIŞI ÜRÜN EKLEME API ENDPOINT'LERİ
+    # ============================================================================
+    
+    @app.route('/api/kat-sorumlusu/zimmet-urunler', methods=['GET'])
+    @login_required
+    @role_required('kat_sorumlusu')
+    def api_zimmet_urunler():
+        """
+        Kat sorumlusunun otel zimmet deposundaki stoklu ürünleri listeler.
+        Setup dışı ürün ekleme dialog'unda ürün seçimi için kullanılır.
+        
+        Query Params:
+            oda_id (int): Oda ID — setup'taki ürünleri hariç tutmak için
+            
+        Returns:
+            JSON: Stokta bulunan ürün listesi (grup bazlı)
+        """
+        try:
+            from models import OtelZimmetStok, Kullanici, Urun, UrunGrup
+            
+            kullanici_id = session.get('kullanici_id')
+            kullanici = Kullanici.query.get(kullanici_id)
+            
+            if not kullanici or not kullanici.otel_id:
+                return jsonify({'success': False, 'error': 'Otel atamanız bulunamadı'}), 400
+            
+            oda_id = request.args.get('oda_id', type=int)
+            
+            # Setup'taki ürün ID'lerini bul (hariç tutmak için)
+            setup_urun_idleri = set()
+            if oda_id:
+                oda = db.session.get(Oda, oda_id)
+                if oda and oda.oda_tipi_rel:
+                    from models import SetupIcerik, oda_tipi_setup
+                    for setup in oda.oda_tipi_rel.setuplar:
+                        for icerik in setup.icerikler:
+                            setup_urun_idleri.add(icerik.urun_id)
+            
+            # Otel zimmet deposundaki stoklu ürünleri getir
+            otel_stoklar = OtelZimmetStok.query.filter(
+                OtelZimmetStok.otel_id == kullanici.otel_id,
+                OtelZimmetStok.kalan_miktar > 0
+            ).all()
+            
+            # Ürün bilgilerini topla
+            urun_idleri = [s.urun_id for s in otel_stoklar]
+            urunler = Urun.query.filter(
+                Urun.id.in_(urun_idleri),
+                Urun.aktif == True
+            ).all()
+            urun_map = {u.id: u for u in urunler}
+            
+            # Stok map
+            stok_map = {s.urun_id: s.kalan_miktar for s in otel_stoklar}
+            
+            # Grup bazlı organize et
+            gruplar = {}
+            for urun_id, miktar in stok_map.items():
+                urun = urun_map.get(urun_id)
+                if not urun:
+                    continue
+                    
+                # Setup'taki ürünleri işaretle (hariç tutma yerine bilgi ver)
+                setup_urunu = urun_id in setup_urun_idleri
+                
+                grup_adi = urun.grup.grup_adi if urun.grup else 'Diğer'
+                if grup_adi not in gruplar:
+                    gruplar[grup_adi] = []
+                
+                gruplar[grup_adi].append({
+                    'urun_id': urun.id,
+                    'urun_adi': urun.urun_adi,
+                    'birim': urun.birim,
+                    'stok': miktar,
+                    'setup_urunu': setup_urunu
+                })
+            
+            # Grup içi sıralama
+            for grup_adi in gruplar:
+                gruplar[grup_adi].sort(key=lambda x: x['urun_adi'])
+            
+            return jsonify({
+                'success': True,
+                'gruplar': gruplar,
+                'toplam_urun': sum(len(v) for v in gruplar.values())
+            })
+            
+        except Exception as e:
+            log_hata(e, modul='api_zimmet_urunler')
+            return jsonify({'success': False, 'error': 'Ürünler yüklenirken hata oluştu'}), 500
+    
+    
+    @app.route('/api/kat-sorumlusu/setup-disi-urun-ekle', methods=['POST'])
+    @login_required
+    @role_required('kat_sorumlusu')
+    def api_setup_disi_urun_ekle():
+        """
+        Setup dışı ürün ekleme — Odaya setup'ta olmayan bir ürün ekler.
+        Zimmet stoğundan düşer, raporlarda 'setup_disi_ekleme' olarak görünür.
+        
+        Request Body:
+            {
+                "oda_id": 101,
+                "urun_id": 15,
+                "miktar": 2
+            }
+            
+        Returns:
+            JSON: İşlem sonucu
+        """
+        try:
+            from utils.minibar_servisleri import (
+                zimmet_stok_kontrol,
+                zimmet_stok_dusu,
+                ZimmetStokYetersizError
+            )
+            from models import OtelZimmetStok
+            
+            data = request.get_json()
+            if not data:
+                return jsonify({'success': False, 'error': 'Geçersiz istek'}), 400
+            
+            oda_id = data.get('oda_id')
+            urun_id = data.get('urun_id')
+            miktar = data.get('miktar')
+            
+            if not all([oda_id, urun_id, miktar]):
+                return jsonify({'success': False, 'error': 'Eksik parametreler'}), 400
+            
+            if not isinstance(miktar, int) or miktar <= 0:
+                return jsonify({'success': False, 'error': 'Miktar 0\'dan büyük bir tam sayı olmalıdır'}), 400
+            
+            kullanici_id = session.get('kullanici_id')
+            
+            # Oda kontrolü
+            oda = db.session.get(Oda, oda_id)
+            if not oda:
+                return jsonify({'success': False, 'error': 'Oda bulunamadı'}), 404
+            
+            # Ürün kontrolü
+            urun = db.session.get(Urun, urun_id)
+            if not urun:
+                return jsonify({'success': False, 'error': 'Ürün bulunamadı'}), 404
+            
+            try:
+                # Zimmet stok kontrolü
+                zimmet_stok_kontrol(kullanici_id, urun_id, miktar)
+                
+                # Zimmet stoğundan düş
+                otel_stok = zimmet_stok_dusu(kullanici_id, urun_id, miktar)
+                
+                # MinibarIslem kaydı oluştur (setup_disi_ekleme tipi)
+                from models.base import get_kktc_now
+                islem = MinibarIslem(
+                    oda_id=oda_id,
+                    personel_id=kullanici_id,
+                    islem_tipi='setup_disi_ekleme',
+                    islem_tarihi=get_kktc_now(),
+                    aciklama=f'Setup dışı ürün ekleme: {urun.urun_adi} x{miktar}'
+                )
+                db.session.add(islem)
+                db.session.flush()
+                
+                # MinibarIslemDetay kaydı
+                detay = MinibarIslemDetay(
+                    islem_id=islem.id,
+                    urun_id=urun_id,
+                    baslangic_stok=0,
+                    bitis_stok=miktar,
+                    tuketim=0,
+                    eklenen_miktar=miktar,
+                    ekstra_miktar=0,
+                    setup_miktari=0,
+                    zimmet_detay_id=None
+                )
+                db.session.add(detay)
+                
+                db.session.commit()
+                
+                # Audit log
+                audit_create(
+                    tablo_adi='minibar_islem',
+                    kayit_id=islem.id,
+                    yeni_deger={
+                        'oda_no': oda.oda_no,
+                        'urun': urun.urun_adi,
+                        'miktar': miktar,
+                        'tip': 'setup_disi_ekleme'
+                    },
+                    aciklama=f"Oda {oda.oda_no} - Setup dışı ürün: {urun.urun_adi} x{miktar}"
+                )
+                
+                log_islem(
+                    'setup_disi_ekleme',
+                    'oda_kontrol',
+                    {'oda_no': oda.oda_no, 'urun': urun.urun_adi, 'miktar': miktar}
+                )
+                
+                zimmet_kalan = otel_stok.kalan_miktar if otel_stok else 0
+                
+                return jsonify({
+                    'success': True,
+                    'message': f'{urun.urun_adi} x{miktar} başarıyla eklendi (Setup dışı)',
+                    'urun_adi': urun.urun_adi,
+                    'miktar': miktar,
+                    'zimmet_kalan': zimmet_kalan
+                })
+                
+            except ZimmetStokYetersizError as e:
+                db.session.rollback()
+                return jsonify({
+                    'success': False,
+                    'error': str(e),
+                    'zimmet_mevcut': e.mevcut,
+                    'gereken_miktar': e.gereken
+                }), 400
+                
+            except Exception as e:
+                db.session.rollback()
+                raise
+            
+        except Exception as e:
+            log_hata(e, modul='api_setup_disi_urun_ekle')
+            return jsonify({'success': False, 'error': 'Setup dışı ürün eklenirken hata oluştu'}), 500

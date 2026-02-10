@@ -130,7 +130,7 @@ def register_admin_minibar_routes(app):
     @role_required('sistem_yoneticisi')
     def ilk_stok_yukleme(otel_id):
         """İlk stok yükleme - Excel'den ürün ve adet bilgisi alarak stok girişi yapar"""
-        from models import Otel, Urun, SatinAlmaIslem, SatinAlmaIslemDetay, UrunStok, Tedarikci
+        from models import Otel, Urun, UrunStok
         from datetime import datetime, timezone
         import pandas as pd
         import io
@@ -228,47 +228,8 @@ def register_admin_minibar_routes(app):
                         if not eslesen_urunler:
                             return jsonify({'success': False, 'message': 'Eşleşen ürün bulunamadı.'}), 400
                         
-                        # Tedarikçi ID=1 kontrolü
-                        tedarikci = Tedarikci.query.get(1)
-                        if not tedarikci:
-                            return jsonify({'success': False, 'message': 'Varsayılan tedarikçi (ID=1) bulunamadı.'}), 400
-                        
-                        # Satın alma işlemi oluştur
-                        islem_no = f"ILK-{otel_id}-{get_kktc_now().strftime('%Y%m%d%H%M%S')}"
-                        
-                        satin_alma = SatinAlmaIslem(
-                            islem_no=islem_no,
-                            tedarikci_id=1,  # Varsayılan tedarikçi
-                            otel_id=otel_id,
-                            fatura_no=f'ILK-STOK-{otel_id}',
-                            fatura_tarihi=get_kktc_now().date(),
-                            odeme_sekli='diger',
-                            odeme_durumu='odendi',
-                            toplam_tutar=0,  # 0 TL
-                            kdv_tutari=0,
-                            genel_toplam=0,
-                            aciklama=f'{otel.ad} için ilk stok yüklemesi',
-                            durum='aktif',
-                            olusturan_id=session['kullanici_id']
-                        )
-                        db.session.add(satin_alma)
-                        db.session.flush()
-                        
                         # Detayları ve stokları ekle
                         for item in eslesen_urunler:
-                            # Satın alma detayı
-                            detay = SatinAlmaIslemDetay(
-                                islem_id=satin_alma.id,
-                                urun_id=item['urun_id'],
-                                miktar=item['adet'],
-                                birim_fiyat=0,  # 0 TL
-                                kdv_orani=0,
-                                kdv_tutari=0,
-                                toplam_fiyat=0
-                            )
-                            db.session.add(detay)
-                            
-                            # Stok girişi - UrunStok tablosuna
                             urun_stok = UrunStok.query.filter_by(
                                 urun_id=item['urun_id'],
                                 otel_id=otel_id
@@ -308,18 +269,18 @@ def register_admin_minibar_routes(app):
                         db.session.commit()
                         
                         # Log kaydı
+                        islem_ref = f"ILK-{otel_id}-{get_kktc_now().strftime('%Y%m%d%H%M%S')}"
                         log_islem('ilk_stok_yukleme', 'depo_stoklari', {
                             'otel_id': otel_id,
                             'otel_adi': otel.ad,
                             'urun_sayisi': len(eslesen_urunler),
                             'toplam_adet': sum(u['adet'] for u in eslesen_urunler),
-                            'islem_no': islem_no
+                            'islem_ref': islem_ref
                         })
                         
                         return jsonify({
                             'success': True,
-                            'message': f'{len(eslesen_urunler)} ürün başarıyla stoka eklendi.',
-                            'islem_no': islem_no
+                            'message': f'{len(eslesen_urunler)} ürün başarıyla stoka eklendi.'
                         })
                     
                 except Exception as e:

@@ -1,451 +1,753 @@
-{% extends "base.html" %}
-
-{% block title %}Minibar İşlemleri - Admin Panel{% endblock %}
-{% block page_title %}Minibar İşlemleri{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Minibar İşlemleri - Admin Panel{%
+endblock %} {% block page_title %}Minibar İşlemleri{% endblock %} {% block
+content %}
 <div class="space-y-6">
-    <!-- Filtreler -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
-        <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Filtreler</h3>
-        
-        <!-- Hızlı Tarih Seçici -->
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hızlı Tarih Seçimi</label>
-            <div class="flex flex-wrap gap-2">
-                <a href="{{ url_for('admin_minibar_islemleri', tarih_filtre='bugun', otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi) }}"
-                   class="px-4 py-2 rounded-lg text-sm font-medium transition-colors
-                          {% if tarih_filtre == 'bugun' %}bg-blue-600 text-white{% else %}bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600{% endif %}">
-                    📅 Bugün
-                </a>
-                <a href="{{ url_for('admin_minibar_islemleri', tarih_filtre='dun', otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi) }}"
-                   class="px-4 py-2 rounded-lg text-sm font-medium transition-colors
-                          {% if tarih_filtre == 'dun' %}bg-blue-600 text-white{% else %}bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600{% endif %}">
-                    ⏪ Dün
-                </a>
-                <a href="{{ url_for('admin_minibar_islemleri', tarih_filtre='bu_hafta', otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi) }}"
-                   class="px-4 py-2 rounded-lg text-sm font-medium transition-colors
-                          {% if tarih_filtre == 'bu_hafta' %}bg-blue-600 text-white{% else %}bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600{% endif %}">
-                    📆 Bu Hafta
-                </a>
-                <a href="{{ url_for('admin_minibar_islemleri', tarih_filtre='bu_ay', otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi) }}"
-                   class="px-4 py-2 rounded-lg text-sm font-medium transition-colors
-                          {% if tarih_filtre == 'bu_ay' %}bg-blue-600 text-white{% else %}bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600{% endif %}">
-                    🗓️ Bu Ay
-                </a>
-                {% if tarih_filtre %}
-                <a href="{{ url_for('admin_minibar_islemleri', otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi) }}"
-                   class="px-4 py-2 rounded-lg text-sm font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors">
-                    ✕ Temizle
-                </a>
-                {% endif %}
-            </div>
-        </div>
-        
-        <form method="GET" action="{{ url_for('admin_minibar_islemleri') }}" class="grid grid-cols-1 md:grid-cols-6 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Otel</label>
-                <select name="otel_id" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200">
-                    <option value="">Tümü</option>
-                    {% for otel in oteller %}
-                    <option value="{{ otel.id }}" {% if otel_id == otel.id %}selected{% endif %}>
-                        {{ otel.ad }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Oda</label>
-                <select name="oda_id" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200">
-                    <option value="">Tümü</option>
-                    {% for oda in odalar %}
-                    <option value="{{ oda.id }}" {% if oda_id == oda.id %}selected{% endif %}>
-                        {{ oda.oda_no }} - {{ oda.kat.kat_adi }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Personel</label>
-                <select name="personel_id" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200">
-                    <option value="">Tümü</option>
-                    {% for personel in personeller %}
-                    <option value="{{ personel.id }}" {% if personel_id == personel.id %}selected{% endif %}>
-                        {{ personel.ad }} {{ personel.soyad }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">İşlem Tipi</label>
-                <select name="islem_tipi" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200">
-                    <option value="">Tümü</option>
-                    <option value="kontrol" {% if islem_tipi == 'kontrol' %}selected{% endif %}>Kontrol</option>
-                    <option value="dolum" {% if islem_tipi == 'dolum' %}selected{% endif %}>Dolum</option>
-                </select>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Başlangıç Tarihi</label>
-                <input type="date" name="baslangic_tarih" value="{{ baslangic_tarih }}"
-                    class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200">
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bitiş Tarihi</label>
-                <input type="date" name="bitis_tarih" value="{{ bitis_tarih }}"
-                    class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200">
-            </div>
-            
-            <div class="md:col-span-6 flex justify-end space-x-4">
-                <a href="{{ url_for('admin_minibar_islemleri') }}"
-                    class="px-6 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
-                    Temizle
-                </a>
-                <button type="submit"
-                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                    Filtrele
-                </button>
-            </div>
-        </form>
-    </div>
-    
-    <!-- Minibar İşlemleri Tablosu -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                Minibar İşlemleri ({{ islemler.total }} kayıt)
-            </h3>
-        </div>
-        
-        {% if islemler.items %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                <thead class="bg-slate-50 dark:bg-slate-900">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Tarih</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Oda No</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Kat Sorumlusu</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Ürünler</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">İşlem Tipi</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">İşlemler</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                    {% for islem in islemler.items %}
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100 font-medium">
-                            {{ islem.islem_tarihi.strftime('%d.%m.%Y') }}<br>
-                            <span class="text-xs text-slate-500 dark:text-slate-400">{{ islem.islem_tarihi.strftime('%H:%M') }}</span>
-                        </td>
-                        <td class="px-6 py-4 text-sm">
-                            <span class="font-semibold text-slate-900 dark:text-slate-100">{{ islem.oda.oda_no }}</span><br>
-                            <span class="text-xs text-slate-500 dark:text-slate-400">{{ islem.oda.kat.kat_adi }}</span>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">
-                            {% if islem.personel %}
-                            {{ islem.personel.ad }} {{ islem.personel.soyad }}
-                            {% else %}
-                            <span class="text-slate-400">-</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-sm">
-                            <div class="space-y-1 max-h-32 overflow-y-auto">
-                                {% for detay in islem.detaylar %}
-                                <div class="flex items-center gap-2 text-xs">
-                                    <span class="text-slate-700 dark:text-slate-300">{{ detay.urun.urun_adi if detay.urun else 'Bilinmeyen Ürün' }}</span>
-                                    {% if detay.tuketim > 0 %}
-                                    <span class="px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-medium">-{{ detay.tuketim }}</span>
-                                    {% endif %}
-                                    {% if detay.eklenen_miktar > 0 %}
-                                    <span class="px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium">+{{ detay.eklenen_miktar }}</span>
-                                    {% endif %}
-                                </div>
-                                {% else %}
-                                <span class="text-slate-400 text-xs">Ürün yok</span>
-                                {% endfor %}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                {% if islem.islem_tipi == 'kontrol' %}bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400
-                                {% elif islem.islem_tipi == 'ilk_dolum' %}bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400
-                                {% else %}bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400{% endif %}">
-                                {{ islem.islem_tipi.replace('_', ' ').title() }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                            <button onclick="showDetayModal({{ islem.id }})"
-                                class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 transition-colors">
-                                Detay
-                            </button>
-                            <button onclick="silIslem({{ islem.id }})"
-                                class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 transition-colors">
-                                Sil
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Sayfalama -->
-        {% if islemler.pages > 1 %}
-        <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
-            <div class="text-sm text-slate-600 dark:text-slate-400">
-                Sayfa {{ islemler.page }} / {{ islemler.pages }}
-            </div>
-            <div class="flex space-x-2">
-                {% if islemler.has_prev %}
-                <a href="{{ url_for('admin_minibar_islemleri', sayfa=islemler.prev_num, otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi, baslangic_tarih=baslangic_tarih, bitis_tarih=bitis_tarih, tarih_filtre=tarih_filtre) }}"
-                    class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
-                    Önceki
-                </a>
-                {% endif %}
-                {% if islemler.has_next %}
-                <a href="{{ url_for('admin_minibar_islemleri', sayfa=islemler.next_num, otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi, baslangic_tarih=baslangic_tarih, bitis_tarih=bitis_tarih, tarih_filtre=tarih_filtre) }}"
-                    class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
-                    Sonraki
-                </a>
-                {% endif %}
-            </div>
-        </div>
+  <!-- Filtreler -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+      Filtreler
+    </h3>
+
+    <!-- Hızlı Tarih Seçici -->
+    <div class="mb-4">
+      <label
+        class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >Hızlı Tarih Seçimi</label
+      >
+      <div class="flex flex-wrap gap-2">
+        <a
+          href="{{ url_for('admin_minibar_islemleri', tarih_filtre='bugun', otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi) }}"
+          class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if tarih_filtre == 'bugun' %}bg-blue-600 text-white{% else %}bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600{% endif %}"
+        >
+          📅 Bugün
+        </a>
+        <a
+          href="{{ url_for('admin_minibar_islemleri', tarih_filtre='dun', otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi) }}"
+          class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if tarih_filtre == 'dun' %}bg-blue-600 text-white{% else %}bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600{% endif %}"
+        >
+          ⏪ Dün
+        </a>
+        <a
+          href="{{ url_for('admin_minibar_islemleri', tarih_filtre='bu_hafta', otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi) }}"
+          class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if tarih_filtre == 'bu_hafta' %}bg-blue-600 text-white{% else %}bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600{% endif %}"
+        >
+          📆 Bu Hafta
+        </a>
+        <a
+          href="{{ url_for('admin_minibar_islemleri', tarih_filtre='bu_ay', otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi) }}"
+          class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if tarih_filtre == 'bu_ay' %}bg-blue-600 text-white{% else %}bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600{% endif %}"
+        >
+          🗓️ Bu Ay
+        </a>
+        {% if tarih_filtre %}
+        <a
+          href="{{ url_for('admin_minibar_islemleri', otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi) }}"
+          class="px-4 py-2 rounded-lg text-sm font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+        >
+          ✕ Temizle
+        </a>
         {% endif %}
-        {% else %}
-        <div class="px-6 py-12 text-center text-slate-500">
-            Minibar işlemi bulunamadı.
-        </div>
-        {% endif %}
+      </div>
     </div>
+
+    <form
+      method="GET"
+      action="{{ url_for('admin_minibar_islemleri') }}"
+      class="grid grid-cols-1 md:grid-cols-6 gap-4"
+    >
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >Otel</label
+        >
+        <select
+          name="otel_id"
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200"
+        >
+          <option value="">Tümü</option>
+          {% for otel in oteller %}
+          <option
+            value="{{ otel.id }}"
+            {%
+            if
+            otel_id=""
+            ="otel.id"
+            %}selected{%
+            endif
+            %}
+          >
+            {{ otel.ad }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >Oda</label
+        >
+        <select
+          name="oda_id"
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200"
+        >
+          <option value="">Tümü</option>
+          {% for oda in odalar %}
+          <option
+            value="{{ oda.id }}"
+            {%
+            if
+            oda_id=""
+            ="oda.id"
+            %}selected{%
+            endif
+            %}
+          >
+            {{ oda.oda_no }} - {{ oda.kat.kat_adi }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >Personel</label
+        >
+        <select
+          name="personel_id"
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200"
+        >
+          <option value="">Tümü</option>
+          {% for personel in personeller %}
+          <option
+            value="{{ personel.id }}"
+            {%
+            if
+            personel_id=""
+            ="personel.id"
+            %}selected{%
+            endif
+            %}
+          >
+            {{ personel.ad }} {{ personel.soyad }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >İşlem Tipi</label
+        >
+        <select
+          name="islem_tipi"
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200"
+        >
+          <option value="">Tümü</option>
+          <option
+            value="kontrol"
+            {%
+            if
+            islem_tipi=""
+            ="kontrol"
+            %}selected{%
+            endif
+            %}
+          >
+            Kontrol
+          </option>
+          <option
+            value="dolum"
+            {%
+            if
+            islem_tipi=""
+            ="dolum"
+            %}selected{%
+            endif
+            %}
+          >
+            Dolum
+          </option>
+          <option
+            value="setup_kontrol"
+            {%
+            if
+            islem_tipi=""
+            ="setup_kontrol"
+            %}selected{%
+            endif
+            %}
+          >
+            Tüketim İkamesi
+          </option>
+          <option
+            value="ekstra_ekleme"
+            {%
+            if
+            islem_tipi=""
+            ="ekstra_ekleme"
+            %}selected{%
+            endif
+            %}
+          >
+            Ekstra Ekleme
+          </option>
+          <option
+            value="ekstra_tuketim"
+            {%
+            if
+            islem_tipi=""
+            ="ekstra_tuketim"
+            %}selected{%
+            endif
+            %}
+          >
+            Ekstra Tüketim
+          </option>
+          <option
+            value="setup_disi_ekleme"
+            {%
+            if
+            islem_tipi=""
+            ="setup_disi_ekleme"
+            %}selected{%
+            endif
+            %}
+          >
+            Setup Dışı Ekleme
+          </option>
+          <option
+            value="sarfiyat_yok"
+            {%
+            if
+            islem_tipi=""
+            ="sarfiyat_yok"
+            %}selected{%
+            endif
+            %}
+          >
+            Sarfiyat Yok
+          </option>
+        </select>
+      </div>
+
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >Başlangıç Tarihi</label
+        >
+        <input
+          type="date"
+          name="baslangic_tarih"
+          value="{{ baslangic_tarih }}"
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200"
+        />
+      </div>
+
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >Bitiş Tarihi</label
+        >
+        <input
+          type="date"
+          name="bitis_tarih"
+          value="{{ bitis_tarih }}"
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200"
+        />
+      </div>
+
+      <div class="md:col-span-6 flex justify-end space-x-4">
+        <a
+          href="{{ url_for('admin_minibar_islemleri') }}"
+          class="px-6 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+        >
+          Temizle
+        </a>
+        <button
+          type="submit"
+          class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Filtrele
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Minibar İşlemleri Tablosu -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+    <div class="px-3 py-3 border-b border-slate-200 dark:border-slate-700">
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+        Minibar İşlemleri ({{ islemler.total }} kayıt)
+      </h3>
+    </div>
+
+    {% if islemler.items %}
+    <div class="overflow-hidden">
+      <table
+        class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet"
+        style="table-layout: fixed"
+      >
+        <thead class="bg-slate-50 dark:bg-slate-900">
+          <tr>
+            <th
+              class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Tarih
+            </th>
+            <th
+              class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Oda No
+            </th>
+            <th
+              class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Kat Sorumlusu
+            </th>
+            <th
+              class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Ürünler
+            </th>
+            <th
+              class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              İşlem Tipi
+            </th>
+            <th
+              class="px-3 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              İşlemler
+            </th>
+          </tr>
+        </thead>
+        <tbody
+          class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+        >
+          {% for islem in islemler.items %}
+          <tr
+            class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+          >
+            <td
+              class="px-3 py-3 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100 font-medium"
+            >
+              {{ islem.islem_tarihi.strftime('%d.%m.%Y') }}<br />
+              <span class="text-xs text-slate-500 dark:text-slate-400"
+                >{{ islem.islem_tarihi.strftime('%H:%M') }}</span
+              >
+            </td>
+            <td class="px-3 py-3 text-sm">
+              <span class="font-semibold text-slate-900 dark:text-slate-100"
+                >{{ islem.oda.oda_no }}</span
+              ><br />
+              <span class="text-xs text-slate-500 dark:text-slate-400"
+                >{{ islem.oda.kat.kat_adi }}</span
+              >
+            </td>
+            <td class="px-3 py-3 text-sm text-slate-700 dark:text-slate-300">
+              {% if islem.personel %} {{ islem.personel.ad }} {{
+              islem.personel.soyad }} {% else %}
+              <span class="text-slate-400">-</span>
+              {% endif %}
+            </td>
+            <td class="px-3 py-3 text-sm">
+              <div class="space-y-1 max-h-32 overflow-y-auto">
+                {% for detay in islem.detaylar %}
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="text-slate-700 dark:text-slate-300"
+                    >{{ detay.urun.urun_adi if detay.urun else 'Bilinmeyen Ürün'
+                    }}</span
+                  >
+                  {% if detay.tuketim > 0 %}
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-medium"
+                    >-{{ detay.tuketim }}</span
+                  >
+                  {% endif %} {% if detay.eklenen_miktar > 0 %}
+                  <span
+                    class="px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-medium"
+                    >+{{ detay.eklenen_miktar }}</span
+                  >
+                  {% endif %}
+                </div>
+                {% else %}
+                <span class="text-slate-400 text-xs">Ürün yok</span>
+                {% endfor %}
+              </div>
+            </td>
+            <td class="px-3 py-3 whitespace-nowrap">
+              <span
+                class="px-2 py-1 text-xs font-semibold rounded-full {% if islem.islem_tipi == 'kontrol' %}bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 {% elif islem.islem_tipi == 'ilk_dolum' %}bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400 {% elif islem.islem_tipi == 'setup_kontrol' %}bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 {% elif islem.islem_tipi == 'ekstra_ekleme' %}bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400 {% elif islem.islem_tipi == 'ekstra_tuketim' %}bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 {% elif islem.islem_tipi == 'setup_disi_ekleme' %}bg-fuchsia-100 dark:bg-fuchsia-900/30 text-fuchsia-800 dark:text-fuchsia-400 {% elif islem.islem_tipi == 'sarfiyat_yok' %}bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 {% else %}bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400{% endif %}"
+              >
+                {% if islem.islem_tipi == 'setup_disi_ekleme' %}Setup Dışı
+                Ekleme{% elif islem.islem_tipi == 'setup_kontrol' %}Tüketim
+                İkamesi{% elif islem.islem_tipi == 'ekstra_ekleme' %}Ekstra
+                Ekleme{% elif islem.islem_tipi == 'ekstra_tuketim' %}Ekstra
+                Tüketim{% elif islem.islem_tipi == 'sarfiyat_yok' %}Sarfiyat
+                Yok{% else %}{{ islem.islem_tipi.replace('_', ' ').title() }}{%
+                endif %}
+              </span>
+            </td>
+            <td
+              class="px-3 py-3 whitespace-nowrap text-right text-sm font-medium space-x-2"
+            >
+              <button
+                onclick="showDetayModal({{ islem.id }})"
+                class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 transition-colors"
+              >
+                Detay
+              </button>
+              <button
+                onclick="silIslem({{ islem.id }})"
+                class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 transition-colors"
+              >
+                Sil
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sayfalama -->
+    {% if islemler.pages > 1 %}
+    <div
+      class="px-3 py-3 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center"
+    >
+      <div class="text-sm text-slate-600 dark:text-slate-400">
+        Sayfa {{ islemler.page }} / {{ islemler.pages }}
+      </div>
+      <div class="flex space-x-2">
+        {% if islemler.has_prev %}
+        <a
+          href="{{ url_for('admin_minibar_islemleri', sayfa=islemler.prev_num, otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi, baslangic_tarih=baslangic_tarih, bitis_tarih=bitis_tarih, tarih_filtre=tarih_filtre) }}"
+          class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+        >
+          Önceki
+        </a>
+        {% endif %} {% if islemler.has_next %}
+        <a
+          href="{{ url_for('admin_minibar_islemleri', sayfa=islemler.next_num, otel_id=otel_id, oda_id=oda_id, personel_id=personel_id, islem_tipi=islem_tipi, baslangic_tarih=baslangic_tarih, bitis_tarih=bitis_tarih, tarih_filtre=tarih_filtre) }}"
+          class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+        >
+          Sonraki
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %} {% else %}
+    <div class="px-6 py-12 text-center text-slate-500">
+      Minibar işlemi bulunamadı.
+    </div>
+    {% endif %}
+  </div>
 </div>
 
 <!-- Minibar İşlem Modal -->
-<div id="minibarIslemModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-slate-900">Yeni Minibar İşlemi</h3>
-            <button onclick="closeMinibarIslemModal()" class="text-slate-400 hover:text-slate-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-        
-        <form id="minibarIslemForm" class="p-6 space-y-6">
-            <!-- Oda Seçimi -->
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">
-                    Oda <span class="text-red-500">*</span>
-                </label>
-                <select id="odaSelect" required
-                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                    <option value="">Oda Seçin</option>
-                </select>
-            </div>
-            
-            <!-- İşlem Tipi -->
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">
-                    İşlem Tipi <span class="text-red-500">*</span>
-                </label>
-                <select id="islemTipiSelect" required
-                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                    <option value="">İşlem Tipi Seçin</option>
-                    <option value="kontrol">Kontrol</option>
-                    <option value="dolum">Dolum</option>
-                </select>
-            </div>
-            
-            <!-- Ürünler Tablosu -->
-            <div id="urunlerContainer" class="hidden">
-                <h4 class="text-sm font-medium text-slate-700 mb-3">Ürünler</h4>
-                <div class="border border-slate-300 rounded-lg overflow-hidden">
-                    <table class="min-w-full divide-y divide-slate-200">
-                        <thead class="bg-slate-50">
-                            <tr>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-slate-500">Ürün</th>
-                                <th class="px-4 py-2 text-center text-xs font-medium text-slate-500">Mevcut</th>
-                                <th class="px-4 py-2 text-center text-xs font-medium text-slate-500">Başlangıç</th>
-                                <th class="px-4 py-2 text-center text-xs font-medium text-slate-500">Bitiş</th>
-                                <th class="px-4 py-2 text-center text-xs font-medium text-slate-500">Tüketim</th>
-                            </tr>
-                        </thead>
-                        <tbody id="urunlerTableBody" class="bg-white divide-y divide-slate-200">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Açıklama -->
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">
-                    Açıklama
-                </label>
-                <textarea id="aciklamaInput" rows="3"
-                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="İsteğe bağlı açıklama"></textarea>
-            </div>
-            
-            <!-- Butonlar -->
-            <div class="flex justify-end space-x-4 pt-4">
-                <button type="button" onclick="closeMinibarIslemModal()"
-                    class="px-6 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50">
-                    İptal
-                </button>
-                <button type="submit"
-                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                    İşlemi Kaydet
-                </button>
-            </div>
-        </form>
+<div
+  id="minibarIslemModal"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+>
+  <div
+    class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+  >
+    <div
+      class="px-3 py-3 border-b border-slate-200 flex justify-between items-center"
+    >
+      <h3 class="text-lg font-semibold text-slate-900">Yeni Minibar İşlemi</h3>
+      <button
+        onclick="closeMinibarIslemModal()"
+        class="text-slate-400 hover:text-slate-600"
+      >
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
     </div>
+
+    <form id="minibarIslemForm" class="p-6 space-y-6">
+      <!-- Oda Seçimi -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          Oda <span class="text-red-500">*</span>
+        </label>
+        <select
+          id="odaSelect"
+          required
+          class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Oda Seçin</option>
+        </select>
+      </div>
+
+      <!-- İşlem Tipi -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          İşlem Tipi <span class="text-red-500">*</span>
+        </label>
+        <select
+          id="islemTipiSelect"
+          required
+          class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">İşlem Tipi Seçin</option>
+          <option value="kontrol">Kontrol</option>
+          <option value="dolum">Dolum</option>
+        </select>
+      </div>
+
+      <!-- Ürünler Tablosu -->
+      <div id="urunlerContainer" class="hidden">
+        <h4 class="text-sm font-medium text-slate-700 mb-3">Ürünler</h4>
+        <div class="border border-slate-300 rounded-lg overflow-hidden">
+          <table
+            class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet"
+            style="table-layout: fixed"
+          >
+            <thead class="bg-slate-50">
+              <tr>
+                <th
+                  class="px-4 py-2 text-left text-xs font-medium text-slate-500"
+                >
+                  Ürün
+                </th>
+                <th
+                  class="px-4 py-2 text-center text-xs font-medium text-slate-500"
+                >
+                  Mevcut
+                </th>
+                <th
+                  class="px-4 py-2 text-center text-xs font-medium text-slate-500"
+                >
+                  Başlangıç
+                </th>
+                <th
+                  class="px-4 py-2 text-center text-xs font-medium text-slate-500"
+                >
+                  Bitiş
+                </th>
+                <th
+                  class="px-4 py-2 text-center text-xs font-medium text-slate-500"
+                >
+                  Tüketim
+                </th>
+              </tr>
+            </thead>
+            <tbody
+              id="urunlerTableBody"
+              class="bg-white divide-y divide-slate-200"
+            ></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Açıklama -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          Açıklama
+        </label>
+        <textarea
+          id="aciklamaInput"
+          rows="3"
+          class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          placeholder="İsteğe bağlı açıklama"
+        ></textarea>
+      </div>
+
+      <!-- Butonlar -->
+      <div class="flex justify-end space-x-4 pt-4">
+        <button
+          type="button"
+          onclick="closeMinibarIslemModal()"
+          class="px-6 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50"
+        >
+          İptal
+        </button>
+        <button
+          type="submit"
+          class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          İşlemi Kaydet
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- jQuery (Select2 için gerekli) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <!-- Select2 CSS & JS -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link
+  href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+  rel="stylesheet"
+/>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <!-- Select2 Dark Mode CSS -->
 <style>
-.dark .select2-container--default .select2-selection--single {
+  .dark .select2-container--default .select2-selection--single {
     background-color: rgb(51 65 85);
     border-color: rgb(71 85 105);
     color: rgb(226 232 240);
-}
+  }
 
-.dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+  .dark
+    .select2-container--default
+    .select2-selection--single
+    .select2-selection__rendered {
     color: rgb(226 232 240);
-}
+  }
 
-.dark .select2-container--default .select2-selection--single .select2-selection__arrow b {
+  .dark
+    .select2-container--default
+    .select2-selection--single
+    .select2-selection__arrow
+    b {
     border-color: rgb(148 163 184) transparent transparent transparent;
-}
+  }
 
-.dark .select2-dropdown {
+  .dark .select2-dropdown {
     background-color: rgb(51 65 85);
     border-color: rgb(71 85 105);
-}
+  }
 
-.dark .select2-container--default .select2-results__option {
+  .dark .select2-container--default .select2-results__option {
     color: rgb(226 232 240);
-}
+  }
 
-.dark .select2-container--default .select2-results__option--highlighted[aria-selected] {
+  .dark
+    .select2-container--default
+    .select2-results__option--highlighted[aria-selected] {
     background-color: rgb(30 41 59);
-}
+  }
 
-.dark .select2-container--default .select2-search--dropdown .select2-search__field {
+  .dark
+    .select2-container--default
+    .select2-search--dropdown
+    .select2-search__field {
     background-color: rgb(30 41 59);
     border-color: rgb(71 85 105);
     color: rgb(226 232 240);
-}
+  }
 
-.dark .select2-container--default.select2-container--disabled .select2-selection--single {
+  .dark
+    .select2-container--default.select2-container--disabled
+    .select2-selection--single {
     background-color: rgb(15 23 42);
-}
+  }
 </style>
 
 <script>
-let odalar = [];
-let minibarUrunler = [];
-let mevcutStoklar = {};
+  let odalar = [];
+  let minibarUrunler = [];
+  let mevcutStoklar = {};
 
-// Modal açma
-function openMinibarIslemModal() {
-    document.getElementById('minibarIslemModal').classList.remove('hidden');
+  // Modal açma
+  function openMinibarIslemModal() {
+    document.getElementById("minibarIslemModal").classList.remove("hidden");
     loadOdalar();
-}
+  }
 
-// Modal kapatma
-function closeMinibarIslemModal() {
-    document.getElementById('minibarIslemModal').classList.add('hidden');
-    document.getElementById('minibarIslemForm').reset();
-    document.getElementById('urunlerContainer').classList.add('hidden');
-}
+  // Modal kapatma
+  function closeMinibarIslemModal() {
+    document.getElementById("minibarIslemModal").classList.add("hidden");
+    document.getElementById("minibarIslemForm").reset();
+    document.getElementById("urunlerContainer").classList.add("hidden");
+  }
 
-// Odaları yükle
-async function loadOdalar() {
+  // Odaları yükle
+  async function loadOdalar() {
     try {
-        const response = await fetch('/api/odalar');
-        odalar = await response.json();
-        
-        const odaSelect = document.getElementById('odaSelect');
-        odaSelect.innerHTML = '<option value="">Oda Seçin</option>';
-        
-        odalar.forEach(oda => {
-            const option = document.createElement('option');
-            option.value = oda.id;
-            option.textContent = `${oda.oda_no} - ${oda.kat_adi}`;
-            odaSelect.appendChild(option);
-        });
-        
-        // Select2 başlat
-        $('#odaSelect').select2({
-            placeholder: 'Oda ara...',
-            allowClear: true,
-            dropdownParent: $('#minibarIslemModal'),
-            theme: 'default'
-        });
-        
-        // Select2 change event'i
-        $('#odaSelect').on('change', loadMinibarUrunler);
-        
+      const response = await fetch("/api/odalar");
+      odalar = await response.json();
+
+      const odaSelect = document.getElementById("odaSelect");
+      odaSelect.innerHTML = '<option value="">Oda Seçin</option>';
+
+      odalar.forEach((oda) => {
+        const option = document.createElement("option");
+        option.value = oda.id;
+        option.textContent = `${oda.oda_no} - ${oda.kat_adi}`;
+        odaSelect.appendChild(option);
+      });
+
+      // Select2 başlat
+      $("#odaSelect").select2({
+        placeholder: "Oda ara...",
+        allowClear: true,
+        dropdownParent: $("#minibarIslemModal"),
+        theme: "default",
+      });
+
+      // Select2 change event'i
+      $("#odaSelect").on("change", loadMinibarUrunler);
     } catch (error) {
-        console.error('Odalar yüklenemedi:', error);
-        alert('Odalar yüklenirken hata oluştu');
+      console.error("Odalar yüklenemedi:", error);
+      alert("Odalar yüklenirken hata oluştu");
     }
-}
+  }
 
-// İşlem tipi seçildiğinde ürünleri yükle
-document.getElementById('islemTipiSelect').addEventListener('change', loadMinibarUrunler);
+  // İşlem tipi seçildiğinde ürünleri yükle
+  document
+    .getElementById("islemTipiSelect")
+    .addEventListener("change", loadMinibarUrunler);
 
-async function loadMinibarUrunler() {
-    const odaId = document.getElementById('odaSelect').value;
-    const islemTipi = document.getElementById('islemTipiSelect').value;
-    
+  async function loadMinibarUrunler() {
+    const odaId = document.getElementById("odaSelect").value;
+    const islemTipi = document.getElementById("islemTipiSelect").value;
+
     if (!odaId || !islemTipi) {
-        document.getElementById('urunlerContainer').classList.add('hidden');
-        return;
+      document.getElementById("urunlerContainer").classList.add("hidden");
+      return;
     }
-    
+
     try {
-        // Minibar içeriğini getir
-        const response = await fetch(`/api/minibar-icerigi/${odaId}`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (!data.success) {
-            throw new Error(data.error || 'Minibar içeriği alınamadı');
-        }
-        
-        mevcutStoklar = {};
-        const tbody = document.getElementById('urunlerTableBody');
-        tbody.innerHTML = '';
-        
-        // Ürün yoksa bilgi göster
-        if (!data.urunler || data.urunler.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-slate-500">Bu odada henüz minibar ürünü yok. Lütfen önce minibar dolumu yapın.</td></tr>';
-            document.getElementById('urunlerContainer').classList.remove('hidden');
-            return;
-        }
-        
-        data.urunler.forEach(urun => {
-            const mevcutStok = urun.mevcut_stok || 0;
-            mevcutStoklar[urun.urun_id] = mevcutStok;
-            
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
+      // Minibar içeriğini getir
+      const response = await fetch(`/api/minibar-icerigi/${odaId}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Minibar içeriği alınamadı");
+      }
+
+      mevcutStoklar = {};
+      const tbody = document.getElementById("urunlerTableBody");
+      tbody.innerHTML = "";
+
+      // Ürün yoksa bilgi göster
+      if (!data.urunler || data.urunler.length === 0) {
+        tbody.innerHTML =
+          '<tr><td colspan="5" class="px-4 py-4 text-center text-slate-500">Bu odada henüz minibar ürünü yok. Lütfen önce minibar dolumu yapın.</td></tr>';
+        document.getElementById("urunlerContainer").classList.remove("hidden");
+        return;
+      }
+
+      data.urunler.forEach((urun) => {
+        const mevcutStok = urun.mevcut_stok || 0;
+        mevcutStoklar[urun.urun_id] = mevcutStok;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
                 <td class="px-4 py-2 text-sm text-slate-900">${urun.urun_adi}</td>
                 <td class="px-4 py-2 text-center text-sm font-medium text-slate-900">${mevcutStok}</td>
                 <td class="px-4 py-2 text-center">
@@ -464,228 +766,247 @@ async function loadMinibarUrunler() {
                     <span id="tuketim-${urun.urun_id}" class="text-sm font-semibold text-red-600">0</span>
                 </td>
             `;
-            tbody.appendChild(tr);
-        });
-        
-        document.getElementById('urunlerContainer').classList.remove('hidden');
-        
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("urunlerContainer").classList.remove("hidden");
     } catch (error) {
-        console.error('Minibar ürünleri yüklenemedi:', error);
-        alert('Minibar ürünleri yüklenirken hata oluştu');
+      console.error("Minibar ürünleri yüklenemedi:", error);
+      alert("Minibar ürünleri yüklenirken hata oluştu");
     }
-}
+  }
 
-// Tüketim hesapla
-function hesaplaTuketim(urunId) {
-    const baslangic = parseInt(document.querySelector(`.baslangic-input[data-urun-id="${urunId}"]`).value) || 0;
-    const bitis = parseInt(document.querySelector(`.bitis-input[data-urun-id="${urunId}"]`).value) || 0;
+  // Tüketim hesapla
+  function hesaplaTuketim(urunId) {
+    const baslangic =
+      parseInt(
+        document.querySelector(`.baslangic-input[data-urun-id="${urunId}"]`)
+          .value,
+      ) || 0;
+    const bitis =
+      parseInt(
+        document.querySelector(`.bitis-input[data-urun-id="${urunId}"]`).value,
+      ) || 0;
     const tuketim = baslangic - bitis;
-    
-    document.getElementById(`tuketim-${urunId}`).textContent = tuketim;
-}
 
-// Form submit
-document.getElementById('minibarIslemForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const odaId = document.getElementById('odaSelect').value;
-    const islemTipi = document.getElementById('islemTipiSelect').value;
-    const aciklama = document.getElementById('aciklamaInput').value;
-    
-    if (!odaId || !islemTipi) {
-        alert('Lütfen tüm zorunlu alanları doldurun');
+    document.getElementById(`tuketim-${urunId}`).textContent = tuketim;
+  }
+
+  // Form submit
+  document
+    .getElementById("minibarIslemForm")
+    .addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const odaId = document.getElementById("odaSelect").value;
+      const islemTipi = document.getElementById("islemTipiSelect").value;
+      const aciklama = document.getElementById("aciklamaInput").value;
+
+      if (!odaId || !islemTipi) {
+        alert("Lütfen tüm zorunlu alanları doldurun");
         return;
-    }
-    
-    // Ürün detaylarını topla
-    const detaylar = [];
-    document.querySelectorAll('.baslangic-input').forEach(input => {
+      }
+
+      // Ürün detaylarını topla
+      const detaylar = [];
+      document.querySelectorAll(".baslangic-input").forEach((input) => {
         const urunId = input.dataset.urunId;
         const baslangic = parseInt(input.value) || 0;
-        const bitis = parseInt(document.querySelector(`.bitis-input[data-urun-id="${urunId}"]`).value) || 0;
-        
+        const bitis =
+          parseInt(
+            document.querySelector(`.bitis-input[data-urun-id="${urunId}"]`)
+              .value,
+          ) || 0;
+
         detaylar.push({
-            urun_id: parseInt(urunId),
-            baslangic_stok: baslangic,
-            bitis_stok: bitis,
-            tuketim: baslangic - bitis
+          urun_id: parseInt(urunId),
+          baslangic_stok: baslangic,
+          bitis_stok: bitis,
+          tuketim: baslangic - bitis,
         });
+      });
+
+      try {
+        const response = await fetch("/api/minibar-islem-kaydet", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            oda_id: parseInt(odaId),
+            islem_tipi: islemTipi,
+            aciklama: aciklama,
+            detaylar: detaylar,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert("Minibar işlemi başarıyla kaydedildi");
+          closeMinibarIslemModal();
+          location.reload();
+        } else {
+          alert("Hata: " + data.message);
+        }
+      } catch (error) {
+        console.error("Minibar işlemi hatası:", error);
+        alert("Minibar işlemi sırasında hata oluştu");
+      }
     });
-    
-    try {
-        const response = await fetch('/api/minibar-islem-kaydet', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                oda_id: parseInt(odaId),
-                islem_tipi: islemTipi,
-                aciklama: aciklama,
-                detaylar: detaylar
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            alert('Minibar işlemi başarıyla kaydedildi');
-            closeMinibarIslemModal();
-            location.reload();
-        } else {
-            alert('Hata: ' + data.message);
-        }
-        
-    } catch (error) {
-        console.error('Minibar işlemi hatası:', error);
-        alert('Minibar işlemi sırasında hata oluştu');
-    }
-});
 
-async function silIslem(islemId) {
+  async function silIslem(islemId) {
     const result = await showConfirm(
-        'Bu minibar işlemini silmek istediğinizden emin misiniz?\n\nİlgili stok hareketleri geri alınacaktır.',
-        'Minibar İşlemi Sil'
+      "Bu minibar işlemini silmek istediğinizden emin misiniz?\n\nİlgili stok hareketleri geri alınacaktır.",
+      "Minibar İşlemi Sil",
     );
-    
+
     if (!result.isConfirmed) {
-        return;
+      return;
     }
-    
+
     try {
-        // CSRF token'ı al
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        
-        const response = await fetch(`/admin/minibar-islem-sil/${islemId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showSuccess('İşlem başarıyla silindi');
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showError(data.message || 'Silme işlemi başarısız');
-        }
+      // CSRF token'ı al
+      const csrfToken = document
+        .querySelector('meta[name="csrf-token"]')
+        ?.getAttribute("content");
+
+      const response = await fetch(`/admin/minibar-islem-sil/${islemId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showSuccess("İşlem başarıyla silindi");
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showError(data.message || "Silme işlemi başarısız");
+      }
     } catch (error) {
-        console.error('Silme hatası:', error);
-        showError(error.message, 'Silme Hatası');
+      console.error("Silme hatası:", error);
+      showError(error.message, "Silme Hatası");
     }
-}
+  }
 
-// İlk Dolum Modal Fonksiyonları
-let tumUrunler = [];
-let tumGruplar = [];
-let secilenGrupId = null;
+  // İlk Dolum Modal Fonksiyonları
+  let tumUrunler = [];
+  let tumGruplar = [];
+  let secilenGrupId = null;
 
-function openIlkDolumModal() {
-    document.getElementById('ilkDolumModal').classList.remove('hidden');
+  function openIlkDolumModal() {
+    document.getElementById("ilkDolumModal").classList.remove("hidden");
     loadOdalarForIlkDolum();
     loadGruplarForIlkDolum();
-}
+  }
 
-function closeIlkDolumModal() {
-    document.getElementById('ilkDolumModal').classList.add('hidden');
-    document.getElementById('ilkDolumForm').reset();
-    document.getElementById('urunListesi').innerHTML = '';
-    document.getElementById('grupSecimDiv').classList.add('hidden');
-    document.getElementById('urunListesiDiv').classList.add('hidden');
+  function closeIlkDolumModal() {
+    document.getElementById("ilkDolumModal").classList.add("hidden");
+    document.getElementById("ilkDolumForm").reset();
+    document.getElementById("urunListesi").innerHTML = "";
+    document.getElementById("grupSecimDiv").classList.add("hidden");
+    document.getElementById("urunListesiDiv").classList.add("hidden");
     secilenGrupId = null;
-}
+  }
 
-async function loadOdalarForIlkDolum() {
+  async function loadOdalarForIlkDolum() {
     try {
-        const response = await fetch('/api/odalar');
-        const odalar = await response.json();
-        
-        const odaSelect = document.getElementById('ilkDolumOdaSelect');
-        odaSelect.innerHTML = '<option value="">Oda Seçin</option>';
-        
-        odalar.forEach(oda => {
-            const option = document.createElement('option');
-            option.value = oda.id;
-            option.textContent = `${oda.oda_no} - ${oda.kat_adi}`;
-            odaSelect.appendChild(option);
-        });
-        
-        // Oda seçildiğinde grup seçimini göster
-        odaSelect.addEventListener('change', function() {
-            if (this.value) {
-                document.getElementById('grupSecimDiv').classList.remove('hidden');
-            } else {
-                document.getElementById('grupSecimDiv').classList.add('hidden');
-                document.getElementById('urunListesiDiv').classList.add('hidden');
-            }
-        });
-    } catch (error) {
-        console.error('Odalar yüklenemedi:', error);
-        showError('Odalar yüklenirken hata oluştu');
-    }
-}
+      const response = await fetch("/api/odalar");
+      const odalar = await response.json();
 
-async function loadGruplarForIlkDolum() {
+      const odaSelect = document.getElementById("ilkDolumOdaSelect");
+      odaSelect.innerHTML = '<option value="">Oda Seçin</option>';
+
+      odalar.forEach((oda) => {
+        const option = document.createElement("option");
+        option.value = oda.id;
+        option.textContent = `${oda.oda_no} - ${oda.kat_adi}`;
+        odaSelect.appendChild(option);
+      });
+
+      // Oda seçildiğinde grup seçimini göster
+      odaSelect.addEventListener("change", function () {
+        if (this.value) {
+          document.getElementById("grupSecimDiv").classList.remove("hidden");
+        } else {
+          document.getElementById("grupSecimDiv").classList.add("hidden");
+          document.getElementById("urunListesiDiv").classList.add("hidden");
+        }
+      });
+    } catch (error) {
+      console.error("Odalar yüklenemedi:", error);
+      showError("Odalar yüklenirken hata oluştu");
+    }
+  }
+
+  async function loadGruplarForIlkDolum() {
     try {
-        const response = await fetch('/api/urun-gruplari');
-        tumGruplar = await response.json();
-        
-        const grupSelect = document.getElementById('ilkDolumGrupSelect');
-        grupSelect.innerHTML = '<option value="">Tüm Gruplar</option>';
-        
-        tumGruplar.forEach(grup => {
-            const option = document.createElement('option');
-            option.value = grup.id;
-            option.textContent = grup.grup_adi;
-            grupSelect.appendChild(option);
-        });
-        
-        // Grup seçildiğinde ürünleri yükle
-        grupSelect.addEventListener('change', function() {
-            secilenGrupId = this.value ? parseInt(this.value) : null;
-            loadUrunlerForIlkDolum();
-        });
-    } catch (error) {
-        console.error('Gruplar yüklenemedi:', error);
-        showError('Gruplar yüklenirken hata oluştu');
-    }
-}
+      const response = await fetch("/api/urun-gruplari");
+      tumGruplar = await response.json();
 
-async function loadUrunlerForIlkDolum() {
+      const grupSelect = document.getElementById("ilkDolumGrupSelect");
+      grupSelect.innerHTML = '<option value="">Tüm Gruplar</option>';
+
+      tumGruplar.forEach((grup) => {
+        const option = document.createElement("option");
+        option.value = grup.id;
+        option.textContent = grup.grup_adi;
+        grupSelect.appendChild(option);
+      });
+
+      // Grup seçildiğinde ürünleri yükle
+      grupSelect.addEventListener("change", function () {
+        secilenGrupId = this.value ? parseInt(this.value) : null;
+        loadUrunlerForIlkDolum();
+      });
+    } catch (error) {
+      console.error("Gruplar yüklenemedi:", error);
+      showError("Gruplar yüklenirken hata oluştu");
+    }
+  }
+
+  async function loadUrunlerForIlkDolum() {
     try {
-        // Grup seçiliyse o grubun ürünlerini, değilse tüm ürünleri getir
-        const url = secilenGrupId 
-            ? `/api/urunler-by-grup/${secilenGrupId}`
-            : '/api/urunler';
-            
-        const response = await fetch(url);
-        tumUrunler = await response.json();
-        
-        console.log('Yüklenen ürünler:', tumUrunler);
-        console.log('Stokta olan ürünler:', tumUrunler.filter(u => u.stok_miktari > 0));
-        console.log('Stokta olmayan ürünler:', tumUrunler.filter(u => u.stok_miktari === 0));
-        
-        // Ürün listesini göster
-        document.getElementById('urunListesiDiv').classList.remove('hidden');
-        renderUrunListesi();
-    } catch (error) {
-        console.error('Ürünler yüklenemedi:', error);
-        showError('Ürünler yüklenirken hata oluştu');
-    }
-}
+      // Grup seçiliyse o grubun ürünlerini, değilse tüm ürünleri getir
+      const url = secilenGrupId
+        ? `/api/urunler-by-grup/${secilenGrupId}`
+        : "/api/urunler";
 
-function renderUrunListesi() {
-    const container = document.getElementById('urunListesi');
-    container.innerHTML = '';
-    
+      const response = await fetch(url);
+      tumUrunler = await response.json();
+
+      console.log("Yüklenen ürünler:", tumUrunler);
+      console.log(
+        "Stokta olan ürünler:",
+        tumUrunler.filter((u) => u.stok_miktari > 0),
+      );
+      console.log(
+        "Stokta olmayan ürünler:",
+        tumUrunler.filter((u) => u.stok_miktari === 0),
+      );
+
+      // Ürün listesini göster
+      document.getElementById("urunListesiDiv").classList.remove("hidden");
+      renderUrunListesi();
+    } catch (error) {
+      console.error("Ürünler yüklenemedi:", error);
+      showError("Ürünler yüklenirken hata oluştu");
+    }
+  }
+
+  function renderUrunListesi() {
+    const container = document.getElementById("urunListesi");
+    container.innerHTML = "";
+
     // Sadece stokta olan ürünleri göster
-    const stokluUrunler = tumUrunler.filter(u => u.stok_miktari > 0);
-    
+    const stokluUrunler = tumUrunler.filter((u) => u.stok_miktari > 0);
+
     if (stokluUrunler.length === 0) {
-        container.innerHTML = `
+      container.innerHTML = `
             <div class="text-center py-8 text-slate-500 dark:text-slate-400">
                 <svg class="w-12 h-12 mx-auto mb-3 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
@@ -694,368 +1015,459 @@ function renderUrunListesi() {
                 <p class="text-sm mt-1">Lütfen önce depo stok girişi yapın</p>
             </div>
         `;
-        return;
+      return;
     }
-    
-    stokluUrunler.forEach(urun => {
-        const ilkDolumYapilmis = ilkDolumYapilmisUrunler.includes(urun.id);
-        const stokYok = urun.stok_miktari === 0;
-        const disabled = ilkDolumYapilmis || stokYok;
-        
-        const div = document.createElement('div');
-        div.className = `flex items-center justify-between p-3 rounded-lg ${
-            disabled
-                ? 'bg-slate-200 dark:bg-slate-900 opacity-60' 
-                : 'bg-slate-50 dark:bg-slate-700'
-        }`;
-        
-        div.innerHTML = `
+
+    stokluUrunler.forEach((urun) => {
+      const ilkDolumYapilmis = ilkDolumYapilmisUrunler.includes(urun.id);
+      const stokYok = urun.stok_miktari === 0;
+      const disabled = ilkDolumYapilmis || stokYok;
+
+      const div = document.createElement("div");
+      div.className = `flex items-center justify-between p-3 rounded-lg ${
+        disabled
+          ? "bg-slate-200 dark:bg-slate-900 opacity-60"
+          : "bg-slate-50 dark:bg-slate-700"
+      }`;
+
+      div.innerHTML = `
             <div class="flex items-center gap-3">
                 <input type="checkbox" id="urun_${urun.id}" 
                     class="w-4 h-4 text-blue-600 rounded"
                     onchange="toggleUrunMiktar(${urun.id})"
-                    ${disabled ? 'disabled' : ''}>
+                    ${disabled ? "disabled" : ""}>
                 <label for="urun_${urun.id}" class="text-sm font-medium ${
-                    disabled
-                        ? 'text-slate-500 dark:text-slate-500 line-through' 
-                        : 'text-slate-900 dark:text-slate-100'
+                  disabled
+                    ? "text-slate-500 dark:text-slate-500 line-through"
+                    : "text-slate-900 dark:text-slate-100"
                 }">
                     ${urun.urun_adi}
-                    ${ilkDolumYapilmis ? '<span class="ml-2 text-xs text-red-500">✓ İlk dolum yapılmış</span>' : ''}
-                    ${stokYok ? '<span class="ml-2 text-xs text-orange-500">⚠️ Stokta yok</span>' : ''}
+                    ${ilkDolumYapilmis ? '<span class="ml-2 text-xs text-red-500">✓ İlk dolum yapılmış</span>' : ""}
+                    ${stokYok ? '<span class="ml-2 text-xs text-orange-500">⚠️ Stokta yok</span>' : ""}
                 </label>
-                <span class="text-xs ${stokYok ? 'text-orange-500 font-semibold' : 'text-slate-500 dark:text-slate-400'}">
+                <span class="text-xs ${stokYok ? "text-orange-500 font-semibold" : "text-slate-500 dark:text-slate-400"}">
                     (Stok: ${urun.stok_miktari} ${urun.birim})
                 </span>
             </div>
             <div id="miktar_${urun.id}" class="hidden">
-                <input type="number" min="1" ${urun.stok_miktari > 0 ? `max="${urun.stok_miktari}"` : ''} value="1"
+                <input type="number" min="1" ${urun.stok_miktari > 0 ? `max="${urun.stok_miktari}"` : ""} value="1"
                     class="w-20 px-2 py-1 border border-slate-300 dark:border-slate-600 rounded dark:bg-slate-800 dark:text-slate-200 text-sm"
                     placeholder="Miktar"
-                    ${urun.stok_miktari === 0 ? 'disabled title="Stokta yok"' : ''}>
-                ${urun.stok_miktari === 0 ? '<span class="ml-2 text-xs text-red-500">Stokta yok</span>' : ''}
+                    ${urun.stok_miktari === 0 ? 'disabled title="Stokta yok"' : ""}>
+                ${urun.stok_miktari === 0 ? '<span class="ml-2 text-xs text-red-500">Stokta yok</span>' : ""}
             </div>
         `;
-        container.appendChild(div);
+      container.appendChild(div);
     });
-    
+
     // Eğer hiç seçilebilir ürün yoksa uyarı göster
-    const secilebilirUrunler = tumUrunler.filter(u => !ilkDolumYapilmisUrunler.includes(u.id));
+    const secilebilirUrunler = tumUrunler.filter(
+      (u) => !ilkDolumYapilmisUrunler.includes(u.id),
+    );
     if (secilebilirUrunler.length === 0 && tumUrunler.length > 0) {
-        const uyariDiv = document.createElement('div');
-        uyariDiv.className = 'text-center py-8 text-slate-500 dark:text-slate-400';
-        uyariDiv.innerHTML = `
+      const uyariDiv = document.createElement("div");
+      uyariDiv.className =
+        "text-center py-8 text-slate-500 dark:text-slate-400";
+      uyariDiv.innerHTML = `
             <svg class="w-12 h-12 mx-auto mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             <p class="font-medium">Bu oda için tüm ürünlere ilk dolum yapılmış</p>
             <p class="text-sm mt-1">Yeni ürün eklendiğinde buradan ilk dolum yapabilirsiniz</p>
         `;
-        container.appendChild(uyariDiv);
+      container.appendChild(uyariDiv);
     }
-}
+  }
 
-function toggleUrunMiktar(urunId) {
+  function toggleUrunMiktar(urunId) {
     const checkbox = document.getElementById(`urun_${urunId}`);
     const miktarDiv = document.getElementById(`miktar_${urunId}`);
-    
+
     if (checkbox.checked) {
-        miktarDiv.classList.remove('hidden');
+      miktarDiv.classList.remove("hidden");
     } else {
-        miktarDiv.classList.add('hidden');
+      miktarDiv.classList.add("hidden");
     }
-}
+  }
 
-// Oda seçildiğinde ilk dolum yapılmış ürünleri kontrol et
-let ilkDolumYapilmisUrunler = [];
+  // Oda seçildiğinde ilk dolum yapılmış ürünleri kontrol et
+  let ilkDolumYapilmisUrunler = [];
 
-document.addEventListener('DOMContentLoaded', function() {
-    const odaSelect = document.getElementById('ilkDolumOdaSelect');
+  document.addEventListener("DOMContentLoaded", function () {
+    const odaSelect = document.getElementById("ilkDolumOdaSelect");
     if (odaSelect) {
-        odaSelect.addEventListener('change', async function() {
-            const odaId = this.value;
-            
-            // Oda seçimi temizlendiyse tüm ürünleri aktif et
-            if (!odaId) {
-                ilkDolumYapilmisUrunler = [];
-                renderUrunListesi();
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/api/minibar-ilk-dolum-kontrol/${odaId}`);
-                const data = await response.json();
-                
-                if (data.success && data.ilk_dolum_urunler.length > 0) {
-                    ilkDolumYapilmisUrunler = data.ilk_dolum_urunler.map(u => u.urun_id);
-                    
-                    // Ürün listesini güncelle
-                    renderUrunListesi();
-                    
-                    // Bilgilendirme mesajı
-                    const urunAdlari = data.ilk_dolum_urunler.map(u => u.urun_adi).join(', ');
-                    showInfo(
-                        `Bu oda için şu ürünlere daha önce ilk dolum yapılmış:\n\n${urunAdlari}\n\nBu ürünler listede devre dışı bırakıldı.`,
-                        'Bilgilendirme'
-                    );
-                } else {
-                    ilkDolumYapilmisUrunler = [];
-                    renderUrunListesi();
-                }
-            } catch (error) {
-                console.error('Kontrol hatası:', error);
-                showError('İlk dolum kontrolü yapılırken hata oluştu');
-            }
-        });
-    }
-});
+      odaSelect.addEventListener("change", async function () {
+        const odaId = this.value;
 
-// İlk Dolum Form Submit
-document.addEventListener('DOMContentLoaded', function() {
-    const ilkDolumForm = document.getElementById('ilkDolumForm');
-    
-    if (!ilkDolumForm) {
-        console.error('İlk Dolum Form bulunamadı!');
-        return;
-    }
-    
-    console.log('İlk Dolum Form event listener eklendi');
-    
-    ilkDolumForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        console.log('Form submit tetiklendi!');
-        
-        const odaId = document.getElementById('ilkDolumOdaSelect').value;
-        const aciklama = document.getElementById('ilkDolumAciklama').value;
-        
-        console.log('Oda ID:', odaId);
-        
+        // Oda seçimi temizlendiyse tüm ürünleri aktif et
         if (!odaId) {
-            showWarning('Lütfen oda seçin');
-            return;
+          ilkDolumYapilmisUrunler = [];
+          renderUrunListesi();
+          return;
         }
-    
-    // Seçili ürünleri topla
-    const urunler = [];
-    tumUrunler.forEach(urun => {
+
+        try {
+          const response = await fetch(
+            `/api/minibar-ilk-dolum-kontrol/${odaId}`,
+          );
+          const data = await response.json();
+
+          if (data.success && data.ilk_dolum_urunler.length > 0) {
+            ilkDolumYapilmisUrunler = data.ilk_dolum_urunler.map(
+              (u) => u.urun_id,
+            );
+
+            // Ürün listesini güncelle
+            renderUrunListesi();
+
+            // Bilgilendirme mesajı
+            const urunAdlari = data.ilk_dolum_urunler
+              .map((u) => u.urun_adi)
+              .join(", ");
+            showInfo(
+              `Bu oda için şu ürünlere daha önce ilk dolum yapılmış:\n\n${urunAdlari}\n\nBu ürünler listede devre dışı bırakıldı.`,
+              "Bilgilendirme",
+            );
+          } else {
+            ilkDolumYapilmisUrunler = [];
+            renderUrunListesi();
+          }
+        } catch (error) {
+          console.error("Kontrol hatası:", error);
+          showError("İlk dolum kontrolü yapılırken hata oluştu");
+        }
+      });
+    }
+  });
+
+  // İlk Dolum Form Submit
+  document.addEventListener("DOMContentLoaded", function () {
+    const ilkDolumForm = document.getElementById("ilkDolumForm");
+
+    if (!ilkDolumForm) {
+      console.error("İlk Dolum Form bulunamadı!");
+      return;
+    }
+
+    console.log("İlk Dolum Form event listener eklendi");
+
+    ilkDolumForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      console.log("Form submit tetiklendi!");
+
+      const odaId = document.getElementById("ilkDolumOdaSelect").value;
+      const aciklama = document.getElementById("ilkDolumAciklama").value;
+
+      console.log("Oda ID:", odaId);
+
+      if (!odaId) {
+        showWarning("Lütfen oda seçin");
+        return;
+      }
+
+      // Seçili ürünleri topla
+      const urunler = [];
+      tumUrunler.forEach((urun) => {
         const checkbox = document.getElementById(`urun_${urun.id}`);
         if (checkbox && checkbox.checked) {
-            const miktarInput = document.querySelector(`#miktar_${urun.id} input`);
-            const miktar = parseInt(miktarInput.value) || 0;
-            if (miktar > 0) {
-                urunler.push({
-                    urun_id: urun.id,
-                    miktar: miktar
-                });
-            }
+          const miktarInput = document.querySelector(
+            `#miktar_${urun.id} input`,
+          );
+          const miktar = parseInt(miktarInput.value) || 0;
+          if (miktar > 0) {
+            urunler.push({
+              urun_id: urun.id,
+              miktar: miktar,
+            });
+          }
         }
-    });
-    
-    if (urunler.length === 0) {
-        showWarning('Lütfen en az bir ürün seçin ve miktar girin');
+      });
+
+      if (urunler.length === 0) {
+        showWarning("Lütfen en az bir ürün seçin ve miktar girin");
         return;
-    }
-    
-    // CSRF token
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    if (!csrfToken) {
-        showError('CSRF token bulunamadı', 'Güvenlik Hatası');
+      }
+
+      // CSRF token
+      const csrfToken = document
+        .querySelector('meta[name="csrf-token"]')
+        ?.getAttribute("content");
+      if (!csrfToken) {
+        showError("CSRF token bulunamadı", "Güvenlik Hatası");
         return;
-    }
-    
-    try {
-        console.log('İlk dolum isteği gönderiliyor:', {
+      }
+
+      try {
+        console.log("İlk dolum isteği gönderiliyor:", {
+          oda_id: parseInt(odaId),
+          aciklama: aciklama,
+          urunler: urunler,
+        });
+
+        const response = await fetch("/api/minibar-ilk-dolum", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({
             oda_id: parseInt(odaId),
             aciklama: aciklama,
-            urunler: urunler
+            urunler: urunler,
+          }),
         });
-        
-        const response = await fetch('/api/minibar-ilk-dolum', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({
-                oda_id: parseInt(odaId),
-                aciklama: aciklama,
-                urunler: urunler
-            })
-        });
-        
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
-        
+
+        console.log("Response status:", response.status);
+        console.log("Response headers:", response.headers);
+
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('API Hatası:', response.status, errorText);
-            throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`);
+          const errorText = await response.text();
+          console.error("API Hatası:", response.status, errorText);
+          throw new Error(
+            `HTTP ${response.status}: ${errorText.substring(0, 200)}`,
+          );
         }
-        
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            console.error('JSON değil:', text.substring(0, 500));
-            throw new Error('Sunucu JSON döndürmedi. Lütfen console\'u kontrol edin.');
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await response.text();
+          console.error("JSON değil:", text.substring(0, 500));
+          throw new Error(
+            "Sunucu JSON döndürmedi. Lütfen console'u kontrol edin.",
+          );
         }
-        
+
         const data = await response.json();
-        console.log('Response data:', data);
-        
+        console.log("Response data:", data);
+
         if (data.success) {
-            closeIlkDolumModal();
-            showSuccess(data.message);
-            setTimeout(() => location.reload(), 1500);
+          closeIlkDolumModal();
+          showSuccess(data.message);
+          setTimeout(() => location.reload(), 1500);
         } else {
-            showError(data.message || 'İşlem başarısız');
+          showError(data.message || "İşlem başarısız");
         }
-    } catch (error) {
-        console.error('İlk dolum hatası:', error);
-        showError(error.message, 'İlk Dolum Hatası');
-    }
+      } catch (error) {
+        console.error("İlk dolum hatası:", error);
+        showError(error.message, "İlk Dolum Hatası");
+      }
     });
-});
+  });
 </script>
 
 <!-- İlk Dolum Modal -->
-<div id="ilkDolumModal" class="hidden fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 z-50 flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-800 z-10">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">🎯 İlk Dolum İşlemi</h3>
-            <button onclick="closeIlkDolumModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-        
-        <form id="ilkDolumForm" class="p-6 space-y-6">
-            <!-- Oda Seçimi -->
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Oda <span class="text-red-500">*</span>
-                </label>
-                <select id="ilkDolumOdaSelect" required
-                    class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200">
-                    <option value="">Oda Seçin</option>
-                </select>
-                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    ⚠️ Her oda için her ürüne sadece bir kez ilk dolum yapılabilir
-                </p>
-            </div>
-            
-            <!-- Ürün Grubu Seçimi -->
-            <div id="grupSecimDiv" class="hidden">
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Ürün Grubu <span class="text-red-500">*</span>
-                </label>
-                <select id="ilkDolumGrupSelect"
-                    class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200">
-                    <option value="">Tüm Gruplar</option>
-                </select>
-                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    💡 Grup seçerek ürünleri filtreleyebilirsiniz
-                </p>
-            </div>
-            
-            <!-- Ürün Listesi -->
-            <div id="urunListesiDiv" class="hidden">
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Ürünler <span class="text-red-500">*</span>
-                </label>
-                <div id="urunListesi" class="space-y-2 max-h-96 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg p-4">
-                    <!-- Ürünler buraya yüklenecek -->
-                </div>
-            </div>
-            
-            <!-- Açıklama -->
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Açıklama
-                </label>
-                <textarea id="ilkDolumAciklama" rows="2"
-                    class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200"
-                    placeholder="İsteğe bağlı açıklama"></textarea>
-            </div>
-            
-            <!-- Butonlar -->
-            <div class="flex justify-end space-x-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <button type="button" onclick="closeIlkDolumModal()"
-                    class="px-6 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                    İptal
-                </button>
-                <button type="submit"
-                    class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                    İlk Dolumu Tamamla
-                </button>
-            </div>
-        </form>
+<div
+  id="ilkDolumModal"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 z-50 flex items-center justify-center p-4"
+>
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+  >
+    <div
+      class="px-3 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-800 z-10"
+    >
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+        🎯 İlk Dolum İşlemi
+      </h3>
+      <button
+        onclick="closeIlkDolumModal()"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+      >
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
     </div>
+
+    <form id="ilkDolumForm" class="p-6 space-y-6">
+      <!-- Oda Seçimi -->
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          Oda <span class="text-red-500">*</span>
+        </label>
+        <select
+          id="ilkDolumOdaSelect"
+          required
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200"
+        >
+          <option value="">Oda Seçin</option>
+        </select>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          ⚠️ Her oda için her ürüne sadece bir kez ilk dolum yapılabilir
+        </p>
+      </div>
+
+      <!-- Ürün Grubu Seçimi -->
+      <div id="grupSecimDiv" class="hidden">
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          Ürün Grubu <span class="text-red-500">*</span>
+        </label>
+        <select
+          id="ilkDolumGrupSelect"
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200"
+        >
+          <option value="">Tüm Gruplar</option>
+        </select>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          💡 Grup seçerek ürünleri filtreleyebilirsiniz
+        </p>
+      </div>
+
+      <!-- Ürün Listesi -->
+      <div id="urunListesiDiv" class="hidden">
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          Ürünler <span class="text-red-500">*</span>
+        </label>
+        <div
+          id="urunListesi"
+          class="space-y-2 max-h-96 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg p-4"
+        >
+          <!-- Ürünler buraya yüklenecek -->
+        </div>
+      </div>
+
+      <!-- Açıklama -->
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          Açıklama
+        </label>
+        <textarea
+          id="ilkDolumAciklama"
+          rows="2"
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-slate-700 dark:text-slate-200"
+          placeholder="İsteğe bağlı açıklama"
+        ></textarea>
+      </div>
+
+      <!-- Butonlar -->
+      <div
+        class="flex justify-end space-x-4 pt-4 border-t border-slate-200 dark:border-slate-700"
+      >
+        <button
+          type="button"
+          onclick="closeIlkDolumModal()"
+          class="px-6 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+        >
+          İptal
+        </button>
+        <button
+          type="submit"
+          class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+        >
+          İlk Dolumu Tamamla
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- Detay Modal -->
-<div id="detayModal" class="hidden fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 z-50 flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-800 z-10">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">📋 Minibar İşlem Detayı</h3>
-            <button onclick="closeDetayModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-        
-        <div id="detayContent" class="p-6">
-            <!-- İçerik buraya yüklenecek -->
-        </div>
+<div
+  id="detayModal"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 z-50 flex items-center justify-center p-4"
+>
+  <div
+    class="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+  >
+    <div
+      class="px-3 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-800 z-10"
+    >
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+        📋 Minibar İşlem Detayı
+      </h3>
+      <button
+        onclick="closeDetayModal()"
+        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+      >
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
     </div>
+
+    <div id="detayContent" class="p-6">
+      <!-- İçerik buraya yüklenecek -->
+    </div>
+  </div>
 </div>
 
 <script>
-// Detay Modal Fonksiyonları
-async function showDetayModal(islemId) {
-    document.getElementById('detayModal').classList.remove('hidden');
-    document.getElementById('detayContent').innerHTML = '<div class="text-center py-8"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div><p class="mt-4 text-slate-600 dark:text-slate-400">Yükleniyor...</p></div>';
-    
+  // Detay Modal Fonksiyonları
+  async function showDetayModal(islemId) {
+    document.getElementById("detayModal").classList.remove("hidden");
+    document.getElementById("detayContent").innerHTML =
+      '<div class="text-center py-8"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div><p class="mt-4 text-slate-600 dark:text-slate-400">Yükleniyor...</p></div>';
+
     try {
-        const response = await fetch(`/api/minibar-islem-detay/${islemId}`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            renderDetayContent(data.islem);
-        } else {
-            showError(data.message || 'Detaylar yüklenemedi');
-            closeDetayModal();
-        }
-    } catch (error) {
-        console.error('Detay yükleme hatası:', error);
-        showError('Detaylar yüklenirken hata oluştu');
+      const response = await fetch(`/api/minibar-islem-detay/${islemId}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        renderDetayContent(data.islem);
+      } else {
+        showError(data.message || "Detaylar yüklenemedi");
         closeDetayModal();
+      }
+    } catch (error) {
+      console.error("Detay yükleme hatası:", error);
+      showError("Detaylar yüklenirken hata oluştu");
+      closeDetayModal();
     }
-}
+  }
 
-function closeDetayModal() {
-    document.getElementById('detayModal').classList.add('hidden');
-}
+  function closeDetayModal() {
+    document.getElementById("detayModal").classList.add("hidden");
+  }
 
-function renderDetayContent(islem) {
+  function renderDetayContent(islem) {
     const islemTipiClass = {
-        'ilk_dolum': 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400',
-        'kontrol': 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400',
-        'doldurma': 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+      ilk_dolum:
+        "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400",
+      kontrol:
+        "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400",
+      doldurma:
+        "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400",
     };
-    
+
     const islemTipiText = {
-        'ilk_dolum': 'İlk Dolum',
-        'kontrol': 'Kontrol',
-        'doldurma': 'Doldurma'
+      ilk_dolum: "İlk Dolum",
+      kontrol: "Kontrol",
+      doldurma: "Doldurma",
     };
-    
+
     const html = `
         <!-- İşlem Bilgileri -->
         <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 mb-6">
@@ -1067,7 +1479,7 @@ function renderDetayContent(islem) {
                 <div>
                     <span class="text-sm text-slate-500 dark:text-slate-400">İşlem Tipi:</span>
                     <p class="mt-1">
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${islemTipiClass[islem.islem_tipi] || ''}">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${islemTipiClass[islem.islem_tipi] || ""}">
                             ${islemTipiText[islem.islem_tipi] || islem.islem_tipi}
                         </span>
                     </p>
@@ -1080,21 +1492,27 @@ function renderDetayContent(islem) {
                     <span class="text-sm text-slate-500 dark:text-slate-400">İşlem Yapan:</span>
                     <p class="text-slate-900 dark:text-slate-100 font-medium">${islem.personel}</p>
                 </div>
-                ${islem.aciklama ? `
+                ${
+                  islem.aciklama
+                    ? `
                 <div class="md:col-span-2">
                     <span class="text-sm text-slate-500 dark:text-slate-400">Açıklama:</span>
                     <p class="text-slate-900 dark:text-slate-100">${islem.aciklama}</p>
                 </div>
-                ` : ''}
+                `
+                    : ""
+                }
             </div>
         </div>
 
         <!-- Ürün Detayları -->
         <div>
             <h4 class="text-md font-semibold text-slate-900 dark:text-slate-100 mb-3">Ürün Detayları</h4>
-            ${islem.detaylar.length > 0 ? `
-                <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-                    <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+            ${
+              islem.detaylar.length > 0
+                ? `
+                <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                    <table class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
                         <thead class="bg-slate-50 dark:bg-slate-900">
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Ürün</th>
@@ -1105,7 +1523,9 @@ function renderDetayContent(islem) {
                             </tr>
                         </thead>
                         <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                            ${islem.detaylar.map(detay => `
+                            ${islem.detaylar
+                              .map(
+                                (detay) => `
                                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                                     <td class="px-4 py-3 text-sm font-medium text-slate-900 dark:text-slate-100">
                                         ${detay.urun_adi}
@@ -1116,18 +1536,26 @@ function renderDetayContent(islem) {
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-sm text-center">
-                                        ${detay.eklenen_miktar > 0 ? `
+                                        ${
+                                          detay.eklenen_miktar > 0
+                                            ? `
                                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                                                 +${detay.eklenen_miktar}
                                             </span>
-                                        ` : '<span class="text-slate-400">-</span>'}
+                                        `
+                                            : '<span class="text-slate-400">-</span>'
+                                        }
                                     </td>
                                     <td class="px-4 py-3 text-sm text-center">
-                                        ${detay.tuketim > 0 ? `
+                                        ${
+                                          detay.tuketim > 0
+                                            ? `
                                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
                                                 -${detay.tuketim}
                                             </span>
-                                        ` : '<span class="text-slate-400">-</span>'}
+                                        `
+                                            : '<span class="text-slate-400">-</span>'
+                                        }
                                     </td>
                                     <td class="px-4 py-3 text-sm text-center">
                                         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
@@ -1135,16 +1563,20 @@ function renderDetayContent(islem) {
                                         </span>
                                     </td>
                                 </tr>
-                            `).join('')}
+                            `,
+                              )
+                              .join("")}
                         </tbody>
                     </table>
                 </div>
-            ` : '<p class="text-center py-8 text-slate-500 dark:text-slate-400">Detay bulunamadı</p>'}
+            `
+                : '<p class="text-center py-8 text-slate-500 dark:text-slate-400">Detay bulunamadı</p>'
+            }
         </div>
     `;
-    
-    document.getElementById('detayContent').innerHTML = html;
-}
+
+    document.getElementById("detayContent").innerHTML = html;
+  }
 </script>
 
 {% endblock %}

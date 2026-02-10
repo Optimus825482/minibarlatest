@@ -32,37 +32,15 @@ class DatabaseOptimizer:
             db = get_db()
             missing_indexes = []
             
-            # Fiyatlandırma tabloları için kritik index'ler
+            # Kritik index'ler
             critical_indexes = {
-                'urun_tedarikci_fiyatlari': [
-                    ('idx_urun_tedarikci_aktif', ['urun_id', 'tedarikci_id', 'aktif']),
-                    ('idx_urun_fiyat_tarih', ['urun_id', 'baslangic_tarihi', 'bitis_tarihi']),
-                ],
-                'oda_tipi_satis_fiyatlari': [
-                    ('idx_oda_tipi_urun_aktif', ['oda_tipi', 'urun_id', 'aktif']),
-                ],
-                'sezon_fiyatlandirma': [
-                    ('idx_sezon_tarih_aktif', ['baslangic_tarihi', 'bitis_tarihi', 'aktif']),
-                ],
-                'kampanyalar': [
-                    ('idx_kampanya_aktif_tarih', ['aktif', 'baslangic_tarihi', 'bitis_tarihi']),
-                ],
-                'bedelsiz_limitler': [
-                    ('idx_bedelsiz_oda_aktif', ['oda_id', 'aktif']),
-                ],
                 'minibar_islem_detaylari': [
                     ('idx_islem_detay_urun', ['urun_id', 'islem_id']),
                     ('idx_islem_detay_kar', ['kar_tutari', 'kar_orani']),
                 ],
-                'donemsel_kar_analizi': [
-                    ('idx_kar_analiz_otel_donem', ['otel_id', 'donem_tipi', 'baslangic_tarihi']),
-                ],
                 'urun_stok': [
                     ('idx_urun_stok_otel', ['otel_id', 'urun_id']),
                     ('idx_urun_stok_kritik', ['mevcut_stok', 'kritik_stok_seviyesi']),
-                ],
-                'urun_fiyat_gecmisi': [
-                    ('idx_fiyat_gecmis_urun_tarih', ['urun_id', 'degisiklik_tarihi']),
                 ],
             }
             
@@ -271,16 +249,10 @@ class DatabaseOptimizer:
         """
         try:
             db = get_db()
-            # Fiyatlandırma ile ilgili kritik tablolar
+            # Kritik tablolar
             critical_tables = [
-                'urun_tedarikci_fiyatlari',
-                'oda_tipi_satis_fiyatlari',
-                'kampanyalar',
-                'bedelsiz_limitler',
                 'minibar_islem_detaylari',
-                'donemsel_kar_analizi',
                 'urun_stok',
-                'urun_fiyat_gecmisi',
             ]
             
             optimized_tables = []

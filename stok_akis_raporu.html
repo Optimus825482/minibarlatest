@@ -1,0 +1,1544 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stok Takip Akış Şeması & Simülasyon</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        min-height: 100vh;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-bottom: 1px solid #334155;
+        padding: 24px 32px;
+      }
+      .header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        background: linear-gradient(to right, #38bdf8, #818cf8, #c084fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .header p {
+        color: #94a3b8;
+        margin-top: 4px;
+        font-size: 14px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 32px;
+      }
+
+      /* Tabs */
+      .tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 32px;
+        background: #1e293b;
+        border-radius: 12px;
+        padding: 4px;
+        border: 1px solid #334155;
+      }
+      .tab {
+        flex: 1;
+        padding: 12px 16px;
+        text-align: center;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+        color: #94a3b8;
+      }
+      .tab:hover {
+        color: #e2e8f0;
+        background: #334155;
+      }
+      .tab.active {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+
+      /* Flow Chart */
+      .flow-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+      }
+      .flow-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        width: 100%;
+      }
+
+      .flow-node {
+        background: #1e293b;
+        border: 2px solid #334155;
+        border-radius: 16px;
+        padding: 20px 28px;
+        min-width: 220px;
+        text-align: center;
+        position: relative;
+        transition: all 0.3s;
+      }
+      .flow-node:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      }
+      .flow-node .icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+      }
+      .flow-node .title {
+        font-weight: 700;
+        font-size: 15px;
+        margin-bottom: 4px;
+      }
+      .flow-node .desc {
+        font-size: 12px;
+        color: #94a3b8;
+      }
+      .flow-node .model {
+        font-size: 10px;
+        color: #64748b;
+        margin-top: 6px;
+        font-family: monospace;
+        background: #0f172a;
+        padding: 2px 8px;
+        border-radius: 4px;
+        display: inline-block;
+      }
+
+      .flow-node.tedarik {
+        border-color: #f59e0b;
+      }
+      .flow-node.tedarik .title {
+        color: #fbbf24;
+      }
+      .flow-node.depo {
+        border-color: #3b82f6;
+      }
+      .flow-node.depo .title {
+        color: #60a5fa;
+      }
+      .flow-node.zimmet {
+        border-color: #8b5cf6;
+      }
+      .flow-node.zimmet .title {
+        color: #a78bfa;
+      }
+      .flow-node.oda {
+        border-color: #10b981;
+      }
+      .flow-node.oda .title {
+        color: #34d399;
+      }
+      .flow-node.tuketim {
+        border-color: #ef4444;
+      }
+      .flow-node.tuketim .title {
+        color: #f87171;
+      }
+      .flow-node.fifo {
+        border-color: #06b6d4;
+      }
+      .flow-node.fifo .title {
+        color: #22d3ee;
+      }
+      .flow-node.siparis {
+        border-color: #ec4899;
+      }
+      .flow-node.siparis .title {
+        color: #f472b6;
+      }
+
+      .flow-arrow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px 0;
+        color: #475569;
+      }
+      .flow-arrow .arrow-line {
+        width: 2px;
+        height: 24px;
+        background: linear-gradient(to bottom, #475569, #6366f1);
+      }
+      .flow-arrow .arrow-head {
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-top: 10px solid #6366f1;
+      }
+      .flow-arrow .arrow-label {
+        font-size: 11px;
+        color: #818cf8;
+        font-weight: 600;
+        margin-top: 2px;
+      }
+
+      .flow-arrow-h {
+        display: flex;
+        align-items: center;
+        color: #475569;
+      }
+      .flow-arrow-h .arrow-line {
+        width: 40px;
+        height: 2px;
+        background: linear-gradient(to right, #475569, #6366f1);
+      }
+      .flow-arrow-h .arrow-head {
+        width: 0;
+        height: 0;
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        border-left: 10px solid #6366f1;
+      }
+
+      /* Simulation */
+      .sim-panel {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+      }
+      .sim-panel h3 {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .sim-controls {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+      }
+      .sim-btn {
+        padding: 10px 20px;
+        border-radius: 10px;
+        border: none;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .sim-btn:hover {
+        transform: translateY(-1px);
+      }
+      .sim-btn:active {
+        transform: scale(0.98);
+      }
+      .sim-btn.tedarik-btn {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #1e293b;
+      }
+      .sim-btn.zimmet-btn {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        color: white;
+      }
+      .sim-btn.kontrol-btn {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+      }
+      .sim-btn.setup-disi-btn {
+        background: linear-gradient(135deg, #d946ef, #c026d3);
+        color: white;
+      }
+      .sim-btn.reset-btn {
+        background: #334155;
+        color: #94a3b8;
+      }
+      .sim-btn.auto-btn {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+      }
+
+      .stock-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .stock-card {
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 16px;
+      }
+      .stock-card .label {
+        font-size: 11px;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+      }
+      .stock-card .value {
+        font-size: 28px;
+        font-weight: 800;
+        margin: 4px 0;
+      }
+      .stock-card .sub {
+        font-size: 12px;
+        color: #94a3b8;
+      }
+      .stock-card.amber .value {
+        color: #fbbf24;
+      }
+      .stock-card.blue .value {
+        color: #60a5fa;
+      }
+      .stock-card.violet .value {
+        color: #a78bfa;
+      }
+      .stock-card.green .value {
+        color: #34d399;
+      }
+      .stock-card.red .value {
+        color: #f87171;
+      }
+      .stock-card.cyan .value {
+        color: #22d3ee;
+      }
+
+      /* Log */
+      .log-container {
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      .log-entry {
+        padding: 10px 16px;
+        border-bottom: 1px solid #1e293b;
+        font-size: 13px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        animation: fadeIn 0.3s ease;
+      }
+      .log-entry:last-child {
+        border-bottom: none;
+      }
+      .log-entry .time {
+        color: #64748b;
+        font-family: monospace;
+        font-size: 11px;
+        white-space: nowrap;
+        min-width: 60px;
+      }
+      .log-entry .badge {
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 10px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .log-entry .badge.tedarik {
+        background: #f59e0b20;
+        color: #fbbf24;
+      }
+      .log-entry .badge.depo {
+        background: #3b82f620;
+        color: #60a5fa;
+      }
+      .log-entry .badge.zimmet {
+        background: #8b5cf620;
+        color: #a78bfa;
+      }
+      .log-entry .badge.kontrol {
+        background: #10b98120;
+        color: #34d399;
+      }
+      .log-entry .badge.tuketim {
+        background: #ef444420;
+        color: #f87171;
+      }
+      .log-entry .badge.fifo {
+        background: #06b6d420;
+        color: #22d3ee;
+      }
+      .log-entry .badge.setup-disi {
+        background: #d946ef20;
+        color: #e879f9;
+      }
+      .log-entry .msg {
+        color: #cbd5e1;
+        flex: 1;
+      }
+      .log-entry .amount {
+        font-weight: 700;
+        font-family: monospace;
+      }
+      .log-entry .amount.plus {
+        color: #34d399;
+      }
+      .log-entry .amount.minus {
+        color: #f87171;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* DB Schema */
+      .schema-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 16px;
+      }
+      .schema-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .schema-card .card-header {
+        padding: 12px 16px;
+        font-weight: 700;
+        font-size: 14px;
+        border-bottom: 1px solid #334155;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .schema-card .card-body {
+        padding: 12px 16px;
+      }
+      .schema-card .field {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 0;
+        font-size: 12px;
+        border-bottom: 1px solid #1e293b;
+      }
+      .schema-card .field:last-child {
+        border-bottom: none;
+      }
+      .schema-card .field .fname {
+        color: #e2e8f0;
+        font-family: monospace;
+      }
+      .schema-card .field .ftype {
+        color: #64748b;
+        font-family: monospace;
+        font-size: 11px;
+      }
+      .schema-card .field .fkey {
+        color: #fbbf24;
+        font-size: 10px;
+      }
+
+      .schema-card.amber .card-header {
+        background: #f59e0b15;
+        color: #fbbf24;
+      }
+      .schema-card.blue .card-header {
+        background: #3b82f615;
+        color: #60a5fa;
+      }
+      .schema-card.violet .card-header {
+        background: #8b5cf615;
+        color: #a78bfa;
+      }
+      .schema-card.green .card-header {
+        background: #10b98115;
+        color: #34d399;
+      }
+      .schema-card.red .card-header {
+        background: #ef444415;
+        color: #f87171;
+      }
+      .schema-card.cyan .card-header {
+        background: #06b6d415;
+        color: #22d3ee;
+      }
+      .schema-card.pink .card-header {
+        background: #ec489915;
+        color: #f472b6;
+      }
+
+      /* Progress bar */
+      .progress-bar {
+        height: 6px;
+        background: #334155;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-top: 6px;
+      }
+      .progress-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.5s ease;
+      }
+
+      .highlight {
+        animation: pulse 0.6s ease;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.03);
+          box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+        }
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .container {
+          padding: 16px;
+        }
+        .flow-row {
+          flex-direction: column;
+        }
+        .stock-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .schema-grid {
+          grid-template-columns: 1fr;
+        }
+        .sim-controls {
+          flex-direction: column;
+        }
+        .sim-btn {
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>🏨 Minibar Takip — Stok Akış Şeması & Simülasyon</h1>
+      <p>
+        Ana depo tedarikten odaya tüketime kadar tüm stok hareketlerinin detaylı
+        analizi
+      </p>
+    </div>
+
+    <div class="container">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('flow')">📊 Akış Şeması</div>
+        <div class="tab" onclick="switchTab('sim')">🎮 Simülasyon</div>
+        <div class="tab" onclick="switchTab('db')">🗄️ Veritabanı Şeması</div>
+        <div class="tab" onclick="switchTab('detail')">📋 Adım Detayları</div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<!-- TAB 1: AKIŞ ŞEMASI -->
+<div id="tab-flow" class="tab-content active">
+  <div class="flow-container">
+    <!-- ADIM 1: Ana Depo Tedarik -->
+    <div class="flow-node tedarik">
+      <div class="icon">🏭</div>
+      <div class="title">1. Ana Depo Tedarik</div>
+      <div class="desc">Tedarikçiden ana depoya ürün girişi</div>
+      <div class="model">AnaDepoTedarik + AnaDepoTedarikDetay</div>
+    </div>
+    <div class="flow-arrow">
+      <div class="arrow-line"></div>
+      <div class="arrow-head"></div>
+      <div class="arrow-label">Stok girişi + FIFO parti kaydı</div>
+    </div>
+
+    <!-- ADIM 2: Otel Depo Stok -->
+    <div class="flow-row">
+      <div class="flow-node depo">
+        <div class="icon">📦</div>
+        <div class="title">2. Otel Depo Stok</div>
+        <div class="desc">Otelin ana deposundaki stok durumu</div>
+        <div class="model">UrunStok (otel_id + urun_id)</div>
+      </div>
+      <div class="flow-arrow-h">
+        <div class="arrow-line"></div>
+        <div class="arrow-head"></div>
+      </div>
+      <div class="flow-node fifo">
+        <div class="icon">📋</div>
+        <div class="title">FIFO Takip</div>
+        <div class="desc">
+          Her parti ayrı takip edilir (ilk giren ilk çıkar)
+        </div>
+        <div class="model">StokFifoKayit + StokFifoKullanim</div>
+      </div>
+    </div>
+    <div class="flow-arrow">
+      <div class="arrow-line"></div>
+      <div class="arrow-head"></div>
+      <div class="arrow-label">Depodan zimmet deposuna aktarım</div>
+    </div>
+
+    <!-- ADIM 3: Otel Zimmet Stok -->
+    <div class="flow-node zimmet">
+      <div class="icon">🔐</div>
+      <div class="title">3. Otel Zimmet Deposu</div>
+      <div class="desc">Kat sorumluları için ortak zimmet havuzu</div>
+      <div class="model">OtelZimmetStok (otel_id + urun_id)</div>
+    </div>
+    <div class="flow-arrow">
+      <div class="arrow-line"></div>
+      <div class="arrow-head"></div>
+      <div class="arrow-label">Kat sorumlusu zimmet kullanımı</div>
+    </div>
+
+    <!-- ADIM 4: Kat Sorumlusu Kullanım -->
+    <div class="flow-row">
+      <div class="flow-node zimmet" style="border-color: #7c3aed">
+        <div class="icon">👤</div>
+        <div class="title" style="color: #c4b5fd">
+          4. Personel Zimmet Kullanım
+        </div>
+        <div class="desc">Kimin ne kadar kullandığının takibi</div>
+        <div class="model">PersonelZimmetKullanim</div>
+      </div>
+      <div class="flow-arrow-h">
+        <div class="arrow-line"></div>
+        <div class="arrow-head"></div>
+      </div>
+      <div class="flow-node siparis">
+        <div class="icon">📝</div>
+        <div class="title">Sipariş Talebi</div>
+        <div class="desc">Kat sorumlusu → Depo talebi</div>
+        <div class="model">KatSorumlusuSiparisTalebi</div>
+      </div>
+    </div>
+    <div class="flow-arrow">
+      <div class="arrow-line"></div>
+      <div class="arrow-head"></div>
+      <div class="arrow-label">Oda minibar kontrolü / setup dışı ekleme</div>
+    </div>
+
+    <!-- ADIM 5: Oda Minibar -->
+    <div class="flow-node oda">
+      <div class="icon">🚪</div>
+      <div class="title">5. Oda Minibar İşlemi</div>
+      <div class="desc">Setup kontrol, ekstra ekleme, setup dışı ekleme</div>
+      <div class="model">MinibarIslem + MinibarIslemDetay</div>
+    </div>
+    <div class="flow-arrow">
+      <div class="arrow-line"></div>
+      <div class="arrow-head"></div>
+      <div class="arrow-label">Misafir tüketimi tespit</div>
+    </div>
+
+    <!-- ADIM 6: Tüketim -->
+    <div class="flow-node tuketim">
+      <div class="icon">🍹</div>
+      <div class="title">6. Tüketim & Raporlama</div>
+      <div class="desc">Tüketim ikamesi, sarfiyat yok, DND</div>
+      <div class="model">MinibarIslemDetay.tuketim</div>
+    </div>
+  </div>
+
+  <!-- Stok Hareket Tipleri -->
+  <div style="margin-top: 40px">
+    <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px">
+      📊 Stok Hareket Tipleri
+    </h3>
+    <div
+      style="
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 12px;
+      "
+    >
+      <div
+        style="
+          background: #1e293b;
+          border: 1px solid #334155;
+          border-radius: 12px;
+          padding: 16px;
+          border-left: 4px solid #f59e0b;
+        "
+      >
+        <div style="font-weight: 700; color: #fbbf24; margin-bottom: 4px">
+          🟡 GİRİŞ — Ana Depo Tedarik
+        </div>
+        <div style="font-size: 12px; color: #94a3b8">
+          Tedarikçiden depoya ürün girişi. UrunStok.mevcut_stok artırılır,
+          StokFifoKayit oluşturulur, StokHareket(giris) kaydedilir.
+        </div>
+      </div>
+      <div
+        style="
+          background: #1e293b;
+          border: 1px solid #334155;
+          border-radius: 12px;
+          padding: 16px;
+          border-left: 4px solid #8b5cf6;
+        "
+      >
+        <div style="font-weight: 700; color: #a78bfa; margin-bottom: 4px">
+          🟣 ÇIKIŞ — Zimmet Aktarım
+        </div>
+        <div style="font-size: 12px; color: #94a3b8">
+          Depodan otel zimmet deposuna aktarım. UrunStok.mevcut_stok azalır,
+          OtelZimmetStok.kalan_miktar artar, FIFO kullanım kaydı oluşur.
+        </div>
+      </div>
+      <div
+        style="
+          background: #1e293b;
+          border: 1px solid #334155;
+          border-radius: 12px;
+          padding: 16px;
+          border-left: 4px solid #10b981;
+        "
+      >
+        <div style="font-weight: 700; color: #34d399; margin-bottom: 4px">
+          🟢 KULLANIM — Oda Minibar
+        </div>
+        <div style="font-size: 12px; color: #94a3b8">
+          Kat sorumlusu odaya ürün ekler. OtelZimmetStok.kalan_miktar azalır,
+          PersonelZimmetKullanim kaydı oluşur, MinibarIslem kaydedilir.
+        </div>
+      </div>
+      <div
+        style="
+          background: #1e293b;
+          border: 1px solid #334155;
+          border-radius: 12px;
+          padding: 16px;
+          border-left: 4px solid #ef4444;
+        "
+      >
+        <div style="font-weight: 700; color: #f87171; margin-bottom: 4px">
+          🔴 TÜKETİM — Misafir Sarfiyat
+        </div>
+        <div style="font-size: 12px; color: #94a3b8">
+          Misafir ürün tüketir. MinibarIslemDetay.tuketim kaydedilir. Tüketim
+          ikamesi yapılırsa zimmet stoğundan düşülür.
+        </div>
+      </div>
+      <div
+        style="
+          background: #1e293b;
+          border: 1px solid #334155;
+          border-radius: 12px;
+          padding: 16px;
+          border-left: 4px solid #d946ef;
+        "
+      >
+        <div style="font-weight: 700; color: #e879f9; margin-bottom: 4px">
+          🟣 SETUP DIŞI — Ekstra Ürün
+        </div>
+        <div style="font-size: 12px; color: #94a3b8">
+          Setup'ta olmayan ürün odaya eklenir. OtelZimmetStok'tan düşülür,
+          MinibarIslem(setup_disi_ekleme) kaydedilir.
+        </div>
+      </div>
+      <div
+        style="
+          background: #1e293b;
+          border: 1px solid #334155;
+          border-radius: 12px;
+          padding: 16px;
+          border-left: 4px solid #06b6d4;
+        "
+      >
+        <div style="font-weight: 700; color: #22d3ee; margin-bottom: 4px">
+          🔵 FIFO — Parti Takibi
+        </div>
+        <div style="font-size: 12px; color: #94a3b8">
+          Her tedarik partisi ayrı takip edilir. İlk giren ilk çıkar kuralıyla
+          stok tüketilir. StokFifoKayit.kalan_miktar güncellenir.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: SİMÜLASYON -->
+<div id="tab-sim" class="tab-content">
+  <div class="sim-panel">
+    <h3>🎮 Stok Akış Simülasyonu</h3>
+    <p style="color: #94a3b8; font-size: 13px; margin-bottom: 16px">
+      Butonlara tıklayarak stok hareketlerini adım adım simüle edin. Her adımda
+      hangi tablolar etkileniyor görebilirsiniz.
+    </p>
+
+    <div class="sim-controls">
+      <button class="sim-btn tedarik-btn" onclick="simTedarik()">
+        🏭 Ana Depo Tedarik (+50)
+      </button>
+      <button class="sim-btn zimmet-btn" onclick="simZimmetAktar()">
+        🔐 Zimmet Deposuna Aktar (+20)
+      </button>
+      <button class="sim-btn kontrol-btn" onclick="simOdaKontrol()">
+        🚪 Oda Kontrol (Tüketim İkamesi)
+      </button>
+      <button class="sim-btn setup-disi-btn" onclick="simSetupDisi()">
+        🟣 Setup Dışı Ürün Ekle
+      </button>
+      <button class="sim-btn auto-btn" onclick="simOtomatik()">
+        ⚡ Otomatik Tam Döngü
+      </button>
+      <button class="sim-btn reset-btn" onclick="simReset()">🔄 Sıfırla</button>
+    </div>
+  </div>
+
+  <!-- Stok Durumu Kartları -->
+  <div class="stock-grid" id="stockGrid">
+    <div class="stock-card amber" id="card-depo">
+      <div class="label">Ana Depo Stok</div>
+      <div class="value" id="val-depo">0</div>
+      <div class="sub">UrunStok.mevcut_stok</div>
+      <div class="progress-bar">
+        <div
+          class="progress-fill"
+          id="bar-depo"
+          style="width: 0%; background: #fbbf24"
+        ></div>
+      </div>
+    </div>
+    <div class="stock-card cyan" id="card-fifo">
+      <div class="label">FIFO Partiler</div>
+      <div class="value" id="val-fifo">0</div>
+      <div class="sub">StokFifoKayit (aktif parti)</div>
+      <div class="progress-bar">
+        <div
+          class="progress-fill"
+          id="bar-fifo"
+          style="width: 0%; background: #22d3ee"
+        ></div>
+      </div>
+    </div>
+    <div class="stock-card violet" id="card-zimmet">
+      <div class="label">Zimmet Deposu</div>
+      <div class="value" id="val-zimmet">0</div>
+      <div class="sub">OtelZimmetStok.kalan_miktar</div>
+      <div class="progress-bar">
+        <div
+          class="progress-fill"
+          id="bar-zimmet"
+          style="width: 0%; background: #a78bfa"
+        ></div>
+      </div>
+    </div>
+    <div class="stock-card green" id="card-oda">
+      <div class="label">Odalardaki Ürün</div>
+      <div class="value" id="val-oda">0</div>
+      <div class="sub">MinibarIslemDetay.eklenen</div>
+      <div class="progress-bar">
+        <div
+          class="progress-fill"
+          id="bar-oda"
+          style="width: 0%; background: #34d399"
+        ></div>
+      </div>
+    </div>
+    <div class="stock-card red" id="card-tuketim">
+      <div class="label">Toplam Tüketim</div>
+      <div class="value" id="val-tuketim">0</div>
+      <div class="sub">MinibarIslemDetay.tuketim</div>
+      <div class="progress-bar">
+        <div
+          class="progress-fill"
+          id="bar-tuketim"
+          style="width: 0%; background: #f87171"
+        ></div>
+      </div>
+    </div>
+    <div class="stock-card blue" id="card-toplam">
+      <div class="label">Toplam Giriş</div>
+      <div class="value" id="val-toplam">0</div>
+      <div class="sub">Tüm tedarik toplamı</div>
+      <div class="progress-bar">
+        <div
+          class="progress-fill"
+          id="bar-toplam"
+          style="width: 0%; background: #60a5fa"
+        ></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- İşlem Logu -->
+  <div class="sim-panel" style="padding: 0">
+    <h3 style="padding: 16px 16px 12px">📜 İşlem Logu</h3>
+    <div class="log-container" id="logContainer">
+      <div class="log-entry">
+        <span class="time">--:--</span>
+        <span class="badge depo">SİSTEM</span>
+        <span class="msg"
+          >Simülasyon hazır. Bir buton tıklayarak başlayın.</span
+        >
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: VERİTABANI ŞEMASI -->
+<div id="tab-db" class="tab-content">
+  <div class="schema-grid">
+    <div class="schema-card amber">
+      <div class="card-header">🏭 AnaDepoTedarik</div>
+      <div class="card-body">
+        <div class="field">
+          <span class="fname">id</span><span class="ftype">Integer PK</span>
+        </div>
+        <div class="field">
+          <span class="fname">tedarik_no</span
+          ><span class="ftype">String(50) UNIQUE</span>
+        </div>
+        <div class="field">
+          <span class="fname">otel_id</span
+          ><span class="ftype">FK → oteller.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">depo_sorumlusu_id</span
+          ><span class="ftype">FK → kullanicilar.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">islem_tarihi</span
+          ><span class="ftype">DateTime</span>
+        </div>
+        <div class="field">
+          <span class="fname">toplam_urun_sayisi</span
+          ><span class="ftype">Integer</span>
+        </div>
+        <div class="field">
+          <span class="fname">toplam_miktar</span
+          ><span class="ftype">Integer</span>
+        </div>
+        <div class="field">
+          <span class="fname">durum</span
+          ><span class="ftype">aktif / iptal</span>
+        </div>
+      </div>
+    </div>
+    <div class="schema-card amber">
+      <div class="card-header">📋 AnaDepoTedarikDetay</div>
+      <div class="card-body">
+        <div class="field">
+          <span class="fname">id</span><span class="ftype">Integer PK</span>
+        </div>
+        <div class="field">
+          <span class="fname">tedarik_id</span
+          ><span class="ftype">FK → ana_depo_tedarikleri.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">urun_id</span
+          ><span class="ftype">FK → urunler.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">miktar</span><span class="ftype">Integer</span>
+        </div>
+      </div>
+    </div>
+    <div class="schema-card blue">
+      <div class="card-header">📦 UrunStok</div>
+      <div class="card-body">
+        <div class="field">
+          <span class="fname">id</span><span class="ftype">Integer PK</span>
+        </div>
+        <div class="field">
+          <span class="fname">urun_id</span
+          ><span class="ftype">FK → urunler.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">otel_id</span
+          ><span class="ftype">FK → oteller.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">mevcut_stok</span
+          ><span class="ftype">Integer ≥ 0</span>
+        </div>
+        <div class="field">
+          <span class="fname">minimum_stok</span
+          ><span class="ftype">Integer (default: 10)</span>
+        </div>
+        <div class="field">
+          <span class="fname">kritik_stok_seviyesi</span
+          ><span class="ftype">Integer (default: 5)</span>
+        </div>
+        <div class="field">
+          <span class="fname">birim_maliyet</span
+          ><span class="ftype">Numeric(10,2)</span>
+        </div>
+        <div class="field">
+          <span class="fname">son_30gun_cikis</span
+          ><span class="ftype">Integer</span>
+        </div>
+      </div>
+    </div>
+    <div class="schema-card cyan">
+      <div class="card-header">📋 StokFifoKayit</div>
+      <div class="card-body">
+        <div class="field">
+          <span class="fname">id</span><span class="ftype">Integer PK</span>
+        </div>
+        <div class="field">
+          <span class="fname">otel_id</span
+          ><span class="ftype">FK → oteller.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">urun_id</span
+          ><span class="ftype">FK → urunler.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">tedarik_detay_id</span
+          ><span class="ftype">FK → ana_depo_tedarik_detaylari.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">giris_miktari</span
+          ><span class="ftype">Integer</span>
+        </div>
+        <div class="field">
+          <span class="fname">kalan_miktar</span
+          ><span class="ftype">Integer</span>
+        </div>
+        <div class="field">
+          <span class="fname">kullanilan_miktar</span
+          ><span class="ftype">Integer</span>
+        </div>
+        <div class="field">
+          <span class="fname">tukendi</span><span class="ftype">Boolean</span>
+        </div>
+      </div>
+    </div>
+    <div class="schema-card cyan">
+      <div class="card-header">🔄 StokFifoKullanim</div>
+      <div class="card-body">
+        <div class="field">
+          <span class="fname">id</span><span class="ftype">Integer PK</span>
+        </div>
+        <div class="field">
+          <span class="fname">fifo_kayit_id</span
+          ><span class="ftype">FK → stok_fifo_kayitlari.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">miktar</span><span class="ftype">Integer</span>
+        </div>
+        <div class="field">
+          <span class="fname">islem_tipi</span
+          ><span class="ftype">zimmet / minibar_dolum / iade</span>
+        </div>
+        <div class="field">
+          <span class="fname">referans_id</span
+          ><span class="ftype">Integer (nullable)</span>
+        </div>
+      </div>
+    </div>
+    <div class="schema-card violet">
+      <div class="card-header">🔐 OtelZimmetStok</div>
+      <div class="card-body">
+        <div class="field">
+          <span class="fname">id</span><span class="ftype">Integer PK</span>
+        </div>
+        <div class="field">
+          <span class="fname">otel_id</span
+          ><span class="ftype">FK → oteller.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">urun_id</span
+          ><span class="ftype">FK → urunler.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">toplam_miktar</span
+          ><span class="ftype">Integer</span>
+        </div>
+        <div class="field">
+          <span class="fname">kullanilan_miktar</span
+          ><span class="ftype">Integer</span>
+        </div>
+        <div class="field">
+          <span class="fname">kalan_miktar</span
+          ><span class="ftype">Integer</span>
+        </div>
+        <div class="field">
+          <span class="fname">kritik_stok_seviyesi</span
+          ><span class="ftype">Integer (default: 50)</span>
+        </div>
+      </div>
+    </div>
+    <div class="schema-card violet">
+      <div class="card-header">👤 PersonelZimmetKullanim</div>
+      <div class="card-body">
+        <div class="field">
+          <span class="fname">id</span><span class="ftype">Integer PK</span>
+        </div>
+        <div class="field">
+          <span class="fname">otel_zimmet_stok_id</span
+          ><span class="ftype">FK → otel_zimmet_stok.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">personel_id</span
+          ><span class="ftype">FK → kullanicilar.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">urun_id</span
+          ><span class="ftype">FK → urunler.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">kullanilan_miktar</span
+          ><span class="ftype">Integer</span>
+        </div>
+        <div class="field">
+          <span class="fname">islem_tipi</span
+          ><span class="ftype">minibar_kullanim / iade / duzeltme</span>
+        </div>
+      </div>
+    </div>
+    <div class="schema-card green">
+      <div class="card-header">🚪 MinibarIslem</div>
+      <div class="card-body">
+        <div class="field">
+          <span class="fname">id</span><span class="ftype">Integer PK</span>
+        </div>
+        <div class="field">
+          <span class="fname">oda_id</span
+          ><span class="ftype">FK → odalar.id</span><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">personel_id</span
+          ><span class="ftype">FK → kullanicilar.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">islem_tipi</span
+          ><span class="ftype"
+            >String(50) — setup_kontrol, ekstra_ekleme, setup_disi_ekleme,
+            sarfiyat_yok, dnd...</span
+          >
+        </div>
+        <div class="field">
+          <span class="fname">islem_tarihi</span
+          ><span class="ftype">DateTime</span>
+        </div>
+        <div class="field">
+          <span class="fname">aciklama</span><span class="ftype">Text</span>
+        </div>
+      </div>
+    </div>
+    <div class="schema-card green">
+      <div class="card-header">📊 MinibarIslemDetay</div>
+      <div class="card-body">
+        <div class="field">
+          <span class="fname">id</span><span class="ftype">Integer PK</span>
+        </div>
+        <div class="field">
+          <span class="fname">islem_id</span
+          ><span class="ftype">FK → minibar_islemleri.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">urun_id</span
+          ><span class="ftype">FK → urunler.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">baslangic_stok</span
+          ><span class="ftype">Integer</span>
+        </div>
+        <div class="field">
+          <span class="fname">bitis_stok</span
+          ><span class="ftype">Integer</span>
+        </div>
+        <div class="field">
+          <span class="fname">tuketim</span><span class="ftype">Integer</span>
+        </div>
+        <div class="field">
+          <span class="fname">eklenen_miktar</span
+          ><span class="ftype">Integer</span>
+        </div>
+        <div class="field">
+          <span class="fname">ekstra_miktar</span
+          ><span class="ftype">Integer</span>
+        </div>
+        <div class="field">
+          <span class="fname">setup_miktari</span
+          ><span class="ftype">Integer</span>
+        </div>
+      </div>
+    </div>
+    <div class="schema-card red">
+      <div class="card-header">📝 StokHareket</div>
+      <div class="card-body">
+        <div class="field">
+          <span class="fname">id</span><span class="ftype">Integer PK</span>
+        </div>
+        <div class="field">
+          <span class="fname">urun_id</span
+          ><span class="ftype">FK → urunler.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">hareket_tipi</span
+          ><span class="ftype"
+            >giris / cikis / transfer / devir / sayim / fire</span
+          >
+        </div>
+        <div class="field">
+          <span class="fname">miktar</span><span class="ftype">Integer</span>
+        </div>
+        <div class="field">
+          <span class="fname">islem_yapan_id</span
+          ><span class="ftype">FK → kullanicilar.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+      </div>
+    </div>
+    <div class="schema-card pink">
+      <div class="card-header">📝 KatSorumlusuSiparisTalebi</div>
+      <div class="card-body">
+        <div class="field">
+          <span class="fname">id</span><span class="ftype">Integer PK</span>
+        </div>
+        <div class="field">
+          <span class="fname">talep_no</span
+          ><span class="ftype">String(50) UNIQUE</span>
+        </div>
+        <div class="field">
+          <span class="fname">kat_sorumlusu_id</span
+          ><span class="ftype">FK → kullanicilar.id</span
+          ><span class="fkey">🔑</span>
+        </div>
+        <div class="field">
+          <span class="fname">durum</span
+          ><span class="ftype"
+            >beklemede / onaylandi / hazirlaniyor / teslim_edildi / iptal</span
+          >
+        </div>
+        <div class="field">
+          <span class="fname">talep_tarihi</span
+          ><span class="ftype">DateTime</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: ADIM DETAYLARI -->
+<div id="tab-detail" class="tab-content">
+  <div style="display: flex; flex-direction: column; gap: 20px"></div>
+</div>
+
+                <!-- Adım 1 -->
+                <div class="sim-panel" style="border-left:4px solid #f59e0b;">
+                    <h3 style="color:#fbbf24;">🏭 Adım 1: Ana Depo Tedarik</h3>
+                    <div style="margin-top:12px;font-size:13px;color:#cbd5e1;line-height:1.8;">
+                        <p><strong>Tetikleyen:</strong> Depo sorumlusu "Ana Depodan Çek" işlemi yapar</p>
+                        <p><strong>Route:</strong> <code style="background:#0f172a;padding:2px 6px;border-radius:4px;font-size:12px;">POST /api/depo/ana-depo-tedarik</code></p>
+                        <p><strong>Etkilenen Tablolar:</strong></p>
+                        <ul style="margin-left:20px;margin-top:4px;">
+                            <li><code>AnaDepoTedarik</code> — Başlık kaydı oluşturulur (tedarik_no, otel_id, depo_sorumlusu_id)</li>
+                            <li><code>AnaDepoTedarikDetay</code> — Her ürün için detay satırı (urun_id, miktar)</li>
+                            <li><code>UrunStok</code> — mevcut_stok += miktar, son_giris_tarihi güncellenir</li>
+                            <li><code>StokFifoKayit</code> — Yeni parti kaydı (giris_miktari = miktar, kalan_miktar = miktar)</li>
+                            <li><code>StokHareket</code> — hareket_tipi='giris' kaydı</li>
+                        </ul>
+                        <p style="margin-top:8px;"><strong>İş Kuralları:</strong></p>
+                        <ul style="margin-left:20px;margin-top:4px;">
+                            <li>Tedarik numarası otomatik üretilir: ADT-YYYYMMDD-XXX</li>
+                            <li>Her ürün için ayrı FIFO parti kaydı oluşturulur</li>
+                            <li>İptal edilebilir (durum='iptal' yapılır, stoklar geri alınır)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Adım 2 -->
+                <div class="sim-panel" style="border-left:4px solid #8b5cf6;">
+                    <h3 style="color:#a78bfa;">🔐 Adım 2: Zimmet Deposuna Aktarım</h3>
+                    <div style="margin-top:12px;font-size:13px;color:#cbd5e1;line-height:1.8;">
+                        <p><strong>Tetikleyen:</strong> Depo sorumlusu "Zimmet Ver" işlemi yapar</p>
+                        <p><strong>Route:</strong> <code style="background:#0f172a;padding:2px 6px;border-radius:4px;font-size:12px;">POST /api/depo/zimmet-ver</code></p>
+                        <p><strong>Etkilenen Tablolar:</strong></p>
+                        <ul style="margin-left:20px;margin-top:4px;">
+                            <li><code>UrunStok</code> — mevcut_stok -= miktar (depodan çıkış)</li>
+                            <li><code>OtelZimmetStok</code> — toplam_miktar += miktar, kalan_miktar += miktar</li>
+                            <li><code>StokFifoKayit</code> — FIFO kuralıyla en eski partiden kalan_miktar azaltılır</li>
+                            <li><code>StokFifoKullanim</code> — islem_tipi='zimmet' kaydı oluşturulur</li>
+                            <li><code>StokHareket</code> — hareket_tipi='cikis' kaydı</li>
+                        </ul>
+                        <p style="margin-top:8px;"><strong>İş Kuralları:</strong></p>
+                        <ul style="margin-left:20px;margin-top:4px;">
+                            <li>Depo stoku yeterli olmalı (mevcut_stok >= miktar)</li>
+                            <li>FIFO: En eski parti önce tüketilir</li>
+                            <li>Otel bazlı ortak zimmet deposu — tüm kat sorumluları aynı havuzdan kullanır</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Adım 3 -->
+                <div class="sim-panel" style="border-left:4px solid #10b981;">
+                    <h3 style="color:#34d399;">🚪 Adım 3: Oda Minibar Kontrolü (Tüketim İkamesi)</h3>
+                    <div style="margin-top:12px;font-size:13px;color:#cbd5e1;line-height:1.8;">
+                        <p><strong>Tetikleyen:</strong> Kat sorumlusu oda kontrolü yapar, tüketilen ürünleri ikame eder</p>
+                        <p><strong>Route:</strong> <code style="background:#0f172a;padding:2px 6px;border-radius:4px;font-size:12px;">POST /api/kat-sorumlusu/oda-kontrol-kaydet</code></p>
+                        <p><strong>Etkilenen Tablolar:</strong></p>
+                        <ul style="margin-left:20px;margin-top:4px;">
+                            <li><code>MinibarIslem</code> — islem_tipi='setup_kontrol' başlık kaydı</li>
+                            <li><code>MinibarIslemDetay</code> — Her ürün: tuketim, eklenen_miktar, setup_miktari</li>
+                            <li><code>OtelZimmetStok</code> — kalan_miktar -= eklenen_miktar (ikame edilen)</li>
+                            <li><code>PersonelZimmetKullanim</code> — Kimin ne kadar kullandığı kaydedilir</li>
+                        </ul>
+                        <p style="margin-top:8px;"><strong>İş Kuralları:</strong></p>
+                        <ul style="margin-left:20px;margin-top:4px;">
+                            <li>Setup'taki miktar referans alınır (beklenen stok)</li>
+                            <li>Tüketim = setup_miktari - bulunan_miktar</li>
+                            <li>İkame = tüketilen kadar zimmet deposundan eklenir</li>
+                            <li>Zimmet stoğu yeterli olmalı</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Adım 4 -->
+                <div class="sim-panel" style="border-left:4px solid #d946ef;">
+                    <h3 style="color:#e879f9;">🟣 Adım 4: Setup Dışı Ürün Ekleme</h3>
+                    <div style="margin-top:12px;font-size:13px;color:#cbd5e1;line-height:1.8;">
+                        <p><strong>Tetikleyen:</strong> Kat sorumlusu setup'ta olmayan bir ürünü odaya ekler</p>
+                        <p><strong>Route:</strong> <code style="background:#0f172a;padding:2px 6px;border-radius:4px;font-size:12px;">POST /api/kat-sorumlusu/setup-disi-urun-ekle</code></p>
+                        <p><strong>Etkilenen Tablolar:</strong></p>
+                        <ul style="margin-left:20px;margin-top:4px;">
+                            <li><code>OtelZimmetStok</code> — kalan_miktar -= miktar (zimmet deposundan düşülür)</li>
+                            <li><code>PersonelZimmetKullanim</code> — Kullanım kaydı oluşturulur</li>
+                            <li><code>MinibarIslem</code> — islem_tipi='setup_disi_ekleme' başlık kaydı</li>
+                            <li><code>MinibarIslemDetay</code> — eklenen_miktar = miktar</li>
+                        </ul>
+                        <p style="margin-top:8px;"><strong>İş Kuralları:</strong></p>
+                        <ul style="margin-left:20px;margin-top:4px;">
+                            <li>Ürün zimmet deposunda mevcut olmalı</li>
+                            <li>Zimmet stoğu yeterli olmalı (kalan_miktar >= miktar)</li>
+                            <li>Oda kontrol sayfasında ayrı bir card'da gösterilir</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Adım 5 -->
+                <div class="sim-panel" style="border-left:4px solid #ef4444;">
+                    <h3 style="color:#f87171;">🔴 Adım 5: Diğer İşlem Tipleri</h3>
+                    <div style="margin-top:12px;font-size:13px;color:#cbd5e1;line-height:1.8;">
+                        <p><strong>Ekstra Ekleme (ekstra_ekleme):</strong> Setup üstü ürün ekleme. Zimmet deposundan düşülür.</p>
+                        <p><strong>Ekstra Tüketim (ekstra_tuketim):</strong> Setup dışı tüketim tespiti.</p>
+                        <p><strong>Sarfiyat Yok (sarfiyat_yok):</strong> Oda kontrol edildi, tüketim yok. Sadece kayıt.</p>
+                        <p><strong>DND (dnd):</strong> Rahatsız Etmeyin. 3 kontrol sonrası otomatik tamamlanır.</p>
+                        <p style="margin-top:12px;"><strong>Sipariş Talebi Akışı:</strong></p>
+                        <ul style="margin-left:20px;margin-top:4px;">
+                            <li>Kat sorumlusu sipariş talebi oluşturur → <code>KatSorumlusuSiparisTalebi</code> (durum: beklemede)</li>
+                            <li>Depo sorumlusu onaylar → durum: onaylandi</li>
+                            <li>Depo sorumlusu hazırlar → durum: hazirlaniyor</li>
+                            <li>Teslim edilir → durum: teslim_edildi, OtelZimmetStok güncellenir</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Tab switching
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        event.target.classList.add('active');
+    }
+
+    // Simulation State
+    let state = { depo: 0, fifo: 0, zimmet: 0, oda: 0, tuketim: 0, toplam: 0, logCount: 0 };
+    let simTime = new Date(2026, 1, 10, 8, 0, 0); // 10 Feb 2026 08:00
+
+    function getTime() {
+        simTime = new Date(simTime.getTime() + Math.floor(Math.random() * 600000) + 60000);
+        return simTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function updateUI() {
+        const max = Math.max(state.toplam, 1);
+        document.getElementById('val-depo').textContent = state.depo;
+        document.getElementById('val-fifo').textContent = state.fifo;
+        document.getElementById('val-zimmet').textContent = state.zimmet;
+        document.getElementById('val-oda').textContent = state.oda;
+        document.getElementById('val-tuketim').textContent = state.tuketim;
+        document.getElementById('val-toplam').textContent = state.toplam;
+
+        document.getElementById('bar-depo').style.width = (state.depo / max * 100) + '%';
+        document.getElementById('bar-fifo').style.width = (state.fifo / max * 100) + '%';
+        document.getElementById('bar-zimmet').style.width = (state.zimmet / max * 100) + '%';
+        document.getElementById('bar-oda').style.width = (state.oda / max * 100) + '%';
+        document.getElementById('bar-tuketim').style.width = (state.tuketim / max * 100) + '%';
+        document.getElementById('bar-toplam').style.width = '100%';
+    }
+
+    function addLog(badge, badgeClass, msg, amount, amountClass) {
+        const container = document.getElementById('logContainer');
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML = `
+            <span class="time">${getTime()}</span>
+            <span class="badge ${badgeClass}">${badge}</span>
+            <span class="msg">${msg}</span>
+            ${amount ? `<span class="amount ${amountClass}">${amount}</span>` : ''}
+        `;
+        container.insertBefore(entry, container.firstChild);
+        state.logCount++;
+        if (state.logCount > 50) container.removeChild(container.lastChild);
+    }
+
+    function highlightCard(id) {
+        const el = document.getElementById(id);
+        el.classList.add('highlight');
+        setTimeout(() => el.classList.remove('highlight'), 600);
+    }
+
+    // Simulation Actions
+    function simTedarik() {
+        const miktar = 50;
+        state.depo += miktar;
+        state.fifo += miktar;
+        state.toplam += miktar;
+        updateUI();
+        highlightCard('card-depo');
+        highlightCard('card-fifo');
+        highlightCard('card-toplam');
+        addLog('TEDARİK', 'tedarik', `Ana depodan ${miktar} adet ürün tedarik edildi. UrunStok.mevcut_stok += ${miktar}, StokFifoKayit oluşturuldu.`, `+${miktar}`, 'plus');
+        addLog('FIFO', 'fifo', `Yeni FIFO parti kaydı: giris_miktari=${miktar}, kalan_miktar=${miktar}`, `Parti #${Math.floor(Math.random()*900)+100}`, '');
+    }
+
+    function simZimmetAktar() {
+        const miktar = 20;
+        if (state.depo < miktar) {
+            addLog('HATA', 'tuketim', `Yetersiz depo stoku! Mevcut: ${state.depo}, Gereken: ${miktar}. Önce tedarik yapın.`, '❌', 'minus');
+            return;
+        }
+        state.depo -= miktar;
+        state.fifo -= miktar;
+        state.zimmet += miktar;
+        updateUI();
+        highlightCard('card-depo');
+        highlightCard('card-fifo');
+        highlightCard('card-zimmet');
+        addLog('ZİMMET', 'zimmet', `Depodan zimmet deposuna ${miktar} adet aktarıldı. UrunStok -= ${miktar}, OtelZimmetStok += ${miktar}`, `-${miktar} / +${miktar}`, '');
+        addLog('FIFO', 'fifo', `FIFO parti kullanıldı: StokFifoKullanim(islem_tipi='zimmet', miktar=${miktar})`, `−${miktar}`, 'minus');
+    }
+
+    function simOdaKontrol() {
+        const tuketilen = Math.floor(Math.random() * 3) + 1;
+        const ikame = tuketilen;
+        if (state.zimmet < ikame) {
+            addLog('HATA', 'tuketim', `Yetersiz zimmet stoğu! Mevcut: ${state.zimmet}, Gereken: ${ikame}. Önce zimmet aktarımı yapın.`, '❌', 'minus');
+            return;
+        }
+        state.zimmet -= ikame;
+        state.oda += ikame;
+        state.tuketim += tuketilen;
+        updateUI();
+        highlightCard('card-zimmet');
+        highlightCard('card-oda');
+        highlightCard('card-tuketim');
+        const odaNo = Math.floor(Math.random() * 200) + 1001;
+        addLog('KONTROL', 'kontrol', `Oda ${odaNo}: ${tuketilen} ürün tüketildi, ${ikame} adet ikame edildi. MinibarIslem(setup_kontrol) kaydedildi.`, `−${tuketilen} tüketim`, 'minus');
+        addLog('ZİMMET', 'zimmet', `OtelZimmetStok.kalan_miktar -= ${ikame}, PersonelZimmetKullanim kaydı oluşturuldu.`, `−${ikame}`, 'minus');
+    }
+
+    function simSetupDisi() {
+        const miktar = 1;
+        if (state.zimmet < miktar) {
+            addLog('HATA', 'tuketim', `Yetersiz zimmet stoğu! Mevcut: ${state.zimmet}`, '❌', 'minus');
+            return;
+        }
+        state.zimmet -= miktar;
+        state.oda += miktar;
+        updateUI();
+        highlightCard('card-zimmet');
+        highlightCard('card-oda');
+        const odaNo = Math.floor(Math.random() * 200) + 1001;
+        addLog('SETUP DIŞI', 'setup-disi', `Oda ${odaNo}: Setup dışı ürün eklendi (x${miktar}). MinibarIslem(setup_disi_ekleme) kaydedildi.`, `+${miktar}`, 'plus');
+        addLog('ZİMMET', 'zimmet', `OtelZimmetStok.kalan_miktar -= ${miktar}`, `−${miktar}`, 'minus');
+    }
+
+    async function simOtomatik() {
+        addLog('SİSTEM', 'depo', '⚡ Otomatik tam döngü başlatılıyor...', '', '');
+        
+        await sleep(400); simTedarik();
+        await sleep(600); simTedarik();
+        await sleep(600); simZimmetAktar();
+        await sleep(600); simZimmetAktar();
+        await sleep(600); simOdaKontrol();
+        await sleep(400); simOdaKontrol();
+        await sleep(400); simOdaKontrol();
+        await sleep(400); simSetupDisi();
+        await sleep(400); simOdaKontrol();
+        await sleep(400); simSetupDisi();
+        
+        addLog('SİSTEM', 'depo', '✅ Otomatik döngü tamamlandı. Stok durumlarını inceleyin.', '', '');
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    function simReset() {
+        state = { depo: 0, fifo: 0, zimmet: 0, oda: 0, tuketim: 0, toplam: 0, logCount: 0 };
+        simTime = new Date(2026, 1, 10, 8, 0, 0);
+        updateUI();
+        document.getElementById('logContainer').innerHTML = `
+            <div class="log-entry">
+                <span class="time">--:--</span>
+                <span class="badge depo">SİSTEM</span>
+                <span class="msg">Simülasyon sıfırlandı. Bir buton tıklayarak başlayın.</span>
+            </div>
+        `;
+    }
+
+    // Init
+    updateUI();
+    </script>
+</body>
+</html>

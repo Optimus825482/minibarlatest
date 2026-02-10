@@ -117,124 +117,6 @@ celery = make_celery()
 # ASENKRON TASK'LAR
 # ============================================
 
-@celery.task(bind=True, name='fiyatlandirma.donemsel_kar_hesapla')
-def donemsel_kar_hesapla_async(self, otel_id, baslangic_tarihi, bitis_tarihi, donem_tipi='gunluk'):
-    """
-    Dönemsel kar hesaplama - Asenkron
-    
-    Args:
-        otel_id: Otel ID
-        baslangic_tarihi: Başlangıç tarihi (ISO format string)
-        bitis_tarihi: Bitiş tarihi (ISO format string)
-        donem_tipi: Dönem tipi (gunluk, haftalik, aylik)
-    
-    Returns:
-        dict: {
-            'status': 'success' | 'error',
-            'analiz_id': int,
-            'message': str,
-            'data': dict
-        }
-    """
-    try:
-        # Flask app context'i gerekli
-        app, db = get_flask_app()
-        from models import DonemselKarAnalizi, MinibarIslemDetay, MinibarIslem
-        from sqlalchemy import func
-        from datetime import datetime
-        
-        with app.app_context():
-            logger.info(f"Dönemsel kar hesaplama başladı - Otel: {otel_id}, Dönem: {donem_tipi}")
-            
-            # Tarih parse
-            baslangic = datetime.fromisoformat(baslangic_tarihi)
-            bitis = datetime.fromisoformat(bitis_tarihi)
-            
-            # Toplam gelir hesapla (satış fiyatı * miktar)
-            toplam_gelir_query = db.session.query(
-                func.sum(MinibarIslemDetay.satis_fiyati * MinibarIslemDetay.tuketim)
-            ).join(
-                MinibarIslem
-            ).filter(
-                MinibarIslem.otel_id == otel_id,
-                MinibarIslem.islem_tarihi.between(baslangic, bitis),
-                MinibarIslemDetay.satis_fiyati.isnot(None)
-            )
-            
-            toplam_gelir = toplam_gelir_query.scalar() or Decimal('0')
-            
-            # Toplam maliyet hesapla (alış fiyatı * miktar)
-            toplam_maliyet_query = db.session.query(
-                func.sum(MinibarIslemDetay.alis_fiyati * MinibarIslemDetay.tuketim)
-            ).join(
-                MinibarIslem
-            ).filter(
-                MinibarIslem.otel_id == otel_id,
-                MinibarIslem.islem_tarihi.between(baslangic, bitis),
-                MinibarIslemDetay.alis_fiyati.isnot(None)
-            )
-            
-            toplam_maliyet = toplam_maliyet_query.scalar() or Decimal('0')
-            
-            # Net kar ve kar marjı hesapla
-            net_kar = toplam_gelir - toplam_maliyet
-            kar_marji = (net_kar / toplam_gelir * 100) if toplam_gelir > 0 else Decimal('0')
-            
-            # Detaylı analiz verisi
-            analiz_verisi = {
-                'toplam_islem': db.session.query(func.count(MinibarIslem.id)).filter(
-                    MinibarIslem.otel_id == otel_id,
-                    MinibarIslem.islem_tarihi.between(baslangic, bitis)
-                ).scalar(),
-                'ortalama_islem_degeri': float(toplam_gelir / db.session.query(func.count(MinibarIslem.id)).filter(
-                    MinibarIslem.otel_id == otel_id,
-                    MinibarIslem.islem_tarihi.between(baslangic, bitis)
-                ).scalar()) if db.session.query(func.count(MinibarIslem.id)).filter(
-                    MinibarIslem.otel_id == otel_id,
-                    MinibarIslem.islem_tarihi.between(baslangic, bitis)
-                ).scalar() > 0 else 0,
-                'hesaplama_tarihi': get_kktc_now().isoformat()
-            }
-            
-            # Veritabanına kaydet
-            analiz = DonemselKarAnalizi(
-                otel_id=otel_id,
-                donem_tipi=donem_tipi,
-                baslangic_tarihi=baslangic.date(),
-                bitis_tarihi=bitis.date(),
-                toplam_gelir=toplam_gelir,
-                toplam_maliyet=toplam_maliyet,
-                net_kar=net_kar,
-                kar_marji=kar_marji,
-                analiz_verisi=analiz_verisi
-            )
-            
-            db.session.add(analiz)
-            db.session.commit()
-            
-            logger.info(f"Dönemsel kar hesaplama tamamlandı - Analiz ID: {analiz.id}")
-            
-            return {
-                'status': 'success',
-                'analiz_id': analiz.id,
-                'message': 'Dönemsel kar analizi başarıyla tamamlandı',
-                'data': {
-                    'toplam_gelir': float(toplam_gelir),
-                    'toplam_maliyet': float(toplam_maliyet),
-                    'net_kar': float(net_kar),
-                    'kar_marji': float(kar_marji)
-                }
-            }
-            
-    except Exception as e:
-        logger.error(f"Dönemsel kar hesaplama hatası: {str(e)}")
-        return {
-            'status': 'error',
-            'message': f'Hata: {str(e)}',
-            'data': None
-        }
-
-
 @celery.task(bind=True, name='fiyatlandirma.tuketim_trendi_guncelle')
 def tuketim_trendi_guncelle_async(self, otel_id=None, donem='aylik'):
     """
@@ -448,53 +330,6 @@ def stok_devir_guncelle_async(self, otel_id=None):
         }
 
 
-# ============================================
-# PERİYODİK TASK'LAR (Celery Beat için)
-# ============================================
-
-@celery.task(name='fiyatlandirma.gunluk_kar_analizi')
-def gunluk_kar_analizi_task():
-    """
-    Günlük kar analizi - Otomatik çalışır (Celery Beat)
-    Her gün gece yarısı tüm oteller için önceki günün kar analizini yapar
-    """
-    try:
-        app, db = get_flask_app()
-        from models import Otel
-        from datetime import datetime, timedelta
-        
-        with app.app_context():
-            logger.info("Günlük kar analizi başladı")
-            
-            # Dün
-            bugun = get_kktc_now().date()
-            dun = bugun - timedelta(days=1)
-            
-            # Tüm aktif oteller
-            oteller = Otel.query.filter_by(aktif=True).all()
-            
-            for otel in oteller:
-                # Asenkron task başlat
-                donemsel_kar_hesapla_async.delay(
-                    otel_id=otel.id,
-                    baslangic_tarihi=dun.isoformat(),
-                    bitis_tarihi=dun.isoformat(),
-                    donem_tipi='gunluk'
-                )
-            
-            logger.info(f"Günlük kar analizi task'ları başlatıldı - {len(oteller)} otel")
-            
-            return {
-                'status': 'success',
-                'message': f'{len(oteller)} otel için günlük kar analizi başlatıldı'
-            }
-            
-    except Exception as e:
-        logger.error(f"Günlük kar analizi task hatası: {str(e)}")
-        return {
-            'status': 'error',
-            'message': f'Hata: {str(e)}'
-        }
 
 
 @celery.task(name='fiyatlandirma.haftalik_trend_analizi')
@@ -1520,11 +1355,6 @@ celery.conf.beat_schedule = {
     # FİYATLANDIRMA SİSTEMİ SCHEDULE
     # ============================================
     
-    # Her gün gece 00:30'da günlük kar analizi
-    'gunluk-kar-analizi': {
-        'task': 'fiyatlandirma.gunluk_kar_analizi',
-        'schedule': crontab(hour=22, minute=30),  # UTC 22:30 = KKTC 00:30
-    },
     # Her Pazartesi sabah 06:00'da haftalık trend analizi
     'haftalik-trend-analizi': {
         'task': 'fiyatlandirma.haftalik_trend_analizi',

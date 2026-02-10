@@ -1,228 +1,324 @@
-{% extends "base.html" %}
-
-{% block title %}Zimmetim - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Zimmetim{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Zimmetim - Minibar Takip Sistemi{%
+endblock %} {% block page_title %}Zimmetim{% endblock %} {% block content %}
 <div class="space-y-6">
-    <!-- Zimmet Özeti -->
-    <div class="bg-white shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 mb-4">Zimmet Özeti</h3>
+  <!-- Zimmet Özeti -->
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3 class="text-lg leading-6 font-medium text-slate-900 mb-4">
+        Zimmet Özeti
+      </h3>
 
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <h4 class="text-sm font-medium text-blue-800">Toplam Zimmet</h4>
-                            <p class="text-2xl font-bold text-blue-900">{{ toplam_zimmet }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <h4 class="text-sm font-medium text-green-800">Kalan Zimmet</h4>
-                            <p class="text-2xl font-bold text-green-900">{{ kalan_zimmet }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <svg class="h-8 w-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <h4 class="text-sm font-medium text-yellow-800">Kullanılan</h4>
-                            <p class="text-2xl font-bold text-yellow-900">{{ kullanilan_zimmet }}</p>
-                        </div>
-                    </div>
-                </div>
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg
+                class="h-12 w-12 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                ></path>
+              </svg>
             </div>
+            <div class="ml-3">
+              <h4 class="text-sm font-medium text-blue-800">Toplam Zimmet</h4>
+              <p class="text-3xl font-bold text-blue-900">
+                {{ toplam_zimmet }}
+              </p>
+            </div>
+          </div>
         </div>
+
+        <div class="bg-green-50 border border-green-200 rounded-xl p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg
+                class="h-12 w-12 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h4 class="text-sm font-medium text-green-800">Kalan Zimmet</h4>
+              <p class="text-3xl font-bold text-green-900">
+                {{ kalan_zimmet }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg
+                class="h-12 w-12 text-yellow-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h4 class="text-sm font-medium text-yellow-800">Kullanılan</h4>
+              <p class="text-3xl font-bold text-yellow-900">
+                {{ kullanilan_zimmet }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Aktif Zimmetler -->
-    <div class="bg-white shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg leading-6 font-medium text-slate-900">Aktif Zimmetlerim</h3>
-                <div class="flex items-center gap-2 text-sm text-slate-600">
-                    <span class="font-medium" id="zimmet-count">{{ aktif_zimmetler|length }}</span>
-                    <span>Aktif Zimmet</span>
-                </div>
+  <!-- Aktif Zimmetler -->
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg leading-6 font-medium text-slate-900">
+          Aktif Zimmetlerim
+        </h3>
+        <div class="flex items-center gap-2 text-sm text-slate-600">
+          <span class="font-medium" id="zimmet-count"
+            >{{ aktif_zimmetler|length }}</span
+          >
+          <span>Aktif Zimmet</span>
+        </div>
+      </div>
+
+      {% if aktif_zimmetler %}
+      <!-- Arama Çubuğu -->
+      <div class="mb-4">
+        <div class="relative">
+          <input
+            type="text"
+            id="zimmet-search"
+            placeholder="Zimmet no, tarih veya ürün adı ile ara..."
+            class="block w-full pl-10 pr-3 py-2 input-touch border border-slate-300 rounded-xl leading-5 bg-white placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-1 focus:ring-slate-500 focus:border-slate-500 text-base"
+          />
+          <div
+            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+          >
+            <svg
+              class="h-5 w-5 text-slate-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              ></path>
+            </svg>
+          </div>
+        </div>
+        <p class="mt-2 text-xs text-slate-500" id="search-info">
+          <span id="visible-count">{{ aktif_zimmetler|length }}</span> zimmet
+          gösteriliyor
+        </p>
+      </div>
+
+      <div id="zimmet-container" class="space-y-4">
+        {% for zimmet in aktif_zimmetler %}
+        <div
+          class="zimmet-card border border-slate-200 rounded-xl p-5"
+          data-zimmet-id="{{ zimmet.id }}"
+          data-zimmet-date="{{ zimmet.zimmet_tarihi.strftime('%d.%m.%Y %H:%M') }}"
+        >
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h4 class="text-sm font-medium text-slate-900">
+                Zimmet #{{ zimmet.id }}
+              </h4>
+              <p class="text-sm text-slate-500">
+                {{ zimmet.zimmet_tarihi.strftime('%d.%m.%Y %H:%M') }}
+              </p>
             </div>
+            <span
+              class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"
+            >
+              Aktif
+            </span>
+          </div>
 
-            {% if aktif_zimmetler %}
-            <!-- Arama Çubuğu -->
-            <div class="mb-4">
-                <div class="relative">
-                    <input type="text" id="zimmet-search" placeholder="Zimmet no, tarih veya ürün adı ile ara..."
-                        class="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md leading-5 bg-white placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-1 focus:ring-slate-500 focus:border-slate-500 sm:text-sm">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                    </div>
-                </div>
-                <p class="mt-2 text-xs text-slate-500" id="search-info">
-                    <span id="visible-count">{{ aktif_zimmetler|length }}</span> zimmet gösteriliyor
-                </p>
-            </div>
+          {% if zimmet.aciklama %}
+          <p class="text-sm text-slate-600 mb-3">{{ zimmet.aciklama }}</p>
+          {% endif %}
 
-            <div id="zimmet-container" class="space-y-4">
-                {% for zimmet in aktif_zimmetler %}
-                <div class="zimmet-card border border-slate-200 rounded-lg p-4" data-zimmet-id="{{ zimmet.id }}"
-                    data-zimmet-date="{{ zimmet.zimmet_tarihi.strftime('%d.%m.%Y %H:%M') }}">
-                    <div class="flex items-center justify-between mb-3">
-                        <div>
-                            <h4 class="text-sm font-medium text-slate-900">Zimmet #{{ zimmet.id }}</h4>
-                            <p class="text-sm text-slate-500">{{ zimmet.zimmet_tarihi.strftime('%d.%m.%Y %H:%M') }}</p>
-                        </div>
-                        <span
-                            class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                            Aktif
-                        </span>
-                    </div>
-
-                    {% if zimmet.aciklama %}
-                    <p class="text-sm text-slate-600 mb-3">{{ zimmet.aciklama }}</p>
-                    {% endif %}
-
-                    <div class="overflow-hidden">
-                        <table class="min-w-full divide-y divide-slate-200">
-                            <thead class="bg-slate-50">
-                                <tr>
-                                    <th
-                                        class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                        Ürün</th>
-                                    <th
-                                        class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                        Teslim Edilen</th>
-                                    <th
-                                        class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                        Kullanılan</th>
-                                    <th
-                                        class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                        Kalan</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-slate-200">
-                                {% for detay in zimmet.detaylar %}
-                                <tr class="zimmet-product" data-product-name="{{ detay.urun.urun_adi }}">
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-slate-900">{{
-                                        detay.urun.urun_adi }}</td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-slate-500">{{ detay.miktar }}
-                                    </td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-slate-500">{{
-                                        detay.kullanilan_miktar }}</td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-sm text-slate-500">{{ detay.kalan_miktar
-                                        or (detay.miktar - detay.kullanilan_miktar) }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+          <div class="overflow-hidden">
+            <table class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-touch table-compact-tablet" style="table-layout: fixed;">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th
+                    class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  >
+                    Ürün
+                  </th>
+                  <th
+                    class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  >
+                    Teslim Edilen
+                  </th>
+                  <th
+                    class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  >
+                    Kullanılan
+                  </th>
+                  <th
+                    class="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                  >
+                    Kalan
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-slate-200">
+                {% for detay in zimmet.detaylar %}
+                <tr
+                  class="zimmet-product"
+                  data-product-name="{{ detay.urun.urun_adi }}"
+                >
+                  <td
+                    class="px-3 py-2 text-sm font-medium text-slate-900 dark:text-white truncate"
+                  >
+                    {{ detay.urun.urun_adi }}
+                  </td>
+                  <td
+                    class="px-3 py-2 text-sm text-slate-500 dark:text-slate-400"
+                  >
+                    {{ detay.miktar }}
+                  </td>
+                  <td
+                    class="px-3 py-2 text-sm text-slate-500 dark:text-slate-400"
+                  >
+                    {{ detay.kullanilan_miktar }}
+                  </td>
+                  <td
+                    class="px-3 py-2 text-sm text-slate-500 dark:text-slate-400"
+                  >
+                    {{ detay.kalan_miktar or (detay.miktar -
+                    detay.kullanilan_miktar) }}
+                  </td>
+                </tr>
                 {% endfor %}
-            </div>
-            {% else %}
-            <div class="text-center py-8">
-                <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-slate-900">Aktif zimmetiniz bulunmuyor</h3>
-                <p class="mt-1 text-sm text-slate-500">Depo sorumlusu tarafından size zimmet atanması bekleniyor.</p>
-            </div>
-            {% endif %}
+              </tbody>
+            </table>
+          </div>
         </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-8">
+        <svg
+          class="mx-auto h-12 w-12 text-slate-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+          ></path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-slate-900">
+          Aktif zimmetiniz bulunmuyor
+        </h3>
+        <p class="mt-1 text-sm text-slate-500">
+          Depo sorumlusu tarafından size zimmet atanması bekleniyor.
+        </p>
+      </div>
+      {% endif %}
     </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block extra_scripts %}
+{% endblock %} {% block extra_scripts %}
 <script>
-    document.addEventListener( 'DOMContentLoaded', function () {
-        const searchInput = document.getElementById( 'zimmet-search' );
-        const zimmetContainer = document.getElementById( 'zimmet-container' );
-        const zimmetCards = document.querySelectorAll( '.zimmet-card' );
-        const visibleCount = document.getElementById( 'visible-count' );
+  document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("zimmet-search");
+    const zimmetContainer = document.getElementById("zimmet-container");
+    const zimmetCards = document.querySelectorAll(".zimmet-card");
+    const visibleCount = document.getElementById("visible-count");
 
-        if ( searchInput && zimmetCards.length > 0 ) {
-            searchInput.addEventListener( 'input', function () {
-                const searchTerm = this.value.toLowerCase().trim();
-                let visibleCardCount = 0;
+    if (searchInput && zimmetCards.length > 0) {
+      searchInput.addEventListener("input", function () {
+        const searchTerm = this.value.toLowerCase().trim();
+        let visibleCardCount = 0;
 
-                zimmetCards.forEach( card => {
-                    const zimmetId = card.dataset.zimmetId;
-                    const zimmetDate = card.dataset.zimmetDate.toLowerCase();
+        zimmetCards.forEach((card) => {
+          const zimmetId = card.dataset.zimmetId;
+          const zimmetDate = card.dataset.zimmetDate.toLowerCase();
 
-                    // Kart içindeki tüm ürün isimlerini al
-                    const products = card.querySelectorAll( '.zimmet-product' );
-                    const productNames = Array.from( products )
-                        .map( p => p.dataset.productName.toLowerCase() )
-                        .join( ' ' );
+          // Kart içindeki tüm ürün isimlerini al
+          const products = card.querySelectorAll(".zimmet-product");
+          const productNames = Array.from(products)
+            .map((p) => p.dataset.productName.toLowerCase())
+            .join(" ");
 
-                    // Zimmet açıklaması varsa onu da ara
-                    const description = card.querySelector( 'p.text-sm.text-slate-600' );
-                    const descriptionText = description ? description.textContent.toLowerCase() : '';
+          // Zimmet açıklaması varsa onu da ara
+          const description = card.querySelector("p.text-sm.text-slate-600");
+          const descriptionText = description
+            ? description.textContent.toLowerCase()
+            : "";
 
-                    // Arama: zimmet ID, tarih, ürün isimleri veya açıklama
-                    const searchableText = `${zimmetId} ${zimmetDate} ${productNames} ${descriptionText}`;
+          // Arama: zimmet ID, tarih, ürün isimleri veya açıklama
+          const searchableText = `${zimmetId} ${zimmetDate} ${productNames} ${descriptionText}`;
 
-                    if ( !searchTerm || searchableText.includes( searchTerm ) ) {
-                        card.style.display = '';
-                        visibleCardCount++;
-                    } else {
-                        card.style.display = 'none';
-                    }
-                } );
+          if (!searchTerm || searchableText.includes(searchTerm)) {
+            card.style.display = "";
+            visibleCardCount++;
+          } else {
+            card.style.display = "none";
+          }
+        });
 
-                // Görünen zimmet sayısını güncelle
-                visibleCount.textContent = visibleCardCount;
+        // Görünen zimmet sayısını güncelle
+        visibleCount.textContent = visibleCardCount;
 
-                // Hiç sonuç yoksa mesaj göster
-                if ( visibleCardCount === 0 && searchTerm ) {
-                    if ( !document.getElementById( 'no-results-message' ) ) {
-                        const noResultsDiv = document.createElement( 'div' );
-                        noResultsDiv.id = 'no-results-message';
-                        noResultsDiv.className = 'text-center py-8';
-                        noResultsDiv.innerHTML = `
+        // Hiç sonuç yoksa mesaj göster
+        if (visibleCardCount === 0 && searchTerm) {
+          if (!document.getElementById("no-results-message")) {
+            const noResultsDiv = document.createElement("div");
+            noResultsDiv.id = "no-results-message";
+            noResultsDiv.className = "text-center py-8";
+            noResultsDiv.innerHTML = `
                             <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
                             <h3 class="mt-2 text-sm font-medium text-slate-900">Sonuç bulunamadı</h3>
                             <p class="mt-1 text-sm text-slate-500">"${searchTerm}" için eşleşen zimmet bulunamadı</p>
                         `;
-                        zimmetContainer.appendChild( noResultsDiv );
-                    }
-                } else {
-                    const noResultsMsg = document.getElementById( 'no-results-message' );
-                    if ( noResultsMsg ) {
-                        noResultsMsg.remove();
-                    }
-                }
-            } );
+            zimmetContainer.appendChild(noResultsDiv);
+          }
+        } else {
+          const noResultsMsg = document.getElementById("no-results-message");
+          if (noResultsMsg) {
+            noResultsMsg.remove();
+          }
         }
-    } );
+      });
+    }
+  });
 </script>
 {% endblock %}

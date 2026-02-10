@@ -16,7 +16,7 @@ Sistemi{% endblock %} {% block page_title %}Otel Ortak Zimmet Stoğu{% endblock
     <div class="flex gap-3">
       <a
         href="{{ url_for('kat_sorumlusu_zimmet_export') }}"
-        class="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600"
+        class="inline-flex items-center px-5 py-3 border border-slate-300 dark:border-slate-600 rounded-xl shadow-sm text-base font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 btn-touch-secondary"
       >
         <svg
           class="w-5 h-5 mr-2"
@@ -35,7 +35,7 @@ Sistemi{% endblock %} {% block page_title %}Otel Ortak Zimmet Stoğu{% endblock
       </a>
       <a
         href="{{ url_for('kat_sorumlusu_dashboard') }}"
-        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+        class="inline-flex items-center px-5 py-3 border border-transparent rounded-xl shadow-sm text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 btn-touch-primary"
       >
         Dashboard'a Dön
       </a>
@@ -100,23 +100,31 @@ Sistemi{% endblock %} {% block page_title %}Otel Ortak Zimmet Stoğu{% endblock
     'kritik')|list|length %} {% set stokout_count =
     zimmet.urunler|selectattr('durum', 'equalto', 'stokout')|list|length %}
 
-    <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
-      <div class="text-2xl font-bold text-green-600">{{ normal_count }}</div>
-      <div class="text-xs text-green-600/70 font-medium">Normal</div>
+    <div
+      class="bg-green-50 dark:bg-green-900/20 rounded-xl p-5 text-center card-touch"
+    >
+      <div class="text-3xl font-bold text-green-600">{{ normal_count }}</div>
+      <div class="text-sm text-green-600/70 font-medium">Normal</div>
     </div>
-    <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 text-center">
-      <div class="text-2xl font-bold text-yellow-600">{{ dikkat_count }}</div>
-      <div class="text-xs text-yellow-600/70 font-medium">Dikkat</div>
+    <div
+      class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-5 text-center card-touch"
+    >
+      <div class="text-3xl font-bold text-yellow-600">{{ dikkat_count }}</div>
+      <div class="text-sm text-yellow-600/70 font-medium">Dikkat</div>
     </div>
-    <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 text-center">
-      <div class="text-2xl font-bold text-red-600">{{ kritik_count }}</div>
-      <div class="text-xs text-red-600/70 font-medium">Kritik</div>
+    <div
+      class="bg-red-50 dark:bg-red-900/20 rounded-xl p-5 text-center card-touch"
+    >
+      <div class="text-3xl font-bold text-red-600">{{ kritik_count }}</div>
+      <div class="text-sm text-red-600/70 font-medium">Kritik</div>
     </div>
-    <div class="bg-slate-100 dark:bg-slate-700 rounded-lg p-4 text-center">
-      <div class="text-2xl font-bold text-slate-600 dark:text-slate-300">
+    <div
+      class="bg-slate-100 dark:bg-slate-700 rounded-xl p-5 text-center card-touch"
+    >
+      <div class="text-3xl font-bold text-slate-600 dark:text-slate-300">
         {{ stokout_count }}
       </div>
-      <div class="text-xs text-slate-500 font-medium">Stokout</div>
+      <div class="text-sm text-slate-500 font-medium">Stokout</div>
     </div>
   </div>
 
@@ -131,49 +139,59 @@ Sistemi{% endblock %} {% block page_title %}Otel Ortak Zimmet Stoğu{% endblock
           type="text"
           id="arama_input"
           placeholder="Ürün ara..."
-          class="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm dark:bg-slate-700 dark:text-white w-48"
+          class="px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl text-base dark:bg-slate-700 dark:text-white w-56 input-touch"
           onkeyup="filtreleUrunler()"
         />
       </div>
     </div>
 
     <!-- Ürün Listesi -->
-    <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+    <div class="overflow-hidden">
+      <table
+        class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-touch table-compact-tablet"
+        style="table-layout: fixed"
+      >
         <thead class="bg-slate-50 dark:bg-slate-700">
           <tr>
             <th
-              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+              class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+              style="width: 28%"
             >
               Ürün
             </th>
             <th
-              class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+              class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase hide-tablet"
+              style="width: 14%"
             >
               Grup
             </th>
             <th
-              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+              class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+              style="width: 11%"
             >
               Toplam
             </th>
             <th
-              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+              class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase hide-tablet"
+              style="width: 11%"
             >
               Kullanılan
             </th>
             <th
-              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+              class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+              style="width: 11%"
             >
               Kalan
             </th>
             <th
-              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+              class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+              style="width: 13%"
             >
               Kullanım
             </th>
             <th
-              class="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+              class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-300 uppercase"
+              style="width: 12%"
             >
               Durum
             </th>
@@ -188,59 +206,56 @@ Sistemi{% endblock %} {% block page_title %}Otel Ortak Zimmet Stoğu{% endblock
             class="hover:bg-slate-50 dark:hover:bg-slate-700/50 urun-row"
             data-urun="{{ urun.urun_adi|lower }}"
           >
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm font-medium text-slate-900 dark:text-white">
+            <td class="px-3 py-3">
+              <div
+                class="text-sm font-medium text-slate-900 dark:text-white truncate"
+              >
                 {{ urun.urun_adi }}
               </div>
-              <div class="text-sm text-slate-500 dark:text-slate-400">
+              <div class="text-xs text-slate-500 dark:text-slate-400">
                 {{ urun.birim }}
+                <span class="lg:hidden"> · {{ urun.grup_adi }}</span>
               </div>
             </td>
             <td
-              class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400"
+              class="px-2 py-3 text-sm text-slate-500 dark:text-slate-400 truncate hide-tablet"
             >
               {{ urun.grup_adi }}
             </td>
             <td
-              class="px-6 py-4 whitespace-nowrap text-center text-sm font-semibold text-slate-900 dark:text-white"
+              class="px-2 py-3 text-center text-sm font-semibold text-slate-900 dark:text-white"
             >
               {{ urun.teslim_edilen|default(urun.toplam_miktar, true) }}
             </td>
             <td
-              class="px-6 py-4 whitespace-nowrap text-center text-sm text-slate-600 dark:text-slate-400"
+              class="px-2 py-3 text-center text-sm text-slate-600 dark:text-slate-400 hide-tablet"
             >
               {{ urun.kullanilan }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-center">
+            <td class="px-2 py-3 text-center">
               <span
-                class="text-lg font-bold {% if urun.durum == 'stokout' or urun.durum == 'kritik' %}text-red-500{% elif urun.durum == 'dikkat' %}text-yellow-500{% else %}text-green-600{% endif %}"
+                class="text-base font-bold {% if urun.durum == 'stokout' or urun.durum == 'kritik' %}text-red-500{% elif urun.durum == 'dikkat' %}text-yellow-500{% else %}text-green-600{% endif %}"
               >
                 {{ urun.kalan }}
               </span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center justify-center">
-                <div class="w-24">
-                  <div class="flex items-center">
-                    <div
-                      class="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2"
-                    >
-                      <div
-                        class="{% if urun.kullanim_yuzdesi >= 80 %}bg-red-600{% elif urun.kullanim_yuzdesi >= 50 %}bg-yellow-500{% else %}bg-green-500{% endif %} h-2 rounded-full"
-                        style="width: {{ urun.kullanim_yuzdesi }}%"
-                      ></div>
-                    </div>
-                    <span
-                      class="ml-2 text-xs text-slate-600 dark:text-slate-400"
-                      >{{ urun.kullanim_yuzdesi }}%</span
-                    >
-                  </div>
+            <td class="px-2 py-3">
+              <div class="flex items-center justify-center gap-1.5">
+                <div class="progress-compact bg-slate-200 dark:bg-slate-600">
+                  <div
+                    class="{% if urun.kullanim_yuzdesi >= 80 %}bg-red-600{% elif urun.kullanim_yuzdesi >= 50 %}bg-yellow-500{% else %}bg-green-500{% endif %} h-full rounded-full"
+                    style="width: {{ urun.kullanim_yuzdesi }}%"
+                  ></div>
                 </div>
+                <span
+                  class="text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap"
+                  >{{ urun.kullanim_yuzdesi }}%</span
+                >
               </div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-center">
+            <td class="px-2 py-3 text-center">
               <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ urun.badge_class }}"
+                class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold {{ urun.badge_class }}"
               >
                 {{ urun.badge_text }}
               </span>

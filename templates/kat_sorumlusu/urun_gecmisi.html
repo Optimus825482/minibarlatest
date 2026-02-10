@@ -1,118 +1,164 @@
-{% extends "base.html" %}
-
-{% block title %}Ürün Geçmişi - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Ürün Kullanım Geçmişi{% endblock %}
-
+{% extends "base.html" %} {% block title %}Ürün Geçmişi - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}Ürün Kullanım Geçmişi{% endblock %}
 {% block content %}
 <div class="space-y-6">
-    <div class="flex justify-between items-center">
-        <div>
-            <h2 class="text-2xl font-bold text-slate-900">{{ gecmis.urun.urun_adi }}</h2>
-            <p class="mt-1 text-sm text-slate-500">Son {{ gun_sayisi }} günlük kullanım geçmişi</p>
-        </div>
-        <a href="{{ url_for('kat_sorumlusu_zimmet_stoklarim') }}" 
-           class="inline-flex items-center px-4 py-2 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50">
-            Geri Dön
-        </a>
+  <div class="flex justify-between items-center">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-900">
+        {{ gecmis.urun.urun_adi }}
+      </h2>
+      <p class="mt-1 text-sm text-slate-500">
+        Son {{ gun_sayisi }} günlük kullanım geçmişi
+      </p>
     </div>
+    <a
+      href="{{ url_for('kat_sorumlusu_zimmet_stoklarim') }}"
+      class="inline-flex items-center px-5 py-3 border border-slate-300 rounded-xl shadow-sm text-base font-semibold text-slate-700 bg-white hover:bg-slate-50 active:scale-95 touch-manipulation transition-transform"
+    >
+      Geri Dön
+    </a>
+  </div>
 
-    <!-- İstatistikler -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <dt class="text-sm font-medium text-slate-500 truncate">Toplam Kullanım</dt>
-                <dd class="mt-1 text-3xl font-semibold text-slate-900">{{ gecmis.istatistik.toplam_kullanim }}</dd>
-            </div>
-        </div>
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <dt class="text-sm font-medium text-slate-500 truncate">Günlük Ortalama</dt>
-                <dd class="mt-1 text-3xl font-semibold text-slate-900">{{ gecmis.istatistik.gunluk_ortalama }}</dd>
-            </div>
-        </div>
-        <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <dt class="text-sm font-medium text-slate-500 truncate">Hareket Sayısı</dt>
-                <dd class="mt-1 text-3xl font-semibold text-slate-900">{{ gecmis.hareketler|length }}</dd>
-            </div>
-        </div>
+  <!-- İstatistikler -->
+  <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+    <div class="bg-white overflow-hidden shadow rounded-xl">
+      <div class="p-5">
+        <dt class="text-sm font-medium text-slate-500 truncate">
+          Toplam Kullanım
+        </dt>
+        <dd class="mt-1 text-3xl font-semibold text-slate-900">
+          {{ gecmis.istatistik.toplam_kullanim }}
+        </dd>
+      </div>
     </div>
+    <div class="bg-white overflow-hidden shadow rounded-xl">
+      <div class="p-5">
+        <dt class="text-sm font-medium text-slate-500 truncate">
+          Günlük Ortalama
+        </dt>
+        <dd class="mt-1 text-3xl font-semibold text-slate-900">
+          {{ gecmis.istatistik.gunluk_ortalama }}
+        </dd>
+      </div>
+    </div>
+    <div class="bg-white overflow-hidden shadow rounded-xl">
+      <div class="p-5">
+        <dt class="text-sm font-medium text-slate-500 truncate">
+          Hareket Sayısı
+        </dt>
+        <dd class="mt-1 text-3xl font-semibold text-slate-900">
+          {{ gecmis.hareketler|length }}
+        </dd>
+      </div>
+    </div>
+  </div>
 
-    <!-- Grafik -->
-    <div class="bg-white shadow rounded-lg p-6">
-        <h3 class="text-lg font-medium text-slate-900 mb-4">Günlük Tüketim Grafiği</h3>
-        <div style="height: 300px;">
-            <canvas id="gunlukTuketimChart"></canvas>
-        </div>
+  <!-- Grafik -->
+  <div class="bg-white shadow rounded-xl p-6">
+    <h3 class="text-lg font-medium text-slate-900 mb-4">
+      Günlük Tüketim Grafiği
+    </h3>
+    <div style="height: 300px">
+      <canvas id="gunlukTuketimChart"></canvas>
     </div>
+  </div>
 
-    <!-- Hareketler Tablosu -->
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-200">
-            <h3 class="text-lg font-medium text-slate-900">Kullanım Hareketleri</h3>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200">
-                <thead class="bg-slate-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Tarih</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">İşlem</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Oda</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase">Miktar</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-slate-200">
-                    {% for hareket in gecmis.hareketler %}
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                            {{ hareket.tarih.strftime('%d.%m.%Y %H:%M') }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{ hareket.islem_tipi }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{{ hareket.oda_no }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-slate-900">
-                            {{ hareket.miktar }}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+  <!-- Hareketler Tablosu -->
+  <div class="bg-white shadow rounded-xl overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-200">
+      <h3 class="text-lg font-medium text-slate-900">Kullanım Hareketleri</h3>
     </div>
+    <div class="overflow-hidden">
+      <table
+        class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-touch table-compact-tablet"
+        style="table-layout: fixed"
+      >
+        <thead class="bg-slate-50 dark:bg-slate-700">
+          <tr>
+            <th
+              class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              style="width: 30%"
+            >
+              Tarih
+            </th>
+            <th
+              class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              style="width: 30%"
+            >
+              İşlem
+            </th>
+            <th
+              class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              style="width: 20%"
+            >
+              Oda
+            </th>
+            <th
+              class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              style="width: 20%"
+            >
+              Miktar
+            </th>
+          </tr>
+        </thead>
+        <tbody
+          class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+        >
+          {% for hareket in gecmis.hareketler %}
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+            <td class="px-3 py-3 text-sm text-slate-900 dark:text-white">
+              {{ hareket.tarih.strftime('%d.%m.%Y %H:%M') }}
+            </td>
+            <td class="px-2 py-3 text-sm text-slate-500 dark:text-slate-400">
+              {{ hareket.islem_tipi }}
+            </td>
+            <td class="px-2 py-3 text-sm text-slate-900 dark:text-white">
+              {{ hareket.oda_no }}
+            </td>
+            <td
+              class="px-2 py-3 text-center text-sm font-medium text-slate-900 dark:text-white"
+            >
+              {{ hareket.miktar }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block extra_scripts %}
+{% endblock %} {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-const gunlukKullanim = {{ gecmis.istatistik.gunluk_kullanim|tojson }};
-const labels = Object.keys(gunlukKullanim).map(d => {
-    const date = new Date(d);
-    return date.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' });
-});
-const data = Object.values(gunlukKullanim);
+  const gunlukKullanim = {{ gecmis.istatistik.gunluk_kullanim|tojson }};
+  const labels = Object.keys(gunlukKullanim).map(d => {
+      const date = new Date(d);
+      return date.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' });
+  });
+  const data = Object.values(gunlukKullanim);
 
-new Chart(document.getElementById('gunlukTuketimChart'), {
-    type: 'line',
-    data: {
-        labels: labels,
-        datasets: [{
-            label: 'Günlük Kullanım',
-            data: data,
-            fill: true,
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            borderColor: 'rgb(59, 130, 246)',
-            tension: 0.4
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        }
-    }
-});
+  new Chart(document.getElementById('gunlukTuketimChart'), {
+      type: 'line',
+      data: {
+          labels: labels,
+          datasets: [{
+              label: 'Günlük Kullanım',
+              data: data,
+              fill: true,
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderColor: 'rgb(59, 130, 246)',
+              tension: 0.4
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+              y: {
+                  beginAtZero: true
+              }
+          }
+      }
+  });
 </script>
 {% endblock %}

@@ -268,53 +268,53 @@
             <h3 class="text-lg leading-6 font-medium text-slate-900 mb-4">Son Eklenen Personeller</h3>
             {% if son_personeller %}
             <div class="overflow-hidden">
-                <table id="son-personeller-table" class="min-w-full divide-y divide-slate-200">
+                <table id="son-personeller-table" class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
                     <thead class="bg-slate-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                            <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                 Ad Soyad
                                 <span
                                     class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
                                     {{ son_personeller|length }} kişi
                                 </span>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                            <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                 Kullanıcı Adı</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                            <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                 Rol</th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell">
+                                class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell">
                                 Email</th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden xl:table-cell">
+                                class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden xl:table-cell">
                                 Eklenme Tarihi</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-slate-200">
                         {% for personel in son_personeller %}
                         <tr class="hover:bg-slate-50 transition-colors duration-150">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                            <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-slate-900">
                                 👤 {{ personel.ad }} {{ personel.soyad }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                            <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">
                                 <span
                                     class="inline-flex items-center px-2 py-1 rounded text-xs font-mono bg-slate-100 text-slate-700">
                                     {{ personel.kullanici_adi }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-3 py-3 whitespace-nowrap">
                                 <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full
                                         {% if personel.rol == 'depo_sorumlusu' %}bg-blue-100 text-blue-800
                                         {% else %}bg-green-100 text-green-800{% endif %}">
                                     {{ personel.rol.replace('_', ' ').title() }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden lg:table-cell">
+                            <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500 hidden lg:table-cell">
                                 <span class="inline-flex items-center">
                                     📧 {{ personel.email or '-' }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden xl:table-cell">
+                            <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500 hidden xl:table-cell">
                                 📅 {{ personel.olusturma_tarihi.strftime('%d.%m.%Y') }}
                             </td>
                         </tr>
@@ -334,54 +334,54 @@
             <h3 class="text-lg leading-6 font-medium text-slate-900 mb-4">Son Eklenen Ürünler</h3>
             {% if son_urunler %}
             <div class="overflow-hidden">
-                <table id="son-urunler-table" class="min-w-full divide-y divide-slate-200">
+                <table id="son-urunler-table" class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
                     <thead class="bg-slate-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                            <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                 Ürün Adı
                                 <span
                                     class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                                     {{ son_urunler|length }} ürün
                                 </span>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                            <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                 Grup</th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">
+                                class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">
                                 Birim</th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell">
+                                class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell">
                                 Kritik Seviye</th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden xl:table-cell">
+                                class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden xl:table-cell">
                                 Eklenme Tarihi</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-slate-200">
                         {% for urun in son_urunler %}
                         <tr class="hover:bg-slate-50 transition-colors duration-150">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                            <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-slate-900">
                                 📦 {{ urun.urun_adi }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <td class="px-3 py-3 whitespace-nowrap text-sm">
                                 <span
                                     class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                                     {{ urun.grup.grup_adi }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden md:table-cell">
+                            <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500 hidden md:table-cell">
                                 <span
                                     class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-700">
                                     {{ urun.birim }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm hidden lg:table-cell">
+                            <td class="px-3 py-3 whitespace-nowrap text-sm hidden lg:table-cell">
                                 <span
                                     class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                     ⚠️ {{ urun.kritik_stok_seviyesi }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden xl:table-cell">
+                            <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500 hidden xl:table-cell">
                                 📅 {{ urun.olusturma_tarihi.strftime('%d.%m.%Y') }}
                             </td>
                         </tr>

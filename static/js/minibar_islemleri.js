@@ -44,7 +44,7 @@ async function islemleriYukle() {
     if (islemTipi) params.append("islem_tipi", islemTipi);
 
     const response = await fetch(
-      `/api/kat-sorumlusu/minibar-islemlerim?${params}`
+      `/api/kat-sorumlusu/minibar-islemlerim?${params}`,
     );
     const data = await response.json();
 
@@ -83,39 +83,39 @@ function renderIslemler(islemler) {
         islem.dnd_durum === "tamamlandi"
           ? "Tamamlandı"
           : islem.dnd_durum === "iptal"
-          ? "İptal"
-          : "Aktif";
+            ? "İptal"
+            : "Aktif";
       const dndClass =
         islem.dnd_durum === "tamamlandi"
           ? "bg-green-100 text-green-800"
           : islem.dnd_durum === "iptal"
-          ? "bg-red-100 text-red-800"
-          : "bg-yellow-100 text-yellow-800";
+            ? "bg-red-100 text-red-800"
+            : "bg-yellow-100 text-yellow-800";
 
       tr.innerHTML = `
-        <td class="px-4 py-3 text-sm text-slate-900">
+        <td class="px-2 py-3 text-sm text-slate-900">
           ${formatTarih(islem.islem_tarihi)}
         </td>
-        <td class="px-4 py-3 text-sm font-medium text-slate-900">
+        <td class="px-2 py-3 text-sm font-medium text-slate-900">
           ${islem.oda_no}
         </td>
-        <td class="px-4 py-3">
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+        <td class="px-2 py-3">
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold badge-touch bg-purple-100 text-purple-800">
             🚫 DND (${islem.dnd_sayisi || 0}/3)
           </span>
         </td>
-        <td class="px-4 py-3">
+        <td class="px-2 py-3">
           <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${dndClass}">
             ${dndDurum}
           </span>
         </td>
-        <td class="px-4 py-3 text-center">
+        <td class="px-2 py-3 text-center">
           <button
             onclick='detayGoster(${JSON.stringify(islem).replace(
               /'/g,
-              "&#39;"
+              "&#39;",
             )})'
-            class="inline-flex items-center px-3 py-1.5 bg-slate-600 text-white text-xs font-medium rounded-lg hover:bg-slate-700 transition-colors"
+            class="inline-flex items-center px-4 py-2.5 bg-slate-600 text-white text-sm font-medium rounded-xl hover:bg-slate-700 transition-colors touch-manipulation"
           >
             Detay
           </button>
@@ -131,6 +131,7 @@ function renderIslemler(islemler) {
         ekstra_ekleme: "Ekstra Ekleme",
         ekstra_tuketim: "Ekstra Tüketim",
         sarfiyat_yok: "Sarfiyat Yok",
+        setup_disi_ekleme: "Setup Dışı Ekleme",
       }[islem.islem_tipi] || islem.islem_tipi;
 
     const islemTipiClass =
@@ -139,27 +140,28 @@ function renderIslemler(islemler) {
         ekstra_ekleme: "bg-orange-100 text-orange-800",
         ekstra_tuketim: "bg-red-100 text-red-800",
         sarfiyat_yok: "bg-emerald-100 text-emerald-800",
+        setup_disi_ekleme: "bg-fuchsia-100 text-fuchsia-800",
       }[islem.islem_tipi] || "bg-slate-100 text-slate-800";
 
     tr.innerHTML = `
-      <td class="px-4 py-3 text-sm text-slate-900">
+      <td class="px-2 py-3 text-sm text-slate-900">
         ${formatTarih(islem.islem_tarihi)}
       </td>
-      <td class="px-4 py-3 text-sm font-medium text-slate-900">
+      <td class="px-2 py-3 text-sm font-medium text-slate-900">
         ${islem.oda_no}
       </td>
-      <td class="px-4 py-3">
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${islemTipiClass}">
+      <td class="px-2 py-3">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold badge-touch ${islemTipiClass}">
           ${islemTipiText}
         </span>
       </td>
-      <td class="px-4 py-3 text-sm text-slate-600">
+      <td class="px-2 py-3 text-sm text-slate-600">
         ${islem.urun_sayisi} ürün
       </td>
-      <td class="px-4 py-3 text-center space-x-2">
+      <td class="px-2 py-3 text-center space-x-2">
         <button
           onclick='detayGoster(${JSON.stringify(islem).replace(/'/g, "&#39;")})'
-          class="inline-flex items-center px-3 py-1.5 bg-slate-600 text-white text-xs font-medium rounded-lg hover:bg-slate-700 transition-colors"
+          class="inline-flex items-center px-4 py-2.5 bg-slate-600 text-white text-sm font-medium rounded-xl hover:bg-slate-700 transition-colors touch-manipulation"
         >
           Detay
         </button>
@@ -168,7 +170,7 @@ function renderIslemler(islemler) {
             ? `
           <button
             onclick='islemSilModalAc(${islem.id})'
-            class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition-colors"
+            class="inline-flex items-center px-4 py-2.5 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 transition-colors touch-manipulation"
           >
             Sil
           </button>
@@ -206,20 +208,20 @@ function detayGoster(islem) {
       islem.dnd_durum === "tamamlandi"
         ? "Tamamlandı"
         : islem.dnd_durum === "iptal"
-        ? "İptal"
-        : "Aktif";
+          ? "İptal"
+          : "Aktif";
     const dndClass =
       islem.dnd_durum === "tamamlandi"
         ? "bg-green-50 border-green-200"
         : islem.dnd_durum === "iptal"
-        ? "bg-red-50 border-red-200"
-        : "bg-yellow-50 border-yellow-200";
+          ? "bg-red-50 border-red-200"
+          : "bg-yellow-50 border-yellow-200";
     const dndIconClass =
       islem.dnd_durum === "tamamlandi"
         ? "text-green-600"
         : islem.dnd_durum === "iptal"
-        ? "text-red-600"
-        : "text-yellow-600";
+          ? "text-red-600"
+          : "text-yellow-600";
 
     let html = `
       <div class="space-y-4">
@@ -231,7 +233,7 @@ function detayGoster(islem) {
           <div>
             <label class="block text-sm font-medium text-slate-700">Tarih</label>
             <p class="mt-1 text-base text-slate-900">${formatTarih(
-              islem.islem_tarihi
+              islem.islem_tarihi,
             )}</p>
           </div>
         </div>
@@ -289,6 +291,68 @@ function detayGoster(islem) {
     return;
   }
 
+  // Setup Dışı Ekleme işlemi için özel görünüm
+  if (islem.islem_tipi === "setup_disi_ekleme") {
+    let html = `
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Oda</label>
+            <p class="mt-1 text-base text-slate-900">${islem.oda_no}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Tarih/Saat</label>
+            <p class="mt-1 text-base text-slate-900">${formatTarih(islem.islem_tarihi)}</p>
+          </div>
+        </div>
+
+        <div class="bg-fuchsia-50 border border-fuchsia-200 rounded-lg p-4">
+          <div class="flex items-center">
+            <svg class="w-6 h-6 text-fuchsia-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            <div>
+              <p class="text-sm font-medium text-fuchsia-800">Setup Dışı Ürün Ekleme</p>
+              <p class="text-sm text-fuchsia-600">Setup'ta olmayan ürün odaya eklendi.</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Eklenen Ürünler</label>
+          <div class="space-y-2">
+    `;
+
+    islem.detaylar.forEach((detay) => {
+      html += `
+            <div class="flex items-center justify-between bg-fuchsia-50 rounded-lg p-3 border border-fuchsia-100">
+              <span class="text-sm font-medium text-slate-900">${detay.urun_adi}</span>
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-fuchsia-100 text-fuchsia-800">+${detay.eklenen_miktar}</span>
+            </div>
+      `;
+    });
+
+    html += `
+          </div>
+        </div>
+
+        ${
+          islem.aciklama
+            ? `
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Açıklama</label>
+            <p class="mt-1 text-sm text-slate-600">${islem.aciklama}</p>
+          </div>
+        `
+            : ""
+        }
+      </div>
+    `;
+    detayIcerik.innerHTML = html;
+    document.getElementById("detayModal").classList.remove("hidden");
+    return;
+  }
+
   // Sarfiyat Yok işlemi için özel görünüm
   if (islem.islem_tipi === "sarfiyat_yok") {
     let html = `
@@ -301,7 +365,7 @@ function detayGoster(islem) {
           <div>
             <label class="block text-sm font-medium text-slate-700">Tarih/Saat</label>
             <p class="mt-1 text-base text-slate-900">${formatTarih(
-              islem.islem_tarihi
+              islem.islem_tarihi,
             )}</p>
           </div>
         </div>
@@ -345,7 +409,7 @@ function detayGoster(islem) {
         <div>
           <label class="block text-sm font-medium text-slate-700">Tarih/Saat</label>
           <p class="mt-1 text-base text-slate-900">${formatTarih(
-            islem.islem_tarihi
+            islem.islem_tarihi,
           )}</p>
         </div>
       </div>
@@ -356,11 +420,11 @@ function detayGoster(islem) {
           <table class="min-w-full divide-y divide-slate-200">
             <thead class="bg-slate-50">
               <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Ürün</th>
-                <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Setup</th>
-                <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Eklenen</th>
-                <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Tüketim</th>
-                <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Bitiş</th>
+                <th class="px-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Ürün</th>
+                <th class="px-2 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Setup</th>
+                <th class="px-2 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Eklenen</th>
+                <th class="px-2 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Tüketim</th>
+                <th class="px-2 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Bitiş</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-slate-200">
@@ -373,25 +437,25 @@ function detayGoster(islem) {
   islem.detaylar.forEach((detay) => {
     html += `
       <tr class="hover:bg-slate-50 transition-colors">
-        <td class="px-4 py-3 text-sm font-medium text-slate-900">${
+        <td class="px-2 py-3 text-sm font-medium text-slate-900">${
           detay.urun_adi
         }</td>
-        <td class="px-4 py-3 text-sm text-center">
+        <td class="px-2 py-3 text-sm text-center">
           <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
             ${detay.setup_miktari || 0}
           </span>
         </td>
-        <td class="px-4 py-3 text-sm text-center">
+        <td class="px-2 py-3 text-sm text-center">
           <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
             +${detay.eklenen_miktar}
           </span>
         </td>
-        <td class="px-4 py-3 text-sm text-center">
+        <td class="px-2 py-3 text-sm text-center">
           <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
             -${detay.tuketim}
           </span>
         </td>
-        <td class="px-4 py-3 text-sm text-center">
+        <td class="px-2 py-3 text-sm text-center">
           <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
             ${detay.bitis_stok}
           </span>
@@ -453,7 +517,7 @@ async function islemSil() {
           "Content-Type": "application/json",
           "X-CSRFToken": getCsrfToken(),
         },
-      }
+      },
     );
 
     const data = await response.json();
@@ -478,10 +542,10 @@ function toastGoster(mesaj, tip = "info") {
     tip === "success"
       ? "bg-green-500"
       : tip === "error"
-      ? "bg-red-500"
-      : tip === "warning"
-      ? "bg-orange-500"
-      : "bg-blue-500"
+        ? "bg-red-500"
+        : tip === "warning"
+          ? "bg-orange-500"
+          : "bg-blue-500"
   }`;
   toast.textContent = mesaj;
 

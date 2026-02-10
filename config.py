@@ -51,11 +51,11 @@ class Config:
     
     # PostgreSQL Optimized Engine Options - Performance Optimized
     SQLALCHEMY_ENGINE_OPTIONS = {
-        # Connection Pool Configuration - OPTIMIZED FOR PERFORMANCE
-        'pool_size': 5,                     # 5 connection pool (increased from 2)
-        'max_overflow': 10,                 # Max 15 connection total (increased from 3)
+        # Connection Pool Configuration - OPTIMIZED FOR GUNICORN (4 workers × 4 threads)
+        'pool_size': 8,                     # 8 connections per worker (matches thread count)
+        'max_overflow': 8,                  # Max 16 connections per worker
         'pool_timeout': 30,                 # 30 saniye wait timeout
-        'pool_recycle': 1800,               # 30 dakikada bir recycle
+        'pool_recycle': 900,                # 15 dakikada bir recycle (cloud-friendly)
         'pool_pre_ping': True,              # Health check before use
         
         # Connection Management
@@ -64,10 +64,10 @@ class Config:
         # PostgreSQL Specific Options
         'connect_args': {
             'connect_timeout': 10,          # 10 saniye connection timeout
-            'options': '-c timezone=Europe/Nicosia -c statement_timeout=30000',  # KKTC timezone (GMT+2)
+            'options': '-c timezone=Europe/Nicosia -c statement_timeout=60000',  # 60 saniye statement timeout (raporlar için)
             'application_name': 'minibar_takip',
             
-            # Keep-alive settings
+            # Keep-alive settings (cloud deployment uyumlu)
             'keepalives': 1,
             'keepalives_idle': 30,
             'keepalives_interval': 10,
@@ -96,7 +96,7 @@ class Config:
     SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'  # 'Strict' önerilen ama 'Lax' uyumluluk için
-    PERMANENT_SESSION_LIFETIME = timedelta(minutes=30)  # 1 saatten 30 dakikaya düşürüldü
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=8)  # 8 saat - otel personeli gün boyu çalışır
     
     # WTF Forms ayarları - GÜVENLİK
     WTF_CSRF_ENABLED = True

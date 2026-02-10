@@ -37,13 +37,6 @@ if os.path.exists(_models_py_path):
     DolumTalebiDurum = _models_main.DolumTalebiDurum
     QROkutmaTipi = _models_main.QROkutmaTipi
     GorevDurum = _models_main.GorevDurum
-    SiparisDurum = _models_main.SiparisDurum
-    DokumanTipi = _models_main.DokumanTipi
-    FiyatDegisiklikTipi = _models_main.FiyatDegisiklikTipi
-    IndirimTipi = _models_main.IndirimTipi
-    BedelsizLimitTipi = _models_main.BedelsizLimitTipi
-    DonemTipi = _models_main.DonemTipi
-    KuralTipi = _models_main.KuralTipi
     MLMetricType = _models_main.MLMetricType
     MLAlertType = _models_main.MLAlertType
     MLAlertSeverity = _models_main.MLAlertSeverity
@@ -71,7 +64,6 @@ if os.path.exists(_models_py_path):
     AnaDepoTedarikDetay = _models_main.AnaDepoTedarikDetay
     OtelZimmetStok = _models_main.OtelZimmetStok
     UrunStok = _models_main.UrunStok
-    OdaTipiSatisFiyati = _models_main.OdaTipiSatisFiyati
     
     # Zimmet modelleri
     PersonelZimmet = _models_main.PersonelZimmet
@@ -84,7 +76,6 @@ if os.path.exists(_models_py_path):
     MinibarIslem = _models_main.MinibarIslem
     MinibarIslemDetay = _models_main.MinibarIslemDetay
     MinibarDolumTalebi = _models_main.MinibarDolumTalebi
-    Kampanya = _models_main.Kampanya
     
     # Görev modelleri
     GunlukGorev = _models_main.GunlukGorev
@@ -113,18 +104,7 @@ if os.path.exists(_models_py_path):
     EmailLog = _models_main.EmailLog
     DolulukUyariLog = _models_main.DolulukUyariLog
     
-    # Tedarikçi modelleri
-    Tedarikci = _models_main.Tedarikci
-    UrunTedarikciFiyat = _models_main.UrunTedarikciFiyat
-    TedarikciPerformans = _models_main.TedarikciPerformans
-    TedarikciIletisim = _models_main.TedarikciIletisim
-    TedarikciDokuman = _models_main.TedarikciDokuman
-    
-    # Satın Alma modelleri
-    SatinAlmaSiparisi = _models_main.SatinAlmaSiparisi
-    SatinAlmaSiparisDetay = _models_main.SatinAlmaSiparisDetay
-    SatinAlmaIslem = _models_main.SatinAlmaIslem
-    SatinAlmaIslemDetay = _models_main.SatinAlmaIslemDetay
+    # Satın Alma modelleri (aktif)
     KatSorumlusuSiparisTalebi = _models_main.KatSorumlusuSiparisTalebi
     KatSorumlusuSiparisTalepDetay = _models_main.KatSorumlusuSiparisTalepDetay
     
@@ -135,15 +115,6 @@ if os.path.exists(_models_py_path):
     MLTrainingLog = _models_main.MLTrainingLog
     MLFeature = _models_main.MLFeature
     MLPerformanceLog = _models_main.MLPerformanceLog
-    
-    # Fiyatlandırma modelleri
-    FiyatDegisiklikLog = getattr(_models_main, 'FiyatDegisiklikLog', None)
-    KarlilikAnalizi = getattr(_models_main, 'KarlilikAnalizi', None)
-    SezonFiyatlandirma = _models_main.SezonFiyatlandirma
-    BedelsizLimit = _models_main.BedelsizLimit
-    BedelsizKullanimLog = _models_main.BedelsizKullanimLog
-    DonemselKarAnalizi = _models_main.DonemselKarAnalizi
-    UrunFiyatGecmisi = _models_main.UrunFiyatGecmisi
     
     # Developer/Sistem modelleri
     QueryLog = _models_main.QueryLog
@@ -158,8 +129,7 @@ __all__ = [
     # Enum'lar
     'KullaniciRol', 'HareketTipi', 'ZimmetDurum', 'MinibarIslemTipi',
     'AuditIslemTipi', 'RaporTipi', 'DolumTalebiDurum', 'QROkutmaTipi',
-    'GorevDurum', 'SiparisDurum', 'DokumanTipi', 'FiyatDegisiklikTipi',
-    'IndirimTipi', 'BedelsizLimitTipi', 'DonemTipi', 'KuralTipi',
+    'GorevDurum',
     'MLMetricType', 'MLAlertType', 'MLAlertSeverity',
     # Otel
     'Otel', 'Kat', 'Oda', 'OdaTipi', 'Setup', 'SetupIcerik', 'oda_tipi_setup',
@@ -167,11 +137,11 @@ __all__ = [
     'Kullanici', 'KullaniciOtel',
     # Stok
     'UrunGrup', 'Urun', 'StokHareket', 'StokFifoKayit', 'StokFifoKullanim',
-    'AnaDepoTedarik', 'AnaDepoTedarikDetay', 'OtelZimmetStok', 'UrunStok', 'OdaTipiSatisFiyati',
+    'AnaDepoTedarik', 'AnaDepoTedarikDetay', 'OtelZimmetStok', 'UrunStok',
     # Zimmet
     'PersonelZimmet', 'PersonelZimmetDetay', 'ZimmetSablon', 'ZimmetSablonDetay', 'PersonelZimmetKullanim',
     # Minibar
-    'MinibarIslem', 'MinibarIslemDetay', 'MinibarDolumTalebi', 'Kampanya',
+    'MinibarIslem', 'MinibarIslemDetay', 'MinibarDolumTalebi',
     # Görev
     'GunlukGorev', 'GorevDetay', 'GorevDurumLog', 'YuklemeGorev',
     'DNDKontrol', 'OdaDNDKayit', 'OdaDNDKontrol', 'OdaKontrolKaydi',
@@ -181,16 +151,10 @@ __all__ = [
     'SistemLog', 'HataLog', 'AuditLog', 'SistemAyar', 'OtomatikRapor',
     # Email
     'EmailAyarlari', 'EmailLog', 'DolulukUyariLog',
-    # Tedarikçi
-    'Tedarikci', 'UrunTedarikciFiyat', 'TedarikciPerformans', 'TedarikciIletisim', 'TedarikciDokuman',
-    # Satın Alma
-    'SatinAlmaSiparisi', 'SatinAlmaSiparisDetay', 'SatinAlmaIslem', 'SatinAlmaIslemDetay',
+    # Kat Sorumlusu Sipariş (aktif)
     'KatSorumlusuSiparisTalebi', 'KatSorumlusuSiparisTalepDetay',
     # ML
     'MLModel', 'MLMetric', 'MLAlert', 'MLTrainingLog', 'MLFeature', 'MLPerformanceLog',
-    # Fiyatlandırma
-    'FiyatDegisiklikLog', 'KarlilikAnalizi', 'SezonFiyatlandirma',
-    'BedelsizLimit', 'BedelsizKullanimLog', 'DonemselKarAnalizi', 'UrunFiyatGecmisi',
     # Developer/Sistem
     'QueryLog', 'BackupHistory', 'ConfigAudit', 'BackgroundJob',
 ]

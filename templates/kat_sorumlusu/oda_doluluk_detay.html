@@ -1,251 +1,336 @@
-{% extends "base.html" %}
-
-{% block title %}Oda {{ oda.oda_no }} Doluluk Detayı - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Oda {{ oda.oda_no }} - Doluluk Detayı{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Oda {{ oda.oda_no }} Doluluk Detayı -
+Minibar Takip Sistemi{% endblock %} {% block page_title %}Oda {{ oda.oda_no }} -
+Doluluk Detayı{% endblock %} {% block content %}
 <div class="space-y-6">
-    <!-- Geri Dön Butonu -->
-    <div>
-        <a href="{{ url_for('doluluk.gunluk_doluluk') }}"
-            class="inline-flex items-center text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">
-            <i class="fas fa-arrow-left mr-2"></i>
-            Günlük Doluluk Raporuna Dön
-        </a>
-    </div>
+  <!-- Geri Dön Butonu -->
+  <div>
+    <a
+      href="{{ url_for('doluluk.gunluk_doluluk') }}"
+      class="inline-flex items-center px-4 py-2.5 text-base font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 rounded-xl touch-manipulation"
+    >
+      <i class="fas fa-arrow-left mr-2"></i>
+      Günlük Doluluk Raporuna Dön
+    </a>
+  </div>
 
-    <!-- Oda Bilgileri -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-white">
-                    <i class="fas fa-door-open mr-2 text-slate-600"></i>
-                    Oda Bilgileri
-                </h3>
-                {% if mevcut_misafir %}
+  <!-- Oda Bilgileri -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-xl">
+    <div class="px-4 py-5 sm:p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3
+          class="text-lg leading-6 font-medium text-slate-900 dark:text-white"
+        >
+          <i class="fas fa-door-open mr-2 text-slate-600"></i>
+          Oda Bilgileri
+        </h3>
+        {% if mevcut_misafir %}
+        <span
+          class="px-4 py-1.5 inline-flex text-base leading-5 font-semibold rounded-full badge-touch bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+        >
+          <i class="fas fa-user-check mr-1"></i> DOLU
+        </span>
+        {% else %}
+        <span
+          class="px-4 py-1.5 inline-flex text-base leading-5 font-semibold rounded-full badge-touch bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+        >
+          <i class="fas fa-check-circle mr-1"></i> BOŞ
+        </span>
+        {% endif %}
+      </div>
+
+      <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+        <div>
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Oda Numarası
+          </dt>
+          <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
+            {{ oda.oda_no }}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Kat
+          </dt>
+          <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
+            {{ oda.kat.kat_adi }}
+          </dd>
+        </div>
+        {% if oda.oda_tipi_adi %}
+        <div>
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Oda Tipi
+          </dt>
+          <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
+            {{ oda.oda_tipi_adi }}
+          </dd>
+        </div>
+        {% endif %} {% if oda.kapasite %}
+        <div>
+          <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">
+            Kapasite
+          </dt>
+          <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
+            {{ oda.kapasite }} Kişi
+          </dd>
+        </div>
+        {% endif %}
+      </dl>
+    </div>
+  </div>
+
+  <!-- Mevcut Misafir -->
+  {% if mevcut_misafir %}
+  <div
+    class="bg-white dark:bg-slate-800 shadow rounded-xl border-l-4 border-red-500"
+  >
+    <div class="px-4 py-5 sm:p-6">
+      <h3
+        class="text-lg leading-6 font-medium text-slate-900 dark:text-white mb-4"
+      >
+        <i class="fas fa-user-check mr-2 text-red-600"></i>
+        Mevcut Misafir
+      </h3>
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-5">
+          <div
+            class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
+          >
+            Giriş Tarihi
+          </div>
+          <div class="text-lg font-semibold text-slate-900 dark:text-white">
+            {{ mevcut_misafir.giris_tarihi.strftime('%d.%m.%Y') }}
+          </div>
+        </div>
+
+        <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-5">
+          <div
+            class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
+          >
+            Çıkış Tarihi
+          </div>
+          <div class="text-lg font-semibold text-slate-900 dark:text-white">
+            {{ mevcut_misafir.cikis_tarihi.strftime('%d.%m.%Y') }}
+          </div>
+        </div>
+
+        <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-5">
+          <div
+            class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
+          >
+            Kalan Gün
+          </div>
+          <div class="text-lg font-semibold text-slate-900 dark:text-white">
+            {% if kalan_gun == 0 %}
+            <span class="text-red-600 dark:text-red-400">Bugün Çıkış</span>
+            {% elif kalan_gun == 1 %}
+            <span class="text-orange-600 dark:text-orange-400">1 Gün</span>
+            {% else %} {{ kalan_gun }} Gün {% endif %}
+          </div>
+        </div>
+
+        <div class="bg-slate-50 dark:bg-slate-900 rounded-xl p-5">
+          <div
+            class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
+          >
+            Misafir Sayısı
+          </div>
+          <div class="text-lg font-semibold text-slate-900 dark:text-white">
+            <i class="fas fa-users mr-1"></i>
+            {{ mevcut_misafir.misafir_sayisi }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div
+    class="bg-white dark:bg-slate-800 shadow rounded-xl border-l-4 border-green-500"
+  >
+    <div class="px-4 py-5 sm:p-6">
+      <div class="flex items-center">
+        <i class="fas fa-check-circle text-green-600 text-3xl mr-4"></i>
+        <div>
+          <h3
+            class="text-lg leading-6 font-medium text-slate-900 dark:text-white"
+          >
+            Oda Şu Anda Boş
+          </h3>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Bu odada şu anda konaklayan misafir bulunmamaktadır.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Gelecek Rezervasyonlar -->
+  {% if gelecek_rezervasyonlar %}
+  <div class="bg-white dark:bg-slate-800 shadow rounded-xl">
+    <div class="px-4 py-5 sm:p-6">
+      <h3
+        class="text-lg leading-6 font-medium text-slate-900 dark:text-white mb-4"
+      >
+        <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>
+        Gelecek Rezervasyonlar ({{ gelecek_rezervasyonlar|length }})
+      </h3>
+
+      <div class="space-y-4">
+        {% for rez_info in gelecek_rezervasyonlar %} {% set rez =
+        rez_info.rezervasyon %}
+        <div
+          class="border border-slate-200 dark:border-slate-700 rounded-xl p-5 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+        >
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div>
+              <div
+                class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1"
+              >
+                Giriş
+              </div>
+              <div class="text-sm font-semibold text-slate-900 dark:text-white">
+                {{ rez.giris_tarihi.strftime('%d.%m.%Y') }} {% if
+                rez.giris_saati %}
+                <div class="text-xs text-slate-500 dark:text-slate-400">
+                  <i class="fas fa-clock mr-1"></i>{{
+                  rez.giris_saati.strftime('%H:%M') }}
+                </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div>
+              <div
+                class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1"
+              >
+                Çıkış
+              </div>
+              <div class="text-sm font-semibold text-slate-900 dark:text-white">
+                {{ rez.cikis_tarihi.strftime('%d.%m.%Y') }}
+              </div>
+            </div>
+
+            <div>
+              <div
+                class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1"
+              >
+                Kalış Süresi
+              </div>
+              <div class="text-sm font-semibold text-slate-900 dark:text-white">
+                {{ rez_info.kalis_suresi }} Gece
+              </div>
+            </div>
+
+            <div>
+              <div
+                class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1"
+              >
+                Misafir
+              </div>
+              <div class="text-sm font-semibold text-slate-900 dark:text-white">
+                <i class="fas fa-users mr-1"></i>{{ rez.misafir_sayisi }}
+              </div>
+            </div>
+
+            <div>
+              <div
+                class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1"
+              >
+                Tip
+              </div>
+              <div>
+                {% if rez.kayit_tipi == 'arrival' %}
                 <span
-                    class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                    <i class="fas fa-user-check mr-1"></i> DOLU
+                  class="px-3 py-1.5 inline-flex text-sm leading-5 font-semibold rounded-full badge-touch bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                >
+                  ARRIVAL
                 </span>
                 {% else %}
                 <span
-                    class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                    <i class="fas fa-check-circle mr-1"></i> BOŞ
+                  class="px-3 py-1.5 inline-flex text-sm leading-5 font-semibold rounded-full badge-touch bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                >
+                  IN HOUSE
                 </span>
                 {% endif %}
+              </div>
             </div>
-
-            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Oda Numarası</dt>
-                    <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-white">{{ oda.oda_no }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Kat</dt>
-                    <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-white">{{ oda.kat.kat_adi }}</dd>
-                </div>
-                {% if oda.oda_tipi_adi %}
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Oda Tipi</dt>
-                    <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-white">{{ oda.oda_tipi_adi }}</dd>
-                </div>
-                {% endif %}
-                {% if oda.kapasite %}
-                <div>
-                    <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">Kapasite</dt>
-                    <dd class="mt-1 text-lg font-semibold text-slate-900 dark:text-white">{{ oda.kapasite }} Kişi</dd>
-                </div>
-                {% endif %}
-            </dl>
+          </div>
         </div>
+        {% endfor %}
+      </div>
     </div>
+  </div>
+  {% endif %}
 
-    <!-- Mevcut Misafir -->
-    {% if mevcut_misafir %}
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg border-l-4 border-red-500">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-white mb-4">
-                <i class="fas fa-user-check mr-2 text-red-600"></i>
-                Mevcut Misafir
-            </h3>
+  <!-- Geçmiş Kayıtlar -->
+  {% if gecmis_kayitlar %}
+  <div class="bg-white dark:bg-slate-800 shadow rounded-xl">
+    <div class="px-4 py-5 sm:p-6">
+      <h3
+        class="text-lg leading-6 font-medium text-slate-900 dark:text-white mb-4"
+      >
+        <i class="fas fa-history mr-2 text-slate-600"></i>
+        Geçmiş Kayıtlar (Son 10)
+      </h3>
 
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
-                    <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Giriş Tarihi</div>
-                    <div class="text-lg font-semibold text-slate-900 dark:text-white">
-                        {{ mevcut_misafir.giris_tarihi.strftime('%d.%m.%Y') }}
-                    </div>
-                </div>
-
-                <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
-                    <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Çıkış Tarihi</div>
-                    <div class="text-lg font-semibold text-slate-900 dark:text-white">
-                        {{ mevcut_misafir.cikis_tarihi.strftime('%d.%m.%Y') }}
-                    </div>
-                </div>
-
-                <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
-                    <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Kalan Gün</div>
-                    <div class="text-lg font-semibold text-slate-900 dark:text-white">
-                        {% if kalan_gun == 0 %}
-                        <span class="text-red-600 dark:text-red-400">Bugün Çıkış</span>
-                        {% elif kalan_gun == 1 %}
-                        <span class="text-orange-600 dark:text-orange-400">1 Gün</span>
-                        {% else %}
-                        {{ kalan_gun }} Gün
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
-                    <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Misafir Sayısı</div>
-                    <div class="text-lg font-semibold text-slate-900 dark:text-white">
-                        <i class="fas fa-users mr-1"></i>
-                        {{ mevcut_misafir.misafir_sayisi }}
-                    </div>
-                </div>
-            </div>
-        </div>
+      <div class="overflow-hidden">
+        <table
+          class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-touch table-compact-tablet"
+          style="table-layout: fixed"
+        >
+          <thead class="bg-slate-50 dark:bg-slate-900">
+            <tr>
+              <th
+                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+                style="width: 25%"
+              >
+                Giriş
+              </th>
+              <th
+                class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+                style="width: 25%"
+              >
+                Çıkış
+              </th>
+              <th
+                class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+                style="width: 25%"
+              >
+                Kalış
+              </th>
+              <th
+                class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+                style="width: 25%"
+              >
+                Misafir
+              </th>
+            </tr>
+          </thead>
+          <tbody
+            class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+          >
+            {% for kayit in gecmis_kayitlar %}
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700">
+              <td class="px-3 py-3 text-sm text-slate-900 dark:text-slate-100">
+                {{ kayit.giris_tarihi.strftime('%d.%m.%Y') }}
+              </td>
+              <td class="px-2 py-3 text-sm text-slate-900 dark:text-slate-100">
+                {{ kayit.cikis_tarihi.strftime('%d.%m.%Y') }}
+              </td>
+              <td class="px-2 py-3 text-sm text-slate-900 dark:text-slate-100">
+                {{ (kayit.cikis_tarihi - kayit.giris_tarihi).days }} Gece
+              </td>
+              <td class="px-2 py-3 text-sm text-slate-900 dark:text-slate-100">
+                <i class="fas fa-users mr-1"></i>{{ kayit.misafir_sayisi }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
-    {% else %}
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg border-l-4 border-green-500">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center">
-                <i class="fas fa-check-circle text-green-600 text-3xl mr-4"></i>
-                <div>
-                    <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-white">
-                        Oda Şu Anda Boş
-                    </h3>
-                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        Bu odada şu anda konaklayan misafir bulunmamaktadır.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Gelecek Rezervasyonlar -->
-    {% if gelecek_rezervasyonlar %}
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-white mb-4">
-                <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>
-                Gelecek Rezervasyonlar ({{ gelecek_rezervasyonlar|length }})
-            </h3>
-
-            <div class="space-y-4">
-                {% for rez_info in gelecek_rezervasyonlar %}
-                {% set rez = rez_info.rezervasyon %}
-                <div
-                    class="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                        <div>
-                            <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Giriş</div>
-                            <div class="text-sm font-semibold text-slate-900 dark:text-white">
-                                {{ rez.giris_tarihi.strftime('%d.%m.%Y') }}
-                                {% if rez.giris_saati %}
-                                <div class="text-xs text-slate-500 dark:text-slate-400">
-                                    <i class="fas fa-clock mr-1"></i>{{ rez.giris_saati.strftime('%H:%M') }}
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Çıkış</div>
-                            <div class="text-sm font-semibold text-slate-900 dark:text-white">
-                                {{ rez.cikis_tarihi.strftime('%d.%m.%Y') }}
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Kalış Süresi</div>
-                            <div class="text-sm font-semibold text-slate-900 dark:text-white">
-                                {{ rez_info.kalis_suresi }} Gece
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Misafir</div>
-                            <div class="text-sm font-semibold text-slate-900 dark:text-white">
-                                <i class="fas fa-users mr-1"></i>{{ rez.misafir_sayisi }}
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Tip</div>
-                            <div>
-                                {% if rez.kayit_tipi == 'arrival' %}
-                                <span
-                                    class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                                    ARRIVAL
-                                </span>
-                                {% else %}
-                                <span
-                                    class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                    IN HOUSE
-                                </span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Geçmiş Kayıtlar -->
-    {% if gecmis_kayitlar %}
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-white mb-4">
-                <i class="fas fa-history mr-2 text-slate-600"></i>
-                Geçmiş Kayıtlar (Son 10)
-            </h3>
-
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                    <thead class="bg-slate-50 dark:bg-slate-900">
-                        <tr>
-                            <th
-                                class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                Giriş</th>
-                            <th
-                                class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                Çıkış</th>
-                            <th
-                                class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                Kalış</th>
-                            <th
-                                class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                                Misafir</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                        {% for kayit in gecmis_kayitlar %}
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-700">
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
-                                {{ kayit.giris_tarihi.strftime('%d.%m.%Y') }}
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
-                                {{ kayit.cikis_tarihi.strftime('%d.%m.%Y') }}
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
-                                {{ (kayit.cikis_tarihi - kayit.giris_tarihi).days }} Gece
-                            </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
-                                <i class="fas fa-users mr-1"></i>{{ kayit.misafir_sayisi }}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    {% endif %}
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

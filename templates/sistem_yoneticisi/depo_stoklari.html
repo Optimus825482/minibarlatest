@@ -133,39 +133,39 @@
             </div>
             {% elif stok_listesi %}
             <div class="table-wrapper">
-                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                <table class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
                     <thead class="bg-slate-50 dark:bg-slate-900">
                         <tr>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Ürün Adı
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Grup
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Birim
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Depo Stok
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Zimmet Stok
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Toplam Stok
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Kritik Seviye
                             </th>
                             <th
-                                class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Durum
                             </th>
                         </tr>
@@ -174,31 +174,31 @@
                         {% for item in stok_listesi %}
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                             <td
-                                class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">
+                                class="px-3 py-3 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">
                                 {{ item.urun_adi }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">
+                            <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">
                                 {{ item.grup_adi }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">
+                            <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">
                                 {{ item.birim }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">
+                            <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">
                                 {{ item.depo_stok }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 dark:text-blue-400">
+                            <td class="px-3 py-3 whitespace-nowrap text-sm text-blue-600 dark:text-blue-400">
                                 {{ item.zimmet_stok }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold 
+                            <td class="px-3 py-3 whitespace-nowrap text-sm font-semibold 
                                 {% if item.durum == 'kritik' %}text-red-600 dark:text-red-400
                                 {% elif item.durum == 'dikkat' %}text-yellow-600 dark:text-yellow-400
                                 {% else %}text-green-600 dark:text-green-400{% endif %}">
                                 {{ item.toplam_stok }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">
+                            <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">
                                 {{ item.kritik_stok }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-3 py-3 whitespace-nowrap">
                                 <span
                                     class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ item.badge_class }}">
                                     {{ item.badge_text }}
@@ -651,7 +651,7 @@ document.getElementById('stokGirisForm').addEventListener('submit', async functi
             class="relative inline-block w-full max-w-2xl overflow-hidden text-left align-bottom transition-all transform bg-white dark:bg-slate-800 rounded-lg shadow-xl sm:my-8 sm:align-middle">
             <!-- Header -->
             <div
-                class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-slate-900 dark:to-slate-800">
+                class="px-3 py-3 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-slate-900 dark:to-slate-800">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center">
                         <svg class="w-6 h-6 mr-2 text-emerald-600 dark:text-emerald-400" fill="none"
@@ -674,7 +674,7 @@ document.getElementById('stokGirisForm').addEventListener('submit', async functi
             </div>
 
             <!-- Body -->
-            <div class="px-6 py-4">
+            <div class="px-3 py-3">
                 <!-- Adım 1: Dosya Yükleme -->
                 <div id="ilkStokStep1">
                     <div class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
@@ -730,7 +730,7 @@ document.getElementById('stokGirisForm').addEventListener('submit', async functi
 
                     <!-- Eşleşen Ürünler Tablosu -->
                     <div class="max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-lg">
-                        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                        <table class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
                             <thead class="bg-slate-50 dark:bg-slate-900 sticky top-0">
                                 <tr>
                                     <th

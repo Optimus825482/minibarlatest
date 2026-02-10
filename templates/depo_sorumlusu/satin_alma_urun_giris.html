@@ -67,9 +67,9 @@ to-teal-600{% endblock %} {% block page_icon %}fas fa-money-bill-wave{% endblock
     >
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-      <div class="overflow-x-auto">
+      <div class="overflow-hidden">
         <table
-          class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"
+          class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;"
         >
           <thead class="bg-slate-50 dark:bg-slate-900">
             <tr>
@@ -176,14 +176,14 @@ to-teal-600{% endblock %} {% block page_icon %}fas fa-money-bill-wave{% endblock
       <div class="mt-6 flex justify-end gap-3">
         <a
           href="{{ url_for('satin_alma_giris', siparis_id=siparis.id) }}"
-          class="px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-semibold transition-colors"
+          class="px-3 py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-semibold transition-colors"
         >
           <i class="fas fa-arrow-left mr-2"></i>
           Geri
         </a>
         <button
           type="submit"
-          class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors"
+          class="px-3 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors"
         >
           <i class="fas fa-check mr-2"></i>
           Satın Alma İşlemini Tamamla

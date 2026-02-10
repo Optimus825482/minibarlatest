@@ -62,6 +62,9 @@
   <!-- Tailwind CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.min.css') }}" />
 
+  <!-- Tablet & Touch-Friendly UX -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tablet-touch.css') }}" />
+
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
@@ -357,24 +360,24 @@
     }
 
     /* Hamburger button visibility */
-    @media (min-width: 768px) {
+    @media (min-width: 1025px) {
 
-      /* Desktop/Tablet: Sidebar açıkken hamburger'ı gizle */
+      /* Desktop: Sidebar açıkken hamburger'ı gizle */
       body:has(#sidebar.sidebar-open) #mobile-menu-button {
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.3s ease;
       }
 
-      /* Desktop/Tablet: Sidebar kapalıyken hamburger'ı göster */
+      /* Desktop: Sidebar kapalıyken hamburger'ı göster */
       body:has(#sidebar.sidebar-hidden) #mobile-menu-button {
         opacity: 1;
         pointer-events: auto;
       }
     }
 
-    /* Mobile: Hamburger her zaman görünür */
-    @media (max-width: 767px) {
+    /* Mobile + Tablet: Hamburger her zaman görünür */
+    @media (max-width: 1024px) {
       #mobile-menu-button {
         opacity: 1 !important;
         pointer-events: auto !important;
@@ -390,14 +393,14 @@
       transform: translateX(0);
     }
 
-    /* Mobile: Main content full width */
+    /* Mobile + Tablet: Main content full width, sidebar overlay */
     #main-content {
       margin-left: 0;
       width: 100%;
     }
 
-    /* Tablet/Desktop: Sidebar default açık, content kenara çekilir */
-    @media (min-width: 768px) {
+    /* Desktop only (>1024px): Sidebar default açık, content kenara çekilir */
+    @media (min-width: 1025px) {
       .sidebar-hidden {
         transform: translateX(-100%);
       }
@@ -803,22 +806,9 @@
          RESPONSIVE TABLE STYLES - GLOBAL
          ============================================ */
 
-    /* Tablo container'ı için responsive wrapper */
-    .overflow-x-auto {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
     /* Tablo için temel responsive ayarlar - TÜM TABLOLAR */
-    table.min-w-full,
     table {
-      table-layout: auto !important;
       width: 100% !important;
-    }
-
-    /* Tablo container'ları için max-width */
-    .overflow-x-auto {
-      max-width: 100%;
     }
 
     /* Mobil görünüm için tablo hücreleri - TÜM TABLOLAR */
@@ -827,19 +817,16 @@
       /* Tablo header ve cell padding'lerini küçült */
       table th,
       table td {
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
-        padding-top: 0.75rem !important;
-        padding-bottom: 0.75rem !important;
+        padding-left: 0.375rem !important;
+        padding-right: 0.375rem !important;
+        padding-top: 0.625rem !important;
+        padding-bottom: 0.625rem !important;
         font-size: 0.75rem !important;
       }
 
       /* Tablo header'ları daha kompakt yap */
       table th {
-        font-size: 0.7rem !important;
-        white-space: nowrap;
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
+        font-size: 0.65rem !important;
       }
 
       /* İşlem butonları için özel stil */
@@ -859,11 +846,11 @@
 
       /* Badge'ler için küçültme */
       table .inline-flex {
-        padding-left: 0.4rem !important;
-        padding-right: 0.4rem !important;
-        padding-top: 0.25rem !important;
-        padding-bottom: 0.25rem !important;
-        font-size: 0.7rem !important;
+        padding-left: 0.375rem !important;
+        padding-right: 0.375rem !important;
+        padding-top: 0.2rem !important;
+        padding-bottom: 0.2rem !important;
+        font-size: 0.65rem !important;
       }
 
       /* Overflow text için */
@@ -874,20 +861,6 @@
       table td .truncate {
         max-width: 100px;
       }
-
-      /* Tablo genişliğini sınırla */
-      table {
-        display: block;
-        max-width: 100%;
-      }
-
-      table thead,
-      table tbody,
-      table tr {
-        display: table;
-        width: 100%;
-        table-layout: fixed;
-      }
     }
 
     /* Tablet görünüm - TÜM TABLOLAR */
@@ -895,37 +868,9 @@
 
       table th,
       table td {
-        padding-left: 0.75rem !important;
-        padding-right: 0.75rem !important;
-        font-size: 0.875rem !important;
-      }
-    }
-
-    /* Tablo scroll indicator (mobil için) */
-    @media (max-width: 768px) {
-      .overflow-x-auto::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 30px;
-        background: linear-gradient(to left,
-            rgba(255, 255, 255, 0.8),
-            transparent);
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.3s;
-      }
-
-      .overflow-x-auto:not(:hover)::after {
-        opacity: 1;
-      }
-
-      .dark .overflow-x-auto::after {
-        background: linear-gradient(to left,
-            rgba(30, 41, 59, 0.8),
-            transparent);
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        font-size: 0.8125rem !important;
       }
     }
   </style>
@@ -954,6 +899,12 @@
     })();
   </script>
   {% endif %}
+  <script>
+    // Tablet/mobile'da sidebar flash'ını önle - DOMContentLoaded'dan önce çalışır
+    if (window.innerWidth < 1025) {
+      document.documentElement.classList.add('sidebar-start-hidden');
+    }
+  </script>
   <div class="flex h-full">
     <!-- Sidebar -->
     <div id="sidebar"
@@ -1803,15 +1754,15 @@
     // Sidebar açma/kapama fonksiyonu
     function toggleSidebar() {
       const isHidden = sidebar.classList.contains("sidebar-hidden");
-      const isMobile = window.innerWidth < 768;
+      const isDesktop = window.innerWidth >= 1025;
 
       if (isHidden) {
         // Sidebar'ı aç
         sidebar.classList.remove("sidebar-hidden");
         sidebar.classList.add("sidebar-open");
 
-        // Overlay sadece mobile'da
-        if (isMobile) {
+        // Overlay: mobile + tablet (desktop hariç)
+        if (!isDesktop) {
           sidebarOverlay.classList.remove("hidden");
           document.body.style.overflow = "hidden";
         }
@@ -1860,8 +1811,8 @@
           }
         }
 
-        // Mobile'da menüyü kapat
-        if (window.innerWidth < 768) {
+        // Mobile + Tablet'te menüyü kapat
+        if (window.innerWidth < 1025) {
           toggleSidebar();
         }
       });
@@ -1879,16 +1830,16 @@
 
     // Sayfa yüklendiğinde ve ekran boyutu değiştiğinde sidebar durumunu ayarla
     function adjustSidebarForScreenSize() {
-      const isMobile = window.innerWidth < 768;
+      const isDesktop = window.innerWidth >= 1025;
 
-      if (isMobile) {
-        // Mobile: Sidebar'ı kapat
+      if (!isDesktop) {
+        // Mobile + Tablet: Sidebar'ı kapat, overlay gizle
         sidebar.classList.add("sidebar-hidden");
         sidebar.classList.remove("sidebar-open");
         sidebarOverlay.classList.add("hidden");
         document.body.style.overflow = "";
       } else {
-        // Desktop/Tablet: Sidebar'ı aç, overlay'i kapat
+        // Desktop (>1024px): Sidebar'ı aç, overlay'i kapat
         sidebar.classList.remove("sidebar-hidden");
         sidebar.classList.add("sidebar-open");
         sidebarOverlay.classList.add("hidden");

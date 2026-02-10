@@ -445,7 +445,7 @@ block content %}
   // Seçim sayısını güncelle
   function updateSelectionCount() {
     const checkboxes = document.querySelectorAll(
-      ".recommendation-checkbox:checked"
+      ".recommendation-checkbox:checked",
     );
     const count = checkboxes.length;
 
@@ -472,7 +472,7 @@ block content %}
   // Seçilenleri sipariş et
   function createOrderFromSelected() {
     const checkboxes = document.querySelectorAll(
-      ".recommendation-checkbox:checked"
+      ".recommendation-checkbox:checked",
     );
 
     if (checkboxes.length === 0) {
@@ -506,7 +506,7 @@ block content %}
     if (tedarikciler.size > 1) {
       if (
         !confirm(
-          "Seçili ürünler farklı tedarikçilerden. Her tedarikçi için ayrı sipariş oluşturulacak. Devam etmek istiyor musunuz?"
+          "Seçili ürünler farklı tedarikçilerden. Her tedarikçi için ayrı sipariş oluşturulacak. Devam etmek istiyor musunuz?",
         )
       ) {
         return;
@@ -516,7 +516,7 @@ block content %}
     // Sipariş sayfasına yönlendir (query string ile)
     const params = new URLSearchParams();
     params.append("oneriler", JSON.stringify(selectedProducts));
-    window.location.href = `{{ url_for('satin_alma_siparis') }}?${params.toString()}`;
+    window.location.href = `{{ url_for('kat_sorumlusu_siparisler') }}?${params.toString()}`;
   }
 
   // Sayfa yüklendiğinde

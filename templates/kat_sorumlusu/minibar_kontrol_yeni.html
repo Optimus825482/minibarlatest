@@ -190,7 +190,7 @@ endblock %} {% block page_title %}Minibar Kontrol{% endblock %} {% block content
     const loading = document.getElementById("loading");
     const odaSecimiSection = document.getElementById("oda_secimi_section");
     const odaDetaylariSection = document.getElementById(
-      "oda_detaylari_section"
+      "oda_detaylari_section",
     );
 
     try {
@@ -246,7 +246,7 @@ endblock %} {% block page_title %}Minibar Kontrol{% endblock %} {% block content
             `dolap_${setup.setup_id}_${dolapNo}`,
             `Dolap ${dolapNo} - ${setup.setup_adi}`,
             setup.urunler,
-            "from-pink-500 to-rose-500"
+            "from-pink-500 to-rose-500",
           );
           container.insertAdjacentHTML("beforeend", accordionHtml);
         }
@@ -259,7 +259,7 @@ endblock %} {% block page_title %}Minibar Kontrol{% endblock %} {% block content
         `ilave_${setup.setup_id}`,
         setup.setup_adi,
         setup.urunler,
-        "from-blue-500 to-indigo-500"
+        "from-blue-500 to-indigo-500",
       );
       container.insertAdjacentHTML("beforeend", accordionHtml);
     });
@@ -278,7 +278,7 @@ endblock %} {% block page_title %}Minibar Kontrol{% endblock %} {% block content
       const durumBadge = getDurumBadge(
         urun.durum,
         urun.eksik_miktar,
-        urun.fazla_miktar
+        urun.fazla_miktar,
       );
 
       urunlerHtml += `
@@ -347,16 +347,16 @@ endblock %} {% block page_title %}Minibar Kontrol{% endblock %} {% block content
             
             <div id="${id}" class="accordion-content hidden">
                 <div class="p-6">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-slate-200">
-                            <thead class="bg-slate-50">
+                    <div class="overflow-hidden">
+                        <table class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
+                            <thead class="bg-slate-50 dark:bg-slate-700">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Ürün</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Setup Miktar</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Mevcut</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Ekstra</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Durum</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">İşlem</th>
+                                    <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase" style="width: 25%;">Ürün</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase" style="width: 14%;">Setup</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase" style="width: 14%;">Mevcut</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase" style="width: 14%;">Ekstra</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase" style="width: 15%;">Durum</th>
+                                    <th class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase" style="width: 18%;">İşlem</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-slate-200">
@@ -423,10 +423,10 @@ endblock %} {% block page_title %}Minibar Kontrol{% endblock %} {% block content
     setupMiktar,
     mevcutMiktar,
     eksikMiktar,
-    birim
+    birim,
   ) {
     alert(
-      `Ürün Ekle Modal\n\nÜrün: ${urunAdi}\nSetup: ${setupMiktar}\nMevcut: ${mevcutMiktar}\nEksik: ${eksikMiktar}\nBirim: ${birim}`
+      `Ürün Ekle Modal\n\nÜrün: ${urunAdi}\nSetup: ${setupMiktar}\nMevcut: ${mevcutMiktar}\nEksik: ${eksikMiktar}\nBirim: ${birim}`,
     );
     // TODO: Modal implementasyonu
   }
@@ -444,10 +444,10 @@ endblock %} {% block page_title %}Minibar Kontrol{% endblock %} {% block content
       tip === "success"
         ? "bg-green-500"
         : tip === "error"
-        ? "bg-red-500"
-        : tip === "warning"
-        ? "bg-orange-500"
-        : "bg-blue-500"
+          ? "bg-red-500"
+          : tip === "warning"
+            ? "bg-orange-500"
+            : "bg-blue-500"
     }`;
     toast.textContent = mesaj;
 

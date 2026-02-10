@@ -1,0 +1,484 @@
+/**
+ * Tablet & Touch-Friendly UX Optimizations
+ * Kat Sorumlusu Arayüzleri için
+ * Min touch target: 44x44px (WCAG 2.5.5)
+ * Optimized for 768px-1024px tablet screens
+ */
+
+/* ===== GLOBAL TOUCH OPTIMIZATIONS ===== */
+
+/* Prevent double-tap zoom on interactive elements */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Larger touch targets for all interactive elements */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Active state feedback for touch */
+.touch-feedback:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
+
+/* ===== TABLET LAYOUT ADJUSTMENTS ===== */
+
+/* Tablet-optimized container */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .tablet-container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Larger text for readability */
+  .tablet-text-base {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  /* Bigger stat cards */
+  .tablet-stat-card {
+    padding: 1.25rem;
+  }
+
+  .tablet-stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+  }
+
+  .tablet-stat-card .stat-label {
+    font-size: 0.875rem;
+  }
+}
+
+/* ===== BUTTON ENHANCEMENTS ===== */
+
+/* Primary action button - large touch target */
+.btn-touch-primary {
+  min-height: 48px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s ease;
+}
+
+.btn-touch-primary:active {
+  transform: scale(0.97);
+}
+
+/* Secondary action button */
+.btn-touch-secondary {
+  min-height: 44px;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 0.625rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s ease;
+}
+
+.btn-touch-secondary:active {
+  transform: scale(0.97);
+}
+
+/* ===== TABLE TOUCH OPTIMIZATIONS ===== */
+
+/* Larger table rows for touch */
+.table-touch tbody td {
+  padding: 1rem 1.25rem;
+  font-size: 0.9375rem;
+}
+
+.table-touch thead th {
+  padding: 0.875rem 1.25rem;
+  font-size: 0.8125rem;
+}
+
+/* Table row touch feedback */
+.table-touch tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.table-touch tbody tr:active {
+  background-color: rgba(99, 102, 241, 0.08);
+}
+
+/* ===== CARD TOUCH OPTIMIZATIONS ===== */
+
+/* Clickable card with touch feedback */
+.card-touch {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.card-touch:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== FORM TOUCH OPTIMIZATIONS ===== */
+
+/* Larger form inputs */
+.input-touch {
+  min-height: 48px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border-radius: 0.625rem;
+  touch-action: manipulation;
+}
+
+/* Larger select dropdowns */
+.select-touch {
+  min-height: 48px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border-radius: 0.625rem;
+  touch-action: manipulation;
+  -webkit-appearance: none;
+}
+
+/* ===== TAB NAVIGATION TOUCH ===== */
+
+/* Touch-friendly tabs */
+.tab-touch {
+  min-height: 48px;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s ease;
+}
+
+.tab-touch:active {
+  background-color: rgba(99, 102, 241, 0.08);
+}
+
+/* Scrollable tab bar */
+.tab-scroll {
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: x mandatory;
+  gap: 0.25rem;
+}
+
+.tab-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-scroll > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* ===== MODAL TOUCH OPTIMIZATIONS ===== */
+
+/* Bottom sheet modal for mobile/tablet */
+.modal-bottom-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+
+@media (min-width: 640px) {
+  .modal-bottom-sheet {
+    align-items: center;
+    padding: 1rem;
+  }
+}
+
+/* Modal content with safe area */
+.modal-content-touch {
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ===== BADGE TOUCH OPTIMIZATIONS ===== */
+
+/* Larger badges for touch */
+.badge-touch {
+  min-height: 28px;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/* ===== GOREV (TASK) CARD TOUCH ===== */
+
+/* Task card with larger touch area */
+.gorev-card-touch {
+  min-height: 64px;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s ease;
+}
+
+.gorev-card-touch:active {
+  transform: scale(0.99);
+}
+
+/* Room number badge - larger */
+.oda-badge-touch {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ===== COUNTDOWN TIMER TOUCH ===== */
+
+.countdown-touch {
+  min-width: 5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-family: "Roboto Mono", monospace;
+  text-align: center;
+}
+
+/* ===== QUICK ACTION GRID ===== */
+
+/* Touch-optimized quick action cards */
+.quick-action-touch {
+  min-height: 120px;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s ease;
+}
+
+.quick-action-touch:active {
+  transform: scale(0.97);
+}
+
+.quick-action-touch .action-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-action-touch .action-icon i {
+  font-size: 1.5rem;
+}
+
+/* ===== PROGRESS BAR TOUCH ===== */
+
+.progress-touch {
+  height: 0.75rem;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-touch .progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.5s ease;
+}
+
+/* ===== SPACING UTILITIES ===== */
+
+/* Extra spacing for touch interfaces */
+.space-y-touch > * + * {
+  margin-top: 1rem;
+}
+
+.gap-touch {
+  gap: 0.75rem;
+}
+
+/* ===== SAFE AREA PADDING ===== */
+
+/* iOS safe area support */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* ===== SMOOTH SCROLLING ===== */
+
+.scroll-smooth-touch {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ===== DARK MODE ADJUSTMENTS ===== */
+
+.dark .card-touch:active {
+  background-color: rgba(99, 102, 241, 0.12);
+}
+
+.dark .table-touch tbody tr:active {
+  background-color: rgba(99, 102, 241, 0.12);
+}
+
+/* ===== ANIMATION UTILITIES ===== */
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+/* ===== RESPONSIVE TABLE - NO HORIZONTAL SCROLL ===== */
+
+/* Force table to fit container width */
+.table-responsive-fit {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.table-responsive-fit th,
+.table-responsive-fit td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
+}
+
+/* Remove min-w-full to prevent overflow */
+.table-no-scroll {
+  min-width: 0 !important;
+  width: 100% !important;
+  table-layout: fixed;
+}
+
+/* Compact padding for tablet tables */
+@media (max-width: 1024px) {
+  .table-compact-tablet th,
+  .table-compact-tablet td {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .table-compact-tablet th {
+    font-size: 0.6875rem;
+  }
+
+  .table-compact-tablet td {
+    font-size: 0.8125rem;
+  }
+
+  /* Allow text wrapping in cells */
+  .table-compact-tablet td {
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+
+/* Hide columns on tablet */
+@media (max-width: 1024px) {
+  .hide-tablet {
+    display: none !important;
+  }
+}
+
+/* Hide columns on small tablet / large mobile */
+@media (max-width: 768px) {
+  .hide-sm-tablet {
+    display: none !important;
+  }
+}
+
+/* Progress bar in table - compact version */
+.progress-compact {
+  width: 100%;
+  max-width: 4rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+}

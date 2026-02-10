@@ -39,41 +39,41 @@ Doluluk Detayı{% endblock %} {% block content %}
   <!-- Özet İstatistikler -->
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
     <!-- Toplam Oda -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
+    <div class="bg-white dark:bg-slate-800 shadow rounded-xl p-5 card-touch">
       <div class="text-slate-500 dark:text-slate-400 text-sm mb-1">
         Toplam Oda
       </div>
-      <div class="text-2xl font-bold text-slate-900 dark:text-white">
+      <div class="text-3xl font-bold text-slate-900 dark:text-white">
         {{ toplam_oda }}
       </div>
     </div>
 
     <!-- Dolu Oda -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
+    <div class="bg-white dark:bg-slate-800 shadow rounded-xl p-5 card-touch">
       <div class="text-slate-500 dark:text-slate-400 text-sm mb-1">
         Dolu Oda
       </div>
-      <div class="text-2xl font-bold text-red-600 dark:text-red-400">
+      <div class="text-3xl font-bold text-red-600 dark:text-red-400">
         {{ dolu_sayisi }}
       </div>
     </div>
 
     <!-- Bugün Giriş -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
+    <div class="bg-white dark:bg-slate-800 shadow rounded-xl p-5 card-touch">
       <div class="text-slate-500 dark:text-slate-400 text-sm mb-1">
         Bugün Giriş
       </div>
-      <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+      <div class="text-3xl font-bold text-green-600 dark:text-green-400">
         {{ bugun_giris_sayisi }}
       </div>
     </div>
 
     <!-- Bugün Çıkış -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-4">
+    <div class="bg-white dark:bg-slate-800 shadow rounded-xl p-5 card-touch">
       <div class="text-slate-500 dark:text-slate-400 text-sm mb-1">
         Bugün Çıkış
       </div>
-      <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">
+      <div class="text-3xl font-bold text-orange-600 dark:text-orange-400">
         {{ bugun_cikis_sayisi }}
       </div>
     </div>
@@ -84,31 +84,31 @@ Doluluk Detayı{% endblock %} {% block content %}
     <div class="flex flex-wrap items-center gap-2">
       <button
         onclick="filterOdalar('all')"
-        class="filter-btn active px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        class="filter-btn active px-5 py-3 rounded-xl text-base font-semibold transition-colors touch-manipulation"
       >
         Tümü ({{ toplam_oda }})
       </button>
       <button
         onclick="filterOdalar('dolu')"
-        class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        class="filter-btn px-5 py-3 rounded-xl text-base font-semibold transition-colors touch-manipulation"
       >
         Dolu ({{ dolu_sayisi }})
       </button>
       <button
         onclick="filterOdalar('bos')"
-        class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        class="filter-btn px-5 py-3 rounded-xl text-base font-semibold transition-colors touch-manipulation"
       >
         Boş ({{ bos_sayisi }})
       </button>
       <button
         onclick="filterOdalar('bugun_giris')"
-        class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        class="filter-btn px-5 py-3 rounded-xl text-base font-semibold transition-colors touch-manipulation"
       >
         Bugün Giriş ({{ bugun_giris_sayisi }})
       </button>
       <button
         onclick="filterOdalar('bugun_cikis')"
-        class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        class="filter-btn px-5 py-3 rounded-xl text-base font-semibold transition-colors touch-manipulation"
       >
         Bugün Çıkış ({{ bugun_cikis_sayisi }})
       </button>

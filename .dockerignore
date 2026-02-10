@@ -90,6 +90,7 @@ railway.toml
 *.bat
 *.sh
 !start.sh
+!docker-entrypoint.sh
 
 # Migrations (manuel çalıştırılacak)
 migrations/

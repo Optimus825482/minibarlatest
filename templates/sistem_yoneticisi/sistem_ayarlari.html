@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %} {% block title %}Sistem Ayarları - Minibar Takip
+{% extends "base.html" %} {% block title %}Sistem Ayarları - Minibar Takip
 Sistemi{% endblock %} {% block page_title %}Sistem Ayarları{% endblock %} {%
 block content %}
 <div class="space-y-6">
@@ -8,31 +8,31 @@ block content %}
       <nav class="flex -mb-px">
         <a
           href="{{ url_for('sistem_ayarlari') }}"
-          class="px-6 py-4 text-sm font-medium border-b-2 transition-colors {% if active_tab == 'genel' %}border-blue-500 text-blue-600 dark:text-blue-400{% else %}border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300{% endif %}"
+          class="px-3 py-3 text-sm font-medium border-b-2 transition-colors {% if active_tab == 'genel' %}border-blue-500 text-blue-600 dark:text-blue-400{% else %}border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300{% endif %}"
         >
           <i class="fas fa-cog mr-2"></i>Genel
         </a>
         <a
           href="{{ url_for('sistem_ayarlari_email') }}"
-          class="px-6 py-4 text-sm font-medium border-b-2 transition-colors {% if active_tab == 'email' %}border-blue-500 text-blue-600 dark:text-blue-400{% else %}border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300{% endif %}"
+          class="px-3 py-3 text-sm font-medium border-b-2 transition-colors {% if active_tab == 'email' %}border-blue-500 text-blue-600 dark:text-blue-400{% else %}border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300{% endif %}"
         >
           <i class="fas fa-envelope mr-2"></i>Email Ayarları
         </a>
         <a
           href="{{ url_for('email_loglari') }}"
-          class="px-6 py-4 text-sm font-medium border-b-2 transition-colors {% if active_tab == 'email_logs' %}border-blue-500 text-blue-600 dark:text-blue-400{% else %}border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300{% endif %}"
+          class="px-3 py-3 text-sm font-medium border-b-2 transition-colors {% if active_tab == 'email_logs' %}border-blue-500 text-blue-600 dark:text-blue-400{% else %}border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300{% endif %}"
         >
           <i class="fas fa-history mr-2"></i>Email Logları
         </a>
         <a
           href="{{ url_for('sistem_ayarlari_yedekleme') }}"
-          class="px-6 py-4 text-sm font-medium border-b-2 transition-colors {% if active_tab == 'yedekleme' %}border-blue-500 text-blue-600 dark:text-blue-400{% else %}border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300{% endif %}"
+          class="px-3 py-3 text-sm font-medium border-b-2 transition-colors {% if active_tab == 'yedekleme' %}border-blue-500 text-blue-600 dark:text-blue-400{% else %}border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300{% endif %}"
         >
           <i class="fas fa-database mr-2"></i>Yedekleme
         </a>
         <a
           href="{{ url_for('sistem_ayarlari_bildirimler') }}"
-          class="px-6 py-4 text-sm font-medium border-b-2 transition-colors {% if active_tab == 'bildirimler' %}border-blue-500 text-blue-600 dark:text-blue-400{% else %}border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300{% endif %}"
+          class="px-3 py-3 text-sm font-medium border-b-2 transition-colors {% if active_tab == 'bildirimler' %}border-blue-500 text-blue-600 dark:text-blue-400{% else %}border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300{% endif %}"
         >
           <i class="fas fa-bell mr-2"></i>Bildirim Ayarlari
         </a>
@@ -412,7 +412,7 @@ block content %}
             <i class="fas fa-list mr-2 text-purple-500"></i>Yedek Listesi
           </h3>
         </div>
-        <div class="overflow-x-auto">
+        <div class="overflow-hidden">
           <table class="w-full">
             <thead class="bg-slate-50 dark:bg-slate-700">
               <tr>
@@ -542,11 +542,11 @@ block content %}
     <form method="POST" action="{{ url_for('sistem_ayarlari_bildirimler') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       
-      <div class="overflow-x-auto">
+      <div class="overflow-hidden">
         <table class="w-full">
           <thead class="bg-slate-50 dark:bg-slate-700">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Otel</th>
+              <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Otel</th>
               <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"><i class="fas fa-envelope mr-1"></i>Tum Bildirimler</th>
               <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"><i class="fas fa-exclamation-triangle mr-1"></i>Uyarilar</th>
               <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"><i class="fas fa-chart-bar mr-1"></i>Raporlar</th>
@@ -556,7 +556,7 @@ block content %}
           <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
             {% for otel in oteller %}
             <tr class="{% if otel.email_bildirim_aktif %}bg-green-50 dark:bg-green-900/10{% endif %}">
-              <td class="px-6 py-4">
+              <td class="px-3 py-3">
                 <div class="flex items-center">
                   <div class="flex-shrink-0 h-10 w-10 bg-slate-100 dark:bg-slate-600 rounded-lg flex items-center justify-center">
                     <i class="fas fa-hotel text-slate-500 dark:text-slate-400"></i>

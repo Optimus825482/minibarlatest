@@ -14,7 +14,7 @@ block content %}
     </div>
     <a
       href="{{ url_for('kat_sorumlusu_kritik_stoklar') }}"
-      class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+      class="inline-flex items-center px-5 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold text-base btn-touch-primary"
     >
       <i class="fas fa-plus mr-2"></i>Yeni Sipariş
     </a>
@@ -24,7 +24,7 @@ block content %}
   <div class="space-y-4">
     {% if siparisler %} {% for siparis in siparisler %}
     <div
-      class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6"
+      class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6"
     >
       <!-- Başlık -->
       <div class="flex items-start justify-between mb-4">
@@ -34,7 +34,7 @@ block content %}
               {{ siparis.talep_no }}
             </h3>
             <span
-              class="px-3 py-1 rounded-full text-sm font-semibold {% if siparis.durum == 'beklemede' %} bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 {% elif siparis.durum == 'onaylandi' %} bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 {% elif siparis.durum == 'reddedildi' %} bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 {% elif siparis.durum == 'teslim_edildi' %} bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 {% else %} bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 {% endif %}"
+              class="px-3 py-1.5 rounded-full text-sm font-semibold badge-touch {% if siparis.durum == 'beklemede' %} bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 {% elif siparis.durum == 'onaylandi' %} bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 {% elif siparis.durum == 'reddedildi' %} bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 {% elif siparis.durum == 'teslim_edildi' %} bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 {% else %} bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 {% endif %}"
             >
               <i
                 class="fas {% if siparis.durum == 'beklemede' %}fa-clock {% elif siparis.durum == 'onaylandi' %}fa-check {% elif siparis.durum == 'reddedildi' %}fa-times {% elif siparis.durum == 'teslim_edildi' %}fa-box {% endif %} mr-1"
@@ -67,7 +67,7 @@ block content %}
         </h4>
         {% for detay in siparis.detaylar_list %}
         <div
-          class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3"
+          class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4"
         >
           <div class="flex-1">
             <p class="text-sm font-medium text-slate-900 dark:text-white">

@@ -77,15 +77,18 @@ from flask_migrate import Migrate
 db.init_app(app)
 migrate = Migrate(app, db)
 
-# Veritabanı metadata'sını yenile (schema değişikliklerini algıla)
+# Veritabanı metadata'sını yenile ve bağlantıyı test et
 with app.app_context():
     try:
-        # Mevcut bağlantıları temizle ve metadata'yı yenile
         db.engine.dispose()
         db.reflect()
-        logger.info("✅ Database engine yenilendi ve metadata reflect edildi")
+        # Bağlantıyı test et
+        with db.engine.connect() as conn:
+            result = conn.execute(db.text("SELECT 1"))
+            result.close()
+        logger.info("✅ Database engine yenilendi, metadata reflect edildi ve bağlantı test edildi")
     except Exception as e:
-        logger.warning(f"⚠️ Metadata refresh hatası (görmezden geliniyor): {e}")
+        logger.warning(f"⚠️ Database başlatma hatası (görmezden geliniyor): {e}")
 
 # Cache devre dışı (Redis sadece Celery broker olarak kullanılıyor)
 cache = None
@@ -124,22 +127,8 @@ try:
 except Exception as e:
     logger.warning(f"Query logging setup hatası: {e}")
 
-# SQLAlchemy Engine ve Session Refresh - ML Metrics entity_type fix
-# ÇÖZÜM: Engine'i dispose ederek tüm connection pool'u ve metadata cache'i temizle
-with app.app_context():
-    try:
-        # Tüm bağlantıları kapat ve engine'i yenile
-        db.engine.dispose()
-        # Yeni bir connection al ve test et
-        with db.engine.connect() as conn:
-            result = conn.execute(db.text("SELECT 1"))
-            result.close()
-        logger.info("✅ Database engine yenilendi ve test edildi")
-        
-       
-            
-    except Exception as e:
-        logger.warning(f"⚠️ Engine refresh hatası: {str(e)[:200]}")
+# İkinci dispose kaldırıldı - yukarıda zaten yapılıyor (10.02.2026)
+# Engine test yukarıdaki blokta yapılıyor
 
 # Database Connection Retry Mekanizması - Railway Timeout Fix v3 (ULTRA AGRESIF)
 def init_db_with_retry(max_retries=3, retry_delay=10):
@@ -201,7 +190,7 @@ from models import (
     Otel, Kullanici, Kat, Oda, UrunGrup, Urun, StokHareket, 
     PersonelZimmet, PersonelZimmetDetay, MinibarIslem, MinibarIslemDetay, 
     MinibarIslemTipi, SistemAyar, SistemLog, HataLog, OtomatikRapor,
-    MinibarDolumTalebi, Kampanya, Setup, SetupIcerik
+    MinibarDolumTalebi, Setup, SetupIcerik
 )
 
 # Context processor - tüm template'lere kullanıcı bilgisini gönder
@@ -1605,142 +1594,6 @@ def api_bekleyen_dolum_sayisi():
         return jsonify({
             'success': False,
             'count': 0,
-            'error': str(e)
-        }), 500
-
-
-# ============================================================================
-# KAMPANYA YÖNETİMİ API'LERİ
-# ============================================================================
-
-@app.route('/api/v1/fiyat/kampanya/istatistikler')
-@login_required
-@role_required(['sistem_yoneticisi', 'admin'])
-def api_kampanya_istatistikler():
-    """Kampanya istatistiklerini döndür"""
-    try:
-        from sqlalchemy import func
-        
-        # Aktif kampanya sayısı
-        aktif_kampanyalar = Kampanya.query.filter_by(aktif=True).filter(
-            Kampanya.baslangic_tarihi <= get_kktc_now(),
-            Kampanya.bitis_tarihi >= get_kktc_now()
-        ).count()
-        
-        # Toplam kampanya sayısı
-        toplam_kampanyalar = Kampanya.query.count()
-        
-        # Süresi dolan kampanyalar
-        suresi_dolan = Kampanya.query.filter(
-            Kampanya.bitis_tarihi < get_kktc_now()
-        ).count()
-        
-        # Yaklaşan kampanyalar (7 gün içinde başlayacak)
-        yaklasan = Kampanya.query.filter(
-            Kampanya.baslangic_tarihi > get_kktc_now(),
-            Kampanya.baslangic_tarihi <= get_kktc_now() + timedelta(days=7)
-        ).count()
-        
-        return jsonify({
-            'success': True,
-            'data': {
-                'aktif': aktif_kampanyalar,
-                'toplam': toplam_kampanyalar,
-                'suresi_dolan': suresi_dolan,
-                'yaklasan': yaklasan
-            }
-        })
-    except Exception as e:
-        logger.error(f"Kampanya istatistikleri hatası: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-
-@app.route('/api/v1/fiyat/kampanya/performans')
-@login_required
-@role_required(['sistem_yoneticisi', 'admin'])
-def api_kampanya_performans():
-    """Kampanya performans metriklerini döndür"""
-    try:
-        # Aktif kampanyaları al
-        kampanyalar = Kampanya.query.filter_by(aktif=True).filter(
-            Kampanya.baslangic_tarihi <= get_kktc_now(),
-            Kampanya.bitis_tarihi >= get_kktc_now()
-        ).all()
-        
-        performans_data = []
-        for kampanya in kampanyalar:
-            kullanim_orani = 0
-            if kampanya.max_kullanim_sayisi:
-                kullanim_orani = (kampanya.kullanilan_sayisi / kampanya.max_kullanim_sayisi) * 100
-            
-            performans_data.append({
-                'id': kampanya.id,
-                'kampanya_adi': kampanya.kampanya_adi,
-                'kullanilan': kampanya.kullanilan_sayisi,
-                'max_kullanim': kampanya.max_kullanim_sayisi,
-                'kullanim_orani': round(kullanim_orani, 2),
-                'indirim_tipi': kampanya.indirim_tipi.value if kampanya.indirim_tipi else None,
-                'indirim_degeri': float(kampanya.indirim_degeri) if kampanya.indirim_degeri else 0
-            })
-        
-        return jsonify({
-            'success': True,
-            'data': performans_data
-        })
-    except Exception as e:
-        logger.error(f"Kampanya performans hatası: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-
-@app.route('/api/v1/fiyat/kampanya/tumu')
-@login_required
-@role_required(['sistem_yoneticisi', 'admin'])
-def api_kampanya_tumu():
-    """Tüm kampanyaları listele"""
-    try:
-        kampanyalar = Kampanya.query.order_by(Kampanya.olusturma_tarihi.desc()).all()
-        
-        kampanya_listesi = []
-        for kampanya in kampanyalar:
-            # Durum kontrolü
-            simdi = get_kktc_now()
-            if kampanya.bitis_tarihi < simdi:
-                durum = 'Süresi Doldu'
-            elif kampanya.baslangic_tarihi > simdi:
-                durum = 'Beklemede'
-            elif kampanya.aktif:
-                durum = 'Aktif'
-            else:
-                durum = 'Pasif'
-            
-            kampanya_listesi.append({
-                'id': kampanya.id,
-                'kampanya_adi': kampanya.kampanya_adi,
-                'baslangic_tarihi': kampanya.baslangic_tarihi.isoformat() if kampanya.baslangic_tarihi else None,
-                'bitis_tarihi': kampanya.bitis_tarihi.isoformat() if kampanya.bitis_tarihi else None,
-                'urun_adi': kampanya.urun.urun_adi if kampanya.urun else 'Tüm Ürünler',
-                'indirim_tipi': kampanya.indirim_tipi.value if kampanya.indirim_tipi else None,
-                'indirim_degeri': float(kampanya.indirim_degeri) if kampanya.indirim_degeri else 0,
-                'kullanilan': kampanya.kullanilan_sayisi,
-                'max_kullanim': kampanya.max_kullanim_sayisi,
-                'aktif': kampanya.aktif,
-                'durum': durum
-            })
-        
-        return jsonify({
-            'success': True,
-            'data': kampanya_listesi
-        })
-    except Exception as e:
-        logger.error(f"Kampanya listesi hatası: {e}")
-        return jsonify({
-            'success': False,
             'error': str(e)
         }), 500
 

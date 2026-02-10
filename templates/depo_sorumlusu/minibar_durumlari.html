@@ -1,478 +1,673 @@
-{% extends "base.html" %}
-
-{% block title %}Minibar Durumları - Depo Sorumlusu{% endblock %}
-{% block page_title %}Minibar Durumları{% endblock %}
-{% block page_icon_bg %}bg-gradient-to-br from-sky-500 to-blue-600{% endblock %}
-{% block page_icon %}fas fa-wine-bottle{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Minibar Durumları - Depo Sorumlusu{%
+endblock %} {% block page_title %}Minibar Durumları{% endblock %} {% block
+page_icon_bg %}bg-gradient-to-br from-sky-500 to-blue-600{% endblock %} {% block
+page_icon %}fas fa-wine-bottle{% endblock %} {% block content %}
 <div class="space-y-6">
-    <!-- Filtrele Formu -->
-    <div class="bg-white shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-slate-900 mb-4">Minibar Sorgula</h3>
+  <!-- Filtrele Formu -->
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <h3 class="text-lg leading-6 font-medium text-slate-900 mb-4">
+        Minibar Sorgula
+      </h3>
 
-            <form method="GET" class="space-y-4">
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <!-- Kat Seçimi -->
-                    <div>
-                        <label for="kat_id" class="block text-sm font-medium text-slate-700 mb-2">
-                            Kat Seçiniz <span class="text-red-500">*</span>
-                        </label>
-                        <select id="kat_id" name="kat_id" required
-                            onchange="this.form.oda_id.value=''; this.form.submit();"
-                            class="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-slate-500 focus:border-slate-500 sm:text-sm">
-                            <option value="">Kat seçiniz...</option>
-                            {% for kat in katlar %}
-                            <option value="{{ kat.id }}" {% if kat_id==kat.id %}selected{% endif %}>
-                                {{ kat.kat_adi }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+      <form method="GET" class="space-y-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <!-- Kat Seçimi -->
+          <div>
+            <label
+              for="kat_id"
+              class="block text-sm font-medium text-slate-700 mb-2"
+            >
+              Kat Seçiniz <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="kat_id"
+              name="kat_id"
+              required
+              onchange="
+                this.form.oda_id.value = '';
+                this.form.submit();
+              "
+              class="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-slate-500 focus:border-slate-500 sm:text-sm"
+            >
+              <option value="">Kat seçiniz...</option>
+              {% for kat in katlar %}
+              <option
+                value="{{ kat.id }}"
+                {%
+                if
+                kat_id=""
+                ="kat.id"
+                %}selected{%
+                endif
+                %}
+              >
+                {{ kat.kat_adi }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
 
-                    <!-- Oda Seçimi -->
-                    <div>
-                        <label for="oda_id" class="block text-sm font-medium text-slate-700 mb-2">
-                            Oda Seçiniz <span class="text-red-500">*</span>
-                        </label>
-                        <select id="oda_id" name="oda_id" required onchange="this.form.submit();" {% if not kat_id
-                            %}disabled{% endif %}
-                            class="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-slate-500 focus:border-slate-500 sm:text-sm">
-                            <option value="">{% if kat_id %}Oda seçiniz...{% else %}Önce kat seçiniz...{% endif %}
-                            </option>
-                            {% for oda in odalar %}
-                            <option value="{{ oda.id }}" {% if oda_id==oda.id %}selected{% endif %}>
-                                {{ oda.oda_no }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                {% if kat_id and not oda_id %}
-                <div class="flex justify-end">
-                    <button type="submit"
-                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500">
-                        Minibar Sorgula
-                    </button>
-                </div>
-                {% endif %}
-            </form>
+          <!-- Oda Seçimi -->
+          <div>
+            <label
+              for="oda_id"
+              class="block text-sm font-medium text-slate-700 mb-2"
+            >
+              Oda Seçiniz <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="oda_id"
+              name="oda_id"
+              required
+              onchange="this.form.submit()"
+              {%
+              if
+              not
+              kat_id
+              %}disabled{%
+              endif
+              %}
+              class="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-slate-500 focus:border-slate-500 sm:text-sm"
+            >
+              <option value="">
+                {% if kat_id %}Oda seçiniz...{% else %}Önce kat seçiniz...{%
+                endif %}
+              </option>
+              {% for oda in odalar %}
+              <option
+                value="{{ oda.id }}"
+                {%
+                if
+                oda_id=""
+                ="oda.id"
+                %}selected{%
+                endif
+                %}
+              >
+                {{ oda.oda_no }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
         </div>
-    </div>
 
-    <!-- Minibar Bilgileri -->
-    {% if minibar_bilgisi %}
-    <div class="bg-white shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h3 class="text-lg leading-6 font-medium text-slate-900">
-                        {{ minibar_bilgisi.oda.oda_no }} - Minibar Durumu
-                    </h3>
-                    <p class="text-sm text-slate-500 mt-1">
-                        {{ minibar_bilgisi.oda.kat.kat_adi }} - {{ minibar_bilgisi.oda.oda_tipi_adi or 'Standart' }}
-                    </p>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="{{ url_for('minibar_durumlari') }}"
-                        class="text-slate-600 hover:text-slate-900 font-medium text-sm">
-                        ← Yeni Sorgulama
-                    </a>
-                </div>
-            </div>
-
-            <!-- İstatistik Kartları -->
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-6">
-                <div class="bg-blue-50 overflow-hidden shadow rounded-lg border border-blue-200">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                                </svg>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-blue-600 truncate">Toplam Ürün Çeşidi</dt>
-                                    <dd class="text-2xl font-bold text-blue-900">{{ minibar_bilgisi.toplam_urun }}</dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-green-50 overflow-hidden shadow rounded-lg border border-green-200">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-green-600 truncate">Toplam Miktar</dt>
-                                    <dd class="text-2xl font-bold text-green-900">{{ minibar_bilgisi.toplam_miktar }}
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-purple-50 overflow-hidden shadow rounded-lg border border-purple-200">
-                    <div class="p-5">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
-                                    </path>
-                                </svg>
-                            </div>
-                            <div class="ml-5 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-sm font-medium text-purple-600 truncate">Son İşlem Tipi</dt>
-                                    <dd class="text-lg font-bold text-purple-900">
-                                        {{ minibar_bilgisi.son_islem.islem_tipi.replace('_', ' ').title() }}
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Son İşlem Bilgileri -->
-            <div class="bg-slate-50 rounded-lg p-4 mb-6 border border-slate-200">
-                <h4 class="text-sm font-medium text-slate-900 mb-3">Son İşlem Bilgileri</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <p class="text-xs text-slate-500">İşlem Tarihi</p>
-                        <p class="text-sm font-medium text-slate-900">
-                            {{ minibar_bilgisi.son_islem.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}
-                        </p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-slate-500">İşlemi Yapan</p>
-                        <p class="text-sm font-medium text-slate-900">
-                            {{ minibar_bilgisi.son_islem.personel.ad }} {{ minibar_bilgisi.son_islem.personel.soyad }}
-                        </p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-slate-500">Açıklama</p>
-                        <p class="text-sm font-medium text-slate-900">
-                            {{ minibar_bilgisi.son_islem.aciklama or '-' }}
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Minibar Ürünleri Tablosu -->
-            <div>
-                <h4 class="text-md font-medium text-slate-900 mb-4">Minibar İçeriği</h4>
-                <div class="table-wrapper border border-slate-200 rounded-lg">
-                    <table id="minibar-urunler-table" class="min-w-full divide-y divide-slate-200">
-                        <thead class="bg-slate-50">
-                            <tr>
-                                <th
-                                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                    Ürün</th>
-                                <th
-                                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">
-                                    Grup</th>
-                                <th
-                                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell">
-                                    Birim</th>
-                                <th
-                                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden xl:table-cell">
-                                    Başlangıç</th>
-                                <th
-                                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                    Eklenen</th>
-                                <th
-                                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                    Tüketim</th>
-                                <th
-                                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                    Mevcut</th>
-                                <th
-                                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell">
-                                    Ekleyen Personel</th>
-                                <th
-                                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden xl:table-cell">
-                                    İşlem Tarihi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-slate-200">
-                            {% for item in minibar_bilgisi.urunler %}
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium text-slate-900">
-                                    <button
-                                        onclick="urunGecmisiGoster({{ minibar_bilgisi.oda.id }}, {{ item.urun.id }}, '{{ item.urun.urun_adi }}')"
-                                        class="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left">
-                                        {{ item.urun.urun_adi }}
-                                    </button>
-                                </td>
-                                <td
-                                    class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 hidden md:table-cell">
-                                    {{ item.urun.grup.grup_adi }}
-                                </td>
-                                <td
-                                    class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 hidden lg:table-cell">
-                                    {{ item.urun.birim }}
-                                </td>
-                                <td
-                                    class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 hidden xl:table-cell">
-                                    {{ item.baslangic_stok }}
-                                </td>
-                                <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500">
-                                    {% if item.eklenen_miktar > 0 %}
-                                    <span class="text-green-600 font-medium">+{{ item.eklenen_miktar }}</span>
-                                    {% else %}
-                                    <span class="text-slate-400">-</span>
-                                    {% endif %}
-                                </td>
-                                <td class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500">
-                                    {% if item.tuketim > 0 %}
-                                    <span class="text-red-600 font-medium">-{{ item.tuketim }}</span>
-                                    {% else %}
-                                    <span class="text-slate-400">-</span>
-                                    {% endif %}
-                                </td>
-                                <td
-                                    class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-bold text-slate-900">
-                                    {{ item.mevcut_miktar }}
-                                </td>
-                                <td
-                                    class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-700 hidden lg:table-cell">
-                                    {{ minibar_bilgisi.son_islem.personel.ad }} {{
-                                    minibar_bilgisi.son_islem.personel.soyad }}
-                                </td>
-                                <td
-                                    class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 hidden xl:table-cell">
-                                    {{ minibar_bilgisi.son_islem.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        {% if kat_id and not oda_id %}
+        <div class="flex justify-end">
+          <button
+            type="submit"
+            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
+          >
+            Minibar Sorgula
+          </button>
         </div>
+        {% endif %}
+      </form>
     </div>
-    {% elif oda_id %}
-    <!-- Oda seçili ama minibar bilgisi yok -->
-    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <div class="flex">
-            <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd"
-                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                        clip-rule="evenodd"></path>
+  </div>
+
+  <!-- Minibar Bilgileri -->
+  {% if minibar_bilgisi %}
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h3 class="text-lg leading-6 font-medium text-slate-900">
+            {{ minibar_bilgisi.oda.oda_no }} - Minibar Durumu
+          </h3>
+          <p class="text-sm text-slate-500 mt-1">
+            {{ minibar_bilgisi.oda.kat.kat_adi }} - {{
+            minibar_bilgisi.oda.oda_tipi_adi or 'Standart' }}
+          </p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <a
+            href="{{ url_for('minibar_durumlari') }}"
+            class="text-slate-600 hover:text-slate-900 font-medium text-sm"
+          >
+            ← Yeni Sorgulama
+          </a>
+        </div>
+      </div>
+
+      <!-- İstatistik Kartları -->
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-6">
+        <div
+          class="bg-blue-50 overflow-hidden shadow rounded-lg border border-blue-200"
+        >
+          <div class="p-5">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg
+                  class="h-6 w-6 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  ></path>
                 </svg>
+              </div>
+              <div class="ml-5 w-0 flex-1">
+                <dl>
+                  <dt class="text-sm font-medium text-blue-600 truncate">
+                    Toplam Ürün Çeşidi
+                  </dt>
+                  <dd class="text-2xl font-bold text-blue-900">
+                    {{ minibar_bilgisi.toplam_urun }}
+                  </dd>
+                </dl>
+              </div>
             </div>
-            <div class="ml-3">
-                <h3 class="text-sm font-medium text-yellow-800">Minibar Bilgisi Bulunamadı</h3>
-                <div class="mt-2 text-sm text-yellow-700">
-                    <p>Bu odada henüz minibar işlemi yapılmamış. Kat sorumlusunun ilk dolum yapması bekleniyor.</p>
-                </div>
-            </div>
+          </div>
         </div>
+
+        <div
+          class="bg-green-50 overflow-hidden shadow rounded-lg border border-green-200"
+        >
+          <div class="p-5">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg
+                  class="h-6 w-6 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
+                </svg>
+              </div>
+              <div class="ml-5 w-0 flex-1">
+                <dl>
+                  <dt class="text-sm font-medium text-green-600 truncate">
+                    Toplam Miktar
+                  </dt>
+                  <dd class="text-2xl font-bold text-green-900">
+                    {{ minibar_bilgisi.toplam_miktar }}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="bg-purple-50 overflow-hidden shadow rounded-lg border border-purple-200"
+        >
+          <div class="p-5">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg
+                  class="h-6 w-6 text-purple-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  ></path>
+                </svg>
+              </div>
+              <div class="ml-5 w-0 flex-1">
+                <dl>
+                  <dt class="text-sm font-medium text-purple-600 truncate">
+                    Son İşlem Tipi
+                  </dt>
+                  <dd class="text-lg font-bold text-purple-900">
+                    {% if minibar_bilgisi.son_islem.islem_tipi ==
+                    'setup_disi_ekleme' %}Setup Dışı Ekleme{% elif
+                    minibar_bilgisi.son_islem.islem_tipi == 'setup_kontrol'
+                    %}Tüketim İkamesi{% elif
+                    minibar_bilgisi.son_islem.islem_tipi == 'ekstra_ekleme'
+                    %}Ekstra Ekleme{% elif minibar_bilgisi.son_islem.islem_tipi
+                    == 'ekstra_tuketim' %}Ekstra Tüketim{% elif
+                    minibar_bilgisi.son_islem.islem_tipi == 'sarfiyat_yok'
+                    %}Sarfiyat Yok{% else %}{{
+                    minibar_bilgisi.son_islem.islem_tipi.replace('_', '
+                    ').title() }}{% endif %}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Son İşlem Bilgileri -->
+      <div class="bg-slate-50 rounded-lg p-4 mb-6 border border-slate-200">
+        <h4 class="text-sm font-medium text-slate-900 mb-3">
+          Son İşlem Bilgileri
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <p class="text-xs text-slate-500">İşlem Tarihi</p>
+            <p class="text-sm font-medium text-slate-900">
+              {{ minibar_bilgisi.son_islem.islem_tarihi.strftime('%d.%m.%Y
+              %H:%M') }}
+            </p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500">İşlemi Yapan</p>
+            <p class="text-sm font-medium text-slate-900">
+              {{ minibar_bilgisi.son_islem.personel.ad }} {{
+              minibar_bilgisi.son_islem.personel.soyad }}
+            </p>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500">Açıklama</p>
+            <p class="text-sm font-medium text-slate-900">
+              {{ minibar_bilgisi.son_islem.aciklama or '-' }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Minibar Ürünleri Tablosu -->
+      <div>
+        <h4 class="text-md font-medium text-slate-900 mb-4">Minibar İçeriği</h4>
+        <div class="table-wrapper border border-slate-200 rounded-lg">
+          <table
+            id="minibar-urunler-table"
+            class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet"
+            style="table-layout: fixed"
+          >
+            <thead class="bg-slate-50">
+              <tr>
+                <th
+                  class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                >
+                  Ürün
+                </th>
+                <th
+                  class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell"
+                >
+                  Grup
+                </th>
+                <th
+                  class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell"
+                >
+                  Birim
+                </th>
+                <th
+                  class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden xl:table-cell"
+                >
+                  Başlangıç
+                </th>
+                <th
+                  class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                >
+                  Eklenen
+                </th>
+                <th
+                  class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                >
+                  Tüketim
+                </th>
+                <th
+                  class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                >
+                  Mevcut
+                </th>
+                <th
+                  class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell"
+                >
+                  Ekleyen Personel
+                </th>
+                <th
+                  class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden xl:table-cell"
+                >
+                  İşlem Tarihi
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-slate-200">
+              {% for item in minibar_bilgisi.urunler %}
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td
+                  class="px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium text-slate-900"
+                >
+                  <button
+                    onclick="urunGecmisiGoster({{ minibar_bilgisi.oda.id }}, {{ item.urun.id }}, '{{ item.urun.urun_adi }}')"
+                    class="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left"
+                  >
+                    {{ item.urun.urun_adi }}
+                  </button>
+                </td>
+                <td
+                  class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 hidden md:table-cell"
+                >
+                  {{ item.urun.grup.grup_adi }}
+                </td>
+                <td
+                  class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 hidden lg:table-cell"
+                >
+                  {{ item.urun.birim }}
+                </td>
+                <td
+                  class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 hidden xl:table-cell"
+                >
+                  {{ item.baslangic_stok }}
+                </td>
+                <td
+                  class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500"
+                >
+                  {% if item.eklenen_miktar > 0 %}
+                  <span class="text-green-600 font-medium"
+                    >+{{ item.eklenen_miktar }}</span
+                  >
+                  {% else %}
+                  <span class="text-slate-400">-</span>
+                  {% endif %}
+                </td>
+                <td
+                  class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500"
+                >
+                  {% if item.tuketim > 0 %}
+                  <span class="text-red-600 font-medium"
+                    >-{{ item.tuketim }}</span
+                  >
+                  {% else %}
+                  <span class="text-slate-400">-</span>
+                  {% endif %}
+                </td>
+                <td
+                  class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-bold text-slate-900"
+                >
+                  {{ item.mevcut_miktar }}
+                </td>
+                <td
+                  class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-700 hidden lg:table-cell"
+                >
+                  {{ minibar_bilgisi.son_islem.personel.ad }} {{
+                  minibar_bilgisi.son_islem.personel.soyad }}
+                </td>
+                <td
+                  class="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-slate-500 hidden xl:table-cell"
+                >
+                  {{ minibar_bilgisi.son_islem.islem_tarihi.strftime('%d.%m.%Y
+                  %H:%M') }}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-    {% endif %}
+  </div>
+  {% elif oda_id %}
+  <!-- Oda seçili ama minibar bilgisi yok -->
+  <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <svg
+          class="h-5 w-5 text-yellow-400"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+            clip-rule="evenodd"
+          ></path>
+        </svg>
+      </div>
+      <div class="ml-3">
+        <h3 class="text-sm font-medium text-yellow-800">
+          Minibar Bilgisi Bulunamadı
+        </h3>
+        <div class="mt-2 text-sm text-yellow-700">
+          <p>
+            Bu odada henüz minibar işlemi yapılmamış. Kat sorumlusunun ilk dolum
+            yapması bekleniyor.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 </div>
 
 <!-- Ürün Geçmişi Modal -->
-<div id="gecmisModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog"
-    aria-modal="true">
-    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity" aria-hidden="true"
-            onclick="modalKapat()"></div>
+<div
+  id="gecmisModal"
+  class="fixed z-10 inset-0 overflow-y-auto hidden"
+  aria-labelledby="modal-title"
+  role="dialog"
+  aria-modal="true"
+>
+  <div
+    class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
+  >
+    <div
+      class="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity"
+      aria-hidden="true"
+      onclick="modalKapat()"
+    ></div>
 
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+    <span
+      class="hidden sm:inline-block sm:align-middle sm:h-screen"
+      aria-hidden="true"
+      >&#8203;</span
+    >
 
-        <div
-            class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="flex items-start justify-between mb-4">
-                    <div>
-                        <h3 class="text-lg leading-6 font-medium text-slate-900" id="modal-title">
-                            Ürün İşlem Geçmişi
-                        </h3>
-                        <p class="mt-1 text-sm text-slate-500" id="modal-subtitle">
-                            <!-- Ürün ve oda bilgisi buraya gelecek -->
-                        </p>
-                    </div>
-                    <button onclick="modalKapat()" class="text-slate-400 hover:text-slate-500">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-
-                <div id="gecmisIcerik" class="mt-4">
-                    <!-- İçerik buraya yüklenecek -->
-                    <div class="text-center py-4">
-                        <svg class="animate-spin h-8 w-8 text-slate-600 mx-auto" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                            </circle>
-                            <path class="opacity-75" fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                            </path>
-                        </svg>
-                        <p class="mt-2 text-sm text-slate-500">Yükleniyor...</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-slate-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button type="button" onclick="modalKapat()"
-                    class="w-full inline-flex justify-center rounded-md border border-slate-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 sm:ml-3 sm:w-auto sm:text-sm">
-                    Kapat
-                </button>
-            </div>
+    <div
+      class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
+    >
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <h3
+              class="text-lg leading-6 font-medium text-slate-900"
+              id="modal-title"
+            >
+              Ürün İşlem Geçmişi
+            </h3>
+            <p class="mt-1 text-sm text-slate-500" id="modal-subtitle">
+              <!-- Ürün ve oda bilgisi buraya gelecek -->
+            </p>
+          </div>
+          <button
+            onclick="modalKapat()"
+            class="text-slate-400 hover:text-slate-500"
+          >
+            <svg
+              class="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
         </div>
+
+        <div id="gecmisIcerik" class="mt-4">
+          <!-- İçerik buraya yüklenecek -->
+          <div class="text-center py-4">
+            <svg
+              class="animate-spin h-8 w-8 text-slate-600 mx-auto"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            <p class="mt-2 text-sm text-slate-500">Yükleniyor...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <button
+          type="button"
+          onclick="modalKapat()"
+          class="w-full inline-flex justify-center rounded-md border border-slate-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 sm:ml-3 sm:w-auto sm:text-sm"
+        >
+          Kapat
+        </button>
+      </div>
     </div>
+  </div>
 </div>
 
 <script>
-    function urunGecmisiGoster( odaId, urunId, urunAdi ) {
-        const modal = document.getElementById( 'gecmisModal' );
-        const icerik = document.getElementById( 'gecmisIcerik' );
-        const subtitle = document.getElementById( 'modal-subtitle' );
+  function urunGecmisiGoster( odaId, urunId, urunAdi ) {
+      const modal = document.getElementById( 'gecmisModal' );
+      const icerik = document.getElementById( 'gecmisIcerik' );
+      const subtitle = document.getElementById( 'modal-subtitle' );
 
-        // Modal'ı göster
-        modal.classList.remove( 'hidden' );
+      // Modal'ı göster
+      modal.classList.remove( 'hidden' );
 
-        // Loading göster
-        icerik.innerHTML = `
-        <div class="text-center py-4">
-            <svg class="animate-spin h-8 w-8 text-slate-600 mx-auto" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p class="mt-2 text-sm text-slate-500">Yükleniyor...</p>
-        </div>
-    `;
+      // Loading göster
+      icerik.innerHTML = `
+      <div class="text-center py-4">
+          <svg class="animate-spin h-8 w-8 text-slate-600 mx-auto" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p class="mt-2 text-sm text-slate-500">Yükleniyor...</p>
+      </div>
+  `;
 
-        // API'den veri çek
-        fetch( `/minibar-urun-gecmis/${odaId}/${urunId}` )
-            .then( response => response.json() )
-            .then( data => {
-                if ( data.success ) {
-                    subtitle.textContent = `${data.urun} - ${data.oda}`;
+      // API'den veri çek
+      fetch( `/minibar-urun-gecmis/${odaId}/${urunId}` )
+          .then( response => response.json() )
+          .then( data => {
+              if ( data.success ) {
+                  subtitle.textContent = `${data.urun} - ${data.oda}`;
 
-                    if ( data.gecmis.length === 0 ) {
-                        icerik.innerHTML = `
-                        <div class="text-center py-8">
-                            <svg class="h-12 w-12 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                            <p class="text-slate-500">Bu ürün için henüz işlem geçmişi bulunmuyor.</p>
-                        </div>
-                    `;
-                    } else {
-                        let html = `
-                        <div class="table-wrapper">
-                            <table class="min-w-full divide-y divide-slate-200">
-                                <thead class="bg-slate-50">
-                                    <tr>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Tarih</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">İşlem Tipi</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Personel</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Başlangıç</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Eklenen</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Tüketim</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Bitiş</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Açıklama</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-slate-200">
-                    `;
+                  if ( data.gecmis.length === 0 ) {
+                      icerik.innerHTML = `
+                      <div class="text-center py-8">
+                          <svg class="h-12 w-12 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                          </svg>
+                          <p class="text-slate-500">Bu ürün için henüz işlem geçmişi bulunmuyor.</p>
+                      </div>
+                  `;
+                  } else {
+                      let html = `
+                      <div class="table-wrapper">
+                          <table class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
+                              <thead class="bg-slate-50">
+                                  <tr>
+                                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Tarih</th>
+                                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">İşlem Tipi</th>
+                                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Personel</th>
+                                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Başlangıç</th>
+                                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Eklenen</th>
+                                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Tüketim</th>
+                                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Bitiş</th>
+                                      <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Açıklama</th>
+                                  </tr>
+                              </thead>
+                              <tbody class="bg-white divide-y divide-slate-200">
+                  `;
 
-                        data.gecmis.forEach( islem => {
-                            const islemTipiMap = {
-                                'ilk_dolum': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">İlk Dolum</span>',
-                                'kontrol': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Kontrol</span>',
-                                'doldurma': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Doldurma</span>'
-                            };
+                      data.gecmis.forEach( islem => {
+                          const islemTipiMap = {
+                              'ilk_dolum': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">İlk Dolum</span>',
+                              'kontrol': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Kontrol</span>',
+                              'doldurma': '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Doldurma</span>'
+                          };
 
-                            html += `
-                            <tr>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-900">${islem.islem_tarihi}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm">${islemTipiMap[islem.islem_tipi] || islem.islem_tipi}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-700">${islem.personel}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-500">${islem.baslangic_stok}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm ${islem.eklenen_miktar > 0 ? 'text-green-600 font-medium' : 'text-slate-400'}">
-                                    ${islem.eklenen_miktar > 0 ? '+' + islem.eklenen_miktar : '-'}
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm ${islem.tuketim > 0 ? 'text-red-600 font-medium' : 'text-slate-400'}">
-                                    ${islem.tuketim > 0 ? '-' + islem.tuketim : '-'}
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-slate-900">${islem.bitis_stok}</td>
-                                <td class="px-4 py-3 text-sm text-slate-500">${islem.aciklama}</td>
-                            </tr>
-                        `;
-                        } );
+                          html += `
+                          <tr>
+                              <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-900">${islem.islem_tarihi}</td>
+                              <td class="px-4 py-3 whitespace-nowrap text-sm">${islemTipiMap[islem.islem_tipi] || islem.islem_tipi}</td>
+                              <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-700">${islem.personel}</td>
+                              <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-500">${islem.baslangic_stok}</td>
+                              <td class="px-4 py-3 whitespace-nowrap text-sm ${islem.eklenen_miktar > 0 ? 'text-green-600 font-medium' : 'text-slate-400'}">
+                                  ${islem.eklenen_miktar > 0 ? '+' + islem.eklenen_miktar : '-'}
+                              </td>
+                              <td class="px-4 py-3 whitespace-nowrap text-sm ${islem.tuketim > 0 ? 'text-red-600 font-medium' : 'text-slate-400'}">
+                                  ${islem.tuketim > 0 ? '-' + islem.tuketim : '-'}
+                              </td>
+                              <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-slate-900">${islem.bitis_stok}</td>
+                              <td class="px-4 py-3 text-sm text-slate-500">${islem.aciklama}</td>
+                          </tr>
+                      `;
+                      } );
 
-                        html += `
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
+                      html += `
+                              </tbody>
+                          </table>
+                      </div>
+                  `;
 
-                        icerik.innerHTML = html;
-                    }
-                } else {
-                    icerik.innerHTML = `
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <p class="text-red-800">Veri yüklenirken bir hata oluştu.</p>
-                    </div>
-                `;
-                }
-            } )
-            .catch( error => {
-                console.error( 'Hata:', error );
-                icerik.innerHTML = `
-                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <p class="text-red-800">Veri yüklenirken bir hata oluştu.</p>
-                </div>
-            `;
-            } );
-    }
+                      icerik.innerHTML = html;
+                  }
+              } else {
+                  icerik.innerHTML = `
+                  <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <p class="text-red-800">Veri yüklenirken bir hata oluştu.</p>
+                  </div>
+              `;
+              }
+          } )
+          .catch( error => {
+              console.error( 'Hata:', error );
+              icerik.innerHTML = `
+              <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p class="text-red-800">Veri yüklenirken bir hata oluştu.</p>
+              </div>
+          `;
+          } );
+  }
 
-    function modalKapat() {
-        document.getElementById( 'gecmisModal' ).classList.add( 'hidden' );
-    }
+  function modalKapat() {
+      document.getElementById( 'gecmisModal' ).classList.add( 'hidden' );
+  }
 
-    // ESC tuşu ile modalı kapat
-    document.addEventListener( 'keydown', function ( event ) {
-        if ( event.key === 'Escape' ) {
-            modalKapat();
-        }
-    } );
+  // ESC tuşu ile modalı kapat
+  document.addEventListener( 'keydown', function ( event ) {
+      if ( event.key === 'Escape' ) {
+          modalKapat();
+      }
+  } );
 
-    // Minibar ürünleri tablosu için gelişmiş arama ve filtreleme
-    {% if minibar_bilgisi %}
-    document.addEventListener( 'DOMContentLoaded', function () {
-        const table = document.getElementById( 'minibar-urunler-table' );
-        if ( table ) {
-            window.tableSearchFilter_minibar = new TableSearchFilter( 'minibar-urunler-table', {
-                searchPlaceholder: 'Ürün adı, grup veya birim ara...',
-                filters: []
-            } );
-        }
-    } );
-    {% endif %}
+  // Minibar ürünleri tablosu için gelişmiş arama ve filtreleme
+  {% if minibar_bilgisi %}
+  document.addEventListener( 'DOMContentLoaded', function () {
+      const table = document.getElementById( 'minibar-urunler-table' );
+      if ( table ) {
+          window.tableSearchFilter_minibar = new TableSearchFilter( 'minibar-urunler-table', {
+              searchPlaceholder: 'Ürün adı, grup veya birim ara...',
+              filters: []
+          } );
+      }
+  } );
+  {% endif %}
 </script>
 
 {% endblock %}

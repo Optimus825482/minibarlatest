@@ -1,29 +1,11 @@
 """
 Minibar Modelleri
 
-MinibarIslem, MinibarIslemDetay, MinibarDolumTalebi ve Kampanya modelleri.
+MinibarIslem, MinibarIslemDetay ve MinibarDolumTalebi modelleri.
 """
 
 from sqlalchemy import Numeric
 from models.base import db, get_kktc_now
-
-
-class Kampanya(db.Model):
-    """Kampanya tanımları tablosu"""
-    __tablename__ = 'kampanyalar'
-    
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    kampanya_adi = db.Column(db.String(200), nullable=False)
-    aciklama = db.Column(db.Text)
-    baslangic_tarihi = db.Column(db.DateTime(timezone=True), nullable=False)
-    bitis_tarihi = db.Column(db.DateTime(timezone=True), nullable=False)
-    indirim_orani = db.Column(Numeric(5, 2), nullable=True)
-    indirim_tutari = db.Column(Numeric(10, 2), nullable=True)
-    aktif = db.Column(db.Boolean, default=True)
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
-    
-    def __repr__(self):
-        return f'<Kampanya {self.kampanya_adi}>'
 
 
 class MinibarIslem(db.Model):
@@ -74,11 +56,9 @@ class MinibarIslemDetay(db.Model):
     kar_tutari = db.Column(Numeric(10, 2), nullable=True)
     kar_orani = db.Column(Numeric(5, 2), nullable=True)
     bedelsiz = db.Column(db.Boolean, default=False)
-    kampanya_id = db.Column(db.Integer, db.ForeignKey('kampanyalar.id'), nullable=True)
     
     # İlişkiler
     zimmet_detay = db.relationship('PersonelZimmetDetay', foreign_keys=[zimmet_detay_id])
-    kampanya = db.relationship('Kampanya')
     
     def __repr__(self):
         return f'<MinibarIslemDetay #{self.id}>'

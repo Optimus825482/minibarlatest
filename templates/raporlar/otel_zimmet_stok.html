@@ -183,47 +183,58 @@
         </div>
       </div>
     </div>
-    <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+    <div class="overflow-hidden">
+      <table
+        class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-touch table-compact-tablet"
+        style="table-layout: fixed"
+      >
         <thead class="bg-slate-100 dark:bg-slate-900">
           <tr>
             <th
-              class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+              class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              style="width: 30%"
             >
               Ürün
             </th>
             <th
-              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+              class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase hide-tablet"
+              style="width: 8%"
             >
               Birim
             </th>
             <th
-              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+              class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              style="width: 10%"
             >
               Toplam
             </th>
             <th
-              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+              class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              style="width: 10%"
             >
               Kullanılan
             </th>
             <th
-              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+              class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              style="width: 10%"
             >
               Kalan
             </th>
             <th
-              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+              class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase hide-tablet"
+              style="width: 8%"
             >
-              Kritik Seviye
+              Kritik
             </th>
             <th
-              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+              class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              style="width: 12%"
             >
-              Kullanım %
+              Kullanım
             </th>
             <th
-              class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+              class="px-2 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+              style="width: 12%"
             >
               Durum
             </th>
@@ -233,67 +244,71 @@
           {% for urun in otel.urunler %}
           <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/50">
             <td
-              class="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white"
+              class="px-3 py-3 text-sm font-medium text-slate-900 dark:text-white"
             >
-              {{ urun.urun_adi }}
+              <div class="truncate">{{ urun.urun_adi }}</div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 lg:hidden">
+                {{ urun.birim }}
+              </div>
             </td>
             <td
-              class="px-4 py-3 text-sm text-center text-slate-600 dark:text-slate-400"
+              class="px-2 py-3 text-sm text-center text-slate-600 dark:text-slate-400 hide-tablet"
             >
               {{ urun.birim }}
             </td>
             <td
-              class="px-4 py-3 text-sm text-center text-slate-600 dark:text-slate-400"
+              class="px-2 py-3 text-sm text-center text-slate-600 dark:text-slate-400"
             >
               {{ urun.toplam_miktar }}
             </td>
             <td
-              class="px-4 py-3 text-sm text-center text-slate-600 dark:text-slate-400"
+              class="px-2 py-3 text-sm text-center text-slate-600 dark:text-slate-400"
             >
               {{ urun.kullanilan_miktar }}
             </td>
             <td
-              class="px-4 py-3 text-sm text-center font-semibold {% if urun.kalan_miktar <= urun.kritik_seviye %}text-red-600{% else %}text-green-600{% endif %}"
+              class="px-2 py-3 text-sm text-center font-semibold {% if urun.kalan_miktar <= urun.kritik_seviye %}text-red-500{% else %}text-green-500{% endif %}"
             >
               {{ urun.kalan_miktar }}
             </td>
             <td
-              class="px-4 py-3 text-sm text-center text-slate-600 dark:text-slate-400"
+              class="px-2 py-3 text-sm text-center text-slate-600 dark:text-slate-400 hide-tablet"
             >
               {{ urun.kritik_seviye }}
             </td>
-            <td class="px-4 py-3 text-sm text-center">
-              <div
-                class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2"
-              >
-                <div
-                  class="h-2 rounded-full {% if urun.kullanim_yuzdesi > 80 %}bg-red-500{% elif urun.kullanim_yuzdesi > 50 %}bg-amber-500{% else %}bg-green-500{% endif %}"
-                  style="width: {{ urun.kullanim_yuzdesi }}%"
-                ></div>
+            <td class="px-2 py-3 text-center">
+              <div class="flex items-center gap-1.5 justify-center">
+                <div class="progress-compact bg-slate-200 dark:bg-slate-700">
+                  <div
+                    class="h-full rounded-full {% if urun.kullanim_yuzdesi > 80 %}bg-red-500{% elif urun.kullanim_yuzdesi > 50 %}bg-amber-500{% else %}bg-green-500{% endif %}"
+                    style="width: {{ urun.kullanim_yuzdesi }}%"
+                  ></div>
+                </div>
+                <span
+                  class="text-xs text-slate-500 dark:text-slate-400"
+                  >{{ urun.kullanim_yuzdesi }}%</span
+                >
               </div>
-              <span class="text-xs text-slate-500"
-                >{{ urun.kullanim_yuzdesi }}%</span
-              >
             </td>
-            <td class="px-4 py-3 text-center">
+            <td class="px-2 py-3 text-center">
               {% if urun.stok_durumu == 'stokout' %}
               <span
-                class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
                 >TÜKENDİ</span
               >
               {% elif urun.stok_durumu == 'kritik' %}
               <span
-                class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400"
+                class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400"
                 >KRİTİK</span
               >
               {% elif urun.stok_durumu == 'dikkat' %}
               <span
-                class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
                 >DİKKAT</span
               >
               {% else %}
               <span
-                class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                 >NORMAL</span
               >
               {% endif %}

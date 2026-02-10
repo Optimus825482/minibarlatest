@@ -196,43 +196,43 @@
                 {% if rapor_tipi == 'stok_durum' %}
                 <!-- Stok Durum Raporu -->
                 <div class="overflow-hidden rounded-lg border border-slate-200">
-                    <table id="stok-durum-table" class="min-w-full divide-y divide-slate-200">
+                    <table id="stok-durum-table" class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
                         <thead class="bg-slate-50">
                             <tr>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Ürün</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Grup</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Birim</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Mevcut Stok</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Kritik Seviye</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Durum</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-slate-200">
                             {% for item in rapor_verisi %}
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{{
+                                <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-slate-900">{{
                                     item.urun.urun_adi }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{
                                     item.urun.grup.grup_adi }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{ item.urun.birim }}
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ item.urun.birim }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{ item.mevcut_stok }}
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ item.mevcut_stok }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{
                                     item.urun.kritik_stok_seviyesi }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-3 py-3 whitespace-nowrap">
                                     {% if item.mevcut_stok <= item.urun.kritik_stok_seviyesi %} <span
                                         class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
                                         KRİTİK
@@ -253,37 +253,37 @@
                 {% elif rapor_tipi == 'stok_hareket' %}
                 <!-- Stok Hareket Raporu -->
                 <div class="overflow-hidden rounded-lg border border-slate-200">
-                    <table id="stok-hareket-table" class="min-w-full divide-y divide-slate-200">
+                    <table id="stok-hareket-table" class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
                         <thead class="bg-slate-50">
                             <tr>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Tarih</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Ürün</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Hareket Tipi</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Miktar</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Açıklama</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     İşlem Yapan</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-slate-200">
                             {% for hareket in rapor_verisi %}
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{
                                     hareket.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{{
+                                <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-slate-900">{{
                                     hareket.urun.urun_adi }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-3 py-3 whitespace-nowrap">
                                     <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
                                         {% if hareket.hareket_tipi == 'giris' %}bg-green-100 text-green-800
                                         {% elif hareket.hareket_tipi == 'cikis' %}bg-red-100 text-red-800
@@ -292,8 +292,8 @@
                                         {{ hareket.hareket_tipi.title() }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{ hareket.miktar }}</td>
-                                <td class="px-6 py-4 text-sm text-slate-500">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ hareket.miktar }}</td>
+                                <td class="px-3 py-3 text-sm text-slate-500">
                                     {{ hareket.aciklama or '-' }}
                                     {% if hareket.zimmet_personel %}
                                     <div class="text-xs text-blue-600 mt-1">
@@ -301,7 +301,7 @@
                                     </div>
                                     {% endif %}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">
                                     {% if hareket.islem_yapan %}
                                     {{ hareket.islem_yapan.ad }} {{ hareket.islem_yapan.soyad }}
                                     {% else %}
@@ -317,51 +317,51 @@
                 {% elif rapor_tipi == 'zimmet' %}
                 <!-- Zimmet Raporu -->
                 <div class="overflow-hidden rounded-lg border border-slate-200">
-                    <table id="zimmet-table" class="min-w-full divide-y divide-slate-200">
+                    <table id="zimmet-table" class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
                         <thead class="bg-slate-50">
                             <tr>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Zimmet No</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Personel</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Zimmet Tarihi</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Ürün Sayısı</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Toplam Miktar</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Durum</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     İşlem</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-slate-200">
                             {% for zimmet in rapor_verisi %}
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">#{{ zimmet.id
+                                <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-slate-900">#{{ zimmet.id
                                     }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{ zimmet.personel.ad }}
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ zimmet.personel.ad }}
                                     {{
                                     zimmet.personel.soyad }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{
                                     zimmet.zimmet_tarihi.strftime('%d.%m.%Y %H:%M') }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{ zimmet.detaylar|length
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ zimmet.detaylar|length
                                     }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">
                                     {% set toplam_miktar = zimmet.detaylar|sum(attribute='miktar') %}
                                     {{ toplam_miktar }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-3 py-3 whitespace-nowrap">
                                     <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
                                     {% if zimmet.durum == 'aktif' %}bg-green-100 text-green-800
                                     {% elif zimmet.durum == 'tamamlandi' %}bg-blue-100 text-blue-800
@@ -369,7 +369,7 @@
                                         {{ zimmet.durum.title() }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm font-medium">
                                     <a href="{{ url_for('zimmet_detay', zimmet_id=zimmet.id) }}"
                                         class="text-slate-600 hover:text-slate-900">Detay</a>
                                 </td>
@@ -381,50 +381,50 @@
                 {% elif rapor_tipi == 'zimmet_detay' %}
                 <!-- Zimmet Detay Raporu -->
                 <div class="overflow-hidden rounded-lg border border-slate-200">
-                    <table id="zimmet-detay-rapor-table" class="min-w-full divide-y divide-slate-200">
+                    <table id="zimmet-detay-rapor-table" class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
                         <thead class="bg-slate-50">
                             <tr>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Zimmet No</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Personel</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Tarih</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Ürün</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Grup</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Miktar</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Durum</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-slate-200">
                             {% for detay, zimmet, kullanici, urun in rapor_verisi %}
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">#{{ zimmet.id
+                                <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-slate-900">#{{ zimmet.id
                                     }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{ kullanici.ad }} {{
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ kullanici.ad }} {{
                                     kullanici.soyad }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{
                                     zimmet.zimmet_tarihi.strftime('%d.%m.%Y') }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{{
+                                <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-slate-900">{{
                                     urun.urun_adi
                                     }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{ urun.grup.grup_adi }}
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ urun.grup.grup_adi }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{ detay.miktar }} {{
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ detay.miktar }} {{
                                     urun.birim }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-3 py-3 whitespace-nowrap">
                                     <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
                                         {% if zimmet.durum == 'aktif' %}bg-green-100 text-green-800
                                         {% elif zimmet.durum == 'tamamlandi' %}bg-blue-100 text-blue-800
@@ -441,33 +441,33 @@
                 {% elif rapor_tipi == 'urun_grup' %}
                 <!-- Ürün Grubu Raporu -->
                 <div class="overflow-hidden rounded-lg border border-slate-200">
-                    <table id="urun-grup-table" class="min-w-full divide-y divide-slate-200">
+                    <table id="urun-grup-table" class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
                         <thead class="bg-slate-50">
                             <tr>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Ürün Grubu</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Toplam Ürün Sayısı</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Kritik Stoklu Ürün</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Durum</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-slate-200">
                             {% for item in rapor_verisi %}
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{{
+                                <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-slate-900">{{
                                     item.grup.grup_adi }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{ item.toplam_urun }}
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ item.toplam_urun }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{ item.kritik_urun }}
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ item.kritik_urun }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-3 py-3 whitespace-nowrap">
                                     {% if item.kritik_urun > 0 %}
                                     <span
                                         class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
@@ -489,63 +489,63 @@
                 {% elif rapor_tipi == 'minibar_tuketim' %}
                 <!-- Minibar Tüketim Raporu -->
                 <div class="overflow-hidden rounded-lg border border-slate-200">
-                    <table id="minibar-tuketim-table" class="min-w-full divide-y divide-slate-200">
+                    <table id="minibar-tuketim-table" class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
                         <thead class="bg-slate-50">
                             <tr>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Tarih</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Ürün</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Grup</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Birim</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Oda</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Kat</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Tüketim</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     İşlem Tipi</th>
                                 <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                    class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Personel</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-slate-200">
                             {% for kayit in rapor_verisi %}
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-900">
                                     {{ kayit[5].strftime('%d.%m.%Y %H:%M') }}
                                 </td>
-                                <td class="px-6 py-4 text-sm font-medium text-slate-900">
+                                <td class="px-3 py-3 text-sm font-medium text-slate-900">
                                     {{ kayit[0] }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">
                                     {{ kayit[2] }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">
                                     {{ kayit[1] }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">
                                     {{ kayit[3] }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">
                                     {{ kayit[4] }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-red-600">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm font-bold text-red-600">
                                     {{ kayit[7] }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm">
                                     {% if kayit[6] == 'setup_kontrol' %}
                                     <span
                                         class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
@@ -561,9 +561,24 @@
                                         class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                                         Ekstra Ekleme
                                     </span>
+                                    {% elif kayit[6] == 'setup_disi_ekleme' %}
+                                    <span
+                                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-fuchsia-100 text-fuchsia-800">
+                                        Setup Dışı Ekleme
+                                    </span>
+                                    {% elif kayit[6] == 'sarfiyat_yok' %}
+                                    <span
+                                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                                        Sarfiyat Yok
+                                    </span>
+                                    {% else %}
+                                    <span
+                                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-800">
+                                        {{ kayit[6]|replace('_', ' ')|title }}
+                                    </span>
                                     {% endif %}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">
                                     {{ kayit[8] }} {{ kayit[9] }}
                                 </td>
                             </tr>
@@ -575,44 +590,44 @@
                 {% elif rapor_tipi == 'minibar_kontrol_odalar' %}
                 <!-- Günlük Minibar Kontrolü Yapılan Odalar Raporu -->
                 <div class="overflow-hidden rounded-lg border border-slate-200">
-                    <table id="minibar-kontrol-odalar-table" class="min-w-full divide-y divide-slate-200">
+                    <table id="minibar-kontrol-odalar-table" class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
                         <thead class="bg-slate-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Tarih</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Oda No</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Kat</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Kontrol Eden</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Ürün Sayısı</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Toplam Tüketim</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-slate-200">
                             {% for kayit in rapor_verisi %}
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-900">
                                     {{ kayit[0].strftime('%d.%m.%Y %H:%M') }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-slate-900">
                                     {{ kayit[1] }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">
                                     {{ kayit[2] }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">
                                     {{ kayit[3] }} {{ kayit[4] }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-900">
                                     <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                                         {{ kayit[5] }} ürün
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-red-600">
+                                <td class="px-3 py-3 whitespace-nowrap text-sm font-bold text-red-600">
                                     {{ kayit[6] }} adet
                                 </td>
                             </tr>

@@ -186,18 +186,11 @@ def register_dashboard_routes(app):
                     print(f"Dashboard bildirimleri hatası: {str(e)}")
                     db.session.rollback()  # Transaction'ı temizle
         
-            # Sipariş istatistikleri
-            from models import SatinAlmaSiparisi, AnaDepoTedarik
-            istatistikler = {
-                'onaylandi': 0
-            }
-            try:
-                istatistikler['onaylandi'] = SatinAlmaSiparisi.query.filter_by(durum='onaylandi').count()
-            except Exception as e:
-                print(f"Sipariş istatistikleri hatası: {str(e)}")
-                db.session.rollback()
+            # Sipariş istatistikleri (eski modül kaldırıldı)
+            istatistikler = {'onaylandi': 0}
             
             # Ana Depo Tedarik bildirimleri (görülmemiş tedarikler)
+            from models import AnaDepoTedarik
             ana_depo_tedarik_sayisi = 0
             try:
                 ana_depo_tedarik_sayisi = AnaDepoTedarik.query.filter_by(sistem_yoneticisi_goruldu=False).count()

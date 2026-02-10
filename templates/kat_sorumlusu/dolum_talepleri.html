@@ -18,7 +18,7 @@ block content %}
         </div>
         <button
           onclick="yenile()"
-          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+          class="inline-flex items-center px-5 py-3 border border-transparent shadow-sm text-base font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 touch-manipulation transition-transform"
         >
           <svg
             class="h-5 w-5 mr-2"
@@ -73,7 +73,7 @@ block content %}
     <div class="px-4 py-5 sm:p-6">
       <button
         onclick="toggleTamamlananlar()"
-        class="w-full flex items-center justify-between text-left"
+        class="w-full flex items-center justify-between text-left py-2 touch-manipulation"
       >
         <div>
           <h3
@@ -221,14 +221,14 @@ block content %}
       <a
         href="#"
         rel="modal:close"
-        class="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-600"
+        class="px-5 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-600 active:scale-95 touch-manipulation transition-transform"
       >
         İptal
       </a>
       <button
         type="button"
         onclick="talepTamamla()"
-        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
+        class="inline-flex items-center px-5 py-3 text-base font-semibold text-white bg-green-600 rounded-xl hover:bg-green-700 active:scale-95 touch-manipulation transition-transform"
       >
         <svg
           class="h-4 w-4 mr-2"
@@ -336,14 +336,14 @@ block content %}
       <a
         href="#"
         rel="modal:close"
-        class="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-600"
+        class="px-5 py-3 text-base font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-600 active:scale-95 touch-manipulation transition-transform"
       >
         Vazgeç
       </a>
       <button
         type="button"
         onclick="talepIptal()"
-        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+        class="inline-flex items-center px-5 py-3 text-base font-semibold text-white bg-red-600 rounded-xl hover:bg-red-700 active:scale-95 touch-manipulation transition-transform"
       >
         <svg
           class="h-4 w-4 mr-2"
@@ -466,7 +466,7 @@ block content %}
                             <h4 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Oda ${talep.oda_no}</h4>
                             <p class="text-sm text-slate-500 dark:text-slate-400">${talep.kat_adi}</p>
                         </div>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 badge-touch">
                             Bekliyor
                         </span>
                     </div>
@@ -488,15 +488,15 @@ block content %}
                     
                     <div class="flex gap-2">
                         <button onclick="tamamlaModalAc(${talep.id}, '${talep.oda_no}', '${talepTarihi}')"
-                                class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
-                            <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                class="flex-1 inline-flex justify-center items-center px-4 py-2.5 border border-transparent text-base font-semibold rounded-xl text-white bg-green-600 hover:bg-green-700 active:scale-95 touch-manipulation transition-transform">
+                            <svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
                             Tamamla
                         </button>
                         <button onclick="iptalModalAc(${talep.id}, '${talep.oda_no}', '${talepTarihi}')"
-                                class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-red-300 dark:border-red-700 text-sm font-medium rounded-md text-red-700 dark:text-red-300 bg-white dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20">
-                            <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                class="flex-1 inline-flex justify-center items-center px-4 py-2.5 border border-red-300 dark:border-red-700 text-base font-semibold rounded-xl text-red-700 dark:text-red-300 bg-white dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-95 touch-manipulation transition-transform">
+                            <svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                             İptal
@@ -575,7 +575,7 @@ block content %}
             "X-CSRFToken": "{{ csrf_token() }}",
           },
           body: JSON.stringify({ notlar }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -708,17 +708,17 @@ block content %}
     }
 
     let html =
-      '<div class="overflow-x-auto"><table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700"><thead class="bg-slate-50 dark:bg-slate-900"><tr>';
+      '<div class="overflow-hidden"><table class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-touch table-compact-tablet" style="table-layout: fixed;"><thead class="bg-slate-50 dark:bg-slate-900"><tr>';
     html +=
-      '<th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Oda</th>';
+      '<th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase" style="width: 15%;">Oda</th>';
     html +=
-      '<th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Talep Tarihi</th>';
+      '<th class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase" style="width: 22%;">Talep Tarihi</th>';
     html +=
-      '<th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Tamamlanma Tarihi</th>';
+      '<th class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase" style="width: 22%;">Tamamlanma</th>';
     html +=
-      '<th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Tamamlayan</th>';
+      '<th class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase hide-tablet" style="width: 18%;">Tamamlayan</th>';
     html +=
-      '<th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Notlar</th>';
+      '<th class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase hide-tablet" style="width: 23%;">Notlar</th>';
     html +=
       '</tr></thead><tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">';
 
@@ -738,23 +738,23 @@ block content %}
           year: "numeric",
           hour: "2-digit",
           minute: "2-digit",
-        }
+        },
       );
 
       html += `
         <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-          <td class="px-4 py-3 text-sm font-medium text-slate-900 dark:text-slate-100">
+          <td class="px-3 py-3 text-sm font-medium text-slate-900 dark:text-slate-100">
             ${talep.oda_no}
             <div class="text-xs text-slate-500 dark:text-slate-400">${
               talep.kat_adi
             }</div>
           </td>
-          <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">${talepTarihi}</td>
-          <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">${tamamlanmaTarihi}</td>
-          <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">${
+          <td class="px-2 py-3 text-sm text-slate-600 dark:text-slate-400">${talepTarihi}</td>
+          <td class="px-2 py-3 text-sm text-slate-600 dark:text-slate-400">${tamamlanmaTarihi}</td>
+          <td class="px-2 py-3 text-sm text-slate-600 dark:text-slate-400 hide-tablet">${
             talep.tamamlayan_ad || "-"
           }</td>
-          <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">${
+          <td class="px-2 py-3 text-sm text-slate-600 dark:text-slate-400 hide-tablet truncate">${
             talep.notlar || "-"
           }</td>
         </tr>

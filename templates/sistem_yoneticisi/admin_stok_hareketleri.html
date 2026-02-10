@@ -1,166 +1,301 @@
-{% extends "base.html" %}
-
-{% block title %}Stok Hareketleri - Admin Panel{% endblock %}
-{% block page_title %}Stok Hareketleri{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Stok Hareketleri - Admin Panel{%
+endblock %} {% block page_title %}Stok Hareketleri{% endblock %} {% block
+content %}
 <div class="space-y-6">
-    <!-- Filtreler -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
-        <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Filtreler</h3>
-        <form method="GET" action="{{ url_for('admin_stok_hareketleri') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ürün</label>
-                <select name="urun_id" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200">
-                    <option value="">Tümü</option>
-                    {% for urun in urunler %}
-                    <option value="{{ urun.id }}" {% if urun_id == urun.id %}selected{% endif %}>
-                        {{ urun.urun_adi }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Hareket Tipi</label>
-                <select name="hareket_tipi" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200">
-                    <option value="">Tümü</option>
-                    <option value="giris" {% if hareket_tipi == 'giris' %}selected{% endif %}>Giriş</option>
-                    <option value="cikis" {% if hareket_tipi == 'cikis' %}selected{% endif %}>Çıkış</option>
-                    <option value="devir" {% if hareket_tipi == 'devir' %}selected{% endif %}>Devir</option>
-                    <option value="sayim" {% if hareket_tipi == 'sayim' %}selected{% endif %}>Sayım</option>
-                </select>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Başlangıç Tarihi</label>
-                <input type="date" name="baslangic_tarih" value="{{ baslangic_tarih }}"
-                    class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200">
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bitiş Tarihi</label>
-                <input type="date" name="bitis_tarih" value="{{ bitis_tarih }}"
-                    class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200">
-            </div>
-            
-            <div class="md:col-span-4 flex justify-end space-x-4">
-                <a href="{{ url_for('admin_stok_hareketleri') }}"
-                    class="px-6 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
-                    Temizle
-                </a>
-                <button type="submit"
-                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                    Filtrele
-                </button>
-            </div>
-        </form>
+  <!-- Filtreler -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+      Filtreler
+    </h3>
+    <form
+      method="GET"
+      action="{{ url_for('admin_stok_hareketleri') }}"
+      class="grid grid-cols-1 md:grid-cols-4 gap-4"
+    >
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >Ürün</label
+        >
+        <select
+          name="urun_id"
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200"
+        >
+          <option value="">Tümü</option>
+          {% for urun in urunler %}
+          <option
+            value="{{ urun.id }}"
+            {%
+            if
+            urun_id=""
+            ="urun.id"
+            %}selected{%
+            endif
+            %}
+          >
+            {{ urun.urun_adi }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >Hareket Tipi</label
+        >
+        <select
+          name="hareket_tipi"
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200"
+        >
+          <option value="">Tümü</option>
+          <option
+            value="giris"
+            {%
+            if
+            hareket_tipi=""
+            ="giris"
+            %}selected{%
+            endif
+            %}
+          >
+            Giriş
+          </option>
+          <option
+            value="cikis"
+            {%
+            if
+            hareket_tipi=""
+            ="cikis"
+            %}selected{%
+            endif
+            %}
+          >
+            Çıkış
+          </option>
+          <option
+            value="devir"
+            {%
+            if
+            hareket_tipi=""
+            ="devir"
+            %}selected{%
+            endif
+            %}
+          >
+            Devir
+          </option>
+          <option
+            value="sayim"
+            {%
+            if
+            hareket_tipi=""
+            ="sayim"
+            %}selected{%
+            endif
+            %}
+          >
+            Sayım
+          </option>
+        </select>
+      </div>
+
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >Başlangıç Tarihi</label
+        >
+        <input
+          type="date"
+          name="baslangic_tarih"
+          value="{{ baslangic_tarih }}"
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200"
+        />
+      </div>
+
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+          >Bitiş Tarihi</label
+        >
+        <input
+          type="date"
+          name="bitis_tarih"
+          value="{{ bitis_tarih }}"
+          class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-slate-200"
+        />
+      </div>
+
+      <div class="md:col-span-4 flex justify-end space-x-4">
+        <a
+          href="{{ url_for('admin_stok_hareketleri') }}"
+          class="px-6 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+        >
+          Temizle
+        </a>
+        <button
+          type="submit"
+          class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Filtrele
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Stok Hareketleri Tablosu -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
+    <div
+      class="px-3 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center"
+    >
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+        Stok Hareketleri ({{ hareketler.total }} kayıt)
+      </h3>
     </div>
-    
-    <!-- Stok Hareketleri Tablosu -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                Stok Hareketleri ({{ hareketler.total }} kayıt)
-            </h3>
-      
-        </div>
-        
-        {% if hareketler.items %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                <thead class="bg-slate-50 dark:bg-slate-900">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Tarih</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Ürün</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Tip</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Miktar</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">İşlem Yapan</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Açıklama</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">İşlemler</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                    {% for hareket in hareketler.items %}
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
-                            {{ hareket.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
-                            {{ hareket.urun.urun_adi }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                {% if hareket.hareket_tipi == 'giris' %}bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400
-                                {% elif hareket.hareket_tipi == 'cikis' %}bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400
-                                {% else %}bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400{% endif %}">
-                                {{ hareket.hareket_tipi.title() }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-slate-100">
-                            {{ hareket.miktar }}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
-                            {% if hareket.islem_yapan %}
-                            {{ hareket.islem_yapan.ad }} {{ hareket.islem_yapan.soyad }}
-                            {% else %}
-                            -
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
-                            {{ hareket.aciklama or '-' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button onclick="silHareket({{ hareket.id }})"
-                                class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 ml-4 transition-colors">
-                                Sil
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Sayfalama -->
-        {% if hareketler.pages > 1 %}
-        <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
-            <div class="text-sm text-slate-600 dark:text-slate-400">
-                Sayfa {{ hareketler.page }} / {{ hareketler.pages }}
-            </div>
-            <div class="flex space-x-2">
-                {% if hareketler.has_prev %}
-                <a href="{{ url_for('admin_stok_hareketleri', sayfa=hareketler.prev_num, urun_id=urun_id, hareket_tipi=hareket_tipi, baslangic_tarih=baslangic_tarih, bitis_tarih=bitis_tarih) }}"
-                    class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                    Önceki
-                </a>
-                {% endif %}
-                {% if hareketler.has_next %}
-                <a href="{{ url_for('admin_stok_hareketleri', sayfa=hareketler.next_num, urun_id=urun_id, hareket_tipi=hareket_tipi, baslangic_tarih=baslangic_tarih, bitis_tarih=bitis_tarih) }}"
-                    class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                    Sonraki
-                </a>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
-        {% else %}
-        <div class="px-6 py-12 text-center">
-            <i class="fas fa-boxes text-slate-300 dark:text-slate-600 text-5xl mb-4"></i>
-            <p class="text-slate-500 dark:text-slate-400 text-lg mb-2">
-                Henüz stok hareketi bulunmuyor
-            </p>
-            <p class="text-sm text-slate-400 dark:text-slate-500 mb-4">
-                Stok hareketleri satın alma işlemleri sırasında otomatik olarak kaydedilir
-            </p>
-            <a href="{{ url_for('satin_alma_siparis') }}"
-                class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
-                <i class="fas fa-shopping-cart mr-2"></i>
-                Satın Alma Yap
-            </a>
-        </div>
-        {% endif %}
+
+    {% if hareketler.items %}
+    <div class="overflow-hidden">
+      <table
+        class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet"
+        style="table-layout: fixed"
+      >
+        <thead class="bg-slate-50 dark:bg-slate-900">
+          <tr>
+            <th
+              class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Tarih
+            </th>
+            <th
+              class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Ürün
+            </th>
+            <th
+              class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Tip
+            </th>
+            <th
+              class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Miktar
+            </th>
+            <th
+              class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              İşlem Yapan
+            </th>
+            <th
+              class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Açıklama
+            </th>
+            <th
+              class="px-3 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              İşlemler
+            </th>
+          </tr>
+        </thead>
+        <tbody
+          class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+        >
+          {% for hareket in hareketler.items %}
+          <tr
+            class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+          >
+            <td
+              class="px-3 py-3 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100"
+            >
+              {{ hareket.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}
+            </td>
+            <td class="px-3 py-3 text-sm text-slate-900 dark:text-slate-100">
+              {{ hareket.urun.urun_adi }}
+            </td>
+            <td class="px-3 py-3 whitespace-nowrap">
+              <span
+                class="px-2 py-1 text-xs font-semibold rounded-full {% if hareket.hareket_tipi == 'giris' %}bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 {% elif hareket.hareket_tipi == 'cikis' %}bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 {% else %}bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400{% endif %}"
+              >
+                {{ hareket.hareket_tipi.title() }}
+              </span>
+            </td>
+            <td
+              class="px-3 py-3 whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-slate-100"
+            >
+              {{ hareket.miktar }}
+            </td>
+            <td class="px-3 py-3 text-sm text-slate-600 dark:text-slate-400">
+              {% if hareket.islem_yapan %} {{ hareket.islem_yapan.ad }} {{
+              hareket.islem_yapan.soyad }} {% else %} - {% endif %}
+            </td>
+            <td class="px-3 py-3 text-sm text-slate-600 dark:text-slate-400">
+              {{ hareket.aciklama or '-' }}
+            </td>
+            <td
+              class="px-3 py-3 whitespace-nowrap text-right text-sm font-medium"
+            >
+              <button
+                onclick="silHareket({{ hareket.id }})"
+                class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 ml-4 transition-colors"
+              >
+                Sil
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+
+    <!-- Sayfalama -->
+    {% if hareketler.pages > 1 %}
+    <div
+      class="px-3 py-3 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center"
+    >
+      <div class="text-sm text-slate-600 dark:text-slate-400">
+        Sayfa {{ hareketler.page }} / {{ hareketler.pages }}
+      </div>
+      <div class="flex space-x-2">
+        {% if hareketler.has_prev %}
+        <a
+          href="{{ url_for('admin_stok_hareketleri', sayfa=hareketler.prev_num, urun_id=urun_id, hareket_tipi=hareket_tipi, baslangic_tarih=baslangic_tarih, bitis_tarih=bitis_tarih) }}"
+          class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+        >
+          Önceki
+        </a>
+        {% endif %} {% if hareketler.has_next %}
+        <a
+          href="{{ url_for('admin_stok_hareketleri', sayfa=hareketler.next_num, urun_id=urun_id, hareket_tipi=hareket_tipi, baslangic_tarih=baslangic_tarih, bitis_tarih=bitis_tarih) }}"
+          class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+        >
+          Sonraki
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %} {% else %}
+    <div class="px-6 py-12 text-center">
+      <i
+        class="fas fa-boxes text-slate-300 dark:text-slate-600 text-5xl mb-4"
+      ></i>
+      <p class="text-slate-500 dark:text-slate-400 text-lg mb-2">
+        Henüz stok hareketi bulunmuyor
+      </p>
+      <p class="text-sm text-slate-400 dark:text-slate-500 mb-4">
+        Stok hareketleri satın alma işlemleri sırasında otomatik olarak
+        kaydedilir
+      </p>
+      <a
+        href="{{ url_for('ana_depo_tedarik') }}"
+        class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+      >
+        <i class="fas fa-shopping-cart mr-2"></i>
+        Ana Depo Tedarik
+      </a>
+    </div>
+    {% endif %}
+  </div>
 </div>
 
 <!-- Modal kaldırıldı - Stok girişleri Satın Alma modülünden yapılır -->
@@ -169,95 +304,114 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <!-- Select2 CSS & JS -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link
+  href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+  rel="stylesheet"
+/>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <!-- Select2 Dark Mode CSS -->
 <style>
-.dark .select2-container--default .select2-selection--single {
+  .dark .select2-container--default .select2-selection--single {
     background-color: rgb(51 65 85);
     border-color: rgb(71 85 105);
     color: rgb(226 232 240);
-}
+  }
 
-.dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+  .dark
+    .select2-container--default
+    .select2-selection--single
+    .select2-selection__rendered {
     color: rgb(226 232 240);
-}
+  }
 
-.dark .select2-container--default .select2-selection--single .select2-selection__arrow b {
+  .dark
+    .select2-container--default
+    .select2-selection--single
+    .select2-selection__arrow
+    b {
     border-color: rgb(148 163 184) transparent transparent transparent;
-}
+  }
 
-.dark .select2-dropdown {
+  .dark .select2-dropdown {
     background-color: rgb(51 65 85);
     border-color: rgb(71 85 105);
-}
+  }
 
-.dark .select2-container--default .select2-results__option {
+  .dark .select2-container--default .select2-results__option {
     color: rgb(226 232 240);
-}
+  }
 
-.dark .select2-container--default .select2-results__option--highlighted[aria-selected] {
+  .dark
+    .select2-container--default
+    .select2-results__option--highlighted[aria-selected] {
     background-color: rgb(30 41 59);
-}
+  }
 
-.dark .select2-container--default .select2-search--dropdown .select2-search__field {
+  .dark
+    .select2-container--default
+    .select2-search--dropdown
+    .select2-search__field {
     background-color: rgb(30 41 59);
     border-color: rgb(71 85 105);
     color: rgb(226 232 240);
-}
+  }
 
-.dark .select2-container--default.select2-container--disabled .select2-selection--single {
+  .dark
+    .select2-container--default.select2-container--disabled
+    .select2-selection--single {
     background-color: rgb(15 23 42);
-}
+  }
 </style>
 
 <script>
-// Stok hareketi silme fonksiyonu
-async function silHareket(hareketId) {
+  // Stok hareketi silme fonksiyonu
+  async function silHareket(hareketId) {
     // Onay iste
     const result = await showConfirm(
-        'Bu stok hareketini silmek istediğinizden emin misiniz?\n\nBu işlem geri alınamaz!',
-        'Stok Hareketi Sil'
+      "Bu stok hareketini silmek istediğinizden emin misiniz?\n\nBu işlem geri alınamaz!",
+      "Stok Hareketi Sil",
     );
-    
+
     if (!result.isConfirmed) {
-        return;
+      return;
     }
-    
+
     // CSRF token'ı meta tag'den al
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    
+    const csrfToken = document
+      .querySelector('meta[name="csrf-token"]')
+      ?.getAttribute("content");
+
     if (!csrfToken) {
-        showError('CSRF token bulunamadı', 'Güvenlik Hatası');
-        return;
+      showError("CSRF token bulunamadı", "Güvenlik Hatası");
+      return;
     }
-    
+
     try {
-        const response = await fetch(`/admin/stok-hareket-sil/${hareketId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showSuccess('Stok hareketi başarıyla silindi');
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showError(data.message || 'Bilinmeyen hata', 'Silme Başarısız');
-        }
+      const response = await fetch(`/admin/stok-hareket-sil/${hareketId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        showSuccess("Stok hareketi başarıyla silindi");
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showError(data.message || "Bilinmeyen hata", "Silme Başarısız");
+      }
     } catch (error) {
-        console.error('Silme hatası:', error);
-        showError(error.message, 'Silme Hatası');
+      console.error("Silme hatası:", error);
+      showError(error.message, "Silme Hatası");
     }
-}
+  }
 </script>
 {% endblock %}
