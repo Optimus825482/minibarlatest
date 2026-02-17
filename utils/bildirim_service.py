@@ -27,6 +27,7 @@ class BildirimTipi:
     DND_KAYDI = 'dnd_kaydi'
     SARFIYAT_YOK = 'sarfiyat_yok'
     DOLULUK_YUKLENDI = 'doluluk_yuklendi'
+    ROYALBAR_TALEBI = 'royalbar_talebi'
 
 
 class BildirimService:
@@ -377,4 +378,47 @@ def doluluk_yuklendi_bildirimi(otel_id: int, otel_adi: str, tarih: str, gonderen
         mesaj=f"{tarih} için doluluk bilgileri güncellendi.",
         hedef_otel_id=otel_id,
         gonderen_id=gonderen_id
+    )
+
+
+def royalbar_talebi_bildirimi(
+    otel_id: int,
+    oda_no: str,
+    kat_adi: str,
+    oda_id: int = None,
+    notlar: str = None
+):
+    """Yeni Royalbar kişiselleştirme talebi geldiğinde kat sorumlusu ve yöneticilere bildirim gönderir"""
+    mesaj = f"{kat_adi} - Oda {oda_no} misafiri Royalbar kişiselleştirme talebi gönderdi."
+    if notlar:
+        mesaj += f" Not: {notlar[:100]}"
+    
+    # Kat sorumlusuna bildirim
+    BildirimService.bildirim_olustur(
+        hedef_rol='kat_sorumlusu',
+        bildirim_tipi=BildirimTipi.ROYALBAR_TALEBI,
+        baslik=f"🛎️ Oda {oda_no} - Yeni Royalbar Kişiselleştirme Talebi",
+        mesaj=mesaj,
+        hedef_otel_id=otel_id,
+        oda_id=oda_id
+    )
+    
+    # Yöneticilere bildirim
+    BildirimService.bildirim_olustur(
+        hedef_rol='sistem_yoneticisi',
+        bildirim_tipi=BildirimTipi.ROYALBAR_TALEBI,
+        baslik=f"🛎️ Oda {oda_no} - Yeni Royalbar Kişiselleştirme Talebi",
+        mesaj=mesaj,
+        hedef_otel_id=otel_id,
+        oda_id=oda_id
+    )
+    
+    # Admin rolüne de bildirim
+    BildirimService.bildirim_olustur(
+        hedef_rol='admin',
+        bildirim_tipi=BildirimTipi.ROYALBAR_TALEBI,
+        baslik=f"🛎️ Oda {oda_no} - Yeni Royalbar Kişiselleştirme Talebi",
+        mesaj=mesaj,
+        hedef_otel_id=otel_id,
+        oda_id=oda_id
     )

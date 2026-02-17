@@ -1,6 +1,6 @@
-{% extends "base.html" %} {% block title %}Dolum Talepleri - Minibar Takip
-Sistemi{% endblock %} {% block page_title %}Dolum Talepleri{% endblock %} {%
-block content %}
+{% extends "base.html" %} {% block title %}Royalbar Kişiselleştirme Talepleri -
+Minibar Takip Sistemi{% endblock %} {% block page_title %}Royalbar
+Kişiselleştirme Talepleri{% endblock %} {% block content %}
 <div class="space-y-6">
   <!-- Bekleyen Talepler -->
   <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
@@ -10,10 +10,10 @@ block content %}
           <h3
             class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100"
           >
-            Bekleyen Dolum Talepleri
+            Bekleyen Royalbar Kişiselleştirme Talepleri
           </h3>
           <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Misafirlerden gelen minibar dolum talepleri
+            Misafirlerden gelen Royalbar kişiselleştirme talepleri
           </p>
         </div>
         <button
@@ -79,7 +79,7 @@ block content %}
           <h3
             class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100"
           >
-            Tamamlanan Dolum Talepleri
+            Tamamlanan Royalbar Kişiselleştirme Talepleri
           </h3>
           <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Son 7 gün içinde tamamlanan talepler
@@ -446,7 +446,7 @@ block content %}
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <h3 class="mt-4 text-lg font-medium text-slate-900 dark:text-slate-100">Bekleyen talep yok</h3>
-                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Şu anda bekleyen dolum talebi bulunmuyor</p>
+                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Şu anda bekleyen Royalbar kişiselleştirme talebi bulunmuyor</p>
                 </div>
             `;
       return;
@@ -484,6 +484,23 @@ block content %}
                             </svg>
                             ${gecenSure.metin}
                         </div>
+                        ${
+                          talep.notlar
+                            ? `
+                        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-2">
+                            <div class="flex items-start text-sm text-blue-800 dark:text-blue-200">
+                                <svg class="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                                </svg>
+                                <div>
+                                    <span class="font-semibold block mb-0.5">Misafir Notu:</span>
+                                    ${talep.notlar}
+                                </div>
+                            </div>
+                        </div>
+                        `
+                            : ""
+                        }
                     </div>
                     
                     <div class="flex gap-2">
@@ -718,7 +735,7 @@ block content %}
     html +=
       '<th class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase hide-tablet" style="width: 18%;">Tamamlayan</th>';
     html +=
-      '<th class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase hide-tablet" style="width: 23%;">Notlar</th>';
+      '<th class="px-2 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase hide-tablet" style="width: 23%;">Misafir Notu</th>';
     html +=
       '</tr></thead><tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">';
 

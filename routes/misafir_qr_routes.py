@@ -7,6 +7,7 @@ from models import db, Oda, MinibarDolumTalebi
 from utils.qr_service import QRKodService
 from utils.rate_limiter import QRRateLimiter
 from utils.helpers import log_islem, log_hata
+from utils.bildirim_service import royalbar_talebi_bildirimi
 from flask_wtf.csrf import CSRFProtect
 import bleach
 
@@ -131,9 +132,23 @@ def register_misafir_qr_routes(app):
                     'talep_id': talep.id
                 })
                 
+                # Push bildirim gönder
+                try:
+                    otel_id = oda.kat.otel.id if oda.kat and oda.kat.otel else None
+                    kat_adi = oda.kat.kat_adi if oda.kat else 'Bilinmeyen Kat'
+                    royalbar_talebi_bildirimi(
+                        otel_id=otel_id,
+                        oda_no=oda.oda_no,
+                        kat_adi=kat_adi,
+                        oda_id=oda.id,
+                        notlar=notlar
+                    )
+                except Exception as bildirim_err:
+                    log_hata(bildirim_err, modul='royalbar_talebi_bildirim')
+                
                 return jsonify({
                     'success': True,
-                    'message': 'Dolum talebiniz başarıyla gönderildi!'
+                    'message': 'Royalbar kişiselleştirme talebiniz başarıyla gönderildi!'
                 })
             
             else:  # GET

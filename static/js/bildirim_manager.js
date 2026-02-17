@@ -92,7 +92,7 @@ class BildirimManager {
   async yeniBildirimleriKontrolEt() {
     try {
       const url = `/api/bildirimler/poll?son_kontrol=${encodeURIComponent(
-        this.sonKontrol
+        this.sonKontrol,
       )}`;
       const response = await fetch(url);
       const data = await response.json();
@@ -225,6 +225,11 @@ class BildirimManager {
         icon: "fas fa-chart-bar",
         color: "text-purple-600",
         bg: "bg-purple-100 dark:bg-purple-900/30",
+      },
+      royalbar_talebi: {
+        icon: "fas fa-concierge-bell",
+        color: "text-amber-600",
+        bg: "bg-amber-100 dark:bg-amber-900/30",
       },
     };
     return (
@@ -373,8 +378,9 @@ class BildirimManager {
   bildirimSesiCal() {
     // Basit bir beep sesi (opsiyonel)
     try {
-      const audioContext = new (window.AudioContext ||
-        window.webkitAudioContext)();
+      const audioContext = new (
+        window.AudioContext || window.webkitAudioContext
+      )();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
 

@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
-    <title>Minibar Dolum Talebi - Oda {{ oda.oda_no }}</title>
+    <title>Royalbar Kişiselleştirme - Oda {{ oda.oda_no }}</title>
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
@@ -292,7 +292,7 @@
               </h4>
               {% endif %}
 
-              <h3 class="page-title text-center">Minibar Dolum Talebi</h3>
+              <h3 class="page-title text-center">Royalbar Kişiselleştirme</h3>
 
               <div class="text-center mb-4">
                 <div class="room-badge">
@@ -304,8 +304,8 @@
               <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i>
                 <strong
-                  >{{ oda.misafir_mesaji or 'Minibar dolum talebiniz en kısa
-                  sürede yerine getirilecektir.' }}</strong
+                  >{{ oda.misafir_mesaji or 'Royalbar kişiselleştirme talebiniz
+                  en kısa sürede yerine getirilecektir.' }}</strong
                 >
               </div>
 
@@ -339,7 +339,8 @@
                   type="submit"
                   class="btn btn-primary btn-block btn-lg mt-4"
                 >
-                  <i class="fas fa-paper-plane"></i> Dolum Talebi Gönder
+                  <i class="fas fa-paper-plane"></i> Royalbar Kişiselleştirme
+                  Talebi Gönder
                 </button>
               </form>
 
@@ -354,7 +355,8 @@
                     >Talebiniz Başarıyla Gönderildi!</strong
                   >
                   <p class="mb-0">
-                    En kısa sürede minibarınız doldurulacaktır. Teşekkür ederiz.
+                    En kısa sürede minibarınız kişiselleştirilecektir. Teşekkür
+                    ederiz.
                   </p>
                 </div>
               </div>
@@ -416,7 +418,7 @@
             } else {
               console.error("❌ Başarısız:", response.message);
               alert(
-                response.message || "Bir hata oluştu. Lütfen tekrar deneyin."
+                response.message || "Bir hata oluştu. Lütfen tekrar deneyin.",
               );
               submitBtn.prop("disabled", false).html(originalText);
             }

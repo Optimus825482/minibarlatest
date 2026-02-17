@@ -1,173 +1,275 @@
-{% extends "base.html" %}
-
-{% block title %}Dolum Talepleri - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Dolum Talepleri Yönetimi{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Royalbar Kişiselleştirme Talepleri -
+Minibar Takip Sistemi{% endblock %} {% block page_title %}Royalbar
+Kişiselleştirme Talepleri Yönetimi{% endblock %} {% block content %}
 <div class="space-y-6">
-    <!-- İstatistikler -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Bekleyen</dt>
-                            <dd class="text-lg font-semibold text-slate-900 dark:text-slate-100" id="stat_bekleyen">-</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
+  <!-- İstatistikler -->
+  <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+    <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg
+              class="h-6 w-6 text-yellow-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt
+                class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate"
+              >
+                Bekleyen
+              </dt>
+              <dd
+                class="text-lg font-semibold text-slate-900 dark:text-slate-100"
+                id="stat_bekleyen"
+              >
+                -
+              </dd>
+            </dl>
+          </div>
         </div>
-
-        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">Tamamlanan (Bugün)</dt>
-                            <dd class="text-lg font-semibold text-slate-900 dark:text-slate-100" id="stat_tamamlanan">-</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate">İptal Edilen (Bugün)</dt>
-                            <dd class="text-lg font-semibold text-slate-900 dark:text-slate-100" id="stat_iptal">-</dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
 
-    <!-- Talepler Tablosu -->
-    <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
-        <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100">Tüm Dolum Talepleri</h3>
-                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Misafirlerden gelen tüm minibar dolum talepleri</p>
-                </div>
-                <div class="flex gap-2">
-                    <select id="durum_filtre" 
-                            onchange="talepleriYukle()"
-                            class="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="tumu" class="bg-white dark:bg-slate-800">Tümü</option>
-                        <option value="beklemede" selected class="bg-white dark:bg-slate-800">Bekleyen</option>
-                        <option value="tamamlandi">Tamamlanan</option>
-                        <option value="iptal">İptal Edilen</option>
-                    </select>
-                    <button onclick="talepleriYukle()" 
-                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        Yenile
-                    </button>
-                </div>
-            </div>
-
-            <!-- Talepler Listesi -->
-            <div id="talep_listesi">
-                <div class="text-center py-8">
-                    <svg class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Yükleniyor...</p>
-                </div>
-            </div>
+    <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg
+              class="h-6 w-6 text-green-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt
+                class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate"
+              >
+                Tamamlanan (Bugün)
+              </dt>
+              <dd
+                class="text-lg font-semibold text-slate-900 dark:text-slate-100"
+                id="stat_tamamlanan"
+              >
+                -
+              </dd>
+            </dl>
+          </div>
         </div>
+      </div>
     </div>
+
+    <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg
+              class="h-6 w-6 text-red-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt
+                class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate"
+              >
+                İptal Edilen (Bugün)
+              </dt>
+              <dd
+                class="text-lg font-semibold text-slate-900 dark:text-slate-100"
+                id="stat_iptal"
+              >
+                -
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Talepler Tablosu -->
+  <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h3
+            class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100"
+          >
+            Tüm Royalbar Kişiselleştirme Talepleri
+          </h3>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Misafirlerden gelen tüm Royalbar kişiselleştirme talepleri
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <select
+            id="durum_filtre"
+            onchange="talepleriYukle()"
+            class="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          >
+            <option value="tumu" class="bg-white dark:bg-slate-800">
+              Tümü
+            </option>
+            <option
+              value="beklemede"
+              selected
+              class="bg-white dark:bg-slate-800"
+            >
+              Bekleyen
+            </option>
+            <option value="tamamlandi">Tamamlanan</option>
+            <option value="iptal">İptal Edilen</option>
+          </select>
+          <button
+            onclick="talepleriYukle()"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+          >
+            <svg
+              class="h-5 w-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              ></path>
+            </svg>
+            Yenile
+          </button>
+        </div>
+      </div>
+
+      <!-- Talepler Listesi -->
+      <div id="talep_listesi">
+        <div class="text-center py-8">
+          <svg
+            class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-600 animate-spin"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            Yükleniyor...
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-{% endblock %}
-
-{% block extra_scripts %}
+{% endblock %} {% block extra_scripts %}
 <!-- Toastr CSS & JS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
+/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
 <script>
-    // Toastr ayarları
-    toastr.options = {
-        "closeButton": true,
-        "progressBar": true,
-        "positionClass": "toast-top-right",
-        "timeOut": "3000"
-    };
-    
-    // Sayfa yüklendiğinde talepleri getir
-    document.addEventListener('DOMContentLoaded', function() {
-        talepleriYukle();
-        istatistikleriYukle();
-        
-        // Her 30 saniyede bir otomatik yenile
-        setInterval(() => {
-            talepleriYukle();
-            istatistikleriYukle();
-        }, 30000);
-    });
-    
-    // İstatistikleri yükle
-    async function istatistikleriYukle() {
-        try {
-            const response = await fetch('/api/dolum-talepleri-istatistik');
-            const data = await response.json();
-            
-            if (data.success) {
-                document.getElementById('stat_bekleyen').textContent = data.bekleyen;
-                document.getElementById('stat_tamamlanan').textContent = data.tamamlanan_bugun;
-                document.getElementById('stat_iptal').textContent = data.iptal_bugun;
-            }
-        } catch (error) {
-            console.error('İstatistik hatası:', error);
-        }
+  // Toastr ayarları
+  toastr.options = {
+    closeButton: true,
+    progressBar: true,
+    positionClass: "toast-top-right",
+    timeOut: "3000",
+  };
+
+  // Sayfa yüklendiğinde talepleri getir
+  document.addEventListener("DOMContentLoaded", function () {
+    talepleriYukle();
+    istatistikleriYukle();
+
+    // Her 30 saniyede bir otomatik yenile
+    setInterval(() => {
+      talepleriYukle();
+      istatistikleriYukle();
+    }, 30000);
+  });
+
+  // İstatistikleri yükle
+  async function istatistikleriYukle() {
+    try {
+      const response = await fetch("/api/dolum-talepleri-istatistik");
+      const data = await response.json();
+
+      if (data.success) {
+        document.getElementById("stat_bekleyen").textContent = data.bekleyen;
+        document.getElementById("stat_tamamlanan").textContent =
+          data.tamamlanan_bugun;
+        document.getElementById("stat_iptal").textContent = data.iptal_bugun;
+      }
+    } catch (error) {
+      console.error("İstatistik hatası:", error);
     }
-    
-    // Talepleri yükle
-    async function talepleriYukle() {
-        const durum = document.getElementById('durum_filtre').value;
-        
-        try {
-            let url = '/api/dolum-talepleri-admin';
-            if (durum !== 'tumu') {
-                url += `?durum=${durum}`;
-            }
-            
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            if (data.success) {
-                talepListesiGoster(data.talepler);
-            } else {
-                throw new Error(data.message);
-            }
-        } catch (error) {
-            console.error('Hata:', error);
-            document.getElementById('talep_listesi').innerHTML = `
+  }
+
+  // Talepleri yükle
+  async function talepleriYukle() {
+    const durum = document.getElementById("durum_filtre").value;
+
+    try {
+      let url = "/api/dolum-talepleri-admin";
+      if (durum !== "tumu") {
+        url += `?durum=${durum}`;
+      }
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.success) {
+        talepListesiGoster(data.talepler);
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      console.error("Hata:", error);
+      document.getElementById("talep_listesi").innerHTML = `
                 <div class="text-center py-8">
                     <svg class="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -175,15 +277,15 @@
                     <p class="mt-2 text-sm text-red-600">Talepler yüklenirken hata oluştu</p>
                 </div>
             `;
-        }
     }
-    
-    // Talep listesini göster
-    function talepListesiGoster(talepler) {
-        const container = document.getElementById('talep_listesi');
-        
-        if (talepler.length === 0) {
-            container.innerHTML = `
+  }
+
+  // Talep listesini göster
+  function talepListesiGoster(talepler) {
+    const container = document.getElementById("talep_listesi");
+
+    if (talepler.length === 0) {
+      container.innerHTML = `
                 <div class="text-center py-12">
                     <svg class="mx-auto h-16 w-16 text-slate-400 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -192,10 +294,10 @@
                     <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Seçilen filtreye uygun talep bulunmuyor</p>
                 </div>
             `;
-            return;
-        }
-        
-        let html = `
+      return;
+    }
+
+    let html = `
             <div class="overflow-hidden">
                 <table class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
                     <thead class="bg-slate-50 dark:bg-slate-900">
@@ -205,44 +307,49 @@
                             <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Talep Tarihi</th>
                             <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Durum</th>
                             <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tamamlanma</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Notlar</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Misafir Notu</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
         `;
-        
-        talepler.forEach(talep => {
-            const talepTarihi = new Date(talep.talep_tarihi).toLocaleString('tr-TR');
-            const tamamlanmaTarihi = talep.tamamlanma_tarihi ? new Date(talep.tamamlanma_tarihi).toLocaleString('tr-TR') : '-';
-            
-            let durumBadge = '';
-            if (talep.durum === 'beklemede') {
-                durumBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200">Bekliyor</span>';
-            } else if (talep.durum === 'tamamlandi') {
-                durumBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">Tamamlandı</span>';
-            } else {
-                durumBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200">İptal</span>';
-            }
-            
-            html += `
+
+    talepler.forEach((talep) => {
+      const talepTarihi = new Date(talep.talep_tarihi).toLocaleString("tr-TR");
+      const tamamlanmaTarihi = talep.tamamlanma_tarihi
+        ? new Date(talep.tamamlanma_tarihi).toLocaleString("tr-TR")
+        : "-";
+
+      let durumBadge = "";
+      if (talep.durum === "beklemede") {
+        durumBadge =
+          '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200">Bekliyor</span>';
+      } else if (talep.durum === "tamamlandi") {
+        durumBadge =
+          '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">Tamamlandı</span>';
+      } else {
+        durumBadge =
+          '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200">İptal</span>';
+      }
+
+      html += `
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
                     <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">${talep.oda_no}</td>
                     <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">${talep.kat_adi}</td>
                     <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">${talepTarihi}</td>
                     <td class="px-3 py-3 whitespace-nowrap">${durumBadge}</td>
                     <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">${tamamlanmaTarihi}</td>
-                    <td class="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">${talep.notlar || '-'}</td>
+                    <td class="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">${talep.notlar ? '<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded p-1.5 text-xs text-blue-800 dark:text-blue-200">' + talep.notlar + "</div>" : "-"}</td>
                 </tr>
             `;
-        });
-        
-        html += `
+    });
+
+    html += `
                     </tbody>
                 </table>
             </div>
         `;
-        
-        container.innerHTML = html;
-    }
+
+    container.innerHTML = html;
+  }
 </script>
 {% endblock %}

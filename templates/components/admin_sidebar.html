@@ -146,7 +146,7 @@
       class="sidebar-item {% if request.endpoint == 'dolum_talepleri' %}active{% endif %}"
     >
       <i class="fas fa-bell sidebar-icon"></i>
-      <span class="sidebar-text">Dolum Talepleri</span>
+      <span class="sidebar-text">Royalbar Kişiselleştirme Talepleri</span>
       <span class="sidebar-badge" id="dolum-badge"></span>
     </a>
   </div>
@@ -431,7 +431,9 @@
   .sidebar-section-content {
     max-height: 1000px;
     overflow: hidden;
-    transition: max-height 0.3s ease, opacity 0.3s ease;
+    transition:
+      max-height 0.3s ease,
+      opacity 0.3s ease;
     opacity: 1;
   }
 
@@ -464,7 +466,7 @@
       const collapsed = section.classList.contains("collapsed");
       localStorage.setItem(
         `sidebar-${sectionId}`,
-        collapsed ? "collapsed" : "expanded"
+        collapsed ? "collapsed" : "expanded",
       );
     }
   }
