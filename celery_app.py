@@ -879,33 +879,7 @@ def ml_eski_verileri_temizle_task():
         return {'status': 'error', 'message': str(e)}
 
 
-@celery.task(name='ml.gunluk_alert_ozeti')
-def ml_gunluk_alert_ozeti_task():
-    """
-    ML günlük alert özeti - Her sabah 07:00'de çalışır
-    Son 24 saatteki kritik alertlerin özetini sistem yöneticilerine gönderir
-    """
-    try:
-        app, db = get_flask_app()
-        from utils.ml.alert_manager import AlertManager
-        
-        with app.app_context():
-            logger.info("📧 ML günlük alert özeti gönderiliyor...")
-            
-            alert_manager = AlertManager(db)
-            gonderilen = alert_manager.send_critical_alerts_summary()
-            
-            logger.info(f"✅ ML alert özeti gönderildi: {gonderilen} alıcı")
-            
-            return {
-                'status': 'success',
-                'message': f'{gonderilen} alıcıya gönderildi',
-                'recipients': gonderilen
-            }
-            
-    except Exception as e:
-        logger.error(f"ML günlük alert özeti task hatası: {str(e)}")
-        return {'status': 'error', 'message': str(e)}
+## ML Günlük Alert Özeti - KALDIRILDI (artık gönderilmiyor)
 
 
 @celery.task(name='ml.stok_bitis_kontrolu')
@@ -1340,11 +1314,7 @@ celery.conf.beat_schedule = {
         'task': 'ml.eski_verileri_temizle',
         'schedule': crontab(hour=23, minute=0),  # UTC 23:00 = KKTC 01:00
     },
-    # ML Günlük Alert Özeti - Her sabah 07:00'de (KKTC)
-    'ml-gunluk-alert-ozeti': {
-        'task': 'ml.gunluk_alert_ozeti',
-        'schedule': crontab(hour=5, minute=0),  # UTC 05:00 = KKTC 07:00
-    },
+    # ML Günlük Alert Özeti - KALDIRILDI (Erkan talebi)
     # ML Stok Bitiş Kontrolü - Her 6 saatte bir
     'ml-stok-bitis-kontrolu': {
         'task': 'ml.stok_bitis_kontrolu',

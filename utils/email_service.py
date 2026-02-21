@@ -13,6 +13,8 @@ import logging
 import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 from datetime import datetime, timezone
 import pytz
 
@@ -106,7 +108,8 @@ class EmailService:
         ilgili_kayit_id: Optional[int] = None,
         ek_bilgiler: Optional[Dict] = None,
         html_body: Optional[str] = None,
-        read_receipt: bool = False
+        read_receipt: bool = False,
+        attachments: Optional[list] = None
     ) -> Dict[str, Any]:
         """
         Email gönder ve logla
@@ -141,8 +144,11 @@ class EmailService:
             # Tracking ID oluştur (okundu takibi için)
             tracking_id = str(uuid.uuid4())
             
-            # Email oluştur
-            msg = MIMEMultipart('alternative')
+            # Email oluştur - attachment varsa mixed, yoksa alternative
+            if attachments:
+                msg = MIMEMultipart('mixed')
+            else:
+                msg = MIMEMultipart('alternative')
             msg['Subject'] = subject
             msg['From'] = f"{settings['sender_name']} <{settings['sender_email']}>"
             msg['To'] = to_email
@@ -154,18 +160,34 @@ class EmailService:
                 msg['X-Confirm-Reading-To'] = settings['sender_email']
                 msg['Return-Receipt-To'] = settings['sender_email']
             
-            # Plain text part
-            text_part = MIMEText(body, 'plain', 'utf-8')
-            msg.attach(text_part)
-            
-            # HTML part (varsa)
-            if html_body:
-                # Okundu takibi için tracking pixel ekle
-                base_url = os.getenv('BASE_URL', 'https://minibartakip.com')
-                tracking_pixel = f'<img src="{base_url}/api/email-tracking/{tracking_id}" width="1" height="1" style="display:none;" alt="" />'
-                html_with_tracking = html_body + tracking_pixel
-                html_part = MIMEText(html_with_tracking, 'html', 'utf-8')
-                msg.attach(html_part)
+            # Text/HTML content
+            if attachments:
+                # mixed modda alternative sub-part oluştur
+                msg_alt = MIMEMultipart('alternative')
+                msg_alt.attach(MIMEText(body, 'plain', 'utf-8'))
+                if html_body:
+                    base_url = os.getenv('BASE_URL', 'https://minibartakip.com')
+                    tracking_pixel = f'<img src="{base_url}/api/email-tracking/{tracking_id}" width="1" height="1" style="display:none;" alt="" />'
+                    msg_alt.attach(MIMEText(html_body + tracking_pixel, 'html', 'utf-8'))
+                msg.attach(msg_alt)
+                
+                # Attachments ekle
+                for att in attachments:
+                    part = MIMEBase('application', 'octet-stream')
+                    part.set_payload(att['data'])
+                    encoders.encode_base64(part)
+                    part.add_header(
+                        'Content-Disposition',
+                        f'attachment; filename="{att["filename"]}"'
+                    )
+                    msg.attach(part)
+            else:
+                # Eski davranış - alternative
+                msg.attach(MIMEText(body, 'plain', 'utf-8'))
+                if html_body:
+                    base_url = os.getenv('BASE_URL', 'https://minibartakip.com')
+                    tracking_pixel = f'<img src="{base_url}/api/email-tracking/{tracking_id}" width="1" height="1" style="display:none;" alt="" />'
+                    msg.attach(MIMEText(html_body + tracking_pixel, 'html', 'utf-8'))
             
             # SMTP bağlantısı ve gönderim
             durum = 'gonderildi'
@@ -445,6 +467,11 @@ class DolulukUyariService:
                         logger.warning(f"Depo sorumlusu email adresi yok: {depo_sorumlusu.kullanici_adi}")
                         continue
                     
+                    # Bildirim ayarı kapalıysa atla (superadmin her zaman alır)
+                    if depo_sorumlusu.rol != 'superadmin' and not getattr(depo_sorumlusu, 'email_bildirim_aktif', True):
+                        logger.info(f"Depo sorumlusu bildirim ayarı kapalı: {depo_sorumlusu.kullanici_adi}")
+                        continue
+                    
                     # Uyarı tipi belirle
                     if len(eksik_yuklemeler) == 3:
                         uyari_tipi = 'tumu_eksik'
@@ -567,12 +594,18 @@ Minibar Takip Sistemi
         try:
             from models import Kullanici
             
-            # Sistem yöneticilerini bul
+            # Sistem yöneticilerini bul (bildirim ayarı aktif olanlar + superadmin her zaman)
             sistem_yoneticileri = Kullanici.query.filter(
-                Kullanici.rol.in_(['sistem_yoneticisi', 'admin']),
+                Kullanici.rol.in_(['sistem_yoneticisi', 'admin', 'superadmin']),
                 Kullanici.aktif == True,
                 Kullanici.email.isnot(None)
             ).all()
+            
+            # email_bildirim_aktif filtresi (superadmin her zaman alır)
+            sistem_yoneticileri = [
+                y for y in sistem_yoneticileri 
+                if y.rol == 'superadmin' or getattr(y, 'email_bildirim_aktif', True)
+            ]
             
             if not sistem_yoneticileri:
                 return

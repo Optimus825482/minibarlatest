@@ -17,6 +17,24 @@ import traceback
 import logging
 import pytz
 
+# Raporlardan hariç tutulacak sistem/test kullanıcıları
+EXCLUDED_USERNAMES = ['superadmin', 'superadmindepo', 'ERKANKAT']
+
+
+def get_excluded_user_ids():
+    """Raporlardan hariç tutulacak kullanıcı ID'lerini döndürür (cache'li)"""
+    if not hasattr(get_excluded_user_ids, '_cache'):
+        get_excluded_user_ids._cache = None
+    if get_excluded_user_ids._cache is None:
+        try:
+            ids = [u.id for u in Kullanici.query.filter(
+                Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
+            ).all()]
+            get_excluded_user_ids._cache = ids
+        except Exception:
+            return []
+    return get_excluded_user_ids._cache
+
 # Logging yapılandırması
 logging.basicConfig(
     filename='minibar_errors.log',
@@ -545,8 +563,12 @@ def log_islem(islem_tipi, modul, islem_detay=None):
 
 
 def get_son_loglar(limit=50):
-    """Son log kayıtlarını getir"""
-    return SistemLog.query.order_by(SistemLog.islem_tarihi.desc()).limit(limit).all()
+    """Son log kayıtlarını getir (superadmin hariç)"""
+    return SistemLog.query.join(
+        Kullanici, SistemLog.kullanici_id == Kullanici.id
+    ).filter(
+        Kullanici.rol != 'superadmin'
+    ).order_by(SistemLog.islem_tarihi.desc()).limit(limit).all()
 
 
 def get_kullanici_loglari(kullanici_id, limit=50):
@@ -557,8 +579,13 @@ def get_kullanici_loglari(kullanici_id, limit=50):
 
 
 def get_modul_loglari(modul, limit=50):
-    """Belirli bir modülün log kayıtlarını getir"""
-    return SistemLog.query.filter_by(modul=modul).order_by(
+    """Belirli bir modülün log kayıtlarını getir (superadmin hariç)"""
+    return SistemLog.query.join(
+        Kullanici, SistemLog.kullanici_id == Kullanici.id
+    ).filter(
+        SistemLog.modul == modul,
+        Kullanici.rol != 'superadmin'
+    ).order_by(
         SistemLog.islem_tarihi.desc()
     ).limit(limit).all()
 

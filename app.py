@@ -1502,9 +1502,13 @@ def api_son_aktiviteler():
     try:
         limit = request.args.get('limit', 10, type=int)
 
-        # Son aktiviteleri çek (sadece önemli işlemler)
+        # Son aktiviteleri çek (sadece önemli işlemler, superadmin hariç)
         aktiviteler = SistemLog.query\
-            .filter(SistemLog.islem_tipi.in_(['ekleme', 'guncelleme', 'silme']))\
+            .join(Kullanici, SistemLog.kullanici_id == Kullanici.id)\
+            .filter(
+                SistemLog.islem_tipi.in_(['ekleme', 'guncelleme', 'silme']),
+                Kullanici.rol != 'superadmin'
+            )\
             .order_by(SistemLog.islem_tarihi.desc())\
             .limit(limit)\
             .all()
@@ -1696,8 +1700,8 @@ def audit_trail():
     tarih_baslangic = request.args.get('tarih_baslangic')
     tarih_bitis = request.args.get('tarih_bitis')
     
-    # Base query
-    query = AuditLog.query
+    # Base query (superadmin aktiviteleri hariç)
+    query = AuditLog.query.filter(AuditLog.kullanici_rol != 'superadmin')
     
     # Filtreleme
     if kullanici_id:
@@ -1793,8 +1797,8 @@ def audit_trail_export():
     tarih_baslangic = request.args.get('tarih_baslangic')
     tarih_bitis = request.args.get('tarih_bitis')
     
-    # Query oluştur
-    query = AuditLog.query
+    # Query oluştur (superadmin aktiviteleri hariç)
+    query = AuditLog.query.filter(AuditLog.kullanici_rol != 'superadmin')
     
     if kullanici_id:
         query = query.filter_by(kullanici_id=kullanici_id)

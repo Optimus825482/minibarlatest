@@ -149,37 +149,64 @@ block extra_head %}
   </div>
 </div>
 
-  <!-- Haftalık Karşılaştırma -->
-  {% if weekly and weekly.degisim %}
-  <div class="exec-weekly-grid">
-    {% set metrics = [
-      ('Tüketim', weekly.bu_hafta.tuketim|default(0), weekly.gecen_hafta.tuketim|default(0), weekly.degisim.tuketim|default(0), 'fas fa-wine-bottle', 'emerald'),
-      ('Oda Kontrol', weekly.bu_hafta.kontrol|default(0), weekly.gecen_hafta.kontrol|default(0), weekly.degisim.kontrol|default(0), 'fas fa-door-open', 'blue'),
-      ('Sistem İşlem', weekly.bu_hafta.islem|default(0), weekly.gecen_hafta.islem|default(0), weekly.degisim.islem|default(0), 'fas fa-exchange-alt', 'purple')
-    ] %}
-    {% for label, current, previous, change, icon, color in metrics %}
+  <!-- Özet Metrik Kartları -->
+  <div class="exec-weekly-grid" id="summary-cards-container">
+    <!-- Görev Tamamlanma -->
     <div class="exec-card p-4">
       <div class="flex items-center justify-between mb-2">
-        <span class="text-sm text-slate-400"><i class="{{ icon }} mr-1"></i>{{ label }}</span>
-        <span class="text-xs px-2 py-0.5 rounded-full font-medium {% if change > 0 %}bg-green-500/20 text-green-400{% elif change < 0 %}bg-red-500/20 text-red-400{% else %}bg-slate-500/20 text-slate-400{% endif %}">
-          {% if change > 0 %}↑{% elif change < 0 %}↓{% else %}→{% endif %} {{ change }}%
+        <span class="text-sm text-slate-400"><i class="fas fa-check-double mr-1"></i>Görev Tamamlanma</span>
+        <span class="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-500/20 text-amber-400" id="summary-gorev-badge">
+          %<span id="summary-gorev-oran">{{ ((weekly.gorev_tamamlanan / weekly.gorev_toplam * 100) if weekly.gorev_toplam > 0 else 0)|round|int }}</span>
         </span>
       </div>
       <div class="flex items-end gap-3">
         <div>
-          <div class="text-2xl font-bold text-white">{{ current }}</div>
-          <div class="text-xs text-slate-500">Bu hafta</div>
+          <div class="text-2xl font-bold text-white"><span id="summary-gorev-tamamlanan">{{ weekly.gorev_tamamlanan|default(0) }}</span></div>
+          <div class="text-xs text-slate-500">Tamamlanan</div>
         </div>
-        <div class="text-slate-600">vs</div>
+        <div class="text-slate-600">/</div>
         <div>
-          <div class="text-lg text-slate-400">{{ previous }}</div>
-          <div class="text-xs text-slate-500">Geçen hafta</div>
+          <div class="text-lg text-slate-400"><span id="summary-gorev-toplam">{{ weekly.gorev_toplam|default(0) }}</span></div>
+          <div class="text-xs text-slate-500">Toplam Görev</div>
         </div>
       </div>
     </div>
-    {% endfor %}
+
+    <!-- Ort. Tüketim / İşlem -->
+    <div class="exec-card p-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm text-slate-400"><i class="fas fa-calculator mr-1"></i>Ort. Tüketim/İşlem</span>
+        <span class="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-500/20 text-emerald-400" id="summary-islem-badge">
+          <span id="summary-tuketimli-islem">{{ weekly.tuketimli_islem|default(0) }}</span> işlem
+        </span>
+      </div>
+      <div class="flex items-end gap-3">
+        <div>
+          <div class="text-2xl font-bold text-white"><span id="summary-ort-tuketim">{{ weekly.ort_tuketim_islem|default(0) }}</span></div>
+          <div class="text-xs text-slate-500">Ort. Tüketim/İşlem</div>
+        </div>
+        <div class="text-slate-600">|</div>
+        <div>
+          <div class="text-lg text-slate-400"><span id="summary-toplam-tuketim">{{ weekly.toplam_tuketim|default(0) }}</span></div>
+          <div class="text-xs text-slate-500">Toplam Tüketim</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bugünkü DND -->
+    <div class="exec-card p-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm text-slate-400"><i class="fas fa-moon mr-1"></i>DND Kayıtları</span>
+        <span class="text-xs px-2 py-0.5 rounded-full font-medium bg-rose-500/20 text-rose-400">Bugün</span>
+      </div>
+      <div class="flex items-end gap-3">
+        <div>
+          <div class="text-2xl font-bold text-white"><span id="summary-dnd">{{ weekly.bugun_dnd|default(0) }}</span></div>
+          <div class="text-xs text-slate-500">Aktif DND Oda</div>
+        </div>
+      </div>
+    </div>
   </div>
-  {% endif %}
 
   <!-- Grafikler -->
   <div class="exec-charts-grid">

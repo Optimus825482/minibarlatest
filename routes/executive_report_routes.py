@@ -6,7 +6,7 @@ Executive Report Routes
 from flask import render_template, jsonify, request, make_response
 from utils.decorators import login_required, role_required
 from utils.executive_report_service import ExecutiveReportService, parse_date
-from models import Otel
+from models import Otel, db
 import logging
 import json
 
@@ -39,6 +39,16 @@ TAB_CONFIGS = {
         'title': 'Karşılaştırmalı Analiz',
         'subtitle': 'İki dönem karşılaştırmalı performans analizi',
         'icon': 'fas fa-balance-scale'
+    },
+    'dnd': {
+        'title': 'DND Raporlama',
+        'subtitle': 'Do Not Disturb kayıtları ve tüketim analizi',
+        'icon': 'fas fa-moon'
+    },
+    'audit': {
+        'title': 'Denetim İzi',
+        'subtitle': 'Sistem genelinde kullanıcı işlem kayıtları ve denetim izleri',
+        'icon': 'fas fa-shield-alt'
     },
 }
 
@@ -182,6 +192,154 @@ def register_executive_report_routes(app):
             logger.error(f"Karşılaştırmalı analiz API hatası: {e}")
             return jsonify({'success': False, 'error': str(e)}), 500
 
+    @app.route('/api/executive/reports/dnd')
+    @login_required
+    @role_required('superadmin')
+    def api_report_dnd():
+        """DND raporlama API"""
+        try:
+            result = ExecutiveReportService.get_dnd_report(
+                start_date=parse_date(request.args.get('start_date')),
+                end_date=parse_date(request.args.get('end_date')),
+                otel_id=request.args.get('otel_id', type=int),
+                kat_id=request.args.get('kat_id', type=int),
+                oda_id=request.args.get('oda_id', type=int),
+                personel_id=request.args.get('personel_id', type=int),
+                group_by=request.args.get('group_by', 'oda')
+            )
+            return jsonify(result)
+        except Exception as e:
+            logger.error(f"DND raporu API hatası: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+    # ---- AUDIT TRAIL API ----
+
+    @app.route('/api/executive/reports/audit-trail')
+    @login_required
+    @role_required('superadmin')
+    def api_report_audit_trail():
+        """Audit Trail (Denetim İzi) API — Executive dashboard: superadmin dahil TÜM kayıtlar"""
+        try:
+            from models import AuditLog, Kullanici
+            from datetime import datetime, timedelta
+
+            page = request.args.get('page', 1, type=int)
+            per_page = request.args.get('per_page', 50, type=int)
+            kullanici_id = request.args.get('kullanici_id', type=int)
+            islem_tipi = request.args.get('islem_tipi')
+            tablo_adi = request.args.get('tablo_adi')
+            arama = request.args.get('arama', '').strip()
+            start_date = request.args.get('start_date')
+            end_date = request.args.get('end_date')
+
+            # Executive dashboard — superadmin dahil TÜM kayıtlar (filtreleme YOK)
+            query = AuditLog.query
+
+            if kullanici_id:
+                query = query.filter(AuditLog.kullanici_id == kullanici_id)
+            if islem_tipi:
+                query = query.filter(AuditLog.islem_tipi == islem_tipi)
+            if tablo_adi:
+                query = query.filter(AuditLog.tablo_adi == tablo_adi)
+            if arama:
+                query = query.filter(
+                    db.or_(
+                        AuditLog.kullanici_adi.ilike(f'%{arama}%'),
+                        AuditLog.degisiklik_ozeti.ilike(f'%{arama}%'),
+                        AuditLog.tablo_adi.ilike(f'%{arama}%')
+                    )
+                )
+            if start_date:
+                try:
+                    sd = datetime.strptime(start_date, '%Y-%m-%d')
+                    query = query.filter(AuditLog.islem_tarihi >= sd)
+                except ValueError:
+                    pass
+            if end_date:
+                try:
+                    ed = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
+                    query = query.filter(AuditLog.islem_tarihi < ed)
+                except ValueError:
+                    pass
+
+            # Sıralama ve sayfalama
+            query = query.order_by(AuditLog.islem_tarihi.desc())
+            total = query.count()
+            logs = query.offset((page - 1) * per_page).limit(per_page).all()
+
+            # İstatistikler
+            from utils.helpers import get_kktc_now
+            bugun = get_kktc_now().replace(hour=0, minute=0, second=0, microsecond=0)
+            bu_hafta = bugun - timedelta(days=bugun.weekday())
+            bu_ay = bugun.replace(day=1)
+
+            stats = {
+                'today': AuditLog.query.filter(AuditLog.islem_tarihi >= bugun).count(),
+                'week': AuditLog.query.filter(AuditLog.islem_tarihi >= bu_hafta).count(),
+                'month': AuditLog.query.filter(AuditLog.islem_tarihi >= bu_ay).count(),
+                'total': total
+            }
+
+            # Filtre seçenekleri
+            users = Kullanici.query.filter_by(aktif=True).order_by(Kullanici.kullanici_adi).all()
+            tables = [t[0] for t in db.session.query(AuditLog.tablo_adi).distinct().order_by(AuditLog.tablo_adi).all()]
+
+            # İşlem tipi etiketleri
+            islem_tipi_labels = {
+                'login': 'Giriş', 'logout': 'Çıkış', 'create': 'Oluşturma',
+                'update': 'Güncelleme', 'delete': 'Silme', 'view': 'Görüntüleme',
+                'export': 'Dışa Aktarma', 'import': 'İçe Aktarma',
+                'backup': 'Yedekleme', 'restore': 'Geri Yükleme'
+            }
+
+            # Rol renkleri
+            rol_colors = {
+                'superadmin': 'purple', 'sistem_yoneticisi': 'blue',
+                'admin': 'cyan', 'depo_sorumlusu': 'amber', 'kat_sorumlusu': 'emerald'
+            }
+
+            data = []
+            for log in logs:
+                islem_label = islem_tipi_labels.get(log.islem_tipi, log.islem_tipi)
+                rol_color = rol_colors.get(log.kullanici_rol, 'slate')
+                data.append({
+                    'id': log.id,
+                    'kullanici_adi': log.kullanici_adi,
+                    'kullanici_rol': log.kullanici_rol,
+                    'rol_color': rol_color,
+                    'islem_tipi': log.islem_tipi,
+                    'islem_label': islem_label,
+                    'tablo_adi': log.tablo_adi,
+                    'kayit_id': log.kayit_id,
+                    'degisiklik_ozeti': log.degisiklik_ozeti or '',
+                    'http_method': log.http_method or '',
+                    'ip_adresi': log.ip_adresi or '',
+                    'tarih': log.islem_tarihi.strftime('%d.%m.%Y %H:%M:%S') if log.islem_tarihi else '',
+                    'tarih_kisa': log.islem_tarihi.strftime('%d.%m.%Y %H:%M') if log.islem_tarihi else '',
+                    'eski_deger': log.eski_deger,
+                    'yeni_deger': log.yeni_deger
+                })
+
+            return jsonify({
+                'success': True,
+                'data': data,
+                'stats': stats,
+                'filters': {
+                    'users': [{'id': u.id, 'ad': u.kullanici_adi, 'rol': u.rol} for u in users],
+                    'tables': tables,
+                    'islem_tipleri': [{'value': k, 'label': v} for k, v in islem_tipi_labels.items()]
+                },
+                'pagination': {
+                    'page': page,
+                    'per_page': per_page,
+                    'total': total,
+                    'pages': (total + per_page - 1) // per_page
+                }
+            })
+        except Exception as e:
+            logger.error(f"Audit trail API hatası: {e}", exc_info=True)
+            return jsonify({'success': False, 'error': str(e)}), 500
+
     # ---- FİLTRE API'leri ----
 
     @app.route('/api/executive/reports/filters/floors')
@@ -306,7 +464,7 @@ def register_executive_report_routes(app):
                 canvas.setFont(FONT_BOLD, 11)
                 canvas.setFillColor(MERIT_DARK)
                 text_x = (1.5 * cm + 16 * mm) if has_logo else 1.5 * cm
-                canvas.drawString(text_x, header_y + 6 * mm, 'Merit Royal Hotel Group')
+                canvas.drawString(text_x, header_y + 6 * mm, 'Merit Royal')
 
                 canvas.setFont(FONT, 7)
                 canvas.setFillColor(MERIT_GRAY)
@@ -334,7 +492,7 @@ def register_executive_report_routes(app):
                 canvas.setFont(FONT, 6.5)
                 canvas.setFillColor(MERIT_GRAY)
                 canvas.drawString(1.5 * cm, footer_y - 3.5 * mm,
-                                  f'Merit Royal Hotel Group \u2014 {report_title}')
+                                  f'Merit Royal \u2014 {report_title}')
 
                 # Orta: tarih
                 canvas.setFont(FONT, 6.5)
@@ -362,7 +520,7 @@ def register_executive_report_routes(app):
                 buffer,
                 pagesize=landscape(A4),
                 title=report_title,
-                author='Merit Royal Hotel Group'
+                author='Merit Royal'
             )
             doc.addPageTemplates([template])
 

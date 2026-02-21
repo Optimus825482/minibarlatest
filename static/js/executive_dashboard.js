@@ -50,6 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Load all data
   loadAllCharts();
   loadActivityFeed();
+  setupAutoRefresh();
 
   // Auto-refresh feed every 15 seconds
   feedInterval = setInterval(loadActivityFeed, 15000);
@@ -88,6 +89,7 @@ function changePeriod(period) {
   updatePeriodLabel();
   loadAllCharts();
   loadKPI();
+  setupAutoRefresh();
 }
 
 // ---- API HELPER ----
@@ -143,8 +145,57 @@ function animateValue(id, target) {
   requestAnimationFrame(step);
 }
 
+// ---- SUMMARY CARDS LOADER ----
+async function loadSummaryCards() {
+  const data = await fetchAPI("/api/executive/summary-cards");
+  if (!data) return;
+
+  const el = (id) => document.getElementById(id);
+
+  // Görev Tamamlanma
+  const tamamlanan = el("summary-gorev-tamamlanan");
+  const toplam = el("summary-gorev-toplam");
+  const oran = el("summary-gorev-oran");
+  if (tamamlanan) tamamlanan.textContent = data.gorev_tamamlanan;
+  if (toplam) toplam.textContent = data.gorev_toplam;
+  if (oran)
+    oran.textContent =
+      data.gorev_toplam > 0
+        ? Math.round((data.gorev_tamamlanan / data.gorev_toplam) * 100)
+        : 0;
+
+  // Ort. Tüketim/İşlem
+  const ortTuketim = el("summary-ort-tuketim");
+  const tuketimliIslem = el("summary-tuketimli-islem");
+  const toplamTuketim = el("summary-toplam-tuketim");
+  if (ortTuketim) ortTuketim.textContent = data.ort_tuketim_islem;
+  if (tuketimliIslem) tuketimliIslem.textContent = data.tuketimli_islem;
+  if (toplamTuketim) toplamTuketim.textContent = data.toplam_tuketim;
+
+  // DND
+  const dnd = el("summary-dnd");
+  if (dnd) dnd.textContent = data.bugun_dnd;
+}
+
+// ---- AUTO-REFRESH POLLING ----
+let autoRefreshInterval = null;
+
+function setupAutoRefresh() {
+  // Mevcut interval'ı temizle
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+    autoRefreshInterval = null;
+  }
+
+  // Sadece "today" seçiliyken 30sn polling
+  if (currentPeriod === "today") {
+    autoRefreshInterval = setInterval(refreshAllData, 30000);
+  }
+}
+
 // ---- CHART LOADERS ----
 function loadAllCharts() {
+  loadSummaryCards();
   loadConsumptionTrends();
   loadRoomControls();
   loadTopProducts();
@@ -482,6 +533,7 @@ async function refreshAllData() {
 
   await Promise.all([
     loadKPI(),
+    loadSummaryCards(),
     loadConsumptionTrends(),
     loadRoomControls(),
     loadTopProducts(),

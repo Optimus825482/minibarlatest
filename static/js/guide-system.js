@@ -1175,17 +1175,16 @@ class PageGuide {
   }
 
   createFloatingButton() {
-    const btn = document.createElement("button");
-    btn.id = "page-guide-btn";
-    btn.className =
-      "fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center group";
-    btn.innerHTML = `
-      <i class="fas fa-question text-xl group-hover:hidden"></i>
-      <i class="fas fa-lightbulb text-xl hidden group-hover:block"></i>
-      <span class="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center text-xs font-bold text-amber-900 animate-pulse" id="guide-badge">?</span>
-    `;
-    btn.onclick = () => this.toggle();
-    document.body.appendChild(btn);
+    // Floating button kaldırıldı - header'daki #header-guide-btn kullanılıyor
+    // İlk ziyarette header badge'i göster
+    const key = `guide_shown_${this.currentEndpoint}`;
+    const disabledKey = `guide_disabled_${this.currentEndpoint}`;
+    const shown = localStorage.getItem(key);
+    const disabled = localStorage.getItem(disabledKey);
+    if (!shown && !disabled && this.getGuideForCurrentPage()) {
+      const badge = document.getElementById("header-guide-badge");
+      if (badge) badge.classList.remove("hidden");
+    }
   }
 
   createGuidePanel() {
@@ -1195,7 +1194,7 @@ class PageGuide {
     const panel = document.createElement("div");
     panel.id = "page-guide-panel";
     panel.className =
-      "fixed bottom-24 right-6 z-50 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform translate-y-4 opacity-0 pointer-events-none transition-all duration-300";
+      "fixed top-16 right-4 z-50 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 transform translate-y-4 opacity-0 pointer-events-none transition-all duration-300";
 
     panel.innerHTML = `
       <div class="p-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-t-2xl">
@@ -1224,7 +1223,7 @@ class PageGuide {
             </div>
             <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">${tip.text}</p>
           </div>
-        `
+        `,
           )
           .join("")}
       </div>
@@ -1258,17 +1257,17 @@ class PageGuide {
 
   open() {
     const panel = document.getElementById("page-guide-panel");
-    const badge = document.getElementById("guide-badge");
+    const badge = document.getElementById("header-guide-badge");
     if (panel) {
       panel.classList.remove(
         "translate-y-4",
         "opacity-0",
-        "pointer-events-none"
+        "pointer-events-none",
       );
       panel.classList.add(
         "translate-y-0",
         "opacity-100",
-        "pointer-events-auto"
+        "pointer-events-auto",
       );
       this.isOpen = true;
       if (badge) badge.classList.add("hidden");
@@ -1282,7 +1281,7 @@ class PageGuide {
       panel.classList.remove(
         "translate-y-0",
         "opacity-100",
-        "pointer-events-auto"
+        "pointer-events-auto",
       );
       this.isOpen = false;
     }
@@ -1290,9 +1289,13 @@ class PageGuide {
 
   checkFirstVisit() {
     const key = `guide_shown_${this.currentEndpoint}`;
+    const disabledKey = `guide_disabled_${this.currentEndpoint}`;
     const shown = localStorage.getItem(key);
-    if (!shown && this.getGuideForCurrentPage()) {
-      setTimeout(() => this.open(), 1500);
+    const disabled = localStorage.getItem(disabledKey);
+    if (!shown && !disabled && this.getGuideForCurrentPage()) {
+      // İlk ziyarette otomatik açma yerine sadece badge göster
+      const badge = document.getElementById("header-guide-badge");
+      if (badge) badge.classList.remove("hidden");
       localStorage.setItem(key, "true");
     }
   }
@@ -1301,8 +1304,6 @@ class PageGuide {
     const key = `guide_disabled_${this.currentEndpoint}`;
     localStorage.setItem(key, "true");
     this.close();
-    const btn = document.getElementById("page-guide-btn");
-    if (btn) btn.style.display = "none";
   }
 }
 // ============================================
@@ -1369,14 +1370,14 @@ function openSystemGuide() {
                   section.color
                 }-900/30 rounded-xl flex items-center justify-center">
                   <i class="fas ${section.icon} text-${
-                  section.color
-                }-600 dark:text-${section.color}-400"></i>
+                    section.color
+                  }-600 dark:text-${section.color}-400"></i>
                 </div>
                 <span class="font-medium text-slate-700 dark:text-slate-200 text-sm">${
                   section.title
                 }</span>
               </button>
-            `
+            `,
               )
               .join("")}
           </div>
@@ -1438,11 +1439,11 @@ function renderGuideSection(section) {
     <div class="space-y-6">
       <div class="flex items-center gap-4 pb-4 border-b border-slate-200 dark:border-slate-700">
         <div class="w-14 h-14 bg-${section.color}-100 dark:bg-${
-    section.color
-  }-900/30 rounded-2xl flex items-center justify-center">
+          section.color
+        }-900/30 rounded-2xl flex items-center justify-center">
           <i class="fas ${section.icon} text-2xl text-${
-    section.color
-  }-600 dark:text-${section.color}-400"></i>
+            section.color
+          }-600 dark:text-${section.color}-400"></i>
         </div>
         <div>
           <h3 class="text-xl font-bold text-slate-900 dark:text-white">${
@@ -1461,11 +1462,11 @@ function renderGuideSection(section) {
           <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 hover:shadow-md transition">
             <div class="flex items-start gap-4">
               <div class="w-10 h-10 bg-${section.color}-100 dark:bg-${
-              section.color
-            }-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                section.color
+              }-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
                 <span class="text-${section.color}-600 dark:text-${
-              section.color
-            }-400 font-bold">${i + 1}</span>
+                  section.color
+                }-400 font-bold">${i + 1}</span>
               </div>
               <div class="flex-1">
                 <h4 class="font-semibold text-slate-900 dark:text-white mb-1">${
@@ -1486,14 +1487,14 @@ function renderGuideSection(section) {
                       }-600 dark:text-${section.color}-400">${j + 1}</span>
                       <span class="text-slate-700 dark:text-slate-300">${step}</span>
                     </div>
-                  `
+                  `,
                     )
                     .join("")}
                 </div>
               </div>
             </div>
           </div>
-        `
+        `,
           )
           .join("")}
       </div>

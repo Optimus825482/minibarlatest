@@ -13,6 +13,7 @@ from models import (
 from datetime import datetime, date, timedelta
 from sqlalchemy import func, and_, or_, desc, case
 from decimal import Decimal
+from utils.helpers import get_excluded_user_ids, EXCLUDED_USERNAMES
 import pytz
 import logging
 
@@ -171,7 +172,8 @@ class KatSorumlusuGunSonuRaporServisi:
             kat_sorumlusu_query = Kullanici.query.filter(
                 Kullanici.rol == 'kat_sorumlusu',
                 Kullanici.aktif.is_(True),
-                Kullanici.otel_id == otel_id
+                Kullanici.otel_id == otel_id,
+                ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
             )
             
             if personel_ids:
@@ -332,7 +334,8 @@ class KatSorumlusuKullanimRaporServisi:
             ).filter(
                 MinibarIslem.islem_tarihi >= baslangic_tarihi,
                 MinibarIslem.islem_tarihi <= bitis_tarihi + timedelta(days=1),
-                Kullanici.rol == 'kat_sorumlusu'
+                Kullanici.rol == 'kat_sorumlusu',
+                ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
             )
             
             # Sadece tüketim veya ekleme olan kayıtları al
@@ -474,7 +477,8 @@ class OdaBazliTuketimRaporServisi:
                 Kat.otel_id == otel_id,
                 MinibarIslem.islem_tarihi >= baslangic_tarihi,
                 MinibarIslem.islem_tarihi <= bitis_tarihi + timedelta(days=1),
-                MinibarIslemDetay.tuketim > 0
+                MinibarIslemDetay.tuketim > 0,
+                ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
             )
             
             if kat_id:
@@ -720,7 +724,8 @@ class OtelKarsilastirmaRaporServisi:
                 ).filter(
                     Kat.otel_id == otel.id,
                     MinibarIslem.islem_tarihi >= baslangic_tarihi,
-                    MinibarIslem.islem_tarihi <= bitis_tarihi + timedelta(days=1)
+                    MinibarIslem.islem_tarihi <= bitis_tarihi + timedelta(days=1),
+                    ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
                 ).first()
                 
                 # Görev tamamlama
@@ -741,7 +746,8 @@ class OtelKarsilastirmaRaporServisi:
                 ks_sayisi = Kullanici.query.filter(
                     Kullanici.otel_id == otel.id,
                     Kullanici.rol == 'kat_sorumlusu',
-                    Kullanici.aktif == True
+                    Kullanici.aktif == True,
+                    ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
                 ).count()
                 
                 # Oda sayısı

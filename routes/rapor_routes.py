@@ -23,7 +23,7 @@ from io import BytesIO
 from sqlalchemy import func, and_, or_
 from models import db, Otel, Kat, Oda, Urun, StokHareket, MinibarIslem, MinibarIslemDetay, PersonelZimmet, PersonelZimmetDetay, Kullanici
 from utils.decorators import login_required, role_required
-from utils.helpers import log_islem, log_hata
+from utils.helpers import log_islem, log_hata, get_excluded_user_ids, EXCLUDED_USERNAMES
 from utils.authorization import get_kullanici_otelleri
 import pytz
 
@@ -193,7 +193,8 @@ def zimmet_raporlari():
         oteller = get_kullanici_otelleri()
         personeller = Kullanici.query.filter(
             Kullanici.rol.in_(['kat_sorumlusu', 'depo_sorumlusu']),
-            Kullanici.aktif.is_(True)
+            Kullanici.aktif.is_(True),
+            ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
         ).order_by(Kullanici.ad, Kullanici.soyad).all()
         return render_template('raporlar/zimmet_raporlari.html', oteller=oteller, personeller=personeller)
     except Exception as e:
@@ -211,7 +212,8 @@ def performans_raporlari():
         oteller = get_kullanici_otelleri()
         personeller = Kullanici.query.filter(
             Kullanici.rol == 'kat_sorumlusu',
-            Kullanici.aktif.is_(True)
+            Kullanici.aktif.is_(True),
+            ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
         ).order_by(Kullanici.ad, Kullanici.soyad).all()
         return render_template('raporlar/performans_raporlari.html', oteller=oteller, personeller=personeller)
     except Exception as e:
@@ -437,7 +439,8 @@ def stok_hareketleri_raporu_olustur():
          .join(Otel, Kullanici.otel_id == Otel.id)\
          .filter(
             StokHareket.islem_tarihi >= baslangic_tarih,
-            StokHareket.islem_tarihi <= bitis_tarih
+            StokHareket.islem_tarihi <= bitis_tarih,
+            ~StokHareket.islem_yapan_id.in_(get_excluded_user_ids())
         )
         
         if otel_id:
@@ -535,7 +538,10 @@ def stok_excel():
              .join(PersonelZimmet, PersonelZimmetDetay.zimmet_id == PersonelZimmet.id)\
              .join(Kullanici, PersonelZimmet.personel_id == Kullanici.id)\
              .join(Otel, Kullanici.otel_id == Otel.id)\
-             .filter(PersonelZimmet.durum == 'aktif')
+             .filter(
+                PersonelZimmet.durum == 'aktif',
+                ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
+            )
             
             if otel_id:
                 query = query.filter(Kullanici.otel_id == otel_id)
@@ -614,7 +620,8 @@ def stok_excel():
              .join(Otel, Kullanici.otel_id == Otel.id)\
              .filter(
                 StokHareket.islem_tarihi >= baslangic_tarih,
-                StokHareket.islem_tarihi <= bitis_tarih
+                StokHareket.islem_tarihi <= bitis_tarih,
+                ~StokHareket.islem_yapan_id.in_(get_excluded_user_ids())
             )
             
             if otel_id:
@@ -703,7 +710,8 @@ def minibar_detayli_raporu_olustur():
          .filter(
             Kat.otel_id == otel_id,
             MinibarIslem.islem_tarihi >= baslangic_tarih,
-            MinibarIslem.islem_tarihi <= bitis_tarih
+            MinibarIslem.islem_tarihi <= bitis_tarih,
+            ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
         ).order_by(MinibarIslem.islem_tarihi.desc())
         
         islemler_data = query.all()
@@ -779,7 +787,8 @@ def minibar_ozet_raporu_olustur():
          .filter(
             Kat.otel_id == otel_id,
             MinibarIslem.islem_tarihi >= baslangic_tarih,
-            MinibarIslem.islem_tarihi <= bitis_tarih
+            MinibarIslem.islem_tarihi <= bitis_tarih,
+            ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
         ).group_by(Urun.urun_adi, Urun.birim)\
          .order_by(func.sum(MinibarIslemDetay.tuketim).desc())
         
@@ -883,7 +892,8 @@ def minibar_excel():
              .filter(
                 Kat.otel_id == otel_id,
                 MinibarIslem.islem_tarihi >= baslangic_tarih,
-                MinibarIslem.islem_tarihi <= bitis_tarih
+                MinibarIslem.islem_tarihi <= bitis_tarih,
+                ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
             ).order_by(MinibarIslem.islem_tarihi.desc())
             
             islemler = query.all()
@@ -930,7 +940,8 @@ def minibar_excel():
              .filter(
                 Kat.otel_id == otel_id,
                 MinibarIslem.islem_tarihi >= baslangic_tarih,
-                MinibarIslem.islem_tarihi <= bitis_tarih
+                MinibarIslem.islem_tarihi <= bitis_tarih,
+                ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
             ).group_by(Urun.urun_adi, Urun.birim)\
              .order_by(func.sum(MinibarIslemDetay.tuketim).desc())
             
@@ -989,7 +1000,8 @@ def zimmet_raporu_olustur():
         ).join(PersonelZimmetDetay, PersonelZimmet.id == PersonelZimmetDetay.zimmet_id)\
          .join(Kullanici, PersonelZimmet.personel_id == Kullanici.id)\
          .join(Urun, PersonelZimmetDetay.urun_id == Urun.id)\
-         .join(Otel, Kullanici.otel_id == Otel.id)
+         .join(Otel, Kullanici.otel_id == Otel.id)\
+         .filter(~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES))
         
         if personel_id:
             query = query.filter(PersonelZimmet.personel_id == personel_id)
@@ -1025,7 +1037,8 @@ def zimmet_raporu_olustur():
         oteller = get_kullanici_otelleri()
         personeller = Kullanici.query.filter(
             Kullanici.rol.in_(['kat_sorumlusu', 'depo_sorumlusu']),
-            Kullanici.aktif.is_(True)
+            Kullanici.aktif.is_(True),
+            ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
         ).order_by(Kullanici.ad, Kullanici.soyad).all()
         
         log_islem('view', 'zimmet_raporu', {'personel_id': personel_id, 'durum': durum})
@@ -1089,7 +1102,8 @@ def zimmet_excel():
         ).join(PersonelZimmetDetay, PersonelZimmet.id == PersonelZimmetDetay.zimmet_id)\
          .join(Kullanici, PersonelZimmet.personel_id == Kullanici.id)\
          .join(Otel, Kullanici.otel_id == Otel.id)\
-         .join(Urun, PersonelZimmetDetay.urun_id == Urun.id)
+         .join(Urun, PersonelZimmetDetay.urun_id == Urun.id)\
+         .filter(~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES))
         
         if personel_id:
             query = query.filter(PersonelZimmet.personel_id == personel_id)
@@ -1177,7 +1191,8 @@ def performans_raporu_olustur():
             Kat.otel_id == otel_id,
             Kullanici.rol == 'kat_sorumlusu',
             MinibarIslem.islem_tarihi >= baslangic_tarih,
-            MinibarIslem.islem_tarihi <= bitis_tarih
+            MinibarIslem.islem_tarihi <= bitis_tarih,
+            ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
         ).group_by(Kullanici.id, Kullanici.ad, Kullanici.soyad)\
          .order_by(func.count(MinibarIslem.id).desc()).all()
         
@@ -1206,7 +1221,8 @@ def performans_raporu_olustur():
         oteller = get_kullanici_otelleri()
         personeller = Kullanici.query.filter(
             Kullanici.rol == 'kat_sorumlusu',
-            Kullanici.aktif.is_(True)
+            Kullanici.aktif.is_(True),
+            ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
         ).order_by(Kullanici.ad, Kullanici.soyad).all()
         
         log_islem('view', 'performans_raporu', {'otel_id': otel_id, 'baslangic': baslangic, 'bitis': bitis})
@@ -1282,7 +1298,8 @@ def performans_excel():
             Kat.otel_id == otel_id,
             Kullanici.rol == 'kat_sorumlusu',
             MinibarIslem.islem_tarihi >= baslangic_tarih,
-            MinibarIslem.islem_tarihi <= bitis_tarih
+            MinibarIslem.islem_tarihi <= bitis_tarih,
+            ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
         ).group_by(Kullanici.id, Kullanici.ad, Kullanici.soyad)\
          .order_by(func.count(MinibarIslem.id).desc())
         
@@ -1846,7 +1863,8 @@ def api_otel_kat_sorumlulari(otel_id):
         personeller = Kullanici.query.filter(
             Kullanici.rol == 'kat_sorumlusu',
             Kullanici.aktif.is_(True),
-            Kullanici.otel_id == otel_id
+            Kullanici.otel_id == otel_id,
+            ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
         ).order_by(Kullanici.ad, Kullanici.soyad).all()
         
         return jsonify({
@@ -2596,7 +2614,8 @@ def kat_sorumlusu_gun_sonu_raporum():
         personeller = Kullanici.query.filter(
             Kullanici.rol == 'kat_sorumlusu',
             Kullanici.aktif.is_(True),
-            Kullanici.otel_id == kullanici.otel_id
+            Kullanici.otel_id == kullanici.otel_id,
+            ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
         ).order_by(Kullanici.ad, Kullanici.soyad).all()
         
         return render_template('raporlar/kat_sorumlusu_gun_sonu_raporum.html',
@@ -2661,7 +2680,8 @@ def kat_sorumlusu_gun_sonu_raporum_olustur():
         personeller = Kullanici.query.filter(
             Kullanici.rol == 'kat_sorumlusu',
             Kullanici.aktif.is_(True),
-            Kullanici.otel_id == otel_id
+            Kullanici.otel_id == otel_id,
+            ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
         ).order_by(Kullanici.ad, Kullanici.soyad).all()
         
         log_islem('view', 'kat_sorumlusu_gun_sonu_raporum', {

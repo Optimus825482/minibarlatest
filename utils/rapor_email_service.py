@@ -30,6 +30,61 @@ def get_kktc_now():
 logger = logging.getLogger(__name__)
 
 
+def get_bildirim_alicilari(ek_kullanicilar=None):
+    """
+    E-posta bildirim alıcılarını belirle.
+    Superadmin rolündekiler HER ZAMAN alır.
+    Diğer kullanıcılar sadece email_bildirim_aktif=True ise alır.
+    
+    Args:
+        ek_kullanicilar: Ek olarak kontrol edilecek kullanıcı listesi [{email, kullanici_id}]
+    
+    Returns:
+        list: [{email, kullanici_id}]
+    """
+    from models import Kullanici
+    
+    alicilar = []
+    eklenen_emailler = set()
+    
+    # 1. Superadmin rolündekiler HER ZAMAN alır
+    superadminler = Kullanici.query.filter(
+        Kullanici.rol == 'superadmin',
+        Kullanici.aktif == True,
+        Kullanici.email.isnot(None)
+    ).all()
+    
+    for sa in superadminler:
+        if sa.email and sa.email not in eklenen_emailler:
+            alicilar.append({'email': sa.email, 'kullanici_id': sa.id})
+            eklenen_emailler.add(sa.email)
+    
+    # 2. Bildirim ayarları sayfasında aktif olan kullanıcılar (superadmin hariç, zaten eklendi)
+    aktif_bildirim_kullanicilari = Kullanici.query.filter(
+        Kullanici.rol != 'superadmin',
+        Kullanici.aktif == True,
+        Kullanici.email.isnot(None),
+        Kullanici.email_bildirim_aktif == True
+    ).all()
+    
+    for k in aktif_bildirim_kullanicilari:
+        if k.email and k.email not in eklenen_emailler:
+            alicilar.append({'email': k.email, 'kullanici_id': k.id})
+            eklenen_emailler.add(k.email)
+    
+    # 3. Ek kullanıcılar (varsa, bildirim aktif kontrolü ile)
+    if ek_kullanicilar:
+        for ek in ek_kullanicilar:
+            if ek.get('email') and ek['email'] not in eklenen_emailler:
+                # Bu kullanıcının bildirim ayarını kontrol et
+                kullanici = Kullanici.query.get(ek.get('kullanici_id'))
+                if kullanici and (kullanici.rol == 'superadmin' or kullanici.email_bildirim_aktif):
+                    alicilar.append(ek)
+                    eklenen_emailler.add(ek['email'])
+    
+    return alicilar
+
+
 class RaporEmailService:
     """Günlük rapor email servisi"""
     
@@ -812,26 +867,15 @@ class RaporEmailService:
             
             alicilar = []
             
-            # Depo sorumlusu
+            # Depo sorumlusu (ek kullanıcı olarak)
+            ek = []
             if kat_sorumlusu.depo_sorumlusu and kat_sorumlusu.depo_sorumlusu.email:
-                alicilar.append({
+                ek.append({
                     'email': kat_sorumlusu.depo_sorumlusu.email,
                     'kullanici_id': kat_sorumlusu.depo_sorumlusu.id
                 })
             
-            # Sistem yöneticileri
-            sistem_yoneticileri = Kullanici.query.filter(
-                Kullanici.rol.in_(['sistem_yoneticisi', 'admin']),
-                Kullanici.aktif == True,
-                Kullanici.email.isnot(None)
-            ).all()
-            
-            for sy in sistem_yoneticileri:
-                if sy.email and sy.email not in [a['email'] for a in alicilar]:
-                    alicilar.append({
-                        'email': sy.email,
-                        'kullanici_id': sy.id
-                    })
+            alicilar = get_bildirim_alicilari(ek_kullanicilar=ek)
             
             if not alicilar:
                 return {'success': False, 'message': 'Alıcı bulunamadı'}
@@ -905,7 +949,8 @@ class RaporEmailService:
             
             alicilar = []
             
-            # Bu otele atanmış depo sorumluları
+            # Bu otele atanmış depo sorumluları (ek kullanıcı olarak)
+            ek = []
             depo_atamalari = KullaniciOtel.query.join(Kullanici).filter(
                 KullaniciOtel.otel_id == otel_id,
                 Kullanici.rol == 'depo_sorumlusu',
@@ -915,24 +960,12 @@ class RaporEmailService:
             
             for atama in depo_atamalari:
                 if atama.kullanici.email:
-                    alicilar.append({
+                    ek.append({
                         'email': atama.kullanici.email,
                         'kullanici_id': atama.kullanici.id
                     })
             
-            # Sistem yöneticileri
-            sistem_yoneticileri = Kullanici.query.filter(
-                Kullanici.rol.in_(['sistem_yoneticisi', 'admin']),
-                Kullanici.aktif == True,
-                Kullanici.email.isnot(None)
-            ).all()
-            
-            for sy in sistem_yoneticileri:
-                if sy.email and sy.email not in [a['email'] for a in alicilar]:
-                    alicilar.append({
-                        'email': sy.email,
-                        'kullanici_id': sy.id
-                    })
+            alicilar = get_bildirim_alicilari(ek_kullanicilar=ek)
             
             if not alicilar:
                 return {'success': False, 'message': 'Alıcı bulunamadı'}
@@ -1016,35 +1049,7 @@ class RaporEmailService:
             html_content = RaporEmailService._generate_toplu_gorev_html(tum_raporlar, rapor_tarihi)
             
             # Alıcıları belirle (depo sorumluları + sistem yöneticileri)
-            alicilar = []
-            
-            # Depo sorumluları
-            depo_sorumlulari = Kullanici.query.filter(
-                Kullanici.rol == 'depo_sorumlusu',
-                Kullanici.aktif == True,
-                Kullanici.email.isnot(None)
-            ).all()
-
-            for ds in depo_sorumlulari:
-                if ds.email:
-                    alicilar.append({
-                        'email': ds.email,
-                        'kullanici_id': ds.id
-                    })
-            
-            # Sistem yöneticileri
-            sistem_yoneticileri = Kullanici.query.filter(
-                Kullanici.rol.in_(['sistem_yoneticisi', 'admin']),
-                Kullanici.aktif == True,
-                Kullanici.email.isnot(None)
-            ).all()
-            
-            for sy in sistem_yoneticileri:
-                if sy.email and sy.email not in [a['email'] for a in alicilar]:
-                    alicilar.append({
-                        'email': sy.email,
-                        'kullanici_id': sy.id
-                    })
+            alicilar = get_bildirim_alicilari()
             
             if not alicilar:
                 return {'success': False, 'message': 'Alıcı bulunamadı'}
@@ -1105,6 +1110,7 @@ Genel Tamamlanma Oranı: %{genel_oran:.1f}"""
     def send_toplu_minibar_raporu(rapor_tarihi: date) -> Dict[str, Any]:
         """
         Tüm otellerin minibar sarfiyat raporunu TEK mail olarak gönder
+        Ürün bazlı cross-tab tablo (her otel ayrı sütun) + PDF ek
         
         Args:
             rapor_tarihi: Rapor tarihi
@@ -1125,7 +1131,6 @@ Genel Tamamlanma Oranı: %{genel_oran:.1f}"""
             # Her otel için rapor verisi topla
             tum_raporlar = []
             for otel in oteller:
-                # Otel için rapor bildirimi aktif mi kontrol et
                 if not EmailService.is_otel_bildirim_aktif(otel.id, 'rapor'):
                     continue
                     
@@ -1136,39 +1141,39 @@ Genel Tamamlanma Oranı: %{genel_oran:.1f}"""
             if not tum_raporlar:
                 return {'success': False, 'message': 'Rapor verisi oluşturulamadı'}
             
+            # Ürün bazlı cross-tab veri oluştur
+            otel_adlari = [r['otel']['ad'] for r in tum_raporlar]
+            urun_otel_map = {}  # {urun_adi: {otel_adi: miktar}}
+            
+            for rapor in tum_raporlar:
+                otel_adi = rapor['otel']['ad']
+                for urun in rapor.get('urun_sarfiyat', []):
+                    urun_adi = urun['urun_adi']
+                    if urun_adi not in urun_otel_map:
+                        urun_otel_map[urun_adi] = {}
+                    urun_otel_map[urun_adi][otel_adi] = urun['adet']
+            
+            # Toplam'a göre sırala
+            cross_tab_data = []
+            for urun_adi, otel_miktarlar in urun_otel_map.items():
+                toplam = sum(otel_miktarlar.values())
+                row = {
+                    'urun_adi': urun_adi,
+                    'oteller': otel_miktarlar,
+                    'toplam': toplam
+                }
+                cross_tab_data.append(row)
+            
+            cross_tab_data.sort(key=lambda x: x['toplam'], reverse=True)
+            
             # Toplu HTML oluştur
-            html_content = RaporEmailService._generate_toplu_minibar_html(tum_raporlar, rapor_tarihi)
+            html_content = RaporEmailService._generate_toplu_minibar_html(tum_raporlar, rapor_tarihi, cross_tab_data, otel_adlari)
             
-            # Alıcıları belirle
-            alicilar = []
+            # PDF oluştur
+            pdf_bytes = RaporEmailService._generate_minibar_crosstab_pdf(cross_tab_data, otel_adlari, rapor_tarihi)
             
-            # Depo sorumluları
-            depo_sorumlulari = Kullanici.query.filter(
-                Kullanici.rol == 'depo_sorumlusu',
-                Kullanici.aktif == True,
-                Kullanici.email.isnot(None)
-            ).all()
-            
-            for ds in depo_sorumlulari:
-                if ds.email:
-                    alicilar.append({
-                        'email': ds.email,
-                        'kullanici_id': ds.id
-                    })
-
-            # Sistem yöneticileri
-            sistem_yoneticileri = Kullanici.query.filter(
-                Kullanici.rol.in_(['sistem_yoneticisi', 'admin']),
-                Kullanici.aktif == True,
-                Kullanici.email.isnot(None)
-            ).all()
-            
-            for sy in sistem_yoneticileri:
-                if sy.email and sy.email not in [a['email'] for a in alicilar]:
-                    alicilar.append({
-                        'email': sy.email,
-                        'kullanici_id': sy.id
-                    })
+            # Alıcıları belirle (bildirim ayarlarına göre)
+            alicilar = get_bildirim_alicilari()
             
             if not alicilar:
                 return {'success': False, 'message': 'Alıcı bulunamadı'}
@@ -1176,6 +1181,14 @@ Genel Tamamlanma Oranı: %{genel_oran:.1f}"""
             # Özet istatistikler
             toplam_tuketim = sum(r['istatistikler']['toplam_tuketim'] for r in tum_raporlar)
             toplam_tutar = sum(r['istatistikler']['toplam_tutar'] for r in tum_raporlar)
+            
+            # Attachments
+            attachments = []
+            if pdf_bytes:
+                attachments.append({
+                    'filename': f'Minibar_Sarfiyat_{rapor_tarihi.strftime("%d_%m_%Y")}.pdf',
+                    'data': pdf_bytes
+                })
             
             # Email gönder
             subject = f"🍫 Günlük Minibar Sarfiyat Raporu - {rapor_tarihi.strftime('%d.%m.%Y')} - {len(tum_raporlar)} Otel"
@@ -1201,7 +1214,8 @@ Toplam Tutar: ₺{toplam_tutar:,.2f}"""
                         'otel_sayisi': len(tum_raporlar),
                         'rapor_tarihi': rapor_tarihi.isoformat()
                     },
-                    read_receipt=True  # Okundu bilgisi talep et
+                    read_receipt=True,
+                    attachments=attachments if attachments else None
                 )
                 gonderim_sonuclari.append({
                     'email': alici['email'],
@@ -1210,7 +1224,7 @@ Toplam Tutar: ₺{toplam_tutar:,.2f}"""
 
             basarili = len([r for r in gonderim_sonuclari if r['success']])
             
-            logger.info(f"✅ Toplu minibar raporu gönderildi: {basarili}/{len(alicilar)} alıcı, {len(tum_raporlar)} otel")
+            logger.info(f"✅ Toplu minibar raporu gönderildi: {basarili}/{len(alicilar)} alıcı, {len(tum_raporlar)} otel, PDF ekli")
             
             return {
                 'success': basarili > 0,
@@ -1348,14 +1362,13 @@ Toplam Tutar: ₺{toplam_tutar:,.2f}"""
         return html
 
     @staticmethod
-    def _generate_toplu_minibar_html(raporlar: List[Dict], rapor_tarihi: date) -> str:
-        """Toplu minibar sarfiyat raporu HTML'i oluştur"""
+    def _generate_toplu_minibar_html(raporlar: List[Dict], rapor_tarihi: date, cross_tab_data: List[Dict] = None, otel_adlari: List[str] = None) -> str:
+        """Toplu minibar sarfiyat raporu HTML'i oluştur - Ürün bazlı cross-tab tablo ile"""
         
         # Genel istatistikler
         toplam_otel = len(raporlar)
         toplam_tuketim = sum(r['istatistikler']['toplam_tuketim'] for r in raporlar)
         toplam_tutar = sum(r['istatistikler']['toplam_tutar'] for r in raporlar)
-        toplam_urun_cesidi = sum(r['istatistikler']['urun_cesidi'] for r in raporlar)
         toplam_oda = sum(r['istatistikler']['islem_yapilan_oda'] for r in raporlar)
         
         # Otel satırları
@@ -1373,27 +1386,44 @@ Toplam Tutar: ₺{toplam_tutar:,.2f}"""
                 <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #059669;">₺{stats['toplam_tutar']:,.2f}</td>
             </tr>'''
 
-        # Ürün bazlı özet (tüm oteller birleşik)
-        urun_toplam = {}
-        for rapor in raporlar:
-            for urun in rapor.get('urun_ozeti', []):
-                urun_adi = urun['urun_adi']
-                if urun_adi not in urun_toplam:
-                    urun_toplam[urun_adi] = {'adet': 0, 'tutar': 0}
-                urun_toplam[urun_adi]['adet'] += urun['adet']
-                urun_toplam[urun_adi]['tutar'] += urun['tutar']
+        # Ürün bazlı cross-tab tablo
+        urun_crosstab_rows = ''
+        if cross_tab_data and otel_adlari:
+            for i, row in enumerate(cross_tab_data):
+                cells = ''
+                for otel_adi in otel_adlari:
+                    miktar = row['oteller'].get(otel_adi, 0)
+                    cells += f'<td style="padding: 10px; text-align: center; border-bottom: 1px solid #e5e7eb;">{miktar if miktar else "-"}</td>'
+                
+                urun_crosstab_rows += f'''
+                <tr style="background: {'#f8fafc' if i % 2 == 0 else 'white'};">
+                    <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; font-weight: 500;">{row['urun_adi']}</td>
+                    {cells}
+                    <td style="padding: 10px; text-align: center; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #d97706;">{row['toplam']}</td>
+                </tr>'''
+            
+            # Otel bazlı toplam satırı
+            otel_toplam_cells = ''
+            genel_toplam = 0
+            for otel_adi in otel_adlari:
+                otel_toplam = sum(row['oteller'].get(otel_adi, 0) for row in cross_tab_data)
+                genel_toplam += otel_toplam
+                otel_toplam_cells += f'<td style="padding: 12px; text-align: center; font-weight: bold;">{otel_toplam}</td>'
+            
+            urun_crosstab_rows += f'''
+                <tr style="background: linear-gradient(135deg, #d97706, #b45309); color: white; font-weight: bold;">
+                    <td style="padding: 12px; border-radius: 0 0 0 10px;">TOPLAM</td>
+                    {otel_toplam_cells}
+                    <td style="padding: 12px; text-align: center; border-radius: 0 0 10px 0;">{genel_toplam}</td>
+                </tr>'''
         
-        # En çok tüketilen 10 ürün
-        top_urunler = sorted(urun_toplam.items(), key=lambda x: x[1]['adet'], reverse=True)[:10]
-        
-        urun_rows = ''
-        for urun_adi, data in top_urunler:
-            urun_rows += f'''
-            <tr>
-                <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">{urun_adi}</td>
-                <td style="padding: 10px; text-align: center; border-bottom: 1px solid #e5e7eb; font-weight: bold;">{data['adet']}</td>
-                <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e5e7eb;">₺{data['tutar']:,.2f}</td>
-            </tr>'''
+        # Otel header sütunları
+        otel_headers = ''
+        if otel_adlari:
+            for otel_adi in otel_adlari:
+                # Kısa isim kullan
+                kisa_ad = otel_adi.replace('Merit Royal ', '').replace('Merit ', '')
+                otel_headers += f'<th style="padding: 12px; text-align: center; border-bottom: 2px solid #fcd34d; font-weight: 600; font-size: 12px;">{kisa_ad}</th>'
 
         html = f'''
 <!DOCTYPE html>
@@ -1461,21 +1491,24 @@ Toplam Tutar: ₺{toplam_tutar:,.2f}"""
             </div>
         </div>
         
-        <!-- En Çok Tüketilen Ürünler -->
+        <!-- Ürün Bazlı Tüketim (Cross-Tab) -->
         <div style="background: white; padding: 25px; border-radius: 0 0 15px 15px;">
-            <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 18px;">🏆 En Çok Tüketilen 10 Ürün (Tüm Oteller)</h3>
-            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                <thead>
-                    <tr style="background: #fef3c7;">
-                        <th style="padding: 12px; text-align: left; border-bottom: 2px solid #fcd34d;">Ürün</th>
-                        <th style="padding: 12px; text-align: center; border-bottom: 2px solid #fcd34d;">Toplam Adet</th>
-                        <th style="padding: 12px; text-align: right; border-bottom: 2px solid #fcd34d;">Toplam Tutar</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {urun_rows if urun_rows else '<tr><td colspan="3" style="padding: 20px; text-align: center; color: #6b7280;">Ürün verisi bulunamadı</td></tr>'}
-                </tbody>
-            </table>
+            <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 18px;">📦 Ürün Bazlı Tüketim Detayı</h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead>
+                        <tr style="background: #fef3c7;">
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #fcd34d; font-weight: 600;">Ürün Adı</th>
+                            {otel_headers}
+                            <th style="padding: 12px; text-align: center; border-bottom: 2px solid #fcd34d; font-weight: 600; background: #fde68a;">Toplam</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {urun_crosstab_rows if urun_crosstab_rows else '<tr><td colspan="' + str(len(otel_adlari or []) + 2) + '" style="padding: 20px; text-align: center; color: #6b7280;">Ürün verisi bulunamadı</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+            <p style="margin: 15px 0 0 0; font-size: 12px; color: #9ca3af; text-align: right;">📎 Detaylı rapor PDF olarak ekte yer almaktadır.</p>
         </div>
         
         <!-- Footer -->
@@ -1488,3 +1521,219 @@ Toplam Tutar: ₺{toplam_tutar:,.2f}"""
 </html>
         '''
         return html
+
+    @staticmethod
+    def _generate_minibar_crosstab_pdf(cross_tab_data: List[Dict], otel_adlari: List[str], rapor_tarihi: date) -> Optional[bytes]:
+        """
+        Ürün bazlı cross-tab tablo PDF'i oluştur
+        Merit Royal letterhead ile, düzgün sayfalama ve yerleşim
+        """
+        try:
+            from reportlab.lib import colors
+            from reportlab.lib.pagesizes import A4, landscape
+            from reportlab.lib.units import mm
+            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.pdfbase import pdfmetrics
+            from reportlab.pdfbase.ttfonts import TTFont
+            from io import BytesIO
+            import os
+            
+            # Türkçe font kaydet
+            font_path = os.path.join('static', 'fonts', 'DejaVuSans.ttf')
+            font_bold_path = os.path.join('static', 'fonts', 'DejaVuSans-Bold.ttf')
+            
+            has_font = os.path.exists(font_path)
+            has_bold = os.path.exists(font_bold_path)
+            
+            if has_font:
+                try:
+                    pdfmetrics.registerFont(TTFont('DejaVuSans', font_path))
+                except Exception:
+                    has_font = False
+            if has_bold:
+                try:
+                    pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', font_bold_path))
+                except Exception:
+                    has_bold = False
+            
+            font_name = 'DejaVuSans' if has_font else 'Helvetica'
+            font_bold_name = 'DejaVuSans-Bold' if has_bold else 'Helvetica-Bold'
+            
+            buffer = BytesIO()
+            page_width, page_height = landscape(A4)
+            
+            doc = SimpleDocTemplate(
+                buffer,
+                pagesize=landscape(A4),
+                leftMargin=15*mm,
+                rightMargin=15*mm,
+                topMargin=20*mm,
+                bottomMargin=20*mm
+            )
+            
+            # Stiller
+            styles = getSampleStyleSheet()
+            
+            title_style = ParagraphStyle(
+                'CustomTitle', parent=styles['Title'],
+                fontName=font_bold_name, fontSize=16,
+                textColor=colors.HexColor('#d97706'),
+                spaceAfter=5*mm, alignment=1
+            )
+            subtitle_style = ParagraphStyle(
+                'CustomSubtitle', parent=styles['Normal'],
+                fontName=font_name, fontSize=10,
+                textColor=colors.HexColor('#6b7280'),
+                spaceAfter=8*mm, alignment=1
+            )
+            normal_style = ParagraphStyle(
+                'CustomNormal', parent=styles['Normal'],
+                fontName=font_name, fontSize=8, leading=10
+            )
+            bold_style = ParagraphStyle(
+                'CustomBold', parent=styles['Normal'],
+                fontName=font_bold_name, fontSize=8, leading=10
+            )
+            footer_style = ParagraphStyle(
+                'Footer', parent=styles['Normal'],
+                fontName=font_name, fontSize=7,
+                textColor=colors.HexColor('#9ca3af'),
+                alignment=1, spaceBefore=5*mm
+            )
+            
+            elements = []
+            
+            # Logo
+            logo_path = os.path.join('static', 'icons', 'icon-for-pdf-18.png')
+            if os.path.exists(logo_path):
+                logo = Image(logo_path, width=40*mm, height=15*mm)
+                logo.hAlign = 'CENTER'
+                elements.append(logo)
+                elements.append(Spacer(1, 3*mm))
+            
+            elements.append(Paragraph('Günlük Minibar Sarfiyat Raporu', title_style))
+            elements.append(Paragraph(
+                f'Ürün Bazlı Tüketim Detayı — {rapor_tarihi.strftime("%d.%m.%Y")}',
+                subtitle_style
+            ))
+            
+            # Kısa otel adları
+            kisa_otel_adlari = []
+            for ad in otel_adlari:
+                kisa = ad.replace('Merit Royal ', '').replace('Merit ', '')
+                kisa_otel_adlari.append(kisa)
+            
+            # Sütun genişlikleri
+            usable_width = page_width - 30*mm
+            otel_count = len(otel_adlari)
+            urun_col_width = usable_width * 0.30
+            toplam_col_width = usable_width * 0.10
+            remaining = usable_width - urun_col_width - toplam_col_width
+            otel_col_width = remaining / max(otel_count, 1)
+            col_widths = [urun_col_width] + [otel_col_width] * otel_count + [toplam_col_width]
+            
+            # Header satırı
+            header_row = [Paragraph('Ürün Adı', bold_style)]
+            for kisa_ad in kisa_otel_adlari:
+                header_row.append(Paragraph(kisa_ad, bold_style))
+            header_row.append(Paragraph('TOPLAM', bold_style))
+            
+            # Sayfalama
+            ROWS_PER_PAGE = 30
+            total_rows = len(cross_tab_data)
+            page_count = max(1, (total_rows + ROWS_PER_PAGE - 1) // ROWS_PER_PAGE)
+            
+            for page_idx in range(page_count):
+                if page_idx > 0:
+                    elements.append(PageBreak())
+                    if os.path.exists(logo_path):
+                        logo = Image(logo_path, width=40*mm, height=15*mm)
+                        logo.hAlign = 'CENTER'
+                        elements.append(logo)
+                        elements.append(Spacer(1, 2*mm))
+                    elements.append(Paragraph('Günlük Minibar Sarfiyat Raporu', title_style))
+                    elements.append(Paragraph(
+                        f'{rapor_tarihi.strftime("%d.%m.%Y")} — Sayfa {page_idx + 1}/{page_count}',
+                        subtitle_style
+                    ))
+                
+                start_idx = page_idx * ROWS_PER_PAGE
+                end_idx = min(start_idx + ROWS_PER_PAGE, total_rows)
+                page_data = cross_tab_data[start_idx:end_idx]
+                
+                table_data = [header_row]
+                
+                for row in page_data:
+                    data_row = [Paragraph(row['urun_adi'], normal_style)]
+                    for otel_adi in otel_adlari:
+                        miktar = row['oteller'].get(otel_adi, 0)
+                        data_row.append(Paragraph(str(miktar) if miktar else '-', normal_style))
+                    data_row.append(Paragraph(str(row['toplam']), bold_style))
+                    table_data.append(data_row)
+                
+                # Son sayfada toplam satırı
+                if page_idx == page_count - 1:
+                    toplam_row = [Paragraph('TOPLAM', bold_style)]
+                    genel_toplam = 0
+                    for otel_adi in otel_adlari:
+                        otel_toplam = sum(r['oteller'].get(otel_adi, 0) for r in cross_tab_data)
+                        genel_toplam += otel_toplam
+                        toplam_row.append(Paragraph(str(otel_toplam), bold_style))
+                    toplam_row.append(Paragraph(str(genel_toplam), bold_style))
+                    table_data.append(toplam_row)
+                
+                table = Table(table_data, colWidths=col_widths, repeatRows=1)
+                
+                style_commands = [
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#fef3c7')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#92400e')),
+                    ('FONTNAME', (0, 0), (-1, 0), font_bold_name),
+                    ('FONTSIZE', (0, 0), (-1, 0), 8),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+                    ('TOPPADDING', (0, 0), (-1, 0), 6),
+                    ('FONTNAME', (0, 1), (-1, -1), font_name),
+                    ('FONTSIZE', (0, 1), (-1, -1), 7),
+                    ('BOTTOMPADDING', (0, 1), (-1, -1), 4),
+                    ('TOPPADDING', (0, 1), (-1, -1), 4),
+                    ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
+                    ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                    ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
+                    ('BACKGROUND', (-1, 0), (-1, -1), colors.HexColor('#fde68a')),
+                ]
+                
+                for i in range(1, len(table_data)):
+                    if i % 2 == 0:
+                        style_commands.append(('BACKGROUND', (0, i), (-2, i), colors.HexColor('#f8fafc')))
+                
+                if page_idx == page_count - 1:
+                    last_row = len(table_data) - 1
+                    style_commands.extend([
+                        ('BACKGROUND', (0, last_row), (-1, last_row), colors.HexColor('#d97706')),
+                        ('TEXTCOLOR', (0, last_row), (-1, last_row), colors.white),
+                        ('FONTNAME', (0, last_row), (-1, last_row), font_bold_name),
+                    ])
+                
+                table.setStyle(TableStyle(style_commands))
+                elements.append(table)
+                
+                if page_count > 1:
+                    elements.append(Paragraph(f'Sayfa {page_idx + 1} / {page_count}', footer_style))
+            
+            elements.append(Spacer(1, 5*mm))
+            elements.append(Paragraph(
+                f'Bu rapor otomatik olarak oluşturulmuştur. — Minibar Takip Sistemi © {get_kktc_now().year}',
+                footer_style
+            ))
+            
+            doc.build(elements)
+            pdf_bytes = buffer.getvalue()
+            buffer.close()
+            
+            logger.info(f"Minibar cross-tab PDF oluşturuldu: {len(pdf_bytes)} bytes, {total_rows} ürün, {page_count} sayfa")
+            return pdf_bytes
+            
+        except Exception as e:
+            logger.error(f"Minibar cross-tab PDF oluşturma hatası: {str(e)}", exc_info=True)
+            return None

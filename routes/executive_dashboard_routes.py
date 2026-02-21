@@ -158,3 +158,15 @@ def register_executive_dashboard_routes(app):
         except Exception as e:
             logger.error(f"Task completion API hatası: {e}")
             return jsonify({'success': False, 'error': str(e)}), 500
+
+    @app.route('/api/executive/summary-cards')
+    @login_required
+    @role_required('superadmin')
+    def api_executive_summary_cards():
+        """Özet kartları — görev tamamlanma, ort tüketim/işlem, DND"""
+        try:
+            data = ExecutiveDashboardService.get_weekly_summary()
+            return jsonify({'success': True, 'data': data})
+        except Exception as e:
+            logger.error(f"Summary cards API hatası: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 500

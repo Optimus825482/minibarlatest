@@ -11,9 +11,11 @@ from models import (
     PersonelZimmet, PersonelZimmetDetay,
     AuditLog, SistemLog, GunlukGorev, GorevDetay,
     OdaKontrolKaydi, MinibarIslemTipi, KullaniciRol,
-    GorevDurum, GorevTipi, HareketTipi
+    GorevDurum, GorevTipi, HareketTipi,
+    OdaDNDKayit, OdaDNDKontrol
 )
 import logging
+from utils.helpers import get_excluded_user_ids
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +79,8 @@ class ExecutiveDashboardService:
             # Kontrol edilen oda sayısı
             kontrol = OdaKontrolKaydi.query.filter(
                 OdaKontrolKaydi.kontrol_tarihi >= start_date,
-                OdaKontrolKaydi.kontrol_tarihi < end_date
+                OdaKontrolKaydi.kontrol_tarihi < end_date,
+                ~OdaKontrolKaydi.personel_id.in_(get_excluded_user_ids())
             ).count()
 
             # Tüketilen ürün sayısı
@@ -86,7 +89,8 @@ class ExecutiveDashboardService:
             ).join(MinibarIslem).filter(
                 MinibarIslem.islem_tarihi >= start_date,
                 MinibarIslem.islem_tarihi < end_date,
-                MinibarIslemDetay.tuketim > 0
+                MinibarIslemDetay.tuketim > 0,
+                ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
             ).scalar() or 0
 
             # Görev tamamlanma oranı (sadece doluluk bilgisi yüklendikten sonra oluşturulan görevler)
@@ -108,13 +112,15 @@ class ExecutiveDashboardService:
                 func.count(func.distinct(AuditLog.kullanici_id))
             ).filter(
                 AuditLog.islem_tarihi >= start_date,
-                AuditLog.islem_tarihi < end_date
+                AuditLog.islem_tarihi < end_date,
+                ~AuditLog.kullanici_id.in_(get_excluded_user_ids())
             ).scalar() or 0
 
             # Toplam işlem sayısı
             toplam_islem = AuditLog.query.filter(
                 AuditLog.islem_tarihi >= start_date,
-                AuditLog.islem_tarihi < end_date
+                AuditLog.islem_tarihi < end_date,
+                ~AuditLog.kullanici_id.in_(get_excluded_user_ids())
             ).count()
 
             return {
@@ -141,12 +147,14 @@ class ExecutiveDashboardService:
 
     @staticmethod
     def get_user_activity_stats():
-        """Kullanıcı bazlı aktivite istatistikleri"""
+        """Kullanıcı bazlı aktivite istatistikleri (executive dashboard - superadmin dahil)"""
         try:
             now = get_kktc_now()
             today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-            users = Kullanici.query.filter_by(aktif=True).all()
+            users = Kullanici.query.filter(
+                Kullanici.aktif == True
+            ).all()
             user_stats = []
 
             for user in users:
@@ -206,7 +214,8 @@ class ExecutiveDashboardService:
                 kontrol = OdaKontrolKaydi.query.join(Oda).join(Kat).filter(
                     Kat.otel_id == otel.id,
                     OdaKontrolKaydi.kontrol_tarihi >= start_date,
-                    OdaKontrolKaydi.kontrol_tarihi < end_date
+                    OdaKontrolKaydi.kontrol_tarihi < end_date,
+                    ~OdaKontrolKaydi.personel_id.in_(get_excluded_user_ids())
                 ).count()
 
                 tuketim = db.session.query(
@@ -215,7 +224,8 @@ class ExecutiveDashboardService:
                     Kat.otel_id == otel.id,
                     MinibarIslem.islem_tarihi >= start_date,
                     MinibarIslem.islem_tarihi < end_date,
-                    MinibarIslemDetay.tuketim > 0
+                    MinibarIslemDetay.tuketim > 0,
+                    ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
                 ).scalar() or 0
 
                 gorevler = GunlukGorev.query.filter(
@@ -274,7 +284,8 @@ class ExecutiveDashboardService:
                 ).join(MinibarIslem).filter(
                     MinibarIslem.islem_tarihi >= day_start,
                     MinibarIslem.islem_tarihi < day_end,
-                    MinibarIslemDetay.tuketim > 0
+                    MinibarIslemDetay.tuketim > 0,
+                    ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
                 ).scalar() or 0
 
                 labels.append(day_start.strftime('%d.%m'))
@@ -299,7 +310,8 @@ class ExecutiveDashboardService:
             ).filter(
                 MinibarIslem.islem_tarihi >= start_date,
                 MinibarIslem.islem_tarihi < end_date,
-                MinibarIslemDetay.tuketim > 0
+                MinibarIslemDetay.tuketim > 0,
+                ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
             ).group_by(Urun.urun_adi
             ).order_by(desc('toplam')
             ).limit(limit).all()
@@ -336,7 +348,8 @@ class ExecutiveDashboardService:
 
                 count = OdaKontrolKaydi.query.filter(
                     OdaKontrolKaydi.kontrol_tarihi >= day_start,
-                    OdaKontrolKaydi.kontrol_tarihi < day_end
+                    OdaKontrolKaydi.kontrol_tarihi < day_end,
+                    ~OdaKontrolKaydi.personel_id.in_(get_excluded_user_ids())
                 ).count()
 
                 labels.append(day_start.strftime('%d.%m'))
@@ -349,7 +362,7 @@ class ExecutiveDashboardService:
 
     @staticmethod
     def get_recent_activity(limit=50):
-        """Son aktiviteler (real-time feed)"""
+        """Son aktiviteler (real-time feed - executive dashboard, superadmin dahil)"""
         try:
             activities = AuditLog.query.order_by(
                 desc(AuditLog.islem_tarihi)
@@ -420,7 +433,8 @@ class ExecutiveDashboardService:
                 func.count(AuditLog.id).label('sayi')
             ).filter(
                 AuditLog.islem_tarihi >= start_date,
-                AuditLog.islem_tarihi < end_date
+                AuditLog.islem_tarihi < end_date,
+                ~AuditLog.kullanici_id.in_(get_excluded_user_ids())
             ).group_by('saat').order_by('saat').all()
 
             hours = {int(r.saat): r.sayi for r in results}
@@ -434,60 +448,71 @@ class ExecutiveDashboardService:
 
     @staticmethod
     def get_weekly_summary():
-        """Haftalık özet karşılaştırma (bu hafta vs geçen hafta)"""
+        """Seçilen döneme göre dinamik özet kartları:
+        - Görev Tamamlanma (tamamlanan/toplam)
+        - Ort. Tüketim/İşlem (sadece tüketim kaydı olan işlemler)
+        - Bugünkü DND Sayısı
+        """
         try:
             now = get_kktc_now()
-            this_week_start = now - timedelta(days=now.weekday())
-            this_week_start = this_week_start.replace(hour=0, minute=0, second=0, microsecond=0)
-            last_week_start = this_week_start - timedelta(days=7)
+            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            today_end = today_start + timedelta(days=1)
 
-            def get_week_data(start):
-                end = start + timedelta(days=7)
-                tuketim = db.session.query(
-                    func.coalesce(func.sum(MinibarIslemDetay.tuketim), 0)
-                ).join(MinibarIslem).filter(
-                    MinibarIslem.islem_tarihi >= start,
-                    MinibarIslem.islem_tarihi < end,
-                    MinibarIslemDetay.tuketim > 0
-                ).scalar() or 0
+            # --- Görev Tamamlanma (bugün, sadece misafir kayıtlı) ---
+            gorevler = GunlukGorev.query.filter(
+                GunlukGorev.gorev_tarihi == today_start.date(),
+                GunlukGorev.id.in_(
+                    db.session.query(GorevDetay.gorev_id).filter(
+                        GorevDetay.misafir_kayit_id.isnot(None)
+                    ).distinct()
+                )
+            ).all()
+            toplam_gorev = len(gorevler)
+            tamamlanan_gorev = sum(1 for g in gorevler if g.durum == GorevDurum.COMPLETED)
 
-                kontrol = OdaKontrolKaydi.query.filter(
-                    OdaKontrolKaydi.kontrol_tarihi >= start,
-                    OdaKontrolKaydi.kontrol_tarihi < end
-                ).count()
+            # --- Ort. Tüketim/İşlem (sadece tüketim kaydı olan işlemler) ---
+            # Tüketim kaydı olan işlem = MinibarIslem where en az 1 detayda tuketim > 0
+            tuketim_islem_q = db.session.query(
+                func.count(func.distinct(MinibarIslem.id)).label('islem_sayisi'),
+                func.coalesce(func.sum(MinibarIslemDetay.tuketim), 0).label('toplam_tuketim')
+            ).join(MinibarIslemDetay).filter(
+                MinibarIslem.islem_tarihi >= today_start,
+                MinibarIslem.islem_tarihi < today_end,
+                MinibarIslemDetay.tuketim > 0,
+                ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
+            ).first()
 
-                islem = AuditLog.query.filter(
-                    AuditLog.islem_tarihi >= start,
-                    AuditLog.islem_tarihi < end
-                ).count()
+            tuketimli_islem_sayisi = tuketim_islem_q.islem_sayisi if tuketim_islem_q else 0
+            toplam_tuketim = int(tuketim_islem_q.toplam_tuketim) if tuketim_islem_q else 0
+            ort_tuketim_islem = round(toplam_tuketim / tuketimli_islem_sayisi, 2) if tuketimli_islem_sayisi > 0 else 0
 
-                return {
-                    'tuketim': int(tuketim),
-                    'kontrol': kontrol,
-                    'islem': islem
-                }
+            # --- Bugünkü DND Sayısı ---
+            bugun_dnd = OdaDNDKayit.query.filter(
+                OdaDNDKayit.kayit_tarihi == today_start.date(),
+                OdaDNDKayit.durum == 'aktif'
+            ).count()
 
-            bu_hafta = get_week_data(this_week_start)
-            gecen_hafta = get_week_data(last_week_start)
+            # Ayrıca GorevDetay'daki DND'ler (görev sistemi üzerinden)
+            gorev_dnd = GorevDetay.query.join(GunlukGorev).filter(
+                GunlukGorev.gorev_tarihi == today_start.date(),
+                GorevDetay.durum == 'dnd_pending',
+                GorevDetay.misafir_kayit_id.isnot(None)
+            ).count()
 
-            def calc_change(current, previous):
-                if previous == 0:
-                    return 100 if current > 0 else 0
-                return round(((current - previous) / previous) * 100)
+            toplam_dnd = bugun_dnd + gorev_dnd
 
             return {
-                'bu_hafta': bu_hafta,
-                'gecen_hafta': gecen_hafta,
-                'degisim': {
-                    'tuketim': calc_change(bu_hafta['tuketim'], gecen_hafta['tuketim']),
-                    'kontrol': calc_change(bu_hafta['kontrol'], gecen_hafta['kontrol']),
-                    'islem': calc_change(bu_hafta['islem'], gecen_hafta['islem'])
-                }
+                'gorev_tamamlanan': tamamlanan_gorev,
+                'gorev_toplam': toplam_gorev,
+                'ort_tuketim_islem': ort_tuketim_islem,
+                'tuketimli_islem': tuketimli_islem_sayisi,
+                'toplam_tuketim': toplam_tuketim,
+                'bugun_dnd': toplam_dnd
             }
         except Exception as e:
             logger.error(f"Weekly summary hatası: {e}")
             return {
-                'bu_hafta': {'tuketim': 0, 'kontrol': 0, 'islem': 0},
-                'gecen_hafta': {'tuketim': 0, 'kontrol': 0, 'islem': 0},
-                'degisim': {'tuketim': 0, 'kontrol': 0, 'islem': 0}
+                'gorev_tamamlanan': 0, 'gorev_toplam': 0,
+                'ort_tuketim_islem': 0, 'tuketimli_islem': 0,
+                'toplam_tuketim': 0, 'bugun_dnd': 0
             }

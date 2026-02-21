@@ -1,6 +1,6 @@
 /**
  * Executive Reports - Raporlama Merkezi
- * Merit Royal Hotel Group - 5 Tab Version
+ * Merit Royal - 5 Tab Version
  */
 
 // State
@@ -52,6 +52,29 @@ document.addEventListener("DOMContentLoaded", function () {
 function switchTab(tab) {
   currentTab = tab;
 
+  // Audit tab özel bölümü
+  const auditSection = document.getElementById("audit-section");
+  const mainFilters = document.getElementById("main-filters");
+  const compFilters = document.getElementById("comparative-filters");
+
+  if (tab === "audit") {
+    auditSection.style.display = "";
+    mainFilters.style.display = "none";
+    compFilters.style.display = "none";
+    document.getElementById("group-by-section").style.display = "none";
+    document.getElementById("summary-section").style.display = "none";
+    document.getElementById("chart1-card").style.display = "none";
+    document.getElementById("chart2-card").style.display = "none";
+    document.getElementById("table-card").style.display = "none";
+    document.getElementById("comparative-cards").style.display = "none";
+    document.getElementById("empty-state").style.display = "none";
+    document.getElementById("report-loading").style.display = "none";
+    initAuditTab();
+    return;
+  }
+
+  auditSection.style.display = "none";
+
   // Filter visibility
   document
     .querySelectorAll(".product-filter")
@@ -64,14 +87,21 @@ function switchTab(tab) {
     .forEach((el) => (el.style.display = tab === "task" ? "" : "none"));
   document.querySelectorAll(".cascading-filter").forEach((el) => {
     if (tab === "comparative" || tab === "task") el.style.display = "none";
+    else el.style.display = "";
   });
 
   document.getElementById("group-by-section").style.display =
     tab === "product" ? "flex" : "none";
-  document.getElementById("comparative-filters").style.display =
-    tab === "comparative" ? "" : "none";
-  document.getElementById("main-filters").style.display =
-    tab === "comparative" ? "none" : "";
+  compFilters.style.display = tab === "comparative" ? "" : "none";
+  mainFilters.style.display = tab === "comparative" ? "none" : "";
+
+  // DND tab: personel filtresi göster, ürün filtreleri gizle
+  document.querySelectorAll(".product-filter").forEach((el) => {
+    if (tab === "dnd") el.style.display = "none";
+  });
+  document.querySelectorAll(".personnel-filter").forEach((el) => {
+    if (tab === "dnd") el.style.display = "";
+  });
 
   hideResults();
 }
@@ -269,6 +299,12 @@ async function loadReport() {
         break;
       case "comparative":
         await loadComparativeReport();
+        break;
+      case "dnd":
+        await loadDNDReport(params);
+        break;
+      case "audit":
+        await loadAuditTrail();
         break;
     }
   } catch (e) {
@@ -1595,4 +1631,535 @@ function fmtMoney(n) {
       maximumFractionDigits: 2,
     })
   );
+}
+
+// ==========================================
+// DND RAPORLAMA
+// ==========================================
+async function loadDNDReport(params) {
+  const url = buildQuery("/api/executive/reports/dnd", params);
+  const resp = await fetch(url);
+  const result = await resp.json();
+  if (!result.success || !result.data.length) {
+    showEmpty("Bu filtrelere uygun DND verisi bulunamadı");
+    return;
+  }
+  currentReportData = result;
+  renderDNDSummary(result.summary);
+  renderDNDChart(result.trend_data, result.otel_dagilim);
+  renderDNDTable(result.data);
+}
+
+function renderDNDSummary(s) {
+  const section = document.getElementById("summary-section");
+  section.style.display = "";
+  section.innerHTML = `
+    <div class="summary-card">
+      <div class="summary-value text-rose-400">${fmtNum(s.toplam_dnd_kayit)}</div>
+      <div class="summary-label">Toplam DND Kayıt</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-value text-amber-400">${fmtNum(s.aktif_dnd)}</div>
+      <div class="summary-label">Aktif DND</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-value text-emerald-400">${fmtNum(s.tuketimle_kapanan)}</div>
+      <div class="summary-label">Tüketimle Kapatılan</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-value text-blue-400">%${s.kapanma_orani}</div>
+      <div class="summary-label">Kapanma Oranı</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-value text-purple-400">${fmtNum(s.toplam_dnd_sayisi)}</div>
+      <div class="summary-label">Toplam DND Sayısı</div>
+    </div>`;
+}
+
+function renderDNDChart(trendData, otelDagilim) {
+  // Chart 1: Günlük DND trend
+  const card1 = document.getElementById("chart1-card");
+  card1.style.display = "";
+  document.getElementById("chart1-title").innerHTML =
+    '<i class="fas fa-chart-line text-rose-400"></i> Günlük DND Trendi';
+
+  const ctx1 = document.getElementById("reportChart1").getContext("2d");
+  if (reportChart1) reportChart1.destroy();
+
+  if (trendData && trendData.length > 0) {
+    reportChart1 = new Chart(ctx1, {
+      type: "line",
+      data: {
+        labels: trendData.map((d) => d.tarih_label),
+        datasets: [
+          {
+            label: "Toplam DND",
+            data: trendData.map((d) => d.toplam),
+            borderColor: "#f43f5e",
+            backgroundColor: "rgba(244, 63, 94, 0.1)",
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: trendData.length > 20 ? 0 : 3,
+          },
+          {
+            label: "Tüketimle Kapatılan",
+            data: trendData.map((d) => d.kapanan),
+            borderColor: "#10b981",
+            backgroundColor: "rgba(16, 185, 129, 0.1)",
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: trendData.length > 20 ? 0 : 3,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "top", labels: { boxWidth: 12, padding: 10 } },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: "rgba(71,85,105,0.15)" },
+          },
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { size: 9 },
+              maxRotation: 45,
+              autoSkip: true,
+              maxTicksLimit: 15,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  // Chart 2: Otel bazlı DND dağılımı
+  const card2 = document.getElementById("chart2-card");
+  card2.style.display = "";
+  document.getElementById("chart2-title").innerHTML =
+    '<i class="fas fa-hotel text-cyan-400"></i> Otel Bazlı DND Dağılımı';
+
+  const ctx2 = document.getElementById("reportChart2").getContext("2d");
+  if (reportChart2) reportChart2.destroy();
+
+  if (otelDagilim && otelDagilim.length > 0) {
+    reportChart2 = new Chart(ctx2, {
+      type: "bar",
+      data: {
+        labels: otelDagilim.map((d) => d.otel),
+        datasets: [
+          {
+            label: "Aktif",
+            data: otelDagilim.map((d) => d.aktif),
+            backgroundColor: "rgba(251, 146, 60, 0.7)",
+            borderColor: "#f97316",
+            borderWidth: 1,
+            borderRadius: 4,
+          },
+          {
+            label: "Tüketimle Kapatılan",
+            data: otelDagilim.map((d) => d.kapanan),
+            backgroundColor: "rgba(16, 185, 129, 0.7)",
+            borderColor: "#10b981",
+            borderWidth: 1,
+            borderRadius: 4,
+          },
+          {
+            label: "Diğer",
+            data: otelDagilim.map((d) => d.toplam - d.aktif - d.kapanan),
+            backgroundColor: "rgba(148, 163, 184, 0.5)",
+            borderColor: "#94a3b8",
+            borderWidth: 1,
+            borderRadius: 4,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "top", labels: { boxWidth: 12, padding: 10 } },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            stacked: true,
+            grid: { color: "rgba(71,85,105,0.15)" },
+          },
+          x: { stacked: true, grid: { display: false } },
+        },
+      },
+    });
+  }
+}
+
+function renderDNDTable(data) {
+  const card = document.getElementById("table-card");
+  card.style.display = "";
+
+  const thead = document.getElementById("report-thead");
+  thead.innerHTML = `
+    <th>Tarih</th>
+    <th>Otel</th>
+    <th>Kat</th>
+    <th>Oda</th>
+    <th>Personel</th>
+    <th class="text-center">DND Sayısı</th>
+    <th class="text-center">Son DND</th>
+    <th class="text-center">Durum</th>`;
+
+  const tbody = document.getElementById("report-tbody");
+  tbody.innerHTML = data
+    .map((d) => {
+      let durumBadge = "";
+      if (d.tuketim_kapandi) {
+        durumBadge =
+          '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400">Tüketimle Kapatıldı</span>';
+      } else if (d.durum_kod === "dnd_pending" || d.durum_kod === "aktif") {
+        durumBadge =
+          '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400">' +
+          d.durum +
+          "</span>";
+      } else {
+        durumBadge =
+          '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-500/20 text-slate-400">' +
+          d.durum +
+          "</span>";
+      }
+
+      return `<tr>
+        <td>${d.tarih_label}</td>
+        <td>${d.otel_adi}</td>
+        <td>${d.kat_adi}</td>
+        <td class="font-medium text-white">${d.oda_no}</td>
+        <td>${d.personel}</td>
+        <td class="text-center font-medium text-rose-400">${d.dnd_sayisi}</td>
+        <td class="text-center text-slate-400">${d.son_dnd_zamani}</td>
+        <td class="text-center">${durumBadge}</td>
+      </tr>`;
+    })
+    .join("");
+}
+
+// ==========================================
+// AUDIT TRAIL (DENETİM İZİ)
+// ==========================================
+let auditCurrentPage = 1;
+let auditData = null;
+let auditInitialized = false;
+
+function initAuditTab() {
+  if (!auditInitialized) {
+    // Varsayılan tarih: bu ay
+    const today = new Date();
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    document.getElementById("audit-start-date").value = formatDate(monthStart);
+    document.getElementById("audit-end-date").value = formatDate(today);
+    auditInitialized = true;
+  }
+  loadAuditTrail();
+}
+
+async function loadAuditTrail(page) {
+  if (page) auditCurrentPage = page;
+  else auditCurrentPage = 1;
+
+  const loading = document.getElementById("audit-loading");
+  const tableCard = document.getElementById("audit-table-card");
+  const emptyState = document.getElementById("audit-empty");
+
+  loading.style.display = "";
+  tableCard.style.display = "none";
+  emptyState.style.display = "none";
+
+  const params = new URLSearchParams();
+  params.append("page", auditCurrentPage);
+  params.append("per_page", 50);
+
+  const startDate = document.getElementById("audit-start-date").value;
+  const endDate = document.getElementById("audit-end-date").value;
+  const userId = document.getElementById("audit-user").value;
+  const islemTipi = document.getElementById("audit-islem-tipi").value;
+  const tablo = document.getElementById("audit-tablo").value;
+  const arama = document.getElementById("audit-arama").value;
+
+  if (startDate) params.append("start_date", startDate);
+  if (endDate) params.append("end_date", endDate);
+  if (userId) params.append("kullanici_id", userId);
+  if (islemTipi) params.append("islem_tipi", islemTipi);
+  if (tablo) params.append("tablo_adi", tablo);
+  if (arama) params.append("arama", arama);
+
+  try {
+    const resp = await fetch(`/api/executive/reports/audit-trail?${params}`);
+    const result = await resp.json();
+
+    if (!result.success) {
+      loading.style.display = "none";
+      emptyState.style.display = "";
+      return;
+    }
+
+    auditData = result;
+    renderAuditStats(result.stats);
+    populateAuditFilters(result.filters);
+    renderAuditTable(result.data);
+    renderAuditPagination(result.pagination);
+
+    loading.style.display = "none";
+    if (result.data.length === 0) {
+      emptyState.style.display = "";
+      tableCard.style.display = "none";
+    } else {
+      tableCard.style.display = "";
+      emptyState.style.display = "none";
+    }
+  } catch (e) {
+    console.error("Audit trail yükleme hatası:", e);
+    loading.style.display = "none";
+    emptyState.style.display = "";
+  }
+}
+
+function renderAuditStats(stats) {
+  const el = document.getElementById("audit-stats");
+  el.innerHTML = `
+    <div class="summary-card">
+      <div class="summary-value text-indigo-400">${fmtNum(stats.today)}</div>
+      <div class="summary-label">Bugün</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-value text-blue-400">${fmtNum(stats.week)}</div>
+      <div class="summary-label">Bu Hafta</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-value text-cyan-400">${fmtNum(stats.month)}</div>
+      <div class="summary-label">Bu Ay</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-value text-slate-300">${fmtNum(stats.total)}</div>
+      <div class="summary-label">Filtrelenen Toplam</div>
+    </div>`;
+}
+
+function populateAuditFilters(filters) {
+  // Kullanıcı dropdown — sadece ilk yüklemede doldur
+  const userSelect = document.getElementById("audit-user");
+  if (userSelect.options.length <= 1) {
+    filters.users.forEach((u) => {
+      const opt = document.createElement("option");
+      opt.value = u.id;
+      opt.textContent = `${u.ad} (${u.rol})`;
+      userSelect.appendChild(opt);
+    });
+  }
+
+  // İşlem tipi dropdown
+  const islemSelect = document.getElementById("audit-islem-tipi");
+  if (islemSelect.options.length <= 1) {
+    filters.islem_tipleri.forEach((t) => {
+      const opt = document.createElement("option");
+      opt.value = t.value;
+      opt.textContent = t.label;
+      islemSelect.appendChild(opt);
+    });
+  }
+
+  // Tablo dropdown
+  const tabloSelect = document.getElementById("audit-tablo");
+  if (tabloSelect.options.length <= 1) {
+    filters.tables.forEach((t) => {
+      const opt = document.createElement("option");
+      opt.value = t;
+      opt.textContent = t;
+      tabloSelect.appendChild(opt);
+    });
+  }
+}
+
+function renderAuditTable(data) {
+  const tbody = document.getElementById("audit-tbody");
+  document.getElementById("audit-table-count").textContent =
+    `${auditData.pagination.total} kayıt`;
+
+  const islemColors = {
+    login: "emerald",
+    logout: "slate",
+    create: "blue",
+    update: "amber",
+    delete: "red",
+    view: "cyan",
+    export: "purple",
+    import: "indigo",
+    backup: "teal",
+    restore: "orange",
+  };
+
+  tbody.innerHTML = data
+    .map((log) => {
+      const islemColor = islemColors[log.islem_tipi] || "slate";
+      return `<tr class="hover:bg-slate-700/30 transition-colors">
+      <td class="text-xs text-slate-400 whitespace-nowrap">${log.tarih_kisa}</td>
+      <td class="font-medium text-white">${escHtml(log.kullanici_adi)}</td>
+      <td><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-${log.rol_color}-500/20 text-${log.rol_color}-400">${log.kullanici_rol}</span></td>
+      <td><span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-${islemColor}-500/20 text-${islemColor}-400">${log.islem_label}</span></td>
+      <td class="text-xs text-slate-300">${escHtml(log.tablo_adi)}</td>
+      <td class="text-xs text-slate-400 text-center">${log.kayit_id || "-"}</td>
+      <td class="text-xs text-slate-400 max-w-[200px] truncate" title="${escHtml(log.degisiklik_ozeti)}">${escHtml(log.degisiklik_ozeti || "-")}</td>
+      <td class="text-xs text-center"><span class="px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 font-mono">${log.http_method || "-"}</span></td>
+      <td class="text-xs text-slate-500 font-mono">${log.ip_adresi || "-"}</td>
+      <td class="text-center">
+        ${log.eski_deger || log.yeni_deger ? `<button onclick='showAuditDetail(${JSON.stringify(log).replace(/'/g, "&#39;")})' class="text-indigo-400 hover:text-indigo-300 transition"><i class="fas fa-eye"></i></button>` : '<span class="text-slate-600">-</span>'}
+      </td>
+    </tr>`;
+    })
+    .join("");
+}
+
+function renderAuditPagination(pg) {
+  const el = document.getElementById("audit-pagination");
+  if (pg.pages <= 1) {
+    el.innerHTML = `<span class="text-sm text-slate-400">${pg.total} kayıt</span>`;
+    return;
+  }
+
+  const startItem = (pg.page - 1) * pg.per_page + 1;
+  const endItem = Math.min(pg.page * pg.per_page, pg.total);
+
+  let btns = "";
+  // Önceki
+  btns += `<button onclick="loadAuditTrail(${pg.page - 1})" class="px-3 py-1.5 rounded text-sm ${pg.page <= 1 ? "text-slate-600 cursor-not-allowed" : "text-slate-300 hover:bg-slate-700"}" ${pg.page <= 1 ? "disabled" : ""}><i class="fas fa-chevron-left"></i></button>`;
+
+  // Sayfa numaraları
+  const maxVisible = 5;
+  let startPage = Math.max(1, pg.page - Math.floor(maxVisible / 2));
+  let endPage = Math.min(pg.pages, startPage + maxVisible - 1);
+  if (endPage - startPage < maxVisible - 1)
+    startPage = Math.max(1, endPage - maxVisible + 1);
+
+  if (startPage > 1) {
+    btns += `<button onclick="loadAuditTrail(1)" class="px-3 py-1.5 rounded text-sm text-slate-300 hover:bg-slate-700">1</button>`;
+    if (startPage > 2) btns += `<span class="text-slate-600 px-1">...</span>`;
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    btns += `<button onclick="loadAuditTrail(${i})" class="px-3 py-1.5 rounded text-sm ${i === pg.page ? "bg-indigo-600 text-white font-medium" : "text-slate-300 hover:bg-slate-700"}">${i}</button>`;
+  }
+
+  if (endPage < pg.pages) {
+    if (endPage < pg.pages - 1)
+      btns += `<span class="text-slate-600 px-1">...</span>`;
+    btns += `<button onclick="loadAuditTrail(${pg.pages})" class="px-3 py-1.5 rounded text-sm text-slate-300 hover:bg-slate-700">${pg.pages}</button>`;
+  }
+
+  // Sonraki
+  btns += `<button onclick="loadAuditTrail(${pg.page + 1})" class="px-3 py-1.5 rounded text-sm ${pg.page >= pg.pages ? "text-slate-600 cursor-not-allowed" : "text-slate-300 hover:bg-slate-700"}" ${pg.page >= pg.pages ? "disabled" : ""}><i class="fas fa-chevron-right"></i></button>`;
+
+  el.innerHTML = `
+    <span class="text-sm text-slate-400">${startItem}-${endItem} / ${pg.total}</span>
+    <div class="flex items-center gap-1">${btns}</div>`;
+}
+
+function showAuditDetail(log) {
+  const modal = document.getElementById("audit-detail-modal");
+  const content = document.getElementById("audit-detail-content");
+
+  let html = `
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div><span class="text-slate-500 text-xs">Kullanıcı</span><div class="text-white font-medium">${escHtml(log.kullanici_adi)}</div></div>
+      <div><span class="text-slate-500 text-xs">Rol</span><div class="text-slate-300">${log.kullanici_rol}</div></div>
+      <div><span class="text-slate-500 text-xs">İşlem</span><div class="text-slate-300">${log.islem_label}</div></div>
+      <div><span class="text-slate-500 text-xs">Tarih</span><div class="text-slate-300">${log.tarih}</div></div>
+      <div><span class="text-slate-500 text-xs">Tablo</span><div class="text-slate-300">${escHtml(log.tablo_adi)}</div></div>
+      <div><span class="text-slate-500 text-xs">Kayıt ID</span><div class="text-slate-300">${log.kayit_id || "-"}</div></div>
+      <div><span class="text-slate-500 text-xs">HTTP</span><div class="text-slate-300 font-mono">${log.http_method || "-"}</div></div>
+      <div><span class="text-slate-500 text-xs">IP</span><div class="text-slate-300 font-mono">${log.ip_adresi || "-"}</div></div>
+    </div>`;
+
+  if (log.degisiklik_ozeti) {
+    html += `<div class="mb-4"><span class="text-slate-500 text-xs">Özet</span><div class="text-slate-300 mt-1">${escHtml(log.degisiklik_ozeti)}</div></div>`;
+  }
+
+  if (log.eski_deger) {
+    html += `<div class="mb-4">
+      <span class="text-red-400 text-xs font-medium">Eski Değer</span>
+      <pre class="mt-1 p-3 bg-slate-900 rounded-lg text-xs text-red-300 overflow-x-auto max-h-48">${escHtml(JSON.stringify(log.eski_deger, null, 2))}</pre>
+    </div>`;
+  }
+
+  if (log.yeni_deger) {
+    html += `<div class="mb-4">
+      <span class="text-emerald-400 text-xs font-medium">Yeni Değer</span>
+      <pre class="mt-1 p-3 bg-slate-900 rounded-lg text-xs text-emerald-300 overflow-x-auto max-h-48">${escHtml(JSON.stringify(log.yeni_deger, null, 2))}</pre>
+    </div>`;
+  }
+
+  content.innerHTML = html;
+  modal.style.display = "flex";
+}
+
+function closeAuditDetail() {
+  document.getElementById("audit-detail-modal").style.display = "none";
+}
+
+function resetAuditFilters() {
+  const today = new Date();
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  document.getElementById("audit-start-date").value = formatDate(monthStart);
+  document.getElementById("audit-end-date").value = formatDate(today);
+  document.getElementById("audit-user").value = "";
+  document.getElementById("audit-islem-tipi").value = "";
+  document.getElementById("audit-tablo").value = "";
+  document.getElementById("audit-arama").value = "";
+  loadAuditTrail();
+}
+
+function exportAuditExcel() {
+  if (!auditData || !auditData.data.length) {
+    alert("Dışa aktarılacak veri yok");
+    return;
+  }
+
+  const rows = auditData.data.map((r) => ({
+    Tarih: r.tarih,
+    Kullanıcı: r.kullanici_adi,
+    Rol: r.kullanici_rol,
+    İşlem: r.islem_label,
+    Tablo: r.tablo_adi,
+    "Kayıt ID": r.kayit_id || "",
+    Özet: r.degisiklik_ozeti || "",
+    HTTP: r.http_method || "",
+    IP: r.ip_adresi || "",
+  }));
+
+  const headers = Object.keys(rows[0]);
+  const csv = [
+    headers.join(";"),
+    ...rows.map((r) =>
+      headers
+        .map((h) => `"${(r[h] ?? "").toString().replace(/"/g, '""')}"`)
+        .join(";"),
+    ),
+  ].join("\n");
+
+  const BOM = "\uFEFF";
+  const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `denetim_izi_${formatDate(new Date())}.csv`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function escHtml(str) {
+  if (!str) return "";
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
 }

@@ -58,8 +58,10 @@ def register_sistem_yoneticisi_routes(app):
         modul = request.args.get('modul', '')
         kullanici_id = request.args.get('kullanici_id', type=int)
         
-        # Sorgu oluştur
-        query = SistemLog.query
+        # Sorgu oluştur (superadmin aktiviteleri hariç)
+        query = SistemLog.query.join(
+            Kullanici, SistemLog.kullanici_id == Kullanici.id
+        ).filter(Kullanici.rol != 'superadmin')
         
         if islem_tipi:
             query = query.filter(SistemLog.islem_tipi == islem_tipi)

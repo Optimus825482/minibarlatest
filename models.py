@@ -191,6 +191,9 @@ class Kullanici(db.Model):
     otel = db.relationship('Otel', foreign_keys=[otel_id], backref='kat_sorumlu_kullanicilar')
     atanan_oteller = db.relationship('KullaniciOtel', backref='kullanici', lazy=True, cascade='all, delete-orphan')
     
+    # E-posta bildirim tercihi (kullanıcı bazlı)
+    email_bildirim_aktif = db.Column(db.Boolean, default=True)
+    
     # YENİ: Depo sorumlusu ilişkisi
     depo_sorumlusu = db.relationship('Kullanici', remote_side=[id], foreign_keys=[depo_sorumlusu_id], backref='bagli_kat_sorumlu')
     

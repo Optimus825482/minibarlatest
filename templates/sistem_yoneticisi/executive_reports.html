@@ -10,7 +10,7 @@ endblock %} {% block extra_head %}
 <div class="exec-reports">
   <!-- Print Header (PDF/Print için) -->
   <div class="print-header">
-    <div class="print-logo">Merit Royal Hotel Group</div>
+    <div class="print-logo">Merit Royal</div>
     <h1 id="print-report-title">{{ tab_config.title|default('Rapor') }}</h1>
     <p id="print-date-range"></p>
     <p class="print-generated">
@@ -354,9 +354,152 @@ endblock %} {% block extra_head %}
     </div>
   </div>
 
+  <!-- ==================== AUDIT TRAIL SECTION ==================== -->
+  <div id="audit-section" style="display: none">
+    <!-- Audit Stats -->
+    <div class="summary-grid mb-4" id="audit-stats"></div>
+
+    <!-- Audit Filters -->
+    <div class="filter-panel" id="audit-filters">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label class="filter-label">Başlangıç</label>
+          <input type="date" id="audit-start-date" class="filter-input" />
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Bitiş</label>
+          <input type="date" id="audit-end-date" class="filter-input" />
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Kullanıcı</label>
+          <select id="audit-user" class="filter-select">
+            <option value="">Tüm Kullanıcılar</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">İşlem Tipi</label>
+          <select id="audit-islem-tipi" class="filter-select">
+            <option value="">Tüm İşlemler</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Tablo</label>
+          <select id="audit-tablo" class="filter-select">
+            <option value="">Tüm Tablolar</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Arama</label>
+          <input
+            type="text"
+            id="audit-arama"
+            class="filter-input"
+            placeholder="Kullanıcı, özet, tablo..."
+          />
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button
+          class="btn-report btn-primary-report"
+          onclick="loadAuditTrail()"
+        >
+          <i class="fas fa-search"></i> Filtrele
+        </button>
+        <button
+          class="btn-report btn-secondary-report"
+          onclick="resetAuditFilters()"
+        >
+          <i class="fas fa-undo"></i> Sıfırla
+        </button>
+        <button class="btn-report btn-export" onclick="exportAuditExcel()">
+          <i class="fas fa-file-excel"></i> <span class="btn-text">Excel</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Audit Table -->
+    <div class="report-card" id="audit-table-card">
+      <div class="report-card-header">
+        <span class="report-card-title">
+          <i class="fas fa-shield-alt text-indigo-400"></i> Denetim İzi
+          Kayıtları
+        </span>
+        <span class="table-count" id="audit-table-count"></span>
+      </div>
+      <div class="report-card-body p-0">
+        <div class="table-scroll">
+          <table class="report-table" id="audit-table">
+            <thead>
+              <tr>
+                <th style="width: 140px">Tarih</th>
+                <th>Kullanıcı</th>
+                <th>Rol</th>
+                <th>İşlem</th>
+                <th>Tablo</th>
+                <th>Kayıt ID</th>
+                <th>Özet</th>
+                <th style="width: 80px">HTTP</th>
+                <th style="width: 110px">IP</th>
+                <th style="width: 50px">Detay</th>
+              </tr>
+            </thead>
+            <tbody id="audit-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Pagination -->
+      <div
+        class="flex items-center justify-between px-4 py-3 border-t border-slate-700"
+        id="audit-pagination"
+      ></div>
+    </div>
+
+    <!-- Audit Empty -->
+    <div class="report-empty" id="audit-empty" style="display: none">
+      <i class="fas fa-shield-alt"></i>
+      <p>Denetim izi kaydı bulunamadı</p>
+    </div>
+
+    <!-- Audit Loading -->
+    <div id="audit-loading" style="display: none" class="report-loading-state">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Denetim izleri yükleniyor...</p>
+    </div>
+  </div>
+
+  <!-- Audit Detail Modal -->
+  <div
+    id="audit-detail-modal"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+    style="display: none"
+    onclick="if (event.target === this) closeAuditDetail();"
+  >
+    <div
+      class="bg-slate-800 rounded-xl shadow-2xl border border-slate-700 w-full max-w-2xl max-h-[80vh] overflow-hidden mx-4"
+    >
+      <div
+        class="flex items-center justify-between px-6 py-4 border-b border-slate-700"
+      >
+        <h3 class="text-lg font-semibold text-white">
+          <i class="fas fa-info-circle text-indigo-400 mr-2"></i>İşlem Detayı
+        </h3>
+        <button
+          onclick="closeAuditDetail()"
+          class="text-slate-400 hover:text-white transition"
+        >
+          <i class="fas fa-times text-lg"></i>
+        </button>
+      </div>
+      <div
+        class="p-6 overflow-y-auto max-h-[65vh]"
+        id="audit-detail-content"
+      ></div>
+    </div>
+  </div>
+
   <!-- Print Footer -->
   <div class="print-footer">
-    Merit Royal Hotel Group — Minibar Takip Sistemi —
+    Merit Royal — Minibar Takip Sistemi —
     <span id="print-footer-title">Rapor</span>
   </div>
 </div>

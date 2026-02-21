@@ -434,9 +434,16 @@ def register_sistem_ayarlari_routes(app):
         # Tüm aktif otelleri getir
         oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
         
+        # Kullanıcı bazlı bildirim listesi (superadmin hariç)
+        bildirim_kullanicilari = Kullanici.query.filter(
+            Kullanici.aktif == True,
+            Kullanici.rol != 'superadmin'
+        ).order_by(Kullanici.rol, Kullanici.ad).all()
+        
         return render_template('sistem_yoneticisi/sistem_ayarlari.html',
                              active_tab='bildirimler',
-                             oteller=oteller)
+                             oteller=oteller,
+                             bildirim_kullanicilari=bildirim_kullanicilari)
     
     # ============================================
     # ML ANALİZ SİSTEMİ AYARLARI
@@ -520,6 +527,39 @@ def register_sistem_ayarlari_routes(app):
             return jsonify({
                 'success': True,
                 'message': f'{otel.ad} bildirim ayarları güncellendi'
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': str(e)})
+
+    @app.route('/api/kullanici-bildirim-ayari/<int:kullanici_id>', methods=['POST'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def kullanici_bildirim_ayari_guncelle(kullanici_id):
+        """Kullanıcı bazlı e-posta bildirim ayarını güncelle (AJAX)"""
+        try:
+            kullanici = Kullanici.query.get_or_404(kullanici_id)
+            
+            # Superadmin kullanıcıları değiştirilemez
+            if kullanici.rol == 'superadmin':
+                return jsonify({'success': False, 'message': 'Superadmin bildirim ayarı değiştirilemez'})
+            
+            data = request.get_json()
+            if 'email_bildirim_aktif' in data:
+                kullanici.email_bildirim_aktif = data['email_bildirim_aktif']
+            
+            db.session.commit()
+            
+            log_islem('guncelleme', 'kullanici_bildirim_ayari', {
+                'kullanici_id': kullanici_id,
+                'kullanici_adi': kullanici.kullanici_adi,
+                'email_bildirim_aktif': kullanici.email_bildirim_aktif
+            })
+            
+            return jsonify({
+                'success': True,
+                'message': f'{kullanici.ad} {kullanici.soyad} bildirim ayarı güncellendi'
             })
             
         except Exception as e:

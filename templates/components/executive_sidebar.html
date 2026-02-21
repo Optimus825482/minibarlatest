@@ -56,10 +56,28 @@
 <!-- Karşılaştırma -->
 <a
   href="{{ url_for('executive_reports', tab='comparative') }}"
-  class="sidebar-item mb-4 {% if request.args.get('tab') == 'comparative' %}active{% endif %}"
+  class="sidebar-item mb-1 {% if request.args.get('tab') == 'comparative' %}active{% endif %}"
 >
   <i class="fas fa-balance-scale sidebar-icon text-purple-500"></i>
   <span class="sidebar-text">Karşılaştırma</span>
+</a>
+
+<!-- DND Raporlama -->
+<a
+  href="{{ url_for('executive_reports', tab='dnd') }}"
+  class="sidebar-item mb-1 {% if request.args.get('tab') == 'dnd' %}active{% endif %}"
+>
+  <i class="fas fa-moon sidebar-icon text-rose-500"></i>
+  <span class="sidebar-text">DND Raporlama</span>
+</a>
+
+<!-- Denetim İzi (Audit Trail) -->
+<a
+  href="{{ url_for('executive_reports', tab='audit') }}"
+  class="sidebar-item mb-4 {% if request.args.get('tab') == 'audit' %}active{% endif %}"
+>
+  <i class="fas fa-shield-alt sidebar-icon text-indigo-500"></i>
+  <span class="sidebar-text">Denetim İzi</span>
 </a>
 
 <!-- Ayırıcı -->

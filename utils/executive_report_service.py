@@ -12,10 +12,12 @@ from models import (
     PersonelZimmet, PersonelZimmetDetay,
     AuditLog, SistemLog, GunlukGorev, GorevDetay,
     OdaKontrolKaydi, MinibarIslemTipi, KullaniciRol,
-    GorevDurum, GorevTipi, HareketTipi
+    GorevDurum, GorevTipi, HareketTipi,
+    OdaDNDKayit, OdaDNDKontrol, DNDKontrol
 )
 import logging
 import pytz
+from utils.helpers import get_excluded_user_ids, EXCLUDED_USERNAMES
 
 logger = logging.getLogger(__name__)
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
@@ -77,7 +79,8 @@ class ExecutiveReportService:
                 Kat, Oda.kat_id == Kat.id
             ).filter(
                 cast(MinibarIslem.islem_tarihi, Date).between(start_date, end_date),
-                MinibarIslemDetay.tuketim > 0
+                MinibarIslemDetay.tuketim > 0,
+                ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
             )
 
             # Filtreler
@@ -212,7 +215,8 @@ class ExecutiveReportService:
             ).join(
                 Otel, Kat.otel_id == Otel.id
             ).filter(
-                OdaKontrolKaydi.kontrol_tarihi.between(start_date, end_date)
+                OdaKontrolKaydi.kontrol_tarihi.between(start_date, end_date),
+                ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
             )
 
             if otel_id:
@@ -238,7 +242,8 @@ class ExecutiveReportService:
             ).join(
                 MinibarIslemDetay, MinibarIslem.id == MinibarIslemDetay.islem_id
             ).filter(
-                cast(MinibarIslem.islem_tarihi, Date).between(start_date, end_date)
+                cast(MinibarIslem.islem_tarihi, Date).between(start_date, end_date),
+                ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
             )
 
             if otel_id:
@@ -325,7 +330,8 @@ class ExecutiveReportService:
                 ).join(Kat, Oda.kat_id == Kat.id).filter(
                     Kat.otel_id == otel.id,
                     cast(MinibarIslem.islem_tarihi, Date).between(start_date, end_date),
-                    MinibarIslemDetay.tuketim > 0
+                    MinibarIslemDetay.tuketim > 0,
+                    ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
                 ).first()
 
                 # Kontrol
@@ -337,7 +343,8 @@ class ExecutiveReportService:
                     Oda, OdaKontrolKaydi.oda_id == Oda.id
                 ).join(Kat, Oda.kat_id == Kat.id).filter(
                     Kat.otel_id == otel.id,
-                    OdaKontrolKaydi.kontrol_tarihi.between(start_date, end_date)
+                    OdaKontrolKaydi.kontrol_tarihi.between(start_date, end_date),
+                    ~OdaKontrolKaydi.personel_id.in_(get_excluded_user_ids())
                 ).first()
 
                 # Görev tamamlanma (sadece doluluk bilgisi yüklendikten sonra oluşturulan görevler)
@@ -369,7 +376,8 @@ class ExecutiveReportService:
                 ).join(Kat, Oda.kat_id == Kat.id).filter(
                     Kat.otel_id == otel.id,
                     cast(MinibarIslem.islem_tarihi, Date).between(start_date, end_date),
-                    MinibarIslemDetay.tuketim > 0
+                    MinibarIslemDetay.tuketim > 0,
+                    ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
                 ).group_by(Urun.urun_adi).order_by(desc('miktar')).limit(5).all()
 
                 data.append({
@@ -490,8 +498,10 @@ class ExecutiveReportService:
                 t['ort_tamamlanma_saat'] = sure_map.get(t['gorev_tipi'], 0)
 
             # --- Personel bazlı kırılım ---
+            # NOT: gunluk_gorevler.personel_id çoğunlukla NULL (görevler otele atanıyor).
+            # Personel bilgisi minibar_islemleri.personel_id üzerinden oda+tarih eşleşmesiyle bulunuyor.
             personel_query = db.session.query(
-                GunlukGorev.personel_id,
+                MinibarIslem.personel_id,
                 Kullanici.ad,
                 Kullanici.soyad,
                 func.count(GorevDetay.id).label('toplam_oda'),
@@ -501,10 +511,17 @@ class ExecutiveReportService:
             ).join(
                 GorevDetay, GunlukGorev.id == GorevDetay.gorev_id
             ).join(
-                Kullanici, GunlukGorev.personel_id == Kullanici.id
+                MinibarIslem,
+                and_(
+                    MinibarIslem.oda_id == GorevDetay.oda_id,
+                    cast(MinibarIslem.islem_tarihi, Date) == GunlukGorev.gorev_tarihi
+                )
+            ).join(
+                Kullanici, MinibarIslem.personel_id == Kullanici.id
             ).filter(
                 GunlukGorev.gorev_tarihi.between(start_date, end_date),
-                GorevDetay.misafir_kayit_id.isnot(None)
+                GorevDetay.misafir_kayit_id.isnot(None),
+                ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
             )
             if otel_id:
                 personel_query = personel_query.filter(GunlukGorev.otel_id == otel_id)
@@ -512,7 +529,7 @@ class ExecutiveReportService:
                 personel_query = personel_query.filter(GunlukGorev.gorev_tipi == gorev_tipi)
 
             personel_query = personel_query.group_by(
-                GunlukGorev.personel_id, Kullanici.ad, Kullanici.soyad
+                MinibarIslem.personel_id, Kullanici.ad, Kullanici.soyad
             ).order_by(desc('tamamlanan'))
 
             personel_data = []
@@ -622,11 +639,15 @@ class ExecutiveReportService:
                     MinibarIslemDetay, MinibarIslem.id == MinibarIslemDetay.islem_id
                 ).join(Oda, MinibarIslem.oda_id == Oda.id
                 ).join(Kat, Oda.kat_id == Kat.id
-                ).filter(*filters, MinibarIslemDetay.tuketim > 0, *otel_filter)
+                ).filter(*filters, MinibarIslemDetay.tuketim > 0, *otel_filter,
+                         ~MinibarIslem.personel_id.in_(get_excluded_user_ids()))
                 tuk = tuk_q.first()
 
                 # Kontrol
-                k_filters = [OdaKontrolKaydi.kontrol_tarihi.between(p_start, p_end)]
+                k_filters = [
+                    OdaKontrolKaydi.kontrol_tarihi.between(p_start, p_end),
+                    ~OdaKontrolKaydi.personel_id.in_(get_excluded_user_ids())
+                ]
                 if otel_id:
                     kontrol_q = db.session.query(
                         func.count(OdaKontrolKaydi.id).label('kontrol'),
@@ -709,7 +730,8 @@ class ExecutiveReportService:
                     ).filter(
                         Kat.otel_id == otel.id,
                         cast(MinibarIslem.islem_tarihi, Date).between(period1_start, period1_end),
-                        MinibarIslemDetay.tuketim > 0
+                        MinibarIslemDetay.tuketim > 0,
+                        ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
                     ).scalar() or 0
 
                     o_tuk2 = db.session.query(
@@ -720,7 +742,8 @@ class ExecutiveReportService:
                     ).filter(
                         Kat.otel_id == otel.id,
                         cast(MinibarIslem.islem_tarihi, Date).between(period2_start, period2_end),
-                        MinibarIslemDetay.tuketim > 0
+                        MinibarIslemDetay.tuketim > 0,
+                        ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
                     ).scalar() or 0
 
                     otel_data.append({
@@ -743,6 +766,239 @@ class ExecutiveReportService:
         except Exception as e:
             logger.error(f"Karşılaştırmalı analiz hatası: {e}")
             return {'success': False, 'error': str(e), 'comparison': {}, 'otel_data': [], 'periods': {}}
+
+    # ==========================================
+    # DND RAPORLAMA SİSTEMİ
+    # ==========================================
+
+    @staticmethod
+    def get_dnd_report(start_date=None, end_date=None, otel_id=None,
+                       kat_id=None, oda_id=None, personel_id=None, group_by='oda'):
+        """
+        DND (Do Not Disturb) raporlama sistemi
+        - Tüm DND kayıtları (OdaDNDKayit + GorevDetay dnd_pending)
+        - DND sonrası tüketim kaydıyla kapatılan kayıtlar
+        - Otel/kat/oda/personel bazlı gruplama
+        group_by: 'oda', 'otel', 'kat', 'personel', 'gun'
+        """
+        try:
+            if not start_date:
+                start_date = get_kktc_now().date() - timedelta(days=30)
+            if not end_date:
+                end_date = get_kktc_now().date()
+
+            # ---- 1. OdaDNDKayit tablosundan DND kayıtları ----
+            dnd_query = db.session.query(
+                OdaDNDKayit.id.label('dnd_id'),
+                OdaDNDKayit.oda_id,
+                Oda.oda_no,
+                Kat.kat_adi,
+                Kat.id.label('kat_id_col'),
+                Otel.id.label('otel_id_col'),
+                Otel.ad.label('otel_adi'),
+                OdaDNDKayit.kayit_tarihi,
+                OdaDNDKayit.dnd_sayisi,
+                OdaDNDKayit.durum,
+                OdaDNDKayit.ilk_dnd_zamani,
+                OdaDNDKayit.son_dnd_zamani,
+                OdaDNDKayit.gorev_detay_id
+            ).join(
+                Oda, OdaDNDKayit.oda_id == Oda.id
+            ).join(
+                Kat, Oda.kat_id == Kat.id
+            ).join(
+                Otel, OdaDNDKayit.otel_id == Otel.id
+            ).filter(
+                OdaDNDKayit.kayit_tarihi.between(start_date, end_date)
+            )
+
+            if otel_id:
+                dnd_query = dnd_query.filter(OdaDNDKayit.otel_id == otel_id)
+            if kat_id:
+                dnd_query = dnd_query.filter(Kat.id == kat_id)
+            if oda_id:
+                dnd_query = dnd_query.filter(OdaDNDKayit.oda_id == oda_id)
+
+            dnd_results = dnd_query.order_by(desc(OdaDNDKayit.kayit_tarihi)).all()
+
+            # ---- 2. GorevDetay tablosundan DND kayıtları (görev sistemi) ----
+            gorev_dnd_query = db.session.query(
+                GorevDetay.id.label('detay_id'),
+                GorevDetay.oda_id,
+                Oda.oda_no,
+                Kat.kat_adi,
+                Kat.id.label('kat_id_col'),
+                Otel.id.label('otel_id_col'),
+                Otel.ad.label('otel_adi'),
+                GunlukGorev.gorev_tarihi.label('kayit_tarihi'),
+                GorevDetay.dnd_sayisi,
+                GorevDetay.durum,
+                GorevDetay.son_dnd_zamani,
+                GunlukGorev.personel_id,
+                Kullanici.ad.label('personel_ad'),
+                Kullanici.soyad.label('personel_soyad')
+            ).join(
+                GunlukGorev, GorevDetay.gorev_id == GunlukGorev.id
+            ).join(
+                Oda, GorevDetay.oda_id == Oda.id
+            ).join(
+                Kat, Oda.kat_id == Kat.id
+            ).join(
+                Otel, GunlukGorev.otel_id == Otel.id
+            ).join(
+                Kullanici, GunlukGorev.personel_id == Kullanici.id
+            ).filter(
+                GunlukGorev.gorev_tarihi.between(start_date, end_date),
+                GorevDetay.dnd_sayisi > 0,
+                GorevDetay.misafir_kayit_id.isnot(None),
+                ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
+            )
+
+            if otel_id:
+                gorev_dnd_query = gorev_dnd_query.filter(GunlukGorev.otel_id == otel_id)
+            if kat_id:
+                gorev_dnd_query = gorev_dnd_query.filter(Kat.id == kat_id)
+            if oda_id:
+                gorev_dnd_query = gorev_dnd_query.filter(GorevDetay.oda_id == oda_id)
+            if personel_id:
+                gorev_dnd_query = gorev_dnd_query.filter(GunlukGorev.personel_id == personel_id)
+
+            gorev_dnd_results = gorev_dnd_query.order_by(desc(GunlukGorev.gorev_tarihi)).all()
+
+            # ---- 3. Birleşik DND kayıtları oluştur ----
+            data = []
+            seen_oda_tarih = set()
+
+            # Önce görev sistemi kayıtları (daha detaylı — personel bilgisi var)
+            for r in gorev_dnd_results:
+                key = (r.oda_id, r.kayit_tarihi.isoformat() if r.kayit_tarihi else '')
+                seen_oda_tarih.add(key)
+
+                # DND sonrası tüketim kaydıyla kapatıldı mı?
+                tuketim_kapandi = r.durum == 'completed'
+
+                data.append({
+                    'kaynak': 'gorev',
+                    'oda_id': r.oda_id,
+                    'oda_no': r.oda_no,
+                    'kat_adi': r.kat_adi,
+                    'kat_id': r.kat_id_col,
+                    'otel_id': r.otel_id_col,
+                    'otel_adi': r.otel_adi,
+                    'tarih': r.kayit_tarihi.isoformat() if r.kayit_tarihi else '',
+                    'tarih_label': r.kayit_tarihi.strftime('%d.%m.%Y') if r.kayit_tarihi else '',
+                    'dnd_sayisi': r.dnd_sayisi or 0,
+                    'durum': 'Tüketimle Kapatıldı' if tuketim_kapandi else (
+                        'DND Bekliyor' if r.durum == 'dnd_pending' else r.durum
+                    ),
+                    'durum_kod': 'completed' if tuketim_kapandi else r.durum,
+                    'personel': f"{r.personel_ad} {r.personel_soyad}" if r.personel_ad else '-',
+                    'personel_id': r.personel_id,
+                    'son_dnd_zamani': r.son_dnd_zamani.strftime('%H:%M') if r.son_dnd_zamani else '-',
+                    'tuketim_kapandi': tuketim_kapandi
+                })
+
+            # Sonra bağımsız DND kayıtları (görev sistemiyle çakışmayanlar)
+            for r in dnd_results:
+                key = (r.oda_id, r.kayit_tarihi.isoformat() if r.kayit_tarihi else '')
+                if key in seen_oda_tarih:
+                    continue
+
+                tuketim_kapandi = r.durum == 'tamamlandi'
+
+                # Personel bilgisi: gorev_detay varsa oradan al
+                personel_adi = '-'
+                personel_id_val = None
+                if r.gorev_detay_id:
+                    gd = GorevDetay.query.get(r.gorev_detay_id)
+                    if gd and gd.gorev:
+                        p = Kullanici.query.get(gd.gorev.personel_id)
+                        if p and p.kullanici_adi not in EXCLUDED_USERNAMES:
+                            personel_adi = p.ad_soyad
+                            personel_id_val = p.id
+
+                data.append({
+                    'kaynak': 'bagimsiz',
+                    'oda_id': r.oda_id,
+                    'oda_no': r.oda_no,
+                    'kat_adi': r.kat_adi,
+                    'kat_id': r.kat_id_col,
+                    'otel_id': r.otel_id_col,
+                    'otel_adi': r.otel_adi,
+                    'tarih': r.kayit_tarihi.isoformat() if r.kayit_tarihi else '',
+                    'tarih_label': r.kayit_tarihi.strftime('%d.%m.%Y') if r.kayit_tarihi else '',
+                    'dnd_sayisi': r.dnd_sayisi or 0,
+                    'durum': 'Tüketimle Kapatıldı' if tuketim_kapandi else (
+                        'Aktif' if r.durum == 'aktif' else r.durum
+                    ),
+                    'durum_kod': 'completed' if tuketim_kapandi else r.durum,
+                    'personel': personel_adi,
+                    'personel_id': personel_id_val,
+                    'son_dnd_zamani': r.son_dnd_zamani.strftime('%H:%M') if r.son_dnd_zamani else '-',
+                    'tuketim_kapandi': tuketim_kapandi
+                })
+
+            # Personel filtresi (bağımsız kayıtlar için post-filter)
+            if personel_id:
+                data = [d for d in data if d.get('personel_id') == personel_id]
+
+            # ---- 4. Özet istatistikler ----
+            toplam_dnd = len(data)
+            aktif_dnd = sum(1 for d in data if d['durum_kod'] in ('aktif', 'dnd_pending'))
+            tuketimle_kapanan = sum(1 for d in data if d['tuketim_kapandi'])
+            toplam_dnd_sayisi = sum(d['dnd_sayisi'] for d in data)
+
+            # Otel bazlı dağılım
+            otel_dagilim = {}
+            for d in data:
+                otel = d['otel_adi']
+                if otel not in otel_dagilim:
+                    otel_dagilim[otel] = {'toplam': 0, 'aktif': 0, 'kapanan': 0}
+                otel_dagilim[otel]['toplam'] += 1
+                if d['durum_kod'] in ('aktif', 'dnd_pending'):
+                    otel_dagilim[otel]['aktif'] += 1
+                if d['tuketim_kapandi']:
+                    otel_dagilim[otel]['kapanan'] += 1
+
+            # Günlük trend
+            gun_trend = {}
+            for d in data:
+                tarih = d['tarih']
+                if tarih not in gun_trend:
+                    gun_trend[tarih] = {'toplam': 0, 'kapanan': 0, 'tarih_label': d['tarih_label']}
+                gun_trend[tarih]['toplam'] += 1
+                if d['tuketim_kapandi']:
+                    gun_trend[tarih]['kapanan'] += 1
+
+            trend_data = [v for _, v in sorted(gun_trend.items())]
+
+            summary = {
+                'toplam_dnd_kayit': toplam_dnd,
+                'aktif_dnd': aktif_dnd,
+                'tuketimle_kapanan': tuketimle_kapanan,
+                'kapanma_orani': round((tuketimle_kapanan / toplam_dnd * 100) if toplam_dnd > 0 else 0, 1),
+                'toplam_dnd_sayisi': toplam_dnd_sayisi,
+                'baslangic': start_date.isoformat(),
+                'bitis': end_date.isoformat()
+            }
+
+            return {
+                'success': True,
+                'data': data,
+                'summary': summary,
+                'otel_dagilim': [
+                    {'otel': k, **v} for k, v in otel_dagilim.items()
+                ],
+                'trend_data': trend_data
+            }
+
+        except Exception as e:
+            logger.error(f"DND raporu hatası: {e}", exc_info=True)
+            return {
+                'success': False, 'error': str(e),
+                'data': [], 'summary': {},
+                'otel_dagilim': [], 'trend_data': []
+            }
 
     @staticmethod
     def _gorev_tipi_label(tip):
@@ -779,7 +1035,8 @@ class ExecutiveReportService:
                 Oda, MinibarIslem.oda_id == Oda.id
             ).join(Kat, Oda.kat_id == Kat.id).filter(
                 cast(MinibarIslem.islem_tarihi, Date).between(start_date, end_date),
-                MinibarIslemDetay.tuketim > 0
+                MinibarIslemDetay.tuketim > 0,
+                ~MinibarIslem.personel_id.in_(get_excluded_user_ids())
             )
 
             if otel_id:
@@ -852,7 +1109,10 @@ class ExecutiveReportService:
     def get_personnel_list(otel_id=None, rol=None):
         """Personel listesi"""
         try:
-            query = Kullanici.query.filter(Kullanici.aktif == True)
+            query = Kullanici.query.filter(
+                Kullanici.aktif == True,
+                ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
+            )
             if rol:
                 query = query.filter(Kullanici.rol == rol)
             if otel_id:
