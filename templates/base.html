@@ -2235,26 +2235,25 @@
 
   <!-- Flask Flash Mesajları için Toast -->
   <script>
-    // Flask flash mesajlarını toast olarak göster
-    {% with messages = get_flashed_messages(with_categories = true) %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
       {% for category, message in messages %}
-      // Flask kategorilerini toast türlerine çevir
-      let toastType = '{{ category }}';
-      let toastMessage = {{ message| tojson
-    }};
-    if (toastType === 'success') {
-      toastSuccess(toastMessage);
-    } else if (toastType === 'danger' || toastType === 'error') {
-      toastError(toastMessage);
-    } else if (toastType === 'warning') {
-      toastWarning(toastMessage);
-    } else {
-      toastInfo(toastMessage);
-    }
-    {% endfor %}
-      } );
+      {
+        const toastType = '{{ category }}';
+        const toastMessage = {{ message|tojson }};
+        if (toastType === 'success') {
+          toastSuccess(toastMessage);
+        } else if (toastType === 'danger' || toastType === 'error') {
+          toastError(toastMessage);
+        } else if (toastType === 'warning') {
+          toastWarning(toastMessage);
+        } else {
+          toastInfo(toastMessage);
+        }
+      }
+      {% endfor %}
+    });
     {% endif %}
     {% endwith %}
   </script>
