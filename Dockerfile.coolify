@@ -6,11 +6,9 @@ FROM python:3.11-slim
 # Çalışma dizini
 WORKDIR /app
 
-# Sistem bağımlılıkları (supervisor eklendi)
-RUN apt-get update && apt-get install -y \
-    gcc \
+# Sistem bağımlılıkları (gcc kaldırıldı - psycopg2-binary pre-compiled)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
-    libpq-dev \
     curl \
     supervisor \
     && rm -rf /var/lib/apt/lists/* \
