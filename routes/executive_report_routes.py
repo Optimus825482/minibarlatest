@@ -220,20 +220,20 @@ def register_executive_report_routes(app):
     @login_required
     @role_required('superadmin')
     def api_report_pdf():
-        """PDF rapor oluştur — reportlab ile"""
+        """PDF rapor oluştur — Merit Royal antetli, Türkçe destekli, sayfalı"""
         try:
             from reportlab.lib.pagesizes import A4, landscape
             from reportlab.lib import colors
             from reportlab.lib.units import mm, cm
-            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.styles import ParagraphStyle
             from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
             from reportlab.platypus import (
-                SimpleDocTemplate, Table, TableStyle, Paragraph,
-                Spacer, PageBreak, HRFlowable
+                BaseDocTemplate, Frame, PageTemplate, Table, TableStyle,
+                Paragraph, Spacer, HRFlowable, Image
             )
             from reportlab.pdfbase import pdfmetrics
             from reportlab.pdfbase.ttfonts import TTFont
-            import io
+            import io, os
             from datetime import datetime
 
             data = request.get_json()
@@ -246,75 +246,156 @@ def register_executive_report_routes(app):
             summary = data.get('summary', [])
             table_headers = data.get('table_headers', [])
             table_rows = data.get('table_rows', [])
+            now_str = datetime.now().strftime('%d.%m.%Y %H:%M')
+
+            # --- Türkçe font kayıt ---
+            font_dir = os.path.join(app.root_path, 'static', 'fonts')
+            font_regular = os.path.join(font_dir, 'DejaVuSans.ttf')
+            font_bold = os.path.join(font_dir, 'DejaVuSans-Bold.ttf')
+
+            try:
+                pdfmetrics.registerFont(TTFont('DejaVu', font_regular))
+                pdfmetrics.registerFont(TTFont('DejaVu-Bold', font_bold))
+            except Exception:
+                pass  # Zaten kayıtlıysa devam
+
+            FONT = 'DejaVu'
+            FONT_BOLD = 'DejaVu-Bold'
+
+            # Merit Royal renk paleti
+            MERIT_GOLD = colors.HexColor('#C5A55A')
+            MERIT_DARK = colors.HexColor('#1a1a2e')
+            MERIT_NAVY = colors.HexColor('#16213e')
+            MERIT_GRAY = colors.HexColor('#64748b')
+            MERIT_LIGHT = colors.HexColor('#f8fafc')
+            MERIT_BORDER = colors.HexColor('#e2e8f0')
+            MERIT_TEXT = colors.HexColor('#1e293b')
+            MERIT_TEXT_LIGHT = colors.HexColor('#475569')
+
+            # Logo yolu
+            logo_path = os.path.join(app.root_path, 'static', 'icons', 'icon-for-pdf-18.png')
+            has_logo = os.path.exists(logo_path)
 
             buffer = io.BytesIO()
+            page_w, page_h = landscape(A4)
 
-            doc = SimpleDocTemplate(
+            # --- Sayfa header/footer çizen fonksiyon ---
+            def draw_page(canvas, doc):
+                canvas.saveState()
+                # --- HEADER ---
+                header_y = page_h - 1.2 * cm
+
+                # Üst altın çizgi
+                canvas.setStrokeColor(MERIT_GOLD)
+                canvas.setLineWidth(2)
+                canvas.line(1.5 * cm, header_y, page_w - 1.5 * cm, header_y)
+
+                # Logo (sol)
+                if has_logo:
+                    try:
+                        canvas.drawImage(
+                            logo_path,
+                            1.5 * cm, header_y + 2 * mm,
+                            width=14 * mm, height=14 * mm,
+                            preserveAspectRatio=True, mask='auto'
+                        )
+                    except Exception:
+                        pass
+
+                # Şirket adı (logo yanı)
+                canvas.setFont(FONT_BOLD, 11)
+                canvas.setFillColor(MERIT_DARK)
+                text_x = (1.5 * cm + 16 * mm) if has_logo else 1.5 * cm
+                canvas.drawString(text_x, header_y + 6 * mm, 'Merit Royal Hotel Group')
+
+                canvas.setFont(FONT, 7)
+                canvas.setFillColor(MERIT_GRAY)
+                canvas.drawString(text_x, header_y + 1.5 * mm, 'Minibar Takip Sistemi')
+
+                # Rapor başlığı (sağ)
+                canvas.setFont(FONT_BOLD, 9)
+                canvas.setFillColor(MERIT_TEXT)
+                canvas.drawRightString(page_w - 1.5 * cm, header_y + 6 * mm, report_title)
+
+                canvas.setFont(FONT, 7)
+                canvas.setFillColor(MERIT_GRAY)
+                if date_range:
+                    canvas.drawRightString(page_w - 1.5 * cm, header_y + 1.5 * mm, date_range)
+
+                # --- FOOTER ---
+                footer_y = 1.2 * cm
+
+                # Alt altın çizgi
+                canvas.setStrokeColor(MERIT_GOLD)
+                canvas.setLineWidth(1)
+                canvas.line(1.5 * cm, footer_y, page_w - 1.5 * cm, footer_y)
+
+                # Sol: şirket bilgisi
+                canvas.setFont(FONT, 6.5)
+                canvas.setFillColor(MERIT_GRAY)
+                canvas.drawString(1.5 * cm, footer_y - 3.5 * mm,
+                                  f'Merit Royal Hotel Group \u2014 {report_title}')
+
+                # Orta: tarih
+                canvas.setFont(FONT, 6.5)
+                canvas.drawCentredString(page_w / 2, footer_y - 3.5 * mm,
+                                         now_str)
+
+                # Sağ: sayfa numarası
+                page_num = canvas.getPageNumber()
+                canvas.setFont(FONT_BOLD, 7)
+                canvas.setFillColor(MERIT_TEXT)
+                canvas.drawRightString(page_w - 1.5 * cm, footer_y - 3.5 * mm,
+                                       f'Sayfa {page_num}')
+
+                canvas.restoreState()
+
+            # --- Document template ---
+            frame = Frame(
+                1.5 * cm, 2 * cm,
+                page_w - 3 * cm, page_h - 4 * cm,
+                id='main'
+            )
+            template = PageTemplate(id='merit', frames=frame, onPage=draw_page)
+
+            doc = BaseDocTemplate(
                 buffer,
                 pagesize=landscape(A4),
-                topMargin=2 * cm,
-                bottomMargin=2 * cm,
-                leftMargin=1.5 * cm,
-                rightMargin=1.5 * cm,
                 title=report_title,
                 author='Merit Royal Hotel Group'
             )
+            doc.addPageTemplates([template])
 
-            styles = getSampleStyleSheet()
-
-            # Özel stiller
+            # --- Stiller (Türkçe font) ---
             title_style = ParagraphStyle(
-                'CustomTitle',
-                parent=styles['Title'],
-                fontSize=18,
-                spaceAfter=6,
-                textColor=colors.HexColor('#1e293b'),
-                alignment=TA_CENTER
+                'MeritTitle', fontName=FONT_BOLD, fontSize=16,
+                spaceAfter=4, textColor=MERIT_DARK, alignment=TA_CENTER
             )
             subtitle_style = ParagraphStyle(
-                'CustomSubtitle',
-                parent=styles['Normal'],
-                fontSize=10,
-                textColor=colors.HexColor('#64748b'),
-                alignment=TA_CENTER,
-                spaceAfter=4
+                'MeritSubtitle', fontName=FONT, fontSize=9,
+                textColor=MERIT_GRAY, alignment=TA_CENTER, spaceAfter=3
             )
             section_style = ParagraphStyle(
-                'SectionTitle',
-                parent=styles['Heading2'],
-                fontSize=13,
-                textColor=colors.HexColor('#334155'),
-                spaceBefore=12,
-                spaceAfter=6
+                'MeritSection', fontName=FONT_BOLD, fontSize=11,
+                textColor=MERIT_DARK, spaceBefore=10, spaceAfter=6
             )
             normal_style = ParagraphStyle(
-                'CustomNormal',
-                parent=styles['Normal'],
-                fontSize=9,
-                textColor=colors.HexColor('#334155')
-            )
-            footer_style = ParagraphStyle(
-                'FooterStyle',
-                parent=styles['Normal'],
-                fontSize=7,
-                textColor=colors.HexColor('#94a3b8'),
-                alignment=TA_CENTER
+                'MeritNormal', fontName=FONT, fontSize=8,
+                textColor=MERIT_TEXT
             )
 
             elements = []
 
-            # --- BAŞLIK ---
-            elements.append(Paragraph('Merit Royal Hotel Group', subtitle_style))
+            # --- KAPAK BAŞLIK ---
+            elements.append(Spacer(1, 6 * mm))
             elements.append(Paragraph(report_title, title_style))
             if date_range:
-                elements.append(Paragraph(f'Dönem: {date_range}', subtitle_style))
-            now_str = datetime.now().strftime('%d.%m.%Y %H:%M')
+                elements.append(Paragraph(date_range, subtitle_style))
             elements.append(Paragraph(f'Oluşturulma: {now_str}', subtitle_style))
-            elements.append(Spacer(1, 8 * mm))
+            elements.append(Spacer(1, 4 * mm))
             elements.append(HRFlowable(
-                width="100%", thickness=1,
-                color=colors.HexColor('#e2e8f0'),
-                spaceAfter=6 * mm
+                width="100%", thickness=0.5,
+                color=MERIT_GOLD, spaceAfter=6 * mm
             ))
 
             # --- ÖZET KARTLARI ---
@@ -326,25 +407,24 @@ def register_executive_report_routes(app):
                     summary_data.append(str(item.get('value', '')))
                     summary_labels.append(str(item.get('label', '')))
 
-                # Özet tablosu — tek satır değerler, altında etiketler
                 col_count = len(summary_data)
                 if col_count > 0:
-                    avail_width = doc.width
+                    avail_width = frame._width
                     col_w = avail_width / col_count
 
                     val_cells = [Paragraph(
-                        f'<b>{v}</b>', ParagraphStyle(
-                            'SummaryVal', parent=normal_style,
+                        v, ParagraphStyle(
+                            'SV', fontName=FONT_BOLD,
                             fontSize=14, alignment=TA_CENTER,
-                            textColor=colors.HexColor('#1e293b')
+                            textColor=MERIT_DARK
                         )
                     ) for v in summary_data]
 
                     label_cells = [Paragraph(
                         lbl, ParagraphStyle(
-                            'SummaryLbl', parent=normal_style,
-                            fontSize=8, alignment=TA_CENTER,
-                            textColor=colors.HexColor('#64748b')
+                            'SL', fontName=FONT,
+                            fontSize=7.5, alignment=TA_CENTER,
+                            textColor=MERIT_GRAY
                         )
                     ) for lbl in summary_labels]
 
@@ -355,13 +435,13 @@ def register_executive_report_routes(app):
                     summary_table.setStyle(TableStyle([
                         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f8fafc')),
-                        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e2e8f0')),
+                        ('BACKGROUND', (0, 0), (-1, 0), MERIT_LIGHT),
+                        ('LINEBELOW', (0, 0), (-1, 0), 0.5, MERIT_GOLD),
+                        ('GRID', (0, 0), (-1, -1), 0.5, MERIT_BORDER),
                         ('TOPPADDING', (0, 0), (-1, 0), 10),
                         ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-                        ('TOPPADDING', (0, 1), (-1, 1), 4),
-                        ('BOTTOMPADDING', (0, 1), (-1, 1), 6),
-                        ('ROUNDEDCORNERS', [4, 4, 4, 4]),
+                        ('TOPPADDING', (0, 1), (-1, 1), 5),
+                        ('BOTTOMPADDING', (0, 1), (-1, 1), 7),
                     ]))
                     elements.append(summary_table)
                     elements.append(Spacer(1, 8 * mm))
@@ -370,62 +450,54 @@ def register_executive_report_routes(app):
             if table_headers and table_rows:
                 elements.append(Paragraph('Detay Tablosu', section_style))
 
-                # Header
                 header_cells = [Paragraph(
-                    f'<b>{h}</b>', ParagraphStyle(
-                        'TH', parent=normal_style,
-                        fontSize=8, textColor=colors.HexColor('#475569')
+                    h, ParagraphStyle(
+                        'TH', fontName=FONT_BOLD,
+                        fontSize=7.5, textColor=colors.white
                     )
                 ) for h in table_headers]
 
-                # Rows
                 all_rows = [header_cells]
                 for row in table_rows:
                     cells = [Paragraph(
                         str(cell), ParagraphStyle(
-                            'TD', parent=normal_style, fontSize=8
+                            'TD', fontName=FONT, fontSize=7.5,
+                            textColor=MERIT_TEXT
                         )
                     ) for cell in row]
                     all_rows.append(cells)
 
                 col_count = len(table_headers)
-                avail_width = doc.width
+                avail_width = frame._width
                 col_w = avail_width / col_count
 
-                data_table = Table(all_rows, colWidths=[col_w] * col_count, repeatRows=1)
+                data_table = Table(
+                    all_rows, colWidths=[col_w] * col_count,
+                    repeatRows=1
+                )
                 data_table.setStyle(TableStyle([
-                    # Header
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f1f5f9')),
-                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#334155')),
-                    ('FONTSIZE', (0, 0), (-1, 0), 8),
+                    # Header — koyu lacivert arka plan, beyaz yazı
+                    ('BACKGROUND', (0, 0), (-1, 0), MERIT_NAVY),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                    ('FONTNAME', (0, 0), (-1, 0), FONT_BOLD),
+                    ('FONTSIZE', (0, 0), (-1, 0), 7.5),
                     ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
                     ('TOPPADDING', (0, 0), (-1, 0), 8),
                     # Body
-                    ('FONTSIZE', (0, 1), (-1, -1), 8),
+                    ('FONTNAME', (0, 1), (-1, -1), FONT),
+                    ('FONTSIZE', (0, 1), (-1, -1), 7.5),
                     ('TOPPADDING', (0, 1), (-1, -1), 5),
                     ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
                     # Zebra striping
-                    *[('BACKGROUND', (0, i), (-1, i), colors.HexColor('#f8fafc'))
-                      for i in range(2, len(all_rows), 2)],
+                    ('ROWBACKGROUNDS', (0, 1), (-1, -1),
+                     [colors.white, MERIT_LIGHT]),
                     # Grid
-                    ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e2e8f0')),
+                    ('GRID', (0, 0), (-1, -1), 0.4, MERIT_BORDER),
+                    ('LINEBELOW', (0, 0), (-1, 0), 1, MERIT_GOLD),
                     ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                     ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                    ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
                 ]))
                 elements.append(data_table)
-
-            # --- FOOTER ---
-            elements.append(Spacer(1, 10 * mm))
-            elements.append(HRFlowable(
-                width="100%", thickness=0.5,
-                color=colors.HexColor('#e2e8f0'),
-                spaceBefore=4 * mm, spaceAfter=4 * mm
-            ))
-            elements.append(Paragraph(
-                f'Merit Royal Hotel Group — Minibar Takip Sistemi — {report_title} — {now_str}',
-                footer_style
-            ))
 
             # Build PDF
             doc.build(elements)
@@ -434,7 +506,8 @@ def register_executive_report_routes(app):
             response = make_response(buffer.getvalue())
             safe_title = report_title.replace(' ', '_')
             response.headers['Content-Type'] = 'application/pdf'
-            response.headers['Content-Disposition'] = f'attachment; filename={safe_title}_{datetime.now().strftime("%Y%m%d_%H%M")}.pdf'
+            response.headers['Content-Disposition'] = \
+                f'attachment; filename={safe_title}_{datetime.now().strftime("%Y%m%d_%H%M")}.pdf'
             return response
 
         except Exception as e:

@@ -365,53 +365,22 @@ function renderProductChart(data) {
     labels = top.map((d) => d.urun_adi);
     values = top.map((d) => d.toplam_tuketim);
   }
-  const chartType =
-    currentGroupBy === "gun" ? "line" : data.length <= 8 ? "doughnut" : "bar";
-  if (chartType === "doughnut") {
+  const isLine = currentGroupBy === "gun";
+  if (isLine) {
     reportChart1 = new Chart(ctx, {
-      type: "doughnut",
-      data: {
-        labels,
-        datasets: [
-          {
-            data: values,
-            backgroundColor: COLORS.slice(0, labels.length),
-            borderColor: "#1e293b",
-            borderWidth: 2,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: "right",
-            labels: { boxWidth: 12, padding: 8, font: { size: 11 } },
-          },
-        },
-      },
-    });
-  } else {
-    reportChart1 = new Chart(ctx, {
-      type: chartType,
+      type: "line",
       data: {
         labels,
         datasets: [
           {
             label: "Tüketim",
             data: values,
-            backgroundColor:
-              chartType === "line"
-                ? "rgba(139,92,246,0.1)"
-                : COLORS.slice(0, labels.length).map((c) => c + "99"),
-            borderColor:
-              chartType === "line" ? "#8b5cf6" : COLORS.slice(0, labels.length),
-            borderWidth: chartType === "line" ? 2 : 1,
-            borderRadius: chartType === "bar" ? 4 : 0,
-            fill: chartType === "line",
+            backgroundColor: "rgba(139,92,246,0.1)",
+            borderColor: "#8b5cf6",
+            borderWidth: 2,
+            fill: true,
             tension: 0.4,
-            pointRadius: chartType === "line" ? 3 : 0,
+            pointRadius: 3,
             pointBackgroundColor: "#8b5cf6",
           },
         ],
@@ -419,7 +388,6 @@ function renderProductChart(data) {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        indexAxis: chartType === "bar" && labels.length > 8 ? "y" : "x",
         plugins: { legend: { display: false } },
         scales: {
           y: { beginAtZero: true, grid: { color: "rgba(71,85,105,0.15)" } },
@@ -429,6 +397,86 @@ function renderProductChart(data) {
           },
         },
       },
+    });
+  } else {
+    // Horizontal bar — tek renk gradient, değer etiketli
+    const maxVal = Math.max(...values, 1);
+    const barBg = values.map((v) => {
+      const ratio = v / maxVal;
+      const alpha = 0.4 + ratio * 0.55;
+      return `rgba(139, 92, 246, ${alpha.toFixed(2)})`;
+    });
+    const barBorder = values.map((v) => {
+      const ratio = v / maxVal;
+      const alpha = 0.6 + ratio * 0.4;
+      return `rgba(139, 92, 246, ${alpha.toFixed(2)})`;
+    });
+    reportChart1 = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Tüketim",
+            data: values,
+            backgroundColor: barBg,
+            borderColor: barBorder,
+            borderWidth: 1,
+            borderRadius: 6,
+            borderSkipped: false,
+            barPercentage: 0.7,
+            categoryPercentage: 0.85,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: "y",
+        layout: { padding: { right: 40 } },
+        plugins: {
+          legend: { display: false },
+          datalabels: {
+            anchor: "end",
+            align: "right",
+            offset: 6,
+            color: "#c4b5fd",
+            font: { size: 12, weight: "bold" },
+            formatter: (v) => v,
+          },
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid: { color: "rgba(71,85,105,0.12)" },
+            ticks: { color: "#94a3b8", font: { size: 10 }, stepSize: 1 },
+          },
+          y: {
+            grid: { display: false },
+            ticks: { color: "#e2e8f0", font: { size: 11 }, mirror: false },
+          },
+        },
+      },
+      plugins: [
+        {
+          id: "customBarLabels",
+          afterDatasetsDraw(chart) {
+            const { ctx: c, scales } = chart;
+            const meta = chart.getDatasetMeta(0);
+            c.save();
+            c.font = "bold 12px sans-serif";
+            c.fillStyle = "#c4b5fd";
+            c.textBaseline = "middle";
+            meta.data.forEach((bar, i) => {
+              const val = chart.data.datasets[0].data[i];
+              if (val > 0) {
+                c.fillText(val, bar.x + 8, bar.y);
+              }
+            });
+            c.restore();
+          },
+        },
+      ],
     });
   }
 }

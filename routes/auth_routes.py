@@ -46,6 +46,8 @@ def register_auth_routes(app):
         
         # Giriş yapmış kullanıcı varsa panele yönlendir
         if 'kullanici_id' in session:
+            if session.get('rol') == 'sistem_yoneticisi':
+                return redirect(url_for('executive_dashboard'))
             return redirect(url_for('dashboard'))
         
         return redirect(url_for('login'))
@@ -176,6 +178,9 @@ def register_auth_routes(app):
                 session['clear_cache'] = True
 
                 flash(f'Hoş geldiniz, {kullanici.ad} {kullanici.soyad}!', 'success')
+                
+                if kullanici.rol == 'sistem_yoneticisi':
+                    return redirect(url_for('executive_dashboard'))
                 return redirect(url_for('dashboard'))
             else:
                 # Başarısız login denemesini logla
