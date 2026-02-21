@@ -21,6 +21,59 @@
   <span class="sidebar-text font-semibold">Dashboard</span>
 </a>
 
+<!-- Executive Dashboard - Sadece superadmin -->
+{% if current_user and current_user.rol == 'superadmin' %}
+<a
+  href="{{ url_for('executive_dashboard') }}"
+  class="sidebar-item mb-4 {% if request.endpoint == 'executive_dashboard' %}active{% endif %}"
+  style="background: {% if request.endpoint == 'executive_dashboard' %}linear-gradient(135deg, #f59e0b 0%, #d97706 100%){% else %}linear-gradient(135deg, rgba(245,158,11,0.1) 0%, rgba(217,119,6,0.1) 100%){% endif %}; border: 1px solid rgba(245,158,11,0.3);"
+>
+  <i
+    class="fas fa-crown sidebar-icon"
+    style="color: {% if request.endpoint == 'executive_dashboard' %}white{% else %}#f59e0b{% endif %};"
+  ></i>
+  <span
+    class="sidebar-text font-semibold"
+    style="color: {% if request.endpoint == 'executive_dashboard' %}white{% else %}#fbbf24{% endif %};"
+    >Executive Panel</span
+  >
+</a>
+
+<!-- Superadmin Kullanıcı Yönetimi -->
+<a
+  href="{{ url_for('superadmin_users') }}"
+  class="sidebar-item mb-4 {% if request.endpoint == 'superadmin_users' %}active{% endif %}"
+  style="background: {% if request.endpoint == 'superadmin_users' %}linear-gradient(135deg, #ef4444 0%, #dc2626 100%){% else %}linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(220,38,38,0.1) 100%){% endif %}; border: 1px solid rgba(239,68,68,0.3);"
+>
+  <i
+    class="fas fa-users-cog sidebar-icon"
+    style="color: {% if request.endpoint == 'superadmin_users' %}white{% else %}#ef4444{% endif %};"
+  ></i>
+  <span
+    class="sidebar-text font-semibold"
+    style="color: {% if request.endpoint == 'superadmin_users' %}white{% else %}#f87171{% endif %};"
+    >Tüm Kullanıcılar</span
+  >
+</a>
+
+<!-- Executive Raporlama Merkezi -->
+<a
+  href="{{ url_for('executive_reports') }}"
+  class="sidebar-item mb-4 {% if request.endpoint == 'executive_reports' %}active{% endif %}"
+  style="background: {% if request.endpoint == 'executive_reports' %}linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%){% else %}linear-gradient(135deg, rgba(139,92,246,0.1) 0%, rgba(124,58,237,0.1) 100%){% endif %}; border: 1px solid rgba(139,92,246,0.3);"
+>
+  <i
+    class="fas fa-chart-pie sidebar-icon"
+    style="color: {% if request.endpoint == 'executive_reports' %}white{% else %}#8b5cf6{% endif %};"
+  ></i>
+  <span
+    class="sidebar-text font-semibold"
+    style="color: {% if request.endpoint == 'executive_reports' %}white{% else %}#a78bfa{% endif %};"
+    >Raporlama Merkezi</span
+  >
+</a>
+{% endif %}
+
 <!-- Otel & Yapı Yönetimi -->
 <div class="sidebar-section" data-section="otel">
   <button class="sidebar-section-header" onclick="toggleSection('otel')">

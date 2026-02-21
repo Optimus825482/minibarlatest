@@ -1,0 +1,350 @@
+{% extends "base.html" %} {% block title %}Executive Dashboard - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}Executive Dashboard{% endblock %} {%
+block extra_head %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/executive-dashboard.css') }}?v={{ cache_version }}"
+/>
+{% endblock %} {% block content %}
+<div class="exec-dashboard">
+  <!-- Header Bar -->
+  <div class="exec-header">
+    <div class="exec-header-left">
+      <div class="exec-header-title">
+        <i class="fas fa-crown text-amber-400"></i>
+        <h1>Executive Dashboard</h1>
+      </div>
+      <span class="exec-header-clock" id="exec-clock"></span>
+    </div>
+    <div class="exec-header-right">
+      <!-- Global Zaman Seçici -->
+      <div class="exec-time-selector">
+        <button
+          class="exec-time-btn {% if current_period == 'today' %}active{% endif %}"
+          data-period="today"
+        >
+          <i class="fas fa-calendar-day"></i> Bugün
+        </button>
+        <button
+          class="exec-time-btn {% if current_period == 'yesterday' %}active{% endif %}"
+          data-period="yesterday"
+        >
+          Dün
+        </button>
+        <button
+          class="exec-time-btn {% if current_period == 'this_week' %}active{% endif %}"
+          data-period="this_week"
+        >
+          Bu Hafta
+        </button>
+        <button
+          class="exec-time-btn {% if current_period == 'last_week' %}active{% endif %}"
+          data-period="last_week"
+        >
+          Geçen Hafta
+        </button>
+        <button
+          class="exec-time-btn {% if current_period == 'this_month' %}active{% endif %}"
+          data-period="this_month"
+        >
+          Bu Ay
+        </button>
+        <button
+          class="exec-time-btn {% if current_period == 'last_month' %}active{% endif %}"
+          data-period="last_month"
+        >
+          Geçen Ay
+        </button>
+        <button
+          class="exec-time-btn {% if current_period == 'all' %}active{% endif %}"
+          data-period="all"
+        >
+          Tümü
+        </button>
+      </div>
+      <button
+        onclick="refreshAllData()"
+        class="exec-refresh-btn"
+        title="Verileri Yenile"
+      >
+        <i class="fas fa-sync-alt" id="refresh-icon"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Period Label -->
+  <div class="exec-period-label" id="period-label">
+    <i class="fas fa-clock"></i>
+    <span id="period-text">Bugün</span>
+  </div>
+
+  <!-- KPI Kartları -->
+  <div class="exec-kpi-grid" id="kpi-container">
+    <div class="exec-kpi-card" data-kpi="kontrol">
+      <div class="exec-kpi-icon bg-blue-500/20 text-blue-400">
+        <i class="fas fa-door-open"></i>
+      </div>
+      <div class="exec-kpi-value text-blue-400" id="kpi-kontrol">
+        {{ kpi.bugun_kontrol|default(0) }}
+      </div>
+      <div class="exec-kpi-label">Kontrol Edilen Oda</div>
+    </div>
+
+    <div class="exec-kpi-card" data-kpi="tuketim">
+      <div class="exec-kpi-icon bg-emerald-500/20 text-emerald-400">
+        <i class="fas fa-wine-bottle"></i>
+      </div>
+      <div class="exec-kpi-value text-emerald-400" id="kpi-tuketim">
+        {{ kpi.bugun_tuketim|default(0) }}
+      </div>
+      <div class="exec-kpi-label">Tüketilen Ürün</div>
+    </div>
+
+    <div class="exec-kpi-card" data-kpi="gorev">
+      <div class="exec-kpi-icon bg-amber-500/20 text-amber-400">
+        <i class="fas fa-tasks"></i>
+      </div>
+      <div class="exec-kpi-value text-amber-400" id="kpi-gorev">
+        %{{ kpi.gorev_oran|default(0) }}
+      </div>
+      <div class="exec-kpi-label">Görev Tamamlanma</div>
+      <div class="exec-kpi-sub" id="kpi-gorev-sub">
+        {{ kpi.tamamlanan_gorev|default(0) }}/{{ kpi.toplam_gorev|default(0) }}
+      </div>
+    </div>
+
+    <div class="exec-kpi-card" data-kpi="kullanici">
+      <div class="exec-kpi-icon bg-purple-500/20 text-purple-400">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="exec-kpi-value text-purple-400" id="kpi-kullanici">
+        {{ kpi.aktif_kullanici|default(0) }}
+      </div>
+      <div class="exec-kpi-label">Aktif Kullanıcı</div>
+      <div class="exec-kpi-sub">
+        / {{ kpi.toplam_kullanici|default(0) }} toplam
+      </div>
+    </div>
+
+    <div class="exec-kpi-card" data-kpi="islem">
+      <div class="exec-kpi-icon bg-rose-500/20 text-rose-400">
+        <i class="fas fa-exchange-alt"></i>
+      </div>
+      <div class="exec-kpi-value text-rose-400" id="kpi-islem">
+        {{ kpi.bugun_islem|default(0) }}
+      </div>
+      <div class="exec-kpi-label">Toplam İşlem</div>
+    </div>
+
+    <div class="exec-kpi-card" data-kpi="oda">
+      <div class="exec-kpi-icon bg-cyan-500/20 text-cyan-400">
+        <i class="fas fa-hotel"></i>
+      </div>
+      <div class="exec-kpi-value text-cyan-400">
+        {{ kpi.toplam_oda|default(0) }}
+      </div>
+      <div class="exec-kpi-label">Toplam Oda</div>
+      <div class="exec-kpi-sub">{{ kpi.toplam_otel|default(0) }} otel</div>
+    </div>
+  </div>
+</div>
+
+  <!-- Haftalık Karşılaştırma -->
+  {% if weekly and weekly.degisim %}
+  <div class="exec-weekly-grid">
+    {% set metrics = [
+      ('Tüketim', weekly.bu_hafta.tuketim|default(0), weekly.gecen_hafta.tuketim|default(0), weekly.degisim.tuketim|default(0), 'fas fa-wine-bottle', 'emerald'),
+      ('Oda Kontrol', weekly.bu_hafta.kontrol|default(0), weekly.gecen_hafta.kontrol|default(0), weekly.degisim.kontrol|default(0), 'fas fa-door-open', 'blue'),
+      ('Sistem İşlem', weekly.bu_hafta.islem|default(0), weekly.gecen_hafta.islem|default(0), weekly.degisim.islem|default(0), 'fas fa-exchange-alt', 'purple')
+    ] %}
+    {% for label, current, previous, change, icon, color in metrics %}
+    <div class="exec-card p-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm text-slate-400"><i class="{{ icon }} mr-1"></i>{{ label }}</span>
+        <span class="text-xs px-2 py-0.5 rounded-full font-medium {% if change > 0 %}bg-green-500/20 text-green-400{% elif change < 0 %}bg-red-500/20 text-red-400{% else %}bg-slate-500/20 text-slate-400{% endif %}">
+          {% if change > 0 %}↑{% elif change < 0 %}↓{% else %}→{% endif %} {{ change }}%
+        </span>
+      </div>
+      <div class="flex items-end gap-3">
+        <div>
+          <div class="text-2xl font-bold text-white">{{ current }}</div>
+          <div class="text-xs text-slate-500">Bu hafta</div>
+        </div>
+        <div class="text-slate-600">vs</div>
+        <div>
+          <div class="text-lg text-slate-400">{{ previous }}</div>
+          <div class="text-xs text-slate-500">Geçen hafta</div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Grafikler -->
+  <div class="exec-charts-grid">
+    <!-- Tüketim Trendi -->
+    <div class="exec-card p-4">
+      <div class="exec-card-header">
+        <h3 class="exec-card-title"><i class="fas fa-chart-line mr-2 text-emerald-400"></i>Tüketim Trendi</h3>
+      </div>
+      <div class="exec-chart-container">
+        <canvas id="consumptionChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Oda Kontrol Trendi -->
+    <div class="exec-card p-4">
+      <div class="exec-card-header">
+        <h3 class="exec-card-title"><i class="fas fa-door-open mr-2 text-blue-400"></i>Oda Kontrol Trendi</h3>
+      </div>
+      <div class="exec-chart-container">
+        <canvas id="roomControlChart"></canvas>
+      </div>
+    </div>
+
+    <!-- En Çok Tüketilen Ürünler -->
+    <div class="exec-card p-4">
+      <div class="exec-card-header">
+        <h3 class="exec-card-title"><i class="fas fa-trophy mr-2 text-amber-400"></i>En Çok Tüketilen Ürünler</h3>
+      </div>
+      <div class="exec-chart-container">
+        <canvas id="topProductsChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Saatlik Aktivite -->
+    <div class="exec-card p-4">
+      <div class="exec-card-header">
+        <h3 class="exec-card-title"><i class="fas fa-clock mr-2 text-purple-400"></i>Saatlik Aktivite Dağılımı</h3>
+      </div>
+      <div class="exec-chart-container">
+        <canvas id="hourlyChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Otel Karşılaştırma & Görev Tamamlanma -->
+  <div class="exec-tables-grid">
+    <!-- Otel Karşılaştırma -->
+    <div class="exec-card p-4">
+      <h3 class="exec-card-title mb-3"><i class="fas fa-hotel mr-2 text-cyan-400"></i>Otel Karşılaştırma</h3>
+      <div class="overflow-x-auto" id="hotel-comparison-container">
+        <table class="exec-table">
+          <thead>
+            <tr>
+              <th>Otel</th>
+              <th class="text-center">Oda</th>
+              <th class="text-center">Kontrol</th>
+              <th class="text-center">Tüketim</th>
+              <th class="text-center">Görev %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in hotel_comparison %}
+            <tr>
+              <td class="font-medium text-white">{{ h.ad }}</td>
+              <td class="text-center">{{ h.oda_sayisi }}</td>
+              <td class="text-center"><span class="text-blue-400">{{ h.bugun_kontrol }}</span></td>
+              <td class="text-center"><span class="text-emerald-400">{{ h.bugun_tuketim }}</span></td>
+              <td class="text-center">
+                <div class="flex items-center justify-center gap-2">
+                  <div class="w-16 bg-slate-700 rounded-full h-1.5">
+                    <div class="h-1.5 rounded-full {% if h.gorev_oran >= 80 %}bg-green-500{% elif h.gorev_oran >= 50 %}bg-amber-500{% else %}bg-red-500{% endif %}"
+                         style="width: {{ h.gorev_oran }}%"></div>
+                  </div>
+                  <span class="text-xs">%{{ h.gorev_oran }}</span>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Görev Tamamlanma -->
+    <div class="exec-card p-4">
+      <h3 class="exec-card-title mb-3"><i class="fas fa-check-circle mr-2 text-green-400"></i>Görev Tamamlanma</h3>
+      <div class="space-y-3" id="task-completion-container">
+        {% for t in task_completion %}
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm text-slate-300">{{ t.otel }}</span>
+            <span class="text-sm font-medium text-white">{{ t.tamamlanan }}/{{ t.toplam }} <span class="text-xs text-slate-500">(%{{ t.oran }})</span></span>
+          </div>
+          <div class="w-full bg-slate-700 rounded-full h-2.5">
+            <div class="h-2.5 rounded-full transition-all duration-500
+              {% if t.oran >= 80 %}bg-gradient-to-r from-green-500 to-emerald-400
+              {% elif t.oran >= 50 %}bg-gradient-to-r from-amber-500 to-yellow-400
+              {% else %}bg-gradient-to-r from-red-500 to-rose-400{% endif %}"
+                 style="width: {{ t.oran }}%"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Aktivite Feed & Kullanıcı Tablosu -->
+  <div class="exec-tables-grid">
+    <!-- Anlık Aktivite Feed -->
+    <div class="exec-card p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="exec-card-title">
+          <i class="fas fa-stream mr-2 text-rose-400"></i>Anlık Aktivite
+          <span class="exec-live-badge">CANLI</span>
+        </h3>
+        <span class="text-xs text-slate-500" id="feed-update-time"></span>
+      </div>
+      <div id="activity-feed" class="exec-feed">
+        <div class="text-center text-slate-500 py-8">
+          <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+          <p class="text-sm">Yükleniyor...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kullanıcı Aktivite Tablosu -->
+    <div class="exec-card p-4">
+      <h3 class="exec-card-title mb-3"><i class="fas fa-user-clock mr-2 text-purple-400"></i>Kullanıcı Aktiviteleri</h3>
+      <div class="overflow-x-auto">
+        <table class="exec-table">
+          <thead>
+            <tr>
+              <th>Kullanıcı</th>
+              <th class="text-center">Rol</th>
+              <th class="text-center">Bugün</th>
+              <th class="text-center">7 Gün</th>
+              <th class="text-center">Son</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in user_stats[:15] %}
+            <tr>
+              <td>
+                <div class="flex items-center gap-2">
+                  <div class="w-2 h-2 rounded-full {% if u.aktif_mi %}bg-green-400{% else %}bg-slate-600{% endif %}"></div>
+                  <span class="text-sm text-white">{{ u.ad_soyad }}</span>
+                </div>
+              </td>
+              <td class="text-center">
+                <span class="exec-role-badge exec-role-{{ u.rol }}">{{ u.rol|replace('_', ' ')|title }}</span>
+              </td>
+              <td class="text-center font-medium">{{ u.bugun_islem }}</td>
+              <td class="text-center text-slate-400">{{ u.haftalik_islem }}</td>
+              <td class="text-center text-xs text-slate-500">{{ u.son_aktivite }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/executive_dashboard.js') }}?v={{ cache_version }}"></script>
+{% endblock %}

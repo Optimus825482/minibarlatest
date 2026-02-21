@@ -1,0 +1,441 @@
+{% extends "base.html" %} {% block title %}Superadmin - Kullanıcı Yönetimi{%
+endblock %} {% block extra_head %}
+<style>
+  .sa-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 1rem;
+  }
+  .sa-header {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .sa-stat-card {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(71, 85, 105, 0.3);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    text-align: center;
+  }
+  .sa-stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+  .sa-stat-label {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .sa-table-wrap {
+    background: #1e293b;
+    border: 1px solid rgba(71, 85, 105, 0.3);
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+  .sa-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+  }
+  .sa-table thead {
+    background: #0f172a;
+  }
+  .sa-table th {
+    padding: 0.75rem 0.75rem;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.6875rem;
+    letter-spacing: 0.05em;
+    text-align: left;
+    border-bottom: 1px solid #334155;
+  }
+  .sa-table td {
+    padding: 0.625rem 0.75rem;
+    color: #e2e8f0;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    vertical-align: middle;
+  }
+  .sa-table tbody tr:hover {
+    background: rgba(59, 130, 246, 0.05);
+  }
+  .sa-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+  }
+  .sa-badge-superadmin {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  .sa-badge-sistem {
+    background: rgba(168, 85, 247, 0.15);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+  }
+  .sa-badge-admin {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+  .sa-badge-depo {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+  .sa-badge-kat {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+  .sa-badge-aktif {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+  }
+  .sa-badge-pasif {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+  }
+  .sa-hash {
+    font-family: "Courier New", monospace;
+    font-size: 0.6875rem;
+    color: #64748b;
+    cursor: pointer;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+  }
+  .sa-hash:hover {
+    color: #94a3b8;
+  }
+  .sa-search {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    color: #e2e8f0;
+    font-size: 0.8125rem;
+    width: 100%;
+  }
+  .sa-search:focus {
+    outline: none;
+    border-color: #3b82f6;
+  }
+  .sa-filter-btn {
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid #334155;
+    background: #1e293b;
+    color: #94a3b8;
+  }
+  .sa-filter-btn.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+  }
+  .sa-filter-btn:hover:not(.active) {
+    background: #334155;
+    color: #e2e8f0;
+  }
+  .sa-hash-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 99999;
+    justify-content: center;
+    align-items: center;
+  }
+  .sa-hash-modal.show {
+    display: flex;
+  }
+  .sa-hash-modal-content {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    max-width: 600px;
+    width: 90%;
+  }
+  .sa-hash-full {
+    font-family: "Courier New", monospace;
+    font-size: 0.75rem;
+    color: #e2e8f0;
+    background: #0f172a;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    word-break: break-all;
+    margin-top: 0.75rem;
+  }
+  @media (max-width: 768px) {
+    .sa-table {
+      font-size: 0.75rem;
+    }
+    .sa-table th,
+    .sa-table td {
+      padding: 0.5rem 0.375rem;
+    }
+    .sa-container {
+      padding: 0.5rem;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="sa-container">
+  <!-- Header -->
+  <div class="sa-header">
+    <div
+      class="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+    >
+      <div>
+        <h1
+          class="text-xl md:text-2xl font-bold text-white flex items-center gap-2"
+        >
+          <i class="fas fa-users-cog text-red-400"></i>
+          Superadmin - Kullanıcı Yönetimi
+        </h1>
+        <p class="text-slate-400 text-sm mt-1">
+          Tüm kullanıcılar, şifre hash'leri, roller ve yetkiler
+        </p>
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <div class="sa-stat-card">
+          <div class="sa-stat-value text-white">{{ toplam }}</div>
+          <div class="sa-stat-label">Toplam</div>
+        </div>
+        <div class="sa-stat-card">
+          <div class="sa-stat-value text-green-400">{{ aktif }}</div>
+          <div class="sa-stat-label">Aktif</div>
+        </div>
+        <div class="sa-stat-card">
+          <div class="sa-stat-value text-red-400">{{ pasif }}</div>
+          <div class="sa-stat-label">Pasif</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex flex-col md:flex-row gap-3 mb-4">
+    <div class="flex-1">
+      <input
+        type="text"
+        id="searchInput"
+        class="sa-search"
+        placeholder="Kullanıcı adı, ad, soyad, email ile ara..."
+      />
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button class="sa-filter-btn active" data-filter="all">Tümü</button>
+      {% for rol in roller %}
+      <button class="sa-filter-btn" data-filter="{{ rol }}">
+        {{ rol | replace('_', ' ') | title }}
+      </button>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="sa-table-wrap">
+    <div class="overflow-x-auto">
+      <table class="sa-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Kullanıcı Adı</th>
+            <th>Ad Soyad</th>
+            <th>Email</th>
+            <th>Telefon</th>
+            <th>Rol</th>
+            <th>Durum</th>
+            <th>Otel</th>
+            <th>Şifre Hash</th>
+            <th>Son Giriş</th>
+            <th>Kayıt Tarihi</th>
+          </tr>
+        </thead>
+        <tbody id="userTableBody">
+          {% for item in user_data %} {% set k = item.kullanici %}
+          <tr
+            class="user-row"
+            data-rol="{{ k.rol }}"
+            data-search="{{ k.kullanici_adi|lower }} {{ k.ad|lower }} {{ k.soyad|lower }} {{ (k.email or '')|lower }}"
+          >
+            <td class="text-slate-500 font-mono text-xs">{{ k.id }}</td>
+            <td class="font-medium">{{ k.kullanici_adi }}</td>
+            <td>{{ k.ad }} {{ k.soyad }}</td>
+            <td class="text-slate-400 text-xs">{{ k.email or '-' }}</td>
+            <td class="text-slate-400 text-xs">{{ k.telefon or '-' }}</td>
+            <td>
+              {% if k.rol == 'superadmin' %}
+              <span class="sa-badge sa-badge-superadmin"
+                ><i class="fas fa-shield-alt mr-1"></i>Superadmin</span
+              >
+              {% elif k.rol == 'sistem_yoneticisi' %}
+              <span class="sa-badge sa-badge-sistem"
+                ><i class="fas fa-user-shield mr-1"></i>Sistem Yön.</span
+              >
+              {% elif k.rol == 'admin' %}
+              <span class="sa-badge sa-badge-admin"
+                ><i class="fas fa-user-cog mr-1"></i>Admin</span
+              >
+              {% elif k.rol == 'depo_sorumlusu' %}
+              <span class="sa-badge sa-badge-depo"
+                ><i class="fas fa-warehouse mr-1"></i>Depo Sor.</span
+              >
+              {% elif k.rol == 'kat_sorumlusu' %}
+              <span class="sa-badge sa-badge-kat"
+                ><i class="fas fa-door-open mr-1"></i>Kat Sor.</span
+              >
+              {% endif %}
+            </td>
+            <td>
+              {% if k.aktif %}
+              <span class="sa-badge sa-badge-aktif">Aktif</span>
+              {% else %}
+              <span class="sa-badge sa-badge-pasif">Pasif</span>
+              {% endif %}
+            </td>
+            <td class="text-xs">{{ item.otel_bilgisi }}</td>
+            <td>
+              <span
+                class="sa-hash"
+                onclick="showHash('{{ k.kullanici_adi }}', '{{ k.sifre_hash | e }}')"
+                title="Tıkla - tam hash'i gör"
+              >
+                {{ k.sifre_hash[:25] }}...
+              </span>
+            </td>
+            <td class="text-xs text-slate-400">
+              {{ k.son_giris.strftime('%d.%m.%Y %H:%M') if k.son_giris else 'Hiç
+              giriş yapmadı' }}
+            </td>
+            <td class="text-xs text-slate-500">
+              {{ k.olusturma_tarihi.strftime('%d.%m.%Y') if k.olusturma_tarihi
+              else '-' }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="text-center text-slate-500 text-xs mt-3" id="resultCount">
+    {{ user_data|length }} kullanıcı gösteriliyor
+  </div>
+</div>
+
+<!-- Hash Modal -->
+<div class="sa-hash-modal" id="hashModal">
+  <div class="sa-hash-modal-content">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-white font-semibold flex items-center gap-2">
+        <i class="fas fa-key text-amber-400"></i>
+        <span id="hashModalUser">Şifre Hash</span>
+      </h3>
+      <button
+        onclick="closeHash()"
+        class="text-slate-400 hover:text-white transition-colors"
+      >
+        <i class="fas fa-times text-lg"></i>
+      </button>
+    </div>
+    <div class="sa-hash-full" id="hashModalValue"></div>
+    <button
+      onclick="copyHash()"
+      class="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+    >
+      <i class="fas fa-copy mr-1"></i> Kopyala
+    </button>
+  </div>
+</div>
+{% endblock %} {% block extra_scripts %}
+<script>
+  // Search
+  document.getElementById("searchInput").addEventListener("input", function () {
+    filterTable();
+  });
+
+  // Filter buttons
+  document.querySelectorAll(".sa-filter-btn").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      document
+        .querySelectorAll(".sa-filter-btn")
+        .forEach((b) => b.classList.remove("active"));
+      this.classList.add("active");
+      filterTable();
+    });
+  });
+
+  function filterTable() {
+    const search = document.getElementById("searchInput").value.toLowerCase();
+    const activeFilter = document.querySelector(".sa-filter-btn.active").dataset
+      .filter;
+    const rows = document.querySelectorAll(".user-row");
+    let visible = 0;
+
+    rows.forEach((row) => {
+      const matchSearch = !search || row.dataset.search.includes(search);
+      const matchFilter =
+        activeFilter === "all" || row.dataset.rol === activeFilter;
+      const show = matchSearch && matchFilter;
+      row.style.display = show ? "" : "none";
+      if (show) visible++;
+    });
+
+    document.getElementById("resultCount").textContent =
+      visible + " kullanıcı gösteriliyor";
+  }
+
+  // Hash modal
+  function showHash(user, hash) {
+    document.getElementById("hashModalUser").textContent =
+      user + " - Şifre Hash";
+    document.getElementById("hashModalValue").textContent = hash;
+    document.getElementById("hashModal").classList.add("show");
+  }
+
+  function closeHash() {
+    document.getElementById("hashModal").classList.remove("show");
+  }
+
+  function copyHash() {
+    const hash = document.getElementById("hashModalValue").textContent;
+    navigator.clipboard.writeText(hash).then(() => {
+      const btn = event.target.closest("button");
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-check mr-1"></i> Kopyalandı';
+      setTimeout(() => {
+        btn.innerHTML = orig;
+      }, 1500);
+    });
+  }
+
+  // Close modal on outside click
+  document.getElementById("hashModal").addEventListener("click", function (e) {
+    if (e.target === this) closeHash();
+  });
+
+  // ESC key
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeHash();
+  });
+</script>
+{% endblock %}

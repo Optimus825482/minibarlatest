@@ -475,6 +475,11 @@ class DataCollector:
         Returns: Toplam toplanan metrik sayısı
         """
         try:
+            from utils.ml_toggle import is_ml_enabled
+            if not is_ml_enabled():
+                logger.info("ML sistemi devre dışı - veri toplama atlandı")
+                return 0
+            
             logger.info("🔄 Veri toplama başladı...")
             
             stok_count = self.collect_stok_metrics()

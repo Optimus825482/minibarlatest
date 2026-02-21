@@ -211,7 +211,8 @@ def register_admin_routes(app):
 
         # Personel listesi - otel bilgileri ile (tüm roller dahil)
         personeller = Kullanici.query.filter(
-            Kullanici.rol.in_(['sistem_yoneticisi', 'admin', 'depo_sorumlusu', 'kat_sorumlusu'])
+            Kullanici.rol.in_(['sistem_yoneticisi', 'admin', 'depo_sorumlusu', 'kat_sorumlusu']),
+            Kullanici.rol != 'superadmin'
         ).order_by(Kullanici.olusturma_tarihi.desc()).all()
         
         # Her personel için otel bilgilerini hazırla

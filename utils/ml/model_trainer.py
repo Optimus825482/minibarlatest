@@ -462,6 +462,11 @@ class ModelTrainer:
     def train_all_models(self):
         """Tüm modelleri eğit"""
         try:
+            from utils.ml_toggle import is_ml_enabled
+            if not is_ml_enabled():
+                logger.info("ML sistemi devre dışı - model eğitimi atlandı")
+                return 0
+            
             logger.info("🎓 Model eğitimi başladı...")
             
             stok_model_id = self.train_stok_model()

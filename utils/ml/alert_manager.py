@@ -23,6 +23,11 @@ class AlertManager:
         Returns: Alert ID veya None
         """
         try:
+            from utils.ml_toggle import is_ml_enabled
+            if not is_ml_enabled():
+                logger.info("ML sistemi devre dışı - alert oluşturulmadı")
+                return None
+            
             from models import MLAlert
             
             alert = MLAlert(**alert_data)
@@ -238,6 +243,11 @@ class AlertManager:
         Returns: Başarılı mı (bool)
         """
         try:
+            from utils.ml_toggle import is_ml_enabled
+            if not is_ml_enabled():
+                logger.info("ML sistemi devre dışı - email bildirimi gönderilmedi")
+                return False
+            
             from utils.email_service import EmailService
             from models import Kullanici
             
@@ -383,6 +393,11 @@ Minibar Takip ML Sistemi
         Returns: Gönderilen email sayısı
         """
         try:
+            from utils.ml_toggle import is_ml_enabled
+            if not is_ml_enabled():
+                logger.info("ML sistemi devre dışı - kritik alert özeti gönderilmedi")
+                return 0
+            
             from utils.email_service import EmailService
             from models import Kullanici, MLAlert
             from datetime import timedelta

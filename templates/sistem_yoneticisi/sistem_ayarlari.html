@@ -36,6 +36,12 @@ block content %}
         >
           <i class="fas fa-bell mr-2"></i>Bildirim Ayarlari
         </a>
+        <a
+          href="{{ url_for('sistem_ayarlari_ml') }}"
+          class="px-3 py-3 text-sm font-medium border-b-2 transition-colors {% if active_tab == 'ml' %}border-blue-500 text-blue-600 dark:text-blue-400{% else %}border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300{% endif %}"
+        >
+          <i class="fas fa-brain mr-2"></i>ML Analiz
+        </a>
       </nav>
     </div>
   </div>
@@ -530,73 +536,161 @@ block content %}
       <div class="flex items-center justify-between">
         <div>
           <h3 class="text-lg font-medium text-slate-900 dark:text-white">
-            <i class="fas fa-bell mr-2 text-amber-500"></i>Otel Bazinda E-posta Bildirim Ayarlari
+            <i class="fas fa-bell mr-2 text-amber-500"></i>Otel Bazinda E-posta
+            Bildirim Ayarlari
           </h3>
           <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Her otel icin ayri ayri e-posta bildirimlerini acip kapatabilirsiniz.
+            Her otel icin ayri ayri e-posta bildirimlerini acip
+            kapatabilirsiniz.
           </p>
         </div>
       </div>
     </div>
-    
+
     <form method="POST" action="{{ url_for('sistem_ayarlari_bildirimler') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-      
+
       <div class="overflow-hidden">
         <table class="w-full">
           <thead class="bg-slate-50 dark:bg-slate-700">
             <tr>
-              <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Otel</th>
-              <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"><i class="fas fa-envelope mr-1"></i>Tum Bildirimler</th>
-              <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"><i class="fas fa-exclamation-triangle mr-1"></i>Uyarilar</th>
-              <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"><i class="fas fa-chart-bar mr-1"></i>Raporlar</th>
-              <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"><i class="fas fa-cog mr-1"></i>Sistem</th>
+              <th
+                class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                Otel
+              </th>
+              <th
+                class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                <i class="fas fa-envelope mr-1"></i>Tum Bildirimler
+              </th>
+              <th
+                class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                <i class="fas fa-exclamation-triangle mr-1"></i>Uyarilar
+              </th>
+              <th
+                class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                <i class="fas fa-chart-bar mr-1"></i>Raporlar
+              </th>
+              <th
+                class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+              >
+                <i class="fas fa-cog mr-1"></i>Sistem
+              </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
             {% for otel in oteller %}
-            <tr class="{% if otel.email_bildirim_aktif %}bg-green-50 dark:bg-green-900/10{% endif %}">
+            <tr
+              class="{% if otel.email_bildirim_aktif %}bg-green-50 dark:bg-green-900/10{% endif %}"
+            >
               <td class="px-3 py-3">
                 <div class="flex items-center">
-                  <div class="flex-shrink-0 h-10 w-10 bg-slate-100 dark:bg-slate-600 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-hotel text-slate-500 dark:text-slate-400"></i>
+                  <div
+                    class="flex-shrink-0 h-10 w-10 bg-slate-100 dark:bg-slate-600 rounded-lg flex items-center justify-center"
+                  >
+                    <i
+                      class="fas fa-hotel text-slate-500 dark:text-slate-400"
+                    ></i>
                   </div>
                   <div class="ml-4">
-                    <div class="text-sm font-medium text-slate-900 dark:text-white">{{ otel.ad }}</div>
+                    <div
+                      class="text-sm font-medium text-slate-900 dark:text-white"
+                    >
+                      {{ otel.ad }}
+                    </div>
                     <div class="text-xs text-slate-500 dark:text-slate-400">
-                      {% if otel.email_bildirim_aktif %}<span class="text-green-600 dark:text-green-400"><i class="fas fa-check-circle mr-1"></i>Aktif</span>{% else %}<span class="text-slate-400"><i class="fas fa-times-circle mr-1"></i>Pasif</span>{% endif %}
+                      {% if otel.email_bildirim_aktif %}<span
+                        class="text-green-600 dark:text-green-400"
+                        ><i class="fas fa-check-circle mr-1"></i>Aktif</span
+                      >{% else %}<span class="text-slate-400"
+                        ><i class="fas fa-times-circle mr-1"></i>Pasif</span
+                      >{% endif %}
                     </div>
                   </div>
                 </div>
               </td>
               <td class="px-4 py-4 text-center">
                 <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" name="bildirim_aktif_{{ otel.id }}" class="sr-only peer" {% if otel.email_bildirim_aktif %}checked{% endif %}>
-                  <div class="w-11 h-6 bg-slate-200 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <input
+                    type="checkbox"
+                    name="bildirim_aktif_{{ otel.id }}"
+                    class="sr-only peer"
+                    {%
+                    if
+                    otel.email_bildirim_aktif
+                    %}checked{%
+                    endif
+                    %}
+                  />
+                  <div
+                    class="w-11 h-6 bg-slate-200 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"
+                  ></div>
                 </label>
               </td>
               <td class="px-4 py-4 text-center">
                 <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" name="uyari_aktif_{{ otel.id }}" class="sr-only peer" {% if otel.email_uyari_aktif %}checked{% endif %}>
-                  <div class="w-11 h-6 bg-slate-200 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                  <input
+                    type="checkbox"
+                    name="uyari_aktif_{{ otel.id }}"
+                    class="sr-only peer"
+                    {%
+                    if
+                    otel.email_uyari_aktif
+                    %}checked{%
+                    endif
+                    %}
+                  />
+                  <div
+                    class="w-11 h-6 bg-slate-200 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"
+                  ></div>
                 </label>
               </td>
               <td class="px-4 py-4 text-center">
                 <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" name="rapor_aktif_{{ otel.id }}" class="sr-only peer" {% if otel.email_rapor_aktif %}checked{% endif %}>
-                  <div class="w-11 h-6 bg-slate-200 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                  <input
+                    type="checkbox"
+                    name="rapor_aktif_{{ otel.id }}"
+                    class="sr-only peer"
+                    {%
+                    if
+                    otel.email_rapor_aktif
+                    %}checked{%
+                    endif
+                    %}
+                  />
+                  <div
+                    class="w-11 h-6 bg-slate-200 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"
+                  ></div>
                 </label>
               </td>
               <td class="px-4 py-4 text-center">
                 <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" name="sistem_aktif_{{ otel.id }}" class="sr-only peer" {% if otel.email_sistem_aktif %}checked{% endif %}>
-                  <div class="w-11 h-6 bg-slate-200 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                  <input
+                    type="checkbox"
+                    name="sistem_aktif_{{ otel.id }}"
+                    class="sr-only peer"
+                    {%
+                    if
+                    otel.email_sistem_aktif
+                    %}checked{%
+                    endif
+                    %}
+                  />
+                  <div
+                    class="w-11 h-6 bg-slate-200 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"
+                  ></div>
                 </label>
               </td>
             </tr>
             {% else %}
             <tr>
-              <td colspan="5" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+              <td
+                colspan="5"
+                class="px-6 py-8 text-center text-slate-500 dark:text-slate-400"
+              >
                 <i class="fas fa-hotel text-4xl mb-2 opacity-50"></i>
                 <p>Henuz otel tanimlanmamis</p>
               </td>
@@ -605,33 +699,231 @@ block content %}
           </tbody>
         </table>
       </div>
-      
-      <div class="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
+
+      <div
+        class="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center"
+      >
         <div class="text-sm text-slate-500 dark:text-slate-400">
-          <i class="fas fa-info-circle mr-1"></i>Sadece "Tum Bildirimler" aktif olan oteller icin e-posta gonderilir.
+          <i class="fas fa-info-circle mr-1"></i>Sadece "Tum Bildirimler" aktif
+          olan oteller icin e-posta gonderilir.
         </div>
-        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg transition-colors">
+        <button
+          type="submit"
+          class="px-6 py-2 bg-blue-600 text-white rounded-lg transition-colors"
+        >
           <i class="fas fa-save mr-2"></i>Kaydet
         </button>
       </div>
     </form>
   </div>
-  
-  <div class="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+
+  <div
+    class="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800"
+  >
     <h4 class="text-sm font-medium text-amber-800 dark:text-amber-300 mb-2">
       <i class="fas fa-lightbulb mr-2"></i>Bildirim Turleri Hakkinda
     </h4>
     <ul class="text-sm text-amber-700 dark:text-amber-400 space-y-1">
-      <li><strong>Tum Bildirimler:</strong> Ana anahtar - kapaliysa hicbir e-posta gonderilmez</li>
-      <li><strong>Uyarilar:</strong> Doluluk yuklemesi eksik, kritik stok uyarilari vb.</li>
+      <li>
+        <strong>Tum Bildirimler:</strong> Ana anahtar - kapaliysa hicbir e-posta
+        gonderilmez
+      </li>
+      <li>
+        <strong>Uyarilar:</strong> Doluluk yuklemesi eksik, kritik stok
+        uyarilari vb.
+      </li>
       <li><strong>Raporlar:</strong> Gunluk/haftalik otomatik raporlar</li>
-      <li><strong>Sistem:</strong> Sistem yoneticilerine gonderilen bilgilendirme e-postalari</li>
+      <li>
+        <strong>Sistem:</strong> Sistem yoneticilerine gonderilen bilgilendirme
+        e-postalari
+      </li>
     </ul>
   </div>
+  {% elif active_tab == 'ml' %}
+  <!-- ML Analiz Sistemi Ayarları -->
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow">
+    <div class="p-6 border-b border-slate-200 dark:border-slate-700">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-medium text-slate-900 dark:text-white">
+            <i class="fas fa-brain mr-2 text-purple-500"></i>ML Analiz Sistemi
+          </h3>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Makine öğrenmesi tabanlı anomali tespit sistemini yönetin
+          </p>
+        </div>
+        <div
+          id="ml-status-badge"
+          class="px-3 py-1 rounded-full text-sm font-medium {% if ml_status and ml_status.enabled %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400{% else %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400{% endif %}"
+        >
+          <i class="fas fa-circle text-xs mr-1"></i>
+          <span id="ml-status-text"
+            >{{ ml_status.status_text if ml_status else 'Bilinmiyor' }}</span
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6">
+      <!-- Ana Toggle -->
+      <div
+        class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg mb-6"
+      >
+        <div>
+          <div class="font-medium text-slate-900 dark:text-white">
+            ML Analiz Sistemi
+          </div>
+          <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Devre dışı bırakıldığında aşağıdaki işlemler durur
+          </div>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            id="ml-toggle"
+            class="sr-only peer"
+            {%
+            if
+            ml_status
+            and
+            ml_status.enabled
+            %}checked{%
+            endif
+            %}
+            onchange="toggleMLSystem(this.checked)"
+          />
+          <div
+            class="w-14 h-7 bg-slate-200 rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-600"
+          ></div>
+        </label>
+      </div>
+
+      <!-- Etkilenen Modüller -->
+      <h4 class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+        <i class="fas fa-list-check mr-1"></i>Devre dışı bırakıldığında duracak
+        işlemler:
+      </h4>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+        <div
+          class="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg"
+        >
+          <i class="fas fa-database text-blue-500 mt-0.5"></i>
+          <div>
+            <div class="text-sm font-medium text-slate-900 dark:text-white">
+              Veri Toplama
+            </div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">
+              Stok, tüketim, dolum metrik toplama
+            </div>
+          </div>
+        </div>
+        <div
+          class="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg"
+        >
+          <i class="fas fa-search text-orange-500 mt-0.5"></i>
+          <div>
+            <div class="text-sm font-medium text-slate-900 dark:text-white">
+              Anomali Tespiti
+            </div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">
+              Z-Score ve Isolation Forest analizi
+            </div>
+          </div>
+        </div>
+        <div
+          class="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg"
+        >
+          <i class="fas fa-graduation-cap text-purple-500 mt-0.5"></i>
+          <div>
+            <div class="text-sm font-medium text-slate-900 dark:text-white">
+              Model Eğitimi
+            </div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">
+              ML modellerinin yeniden eğitilmesi
+            </div>
+          </div>
+        </div>
+        <div
+          class="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg"
+        >
+          <i class="fas fa-bell text-red-500 mt-0.5"></i>
+          <div>
+            <div class="text-sm font-medium text-slate-900 dark:text-white">
+              Alert & Bildirimler
+            </div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">
+              Uyarı oluşturma ve email gönderimi
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Uyarı -->
+      <div
+        class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800"
+      >
+        <h4 class="text-sm font-medium text-amber-800 dark:text-amber-300 mb-1">
+          <i class="fas fa-exclamation-triangle mr-1"></i>Önemli
+        </h4>
+        <p class="text-sm text-amber-700 dark:text-amber-400">
+          ML sistemi devre dışı bırakıldığında mevcut veriler ve eğitilmiş
+          modeller korunur. Sistem tekrar aktif edildiğinde kaldığı yerden devam
+          eder.
+        </p>
+      </div>
+    </div>
+  </div>
+
   {% endif %}
 </div>
 
 <script>
+  // ML Toggle
+  function toggleMLSystem(enabled) {
+    const badge = document.getElementById("ml-status-badge");
+    const text = document.getElementById("ml-status-text");
+    const toggle = document.getElementById("ml-toggle");
+
+    const action = enabled ? "aktif etmek" : "devre dışı bırakmak";
+    if (
+      !confirm(`ML Analiz Sistemini ${action} istediğinizden emin misiniz?`)
+    ) {
+      toggle.checked = !enabled;
+      return;
+    }
+
+    fetch("/api/sistem-ayarlari/ml-toggle", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": "{{ csrf_token() }}",
+      },
+      body: JSON.stringify({ enabled: enabled }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) {
+          if (enabled) {
+            badge.className =
+              "px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+            text.textContent = "Aktif";
+          } else {
+            badge.className =
+              "px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+            text.textContent = "Devre Dışı";
+          }
+          alert("✅ " + data.message);
+        } else {
+          toggle.checked = !enabled;
+          alert("❌ " + data.message);
+        }
+      })
+      .catch((err) => {
+        toggle.checked = !enabled;
+        alert("❌ Hata: " + err);
+      });
+  }
+
   function testEmailConnection() {
     const btn = event.target;
     const originalText = btn.innerHTML;
@@ -689,7 +981,7 @@ block content %}
   function geriYukle(backupId) {
     if (
       !confirm(
-        "⚠️ DİKKAT!\n\nBu işlem mevcut veritabanını yedekle değiştirecektir.\nDevam etmek istediğinizden emin misiniz?"
+        "⚠️ DİKKAT!\n\nBu işlem mevcut veritabanını yedekle değiştirecektir.\nDevam etmek istediğinizden emin misiniz?",
       )
     )
       return;

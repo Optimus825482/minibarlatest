@@ -22,6 +22,7 @@ JSONType = JSONB
 # PostgreSQL ENUM Types
 # Bu enum'lar hem MySQL hem PostgreSQL ile uyumlu çalışır
 class KullaniciRol(str, enum.Enum):
+    SUPERADMIN = 'superadmin'
     SISTEM_YONETICISI = 'sistem_yoneticisi'
     ADMIN = 'admin'
     DEPO_SORUMLUSU = 'depo_sorumlusu'
@@ -165,7 +166,7 @@ class Kullanici(db.Model):
     soyad = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100))
     telefon = db.Column(db.String(20))
-    rol = db.Column(db.Enum('sistem_yoneticisi', 'admin', 'depo_sorumlusu', 'kat_sorumlusu', name='kullanici_rol'), nullable=False)
+    rol = db.Column(db.Enum('superadmin', 'sistem_yoneticisi', 'admin', 'depo_sorumlusu', 'kat_sorumlusu', name='kullanici_rol'), nullable=False)
     aktif = db.Column(db.Boolean, default=True)
     olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     son_giris = db.Column(db.DateTime(timezone=True))

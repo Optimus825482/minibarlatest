@@ -829,6 +829,11 @@ class AnomalyDetector:
         Returns: Toplam oluşturulan alert sayısı
         """
         try:
+            from utils.ml_toggle import is_ml_enabled
+            if not is_ml_enabled():
+                logger.info("ML sistemi devre dışı - anomali tespiti atlandı")
+                return 0
+            
             logger.info("🔍 Anomali tespiti başladı...")
             
             stok_count = self.detect_stok_anomalies()

@@ -67,8 +67,12 @@ def role_required(*allowed_roles):
                 flash('Bu sayfaya erişmek için giriş yapmalısınız.', 'warning')
                 return redirect(url_for('login'))
             
-            # Rol kontrolü
-            if 'rol' not in session or session['rol'] not in allowed_roles:
+            # Rol kontrolü - superadmin her yere erişebilir
+            user_rol = session.get('rol', '')
+            if user_rol == 'superadmin':
+                return f(*args, **kwargs)
+            
+            if 'rol' not in session or user_rol not in allowed_roles:
                 # API isteği mi kontrol et
                 if request.path.startswith('/api/') or request.is_json:
                     # Debug için ekstra bilgi
@@ -157,7 +161,7 @@ def otel_erisim_gerekli(f):
             return redirect(url_for('login'))
         
         # Admin ve sistem yöneticisi tüm otellere erişebilir
-        if rol in ['admin', 'sistem_yoneticisi']:
+        if rol in ['superadmin', 'admin', 'sistem_yoneticisi']:
             return f(*args, **kwargs)
         
         # Otel ID'yi al (kwargs, args veya request.args'dan)

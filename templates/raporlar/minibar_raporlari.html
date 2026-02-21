@@ -1,253 +1,473 @@
-{% extends "base.html" %}
-
-{% block title %}Minibar Raporları - Minibar Takip Sistemi{% endblock %}
-{% block page_title %}Minibar Raporları{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Minibar Raporları - Minibar Takip
+Sistemi{% endblock %} {% block page_title %}Minibar Raporları{% endblock %} {%
+block content %}
 <div class="space-y-6">
-    <!-- Detaylı Rapor Kartı -->
-    <div class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700 p-6">
-        <div class="flex items-center gap-3 mb-6">
-            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <i class="fas fa-list-alt text-white text-xl"></i>
-            </div>
-            <div>
-                <h3 class="text-xl font-bold text-slate-900 dark:text-white">Detaylı Minibar Raporu</h3>
-                <p class="text-sm text-slate-500 dark:text-slate-400">Tüm işlemler ve ürün detayları</p>
-            </div>
-        </div>
-
-        <form method="POST" action="{{ url_for('raporlar.minibar_detayli_raporu_olustur') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    <i class="fas fa-hotel mr-1"></i> Otel
-                </label>
-                <select name="otel_id" required
-                    class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-blue-500 focus:border-blue-500">
-                    <option value="">Otel Seçin</option>
-                    {% for otel in oteller %}
-                    <option value="{{ otel.id }}" {% if detayli_rapor and detayli_rapor.otel_id == otel.id %}selected{% endif %}>{{ otel.ad }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    <i class="fas fa-calendar mr-1"></i> Başlangıç
-                </label>
-                <input type="date" name="baslangic" required value="{{ detayli_rapor.baslangic if detayli_rapor else '' }}"
-                    class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-blue-500 focus:border-blue-500">
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    <i class="fas fa-calendar mr-1"></i> Bitiş
-                </label>
-                <input type="date" name="bitis" required value="{{ detayli_rapor.bitis if detayli_rapor else '' }}"
-                    class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-blue-500 focus:border-blue-500">
-            </div>
-
-            <div class="md:col-span-2 flex items-end">
-                <button type="submit"
-                    class="w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium rounded-lg transition-all shadow-md">
-                    <i class="fas fa-chart-bar mr-2"></i>
-                    Rapor Oluştur
-                </button>
-            </div>
-        </form>
+  <!-- Detaylı Rapor Kartı -->
+  <div
+    class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700 p-6"
+  >
+    <div class="flex items-center gap-3 mb-6">
+      <div
+        class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center"
+      >
+        <i class="fas fa-list-alt text-white text-xl"></i>
+      </div>
+      <div>
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+          Detaylı Minibar Raporu
+        </h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          Tüm işlemler ve ürün detayları
+        </p>
+      </div>
     </div>
 
-    <!-- Özet Rapor Kartı -->
-    <div class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700 p-6">
-        <div class="flex items-center gap-3 mb-6">
-            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <i class="fas fa-chart-pie text-white text-xl"></i>
-            </div>
-            <div>
-                <h3 class="text-xl font-bold text-slate-900 dark:text-white">Özet Minibar Raporu</h3>
-                <p class="text-sm text-slate-500 dark:text-slate-400">Ürün bazlı satış özeti</p>
-            </div>
-        </div>
+    <form
+      method="POST"
+      action="{{ url_for('raporlar.minibar_detayli_raporu_olustur') }}"
+      class="grid grid-cols-1 md:grid-cols-5 gap-4"
+    >
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          <i class="fas fa-hotel mr-1"></i> Otel
+        </label>
+        <select
+          name="otel_id"
+          required
+          class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="">Otel Seçin</option>
+          {% for otel in oteller %}
+          <option
+            value="{{ otel.id }}"
+            {%
+            if
+            detayli_rapor
+            and
+            detayli_rapor.otel_id=""
+            ="otel.id"
+            %}selected{%
+            endif
+            %}
+          >
+            {{ otel.ad }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
 
-        <form method="POST" action="{{ url_for('raporlar.minibar_ozet_raporu_olustur') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    <i class="fas fa-hotel mr-1"></i> Otel
-                </label>
-                <select name="otel_id" required
-                    class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-blue-500 focus:border-blue-500">
-                    <option value="">Otel Seçin</option>
-                    {% for otel in oteller %}
-                    <option value="{{ otel.id }}" {% if ozet_rapor and ozet_rapor.otel_id == otel.id %}selected{% endif %}>{{ otel.ad }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          <i class="fas fa-calendar mr-1"></i> Başlangıç
+        </label>
+        <input
+          type="date"
+          name="baslangic"
+          required
+          value="{{ detayli_rapor.baslangic if detayli_rapor else '' }}"
+          class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
 
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    <i class="fas fa-calendar mr-1"></i> Başlangıç
-                </label>
-                <input type="date" name="baslangic" required value="{{ ozet_rapor.baslangic if ozet_rapor else '' }}"
-                    class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-blue-500 focus:border-blue-500">
-            </div>
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          <i class="fas fa-calendar mr-1"></i> Bitiş
+        </label>
+        <input
+          type="date"
+          name="bitis"
+          required
+          value="{{ detayli_rapor.bitis if detayli_rapor else '' }}"
+          class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
 
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    <i class="fas fa-calendar mr-1"></i> Bitiş
-                </label>
-                <input type="date" name="bitis" required value="{{ ozet_rapor.bitis if ozet_rapor else '' }}"
-                    class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-blue-500 focus:border-blue-500">
-            </div>
+      <div class="md:col-span-2 flex items-end">
+        <button
+          type="submit"
+          class="w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium rounded-lg transition-all shadow-md"
+        >
+          <i class="fas fa-chart-bar mr-2"></i>
+          Rapor Oluştur
+        </button>
+      </div>
+    </form>
+  </div>
 
-            <div class="md:col-span-2 flex items-end">
-                <button type="submit"
-                    class="w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium rounded-lg transition-all shadow-md">
-                    <i class="fas fa-chart-bar mr-2"></i>
-                    Rapor Oluştur
-                </button>
-            </div>
-        </form>
+  <!-- Özet Rapor Kartı -->
+  <div
+    class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700 p-6"
+  >
+    <div class="flex items-center gap-3 mb-6">
+      <div
+        class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center"
+      >
+        <i class="fas fa-chart-pie text-white text-xl"></i>
+      </div>
+      <div>
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+          Özet Minibar Raporu
+        </h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          Ürün bazlı tüketim özeti
+        </p>
+      </div>
     </div>
 
-    <!-- Detaylı Rapor Sonuçları -->
-    {% if detayli_rapor %}
-    <div class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700 p-6">
-        <div class="flex items-center justify-between mb-6">
-            <div class="flex items-center gap-3">
-                {% if detayli_rapor.otel_logo %}
-                <img src="data:image/png;base64,{{ detayli_rapor.otel_logo }}" 
-                     alt="{{ detayli_rapor.otel_ad }}" 
-                     class="w-16 h-16 rounded-lg object-cover border-2 border-green-500 shadow-md">
-                {% else %}
-                <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-md">
-                    <i class="fas fa-wine-bottle text-white text-2xl"></i>
-                </div>
-                {% endif %}
-                <div>
-                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ detayli_rapor.otel_ad }} - Detaylı Minibar Raporu</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ detayli_rapor.baslangic }} / {{ detayli_rapor.bitis }} ({{ detayli_rapor.toplam_islem }} işlem)</p>
-                </div>
-            </div>
-            <a href="{{ url_for('raporlar.minibar_excel', tip='detayli', otel_id=detayli_rapor.otel_id, baslangic=detayli_rapor.baslangic, bitis=detayli_rapor.bitis) }}"
-                class="px-3 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-all shadow-md flex items-center gap-2">
-                <img src="{{ url_for('static', filename='icons/ms-excel-icon-19.png') }}" alt="Excel" class="w-8 h-8 rounded">
-                <span>Excel İndir</span>
-            </a>
-        </div>
+    <form
+      method="POST"
+      action="{{ url_for('raporlar.minibar_ozet_raporu_olustur') }}"
+      class="grid grid-cols-1 md:grid-cols-5 gap-4"
+    >
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          <i class="fas fa-hotel mr-1"></i> Otel
+        </label>
+        <select
+          name="otel_id"
+          required
+          class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="">Otel Seçin</option>
+          {% for otel in oteller %}
+          <option
+            value="{{ otel.id }}"
+            {%
+            if
+            ozet_rapor
+            and
+            ozet_rapor.otel_id=""
+            ="otel.id"
+            %}selected{%
+            endif
+            %}
+          >
+            {{ otel.ad }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
 
-        <div class="overflow-hidden">
-            <table class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
-                <thead class="bg-slate-50 dark:bg-slate-900">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Tarih</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Oda</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Ürün</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Miktar</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Personel</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Durum</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                    {% for islem in detayli_rapor.islemler %}
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700">
-                        <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{{ islem.tarih }}</td>
-                        <td class="px-4 py-3 text-sm text-slate-900 dark:text-white font-medium">{{ islem.oda }}</td>
-                        <td class="px-4 py-3 text-sm text-slate-900 dark:text-white">{{ islem.urun }}</td>
-                        <td class="px-4 py-3 text-sm text-center text-slate-900 dark:text-white font-semibold">{{ islem.miktar }}</td>
-                        <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{{ islem.personel }}</td>
-                        <td class="px-4 py-3 text-sm text-center">
-                            <span class="px-2 py-1 rounded-full text-xs font-semibold
-                                {% if islem.durum == 'tamamlandi' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400
-                                {% elif islem.durum == 'beklemede' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400
-                                {% else %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400{% endif %}">
-                                {{ islem.durum|upper }}
-                            </span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          <i class="fas fa-calendar mr-1"></i> Başlangıç
+        </label>
+        <input
+          type="date"
+          name="baslangic"
+          required
+          value="{{ ozet_rapor.baslangic if ozet_rapor else '' }}"
+          class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <div>
+        <label
+          class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+        >
+          <i class="fas fa-calendar mr-1"></i> Bitiş
+        </label>
+        <input
+          type="date"
+          name="bitis"
+          required
+          value="{{ ozet_rapor.bitis if ozet_rapor else '' }}"
+          class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <div class="md:col-span-2 flex items-end">
+        <button
+          type="submit"
+          class="w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium rounded-lg transition-all shadow-md"
+        >
+          <i class="fas fa-chart-bar mr-2"></i>
+          Rapor Oluştur
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Detaylı Rapor Sonuçları -->
+  {% if detayli_rapor %}
+  <div
+    class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700 p-6"
+  >
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        {% if detayli_rapor.otel_logo %}
+        <img
+          src="data:image/png;base64,{{ detayli_rapor.otel_logo }}"
+          alt="{{ detayli_rapor.otel_ad }}"
+          class="w-16 h-16 rounded-lg object-cover border-2 border-green-500 shadow-md"
+        />
+        {% else %}
+        <div
+          class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-md"
+        >
+          <i class="fas fa-wine-bottle text-white text-2xl"></i>
         </div>
+        {% endif %}
+        <div>
+          <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+            {{ detayli_rapor.otel_ad }} - Detaylı Minibar Raporu
+          </h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400">
+            {{ detayli_rapor.baslangic }} / {{ detayli_rapor.bitis }} ({{
+            detayli_rapor.toplam_islem }} işlem)
+          </p>
+        </div>
+      </div>
+      <a
+        href="{{ url_for('raporlar.minibar_excel', tip='detayli', otel_id=detayli_rapor.otel_id, baslangic=detayli_rapor.baslangic, bitis=detayli_rapor.bitis) }}"
+        class="px-3 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-all shadow-md flex items-center gap-2"
+      >
+        <img
+          src="{{ url_for('static', filename='icons/ms-excel-icon-19.png') }}"
+          alt="Excel"
+          class="w-8 h-8 rounded"
+        />
+        <span>Excel İndir</span>
+      </a>
     </div>
-    {% endif %}
 
-    <!-- Özet Rapor Sonuçları -->
-    {% if ozet_rapor %}
-    <div class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700 p-6">
-        <div class="flex items-center justify-between mb-6">
-            <div class="flex items-center gap-3">
-                {% if ozet_rapor.otel_logo %}
-                <img src="data:image/png;base64,{{ ozet_rapor.otel_logo }}" 
-                     alt="{{ ozet_rapor.otel_ad }}" 
-                     class="w-16 h-16 rounded-lg object-cover border-2 border-green-500 shadow-md">
-                {% else %}
-                <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-md">
-                    <i class="fas fa-wine-bottle text-white text-2xl"></i>
-                </div>
-                {% endif %}
-                <div>
-                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ ozet_rapor.otel_ad }} - Özet Minibar Raporu</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ ozet_rapor.baslangic }} / {{ ozet_rapor.bitis }} ({{ ozet_rapor.toplam_urun_cesidi }} ürün çeşidi)</p>
-                </div>
-            </div>
-            <a href="{{ url_for('raporlar.minibar_excel', tip='ozet', otel_id=ozet_rapor.otel_id, baslangic=ozet_rapor.baslangic, bitis=ozet_rapor.bitis) }}"
-                class="px-3 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-all shadow-md flex items-center gap-2">
-                <img src="{{ url_for('static', filename='icons/ms-excel-icon-19.png') }}" alt="Excel" class="w-8 h-8 rounded">
-                <span>Excel İndir</span>
-            </a>
-        </div>
-
-        <div class="overflow-hidden">
-            <table class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
-                <thead class="bg-slate-50 dark:bg-slate-900">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Ürün</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Toplam Miktar</th>
-                        <th class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Birim</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                    {% for urun in ozet_rapor.urunler %}
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700">
-                        <td class="px-4 py-3 text-sm text-slate-900 dark:text-white font-medium">{{ urun.urun }}</td>
-                        <td class="px-4 py-3 text-sm text-center text-slate-900 dark:text-white font-semibold">{{ urun.miktar }}</td>
-                        <td class="px-4 py-3 text-sm text-center text-slate-600 dark:text-slate-400">{{ urun.birim }}</td>
-                    </tr>
-                    {% endfor %}
-                    <tr class="bg-slate-100 dark:bg-slate-700 font-bold">
-                        <td class="px-4 py-3 text-sm text-slate-900 dark:text-white">TOPLAM</td>
-                        <td class="px-4 py-3 text-sm text-center text-slate-900 dark:text-white">{{ ozet_rapor.genel_toplam }}</td>
-                        <td class="px-4 py-3 text-sm text-center text-slate-600 dark:text-slate-400">-</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+    <div class="overflow-hidden">
+      <table
+        class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet"
+        style="table-layout: fixed"
+      >
+        <thead class="bg-slate-50 dark:bg-slate-900">
+          <tr>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Tarih
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Oda
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Ürün
+            </th>
+            <th
+              class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Miktar
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Personel
+            </th>
+            <th
+              class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Durum
+            </th>
+          </tr>
+        </thead>
+        <tbody
+          class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+        >
+          {% for islem in detayli_rapor.islemler %}
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700">
+            <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+              {{ islem.tarih }}
+            </td>
+            <td
+              class="px-4 py-3 text-sm text-slate-900 dark:text-white font-medium"
+            >
+              {{ islem.oda }}
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-900 dark:text-white">
+              {{ islem.urun }}
+            </td>
+            <td
+              class="px-4 py-3 text-sm text-center text-slate-900 dark:text-white font-semibold"
+            >
+              {{ islem.miktar }}
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+              {{ islem.personel }}
+            </td>
+            <td class="px-4 py-3 text-sm text-center">
+              <span
+                class="px-2 py-1 rounded-full text-xs font-semibold {% if islem.durum == 'tamamlandi' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 {% elif islem.durum == 'beklemede' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 {% else %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400{% endif %}"
+              >
+                {{ islem.durum|upper }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    {% endif %}
+  </div>
+  {% endif %}
 
-    <!-- Bilgi Kartları -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-            <div class="flex items-center gap-3">
-                <i class="fas fa-list-alt text-2xl text-blue-600 dark:text-blue-400"></i>
-                <div>
-                    <p class="text-sm font-semibold text-slate-900 dark:text-white">Detaylı Rapor</p>
-                    <p class="text-xs text-slate-600 dark:text-slate-400">Tüm işlemler, odalar ve ürünler</p>
-                </div>
-            </div>
+  <!-- Özet Rapor Sonuçları -->
+  {% if ozet_rapor %}
+  <div
+    class="bg-white dark:bg-slate-800 shadow-lg rounded-lg border border-slate-200 dark:border-slate-700 p-6"
+  >
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        {% if ozet_rapor.otel_logo %}
+        <img
+          src="data:image/png;base64,{{ ozet_rapor.otel_logo }}"
+          alt="{{ ozet_rapor.otel_ad }}"
+          class="w-16 h-16 rounded-lg object-cover border-2 border-green-500 shadow-md"
+        />
+        {% else %}
+        <div
+          class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-md"
+        >
+          <i class="fas fa-wine-bottle text-white text-2xl"></i>
         </div>
-
-        <div class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
-            <div class="flex items-center gap-3">
-                <i class="fas fa-chart-pie text-2xl text-purple-600 dark:text-purple-400"></i>
-                <div>
-                    <p class="text-sm font-semibold text-slate-900 dark:text-white">Özet Rapor</p>
-                    <p class="text-xs text-slate-600 dark:text-slate-400">Ürün bazlı toplam satışlar</p>
-                </div>
-            </div>
+        {% endif %}
+        <div>
+          <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+            {{ ozet_rapor.otel_ad }} - Özet Minibar Raporu
+          </h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400">
+            {{ ozet_rapor.baslangic }} / {{ ozet_rapor.bitis }} ({{
+            ozet_rapor.toplam_urun_cesidi }} ürün çeşidi)
+          </p>
         </div>
+      </div>
+      <a
+        href="{{ url_for('raporlar.minibar_excel', tip='ozet', otel_id=ozet_rapor.otel_id, baslangic=ozet_rapor.baslangic, bitis=ozet_rapor.bitis) }}"
+        class="px-3 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-all shadow-md flex items-center gap-2"
+      >
+        <img
+          src="{{ url_for('static', filename='icons/ms-excel-icon-19.png') }}"
+          alt="Excel"
+          class="w-8 h-8 rounded"
+        />
+        <span>Excel İndir</span>
+      </a>
     </div>
+
+    <div class="overflow-hidden">
+      <table
+        class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet"
+        style="table-layout: fixed"
+      >
+        <thead class="bg-slate-50 dark:bg-slate-900">
+          <tr>
+            <th
+              class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Ürün
+            </th>
+            <th
+              class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Toplam Miktar
+            </th>
+            <th
+              class="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase"
+            >
+              Birim
+            </th>
+          </tr>
+        </thead>
+        <tbody
+          class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700"
+        >
+          {% for urun in ozet_rapor.urunler %}
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700">
+            <td
+              class="px-4 py-3 text-sm text-slate-900 dark:text-white font-medium"
+            >
+              {{ urun.urun }}
+            </td>
+            <td
+              class="px-4 py-3 text-sm text-center text-slate-900 dark:text-white font-semibold"
+            >
+              {{ urun.miktar }}
+            </td>
+            <td
+              class="px-4 py-3 text-sm text-center text-slate-600 dark:text-slate-400"
+            >
+              {{ urun.birim }}
+            </td>
+          </tr>
+          {% endfor %}
+          <tr class="bg-slate-100 dark:bg-slate-700 font-bold">
+            <td class="px-4 py-3 text-sm text-slate-900 dark:text-white">
+              TOPLAM
+            </td>
+            <td
+              class="px-4 py-3 text-sm text-center text-slate-900 dark:text-white"
+            >
+              {{ ozet_rapor.genel_toplam }}
+            </td>
+            <td
+              class="px-4 py-3 text-sm text-center text-slate-600 dark:text-slate-400"
+            >
+              -
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Bilgi Kartları -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div
+      class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800"
+    >
+      <div class="flex items-center gap-3">
+        <i
+          class="fas fa-list-alt text-2xl text-blue-600 dark:text-blue-400"
+        ></i>
+        <div>
+          <p class="text-sm font-semibold text-slate-900 dark:text-white">
+            Detaylı Rapor
+          </p>
+          <p class="text-xs text-slate-600 dark:text-slate-400">
+            Tüm işlemler, odalar ve ürünler
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800"
+    >
+      <div class="flex items-center gap-3">
+        <i
+          class="fas fa-chart-pie text-2xl text-purple-600 dark:text-purple-400"
+        ></i>
+        <div>
+          <p class="text-sm font-semibold text-slate-900 dark:text-white">
+            Özet Rapor
+          </p>
+          <p class="text-xs text-slate-600 dark:text-slate-400">
+            Ürün bazlı toplam tüketimler
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

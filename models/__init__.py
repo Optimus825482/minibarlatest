@@ -37,6 +37,7 @@ if os.path.exists(_models_py_path):
     DolumTalebiDurum = _models_main.DolumTalebiDurum
     QROkutmaTipi = _models_main.QROkutmaTipi
     GorevDurum = _models_main.GorevDurum
+    GorevTipi = _models_main.GorevTipi
     MLMetricType = _models_main.MLMetricType
     MLAlertType = _models_main.MLAlertType
     MLAlertSeverity = _models_main.MLAlertSeverity
@@ -129,7 +130,7 @@ __all__ = [
     # Enum'lar
     'KullaniciRol', 'HareketTipi', 'ZimmetDurum', 'MinibarIslemTipi',
     'AuditIslemTipi', 'RaporTipi', 'DolumTalebiDurum', 'QROkutmaTipi',
-    'GorevDurum',
+    'GorevDurum', 'GorevTipi',
     'MLMetricType', 'MLAlertType', 'MLAlertSeverity',
     # Otel
     'Otel', 'Kat', 'Oda', 'OdaTipi', 'Setup', 'SetupIcerik', 'oda_tipi_setup',

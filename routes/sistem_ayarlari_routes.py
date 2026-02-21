@@ -438,6 +438,59 @@ def register_sistem_ayarlari_routes(app):
                              active_tab='bildirimler',
                              oteller=oteller)
     
+    # ============================================
+    # ML ANALİZ SİSTEMİ AYARLARI
+    # ============================================
+    
+    @app.route('/sistem-ayarlari/ml')
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def sistem_ayarlari_ml():
+        """ML Analiz Sistemi ayarları sayfası"""
+        from utils.ml_toggle import get_ml_status
+        
+        ml_status = get_ml_status()
+        
+        return render_template('sistem_yoneticisi/sistem_ayarlari.html',
+                             active_tab='ml',
+                             ml_status=ml_status)
+    
+    @app.route('/api/sistem-ayarlari/ml-toggle', methods=['POST'])
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_ml_toggle():
+        """ML Analiz Sistemini aç/kapat (AJAX)"""
+        try:
+            from utils.ml_toggle import set_ml_enabled, get_ml_status
+            
+            data = request.get_json()
+            enabled = data.get('enabled', False)
+            
+            result = set_ml_enabled(
+                enabled=bool(enabled),
+                user_id=session.get('kullanici_id')
+            )
+            
+            if result['success']:
+                status = get_ml_status()
+                result['status'] = status
+            
+            return jsonify(result)
+            
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)})
+    
+    @app.route('/api/sistem-ayarlari/ml-status')
+    @login_required
+    @role_required('sistem_yoneticisi', 'admin')
+    def api_ml_status():
+        """ML sistem durumunu getir (AJAX)"""
+        try:
+            from utils.ml_toggle import get_ml_status
+            return jsonify({'success': True, 'status': get_ml_status()})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)})
+    
     @app.route('/api/otel-bildirim-ayarlari/<int:otel_id>', methods=['POST'])
     @login_required
     @role_required('sistem_yoneticisi', 'admin')

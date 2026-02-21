@@ -1,0 +1,374 @@
+{% extends "base.html" %} {% block title %}{{
+tab_config.title|default('Raporlama Merkezi') }} - Merit Royal{% endblock %} {%
+block page_title %}{{ tab_config.title|default('Raporlama Merkezi') }}{%
+endblock %} {% block extra_head %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/executive-reports.css') }}?v={{ cache_version }}"
+/>
+{% endblock %} {% block content %}
+<div class="exec-reports">
+  <!-- Print Header (PDF/Print için) -->
+  <div class="print-header">
+    <div class="print-logo">Merit Royal Hotel Group</div>
+    <h1 id="print-report-title">{{ tab_config.title|default('Rapor') }}</h1>
+    <p id="print-date-range"></p>
+    <p class="print-generated">
+      Oluşturulma: <span id="print-generated-date"></span>
+    </p>
+  </div>
+
+  <!-- Sayfa Başlığı — Sidebar menüye göre dinamik -->
+  <div class="er-header">
+    <div class="er-header-left">
+      <div class="er-icon-wrapper" id="er-icon-wrapper">
+        <i
+          class="{{ tab_config.icon|default('fas fa-chart-pie') }}"
+          id="er-main-icon"
+        ></i>
+      </div>
+      <div>
+        <h1 class="er-title" id="er-page-title">
+          {{ tab_config.title|default('Raporlama Merkezi') }}
+        </h1>
+        <p class="er-subtitle" id="er-page-subtitle">
+          {{ tab_config.subtitle|default('Özelleştirilebilir raporlar ve
+          analizler') }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtre Paneli -->
+  <div class="filter-panel" id="main-filters">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">Başlangıç</label>
+        <input
+          type="date"
+          id="filter-start-date"
+          class="filter-input"
+          onchange="onFilterChange()"
+        />
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Bitiş</label>
+        <input
+          type="date"
+          id="filter-end-date"
+          class="filter-input"
+          onchange="onFilterChange()"
+        />
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Hızlı Seçim</label>
+        <select
+          id="filter-quick-date"
+          class="filter-select"
+          onchange="applyQuickDate()"
+        >
+          <option value="">Özel</option>
+          <option value="today">Bugün</option>
+          <option value="week">Bu Hafta</option>
+          <option value="month" selected>Bu Ay</option>
+          <option value="last30">Son 30 Gün</option>
+          <option value="last90">Son 90 Gün</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Otel</label>
+        <select
+          id="filter-otel"
+          class="filter-select"
+          onchange="onOtelChange()"
+        >
+          <option value="">Tüm Oteller</option>
+          {% for o in filters.oteller %}
+          <option value="{{ o.id }}">{{ o.ad }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div
+        class="filter-group cascading-filter"
+        id="filter-kat-group"
+        style="display: none"
+      >
+        <label class="filter-label">Kat</label>
+        <select id="filter-kat" class="filter-select" onchange="onKatChange()">
+          <option value="">Tüm Katlar</option>
+        </select>
+      </div>
+      <div
+        class="filter-group cascading-filter"
+        id="filter-oda-group"
+        style="display: none"
+      >
+        <label class="filter-label">Oda</label>
+        <select
+          id="filter-oda"
+          class="filter-select"
+          onchange="onFilterChange()"
+        >
+          <option value="">Tüm Odalar</option>
+        </select>
+      </div>
+      <!-- Product filters -->
+      <div class="filter-group product-filter">
+        <label class="filter-label">Ürün Grubu</label>
+        <select
+          id="filter-grup"
+          class="filter-select"
+          onchange="onGrupChange()"
+        >
+          <option value="">Tüm Gruplar</option>
+          {% for g in filters.urun_gruplari %}
+          <option value="{{ g.id }}">{{ g.ad }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-group product-filter">
+        <label class="filter-label">Ürün</label>
+        <select
+          id="filter-urun"
+          class="filter-select"
+          onchange="onFilterChange()"
+        >
+          <option value="">Tüm Ürünler</option>
+          {% for u in filters.urunler %}
+          <option value="{{ u.id }}" data-grup="{{ u.grup_id }}">
+            {{ u.ad }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <!-- Personnel filter -->
+      <div class="filter-group personnel-filter" style="display: none">
+        <label class="filter-label">Personel</label>
+        <select
+          id="filter-personel"
+          class="filter-select"
+          onchange="onFilterChange()"
+        >
+          <option value="">Tüm Personel</option>
+        </select>
+      </div>
+      <!-- Task filter -->
+      <div class="filter-group task-filter" style="display: none">
+        <label class="filter-label">Görev Tipi</label>
+        <select
+          id="filter-gorev-tipi"
+          class="filter-select"
+          onchange="onFilterChange()"
+        >
+          <option value="">Tüm Tipler</option>
+          <option value="inhouse_kontrol">Inhouse Kontrol</option>
+          <option value="arrival_kontrol">Arrival Kontrol</option>
+          <option value="departure_kontrol">Departure Kontrol</option>
+          <option value="inhouse_yukleme">Inhouse Yükleme</option>
+          <option value="arrivals_yukleme">Arrivals Yükleme</option>
+          <option value="departures_yukleme">Departures Yükleme</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filter-actions">
+      <button class="btn-report btn-primary-report" onclick="loadReport()">
+        <i class="fas fa-search"></i> Rapor Oluştur
+      </button>
+      <button class="btn-report btn-export" onclick="exportExcel()">
+        <i class="fas fa-file-excel"></i> <span class="btn-text">Excel</span>
+      </button>
+      <button class="btn-report btn-pdf" onclick="exportPDF()">
+        <i class="fas fa-file-pdf"></i> <span class="btn-text">PDF</span>
+      </button>
+      <button class="btn-report btn-print" onclick="printReport()">
+        <i class="fas fa-print"></i> <span class="btn-text">Yazdır</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Comparative Period Filters -->
+  <div
+    class="filter-panel comparative-filter"
+    id="comparative-filters"
+    style="display: none"
+  >
+    <div class="comp-periods">
+      <div class="comp-period">
+        <span class="comp-period-label"
+          ><i class="fas fa-calendar-alt text-purple-400"></i> Dönem 1
+          (Güncel)</span
+        >
+        <div class="comp-date-row">
+          <input type="date" id="comp-p1-start" class="filter-input" />
+          <span class="comp-sep">—</span>
+          <input type="date" id="comp-p1-end" class="filter-input" />
+        </div>
+      </div>
+      <div class="comp-period">
+        <span class="comp-period-label"
+          ><i class="fas fa-calendar text-slate-400"></i> Dönem 2 (Önceki)</span
+        >
+        <div class="comp-date-row">
+          <input type="date" id="comp-p2-start" class="filter-input" />
+          <span class="comp-sep">—</span>
+          <input type="date" id="comp-p2-end" class="filter-input" />
+        </div>
+      </div>
+    </div>
+    <div class="comp-presets">
+      <button
+        class="btn-report btn-secondary-report"
+        onclick="setCompPreset('month')"
+      >
+        Bu Ay vs Geçen Ay
+      </button>
+      <button
+        class="btn-report btn-secondary-report"
+        onclick="setCompPreset('week')"
+      >
+        Bu Hafta vs Geçen Hafta
+      </button>
+      <button
+        class="btn-report btn-secondary-report"
+        onclick="setCompPreset('quarter')"
+      >
+        Bu Çeyrek vs Önceki
+      </button>
+    </div>
+    <div class="filter-actions">
+      <button class="btn-report btn-primary-report" onclick="loadReport()">
+        <i class="fas fa-search"></i> Karşılaştır
+      </button>
+      <button class="btn-report btn-export" onclick="exportExcel()">
+        <i class="fas fa-file-excel"></i> <span class="btn-text">Excel</span>
+      </button>
+      <button class="btn-report btn-pdf" onclick="exportPDF()">
+        <i class="fas fa-file-pdf"></i> <span class="btn-text">PDF</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Group By (product tab) -->
+  <div id="group-by-section" class="group-by-wrapper">
+    <span class="group-by-label">Grupla:</span>
+    <div class="group-by-selector">
+      <button
+        class="group-by-btn active"
+        data-group="urun"
+        onclick="setGroupBy('urun')"
+      >
+        Ürün
+      </button>
+      <button
+        class="group-by-btn"
+        data-group="otel"
+        onclick="setGroupBy('otel')"
+      >
+        Otel
+      </button>
+      <button class="group-by-btn" data-group="kat" onclick="setGroupBy('kat')">
+        Kat
+      </button>
+      <button class="group-by-btn" data-group="oda" onclick="setGroupBy('oda')">
+        Oda
+      </button>
+      <button class="group-by-btn" data-group="gun" onclick="setGroupBy('gun')">
+        Gün
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div id="summary-section" class="summary-grid" style="display: none"></div>
+
+  <!-- Charts -->
+  <div class="chart-grid">
+    <div class="report-card" id="chart1-card" style="display: none">
+      <div class="report-card-header">
+        <span class="report-card-title" id="chart1-title"
+          ><i class="fas fa-chart-bar text-purple-400"></i> Grafik</span
+        >
+      </div>
+      <div class="report-card-body">
+        <div class="report-chart-container">
+          <canvas id="reportChart1"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="report-card" id="chart2-card" style="display: none">
+      <div class="report-card-header">
+        <span class="report-card-title" id="chart2-title"
+          ><i class="fas fa-chart-line text-emerald-400"></i> Trend</span
+        >
+      </div>
+      <div class="report-card-body">
+        <div class="report-chart-container">
+          <canvas id="reportChart2"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comparative Cards -->
+  <div id="comparative-cards" style="display: none"></div>
+
+  <!-- Data Table -->
+  <div class="report-card" id="table-card" style="display: none">
+    <div class="report-card-header">
+      <span class="report-card-title" id="table-title"
+        ><i class="fas fa-table text-cyan-400"></i> Detay</span
+      >
+      <span class="table-count" id="table-count"></span>
+    </div>
+    <div class="report-card-body p-0">
+      <div class="table-scroll">
+        <table class="report-table" id="report-table">
+          <thead id="report-thead"></thead>
+          <tbody id="report-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="report-empty" id="empty-state">
+    <i class="fas fa-chart-pie"></i>
+    <p>
+      Rapor oluşturmak için filtreleri seçin ve "Rapor Oluştur" butonuna
+      tıklayın
+    </p>
+  </div>
+
+  <!-- Loading -->
+  <div id="report-loading" style="display: none" class="report-loading-state">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Rapor hazırlanıyor...</p>
+  </div>
+
+  <!-- PDF Loading Overlay -->
+  <div id="pdf-loading" class="pdf-loading-overlay" style="display: none">
+    <div class="pdf-loading-content">
+      <i class="fas fa-file-pdf fa-spin"></i>
+      <p>PDF oluşturuluyor...</p>
+    </div>
+  </div>
+
+  <!-- Print Footer -->
+  <div class="print-footer">
+    Merit Royal Hotel Group — Minibar Takip Sistemi —
+    <span id="print-footer-title">Rapor</span>
+  </div>
+</div>
+{% endblock %} {% block extra_scripts %}
+<script>
+  const ALL_URUNLER = [
+    {% for u in filters.urunler %}
+    {id: {{ u.id }}, ad: "{{ u.ad }}", grup_id: {{ u.grup_id }}},
+    {% endfor %}
+  ];
+  // Aktif tab bilgisi — sidebar'dan veya URL hash'ten gelir
+  const INITIAL_TAB = "{{ active_tab|default('product') }}";
+</script>
+<script src="{{ url_for('static', filename='js/executive_reports.js') }}?v={{ cache_version }}"></script>
+{% endblock %}

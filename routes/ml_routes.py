@@ -31,50 +31,56 @@ ml_bp = Blueprint('ml', __name__, url_prefix='/ml')
 def dashboard():
     """ML Dashboard - Ana sayfa"""
     try:
+        from utils.ml_toggle import is_ml_enabled
+        
+        ml_enabled = is_ml_enabled()
+        
         # Her işlem için ayrı try-catch
         dashboard_metrics = {}
         active_alerts = []
         alert_stats = {}
         models = []
         
-        try:
-            alert_manager = AlertManager(db)
-            metrics_calculator = MetricsCalculator(db)
+        if ml_enabled:
+            try:
+                alert_manager = AlertManager(db)
+                metrics_calculator = MetricsCalculator(db)
+                
+                # Dashboard metrikleri
+                dashboard_metrics = metrics_calculator.get_dashboard_metrics()
+            except Exception as e:
+                logger.error(f"❌ Dashboard metrikleri hatası: {str(e)}")
+                db.session.rollback()
             
-            # Dashboard metrikleri
-            dashboard_metrics = metrics_calculator.get_dashboard_metrics()
-        except Exception as e:
-            logger.error(f"❌ Dashboard metrikleri hatası: {str(e)}")
-            db.session.rollback()
-        
-        try:
-            # Aktif alertler (ilk 10)
-            alert_manager = AlertManager(db)
-            active_alerts = alert_manager.get_active_alerts(limit=10)
-        except Exception as e:
-            logger.error(f"❌ Aktif alertler hatası: {str(e)}")
-            db.session.rollback()
-        
-        try:
-            # Alert istatistikleri (son 30 gün)
-            alert_manager = AlertManager(db)
-            alert_stats = alert_manager.get_alert_statistics(days=30)
-        except Exception as e:
-            logger.error(f"❌ Alert istatistikleri hatası: {str(e)}")
-            db.session.rollback()
-        
-        try:
-            # Model performans bilgileri
-            models = MLModel.query.filter_by(is_active=True).all()
-        except Exception as e:
-            logger.error(f"❌ Model sorgusu hatası: {str(e)}")
-            db.session.rollback()
+            try:
+                # Aktif alertler (ilk 10)
+                alert_manager = AlertManager(db)
+                active_alerts = alert_manager.get_active_alerts(limit=10)
+            except Exception as e:
+                logger.error(f"❌ Aktif alertler hatası: {str(e)}")
+                db.session.rollback()
+            
+            try:
+                # Alert istatistikleri (son 30 gün)
+                alert_manager = AlertManager(db)
+                alert_stats = alert_manager.get_alert_statistics(days=30)
+            except Exception as e:
+                logger.error(f"❌ Alert istatistikleri hatası: {str(e)}")
+                db.session.rollback()
+            
+            try:
+                # Model performans bilgileri
+                models = MLModel.query.filter_by(is_active=True).all()
+            except Exception as e:
+                logger.error(f"❌ Model sorgusu hatası: {str(e)}")
+                db.session.rollback()
         
         return render_template('admin/ml_dashboard.html',
                              dashboard_metrics=dashboard_metrics,
                              alerts=active_alerts,
                              alert_stats=alert_stats,
-                             models=models)
+                             models=models,
+                             ml_enabled=ml_enabled)
     
     except Exception as e:
         logger.error(f"❌ ML Dashboard genel hatası: {str(e)}")
@@ -87,7 +93,8 @@ def dashboard():
                              dashboard_metrics={},
                              alerts=[],
                              alert_stats={},
-                             models=[])
+                             models=[],
+                             ml_enabled=False)
 
 
 @ml_bp.route('/api/alerts')
@@ -96,6 +103,10 @@ def dashboard():
 def api_get_alerts():
     """Aktif alertleri getir (JSON)"""
     try:
+        from utils.ml_toggle import is_ml_enabled
+        if not is_ml_enabled():
+            return jsonify({'success': True, 'alerts': [], 'count': 0})
+        
         severity = request.args.get('severity')
         limit = request.args.get('limit', type=int)
         
@@ -221,6 +232,10 @@ def api_mark_false_positive(alert_id):
 def api_get_metrics():
     """Son metrikleri getir"""
     try:
+        from utils.ml_toggle import is_ml_enabled
+        if not is_ml_enabled():
+            return jsonify({'success': True, 'metrics': [], 'count': 0})
+        
         days = request.args.get('days', 7, type=int)
         metric_type = request.args.get('type')
         
@@ -278,6 +293,10 @@ def api_get_metrics():
 def api_model_performance():
     """Model performans metrikleri"""
     try:
+        from utils.ml_toggle import is_ml_enabled
+        if not is_ml_enabled():
+            return jsonify({'success': True, 'models': [], 'count': 0})
+        
         models = MLModel.query.filter_by(is_active=True).all()
         
         models_data = []
@@ -330,6 +349,10 @@ def api_model_performance():
 def api_statistics():
     """Genel istatistikler"""
     try:
+        from utils.ml_toggle import is_ml_enabled
+        if not is_ml_enabled():
+            return jsonify({'success': True, 'alert_statistics': {}, 'dashboard_metrics': {}})
+        
         days = request.args.get('days', 30, type=int)
         
         alert_stats = {}
@@ -426,6 +449,10 @@ def get_entity_name(entity_type, entity_id):
 def api_collect_data():
     """Manuel veri toplama tetikle"""
     try:
+        from utils.ml_toggle import is_ml_enabled
+        if not is_ml_enabled():
+            return jsonify({'success': False, 'message': 'ML Analiz Sistemi devre dışı. Sistem Ayarları > ML Analiz sekmesinden aktif edin.'}), 403
+        
         from utils.ml.data_collector import DataCollector
         
         collector = DataCollector(db)
@@ -460,6 +487,10 @@ def api_collect_data():
 def api_run_anomaly_detection():
     """Manuel sapma analizi tetikle"""
     try:
+        from utils.ml_toggle import is_ml_enabled
+        if not is_ml_enabled():
+            return jsonify({'success': False, 'message': 'ML Analiz Sistemi devre dışı. Sistem Ayarları > ML Analiz sekmesinden aktif edin.'}), 403
+        
         from utils.ml.anomaly_detector import AnomalyDetector
         
         detector = AnomalyDetector(db)
@@ -494,6 +525,10 @@ def api_run_anomaly_detection():
 def api_train_models():
     """Manuel model eğitimi tetikle"""
     try:
+        from utils.ml_toggle import is_ml_enabled
+        if not is_ml_enabled():
+            return jsonify({'success': False, 'message': 'ML Analiz Sistemi devre dışı. Sistem Ayarları > ML Analiz sekmesinden aktif edin.'}), 403
+        
         from utils.ml.model_trainer import ModelTrainer
         
         trainer = ModelTrainer(db)

@@ -77,6 +77,18 @@ def register_all_routes(app):
     from routes.health_routes import health_bp
     app.register_blueprint(health_bp)
     
+    # Executive Dashboard Routes
+    from routes.executive_dashboard_routes import register_executive_dashboard_routes
+    register_executive_dashboard_routes(app)
+
+    # Executive Report Routes
+    from routes.executive_report_routes import register_executive_report_routes
+    register_executive_report_routes(app)
+
+    # Superadmin Routes
+    from routes.superadmin_routes import register_superadmin_routes
+    register_superadmin_routes(app)
+
     # Rapor Routes
     from routes.rapor_routes import register_rapor_routes
     register_rapor_routes(app)

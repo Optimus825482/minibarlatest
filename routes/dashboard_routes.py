@@ -56,7 +56,9 @@ def register_dashboard_routes(app):
         
         rol = session.get('rol')
         
-        if rol == 'sistem_yoneticisi':
+        if rol == 'superadmin':
+            return redirect(url_for('sistem_yoneticisi_dashboard'))
+        elif rol == 'sistem_yoneticisi':
             return redirect(url_for('sistem_yoneticisi_dashboard'))
         elif rol == 'admin':
             return redirect(url_for('sistem_yoneticisi_dashboard'))  # Admin de sistem yöneticisi panelini kullanır
@@ -78,12 +80,15 @@ def register_dashboard_routes(app):
             from utils.occupancy_service import OccupancyService
             from utils.authorization import get_kullanici_otelleri
             from datetime import date
-            import os
             
-            # ML Alertleri (ML_ENABLED ise)
+            # ML Alertleri (DB tabanlı toggle ile kontrol)
             ml_alerts = []
             ml_alert_count = 0
-            ml_enabled = os.getenv('ML_ENABLED', 'false').lower() == 'true'
+            try:
+                from utils.ml_toggle import is_ml_enabled
+                ml_enabled = is_ml_enabled()
+            except Exception:
+                ml_enabled = False
             
             if ml_enabled:
                 try:
