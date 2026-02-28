@@ -8,11 +8,12 @@ import os
 bind = f"0.0.0.0:{os.getenv('PORT', '5000')}"
 backlog = 2048
 
-# Worker Processes - PERFORMANCE OPTIMIZED (29.12.2025)
-# Production için önerilen: workers = (2 * CPU cores) + 1
-workers = int(os.getenv('GUNICORN_WORKERS', '4'))  # 4 worker (increased from 1)
-worker_class = 'sync'  # sync worker (not gevent/eventlet)
-threads = int(os.getenv('GUNICORN_THREADS', '4'))  # 4 threads per worker (increased from 2)
+# Worker Processes - PERFORMANCE OPTIMIZED (01.03.2026)
+# preload_app: App'i master process'te 1 kez yükle, worker'lar fork ile hazır alsın
+preload_app = True
+workers = int(os.getenv('GUNICORN_WORKERS', '2'))  # 2 worker (4 timeout yapıyordu)
+worker_class = 'gthread'  # gthread worker (thread destekli)
+threads = int(os.getenv('GUNICORN_THREADS', '4'))  # 4 threads per worker
 worker_connections = 1000
 max_requests = int(os.getenv('MAX_REQUESTS', '500'))  # Her 500 request'te worker restart (kesinti azaltır)
 max_requests_jitter = int(os.getenv('MAX_REQUESTS_JITTER', '50'))  # Add randomness to prevent thundering herd
