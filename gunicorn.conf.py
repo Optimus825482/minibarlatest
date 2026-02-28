@@ -23,7 +23,7 @@ reload = os.getenv('GUNICORN_RELOAD', 'false').lower() == 'true'
 reload_extra_files = []  # Template dosyaları için (isteğe bağlı)
 
 # Timeouts
-timeout = int(os.getenv('GUNICORN_TIMEOUT', '120'))
+timeout = int(os.getenv('GUNICORN_TIMEOUT', '300'))  # 300s default (app import ~120s sürüyor)
 graceful_timeout = 30
 keepalive = 5
 
