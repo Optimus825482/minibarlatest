@@ -5,33 +5,36 @@ echo "=========================================="
 echo "DOCKER CONTAINER BAŞLATILIYOR"
 echo "=========================================="
 
-# Database bağlantısını bekle
-echo "[1/1] Database bağlantısı kontrol ediliyor..."
-python -c "
-import time
-import sys
-from app import app, db
+# Database bağlantısını bekle (pg_isready ile - app import etmeden)
+echo "[1/2] Database bağlantısı kontrol ediliyor..."
 
-max_retries = 30
-retry_count = 0
+# DATABASE_URL'den host ve port parse et
+DB_HOST=$(echo "$DATABASE_URL" | sed -n 's|.*@\([^:]*\):.*|\1|p')
+DB_PORT=$(echo "$DATABASE_URL" | sed -n 's|.*:\([0-9]*\)/.*|\1|p')
+DB_USER=$(echo "$DATABASE_URL" | sed -n 's|.*://\([^:]*\):.*|\1|p')
 
-with app.app_context():
-    while retry_count < max_retries:
-        try:
-            db.engine.connect()
-            print('✅ Database bağlantısı başarılı!')
-            sys.exit(0)
-        except Exception as e:
-            retry_count += 1
-            print(f'⏳ Database bekleniyor... ({retry_count}/{max_retries})')
-            time.sleep(2)
-    
-    print('❌ Database bağlantısı kurulamadı!')
-    sys.exit(1)
-"
+if [ -z "$DB_HOST" ]; then
+    DB_HOST="minibartakip-db"
+fi
+if [ -z "$DB_PORT" ]; then
+    DB_PORT="5432"
+fi
 
-if [ $? -ne 0 ]; then
-    echo "❌ Database bağlantısı başarısız!"
+MAX_RETRIES=30
+RETRY_COUNT=0
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    if pg_isready -h "$DB_HOST" -p "$DB_PORT" -q 2>/dev/null; then
+        echo "✅ Database bağlantısı başarılı!"
+        break
+    fi
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    echo "⏳ Database bekleniyor... ($RETRY_COUNT/$MAX_RETRIES)"
+    sleep 2
+done
+
+if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+    echo "❌ Database bağlantısı kurulamadı!"
     exit 1
 fi
 
@@ -43,7 +46,6 @@ from models import *
 
 with app.app_context():
     try:
-        # Tabloları oluştur
         db.create_all()
         print('✅ Veritabanı tabloları hazır!')
     except Exception as e:

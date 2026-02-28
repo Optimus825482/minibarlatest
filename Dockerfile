@@ -8,9 +8,10 @@ LABEL description="Minibar Takip Sistemi - Docker Container"
 # Çalışma dizini
 WORKDIR /app
 
-# Sistem bağımlılıkları (PostgreSQL client ve curl - psycopg2-binary kullandığımız için gcc gerekmez)
+# Sistem bağımlılıkları (PostgreSQL client ve curl)
 RUN apt-get update && apt-get install -y \
     libpq5 \
+    postgresql-client \
     curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -41,11 +42,10 @@ VOLUME ["/app/ml_models"]
 # Port expose et
 EXPOSE 5000
 
-# Health check ekle (curl ile basit ve güvenilir)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+# Health check ekle (startup süresi için start-period artırıldı)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=5 \
     CMD curl -f http://localhost:5000/health || exit 1
 
-# Entrypoint ve CMD (optimize edilmiş worker/thread sayısı)
+# Entrypoint ve CMD (safe_deploy.py kaldırıldı - entrypoint zaten aynı işi yapıyor)
 ENTRYPOINT ["./docker-entrypoint.sh"]
-# Son satırdaki CMD'yi şununla değiştir:
-CMD ["sh", "-c", "python safe_deploy.py && gunicorn -c gunicorn.conf.py app:app"]
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "app:app"]
