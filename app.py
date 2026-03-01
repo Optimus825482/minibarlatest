@@ -50,6 +50,10 @@ app = Flask(__name__)
 # Konfigürasyonu yükle
 app.config.from_object('config.Config')
 
+# Proxy arkasında çalışırken (Traefik/Nginx) doğru scheme ve IP algılama
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 # CSRF Koruması Aktif
 csrf = CSRFProtect(app)
 
