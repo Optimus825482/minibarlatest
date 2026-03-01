@@ -2177,9 +2177,9 @@ class OdaDNDKontrol(db.Model):
     kontrol_eden = db.relationship('Kullanici', backref='dnd_kontrol_kayitlari')
     
     __table_args__ = (
-        db.Index('idx_dnd_kontrol_kayit', 'dnd_kayit_id'),
-        db.Index('idx_dnd_kontrol_zaman', 'kontrol_zamani'),
-        db.Index('idx_dnd_kontrol_personel', 'kontrol_eden_id'),
+        db.Index('idx_oda_dnd_kontrol_kayit', 'dnd_kayit_id'),
+        db.Index('idx_oda_dnd_kontrol_zaman', 'kontrol_zamani'),
+        db.Index('idx_oda_dnd_kontrol_personel', 'kontrol_eden_id'),
     )
     
     def __repr__(self):

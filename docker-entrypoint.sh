@@ -43,9 +43,15 @@ echo "[2/2] Veritabanı tabloları kontrol ediliyor..."
 python -c "
 from app import app, db
 from models import *
+from sqlalchemy import text
 
 with app.app_context():
     try:
+        # Onceki hatali index varsa temizle
+        with db.engine.connect() as conn:
+            for idx in ['idx_dnd_kontrol_zaman', 'idx_dnd_kontrol_kayit', 'idx_dnd_kontrol_personel']:
+                conn.execute(text(f'DROP INDEX IF EXISTS {idx}'))
+            conn.commit()
         db.create_all()
         print('✅ Veritabanı tabloları hazır!')
     except Exception as e:
