@@ -43,7 +43,7 @@ echo "[2/2] Veritabanı tabloları kontrol ediliyor..."
 python -c "
 from app import app, db
 from models import *
-from sqlalchemy import text
+from sqlalchemy import text, inspect
 
 with app.app_context():
     try:
@@ -53,7 +53,24 @@ with app.app_context():
                 conn.execute(text(f'DROP INDEX IF EXISTS {idx}'))
             conn.commit()
         db.create_all()
-        print('✅ Veritabanı tabloları hazır!')
+        
+        # Kritik tabloları doğrula
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
+        critical = ['sistem_ayarlari', 'kullanicilar', 'oteller']
+        missing = [t for t in critical if t not in tables]
+        if missing:
+            print(f'⚠️  Eksik tablolar: {missing}')
+            # Tekrar dene
+            db.create_all()
+            tables = inspect(db.engine).get_table_names()
+            still_missing = [t for t in critical if t not in tables]
+            if still_missing:
+                print(f'❌ Hala eksik tablolar var: {still_missing}')
+            else:
+                print('✅ Eksik tablolar ikinci denemede oluşturuldu!')
+        else:
+            print('✅ Veritabanı tabloları hazır!')
     except Exception as e:
         print(f'⚠️  Tablo oluşturma uyarısı: {e}')
         print('ℹ️  Devam ediliyor...')

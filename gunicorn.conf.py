@@ -8,15 +8,16 @@ import os
 bind = f"0.0.0.0:{os.getenv('PORT', '5000')}"
 backlog = 2048
 
-# Worker Processes - PERFORMANCE OPTIMIZED (01.03.2026)
+# Worker Processes - CAPACITY OPTIMIZED (03.03.2026)
+# 8.3 GB RAM, düşük CPU kullanımı - daha fazla worker kaldırır
 # preload_app: App'i master process'te 1 kez yükle, worker'lar fork ile hazır alsın
 preload_app = True
-workers = int(os.getenv('GUNICORN_WORKERS', '2'))  # 2 worker (4 timeout yapıyordu)
+workers = int(os.getenv('GUNICORN_WORKERS', '3'))  # 3 worker (8GB RAM rahat kaldırır)
 worker_class = 'gthread'  # gthread worker (thread destekli)
-threads = int(os.getenv('GUNICORN_THREADS', '4'))  # 4 threads per worker
+threads = int(os.getenv('GUNICORN_THREADS', '6'))  # 6 threads per worker = 18 eşzamanlı istek
 worker_connections = 1000
-max_requests = int(os.getenv('MAX_REQUESTS', '500'))  # Her 500 request'te worker restart (kesinti azaltır)
-max_requests_jitter = int(os.getenv('MAX_REQUESTS_JITTER', '50'))  # Add randomness to prevent thundering herd
+max_requests = int(os.getenv('MAX_REQUESTS', '1000'))  # 1000 request'te worker recycle
+max_requests_jitter = int(os.getenv('MAX_REQUESTS_JITTER', '100'))  # Thundering herd önleme
 
 # Template Reload - Production'da bile template değişikliklerini algıla
 reload = os.getenv('GUNICORN_RELOAD', 'false').lower() == 'true'
