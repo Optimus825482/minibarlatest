@@ -17,10 +17,10 @@
             <form method="POST" class="space-y-6" id="oda-form">
                 {{ form.csrf_token }}
 
-                {{ render_select(form.otel_id, id="otel_id") }}
-                {{ render_select(form.kat_id, id="kat_id") }}
+                {{ render_select(form.otel_id) }}
+                {{ render_select(form.kat_id) }}
                 {{ render_field(form.oda_no) }}
-                {{ render_select(form.oda_tipi_id, id="oda_tipi_id") }}
+                {{ render_select(form.oda_tipi_id) }}
                 {{ render_field(form.kapasite) }}
 
                 <div class="flex justify-end space-x-3">

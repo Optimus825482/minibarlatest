@@ -1,0 +1,46 @@
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.5
+Flask-WTF==1.2.1
+Flask-Limiter==3.5.0
+PyMySQL==1.1.0
+cryptography==41.0.7
+Werkzeug==3.0.1
+openpyxl==3.1.2
+reportlab==4.0.7
+python-dotenv==1.0.0
+WTForms==3.1.1
+email-validator==2.1.0
+gunicorn==21.2.0
+
+# Error Tracking & Monitoring
+sentry-sdk[flask]==2.18.0
+
+# PostgreSQL Support
+psycopg2-binary==2.9.9
+alembic==1.12.1
+
+# Performance & Monitoring
+APScheduler==3.10.4
+tenacity==8.2.3
+psutil==5.9.6
+
+# QR Kod Sistemi
+qrcode[pil]==7.4.2
+Pillow==10.4.0
+
+# Timezone Support
+pytz==2024.1
+bleach==6.0.0
+
+# ML Anomaly Detection System
+scikit-learn==1.3.2
+pandas==2.1.3
+numpy==1.26.2
+joblib==1.3.2
+tqdm==4.66.1
+
+# Cache & Background Tasks
+redis==5.0.1
+Flask-Caching==2.1.0
+celery==5.3.4

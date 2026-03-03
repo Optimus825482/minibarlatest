@@ -54,10 +54,14 @@ logs/
 *.sqlite
 *.sqlite3
 
-# Backups
+# Backups & Data
 backups/
+data/
 *.sql
+*.sql.gz
 *.dump
+*.csv
+*.xlsx
 
 # Uploads
 uploads/
@@ -98,3 +102,7 @@ alembic/
 
 # Development tools
 Makefile
+
+# Large unnecessary files
+minibar-sistem-sunum.html
+*.sql.gz

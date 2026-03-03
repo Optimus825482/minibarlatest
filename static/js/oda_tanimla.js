@@ -186,7 +186,7 @@ document.addEventListener("DOMContentLoaded", function () {
           // Oda numarası kullanılıyorsa uyarı ver
           if (kontrolData.mevcut) {
             throw new Error(
-              `Oda numarası "${odaNo}" zaten kullanılıyor! Lütfen farklı bir oda numarası girin.`
+              `Oda numarası "${odaNo}" zaten kullanılıyor! Lütfen farklı bir oda numarası girin.`,
             );
           }
 
@@ -248,7 +248,7 @@ document.addEventListener("DOMContentLoaded", function () {
             showAlert(
               "yeniOdaAlert",
               "Oda başarıyla eklendi ve QR kod oluşturuldu!",
-              "success"
+              "success",
             );
 
             // QR kod bölümünü göster
@@ -408,7 +408,7 @@ function odaDuzenle(odaId, odaNo, katId, qrVarMi, odaTipi) {
       showAlert(
         "odaDuzenleAlert",
         "Oda bilgileri yüklenirken hata oluştu!",
-        "danger"
+        "danger",
       );
     });
 
@@ -449,10 +449,17 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       // AJAX ile oda güncelle
+      const csrfToken =
+        document
+          .querySelector('meta[name="csrf-token"]')
+          ?.getAttribute("content") ||
+        document.querySelector('input[name="csrf_token"]')?.value ||
+        "";
       fetch(`/api/oda-guncelle/${odaId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
         },
         body: JSON.stringify({
           otel_id: otelId,
@@ -467,7 +474,7 @@ document.addEventListener("DOMContentLoaded", function () {
             showAlert(
               "odaDuzenleAlert",
               "Oda başarıyla güncellendi!",
-              "success"
+              "success",
             );
 
             // Toastr bildirimi
@@ -506,7 +513,7 @@ function tumQrTemizle() {
         '<p class="text-base text-slate-700 mb-2">Tüm odalara ait QR kodları silinecek.</p>' +
         '<p class="text-base text-red-600 font-semibold">Bu işlem geri alınamaz!</p>' +
         '<p class="text-sm text-slate-600 mt-3">Devam etmek istediğinize emin misiniz?</p>' +
-        "</div>"
+        "</div>",
     )
     .dialog({
       title: "⚠️ Onay Gerekli",
@@ -566,7 +573,7 @@ function tumQrTemizleOnay() {
         if (typeof toastr !== "undefined") {
           toastr.success(
             `${data.temizlenen_adet} odanın QR kodu temizlendi!`,
-            "Başarılı"
+            "Başarılı",
           );
         }
 
@@ -620,7 +627,7 @@ function topluQrOlustur(tip) {
         mesaj +
         "</p>" +
         '<p class="text-sm text-slate-600 dark:text-slate-400 mt-3">Devam etmek istiyor musunuz?</p>' +
-        "</div>"
+        "</div>",
     )
     .dialog({
       title: "📱 QR Kod Oluştur",
@@ -683,7 +690,7 @@ function topluQrOlusturOnay(tip) {
         if (typeof toastr !== "undefined") {
           toastr.success(
             `${data.olusturulan_adet} odaya QR kodu oluşturuldu!`,
-            "Başarılı"
+            "Başarılı",
           );
         }
 
@@ -693,7 +700,7 @@ function topluQrOlusturOnay(tip) {
         }, 1500);
       } else {
         throw new Error(
-          data.message || "QR kodları oluşturulurken hata oluştu"
+          data.message || "QR kodları oluşturulurken hata oluştu",
         );
       }
     })
