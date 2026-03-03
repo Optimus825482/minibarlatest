@@ -6,12 +6,11 @@ echo "DOCKER CONTAINER BAŞLATILIYOR"
 echo "=========================================="
 
 # Database bağlantısını bekle (pg_isready ile - app import etmeden)
-echo "[1/2] Database bağlantısı kontrol ediliyor..."
+echo "[1/3] Database bağlantısı kontrol ediliyor..."
 
 # DATABASE_URL'den host ve port parse et
 DB_HOST=$(echo "$DATABASE_URL" | sed -n 's|.*@\([^:]*\):.*|\1|p')
 DB_PORT=$(echo "$DATABASE_URL" | sed -n 's|.*:\([0-9]*\)/.*|\1|p')
-DB_USER=$(echo "$DATABASE_URL" | sed -n 's|.*://\([^:]*\):.*|\1|p')
 
 if [ -z "$DB_HOST" ]; then
     DB_HOST="minibartakip-db"
@@ -39,7 +38,7 @@ if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
 fi
 
 echo ""
-echo "[2/2] Veritabanı tabloları kontrol ediliyor..."
+echo "[2/3] Veritabanı tabloları kontrol ediliyor..."
 python -c "
 from app import app, db
 from models import *
@@ -53,37 +52,46 @@ with app.app_context():
                 conn.execute(text(f'DROP INDEX IF EXISTS {idx}'))
             conn.commit()
         db.create_all()
-        
-        # Performance index'leri oluştur (yoksa)
-        with db.engine.connect() as conn:
-            for idx_sql in [
-                'CREATE INDEX IF NOT EXISTS idx_odalar_aktif_oda_no ON odalar (aktif, oda_no)',
-                'CREATE INDEX IF NOT EXISTS idx_odalar_kat_id ON odalar (kat_id)',
-            ]:
-                conn.execute(text(idx_sql))
-            conn.commit()
-        print('✅ Performance index kontrolleri tamamlandı!')
-        
-        # Kritik tabloları doğrula
-        inspector = inspect(db.engine)
-        tables = inspector.get_table_names()
-        critical = ['sistem_ayarlari', 'kullanicilar', 'oteller']
-        missing = [t for t in critical if t not in tables]
-        if missing:
-            print(f'⚠️  Eksik tablolar: {missing}')
-            # Tekrar dene
-            db.create_all()
-            tables = inspect(db.engine).get_table_names()
-            still_missing = [t for t in critical if t not in tables]
-            if still_missing:
-                print(f'❌ Hala eksik tablolar var: {still_missing}')
-            else:
-                print('✅ Eksik tablolar ikinci denemede oluşturuldu!')
-        else:
-            print('✅ Veritabanı tabloları hazır!')
+        print('✅ Veritabanı tabloları hazır!')
     except Exception as e:
         print(f'⚠️  Tablo oluşturma uyarısı: {e}')
+        import traceback
+        traceback.print_exc()
         print('ℹ️  Devam ediliyor...')
+"
+
+echo ""
+echo "[3/3] Performance index'leri kontrol ediliyor..."
+python -c "
+import os, sys
+from sqlalchemy import create_engine, text
+
+db_url = os.environ.get('DATABASE_URL', '')
+if db_url.startswith('postgres://'):
+    db_url = db_url.replace('postgres://', 'postgresql://', 1)
+
+if not db_url:
+    print('⚠️  DATABASE_URL bulunamadı, index adımı atlanıyor.')
+    sys.exit(0)
+
+try:
+    engine = create_engine(db_url, connect_args={'connect_timeout': 10})
+    with engine.connect() as conn:
+        indexes = [
+            'CREATE INDEX IF NOT EXISTS idx_odalar_aktif_oda_no ON odalar (aktif, oda_no)',
+            'CREATE INDEX IF NOT EXISTS idx_odalar_kat_id ON odalar (kat_id)',
+        ]
+        for idx_sql in indexes:
+            conn.execute(text(idx_sql))
+            print(f'  ✅ {idx_sql.split(\"idx_\")[1].split(\" ON\")[0]}')
+        conn.commit()
+    print('✅ Performance index kontrolleri tamamlandı!')
+    engine.dispose()
+except Exception as e:
+    print(f'⚠️  Index oluşturma hatası: {e}')
+    import traceback
+    traceback.print_exc()
+    print('ℹ️  Devam ediliyor...')
 "
 
 echo ""
