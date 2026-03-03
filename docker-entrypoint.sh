@@ -54,6 +54,16 @@ with app.app_context():
             conn.commit()
         db.create_all()
         
+        # Performance index'leri oluştur (yoksa)
+        with db.engine.connect() as conn:
+            for idx_sql in [
+                'CREATE INDEX IF NOT EXISTS idx_odalar_aktif_oda_no ON odalar (aktif, oda_no)',
+                'CREATE INDEX IF NOT EXISTS idx_odalar_kat_id ON odalar (kat_id)',
+            ]:
+                conn.execute(text(idx_sql))
+            conn.commit()
+        print('✅ Performance index kontrolleri tamamlandı!')
+        
         # Kritik tabloları doğrula
         inspector = inspect(db.engine)
         tables = inspector.get_table_names()

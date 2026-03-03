@@ -503,8 +503,10 @@ def register_sistem_yoneticisi_routes(app):
                 flash('Oda eklenirken hata oluştu.', 'danger')
         
         # Katlar ve odalar (eager loading ile otel bilgisini de çek)
+        # qr_kod_gorsel defer edildi - Base64 PNG verisi bu sayfada kullanılmıyor
         katlar = Kat.query.filter_by(aktif=True).order_by(Kat.kat_no).all()
         odalar = Oda.query.options(
+            db.defer(Oda.qr_kod_gorsel),
             db.joinedload(Oda.kat).joinedload(Kat.otel)
         ).filter_by(aktif=True).order_by(Oda.oda_no).all()
         

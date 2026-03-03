@@ -299,6 +299,8 @@ class Oda(db.Model):
     __tablename__ = 'odalar'
     __table_args__ = (
         db.Index('idx_qr_token', 'qr_kod_token'),
+        db.Index('idx_odalar_aktif_oda_no', 'aktif', 'oda_no'),
+        db.Index('idx_odalar_kat_id', 'kat_id'),
     )
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
