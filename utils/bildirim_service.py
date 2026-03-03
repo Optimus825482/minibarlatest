@@ -193,6 +193,7 @@ class BildirimService:
             return row[0] if row else 0
             
         except Exception as e:
+            db.session.rollback()
             print(f"Okunmamış sayısı hatası: {e}")
             return 0
     
@@ -292,6 +293,7 @@ class BildirimService:
             return bildirimler
             
         except Exception as e:
+            db.session.rollback()
             print(f"Yeni bildirim kontrolü hatası: {e}")
             return []
 

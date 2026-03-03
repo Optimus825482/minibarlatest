@@ -80,6 +80,23 @@
   <span class="sidebar-text">Denetim İzi</span>
 </a>
 
+<!-- Sistem İzleme -->
+<a
+  href="{{ url_for('system_monitor') }}"
+  class="sidebar-item mb-4 {% if request.endpoint == 'system_monitor' %}active{% endif %}"
+  style="{% if request.endpoint == 'system_monitor' %}background:linear-gradient(135deg,#06b6d4,#3b82f6);{% endif %}"
+>
+  <i
+    class="fas fa-heartbeat sidebar-icon"
+    style="color:{% if request.endpoint == 'system_monitor' %}white{% else %}#06b6d4{% endif %}"
+  ></i>
+  <span
+    class="sidebar-text"
+    style="{% if request.endpoint == 'system_monitor' %}color:white;font-weight:500{% endif %}"
+    >Sistem İzleme</span
+  >
+</a>
+
 <!-- Ayırıcı -->
 <div class="border-t border-slate-200 dark:border-slate-700 my-3"></div>
 

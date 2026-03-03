@@ -129,6 +129,10 @@ def register_all_routes(app):
     from routes.bildirim_routes import register_bildirim_routes
     register_bildirim_routes(app)
     
+    # System Monitor Routes
+    from routes.system_monitor_routes import register_system_monitor_routes
+    register_system_monitor_routes(app)
+    
     # Sistem Ayarları Routes
     from routes.sistem_ayarlari_routes import register_sistem_ayarlari_routes
     register_sistem_ayarlari_routes(app)

@@ -931,7 +931,7 @@
         <!-- Navigation -->
         <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto overflow-x-hidden">
           {% if current_user %} {% if current_user.rol == 'superadmin'
-          and request.endpoint in ['executive_dashboard', 'executive_reports', 'superadmin_users'] %} {% include
+          and request.endpoint in ['executive_dashboard', 'executive_reports', 'superadmin_users', 'system_monitor'] %} {% include
           'components/executive_sidebar.html' %} {% elif current_user.rol == 'superadmin'
           and request.endpoint in ['kat_sorumlusu_dashboard', 'kat_sorumlusu_gorev_listesi', 'oda_kontrol', 'minibar_islemlerim', 'dolum_talepleri', 'kat_sorumlusu_zimmet_stoklarim', 'kat_sorumlusu_kritik_stoklar', 'kat_sorumlusu_siparis_hazirla', 'kat_raporlar', 'kat_bazli_rapor', 'kat_sorumlusu_siparis_listesi', 'kat_sorumlusu_qr_okuyucu', 'raporlar.kat_sorumlusu_gun_sonu_raporum'] %}
           <!-- Superadmin viewing Kat Sorumlusu pages -->

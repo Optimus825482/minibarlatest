@@ -13,6 +13,7 @@ from flask import jsonify, request, session
 from datetime import datetime
 import pytz
 
+from models import db
 from utils.decorators import login_required
 from utils.bildirim_service import BildirimService
 
@@ -179,12 +180,11 @@ def register_bildirim_routes(app):
             })
             
         except Exception as e:
+            db.session.rollback()
             return jsonify({
                 'success': False,
                 'error': str(e)
             }), 500
-    
-    @app.route('/api/gorevler/ozet', methods=['GET'])
     @login_required
     def api_gorev_ozet():
         """
