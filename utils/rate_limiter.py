@@ -77,8 +77,8 @@ def init_rate_limiter(app):
     """
     global limiter
     
-    # Redis URL'i config'den al
-    redis_url = app.config.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+    # Redis URL'i config'den al (REDIS_URL authenticated URL içerir)
+    redis_url = app.config.get('REDIS_URL', app.config.get('CELERY_BROKER_URL', 'redis://localhost:6379/0'))
     
     # Development modunda memory kullan
     is_development = app.config.get('IS_DEVELOPMENT', False)
@@ -110,7 +110,7 @@ def init_rate_limiter(app):
                 "socket_timeout": 2
             } if not use_memory else {},
             strategy="fixed-window",
-            default_limits=["10000 per day", "2000 per hour"],  # Production: 3 otel, 600 oda, çoklu kontrol
+            default_limits=["20000 per day", "3000 per hour", "120 per minute"],
             headers_enabled=True,  # X-RateLimit headers
             swallow_errors=True,  # Hata durumunda app çalışmaya devam etsin
         )
@@ -143,7 +143,7 @@ def init_rate_limiter(app):
             app=app,
             storage_uri="memory://",
             strategy="fixed-window",
-            default_limits=["10000 per day", "2000 per hour"],
+            default_limits=["20000 per day", "3000 per hour", "120 per minute"],
             swallow_errors=True,
         )
         logger.warning("⚠️ Rate Limiter memory modunda çalışıyor (fallback)")
@@ -154,19 +154,22 @@ def init_rate_limiter(app):
 # ENDPOINT-SPESİFİK LİMİTLER
 # ============================================
 
-# Login/Auth - Brute force koruması
-LOGIN_LIMIT = "5 per minute"
-LOGIN_LIMIT_STRICT = "10 per hour"
+# Login/Auth - Brute force koruması (yüksek tutuldu ama güvenli)
+LOGIN_LIMIT = "10 per minute"
+LOGIN_LIMIT_STRICT = "30 per hour"
 
-# API Genel
-API_LIMIT_DEFAULT = "100 per minute"
-API_LIMIT_HEAVY = "30 per minute"  # Ağır işlemler (rapor, export)
+# API Genel - Otel personeli yoğun kullanım yapıyor
+API_LIMIT_DEFAULT = "300 per minute"
+API_LIMIT_HEAVY = "60 per minute"  # Ağır işlemler (rapor, export)
+
+# Dashboard polling endpoints - çok sık çağrılıyor
+API_LIMIT_POLLING = "600 per minute"  # /api/bildirimler/poll, /gorevler/api/bekleyen
 
 # Dosya yükleme
-UPLOAD_LIMIT = "10 per hour"
+UPLOAD_LIMIT = "30 per hour"
 
-# Public endpoint'ler
-PUBLIC_LIMIT = "30 per minute"
+# Public endpoint'ler (QR kod tarama vb.)
+PUBLIC_LIMIT = "60 per minute"
 
 
 def exempt_when_authenticated():

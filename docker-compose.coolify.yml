@@ -66,8 +66,8 @@ services:
       DB_TYPE: postgresql
       SECRET_KEY: ${SECRET_KEY}
       FLASK_ENV: production
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      CELERY_BROKER_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${REDIS_URL:-redis://redis:6379/0}
       ML_ENABLED: ${ML_ENABLED:-true}
       ML_MIN_DATA_POINTS: ${ML_MIN_DATA_POINTS:-30}
       ML_MODELS_DIR: /app/ml_models
@@ -76,6 +76,7 @@ services:
       GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-120}
       TZ: Europe/Istanbul
       PYTHONUNBUFFERED: 1
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     volumes:
       - ./uploads:/app/uploads
       - ./xls:/app/xls
@@ -109,13 +110,14 @@ services:
       DB_TYPE: postgresql
       SECRET_KEY: ${SECRET_KEY}
       FLASK_ENV: production
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      CELERY_BROKER_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${REDIS_URL:-redis://redis:6379/0}
       ML_ENABLED: ${ML_ENABLED:-true}
       ML_MIN_DATA_POINTS: ${ML_MIN_DATA_POINTS:-30}
       ML_MODELS_DIR: /app/ml_models
       TZ: Europe/Istanbul
       PYTHONUNBUFFERED: 1
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     volumes:
       - ./uploads:/app/uploads
       - ./backups:/app/backups
@@ -141,10 +143,11 @@ services:
       DB_TYPE: postgresql
       SECRET_KEY: ${SECRET_KEY}
       FLASK_ENV: production
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      CELERY_BROKER_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${REDIS_URL:-redis://redis:6379/0}
       TZ: Europe/Istanbul
       PYTHONUNBUFFERED: 1
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     depends_on:
       postgres:
         condition: service_healthy

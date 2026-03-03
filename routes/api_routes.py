@@ -1551,7 +1551,7 @@ def register_api_routes(app):
         """AJAX ile oda güncelle"""
         try:
             from models import Oda, Kat
-            from utils.audit import audit_create, serialize_model
+            from utils.audit import audit_update, serialize_model
             
             data = request.get_json()
             
@@ -1613,7 +1613,7 @@ def register_api_routes(app):
             oda.kapasite = data.get('kapasite')
             
             # Audit log
-            audit_create(
+            audit_update(
                 tablo_adi='odalar',
                 kayit_id=oda.id,
                 eski_deger=eski_deger,

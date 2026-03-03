@@ -119,8 +119,13 @@ class Config:
     }
     
     # Celery Configuration (Redis sadece broker olarak kullanılıyor, cache yok)
-    CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
-    CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+    # Celery Configuration (Redis sadece broker olarak kullanılıyor, cache yok)
+    # Easypanel/Docker: REDIS_URL env var'ından authenticated URL alınır
+    # Örnek: redis://default:password@minibar_redis:6379/0
+    REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+    
+    CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', REDIS_URL)
+    CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', REDIS_URL)
     CELERY_TASK_SERIALIZER = 'json'
     CELERY_RESULT_SERIALIZER = 'json'
     CELERY_ACCEPT_CONTENT = ['json']
@@ -139,12 +144,13 @@ class Config:
     # Cache SADECE master data için kullanılır (ürün listesi, setup tanımları, otel/kat/oda listeleri)
     # Stok, zimmet, DND gibi transactional data ASLA cache'lenmez!
     CACHE_ENABLED = os.getenv('CACHE_ENABLED', 'true').lower() == 'true'
-    REDIS_URL = os.getenv('REDIS_URL', CELERY_BROKER_URL)
+    # REDIS_URL yukarıda tanımlandı, cache ve rate limiter de aynı URL'i kullanır
     
     # ============================================
     # RATE LIMITING CONFIGURATION
     # ============================================
     RATE_LIMIT_ENABLED = os.getenv('RATE_LIMIT_ENABLED', 'true').lower() == 'true'
-    RATE_LIMIT_DEFAULT = os.getenv('RATE_LIMIT_DEFAULT', '200 per day, 60 per hour')
-    RATE_LIMIT_LOGIN = os.getenv('RATE_LIMIT_LOGIN', '5 per minute')
-    RATE_LIMIT_API = os.getenv('RATE_LIMIT_API', '100 per minute')
+    RATE_LIMIT_DEFAULT = os.getenv('RATE_LIMIT_DEFAULT', '20000 per day, 3000 per hour, 120 per minute')
+    RATE_LIMIT_LOGIN = os.getenv('RATE_LIMIT_LOGIN', '10 per minute')
+    RATE_LIMIT_API = os.getenv('RATE_LIMIT_API', '300 per minute')
+    RATE_LIMIT_POLLING = os.getenv('RATE_LIMIT_POLLING', '600 per minute')

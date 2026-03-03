@@ -422,3 +422,28 @@ def royalbar_talebi_bildirimi(
         hedef_otel_id=otel_id,
         oda_id=oda_id
     )
+
+# Standalone wrapper - allows `from utils.bildirim_service import bildirim_olustur`
+def bildirim_olustur(
+    hedef_rol: str,
+    bildirim_tipi: str,
+    baslik: str,
+    mesaj: str = None,
+    hedef_otel_id: int = None,
+    hedef_kullanici_id: int = None,
+    oda_id: int = None,
+    gorev_id: int = None,
+    gonderen_id: int = None
+) -> int:
+    """Wrapper for BildirimService.bildirim_olustur - backward compatible import"""
+    return BildirimService.bildirim_olustur(
+        hedef_rol=hedef_rol,
+        bildirim_tipi=bildirim_tipi,
+        baslik=baslik,
+        mesaj=mesaj,
+        hedef_otel_id=hedef_otel_id,
+        hedef_kullanici_id=hedef_kullanici_id,
+        oda_id=oda_id,
+        gorev_id=gorev_id,
+        gonderen_id=gonderen_id
+    )
