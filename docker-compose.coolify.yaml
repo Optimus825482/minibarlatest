@@ -85,7 +85,6 @@ services:
     volumes:
       - ./uploads:/app/uploads
       - ./xls:/app/xls
-      - ./static:/app/static
       - ./backups:/app/backups
       - ml_models:/app/ml_models
     depends_on:
