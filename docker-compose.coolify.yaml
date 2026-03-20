@@ -18,6 +18,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backups:/backups
+      - ./initdb:/docker-entrypoint-initdb.d
     networks:
       - minibar_network
     healthcheck:
