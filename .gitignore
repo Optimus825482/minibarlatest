@@ -113,7 +113,6 @@ migration_checkpoint.json
 .env.docker
 docker-compose.override.yml
 *.sql
-!initdb/restore.sql
 !init_db.sql
 
 .kiro/settings/mcp.json
