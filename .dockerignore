@@ -1,38 +1,30 @@
-# Python
-__pycache__/
+# Git
+.git
+.gitignore
+.github
+
+# Python cache
+__pycache__
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
-venv/
-ENV/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+*.egg-info
+dist
+build
+.pytest_cache
+.coverage
+htmlcov
 
-# Environment
-.env
-.env.local
-.env.*.local
-.env.railway
-.env.coolify
+# Virtual Environment
+venv
+env
+ENV
+.venv
 
 # IDE
-.vscode/
-.idea/
+.vscode
+.idea
 *.swp
 *.swo
 *~
@@ -41,68 +33,58 @@ wheels/
 .DS_Store
 Thumbs.db
 
-# Git
-.git/
-.gitignore
-
 # Logs
 *.log
-logs/
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
+# Backups (runtime volume)
+backups/*.sql.gz
+backups/*.dump
+backups/*.csv
 
-# Backups & Data
-backups/
+# Data files
 data/
-*.sql
-*.sql.gz
-*.dump
-*.csv
-*.xlsx
 
-# Uploads
-uploads/
-static/uploads/
-
-# ML Models (runtime'da oluşturulacak)
-ml_models/
+# Uploads (runtime volume)
+uploads/*
+xls/*
 
 # Documentation
 docs/
-*.md
-!README.md
 
-# Tests
+# Test files
 tests/
-pytest_cache/
-.coverage
-htmlcov/
+.coveragerc
+pytest.ini
 
-# Docker
-Dockerfile
+# Docker files (kendini kopyalama)
 docker-compose.yml
+docker-compose.coolify.yaml
+Dockerfile
 .dockerignore
+.dockerignore.coolify
 
-# Railway specific
-railway.json
-railway.toml
-
-# Scripts (sadece production'da gerekli olanlar hariç)
-*.bat
-*.sh
-!start.sh
-!docker-entrypoint.sh
-
-# Migrations (manuel çalıştırılacak)
-migrations/
-alembic/
-
-# Development tools
-Makefile
+# Environment files
+.env
+.env.*
+!.env.example
 
 # Large unnecessary files
+*.sql
+!initdb/restore.sql
 minibar-sistem-sunum.html
-*.sql.gz
+*.html
+!templates/**/*.html
+stok_akis_raporu.html
+personel-zimmet-kullanim-kilavuzu.html
+sistem-tanitim.html
+
+# Misc
+*.bak
+*.tmp
+*.bat
+*.csv
+*.xlsx
+phase-breakdown.md
+SISTEM_ANALIZ_RAPORU.md
+models_backup.py
+qr_urls.*
