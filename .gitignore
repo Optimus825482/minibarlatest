@@ -61,6 +61,9 @@ xls/
 
 # Backup files
 app_backup_*.py
+backups/*.sql.gz
+backups/*.dump
+backups/*.csv
 
 # Documentation drafts
 DASHBOARD_GELIŞTIRMELERI.md
