@@ -21,7 +21,11 @@ services:
     networks:
       - minibar_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-minibar_user}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USER:-minibar_user} -d ${DB_NAME:-minibar_takip}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
