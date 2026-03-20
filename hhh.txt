@@ -1,0 +1,2332 @@
+ ⚡ root@ubuntu-8gb-hel1-1  ~  cat /tmp/minibar_backup.sql | docker exec -i 69e0e0b16372 psql -U minibar_user -d minibar_takip
+SET
+SET
+SET
+SET
+SET
+ set_config
+------------
+
+(1 row)
+
+SET
+SET
+SET
+SET
+COMMENT
+CREATE EXTENSION
+COMMENT
+ERROR:  type "audit_islem_tipi" already exists
+ERROR:  type "backup_status" already exists
+CREATE TYPE
+CREATE TYPE
+ERROR:  type "dolum_talep_durum" already exists
+CREATE TYPE
+CREATE TYPE
+CREATE TYPE
+ERROR:  type "gorev_durum_enum" already exists
+ERROR:  type "gorev_tipi_enum" already exists
+ERROR:  type "hareket_tipi" already exists
+CREATE TYPE
+ERROR:  type "job_status" already exists
+ERROR:  type "kullanici_rol" already exists
+CREATE TYPE
+CREATE TYPE
+CREATE TYPE
+ERROR:  type "ml_alert_severity" already exists
+ERROR:  type "ml_alert_type" already exists
+ERROR:  type "ml_metric_type" already exists
+ERROR:  type "qr_okutma_tipi" already exists
+ERROR:  type "rapor_tipi" already exists
+CREATE TYPE
+ERROR:  type "zimmet_durum" already exists
+CREATE FUNCTION
+SET
+SET
+CREATE TABLE
+ERROR:  relation "ana_depo_tedarik_detaylari" already exists
+ERROR:  relation "ana_depo_tedarik_detaylari_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "ana_depo_tedarikleri" already exists
+ERROR:  relation "ana_depo_tedarikleri_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "audit_logs" already exists
+ERROR:  relation "audit_logs_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "background_jobs" already exists
+ERROR:  relation "background_jobs_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "backup_history" already exists
+ERROR:  relation "backup_history_id_seq" already exists
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+ERROR:  relation "config_audit" already exists
+ERROR:  relation "config_audit_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "dnd_kontroller" already exists
+ERROR:  relation "dnd_kontroller_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "doluluk_uyari_loglari" already exists
+ERROR:  relation "doluluk_uyari_loglari_id_seq" already exists
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+ERROR:  relation "dosya_yuklemeleri" already exists
+ERROR:  relation "dosya_yuklemeleri_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "email_ayarlari" already exists
+ERROR:  relation "email_ayarlari_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "email_loglari" already exists
+ERROR:  relation "email_loglari_id_seq" already exists
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+ERROR:  relation "gorev_detaylari" already exists
+ERROR:  relation "gorev_detaylari_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "gorev_durum_loglari" already exists
+ERROR:  relation "gorev_durum_loglari_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "gunluk_gorevler" already exists
+ERROR:  relation "gunluk_gorevler_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "hata_loglari" already exists
+ERROR:  relation "hata_loglari_id_seq" already exists
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+ERROR:  relation "kat_sorumlusu_siparis_talep_detaylari" already exists
+ERROR:  relation "kat_sorumlusu_siparis_talep_detaylari_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "kat_sorumlusu_siparis_talepleri" already exists
+ERROR:  relation "kat_sorumlusu_siparis_talepleri_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "katlar" already exists
+ERROR:  relation "katlar_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "kullanici_otel" already exists
+ERROR:  relation "kullanici_otel_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "kullanicilar" already exists
+ERROR:  relation "kullanicilar_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "minibar_dolum_talepleri" already exists
+ERROR:  relation "minibar_dolum_talepleri_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "minibar_islem_detay" already exists
+ERROR:  relation "minibar_islem_detay_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "minibar_islemleri" already exists
+ERROR:  relation "minibar_islemleri_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "misafir_kayitlari" already exists
+ERROR:  relation "misafir_kayitlari_id_seq" already exists
+ERROR:  relation "ml_alerts" already exists
+ERROR:  relation "ml_alerts_id_seq" already exists
+ALTER SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+ALTER SEQUENCE
+ERROR:  relation "ml_features" already exists
+ERROR:  relation "ml_features_id_seq" already exists
+ERROR:  relation "ml_metrics" already exists
+ERROR:  relation "ml_metrics_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "ml_models" already exists
+ERROR:  relation "ml_models_id_seq" already exists
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+ERROR:  relation "ml_performance_logs" already exists
+ERROR:  relation "ml_performance_logs_id_seq" already exists
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+ERROR:  relation "ml_training_logs" already exists
+ERROR:  relation "ml_training_logs_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "oda_dnd_kayitlari" already exists
+ERROR:  relation "oda_dnd_kayitlari_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "oda_dnd_kontrolleri" already exists
+ERROR:  relation "oda_dnd_kontrolleri_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "oda_kontrol_kayitlari" already exists
+ERROR:  relation "oda_kontrol_kayitlari_id_seq" already exists
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+ERROR:  relation "oda_tipi_setup" already exists
+CREATE TABLE
+ERROR:  relation "oda_tipleri" already exists
+ERROR:  relation "oda_tipleri_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "odalar" already exists
+ERROR:  relation "odalar_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "otel_zimmet_stok" already exists
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+ERROR:  relation "otel_zimmet_stok_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "oteller" already exists
+COMMENT
+ERROR:  relation "oteller_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "otomatik_raporlar" already exists
+ERROR:  relation "otomatik_raporlar_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "personel_zimmet" already exists
+COMMENT
+ERROR:  relation "personel_zimmet_detay" already exists
+ERROR:  relation "personel_zimmet_detay_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "personel_zimmet_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "personel_zimmet_kullanim" already exists
+COMMENT
+ERROR:  relation "personel_zimmet_kullanim_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "qr_kod_okutma_loglari" already exists
+ERROR:  relation "qr_kod_okutma_loglari_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "query_logs" already exists
+ERROR:  relation "query_logs_id_seq" already exists
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+COMMENT
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+ERROR:  relation "setup_icerik" already exists
+ERROR:  relation "setup_icerik_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "setuplar" already exists
+COMMENT
+ERROR:  relation "setuplar_id_seq" already exists
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+ERROR:  relation "sistem_ayarlari" already exists
+ERROR:  relation "sistem_ayarlari_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "sistem_loglari" already exists
+ERROR:  relation "sistem_loglari_id_seq" already exists
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+ERROR:  relation "stok_fifo_kayitlari" already exists
+ERROR:  relation "stok_fifo_kayitlari_id_seq" already exists
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+ERROR:  relation "stok_fifo_kullanimlari" already exists
+ERROR:  relation "stok_fifo_kullanimlari_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "stok_hareketleri" already exists
+ERROR:  relation "stok_hareketleri_id_seq" already exists
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+ERROR:  relation "urun_gruplari" already exists
+ERROR:  relation "urun_gruplari_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "urun_stok" already exists
+ERROR:  relation "urun_stok_id_seq" already exists
+ALTER SEQUENCE
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
+ERROR:  relation "urunler" already exists
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+ERROR:  relation "urunler_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "yukleme_gorevleri" already exists
+ERROR:  relation "yukleme_gorevleri_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "zimmet_sablon_detaylari" already exists
+ERROR:  relation "zimmet_sablon_detaylari_id_seq" already exists
+ALTER SEQUENCE
+ERROR:  relation "zimmet_sablonlari" already exists
+ERROR:  relation "zimmet_sablonlari_id_seq" already exists
+ALTER SEQUENCE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+ALTER TABLE
+COPY 1
+ERROR:  insert or update on table "ana_depo_tedarik_detaylari" violates foreign key constraint "ana_depo_tedarik_detaylari_tedarik_id_fkey"
+DETAIL:  Key (tedarik_id)=(1) is not present in table "ana_depo_tedarikleri".
+ERROR:  insert or update on table "ana_depo_tedarikleri" violates foreign key constraint "ana_depo_tedarikleri_otel_id_fkey"
+DETAIL:  Key (otel_id)=(1) is not present in table "oteller".
+ERROR:  insert or update on table "audit_logs" violates foreign key constraint "audit_logs_kullanici_id_fkey"
+DETAIL:  Key (kullanici_id)=(4) is not present in table "kullanicilar".
+COPY 0
+ERROR:  insert or update on table "backup_history" violates foreign key constraint "backup_history_created_by_fkey"
+DETAIL:  Key (created_by)=(4) is not present in table "kullanicilar".
+COPY 0
+COPY 0
+COPY 17754
+COPY 0
+ERROR:  insert or update on table "dnd_kontroller" violates foreign key constraint "dnd_kontroller_gorev_detay_id_fkey"
+DETAIL:  Key (gorev_detay_id)=(2801) is not present in table "gorev_detaylari".
+ERROR:  insert or update on table "doluluk_uyari_loglari" violates foreign key constraint "doluluk_uyari_loglari_otel_id_fkey"
+DETAIL:  Key (otel_id)=(1) is not present in table "oteller".
+COPY 0
+ERROR:  column "yukleyen_id" of relation "dosya_yuklemeleri" does not exist
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+ERROR:  syntax error at or near "25"
+LINE 1: 25 DOLULUK-20251202-082014-76301AB9 DEPARTURE.xlsx in_house ...
+        ^
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+ERROR:  syntax error at or near "1"
+LINE 1: 1 smtp.gmail.com 587 minibartakip@gmail.com fyul znts cvfq o...
+        ^
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+backslash commands are restricted; only \unrestrict is allowed
+ERROR:  syntax error at or near "1"
+LINE 1: 1 erkan@erkanerdem.net 4 🧪 Minibar Takip - Email Test Bu bi...
+        ^
+backslash commands are restricted; only \unrestrict is allowed
+ERROR:  insert or update on table "gorev_detaylari" violates foreign key constraint "gorev_detaylari_gorev_id_fkey"
+DETAIL:  Key (gorev_id)=(39) is not present in table "gunluk_gorevler".
+ERROR:  insert or update on table "gorev_durum_loglari" violates foreign key constraint "gorev_durum_loglari_gorev_detay_id_fkey"
+DETAIL:  Key (gorev_detay_id)=(2540) is not present in table "gorev_detaylari".
+ERROR:  null value in column "personel_id" of relation "gunluk_gorevler" violates not-null constraint
+DETAIL:  Failing row contains (663, 3, null, 2026-02-11, departure_kontrol, pending, 2026-02-11 08:00:30.172129+03, null, null).
+CONTEXT:  COPY gunluk_gorevler, line 239: "663  3       \N      2026-02-11      departure_kontrol       pending 2026-02-11 05:00:30.172129+00   \N      \N"
+ERROR:  insert or update on table "hata_loglari" violates foreign key constraint "hata_loglari_kullanici_id_fkey"
+DETAIL:  Key (kullanici_id)=(4) is not present in table "kullanicilar".
+COPY 0
+ERROR:  insert or update on table "kat_sorumlusu_siparis_talep_detaylari" violates foreign key constraint "kat_sorumlusu_siparis_talep_detaylari_talep_id_fkey"
+DETAIL:  Key (talep_id)=(3) is not present in table "kat_sorumlusu_siparis_talepleri".
+ERROR:  insert or update on table "kat_sorumlusu_siparis_talepleri" violates foreign key constraint "kat_sorumlusu_siparis_talepleri_kat_sorumlusu_id_fkey"
+DETAIL:  Key (kat_sorumlusu_id)=(12) is not present in table "kullanicilar".
+ERROR:  insert or update on table "katlar" violates foreign key constraint "katlar_otel_id_fkey"
+DETAIL:  Key (otel_id)=(3) is not present in table "oteller".
+ERROR:  insert or update on table "kullanici_otel" violates foreign key constraint "kullanici_otel_kullanici_id_fkey"
+DETAIL:  Key (kullanici_id)=(5) is not present in table "kullanicilar".
+ERROR:  column "tema_renk_1" of relation "kullanicilar" does not exist
+ERROR:  syntax error at or near "19"
+LINE 1: 19 Caner scrypt:32768:8:1$syVl8mc9URBfOeb4$4e4864d63e7f18230...
+        ^
+ ⚡ root@ubuntu-8gb-hel1-1  ~ 
