@@ -121,13 +121,12 @@ class StokFifoKayit(db.Model):
         
         if self.kalan_miktar == 0:
             self.tukendi = True
-        
-        kullanim = StokFifoKullanim(
-            fifo_kayit_id=self.id,
-            miktar=miktar,
-            islem_tipi=islem_tipi,
-            referans_id=referans_id
-        )
+
+        kullanim = StokFifoKullanim()  # type: ignore[call-arg]
+        kullanim.fifo_kayit_id = self.id
+        kullanim.miktar = miktar
+        kullanim.islem_tipi = islem_tipi
+        kullanim.referans_id = referans_id
         db.session.add(kullanim)
         
         return kullanim

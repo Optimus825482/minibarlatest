@@ -6,146 +6,157 @@ Açıklama: Otel bazlı zimmet, kat sorumlusu kullanım, oda bazlı tüketim,
 """
 
 from models import (
-    db, OtelZimmetStok, PersonelZimmetKullanim, Otel, Kullanici, Urun,
-    MinibarIslem, MinibarIslemDetay, Oda, Kat, GunlukGorev, GorevDetay,
-    PersonelZimmet, PersonelZimmetDetay
+    db,
+    OtelZimmetStok,
+    Otel,
+    Kullanici,
+    Urun,
+    MinibarIslem,
+    MinibarIslemDetay,
+    Oda,
+    Kat,
+    GunlukGorev,
+    GorevDetay,
 )
 from datetime import datetime, date, timedelta
-from sqlalchemy import func, and_, or_, desc, case
-from decimal import Decimal
+from sqlalchemy import func, or_, desc, case
 from utils.helpers import get_excluded_user_ids, EXCLUDED_USERNAMES
-import pytz
+from models import get_kktc_now
 import logging
 
 logger = logging.getLogger(__name__)
 
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-
-def get_kktc_now():
-    return datetime.now(KKTC_TZ)
-
 
 class OtelZimmetRaporServisi:
     """Otel bazlı zimmet stok raporları"""
-    
+
     @staticmethod
-    def get_otel_zimmet_stok_raporu(otel_id: int = None) -> dict:
+    def get_otel_zimmet_stok_raporu(otel_id: int | None = None) -> dict:
         """
         Otel bazlı zimmet stok raporu
-        
+
         Args:
             otel_id: Otel ID (None ise tüm oteller)
-            
+
         Returns:
             dict: Rapor verisi
         """
         try:
-            query = db.session.query(
-                Otel.id.label('otel_id'),
-                Otel.ad.label('otel_ad'),
-                Urun.id.label('urun_id'),
-                Urun.urun_adi,
-                Urun.birim,
-                OtelZimmetStok.toplam_miktar,
-                OtelZimmetStok.kullanilan_miktar,
-                OtelZimmetStok.kalan_miktar,
-                OtelZimmetStok.kritik_stok_seviyesi,
-                OtelZimmetStok.son_guncelleme
-            ).join(
-                OtelZimmetStok, Otel.id == OtelZimmetStok.otel_id
-            ).join(
-                Urun, OtelZimmetStok.urun_id == Urun.id
-            ).filter(Otel.aktif == True)
-            
+            query = (
+                db.session.query(
+                    Otel.id.label("otel_id"),
+                    Otel.ad.label("otel_ad"),
+                    Urun.id.label("urun_id"),
+                    Urun.urun_adi,
+                    Urun.birim,
+                    OtelZimmetStok.toplam_miktar,
+                    OtelZimmetStok.kullanilan_miktar,
+                    OtelZimmetStok.kalan_miktar,
+                    OtelZimmetStok.kritik_stok_seviyesi,
+                    OtelZimmetStok.son_guncelleme,
+                )
+                .join(OtelZimmetStok, Otel.id == OtelZimmetStok.otel_id)
+                .join(Urun, OtelZimmetStok.urun_id == Urun.id)
+                .filter(Otel.aktif)
+            )
+
             if otel_id:
                 query = query.filter(Otel.id == otel_id)
-            
+
             query = query.order_by(Otel.ad, Urun.urun_adi)
             sonuclar = query.all()
-            
+
             # Otel bazlı gruplama
             oteller = {}
             for row in sonuclar:
                 if row.otel_id not in oteller:
                     # Otel logosunu al
-                    otel_obj = Otel.query.get(row.otel_id)
+                    otel_obj = db.session.get(Otel, row.otel_id)
                     otel_logo = otel_obj.logo if otel_obj and otel_obj.logo else None
-                    
+
                     oteller[row.otel_id] = {
-                        'otel_id': row.otel_id,
-                        'otel_ad': row.otel_ad,
-                        'otel_logo': otel_logo,
-                        'toplam_urun_cesidi': 0,
-                        'toplam_stok': 0,
-                        'toplam_kullanilan': 0,
-                        'toplam_kalan': 0,
-                        'kritik_urun_sayisi': 0,
-                        'urunler': []
+                        "otel_id": row.otel_id,
+                        "otel_ad": row.otel_ad,
+                        "otel_logo": otel_logo,
+                        "toplam_urun_cesidi": 0,
+                        "toplam_stok": 0,
+                        "toplam_kullanilan": 0,
+                        "toplam_kalan": 0,
+                        "kritik_urun_sayisi": 0,
+                        "urunler": [],
                     }
-                
+
                 # Stok durumu hesapla
                 if row.kalan_miktar == 0:
-                    stok_durumu = 'stokout'
+                    stok_durumu = "stokout"
                 elif row.kalan_miktar <= row.kritik_stok_seviyesi:
-                    stok_durumu = 'kritik'
+                    stok_durumu = "kritik"
                 elif row.kalan_miktar <= row.kritik_stok_seviyesi * 1.5:
-                    stok_durumu = 'dikkat'
+                    stok_durumu = "dikkat"
                 else:
-                    stok_durumu = 'normal'
-                
-                oteller[row.otel_id]['urunler'].append({
-                    'urun_id': row.urun_id,
-                    'urun_adi': row.urun_adi,
-                    'birim': row.birim,
-                    'toplam_miktar': row.toplam_miktar,
-                    'kullanilan_miktar': row.kullanilan_miktar,
-                    'kalan_miktar': row.kalan_miktar,
-                    'kritik_seviye': row.kritik_stok_seviyesi,
-                    'stok_durumu': stok_durumu,
-                    'kullanim_yuzdesi': round((row.kullanilan_miktar / row.toplam_miktar * 100), 1) if row.toplam_miktar > 0 else 0,
-                    'son_guncelleme': row.son_guncelleme.strftime('%d.%m.%Y %H:%M') if row.son_guncelleme else None
-                })
-                
-                oteller[row.otel_id]['toplam_urun_cesidi'] += 1
-                oteller[row.otel_id]['toplam_stok'] += row.toplam_miktar
-                oteller[row.otel_id]['toplam_kullanilan'] += row.kullanilan_miktar
-                oteller[row.otel_id]['toplam_kalan'] += row.kalan_miktar
-                if stok_durumu in ('kritik', 'stokout'):
-                    oteller[row.otel_id]['kritik_urun_sayisi'] += 1
-            
+                    stok_durumu = "normal"
+
+                oteller[row.otel_id]["urunler"].append(
+                    {
+                        "urun_id": row.urun_id,
+                        "urun_adi": row.urun_adi,
+                        "birim": row.birim,
+                        "toplam_miktar": row.toplam_miktar,
+                        "kullanilan_miktar": row.kullanilan_miktar,
+                        "kalan_miktar": row.kalan_miktar,
+                        "kritik_seviye": row.kritik_stok_seviyesi,
+                        "stok_durumu": stok_durumu,
+                        "kullanim_yuzdesi": round(
+                            (row.kullanilan_miktar / row.toplam_miktar * 100), 1
+                        )
+                        if row.toplam_miktar > 0
+                        else 0,
+                        "son_guncelleme": row.son_guncelleme.strftime("%d.%m.%Y %H:%M")
+                        if row.son_guncelleme
+                        else None,
+                    }
+                )
+
+                oteller[row.otel_id]["toplam_urun_cesidi"] += 1
+                oteller[row.otel_id]["toplam_stok"] += row.toplam_miktar
+                oteller[row.otel_id]["toplam_kullanilan"] += row.kullanilan_miktar
+                oteller[row.otel_id]["toplam_kalan"] += row.kalan_miktar
+                if stok_durumu in ("kritik", "stokout"):
+                    oteller[row.otel_id]["kritik_urun_sayisi"] += 1
+
             return {
-                'success': True,
-                'rapor_tarihi': get_kktc_now().strftime('%d.%m.%Y %H:%M'),
-                'toplam_otel': len(oteller),
-                'oteller': list(oteller.values())
+                "success": True,
+                "rapor_tarihi": get_kktc_now().strftime("%d.%m.%Y %H:%M"),
+                "toplam_otel": len(oteller),
+                "oteller": list(oteller.values()),
             }
-            
+
         except Exception as e:
             logger.error(f"Otel zimmet stok raporu hatası: {e}")
-            return {'success': False, 'message': str(e), 'oteller': []}
+            return {"success": False, "message": str(e), "oteller": []}
 
 
 class KatSorumlusuGunSonuRaporServisi:
     """Kat Sorumlusu Gün Sonu Raporu - Profesyonel format"""
-    
+
     @staticmethod
     def get_gun_sonu_raporu(
         otel_id: int,
-        personel_ids: list = None,
-        tarih: date = None,
-        baslangic_tarihi: date = None,
-        bitis_tarihi: date = None
+        personel_ids: list | None = None,
+        tarih: date | None = None,
+        baslangic_tarihi: date | None = None,
+        bitis_tarihi: date | None = None,
     ) -> dict:
         """
         Kat sorumlusu gün sonu raporu - Tarih aralığı destekli
-        
+
         Args:
             otel_id: Otel ID (zorunlu)
             personel_ids: Kat sorumlusu ID listesi (çoklu seçim)
             tarih: Tek tarih için (geriye uyumluluk)
             baslangic_tarihi: Tarih aralığı başlangıcı
             bitis_tarihi: Tarih aralığı bitişi
-            
+
         Returns:
             dict: Gün sonu rapor verisi
         """
@@ -153,7 +164,9 @@ class KatSorumlusuGunSonuRaporServisi:
             # Tarih aralığı belirleme
             if baslangic_tarihi and bitis_tarihi:
                 # Tarih aralığı modu
-                tarih_baslangic = datetime.combine(baslangic_tarihi, datetime.min.time())
+                tarih_baslangic = datetime.combine(
+                    baslangic_tarihi, datetime.min.time()
+                )
                 tarih_bitis = datetime.combine(bitis_tarihi, datetime.max.time())
                 rapor_tarihi_str = f"{baslangic_tarihi.strftime('%d.%m.%Y')} - {bitis_tarihi.strftime('%d.%m.%Y')}"
             else:
@@ -162,9 +175,9 @@ class KatSorumlusuGunSonuRaporServisi:
                     tarih = date.today()
                 tarih_baslangic = datetime.combine(tarih, datetime.min.time())
                 tarih_bitis = datetime.combine(tarih, datetime.max.time())
-                rapor_tarihi_str = tarih.strftime('%d.%m.%Y')
-            
-            otel = Otel.query.get(otel_id)
+                rapor_tarihi_str = tarih.strftime("%d.%m.%Y")
+
+            otel = db.session.get(Otel, otel_id)
             if not otel:
                 return {'success': False, 'message': 'Otel bulunamadı'}
             
@@ -207,14 +220,14 @@ class KatSorumlusuGunSonuRaporServisi:
                 urun_ozeti = {}
                 
                 for islem in islemler:
-                    oda = Oda.query.get(islem.oda_id)
+                    oda = db.session.get(Oda, islem.oda_id)
                     oda_no = oda.oda_no if oda else 'Bilinmiyor'
                     saat = islem.islem_tarihi.strftime('%H:%M')
                     
                     for detay in islem.detaylar:
                         # Sadece eklenen (minibara tamamlanan) ürünleri al
                         if detay.eklenen_miktar and detay.eklenen_miktar > 0:
-                            urun = Urun.query.get(detay.urun_id)
+                            urun = db.session.get(Urun, detay.urun_id)
                             urun_adi = urun.urun_adi if urun else 'Bilinmiyor'
                             urun_id = detay.urun_id
                             
@@ -281,10 +294,10 @@ class KatSorumlusuKullanimRaporServisi:
     
     @staticmethod
     def get_personel_kullanim_raporu(
-        otel_id: int = None,
-        personel_id: int = None,
-        baslangic_tarihi: date = None,
-        bitis_tarihi: date = None
+        otel_id: int | None = None,
+        personel_id: int | None = None,
+        baslangic_tarihi: date | None = None,
+        bitis_tarihi: date | None = None,
     ) -> dict:
         """
         Kat sorumlusu kullanım raporu - MinibarIslem tablosundan
@@ -428,9 +441,9 @@ class OdaBazliTuketimRaporServisi:
     @staticmethod
     def get_oda_bazli_tuketim_raporu(
         otel_id: int,
-        baslangic_tarihi: date = None,
-        bitis_tarihi: date = None,
-        kat_id: int = None
+        baslangic_tarihi: date | None = None,
+        bitis_tarihi: date | None = None,
+        kat_id: int | None = None,
     ) -> dict:
         """
         Oda bazlı minibar tüketim raporu - Gruplu tablo formatında
@@ -449,8 +462,8 @@ class OdaBazliTuketimRaporServisi:
                 baslangic_tarihi = date.today() - timedelta(days=7)
             if not bitis_tarihi:
                 bitis_tarihi = date.today()
-            
-            otel = Otel.query.get(otel_id)
+
+            otel = db.session.get(Otel, otel_id)
             if not otel:
                 return {'success': False, 'message': 'Otel bulunamadı'}
             
@@ -544,11 +557,11 @@ class GunlukGorevRaporServisi:
     
     @staticmethod
     def get_gunluk_gorev_raporu(
-        otel_id: int = None,
-        baslangic_tarihi: date = None,
-        bitis_tarihi: date = None,
-        personel_id: int = None,
-        personel_ids: list = None
+        otel_id: int | None = None,
+        baslangic_tarihi: date | None = None,
+        bitis_tarihi: date | None = None,
+        personel_id: int | None = None,
+        personel_ids: list | None = None,
     ) -> dict:
         """
         Günlük görev tamamlama raporu - OTEL BAZLI
@@ -679,8 +692,7 @@ class OtelKarsilastirmaRaporServisi:
     
     @staticmethod
     def get_otel_karsilastirma_raporu(
-        baslangic_tarihi: date = None,
-        bitis_tarihi: date = None
+        baslangic_tarihi: date | None = None, bitis_tarihi: date | None = None
     ) -> dict:
         """
         Oteller arası karşılaştırma raporu
@@ -745,16 +757,17 @@ class OtelKarsilastirmaRaporServisi:
                 # Kat sorumlusu sayısı
                 ks_sayisi = Kullanici.query.filter(
                     Kullanici.otel_id == otel.id,
-                    Kullanici.rol == 'kat_sorumlusu',
-                    Kullanici.aktif == True,
-                    ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
+                    Kullanici.rol == "kat_sorumlusu",
+                    Kullanici.aktif,
+                    ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES),
                 ).count()
                 
                 # Oda sayısı
-                oda_sayisi = Oda.query.join(Kat).filter(
-                    Kat.otel_id == otel.id,
-                    Oda.aktif == True
-                ).count()
+                oda_sayisi = (
+                    Oda.query.join(Kat)
+                    .filter(Kat.otel_id == otel.id, Oda.aktif)
+                    .count()
+                )
                 
                 gorev_tamamlanma = 0
                 if gorev_query and gorev_query.toplam and gorev_query.toplam > 0:

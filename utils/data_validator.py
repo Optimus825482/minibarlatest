@@ -3,10 +3,23 @@ Data Validation Tool
 Migration sonrası veri bütünlüğünü kontrol eder
 """
 
+import logging
+import re
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from typing import Dict, List, Tuple
-import hashlib
+
+logger = logging.getLogger(__name__)
+
+# SQL identifier pattern - only allow alphanumeric and underscore
+_SAFE_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _validate_identifier(name: str, kind: str = "identifier") -> str:
+    """Validate SQL identifier to prevent injection."""
+    if not name or not _SAFE_IDENTIFIER.match(name):
+        raise ValueError(f"Invalid SQL {kind}: {name!r}")
+    return name
 
 
 class DataValidator:
@@ -34,12 +47,13 @@ class DataValidator:
     
     def validate_row_counts(self, table_name: str) -> Tuple[bool, int, int]:
         """Tablo kayıt sayılarını karşılaştır"""
+        safe_table = _validate_identifier(table_name, "table name")
         mysql_count = self.mysql_session.execute(
-            text(f"SELECT COUNT(*) FROM {table_name}")
+            text(f"SELECT COUNT(*) FROM {safe_table}")
         ).scalar()
         
         postgres_count = self.postgres_session.execute(
-            text(f"SELECT COUNT(*) FROM {table_name}")
+            text(f"SELECT COUNT(*) FROM {safe_table}")
         ).scalar()
         
         matches = mysql_count == postgres_count
@@ -50,22 +64,27 @@ class DataValidator:
                 'count': mysql_count
             })
         else:
-            self.validation_results['row_count_mismatches'].append({
-                'table': table_name,
-                'mysql_count': mysql_count,
-                'postgres_count': postgres_count,
-                'difference': abs(mysql_count - postgres_count)
-            })
-        
-        return matches, mysql_count, postgres_count
-    
+            self.validation_results["row_count_mismatches"].append(
+                {
+                    "table": table_name,
+                    "mysql_count": mysql_count,
+                    "postgres_count": postgres_count,
+                    "difference": abs(mysql_count - postgres_count),  # type: ignore[operator]
+                }
+            )
+
+        return matches, mysql_count, postgres_count  # type: ignore[return-value]
+
     def validate_foreign_keys(self, table_name: str, fk_column: str, ref_table: str) -> List[Dict]:
         """Foreign key ilişkilerini kontrol et"""
+        safe_table = _validate_identifier(table_name, "table name")
+        safe_fk = _validate_identifier(fk_column, "column name")
+        safe_ref = _validate_identifier(ref_table, "table name")
         query = text(f"""
-            SELECT {fk_column} 
-            FROM {table_name} 
-            WHERE {fk_column} IS NOT NULL 
-            AND {fk_column} NOT IN (SELECT id FROM {ref_table})
+            SELECT {safe_fk} 
+            FROM {safe_table} 
+            WHERE {safe_fk} IS NOT NULL 
+            AND {safe_fk} NOT IN (SELECT id FROM {safe_ref})
         """)
         
         orphans = self.postgres_session.execute(query).fetchall()
@@ -95,7 +114,7 @@ class DataValidator:
             if matches:
                 print(f"   ✅ Row counts match: {mysql_count}")
             else:
-                print(f"   ❌ Row count mismatch!")
+                print("   ❌ Row count mismatch!")
                 print(f"      MySQL: {mysql_count}")
                 print(f"      PostgreSQL: {postgres_count}")
         

@@ -9,7 +9,6 @@ Modüler dosyalar (otel.py, kullanici.py vb.) gelecekte taşınacak.
 """
 
 # Ana models.py'den tüm modelleri import et
-import sys
 import os
 
 # models.py'yi doğrudan import et
@@ -18,9 +17,10 @@ _models_py_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'mode
 if os.path.exists(_models_py_path):
     import importlib.util
     _spec = importlib.util.spec_from_file_location("models_main", _models_py_path)
+    assert _spec is not None and _spec.loader is not None
     _models_main = importlib.util.module_from_spec(_spec)
-    _spec.loader.exec_module(_models_main)
-    
+    _spec.loader.exec_module(_models_main)  # type: ignore[union-attr]
+
     # Base exports
     db = _models_main.db
     get_kktc_now = _models_main.get_kktc_now

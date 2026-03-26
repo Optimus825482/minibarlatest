@@ -8,7 +8,8 @@ Erkan için - Güvenli deployment
 import sys
 import time
 from app import app, db
-from models import *
+from models import *  # noqa: F403
+
 
 def check_database_connection():
     """Database bağlantısını kontrol et"""
@@ -23,9 +24,9 @@ def check_database_connection():
                 db.engine.connect()
                 print('✅ Database bağlantısı başarılı!')
                 return True
-            except Exception as e:
+            except Exception:
                 retry_count += 1
-                print(f'⏳ Database bekleniyor... ({retry_count}/{max_retries})')
+                print(f"⏳ Database bekleniyor... ({retry_count}/{max_retries})")
                 time.sleep(2)
         
         print('❌ Database bağlantısı kurulamadı!')

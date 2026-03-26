@@ -96,7 +96,7 @@ def add_missing_products():
         try:
             db.session.commit()
             print(f"\n{'='*60}")
-            print(f"✅ Ürünler eklendi!")
+            print("✅ Ürünler eklendi!")
             print(f"   Eklenen: {eklenen}")
             print(f"   Hata: {len(hatalar)}")
             print(f"   Toplam otel: {len(oteller)}")

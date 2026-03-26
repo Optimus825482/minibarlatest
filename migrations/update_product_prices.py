@@ -3,7 +3,7 @@
 Erkan için - ff.md dosyasındaki fiyatları veritabanına aktar
 """
 from app import app, db
-from models import Urun, UrunTedarikciFiyat, Tedarikci
+from models import Urun  # type: ignore[attr-defined]
 from datetime import datetime
 from decimal import Decimal
 
@@ -91,7 +91,7 @@ def update_prices():
                 fiyat = Decimal(fiyat_str.replace(",", "."))
                 
                 # Tarihi parse et
-                tarih = datetime.strptime(tarih_str, "%Y-%m-%d")
+                datetime.strptime(tarih_str, "%Y-%m-%d")
                 
                 # UrunStok tablosunda birim_maliyet güncelle
                 from models import UrunStok
@@ -115,7 +115,7 @@ def update_prices():
         try:
             db.session.commit()
             print(f"\n{'='*60}")
-            print(f"✅ Güncelleme tamamlandı!")
+            print("✅ Güncelleme tamamlandı!")
             print(f"   Güncellenen: {guncellenen}")
             print(f"   Bulunamayan: {len(bulunamayan)}")
             print(f"   Hata: {len(hatalar)}")

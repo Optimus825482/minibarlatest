@@ -7,7 +7,6 @@ Create Date: 2024-12-05
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '20251205_ana_depo_tedarik'

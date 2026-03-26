@@ -58,7 +58,7 @@ def create_stock_records():
         try:
             db.session.commit()
             print(f"\n{'='*60}")
-            print(f"✅ Stok kayıtları oluşturuldu!")
+            print("✅ Stok kayıtları oluşturuldu!")
             print(f"   Yeni oluşturulan: {olusturulan}")
             print(f"   Zaten mevcut: {mevcut}")
             print(f"   Toplam ürün: {len(urunler)}")

@@ -5,7 +5,7 @@ Fiyatlandırma ve Karlılık Sistemi için veritabanı optimizasyon endpoint'ler
 Erkan için - Database Performance Management
 """
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, render_template
 from utils.decorators import login_required, role_required
 from utils.db_optimization import DatabaseOptimizer
 from utils.audit_logger import AuditLogger

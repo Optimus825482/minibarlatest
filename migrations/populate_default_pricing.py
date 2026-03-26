@@ -6,7 +6,6 @@ Gereksinimler: 20.1, 20.2, 21.1
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Proje kök dizinini Python path'e ekle
@@ -14,8 +13,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from flask import Flask
-from models import db, Tedarikci, UrunTedarikciFiyat, Urun, UrunStok, Otel, Kullanici
-from sqlalchemy import text
+from models import db, Tedarikci, UrunTedarikciFiyat, Urun, UrunStok, Otel, Kullanici  # type: ignore[attr-defined]
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -291,7 +289,7 @@ def assign_prices_to_products(tedarikci):
         # Son commit
         db.session.commit()
         
-        print(f"\n   ✅ Fiyat atama tamamlandı:")
+        print("\n   ✅ Fiyat atama tamamlandı:")
         print(f"      • Başarılı: {basarili} ürün")
         print(f"      • Eşleşen fiyat: {eslesen} ürün")
         print(f"      • Varsayılan fiyat: {varsayilan} ürün")
@@ -405,12 +403,12 @@ def main():
             print("="*70)
             print("✅ İŞLEM BAŞARIYLA TAMAMLANDI!")
             print("="*70)
-            print(f"\n📊 Özet:")
-            print(f"   • Tedarikçi: 1 adet (Varsayılan Tedarikçi)")
+            print("\n📊 Özet:")
+            print("   • Tedarikçi: 1 adet (Varsayılan Tedarikçi)")
             print(f"   • Fiyat Ataması: {fiyat_sayisi} ürün")
             print(f"   • Stok Kayıtları: {stok_sayisi} kayıt")
             print(f"\n💡 Not: Eşleşmeyen ürünlere varsayılan fiyat ({VARSAYILAN_ALIS_FIYATI} TL) atandı")
-            print(f"   Bu fiyatları admin panelinden güncelleyebilirsiniz.\n")
+            print("   Bu fiyatları admin panelinden güncelleyebilirsiniz.\n")
             
         except Exception as e:
             print(f"\n❌ HATA: {str(e)}\n")

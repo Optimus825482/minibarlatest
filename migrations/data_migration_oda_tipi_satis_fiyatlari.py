@@ -3,7 +3,7 @@ Data Migration: OdaTipiSatisFiyati - oda_tipi string'den oda_tipi_id integer'a g
 Tarih: 2025-11-15
 """
 
-from models import db, OdaTipiSatisFiyati, OdaTipi
+from models import db, OdaTipi  # type: ignore[attr-defined]
 from sqlalchemy import text
 import logging
 
@@ -24,7 +24,7 @@ def migrate_oda_tipi_satis_fiyatlari():
         oda_tipleri = OdaTipi.query.all()
         oda_tipi_map = {ot.ad: ot.id for ot in oda_tipleri}
         
-        print(f"\n✅ Oda Tipi Mapping:")
+        print("\n✅ Oda Tipi Mapping:")
         for ad, id in oda_tipi_map.items():
             print(f"   {ad} → ID: {id}")
         
@@ -80,7 +80,7 @@ def migrate_oda_tipi_satis_fiyatlari():
                 
                 db.session.commit()
                 
-                print(f"\n✅ Migration tamamlandı:")
+                print("\n✅ Migration tamamlandı:")
                 print(f"   - Güncellenen: {guncellenen}")
                 print(f"   - Hatalı: {hatali}")
                 

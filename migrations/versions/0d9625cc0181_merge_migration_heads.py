@@ -5,8 +5,6 @@ Revises: 761c02a6168a, ml_model_path_001
 Create Date: 2025-11-12 18:32:51.814665
 
 """
-from alembic import op
-import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.

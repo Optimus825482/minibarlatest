@@ -23,7 +23,7 @@ class PerformanceProfiler:
     _lock = threading.Lock()
     
     @classmethod
-    def start_profiling(cls, duration: int = 60) -> str:
+    def start_profiling(cls, duration: int = 60) -> str | None:
         """
         Profiling başlat
         
@@ -163,7 +163,7 @@ class PerformanceProfiler:
             
             # Top fonksiyonları al
             hotspots = []
-            for func, (cc, nc, tt, ct, callers) in list(stats.stats.items())[:20]:
+            for func, (cc, nc, tt, ct, callers) in list(stats.stats.items())[:20]:  # type: ignore[attr-defined]
                 filename, line, func_name = func
                 hotspots.append({
                     'function': func_name,

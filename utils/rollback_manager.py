@@ -3,18 +3,22 @@ Rollback Manager
 Migration başarısız olduğunda geri alma işlemleri
 """
 
+import logging
 import json
 import os
-from datetime import datetime, timezone
+import subprocess
+from datetime import datetime
 import pytz
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
 
 # KKTC Timezone
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
 def get_kktc_now():
     return datetime.now(KKTC_TZ)
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
-import subprocess
+
+
+logger = logging.getLogger(__name__)
 
 
 class RollbackManager:
@@ -144,8 +148,8 @@ class RollbackManager:
                 )
             
             self.postgres_session.commit()
-            
-        except Exception as e:
+
+        except Exception:
             self.postgres_session.rollback()
             raise
     

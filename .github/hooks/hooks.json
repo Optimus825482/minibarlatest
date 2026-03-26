@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/jcodemunch-enforce.sh",
+        "powershell": "bash .github/hooks/jcodemunch-enforce.sh",
+        "comment": "Enforce jCodemunch-first code exploration policy. Denies native read/view/grep/glob for code files, redirects to jCodemunch MCP tools.",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}

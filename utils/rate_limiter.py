@@ -42,7 +42,7 @@ def get_client_ip():
     # Cloudflare, nginx gibi proxy'ler için
     if request.headers.get('X-Forwarded-For'):
         # İlk IP gerçek client IP'si
-        return request.headers.get('X-Forwarded-For').split(',')[0].strip()
+        return request.headers.get("X-Forwarded-For").split(",")[0].strip()  # type: ignore[union-attr]
     elif request.headers.get('X-Real-IP'):
         return request.headers.get('X-Real-IP')
     else:
@@ -85,7 +85,8 @@ def init_rate_limiter(app):
     
     # Storage URI belirleme
     use_memory = is_development
-    
+    storage_uri = "memory://"  # default, overridden below
+
     if not is_development:
         # Production'da Redis bağlantısını test et
         if _test_redis_connection(redis_url):
@@ -102,13 +103,12 @@ def init_rate_limiter(app):
     
     try:
         limiter = Limiter(
-            key_func=get_client_ip,
+            key_func=get_client_ip,  # type: ignore[arg-type]
             app=app,
             storage_uri=storage_uri,
-            storage_options={
-                "socket_connect_timeout": 2,
-                "socket_timeout": 2
-            } if not use_memory else {},
+            storage_options={"socket_connect_timeout": 2, "socket_timeout": 2}
+            if not use_memory
+            else {},
             strategy="fixed-window",
             default_limits=["20000 per day", "3000 per hour", "120 per minute"],
             headers_enabled=True,  # X-RateLimit headers
@@ -139,7 +139,7 @@ def init_rate_limiter(app):
         logger.error(f"❌ Rate Limiter başlatılamadı: {str(e)}")
         # Fallback: Memory-based limiter
         limiter = Limiter(
-            key_func=get_client_ip,
+            key_func=get_client_ip,  # type: ignore[arg-type]
             app=app,
             storage_uri="memory://",
             strategy="fixed-window",
@@ -154,9 +154,9 @@ def init_rate_limiter(app):
 # ENDPOINT-SPESİFİK LİMİTLER
 # ============================================
 
-# Login/Auth - Brute force koruması (yüksek tutuldu ama güvenli)
-LOGIN_LIMIT = "10 per minute"
-LOGIN_LIMIT_STRICT = "30 per hour"
+# Login/Auth - Brute force koruması
+LOGIN_LIMIT = "5 per minute"
+LOGIN_LIMIT_STRICT = "15 per hour"
 
 # API Genel - Otel personeli yoğun kullanım yapıyor
 API_LIMIT_DEFAULT = "300 per minute"
@@ -183,12 +183,12 @@ def exempt_when_authenticated():
 
 # Whitelist - Bu path'ler rate limit'ten muaf
 EXEMPT_PATHS = [
-    '/health',
-    '/ready',
-    '/static/',
-    '/sw.js',
-    '/manifest.json',
-    '/favicon.ico',
+    "/health",
+    "/ready",
+    "/static/",
+    "/sw.js",
+    "/manifest.webmanifest",
+    "/favicon.ico",
 ]
 
 
@@ -223,8 +223,12 @@ class QRRateLimiter:
     def _get_redis(cls):
         """Redis client'ı al"""
         global limiter
-        if limiter and hasattr(limiter, '_storage') and hasattr(limiter._storage, '_redis'):
-            return limiter._storage._redis
+        if (
+            limiter
+            and hasattr(limiter, "_storage")
+            and hasattr(limiter._storage, "_redis")
+        ):  # type: ignore[union-attr]
+            return limiter._storage._redis  # type: ignore[attr-defined]
         return None
     
     @classmethod
@@ -263,7 +267,7 @@ class QRRateLimiter:
                     redis.expire(key, 60)  # 1 dakika TTL
                 return count <= cls.QR_SCAN_LIMIT
             except Exception:
-                pass
+                logger.debug("Sessiz hata yakalandi", exc_info=True)
         
         # In-memory fallback
         cls._clean_old_entries(cls._scan_cache)
@@ -303,7 +307,7 @@ class QRRateLimiter:
                     redis.expire(key, 60)  # 1 dakika TTL
                 return count <= cls.QR_GENERATE_LIMIT
             except Exception:
-                pass
+                logger.debug("Sessiz hata yakalandi", exc_info=True)
         
         # In-memory fallback
         cls._clean_old_entries(cls._generate_cache)

@@ -7,7 +7,7 @@ const IMAGE_CACHE = `${CACHE_VERSION}-images`;
 // Önbelleğe alınacak statik dosyalar
 const STATIC_ASSETS = [
   "/",
-  "/static/manifest.json",
+  "/static/manifest.webmanifest",
   // CDN'ler CORS hatası verdiği için cache'lenmiyor
   // Tailwind ve Chart.js her zaman network'ten yüklenecek
 ];

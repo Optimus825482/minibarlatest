@@ -11,7 +11,6 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import app, db
-from models import Oda, MinibarDolumTalebi, QRKodOkutmaLog
 from sqlalchemy import text
 
 def upgrade():

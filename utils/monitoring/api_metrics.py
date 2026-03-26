@@ -4,7 +4,7 @@ Developer Dashboard için API endpoint performans izleme servisi
 """
 import logging
 from typing import Dict, List, Optional, Any
-from datetime import datetime, timedelta
+from datetime import datetime
 from collections import defaultdict
 import threading
 
@@ -15,14 +15,16 @@ class APIMetrics:
     """API endpoint performans izleme servisi"""
     
     # In-memory metrics storage (production'da Redis kullanılmalı)
-    _metrics = defaultdict(lambda: {
-        'request_count': 0,
-        'total_duration': 0.0,
-        'error_count': 0,
-        'status_codes': defaultdict(int),
-        'response_times': [],
-        'last_request': None
-    })
+    _metrics: Any = defaultdict(
+        lambda: {
+            "request_count": 0,
+            "total_duration": 0.0,
+            "error_count": 0,
+            "status_codes": defaultdict(int),
+            "response_times": [],
+            "last_request": None,
+        }
+    )
     _lock = threading.Lock()
     
     @classmethod

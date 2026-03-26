@@ -24,7 +24,7 @@ KULLANIM:
 """
 
 import logging
-from typing import List, Optional, Dict, Any
+from typing import List
 from sqlalchemy.orm import joinedload, selectinload
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class MasterDataService:
     # ============================================
     
     @staticmethod
-    def get_urunler(aktif: bool = True, grup_id: int = None) -> List:
+    def get_urunler(aktif: bool = True, grup_id: int | None = None) -> List:
         """
         Ürün listesini cache + eager loading ile getir.
         
@@ -73,7 +73,7 @@ class MasterDataService:
         
         # Database'den al (eager loading ile)
         try:
-            from models import Urun, UrunGrup
+            from models import Urun
             
             query = Urun.query.options(
                 joinedload(Urun.grup)  # Grup bilgisini eager load et
@@ -188,7 +188,7 @@ class MasterDataService:
             return []
     
     @staticmethod
-    def get_katlar(otel_id: int = None, aktif: bool = True) -> List:
+    def get_katlar(otel_id: int | None = None, aktif: bool = True) -> List:
         """
         Kat listesini cache + eager loading ile getir.
         
@@ -208,7 +208,7 @@ class MasterDataService:
                 return cached
         
         try:
-            from models import Kat, Otel
+            from models import Kat
             
             query = Kat.query.options(
                 joinedload(Kat.otel)  # Otel bilgisini eager load et
@@ -233,7 +233,9 @@ class MasterDataService:
             return []
     
     @staticmethod
-    def get_odalar(kat_id: int = None, otel_id: int = None, aktif: bool = True) -> List:
+    def get_odalar(
+        kat_id: int | None = None, otel_id: int | None = None, aktif: bool = True
+    ) -> List:
         """
         Oda listesini cache + eager loading ile getir.
         
@@ -329,7 +331,7 @@ class MasterDataService:
     # ============================================
     
     @staticmethod
-    def get_setuplar(otel_id: int = None, aktif: bool = True) -> List:
+    def get_setuplar(otel_id: int | None = None, aktif: bool = True) -> List:
         """
         Setup listesini cache + eager loading ile getir.
         
@@ -387,7 +389,9 @@ class MasterDataService:
     # ============================================
     
     @staticmethod
-    def get_kullanicilar(rol: str = None, otel_id: int = None, aktif: bool = True) -> List:
+    def get_kullanicilar(
+        rol: str | None = None, otel_id: int | None = None, aktif: bool = True
+    ) -> List:
         """
         Kullanıcı listesini eager loading ile getir.
         NOT: Kullanıcı listesi cache'lenmez (güvenlik)

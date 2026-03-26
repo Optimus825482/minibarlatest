@@ -1,7 +1,15 @@
 """
-Rate Limiter Middleware
-API endpoint'leri için rate limiting
+Rate Limiter Middleware (DEPRECATED)
+Bu modul multi-worker Gunicorn'da calismaz (in-memory defaultdict).
+Bunun yerine utils/rate_limiter.py kullanin (flask-limiter + Redis).
 """
+import warnings
+
+warnings.warn(
+    "middleware.rate_limiter deprecated - utils.rate_limiter kullanin",
+    DeprecationWarning,
+    stacklevel=2,
+)
 import logging
 from functools import wraps
 from flask import request, jsonify
@@ -141,23 +149,25 @@ def rate_limit(limit: int = 100, window: int = 60, key_func=None):
                     key = request.remote_addr
                 
                 # Rate limit kontrolü
-                if _rate_limiter.is_rate_limited(key, limit, window):
-                    remaining = _rate_limiter.get_remaining(key, limit, window)
-                    return jsonify({
-                        'success': False,
-                        'error': 'Rate limit exceeded',
-                        'message': f'Too many requests. Try again later.',
-                        'limit': limit,
-                        'window': window,
-                        'remaining': remaining
-                    }), 429
+                if _rate_limiter.is_rate_limited(key or "", limit, window):
+                    remaining = _rate_limiter.get_remaining(key or "", limit, window)
+                    return jsonify(
+                        {
+                            "success": False,
+                            "error": "Rate limit exceeded",
+                            "message": "Too many requests. Try again later.",
+                            "limit": limit,
+                            "window": window,
+                            "remaining": remaining,
+                        }
+                    ), 429
                 
                 # İsteği işle
                 response = f(*args, **kwargs)
                 
                 # Rate limit header'ları ekle
                 if hasattr(response, 'headers'):
-                    remaining = _rate_limiter.get_remaining(key, limit, window)
+                    remaining = _rate_limiter.get_remaining(key or "", limit, window)
                     response.headers['X-RateLimit-Limit'] = str(limit)
                     response.headers['X-RateLimit-Remaining'] = str(remaining)
                     response.headers['X-RateLimit-Window'] = str(window)

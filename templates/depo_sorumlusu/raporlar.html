@@ -48,7 +48,7 @@
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <!-- Tarih Filtreleri -->
-                    <div id="tarih_filter" style="display: none;">
+                    <div id="tarih_filter" class="hidden">
                         <label for="baslangic_tarihi" class="block text-sm font-medium text-slate-700">
                             Başlangıç Tarihi
                         </label>
@@ -59,7 +59,7 @@
                         </div>
                     </div>
 
-                    <div id="tarih_filter2" style="display: none;">
+                    <div id="tarih_filter2" class="hidden">
                         <label for="bitis_tarihi" class="block text-sm font-medium text-slate-700">
                             Bitiş Tarihi
                         </label>
@@ -71,7 +71,7 @@
                     </div>
 
                     <!-- Ürün Grubu Filtresi -->
-                    <div id="grup_filter" style="display: none;">
+                    <div id="grup_filter" class="hidden">
                         <label for="urun_grup_id" class="block text-sm font-medium text-slate-700">
                             Ürün Grubu
                         </label>
@@ -88,7 +88,7 @@
                     </div>
 
                     <!-- Ürün Filtresi -->
-                    <div id="urun_filter" style="display: none;">
+                    <div id="urun_filter" class="hidden">
                         <label for="urun_id" class="block text-sm font-medium text-slate-700">
                             Ürün
                         </label>
@@ -105,7 +105,7 @@
                     </div>
 
                     <!-- Personel Filtresi -->
-                    <div id="personel_filter" style="display: none;">
+                    <div id="personel_filter" class="hidden">
                         <label for="personel_id" class="block text-sm font-medium text-slate-700">
                             Kat Sorumlusu
                         </label>
@@ -123,7 +123,7 @@
                     </div>
 
                     <!-- Hareket Tipi Filtresi -->
-                    <div id="hareket_filter" style="display: none;">
+                    <div id="hareket_filter" class="hidden">
                         <label for="hareket_tipi" class="block text-sm font-medium text-slate-700">
                             Hareket Tipi
                         </label>
@@ -196,7 +196,8 @@
                 {% if rapor_tipi == 'stok_durum' %}
                 <!-- Stok Durum Raporu -->
                 <div class="overflow-hidden rounded-lg border border-slate-200">
-                    <table id="stok-durum-table" class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
+                    <table id="stok-durum-table"
+                        class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet table-fixed">
                         <thead class="bg-slate-50">
                             <tr>
                                 <th
@@ -253,7 +254,8 @@
                 {% elif rapor_tipi == 'stok_hareket' %}
                 <!-- Stok Hareket Raporu -->
                 <div class="overflow-hidden rounded-lg border border-slate-200">
-                    <table id="stok-hareket-table" class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
+                    <table id="stok-hareket-table"
+                        class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet table-fixed">
                         <thead class="bg-slate-50">
                             <tr>
                                 <th
@@ -317,7 +319,8 @@
                 {% elif rapor_tipi == 'zimmet' %}
                 <!-- Zimmet Raporu -->
                 <div class="overflow-hidden rounded-lg border border-slate-200">
-                    <table id="zimmet-table" class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
+                    <table id="zimmet-table"
+                        class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet table-fixed">
                         <thead class="bg-slate-50">
                             <tr>
                                 <th
@@ -381,7 +384,8 @@
                 {% elif rapor_tipi == 'zimmet_detay' %}
                 <!-- Zimmet Detay Raporu -->
                 <div class="overflow-hidden rounded-lg border border-slate-200">
-                    <table id="zimmet-detay-rapor-table" class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
+                    <table id="zimmet-detay-rapor-table"
+                        class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet table-fixed">
                         <thead class="bg-slate-50">
                             <tr>
                                 <th
@@ -441,7 +445,8 @@
                 {% elif rapor_tipi == 'urun_grup' %}
                 <!-- Ürün Grubu Raporu -->
                 <div class="overflow-hidden rounded-lg border border-slate-200">
-                    <table id="urun-grup-table" class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
+                    <table id="urun-grup-table"
+                        class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet table-fixed">
                         <thead class="bg-slate-50">
                             <tr>
                                 <th
@@ -489,7 +494,8 @@
                 {% elif rapor_tipi == 'minibar_tuketim' %}
                 <!-- Minibar Tüketim Raporu -->
                 <div class="overflow-hidden rounded-lg border border-slate-200">
-                    <table id="minibar-tuketim-table" class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
+                    <table id="minibar-tuketim-table"
+                        class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet table-fixed">
                         <thead class="bg-slate-50">
                             <tr>
                                 <th
@@ -590,7 +596,8 @@
                 {% elif rapor_tipi == 'minibar_kontrol_odalar' %}
                 <!-- Günlük Minibar Kontrolü Yapılan Odalar Raporu -->
                 <div class="overflow-hidden rounded-lg border border-slate-200">
-                    <table id="minibar-kontrol-odalar-table" class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
+                    <table id="minibar-kontrol-odalar-table"
+                        class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet table-fixed">
                         <thead class="bg-slate-50">
                             <tr>
                                 <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -640,69 +647,69 @@
                 <!-- Özet Rapor -->
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     <div class="bg-white overflow-hidden shadow rounded-lg border border-slate-200">
-                        <div class="px-4 py-5 sm:p-6">
+                        <dl class="px-4 py-5 sm:p-6">
                             <dt class="text-sm font-medium text-slate-500 truncate">
                                 Toplam Ürün Sayısı
                             </dt>
                             <dd class="mt-1 text-3xl font-semibold text-slate-900">
                                 {{ rapor_verisi.toplam_urun }}
                             </dd>
-                        </div>
+                        </dl>
                     </div>
 
                     <div class="bg-white overflow-hidden shadow rounded-lg border border-slate-200">
-                        <div class="px-4 py-5 sm:p-6">
+                        <dl class="px-4 py-5 sm:p-6">
                             <dt class="text-sm font-medium text-slate-500 truncate">
                                 Kritik Stoklu Ürün
                             </dt>
                             <dd class="mt-1 text-3xl font-semibold text-red-600">
                                 {{ rapor_verisi.kritik_urun }}
                             </dd>
-                        </div>
+                        </dl>
                     </div>
 
                     <div class="bg-white overflow-hidden shadow rounded-lg border border-slate-200">
-                        <div class="px-4 py-5 sm:p-6">
+                        <dl class="px-4 py-5 sm:p-6">
                             <dt class="text-sm font-medium text-slate-500 truncate">
                                 Aktif Zimmet
                             </dt>
                             <dd class="mt-1 text-3xl font-semibold text-green-600">
                                 {{ rapor_verisi.aktif_zimmet }}
                             </dd>
-                        </div>
+                        </dl>
                     </div>
 
                     <div class="bg-white overflow-hidden shadow rounded-lg border border-slate-200">
-                        <div class="px-4 py-5 sm:p-6">
+                        <dl class="px-4 py-5 sm:p-6">
                             <dt class="text-sm font-medium text-slate-500 truncate">
                                 Bugünkü Stok Girişi
                             </dt>
                             <dd class="mt-1 text-3xl font-semibold text-blue-600">
                                 {{ rapor_verisi.bugun_giris }}
                             </dd>
-                        </div>
+                        </dl>
                     </div>
 
                     <div class="bg-white overflow-hidden shadow rounded-lg border border-slate-200">
-                        <div class="px-4 py-5 sm:p-6">
+                        <dl class="px-4 py-5 sm:p-6">
                             <dt class="text-sm font-medium text-slate-500 truncate">
                                 Bugünkü Stok Çıkışı
                             </dt>
                             <dd class="mt-1 text-3xl font-semibold text-orange-600">
                                 {{ rapor_verisi.bugun_cikis }}
                             </dd>
-                        </div>
+                        </dl>
                     </div>
 
                     <div class="bg-white overflow-hidden shadow rounded-lg border border-slate-200">
-                        <div class="px-4 py-5 sm:p-6">
+                        <dl class="px-4 py-5 sm:p-6">
                             <dt class="text-sm font-medium text-slate-500 truncate">
                                 Bu Ayki Zimmet
                             </dt>
                             <dd class="mt-1 text-3xl font-semibold text-purple-600">
                                 {{ rapor_verisi.ay_zimmet }}
                             </dd>
-                        </div>
+                        </dl>
                     </div>
                 </div>
                 {% endif %}

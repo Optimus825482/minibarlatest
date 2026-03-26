@@ -1,4 +1,4 @@
-"""
+﻿"""
 Bildirim Routes - Real-time bildirim API endpoint'leri
 
 Endpoint'ler:
@@ -11,13 +11,14 @@ Endpoint'ler:
 
 from flask import jsonify, request, session
 from datetime import datetime
-import pytz
 
-from models import db
+from models import db, KKTC_TZ
 from utils.decorators import login_required
 from utils.bildirim_service import BildirimService
 
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def register_bildirim_routes(app):
@@ -28,8 +29,8 @@ def register_bildirim_routes(app):
     def api_bildirimler():
         """Kullanıcının bildirimlerini getirir"""
         try:
-            kullanici_id = session.get('kullanici_id')
-            kullanici_rol = session.get('rol')
+            kullanici_id: int = session.get("kullanici_id")  # type: ignore[assignment]
+            kullanici_rol: str = session.get("rol")  # type: ignore[assignment]
             otel_id = session.get('otel_id')
             
             sadece_okunmamis = request.args.get('sadece_okunmamis', 'false').lower() == 'true'
@@ -54,20 +55,17 @@ def register_bildirim_routes(app):
                 'bildirimler': bildirimler,
                 'okunmamis_sayisi': okunmamis_sayisi
             })
-            
-        except Exception as e:
-            return jsonify({
-                'success': False,
-                'error': str(e)
-            }), 500
+
+        except Exception:
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/bildirimler/sayac', methods=['GET'])
     @login_required
     def api_bildirim_sayac():
         """Okunmamış bildirim sayısını döndürür"""
         try:
-            kullanici_id = session.get('kullanici_id')
-            kullanici_rol = session.get('rol')
+            kullanici_id: int = session.get("kullanici_id")  # type: ignore[assignment]
+            kullanici_rol: str = session.get("rol")  # type: ignore[assignment]
             otel_id = session.get('otel_id')
             
             sayac = BildirimService.okunmamis_sayisi(
@@ -80,12 +78,9 @@ def register_bildirim_routes(app):
                 'success': True,
                 'okunmamis_sayisi': sayac
             })
-            
-        except Exception as e:
-            return jsonify({
-                'success': False,
-                'error': str(e)
-            }), 500
+
+        except Exception:
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/bildirimler/<int:bildirim_id>/okundu', methods=['POST'])
     @login_required
@@ -101,20 +96,17 @@ def register_bildirim_routes(app):
                     'success': False,
                     'error': 'Bildirim işaretlenemedi'
                 }), 400
-                
-        except Exception as e:
-            return jsonify({
-                'success': False,
-                'error': str(e)
-            }), 500
+
+        except Exception:
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/bildirimler/tumunu-oku', methods=['POST'])
     @login_required
     def api_tumunu_okundu():
         """Tüm bildirimleri okundu olarak işaretler"""
         try:
-            kullanici_id = session.get('kullanici_id')
-            kullanici_rol = session.get('rol')
+            kullanici_id: int = session.get("kullanici_id")  # type: ignore[assignment]
+            kullanici_rol: str = session.get("rol")  # type: ignore[assignment]
             otel_id = session.get('otel_id')
             
             success = BildirimService.tumunu_okundu_isaretle(
@@ -130,12 +122,9 @@ def register_bildirim_routes(app):
                     'success': False,
                     'error': 'Bildirimler işaretlenemedi'
                 }), 400
-                
-        except Exception as e:
-            return jsonify({
-                'success': False,
-                'error': str(e)
-            }), 500
+
+        except Exception:
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/bildirimler/poll', methods=['GET'])
     @login_required
@@ -145,8 +134,8 @@ def register_bildirim_routes(app):
         Son kontrol zamanından sonra gelen bildirimleri döndürür
         """
         try:
-            kullanici_id = session.get('kullanici_id')
-            kullanici_rol = session.get('rol')
+            kullanici_id: int = session.get("kullanici_id")  # type: ignore[assignment]
+            kullanici_rol: str = session.get("rol")  # type: ignore[assignment]
             otel_id = session.get('otel_id')
             
             # Son kontrol zamanı (ISO format)
@@ -156,8 +145,8 @@ def register_bildirim_routes(app):
             if son_kontrol_str:
                 try:
                     son_kontrol = datetime.fromisoformat(son_kontrol_str.replace('Z', '+00:00'))
-                except:
-                    pass
+                except Exception:
+                    logger.debug("Sessiz hata yakalandi", exc_info=True)
             
             yeni_bildirimler = BildirimService.yeni_bildirimler_var_mi(
                 kullanici_id=kullanici_id,
@@ -178,13 +167,10 @@ def register_bildirim_routes(app):
                 'okunmamis_sayisi': okunmamis_sayisi,
                 'kontrol_zamani': datetime.now(KKTC_TZ).isoformat()
             })
-            
-        except Exception as e:
+
+        except Exception:
             db.session.rollback()
-            return jsonify({
-                'success': False,
-                'error': str(e)
-            }), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
     @login_required
     def api_gorev_ozet():
         """
@@ -207,25 +193,31 @@ def register_bildirim_routes(app):
             bugun = date.today()
             
             # Otel bazlı görev özeti
-            ozet = db.session.query(
-                Otel.id.label('otel_id'),
-                Otel.ad.label('otel_adi'),
-                GunlukGorev.gorev_tipi,
-                func.count(GorevDetay.id).label('toplam'),
-                func.sum(func.cast(GorevDetay.durum == 'completed', db.Integer)).label('tamamlanan'),
-                func.sum(func.cast(GorevDetay.durum == 'pending', db.Integer)).label('bekleyen'),
-                func.sum(func.cast(GorevDetay.durum == 'in_progress', db.Integer)).label('devam_eden'),
-                func.sum(func.cast(GorevDetay.durum == 'dnd_pending', db.Integer)).label('dnd')
-            ).join(
-                GunlukGorev, GunlukGorev.otel_id == Otel.id
-            ).join(
-                GorevDetay, GorevDetay.gorev_id == GunlukGorev.id
-            ).filter(
-                GunlukGorev.gorev_tarihi == bugun,
-                Otel.aktif == True
-            ).group_by(
-                Otel.id, Otel.ad, GunlukGorev.gorev_tipi
-            ).all()
+            ozet = (
+                db.session.query(
+                    Otel.id.label("otel_id"),
+                    Otel.ad.label("otel_adi"),
+                    GunlukGorev.gorev_tipi,
+                    func.count(GorevDetay.id).label("toplam"),
+                    func.sum(
+                        func.cast(GorevDetay.durum == "completed", db.Integer)
+                    ).label("tamamlanan"),
+                    func.sum(
+                        func.cast(GorevDetay.durum == "pending", db.Integer)
+                    ).label("bekleyen"),
+                    func.sum(
+                        func.cast(GorevDetay.durum == "in_progress", db.Integer)
+                    ).label("devam_eden"),
+                    func.sum(
+                        func.cast(GorevDetay.durum == "dnd_pending", db.Integer)
+                    ).label("dnd"),
+                )
+                .join(GunlukGorev, GunlukGorev.otel_id == Otel.id)
+                .join(GorevDetay, GorevDetay.gorev_id == GunlukGorev.id)
+                .filter(GunlukGorev.gorev_tarihi == bugun, Otel.aktif)
+                .group_by(Otel.id, Otel.ad, GunlukGorev.gorev_tipi)
+                .all()
+            )
             
             # Sonuçları düzenle
             sonuc = {}
@@ -251,11 +243,9 @@ def register_bildirim_routes(app):
                 'tarih': bugun.isoformat(),
                 'oteller': list(sonuc.values())
             })
-            
-        except Exception as e:
+
+        except Exception:
             import traceback
+
             traceback.print_exc()
-            return jsonify({
-                'success': False,
-                'error': str(e)
-            }), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500

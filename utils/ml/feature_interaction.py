@@ -3,8 +3,6 @@ Feature Interaction - Feature'lar arası etkileşim
 Polynomial features ve interaction terms
 """
 
-import numpy as np
-import pandas as pd
 from sklearn.preprocessing import PolynomialFeatures
 import logging
 

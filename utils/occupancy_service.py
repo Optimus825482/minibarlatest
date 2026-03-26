@@ -5,7 +5,7 @@ Oda doluluk durumlarını hesaplar ve raporlar
 
 from datetime import date, datetime, timedelta
 from models import db, MisafirKayit, Oda, Kat
-from sqlalchemy import and_, or_, func
+from sqlalchemy import and_
 
 
 class OccupancyService:
@@ -204,7 +204,7 @@ class OccupancyService:
                 'gecmis_kayitlar': [MisafirKayit listesi]
             }
         """
-        oda = Oda.query.get(oda_id)
+        oda = db.session.get(Oda, oda_id)
         
         if not oda:
             return None

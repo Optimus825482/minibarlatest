@@ -204,7 +204,7 @@ def otel_erisim_gerekli(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        from flask import request, jsonify, abort
+        from flask import request, jsonify
         from utils.authorization import otel_erisim_kontrol
         
         # Kullanıcı bilgilerini al

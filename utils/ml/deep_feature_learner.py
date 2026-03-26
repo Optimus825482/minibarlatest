@@ -24,8 +24,9 @@ class DeepFeatureLearner:
         self.has_keras = False
         
         try:
-            from tensorflow import keras
-            from tensorflow.keras import layers
+            from tensorflow import keras  # type: ignore[import]
+            from tensorflow.keras import layers  # type: ignore[import]
+
             self.keras = keras
             self.layers = layers
             self.has_keras = True
@@ -85,7 +86,7 @@ class DeepFeatureLearner:
             return None
         
         try:
-            logger.info(f"🎓 Autoencoder eğitimi başladı...")
+            logger.info("🎓 Autoencoder eğitimi başladı...")
             
             history = self.autoencoder.fit(
                 X, X,  # Autoencoder kendini yeniden oluşturmayı öğrenir
@@ -97,8 +98,8 @@ class DeepFeatureLearner:
             
             final_loss = history.history['loss'][-1]
             final_val_loss = history.history['val_loss'][-1]
-            
-            logger.info(f"✅ Autoencoder eğitildi")
+
+            logger.info("✅ Autoencoder eğitildi")
             logger.info(f"   - Final loss: {final_loss:.4f}")
             logger.info(f"   - Final val_loss: {final_val_loss:.4f}")
             
@@ -256,7 +257,7 @@ def detect_anomalies_with_autoencoder(X, threshold_percentile=95):
         errors = learner.get_reconstruction_error(X)
         
         # Threshold
-        threshold = np.percentile(errors, threshold_percentile)
+        threshold = np.percentile(errors, threshold_percentile)  # type: ignore[arg-type]
         anomaly_indices = np.where(errors > threshold)[0]
         
         logger.info(f"✅ {len(anomaly_indices)} anomali tespit edildi (threshold: {threshold:.4f})")

@@ -6,7 +6,6 @@ Açıklama: ML metrik, model, alert ve training log tablolarını ekler
 
 from flask import Flask
 from models import db
-import os
 from dotenv import load_dotenv
 
 # .env dosyasını yükle

@@ -86,11 +86,11 @@ class NegativeStockDetector:
             son_1_saat = datetime.now(timezone.utc) - timedelta(hours=1)
             
             existing_alert = MLAlert.query.filter(
-                MLAlert.alert_type == 'stok_anomali',
-                MLAlert.entity_type == 'urun',
+                MLAlert.alert_type == "stok_anomali",
+                MLAlert.entity_type == "urun",
                 MLAlert.entity_id == urun.id,
                 MLAlert.created_at >= son_1_saat,
-                MLAlert.is_false_positive == False
+                not MLAlert.is_false_positive,
             ).first()
             
             if existing_alert:
@@ -128,8 +128,8 @@ class NegativeStockDetector:
             
             if not stock_info or not stock_info['is_negative']:
                 return False
-            
-            urun = Urun.query.get(urun_id)
+
+            urun = db.session.get(Urun, urun_id)
             if not urun:
                 return False
             

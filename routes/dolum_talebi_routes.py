@@ -3,7 +3,7 @@ Dolum Talebi Yönetimi Route'ları
 """
 
 from flask import jsonify, request
-from models import db, MinibarDolumTalebi, Oda
+from models import db, MinibarDolumTalebi
 from utils.helpers import log_islem, log_hata
 from utils.decorators import login_required, role_required
 from datetime import datetime, timezone, timedelta

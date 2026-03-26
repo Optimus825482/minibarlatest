@@ -19,15 +19,6 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import app, db
-from models import (
-    SatinAlmaSiparisi, 
-    SatinAlmaSiparisDetay,
-    TedarikciPerformans,
-    TedarikciIletisim,
-    TedarikciDokuman,
-    SiparisDurum,
-    DokumanTipi
-)
 from sqlalchemy import text, inspect
 import sys
 

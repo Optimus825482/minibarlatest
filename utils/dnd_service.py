@@ -24,14 +24,22 @@ Kullanım:
     liste = DNDService.gunluk_liste(otel_id=1, tarih=date.today())
 """
 
+import logging
 from datetime import date, datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from sqlalchemy.orm import joinedload
 
 from models import (
-    db, Oda, Otel, Kullanici, OdaDNDKayit, OdaDNDKontrol,
-    GorevDetay, GunlukGorev, GorevDurumLog, OdaKontrolKaydi
+    db,
+    Oda,
+    OdaDNDKayit,
+    OdaDNDKontrol,
+    GorevDetay,
+    GorevDurumLog,
+    OdaKontrolKaydi,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def get_kktc_now():
@@ -253,10 +261,10 @@ class DNDService:
                 try:
                     from utils.bildirim_service import dnd_bildirimi
                     from models import Oda, Kullanici, Kat
-                    oda = Oda.query.get(detay.oda_id)
-                    personel = Kullanici.query.get(personel_id)
+                    oda = db.session.get(Oda, detay.oda_id)
+                    personel = db.session.get(Kullanici, personel_id)
                     if oda and personel:
-                        kat = Kat.query.get(oda.kat_id)
+                        kat = db.session.get(Kat, oda.kat_id)
                         otel_id = kat.otel_id if kat else None
                         if otel_id:
                             personel_adi = f"{personel.ad} {personel.soyad}"
@@ -277,10 +285,10 @@ class DNDService:
                 try:
                     from utils.bildirim_service import dnd_bildirimi
                     from models import Oda, Kullanici, Kat
-                    oda = Oda.query.get(detay.oda_id)
-                    personel = Kullanici.query.get(personel_id)
+                    oda = db.session.get(Oda, detay.oda_id)
+                    personel = db.session.get(Kullanici, personel_id)
                     if oda and personel:
-                        kat = Kat.query.get(oda.kat_id)
+                        kat = db.session.get(Kat, oda.kat_id)
                         otel_id = kat.otel_id if kat else None
                         if otel_id:
                             personel_adi = f"{personel.ad} {personel.soyad}"
@@ -634,5 +642,5 @@ class DNDService:
             if auto_commit:
                 db.session.rollback()
             # Hata olsa bile ana işlemi etkilemesin, sadece log
-            print(f"⚠️ DND otomatik tamamlama hatası: {str(e)}")
+            logger.error(f"⚠️ DND otomatik tamamlama hatası: {str(e)}")
             return None

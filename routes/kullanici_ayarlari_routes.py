@@ -3,6 +3,10 @@ Kullanıcı Ayarları Routes
 Tema, renk ve kişisel tercihler
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from flask import render_template, request, jsonify, flash, redirect, url_for, session
 from models import db, Kullanici  # Ana models.py'den import
 from utils.decorators import login_required
@@ -20,8 +24,8 @@ def register_kullanici_ayarlari_routes(app):
         if not kullanici_id:
             flash('Giriş yapmalısınız.', 'warning')
             return redirect(url_for('login'))
-        
-        kullanici = Kullanici.query.get(kullanici_id)
+
+        kullanici = db.session.get(Kullanici, kullanici_id)
         if not kullanici:
             flash('Kullanıcı bulunamadı.', 'danger')
             return redirect(url_for('dashboard'))
@@ -40,8 +44,8 @@ def register_kullanici_ayarlari_routes(app):
                     'tema_renk_1': '#2563EB',
                     'tema_renk_2': '#0284C7'
                 })
-            
-            kullanici = Kullanici.query.get(kullanici_id)
+
+            kullanici = db.session.get(Kullanici, kullanici_id)
             if not kullanici:
                 return jsonify({
                     'success': True,
@@ -55,8 +59,8 @@ def register_kullanici_ayarlari_routes(app):
                 'tema_renk_2': kullanici.tema_renk_2 or '#0284C7'
             })
         except Exception as e:
-            print(f"❌ Tema renkleri hatası: {str(e)}")
-            print(traceback.format_exc())
+            logger.error(f"❌ Tema renkleri hatası: {str(e)}")
+            logger.error(traceback.format_exc())
             return jsonify({
                 'success': True,
                 'tema_renk_1': '#2563EB',
@@ -92,8 +96,8 @@ def register_kullanici_ayarlari_routes(app):
                     'success': False,
                     'message': 'Oturum bulunamadı!'
                 }), 401
-            
-            kullanici = Kullanici.query.get(kullanici_id)
+
+            kullanici = db.session.get(Kullanici, kullanici_id)
             if not kullanici:
                 return jsonify({
                     'success': False,
@@ -103,8 +107,10 @@ def register_kullanici_ayarlari_routes(app):
             kullanici.tema_renk_1 = tema_renk_1
             kullanici.tema_renk_2 = tema_renk_2
             db.session.commit()
-            
-            print(f"✅ Tema kaydedildi - Kullanıcı: {kullanici.kullanici_adi}, Badge: {tema_renk_1}, Buton: {tema_renk_2}")
+
+            logger.info(
+                f"✅ Tema kaydedildi - Kullanıcı: {kullanici.kullanici_adi}, Badge: {tema_renk_1}, Buton: {tema_renk_2}"
+            )
             
             return jsonify({
                 'success': True,
@@ -113,8 +119,8 @@ def register_kullanici_ayarlari_routes(app):
             
         except Exception as e:
             db.session.rollback()
-            print(f"❌ Tema kaydetme hatası: {str(e)}")
-            print(traceback.format_exc())
+            logger.error(f"❌ Tema kaydetme hatası: {str(e)}")
+            logger.error(traceback.format_exc())
             return jsonify({
                 'success': False,
                 'message': f'Hata: {str(e)}'

@@ -20,19 +20,25 @@ Roller:
 """
 
 from flask import render_template, request, redirect, url_for, flash, session, jsonify, send_file
-from datetime import datetime, timezone
-import pytz
-from models import db, Kullanici, Oda, Kat, MinibarIslem, MinibarIslemDetay, StokHareket, UrunGrup
+from models import get_kktc_now
+from models import (
+    db,
+    Kullanici,
+    Oda,
+    Kat,
+    Urun,
+    MinibarIslem,
+    MinibarIslemDetay,
+    StokHareket,
+    UrunGrup,
+)
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem, log_hata
 from utils.audit import serialize_model
 
-# KKTC Timezone (Kıbrıs - Europe/Nicosia)
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
+import logging
 
-def get_kktc_now():
-    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
-    return datetime.now(KKTC_TZ)
+logger = logging.getLogger(__name__)
 
 
 def register_admin_minibar_routes(app):
@@ -65,7 +71,7 @@ def register_admin_minibar_routes(app):
             secili_otel = None
             otel_adi = None
             if otel_id:
-                secili_otel = Otel.query.get(otel_id)
+                secili_otel = db.session.get(Otel, otel_id)
                 otel_adi = secili_otel.ad if secili_otel else None
             
             # Stok durumlarını getir - otel_id None ise tüm oteller
@@ -75,7 +81,6 @@ def register_admin_minibar_routes(app):
             if export_format == 'excel':
                 excel_buffer = export_depo_stok_excel(stok_listesi, otel_adi=otel_adi)
                 if excel_buffer:
-                    from datetime import datetime
                     # Dosya adına otel adını ekle
                     if otel_adi:
                         safe_otel_adi = otel_adi.replace(' ', '_').replace('/', '_')
@@ -131,7 +136,6 @@ def register_admin_minibar_routes(app):
     def ilk_stok_yukleme(otel_id):
         """İlk stok yükleme - Excel'den ürün ve adet bilgisi alarak stok girişi yapar"""
         from models import Otel, Urun, UrunStok
-        from datetime import datetime, timezone
         import pandas as pd
         import io
         
@@ -155,9 +159,21 @@ def register_admin_minibar_routes(app):
                     return jsonify({'success': False, 'message': 'Dosya seçilmedi.'}), 400
                 
                 # Dosya uzantısı kontrolü
-                if not file.filename.endswith(('.xlsx', '.xls')):
+                if not (file.filename or "").endswith((".xlsx", ".xls")):
                     return jsonify({'success': False, 'message': 'Sadece Excel dosyaları (.xlsx, .xls) kabul edilir.'}), 400
-                
+
+                # Dosya içerik kontrolü (magic bytes)
+                from utils.validation import validate_file_content
+
+                ext = "xlsx" if (file.filename or "").endswith(".xlsx") else "xls"
+                if not validate_file_content(file.stream, ext):
+                    return jsonify(
+                        {
+                            "success": False,
+                            "message": "Dosya içeriği geçerli bir Excel dosyasına ait değil.",
+                        }
+                    ), 400
+
                 # Önizleme mi yoksa kayıt mı?
                 action = request.form.get('action', 'preview')
                 
@@ -407,7 +423,7 @@ def register_admin_minibar_routes(app):
                     return redirect(url_for('admin_minibar_sifirla'))
                 
                 # Kullanıcıyı getir
-                kullanici = Kullanici.query.get(session['kullanici_id'])
+                kullanici = db.session.get(Kullanici, session["kullanici_id"])
                 
                 # Şifre kontrolü
                 if not kullanici.sifre_kontrol(sifre):
@@ -724,7 +740,7 @@ def register_admin_minibar_routes(app):
                 }), 400
             
             # Kullanıcıyı getir
-            kullanici = Kullanici.query.get(session['kullanici_id'])
+            kullanici = db.session.get(Kullanici, session["kullanici_id"])
             
             # Şifre kontrolü
             if kullanici.sifre_kontrol(password):
@@ -750,3 +766,176 @@ def register_admin_minibar_routes(app):
                 'success': False,
                 'message': 'Bir hata oluştu'
             }), 500
+
+    # ============================================================================
+    # MİNİBAR DURUMLARI VE ÜRÜN GEÇMİŞİ (depo_sorumlusu)
+    # ============================================================================
+
+    @app.route("/minibar-durumlari")
+    @login_required
+    @role_required("depo_sorumlusu")
+    def minibar_durumlari():
+        """Minibar durumları - Kat ve oda seçimine göre minibar içeriğini göster"""
+        kat_id = request.args.get("kat_id", type=int)
+        oda_id = request.args.get("oda_id", type=int)
+
+        # Tüm katları al
+        katlar = Kat.query.filter_by(aktif=True).order_by(Kat.kat_no).all()
+
+        # Seçili kat varsa odaları al
+        odalar = []
+        if kat_id:
+            odalar = (
+                Oda.query.filter_by(kat_id=kat_id, aktif=True)
+                .order_by(Oda.oda_no)
+                .all()
+            )
+
+        # Seçili oda varsa minibar bilgilerini al
+        minibar_bilgisi = None
+        son_islem = None
+        minibar_urunler = []
+
+        if oda_id:
+            oda = db.session.get(Oda, oda_id)
+
+            # Son minibar işlemini bul
+            son_islem = (
+                MinibarIslem.query.filter_by(oda_id=oda_id)
+                .order_by(MinibarIslem.islem_tarihi.desc())
+                .first()
+            )
+
+            if son_islem:
+                # Bu oda için tüm minibar işlemlerini al
+                tum_islemler = (
+                    MinibarIslem.query.filter_by(oda_id=oda_id)
+                    .order_by(MinibarIslem.islem_tarihi.asc())
+                    .all()
+                )
+
+                # Her ürün için toplam hesaplama yap
+                urun_toplam = {}
+                ilk_dolum_yapildi = set()  # İlk dolum yapılan ürünleri takip et
+
+                for islem in tum_islemler:
+                    for detay in islem.detaylar:
+                        urun_id = detay.urun_id
+                        if urun_id not in urun_toplam:
+                            urun_toplam[urun_id] = {
+                                "urun": detay.urun,
+                                "toplam_eklenen_ilk_dolum": 0,  # İlk dolumda eklenen (tüketim değil)
+                                "toplam_eklenen_doldurma": 0,  # Doldurmalarda eklenen (= tüketim)
+                                "toplam_tuketim": 0,
+                                "ilk_baslangic": detay.baslangic_stok,
+                                "son_bitis": detay.bitis_stok,
+                            }
+
+                        # İlk dolum mu kontrol et
+                        if (
+                            islem.islem_tipi == "ilk_dolum"
+                            and urun_id not in ilk_dolum_yapildi
+                        ):
+                            urun_toplam[urun_id]["toplam_eklenen_ilk_dolum"] += (
+                                detay.eklenen_miktar
+                            )
+                            ilk_dolum_yapildi.add(urun_id)
+                        elif islem.islem_tipi in ["doldurma", "kontrol"]:
+                            # Doldurma veya kontrolde eklenen miktar = tüketim
+                            urun_toplam[urun_id]["toplam_eklenen_doldurma"] += (
+                                detay.eklenen_miktar
+                            )
+                            urun_toplam[urun_id]["toplam_tuketim"] += (
+                                detay.eklenen_miktar
+                            )
+
+                        urun_toplam[urun_id]["son_bitis"] = detay.bitis_stok
+
+                # Son işlemdeki ürünleri listele (güncel durumda olan ürünler)
+                for detay in son_islem.detaylar:
+                    urun_id = detay.urun_id
+                    urun_data = urun_toplam.get(urun_id, {})
+
+                    # Toplam eklenen = İlk dolum + Doldurma
+                    ilk_dolum_eklenen = urun_data.get("toplam_eklenen_ilk_dolum", 0)
+                    doldurma_eklenen = urun_data.get("toplam_eklenen_doldurma", 0)
+                    toplam_eklenen = ilk_dolum_eklenen + doldurma_eklenen
+                    toplam_tuketim = urun_data.get("toplam_tuketim", 0)
+
+                    # Mevcut miktar = İlk dolum + Doldurma - Tüketim
+                    # Ama doldurma = tüketim olduğu için: İlk dolum miktarı kadar olmalı
+                    mevcut_miktar = urun_data.get("son_bitis", 0)
+
+                    minibar_urunler.append(
+                        {
+                            "urun": detay.urun,
+                            "baslangic_stok": urun_data.get("ilk_baslangic", 0),
+                            "bitis_stok": urun_data.get("son_bitis", 0),
+                            "eklenen_miktar": toplam_eklenen,
+                            "tuketim": toplam_tuketim,
+                            "mevcut_miktar": mevcut_miktar,
+                        }
+                    )
+
+                minibar_bilgisi = {
+                    "oda": oda,
+                    "son_islem": son_islem,
+                    "urunler": minibar_urunler,
+                    "toplam_urun": len(minibar_urunler),
+                    "toplam_miktar": sum(u["mevcut_miktar"] for u in minibar_urunler),
+                }
+
+        return render_template(
+            "depo_sorumlusu/minibar_durumlari.html",
+            katlar=katlar,
+            odalar=odalar,
+            minibar_bilgisi=minibar_bilgisi,
+            kat_id=kat_id,
+            oda_id=oda_id,
+        )
+
+    @app.route("/minibar-urun-gecmis/<int:oda_id>/<int:urun_id>")
+    @login_required
+    @role_required("depo_sorumlusu")
+    def minibar_urun_gecmis(oda_id, urun_id):
+        """Belirli bir ürünün minibar geçmişini getir"""
+        oda = db.session.get(Oda, oda_id)
+        urun = db.session.get(Urun, urun_id)
+        if not oda or not urun:
+            return jsonify({"success": False, "error": "Oda veya ürün bulunamadı"}), 404
+
+        # JOIN ile tek sorguda al (N+1 sorunu giderildi)
+        results = (
+            db.session.query(MinibarIslem, MinibarIslemDetay)
+            .join(MinibarIslemDetay, MinibarIslemDetay.islem_id == MinibarIslem.id)
+            .filter(
+                MinibarIslem.oda_id == oda_id,
+                MinibarIslemDetay.urun_id == urun_id,
+            )
+            .order_by(MinibarIslem.islem_tarihi.desc())
+            .all()
+        )
+
+        gecmis = []
+        for islem, detay in results:
+            gecmis.append(
+                {
+                    "islem_tarihi": islem.islem_tarihi.strftime("%d.%m.%Y %H:%M"),
+                    "islem_tipi": islem.islem_tipi,
+                    "personel": f"{islem.personel.ad} {islem.personel.soyad}",
+                    "baslangic_stok": detay.baslangic_stok,
+                    "eklenen_miktar": detay.eklenen_miktar,
+                    "tuketim": detay.tuketim,
+                    "bitis_stok": detay.bitis_stok,
+                    "aciklama": islem.aciklama or "-",
+                }
+            )
+
+        return jsonify(
+            {
+                "success": True,
+                "oda": f"{oda.oda_no}",
+                "urun": urun.urun_adi,
+                "gecmis": gecmis,
+            }
+        )

@@ -17,20 +17,18 @@ KAT OPTİMİZASYONU:
 """
 
 from datetime import datetime, date, time, timezone, timedelta
+from typing import List, Dict, Optional
+from dataclasses import dataclass
+from enum import IntEnum
+from collections import defaultdict
 import pytz
+
+from models import db, GunlukGorev, GorevDetay, MisafirKayit, Oda, Kat
 
 # KKTC Timezone
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
 def get_kktc_now():
     return datetime.now(KKTC_TZ)
-from typing import List, Dict, Optional, Tuple
-from dataclasses import dataclass
-from enum import IntEnum
-from collections import defaultdict
-
-from models import (
-    db, GunlukGorev, GorevDetay, MisafirKayit, Oda, Kat, Otel
-)
 
 
 class OncelikTipi(IntEnum):
@@ -72,7 +70,9 @@ class GorevOncelikService:
     DND_TEKRAR_DAKIKA = 120  # DND'den 2 saat sonra tekrar kontrol
     
     @staticmethod
-    def get_oncelikli_gorev_plani(personel_id: int, tarih: date, otel_id: int = None) -> Dict:
+    def get_oncelikli_gorev_plani(
+        personel_id: int, tarih: date, otel_id: int | None = None
+    ) -> Dict:
         """
         Otel için akıllı görev öncelik planı oluşturur.
         
@@ -86,7 +86,7 @@ class GorevOncelikService:
         """
         try:
             simdi = get_kktc_now()
-            bugun = simdi.date()
+            simdi.date()
             
             # otel_id yoksa boş döndür
             if not otel_id:
@@ -189,7 +189,7 @@ class GorevOncelikService:
             }
     
     @staticmethod
-    def _tespit_cakismalar(tarih: date, otel_id: int = None) -> Dict[int, Dict]:
+    def _tespit_cakismalar(tarih: date, otel_id: int | None = None) -> Dict[int, Dict]:
         """
         Departure-Arrival çakışmalarını tespit eder.
         Aynı odada bugün çıkış ve giriş varsa çakışma var demektir.
@@ -481,7 +481,8 @@ class GorevOncelikService:
         try:
             # Önce genel planı al
             from models import Kat
-            kat = Kat.query.get(kat_id)
+
+            kat = db.session.get(Kat, kat_id)
             if not kat:
                 return {'success': False, 'error': 'Kat bulunamadı'}
             

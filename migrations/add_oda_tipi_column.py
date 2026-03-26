@@ -11,7 +11,6 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app import app, db
-from models import Oda
 from sqlalchemy import text
 
 def upgrade():

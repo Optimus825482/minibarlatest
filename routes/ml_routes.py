@@ -1,4 +1,4 @@
-"""
+﻿"""
 ML Routes - ML Anomaly Detection System
 ML dashboard ve API endpoint'leri
 """
@@ -8,8 +8,8 @@ from utils.decorators import login_required, role_required
 from utils.helpers import get_current_user
 from utils.ml.alert_manager import AlertManager
 from utils.ml.metrics_calculator import MetricsCalculator
-from models import db, MLAlert, MLModel, MLMetric, MLTrainingLog
-from datetime import datetime, timezone, timedelta
+from models import db, MLModel, MLMetric, MLTrainingLog
+from datetime import datetime, timedelta
 import logging
 import pytz
 
@@ -87,8 +87,8 @@ def dashboard():
         # Transaction'ı rollback et
         try:
             db.session.rollback()
-        except:
-            pass
+        except Exception:
+            logger.debug("Sessiz hata yakalandi", exc_info=True)
         return render_template('admin/ml_dashboard.html',
                              dashboard_metrics={},
                              alerts=[],
@@ -150,12 +150,9 @@ def api_get_alerts():
         logger.error(f"❌ Alert API hatası: {str(e)}")
         try:
             db.session.rollback()
-        except:
-            pass
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        except Exception:
+            logger.debug("Sessiz hata yakalandi", exc_info=True)
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @ml_bp.route('/api/alerts/<int:alert_id>/read', methods=['POST'])
@@ -166,8 +163,8 @@ def api_mark_alert_read(alert_id):
     try:
         user = get_current_user()
         alert_manager = AlertManager(db)
-        
-        success = alert_manager.mark_as_read(alert_id, user.id)
+
+        success = alert_manager.mark_as_read(alert_id, user.id if user else 0)
         
         if success:
             return jsonify({
@@ -184,12 +181,9 @@ def api_mark_alert_read(alert_id):
         logger.error(f"❌ Alert okuma hatası: {str(e)}")
         try:
             db.session.rollback()
-        except:
-            pass
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        except Exception:
+            logger.debug("Sessiz hata yakalandi", exc_info=True)
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @ml_bp.route('/api/alerts/<int:alert_id>/false-positive', methods=['POST'])
@@ -200,8 +194,8 @@ def api_mark_false_positive(alert_id):
     try:
         user = get_current_user()
         alert_manager = AlertManager(db)
-        
-        success = alert_manager.mark_as_false_positive(alert_id, user.id)
+
+        success = alert_manager.mark_as_false_positive(alert_id, user.id if user else 0)
         
         if success:
             return jsonify({
@@ -218,12 +212,9 @@ def api_mark_false_positive(alert_id):
         logger.error(f"❌ Yanlış pozitif işaretleme hatası: {str(e)}")
         try:
             db.session.rollback()
-        except:
-            pass
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        except Exception:
+            logger.debug("Sessiz hata yakalandi", exc_info=True)
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @ml_bp.route('/api/metrics')
@@ -279,12 +270,9 @@ def api_get_metrics():
         logger.error(f"❌ Metrik API hatası: {str(e)}")
         try:
             db.session.rollback()
-        except:
-            pass
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        except Exception:
+            logger.debug("Sessiz hata yakalandi", exc_info=True)
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @ml_bp.route('/api/model-performance')
@@ -335,12 +323,9 @@ def api_model_performance():
         logger.error(f"❌ Model performans API hatası: {str(e)}")
         try:
             db.session.rollback()
-        except:
-            pass
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        except Exception:
+            logger.debug("Sessiz hata yakalandi", exc_info=True)
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @ml_bp.route('/api/statistics')
@@ -382,12 +367,9 @@ def api_statistics():
         logger.error(f"❌ İstatistik API hatası: {str(e)}")
         try:
             db.session.rollback()
-        except:
-            pass
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        except Exception:
+            logger.debug("Sessiz hata yakalandi", exc_info=True)
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 def infer_entity_type_from_alert(alert_type):
@@ -438,8 +420,8 @@ def get_entity_name(entity_type, entity_id):
         # Transaction'ı rollback et
         try:
             db.session.rollback()
-        except:
-            pass
+        except Exception:
+            logger.debug("Sessiz hata yakalandi", exc_info=True)
         return f"#{entity_id}"
 
 
@@ -475,10 +457,7 @@ def api_collect_data():
     
     except Exception as e:
         logger.error(f"❌ Manuel veri toplama hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @ml_bp.route('/api/run-anomaly-detection', methods=['POST'])
@@ -513,10 +492,7 @@ def api_run_anomaly_detection():
     
     except Exception as e:
         logger.error(f"❌ Manuel sapma analizi hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @ml_bp.route('/api/train-models', methods=['POST'])
@@ -544,10 +520,7 @@ def api_train_models():
     
     except Exception as e:
         logger.error(f"❌ Manuel model eğitimi hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 def register_ml_routes(app):

@@ -11,18 +11,18 @@ import smtplib
 import uuid
 import logging
 import os
+from typing import Optional, Dict, Any, List
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
-from datetime import datetime, timezone
+from datetime import datetime
 import pytz
 
 # KKTC Timezone
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
 def get_kktc_now():
     return datetime.now(KKTC_TZ)
-from typing import Optional, Dict, Any, List
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +43,9 @@ class EmailService:
             bool: Bildirim aktif mi
         """
         try:
-            from models import Otel
-            
-            otel = Otel.query.get(otel_id)
+            from models import db, Otel
+
+            otel = db.session.get(Otel, otel_id)
             if not otel:
                 return False
             
@@ -76,7 +76,7 @@ class EmailService:
             dict: Email ayarları veya None
         """
         try:
-            from models import db, EmailAyarlari
+            from models import EmailAyarlari
             
             ayarlar = EmailAyarlari.query.filter_by(aktif=True).first()
             if not ayarlar:
@@ -454,11 +454,15 @@ class DolulukUyariService:
                     continue  # Zaten uyarı gönderilmiş
                 
                 # Bu otele atanmış depo sorumlularını bul
-                depo_sorumlu_atamalari = KullaniciOtel.query.join(Kullanici).filter(
-                    KullaniciOtel.otel_id == otel.id,
-                    Kullanici.rol == 'depo_sorumlusu',
-                    Kullanici.aktif == True
-                ).all()
+                depo_sorumlu_atamalari = (
+                    KullaniciOtel.query.join(Kullanici)
+                    .filter(
+                        KullaniciOtel.otel_id == otel.id,
+                        Kullanici.rol == "depo_sorumlusu",
+                        Kullanici.aktif,
+                    )
+                    .all()
+                )
                 
                 for atama in depo_sorumlu_atamalari:
                     depo_sorumlusu = atama.kullanici
@@ -596,9 +600,9 @@ Minibar Takip Sistemi
             
             # Sistem yöneticilerini bul (bildirim ayarı aktif olanlar + superadmin her zaman)
             sistem_yoneticileri = Kullanici.query.filter(
-                Kullanici.rol.in_(['sistem_yoneticisi', 'admin', 'superadmin']),
-                Kullanici.aktif == True,
-                Kullanici.email.isnot(None)
+                Kullanici.rol.in_(["sistem_yoneticisi", "admin", "superadmin"]),
+                Kullanici.aktif,
+                Kullanici.email.isnot(None),
             ).all()
             
             # email_bildirim_aktif filtresi (superadmin her zaman alır)

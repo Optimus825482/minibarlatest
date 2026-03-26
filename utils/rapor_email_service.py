@@ -13,11 +13,8 @@ Raporlar:
 """
 
 import logging
-import base64
-from io import BytesIO
-from datetime import datetime, date, timedelta, timezone
+from datetime import datetime, date, timezone
 from typing import Dict, Any, List, Optional
-from decimal import Decimal
 import pytz
 
 # KKTC Timezone
@@ -42,16 +39,14 @@ def get_bildirim_alicilari(ek_kullanicilar=None):
     Returns:
         list: [{email, kullanici_id}]
     """
-    from models import Kullanici
+    from models import db, Kullanici
     
     alicilar = []
     eklenen_emailler = set()
     
     # 1. Superadmin rolündekiler HER ZAMAN alır
     superadminler = Kullanici.query.filter(
-        Kullanici.rol == 'superadmin',
-        Kullanici.aktif == True,
-        Kullanici.email.isnot(None)
+        Kullanici.rol == "superadmin", Kullanici.aktif, Kullanici.email.isnot(None)
     ).all()
     
     for sa in superadminler:
@@ -61,10 +56,10 @@ def get_bildirim_alicilari(ek_kullanicilar=None):
     
     # 2. Bildirim ayarları sayfasında aktif olan kullanıcılar (superadmin hariç, zaten eklendi)
     aktif_bildirim_kullanicilari = Kullanici.query.filter(
-        Kullanici.rol != 'superadmin',
-        Kullanici.aktif == True,
+        Kullanici.rol != "superadmin",
+        Kullanici.aktif,
         Kullanici.email.isnot(None),
-        Kullanici.email_bildirim_aktif == True
+        Kullanici.email_bildirim_aktif,
     ).all()
     
     for k in aktif_bildirim_kullanicilari:
@@ -77,7 +72,7 @@ def get_bildirim_alicilari(ek_kullanicilar=None):
         for ek in ek_kullanicilar:
             if ek.get('email') and ek['email'] not in eklenen_emailler:
                 # Bu kullanıcının bildirim ayarını kontrol et
-                kullanici = Kullanici.query.get(ek.get('kullanici_id'))
+                kullanici = db.session.get(Kullanici, ek.get("kullanici_id"))
                 if kullanici and (kullanici.rol == 'superadmin' or kullanici.email_bildirim_aktif):
                     alicilar.append(ek)
                     eklenen_emailler.add(ek['email'])
@@ -101,13 +96,10 @@ class RaporEmailService:
             dict: Rapor verileri
         """
         try:
-            from models import (
-                db, Kullanici, GunlukGorev, GorevDetay, Otel
-            )
-            from sqlalchemy import func
+            from models import db, Kullanici, GunlukGorev
             
             # Kat sorumlusunu al
-            kat_sorumlusu = Kullanici.query.get(kat_sorumlusu_id)
+            kat_sorumlusu = db.session.get(Kullanici, kat_sorumlusu_id)
             if not kat_sorumlusu:
                 return {'success': False, 'message': 'Kat sorumlusu bulunamadı'}
             
@@ -194,13 +186,20 @@ class RaporEmailService:
         """
         try:
             from models import (
-                db, Otel, Oda, Kat, MinibarIslem, MinibarIslemDetay, 
-                Urun, PersonelZimmet, PersonelZimmetDetay, Kullanici
+                db,
+                Otel,
+                Oda,
+                Kat,
+                MinibarIslem,
+                MinibarIslemDetay,
+                Urun,
+                PersonelZimmet,
+                Kullanici,
             )
             from sqlalchemy import func
             
             # Otel bilgisi
-            otel = Otel.query.get(otel_id)
+            otel = db.session.get(Otel, otel_id)
             if not otel:
                 return {'success': False, 'message': 'Otel bulunamadı'}
             
@@ -257,8 +256,8 @@ class RaporEmailService:
             kat_sorumlusu_stok = []
             kat_sorumlulari = Kullanici.query.filter(
                 Kullanici.otel_id == otel_id,
-                Kullanici.rol == 'kat_sorumlusu',
-                Kullanici.aktif == True
+                Kullanici.rol == "kat_sorumlusu",
+                Kullanici.aktif,
             ).all()
             
             for ks in kat_sorumlulari:
@@ -841,11 +840,11 @@ class RaporEmailService:
             dict: Gönderim sonucu
         """
         try:
-            from models import Kullanici, KullaniciOtel
+            from models import db, Kullanici
             from utils.email_service import EmailService
             
             # Kat sorumlusunun otelini bul ve bildirim kontrolü yap
-            kat_sorumlusu = Kullanici.query.get(kat_sorumlusu_id)
+            kat_sorumlusu = db.session.get(Kullanici, kat_sorumlusu_id)
             if kat_sorumlusu and kat_sorumlusu.otel_id:
                 if not EmailService.is_otel_bildirim_aktif(kat_sorumlusu.otel_id, 'rapor'):
                     logger.info(f"Kat sorumlusu {kat_sorumlusu_id} oteli için rapor bildirimi kapalı, atlanıyor")
@@ -861,7 +860,7 @@ class RaporEmailService:
             html_content = RaporEmailService.generate_gorev_raporu_html(rapor_data)
             
             # Kat sorumlusunun bağlı olduğu depo sorumlusunu bul
-            kat_sorumlusu = Kullanici.query.get(kat_sorumlusu_id)
+            kat_sorumlusu = db.session.get(Kullanici, kat_sorumlusu_id)
             if not kat_sorumlusu:
                 return {'success': False, 'message': 'Kat sorumlusu bulunamadı'}
             
@@ -951,12 +950,16 @@ class RaporEmailService:
             
             # Bu otele atanmış depo sorumluları (ek kullanıcı olarak)
             ek = []
-            depo_atamalari = KullaniciOtel.query.join(Kullanici).filter(
-                KullaniciOtel.otel_id == otel_id,
-                Kullanici.rol == 'depo_sorumlusu',
-                Kullanici.aktif == True,
-                Kullanici.email.isnot(None)
-            ).all()
+            depo_atamalari = (
+                KullaniciOtel.query.join(Kullanici)
+                .filter(
+                    KullaniciOtel.otel_id == otel_id,
+                    Kullanici.rol == "depo_sorumlusu",
+                    Kullanici.aktif,
+                    Kullanici.email.isnot(None),
+                )
+                .all()
+            )
             
             for atama in depo_atamalari:
                 if atama.kullanici.email:
@@ -1023,13 +1026,12 @@ class RaporEmailService:
             dict: Gönderim sonucu
         """
         try:
-            from models import Kullanici, KullaniciOtel, Otel
+            from models import Kullanici
             from utils.email_service import EmailService
             
             # Tüm aktif kat sorumlularını al
             kat_sorumlulari = Kullanici.query.filter(
-                Kullanici.rol == 'kat_sorumlusu',
-                Kullanici.aktif == True
+                Kullanici.rol == "kat_sorumlusu", Kullanici.aktif
             ).all()
             
             if not kat_sorumlulari:
@@ -1119,7 +1121,7 @@ Genel Tamamlanma Oranı: %{genel_oran:.1f}"""
             dict: Gönderim sonucu
         """
         try:
-            from models import Kullanici, KullaniciOtel, Otel
+            from models import Otel
             from utils.email_service import EmailService
             
             # Tüm aktif otelleri al
@@ -1362,7 +1364,12 @@ Toplam Tutar: ₺{toplam_tutar:,.2f}"""
         return html
 
     @staticmethod
-    def _generate_toplu_minibar_html(raporlar: List[Dict], rapor_tarihi: date, cross_tab_data: List[Dict] = None, otel_adlari: List[str] = None) -> str:
+    def _generate_toplu_minibar_html(
+        raporlar: List[Dict],
+        rapor_tarihi: date,
+        cross_tab_data: List[Dict] | None = None,
+        otel_adlari: List[str] | None = None,
+    ) -> str:
         """Toplu minibar sarfiyat raporu HTML'i oluştur - Ürün bazlı cross-tab tablo ile"""
         
         # Genel istatistikler

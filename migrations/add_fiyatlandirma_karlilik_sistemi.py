@@ -6,7 +6,6 @@ Gereksinimler: 20.1, 20.2, 20.3
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Proje kök dizinini Python path'e ekle
@@ -17,7 +16,6 @@ from flask import Flask
 from models import db
 from sqlalchemy import text
 from dotenv import load_dotenv
-from datetime import datetime, timezone
 
 # .env dosyasını yükle
 load_dotenv()

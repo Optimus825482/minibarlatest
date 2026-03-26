@@ -3,13 +3,26 @@ Backup Restore Routes
 Yedek yükleme ve geri yükleme sayfası
 """
 
+import logging
+import re
+import os
+
 from flask import Blueprint, render_template, request, jsonify, session
 from werkzeug.utils import secure_filename
-from sqlalchemy import create_engine, text, inspect, MetaData
+from sqlalchemy import text, inspect
 from models import db
-import os
-import re
-import tempfile
+
+logger = logging.getLogger(__name__)
+
+# SQL identifier pattern - only allow alphanumeric and underscore
+_SAFE_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _validate_table_name(table_name: str) -> str:
+    """Validate table name against safe identifier pattern to prevent SQL injection."""
+    if not table_name or not _SAFE_IDENTIFIER.match(table_name):
+        raise ValueError(f"Invalid table name: {table_name!r}")
+    return table_name
 
 restore_bp = Blueprint('restore', __name__)
 
@@ -43,7 +56,7 @@ def parse_sql_backup(filepath):
         
         return tables
     except Exception as e:
-        print(f"Parse error: {e}")
+        logger.error(f"Parse error: {e}")
         return {}
 
 def get_table_dependencies():
@@ -64,12 +77,12 @@ def get_table_dependencies():
                 
                 if deps:
                     dependencies[table_name] = deps
-            except:
+            except Exception:
                 continue
         
         return dependencies
     except Exception as e:
-        print(f"Dependency error: {e}")
+        logger.error(f"Dependency error: {e}")
         return {}
 
 def get_current_table_counts():
@@ -84,12 +97,12 @@ def get_current_table_counts():
                     result = conn.execute(text(f"SELECT COUNT(*) FROM {table_name}"))
                     count = result.scalar()
                     counts[table_name] = count if count else 0
-                except:
+                except Exception:
                     counts[table_name] = 0
         
         return counts
     except Exception as e:
-        print(f"Count error: {e}")
+        logger.error(f"Count error: {e}")
         return {}
 
 @restore_bp.route('/restore_backup')
@@ -113,7 +126,7 @@ def upload_backup():
         if not allowed_file(file.filename):
             return jsonify({'error': 'Sadece .sql dosyaları yüklenebilir'}), 400
         # Dosyayı kaydet (chunk olarak)
-        filename = secure_filename(file.filename)
+        filename = secure_filename(file.filename)  # type: ignore[arg-type]
         filepath = os.path.join(UPLOAD_FOLDER, filename)
         
         # Chunk olarak kaydet (büyük dosyalar için)
@@ -153,11 +166,12 @@ def upload_backup():
             'filename': filename,
             'comparison': comparison
         })
-    
-    except Exception as e:
+
+    except Exception:
         import traceback
+
         traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": "Sunucu hatasi olustu"}), 500
 
 @restore_bp.route('/api/restore_table', methods=['POST'])
 def restore_table():
@@ -168,7 +182,17 @@ def restore_table():
     
     if not table_name:
         return jsonify({'error': 'Tablo adı gerekli'}), 400
-    
+
+    # Validate table name against allowed DB tables to prevent SQL injection
+    try:
+        safe_table = _validate_table_name(table_name)
+    except ValueError:
+        return jsonify({"error": "Geçersiz tablo adı"}), 400
+
+    inspector = inspect(db.engine)
+    if safe_table not in inspector.get_table_names():
+        return jsonify({"error": "Tablo bulunamadı"}), 404
+
     filepath = session.get('backup_filepath')
     
     if not filepath or not os.path.exists(filepath):
@@ -177,7 +201,7 @@ def restore_table():
     try:
         # Önce tabloyu temizle
         with db.engine.connect() as conn:
-            conn.execute(text(f"TRUNCATE TABLE {table_name} CASCADE"))
+            conn.execute(text(f"TRUNCATE TABLE {safe_table} CASCADE"))
             conn.commit()
         
         # SQL dosyasını satır satır oku ve sadece ilgili tabloyu işle
@@ -205,7 +229,7 @@ def restore_table():
                                 conn.execute(text(statement))
                                 conn.commit()
                                 success_count += 1
-                        except Exception as e:
+                        except Exception:
                             error_count += 1
                             # Hata olursa devam et
                             pass
@@ -219,11 +243,12 @@ def restore_table():
             'restored_count': success_count,
             'error_count': error_count
         })
-        
-    except Exception as e:
+
+    except Exception:
         import traceback
+
         traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": "Sunucu hatasi olustu"}), 500
 
 @restore_bp.route('/api/restore_all', methods=['POST'])
 def restore_all():
@@ -262,15 +287,16 @@ def restore_all():
                     success_count += 1
             except Exception as e:
                 error_count += 1
-                print(f"Statement error: {e}")
+                logger.error(f"Statement error: {e}")
                 continue
         
         return jsonify({
             'success': True,
             'message': f'Restore tamamlandı! Başarılı: {success_count}, Hatalı: {error_count}'
         })
-        
-    except Exception as e:
+
+    except Exception:
         import traceback
+
         traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": "Sunucu hatasi olustu"}), 500

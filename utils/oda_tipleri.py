@@ -60,10 +60,10 @@ def get_oda_tipleri_by_otel_id(otel_id):
     Returns:
         list: Oda tipleri listesi
     """
-    from models import Otel
+    from models import db, Otel
     
     try:
-        otel = Otel.query.get(otel_id)
+        otel = db.session.get(Otel, otel_id)
         if otel:
             return get_oda_tipleri_by_otel(otel.ad)
         return []

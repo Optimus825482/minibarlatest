@@ -33,7 +33,6 @@ import logging
 import hashlib
 from functools import wraps
 from typing import Optional, Any, Callable
-from flask import current_app
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +81,7 @@ class CacheManager:
     ]
     
     def __init__(self, redis_client=None):
-        self.redis = redis_client
+        self.redis: Any = redis_client
         self.enabled = redis_client is not None
         
     def _make_key(self, key: str, *args) -> str:
@@ -236,7 +235,7 @@ def init_cache(app):
     
     # Cache'i aktifleştir mi?
     cache_enabled = app.config.get('CACHE_ENABLED', True)
-    is_development = app.config.get('IS_DEVELOPMENT', False)
+    app.config.get("IS_DEVELOPMENT", False)
     
     if not cache_enabled:
         logger.info("ℹ️ Cache devre dışı (config)")
@@ -274,7 +273,7 @@ def init_cache(app):
         return cache_manager
 
 
-def cached_master_data(timeout: Optional[int] = None, key_prefix: str = None):
+def cached_master_data(timeout: Optional[int] = None, key_prefix: str | None = None):
     """
     Master data için cache decorator.
     

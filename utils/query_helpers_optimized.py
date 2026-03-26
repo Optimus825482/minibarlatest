@@ -3,10 +3,10 @@ Query Optimization Helpers - N+1 Problem Çözümleri
 Erkan için - Eager Loading ve Optimized Query'ler
 """
 
-from sqlalchemy.orm import joinedload, selectinload, subqueryload
+from sqlalchemy.orm import joinedload, selectinload
 from models import (
-    db, PersonelZimmet, PersonelZimmetDetay, MinibarIslem, MinibarIslemDetay,
-    StokHareket, Urun, Kullanici, Oda, Kat, UrunGrup
+    PersonelZimmet, PersonelZimmetDetay, MinibarIslem, MinibarIslemDetay,
+    StokHareket, Urun, Oda, Kat
 )
 import logging
 

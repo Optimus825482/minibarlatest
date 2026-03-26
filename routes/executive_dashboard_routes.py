@@ -1,9 +1,9 @@
-"""
+﻿"""
 Executive Dashboard Routes
 Üst yönetici paneli route'ları
 """
 
-from flask import render_template, jsonify, request, session
+from flask import render_template, jsonify, request
 from utils.decorators import login_required, role_required
 from utils.executive_dashboard_service import ExecutiveDashboardService
 import logging
@@ -57,7 +57,7 @@ def register_executive_dashboard_routes(app):
             return jsonify({'success': True, 'data': data})
         except Exception as e:
             logger.error(f"KPI API hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({'success': False, 'error': 'Sunucu hatasi olustu'}), 500
 
     @app.route('/api/executive/activity-feed')
     @login_required
@@ -70,7 +70,7 @@ def register_executive_dashboard_routes(app):
             return jsonify({'success': True, 'data': activities})
         except Exception as e:
             logger.error(f"Activity feed API hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({'success': False, 'error': 'Sunucu hatasi olustu'}), 500
 
     @app.route('/api/executive/consumption-trends')
     @login_required
@@ -83,7 +83,7 @@ def register_executive_dashboard_routes(app):
             return jsonify({'success': True, 'data': data})
         except Exception as e:
             logger.error(f"Consumption trends API hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({'success': False, 'error': 'Sunucu hatasi olustu'}), 500
 
     @app.route('/api/executive/top-products')
     @login_required
@@ -97,7 +97,7 @@ def register_executive_dashboard_routes(app):
             return jsonify({'success': True, 'data': data})
         except Exception as e:
             logger.error(f"Top products API hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({'success': False, 'error': 'Sunucu hatasi olustu'}), 500
 
     @app.route('/api/executive/room-controls')
     @login_required
@@ -110,7 +110,7 @@ def register_executive_dashboard_routes(app):
             return jsonify({'success': True, 'data': data})
         except Exception as e:
             logger.error(f"Room controls API hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({'success': False, 'error': 'Sunucu hatasi olustu'}), 500
 
     @app.route('/api/executive/hourly-activity')
     @login_required
@@ -123,7 +123,7 @@ def register_executive_dashboard_routes(app):
             return jsonify({'success': True, 'data': data})
         except Exception as e:
             logger.error(f"Hourly activity API hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({'success': False, 'error': 'Sunucu hatasi olustu'}), 500
 
     @app.route('/api/executive/hotel-comparison')
     @login_required
@@ -144,7 +144,7 @@ def register_executive_dashboard_routes(app):
             ]})
         except Exception as e:
             logger.error(f"Hotel comparison API hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({'success': False, 'error': 'Sunucu hatasi olustu'}), 500
 
     @app.route('/api/executive/task-completion')
     @login_required
@@ -157,7 +157,7 @@ def register_executive_dashboard_routes(app):
             return jsonify({'success': True, 'data': data})
         except Exception as e:
             logger.error(f"Task completion API hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({'success': False, 'error': 'Sunucu hatasi olustu'}), 500
 
     @app.route('/api/executive/summary-cards')
     @login_required
@@ -169,4 +169,4 @@ def register_executive_dashboard_routes(app):
             return jsonify({'success': True, 'data': data})
         except Exception as e:
             logger.error(f"Summary cards API hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({'success': False, 'error': 'Sunucu hatasi olustu'}), 500

@@ -1,0 +1,4 @@
+{
+  "exclude": ["migrations/", "migrations_manual/", ".venv/"],
+  "ignore": ["migrations/", "migrations_manual/", ".venv/"]
+}

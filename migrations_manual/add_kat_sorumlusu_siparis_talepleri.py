@@ -4,7 +4,6 @@ Tarih: 2025-11-18
 """
 
 from app import app, db
-from models import KatSorumlusuSiparisTalebi, KatSorumlusuSiparisTalepDetay
 
 def upgrade():
     """Tabloları oluştur"""

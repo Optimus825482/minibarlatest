@@ -3,21 +3,28 @@ Görevlendirme Sistemi - GorevService
 Günlük minibar kontrol görevlerinin oluşturulması ve yönetimi
 """
 
-from datetime import datetime, date, time, timezone, timedelta
+import logging
+from datetime import datetime, date, time, timezone
+from typing import List, Dict, Optional, Tuple
 import pytz
+from sqlalchemy.orm import joinedload
+
+from models import (
+    db,
+    GunlukGorev,
+    GorevDetay,
+    DNDKontrol,
+    GorevDurumLog,
+    MisafirKayit,
+    Oda,
+)
 
 # KKTC Timezone
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
 def get_kktc_now():
     return datetime.now(KKTC_TZ)
-from typing import List, Dict, Optional, Tuple
-from sqlalchemy import and_, or_, func
-from sqlalchemy.orm import joinedload, subqueryload
 
-from models import (
-    db, GunlukGorev, GorevDetay, DNDKontrol, GorevDurumLog,
-    MisafirKayit, Kullanici, Oda, Otel
-)
+logger = logging.getLogger(__name__)
 
 # Görev durumları sabitleri
 COMPLETED_STATUS = 'completed'
@@ -75,7 +82,8 @@ class GorevService:
                 try:
                     from utils.bildirim_service import gorev_olusturuldu_bildirimi
                     from models import Otel
-                    otel = Otel.query.get(otel_id)
+
+                    otel = db.session.get(Otel, otel_id)
                     otel_adi = otel.ad if otel else f"Otel #{otel_id}"
                     gorev_olusturuldu_bildirimi(
                         otel_id=otel_id,
@@ -83,7 +91,7 @@ class GorevService:
                         gorev_sayisi=result['toplam_oda_sayisi']
                     )
                 except Exception as bildirim_err:
-                    print(f"Bildirim gönderme hatası: {bildirim_err}")
+                    logger.error(f"Bildirim gönderme hatası: {bildirim_err}")
             
             return result
             
@@ -335,7 +343,9 @@ class GorevService:
             raise Exception(f"Departures görev oluşturma hatası: {str(e)}")
     
     @staticmethod
-    def complete_task(gorev_detay_id: int, personel_id: int, notlar: str = None) -> bool:
+    def complete_task(
+        gorev_detay_id: int, personel_id: int, notlar: str | None = None
+    ) -> bool:
         """
         Görevi tamamlar.
         
@@ -348,7 +358,7 @@ class GorevService:
             bool: Başarılı ise True
         """
         try:
-            detay = GorevDetay.query.get(gorev_detay_id)
+            detay = db.session.get(GorevDetay, gorev_detay_id)
             if not detay:
                 raise ValueError("Görev detayı bulunamadı")
             
@@ -382,11 +392,12 @@ class GorevService:
             try:
                 from utils.bildirim_service import gorev_tamamlandi_bildirimi
                 from models import Oda, Kullanici, Kat
-                oda = Oda.query.get(detay.oda_id)
-                personel = Kullanici.query.get(personel_id)
+
+                oda = db.session.get(Oda, detay.oda_id)
+                personel = db.session.get(Kullanici, personel_id)
                 if oda and personel:
                     # Kat üzerinden otel_id al (lazy loading sorunu için)
-                    kat = Kat.query.get(oda.kat_id)
+                    kat = db.session.get(Kat, oda.kat_id)
                     otel_id = kat.otel_id if kat else None
                     if otel_id:
                         personel_adi = f"{personel.ad} {personel.soyad}"
@@ -398,9 +409,11 @@ class GorevService:
                             oda_id=detay.oda_id,
                             gonderen_id=personel_id
                         )
-                        print(f"✅ Görev tamamlandı bildirimi gönderildi: Oda {oda.oda_no}")
+                        logger.info(
+                            f"✅ Görev tamamlandı bildirimi gönderildi: Oda {oda.oda_no}"
+                        )
             except Exception as bildirim_err:
-                print(f"❌ Bildirim gönderme hatası: {bildirim_err}")
+                logger.error(f"❌ Bildirim gönderme hatası: {bildirim_err}")
                 import traceback
                 traceback.print_exc()
             
@@ -411,7 +424,9 @@ class GorevService:
             raise Exception(f"Görev tamamlama hatası: {str(e)}")
     
     @staticmethod
-    def mark_dnd(gorev_detay_id: int, personel_id: int, notlar: str = None) -> Dict:
+    def mark_dnd(
+        gorev_detay_id: int, personel_id: int, notlar: str | None = None
+    ) -> Dict:
         """
         Odayı DND olarak işaretler.
         DND odaları tamamlanmış sayılmaz, sadece kontrol kaydı tutulur.
@@ -426,7 +441,7 @@ class GorevService:
             Dict: DND durumu bilgileri
         """
         try:
-            detay = GorevDetay.query.get(gorev_detay_id)
+            detay = db.session.get(GorevDetay, gorev_detay_id)
             if not detay:
                 raise ValueError("Görev detayı bulunamadı")
             
@@ -480,11 +495,12 @@ class GorevService:
             try:
                 from utils.bildirim_service import dnd_bildirimi
                 from models import Oda, Kullanici, Kat
-                oda = Oda.query.get(detay.oda_id)
-                personel = Kullanici.query.get(personel_id)
+
+                oda = db.session.get(Oda, detay.oda_id)
+                personel = db.session.get(Kullanici, personel_id)
                 if oda and personel:
                     # Kat üzerinden otel_id al (lazy loading sorunu için)
-                    kat = Kat.query.get(oda.kat_id)
+                    kat = db.session.get(Kat, oda.kat_id)
                     otel_id = kat.otel_id if kat else None
                     if otel_id:
                         personel_adi = f"{personel.ad} {personel.soyad}"
@@ -496,9 +512,9 @@ class GorevService:
                             oda_id=detay.oda_id,
                             gonderen_id=personel_id
                         )
-                        print(f"✅ DND bildirimi gönderildi: Oda {oda.oda_no}")
+                        logger.info(f"✅ DND bildirimi gönderildi: Oda {oda.oda_no}")
             except Exception as bildirim_err:
-                print(f"❌ DND bildirim gönderme hatası: {bildirim_err}")
+                logger.error(f"❌ DND bildirim gönderme hatası: {bildirim_err}")
                 import traceback
                 traceback.print_exc()
             
@@ -732,7 +748,7 @@ class GorevService:
             gorev_id: Ana görev ID
         """
         try:
-            gorev = GunlukGorev.query.get(gorev_id)
+            gorev = db.session.get(GunlukGorev, gorev_id)
             if not gorev:
                 return
             
@@ -941,7 +957,7 @@ class GorevService:
             
             # Boş kalan GunlukGorev kayıtlarını kontrol et ve sil
             for gorev_id in etkilenen_gorev_ids:
-                gorev = GunlukGorev.query.get(gorev_id)
+                gorev = db.session.get(GunlukGorev, gorev_id)
                 if gorev:
                     # Kalan detay sayısını kontrol et
                     kalan_detay_sayisi = GorevDetay.query.filter(

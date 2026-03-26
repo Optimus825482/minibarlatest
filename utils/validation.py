@@ -67,7 +67,7 @@ class InputValidator:
             return ""
     
     @staticmethod
-    def sanitize_html(value: str, allowed_tags: List[str] = None) -> str:
+    def sanitize_html(value: str, allowed_tags: List[str] | None = None) -> str:
         """
         HTML içeriğini temizle
         
@@ -188,7 +188,9 @@ class InputValidator:
             return False
     
     @staticmethod
-    def validate_integer(value: Any, min_val: int = None, max_val: int = None) -> bool:
+    def validate_integer(
+        value: Any, min_val: int | None = None, max_val: int | None = None
+    ) -> bool:
         """
         Integer validasyonu
         
@@ -345,7 +347,7 @@ class FiyatValidation:
             tuple: (geçerli_mi, hata_mesajı)
         """
         try:
-            from datetime import datetime, timezone
+            from datetime import datetime
             
             # None kontrolü
             if baslangic_tarihi is None:
@@ -439,3 +441,40 @@ def get_fiyat_validator() -> FiyatValidation:
         FiyatValidation: Fiyat validator instance
     """
     return _fiyat_validator
+
+
+# Magic bytes for file type validation
+ALLOWED_FILE_SIGNATURES = {
+    "xlsx": [b"\x50\x4b\x03\x04"],  # ZIP-based (OOXML)
+    "xls": [b"\xd0\xcf\x11\xe0"],  # OLE2 Compound Document
+    "sql": None,  # Text-based, no magic bytes
+}
+
+
+def validate_file_content(file_stream, expected_type: str) -> bool:
+    """
+    Dosya iceriginin beklenen tiple uyumlu olup olmadigini kontrol eder.
+    Magic bytes kontrolu yapar.
+
+    Args:
+        file_stream: Dosya stream nesnesi (read/seek desteklemeli)
+        expected_type: Beklenen dosya tipi ('xlsx', 'xls', 'sql')
+
+    Returns:
+        bool: Dosya icerigi beklenen tiple uyumlu mu
+    """
+    signatures = ALLOWED_FILE_SIGNATURES.get(expected_type)
+    if signatures is None:
+        return True  # Text-based dosyalar icin magic bytes kontrolu yok
+
+    try:
+        pos = file_stream.tell()
+        header = file_stream.read(8)
+        file_stream.seek(pos)
+
+        if not header:
+            return False
+
+        return any(header.startswith(sig) for sig in signatures)
+    except Exception:
+        return False

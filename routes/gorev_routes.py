@@ -3,14 +3,27 @@ Görevlendirme Sistemi - Routes
 Kat sorumlusu, depo sorumlusu ve sistem yöneticisi için görev route'ları
 """
 
-from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash
-from datetime import datetime, date, timezone, timedelta
+import logging
 from functools import wraps
 
-from models import db, Kullanici, GunlukGorev, GorevDetay, YuklemeGorev
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    jsonify,
+    session,
+    redirect,
+    url_for,
+    flash,
+)
+from datetime import datetime, date, timedelta
+
+from models import db, Kullanici, GunlukGorev, GorevDetay
 from utils.gorev_service import GorevService
 from utils.yukleme_gorev_service import YuklemeGorevService
 from utils.bildirim_service import BildirimService
+
+logger = logging.getLogger(__name__)
 
 gorev_bp = Blueprint('gorev', __name__, url_prefix='/gorevler')
 
@@ -38,21 +51,23 @@ def rol_gerekli(*roller):
             if 'kullanici_id' not in session:
                 flash('Bu sayfaya erişmek için giriş yapmalısınız.', 'warning')
                 return redirect(url_for('login'))
-            
-            kullanici = Kullanici.query.get(session['kullanici_id'])
+
+            kullanici = db.session.get(Kullanici, session["kullanici_id"])
             if not kullanici or kullanici.rol not in roller:
-                flash('Bu sayfaya erişim yetkiniz yok.', 'danger')
-                return redirect(url_for('dashboard'))
-            
+                flash("Bu sayfaya erişim yetkiniz yok.", "danger")
+                return redirect(url_for("dashboard"))
+
             return f(*args, **kwargs)
+
         return decorated_function
+
     return decorator
 
 
 def get_current_user():
     """Mevcut kullanıcıyı getirir"""
-    if 'kullanici_id' in session:
-        return Kullanici.query.get(session['kullanici_id'])
+    if "kullanici_id" in session:
+        return db.session.get(Kullanici, session["kullanici_id"])
     return None
 
 
@@ -60,9 +75,10 @@ def get_current_user():
 # KAT SORUMLUSU ROUTE'LARI
 # ============================================
 
-@gorev_bp.route('/')
+
+@gorev_bp.route("/")
 @login_required
-@rol_gerekli('kat_sorumlusu', 'depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+@rol_gerekli("kat_sorumlusu", "depo_sorumlusu", "sistem_yoneticisi", "admin")
 def gorev_listesi():
     """
     Günlük görev listesi sayfası
@@ -70,63 +86,63 @@ def gorev_listesi():
     """
     try:
         from utils.authorization import get_kullanici_otelleri
-        
+
         kullanici = get_current_user()
-        tarih_str = request.args.get('tarih', date.today().isoformat())
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
-        
+        tarih_str = request.args.get("tarih", date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, "%Y-%m-%d").date()
+
         # Kullanıcının otelini al (OTEL BAZLI görevler için)
         kullanici_otelleri = get_kullanici_otelleri()
         otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
-        
+
         if not otel_id:
-            flash('Otel atamanız bulunamadı.', 'danger')
-            return redirect(url_for('dashboard'))
-        
+            flash("Otel atamanız bulunamadı.", "danger")
+            return redirect(url_for("dashboard"))
+
         # Görev özetini al (OTEL BAZLI)
         ozet = GorevService.get_task_summary(otel_id, tarih)
-        
+
         # Bekleyen görevleri al (OTEL BAZLI)
         bekleyen = GorevService.get_pending_tasks(otel_id, tarih)
-        
+
         # Öncelik sıralaması: Önce kata göre, sonra Arrivals/Departures zamana göre karışık, sonra In House
         def oncelik_sirala(g):
-            kat = g.get('kat_no') or 999
-            tip = g.get('gorev_tipi', '')
+            kat = g.get("kat_no") or 999
+            tip = g.get("gorev_tipi", "")
             # Arrivals ve Departures için zaman bazlı sıralama (önce)
-            if tip == 'arrival_kontrol' and g.get('varis_saati'):
-                return (kat, 0, g.get('varis_saati', '99:99:99'))
-            elif tip == 'departure_kontrol' and g.get('cikis_saati'):
-                return (kat, 0, g.get('cikis_saati', '99:99:99'))
+            if tip == "arrival_kontrol" and g.get("varis_saati"):
+                return (kat, 0, g.get("varis_saati", "99:99:99"))
+            elif tip == "departure_kontrol" and g.get("cikis_saati"):
+                return (kat, 0, g.get("cikis_saati", "99:99:99"))
             # In House en sona (öncelik sırasına göre)
-            return (kat, 1, str(g.get('oncelik_sirasi') or 999).zfill(5))
-        
+            return (kat, 1, str(g.get("oncelik_sirasi") or 999).zfill(5))
+
         bekleyen.sort(key=oncelik_sirala)
-        
+
         # Tamamlanan görevleri al (OTEL BAZLI)
         tamamlanan = GorevService.get_completed_tasks(otel_id, tarih)
-        
+
         # DND görevleri al (OTEL BAZLI)
         dnd_gorevler = GorevService.get_dnd_tasks(otel_id, tarih)
-        
+
         return render_template(
-            'kat_sorumlusu/gorev_listesi.html',
+            "kat_sorumlusu/gorev_listesi.html",
             ozet=ozet,
             bekleyen=bekleyen,
             tamamlanan=tamamlanan,
             dnd_gorevler=dnd_gorevler,
             tarih=tarih,
-            kullanici=kullanici
+            kullanici=kullanici,
         )
-        
+
     except Exception as e:
-        flash(f'Görev listesi yüklenirken hata oluştu: {str(e)}', 'danger')
-        return redirect(url_for('dashboard'))
+        flash(f"Görev listesi yüklenirken hata oluştu: {str(e)}", "danger")
+        return redirect(url_for("dashboard"))
 
 
-@gorev_bp.route('/yonetim')
+@gorev_bp.route("/yonetim")
 @login_required
-@rol_gerekli('kat_sorumlusu', 'depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+@rol_gerekli("kat_sorumlusu", "depo_sorumlusu", "sistem_yoneticisi", "admin")
 def gorev_yonetimi():
     """
     Gelişmiş görev yönetim sayfası - Filtreleme, yazdırma ve detaylı görünüm
@@ -134,74 +150,82 @@ def gorev_yonetimi():
     """
     try:
         from utils.authorization import get_kullanici_otelleri
-        
+
         kullanici = get_current_user()
-        tarih_str = request.args.get('tarih', date.today().isoformat())
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
-        filtre_durum = request.args.get('durum', '')
-        filtre_tip = request.args.get('tip', '')
-        
+        tarih_str = request.args.get("tarih", date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, "%Y-%m-%d").date()
+        filtre_durum = request.args.get("durum", "")
+        filtre_tip = request.args.get("tip", "")
+
         # Kullanıcının otelini al (OTEL BAZLI görevler için)
         kullanici_otelleri = get_kullanici_otelleri()
         otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
-        
+
         if not otel_id:
-            flash('Otel atamanız bulunamadı.', 'danger')
-            return redirect(url_for('dashboard'))
-        
+            flash("Otel atamanız bulunamadı.", "danger")
+            return redirect(url_for("dashboard"))
+
         # Gün adını hesapla
-        gun_adlari = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']
+        gun_adlari = [
+            "Pazartesi",
+            "Salı",
+            "Çarşamba",
+            "Perşembe",
+            "Cuma",
+            "Cumartesi",
+            "Pazar",
+        ]
         gun_adi = gun_adlari[tarih.weekday()]
-        
+
         # Görev özetini al (OTEL BAZLI)
         ozet = GorevService.get_task_summary(otel_id, tarih)
-        
+
         # Tüm görevleri al ve birleştir (OTEL BAZLI)
         bekleyen = GorevService.get_pending_tasks(otel_id, tarih)
         tamamlanan = GorevService.get_completed_tasks(otel_id, tarih)
-        
+
         # Tüm görevleri birleştir
         tum_gorevler = bekleyen + tamamlanan
-        
+
         # Filtreleme uygula
         if filtre_durum:
-            tum_gorevler = [g for g in tum_gorevler if g['durum'] == filtre_durum]
+            tum_gorevler = [g for g in tum_gorevler if g["durum"] == filtre_durum]
         if filtre_tip:
-            tum_gorevler = [g for g in tum_gorevler if g['gorev_tipi'] == filtre_tip]
-        
+            tum_gorevler = [g for g in tum_gorevler if g["gorev_tipi"] == filtre_tip]
+
         # Sıralama: Önce bekleyenler (öncelik sırasına göre), sonra DND, en son tamamlananlar
         # Arrivals için varış saatine göre, diğerleri için öncelik sırasına göre
         def siralama_key(g):
-            durum_sirasi = {'pending': 0, 'dnd_pending': 1, 'completed': 2}
-            durum = durum_sirasi.get(g['durum'], 3)
-            
+            durum_sirasi = {"pending": 0, "dnd_pending": 1, "completed": 2}
+            durum = durum_sirasi.get(g["durum"], 3)
+
             # Arrivals için varış saatine göre sırala
-            if g.get('gorev_tipi') == 'arrival_kontrol' and g.get('varis_saati'):
-                return (durum, 0, g.get('varis_saati', '99:99'))
+            if g.get("gorev_tipi") == "arrival_kontrol" and g.get("varis_saati"):
+                return (durum, 0, g.get("varis_saati", "99:99"))
             # Diğerleri için öncelik sırasına göre
-            return (durum, 1, g.get('oncelik_sirasi') or 999, g.get('oda_no', ''))
-        
+            return (durum, 1, g.get("oncelik_sirasi") or 999, g.get("oda_no", ""))
+
         tum_gorevler.sort(key=siralama_key)
-        
+
         return render_template(
-            'kat_sorumlusu/gorev_yonetimi.html',
+            "kat_sorumlusu/gorev_yonetimi.html",
             ozet=ozet,
             gorevler=tum_gorevler,
             tarih=tarih,
             gun_adi=gun_adi,
             filtre_durum=filtre_durum,
             filtre_tip=filtre_tip,
-            kullanici=kullanici
+            kullanici=kullanici,
         )
-        
+
     except Exception as e:
-        flash(f'Görev yönetimi yüklenirken hata oluştu: {str(e)}', 'danger')
-        return redirect(url_for('dashboard'))
+        flash(f"Görev yönetimi yüklenirken hata oluştu: {str(e)}", "danger")
+        return redirect(url_for("dashboard"))
 
 
-@gorev_bp.route('/inhouse')
+@gorev_bp.route("/inhouse")
 @login_required
-@rol_gerekli('kat_sorumlusu', 'depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+@rol_gerekli("kat_sorumlusu", "depo_sorumlusu", "sistem_yoneticisi", "admin")
 def inhouse_gorevler():
     """
     In House görevleri sayfası
@@ -209,42 +233,44 @@ def inhouse_gorevler():
     """
     try:
         from utils.authorization import get_kullanici_otelleri
-        
+
         kullanici = get_current_user()
-        tarih_str = request.args.get('tarih', date.today().isoformat())
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
-        
+        tarih_str = request.args.get("tarih", date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, "%Y-%m-%d").date()
+
         # Kullanıcının otelini al (OTEL BAZLI görevler için)
         kullanici_otelleri = get_kullanici_otelleri()
         otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
-        
+
         if not otel_id:
-            flash('Otel atamanız bulunamadı.', 'danger')
-            return redirect(url_for('dashboard'))
-        
+            flash("Otel atamanız bulunamadı.", "danger")
+            return redirect(url_for("dashboard"))
+
         # Sadece In House görevleri filtrele (OTEL BAZLI)
         bekleyen = GorevService.get_pending_tasks(otel_id, tarih)
-        inhouse_bekleyen = [g for g in bekleyen if g['gorev_tipi'] == 'inhouse_kontrol']
-        
+        inhouse_bekleyen = [g for g in bekleyen if g["gorev_tipi"] == "inhouse_kontrol"]
+
         tamamlanan = GorevService.get_completed_tasks(otel_id, tarih)
-        inhouse_tamamlanan = [g for g in tamamlanan if g['gorev_tipi'] == 'inhouse_kontrol']
-        
+        inhouse_tamamlanan = [
+            g for g in tamamlanan if g["gorev_tipi"] == "inhouse_kontrol"
+        ]
+
         return render_template(
-            'kat_sorumlusu/inhouse_gorevler.html',
+            "kat_sorumlusu/inhouse_gorevler.html",
             bekleyen=inhouse_bekleyen,
             tamamlanan=inhouse_tamamlanan,
             tarih=tarih,
-            kullanici=kullanici
+            kullanici=kullanici,
         )
-        
+
     except Exception as e:
-        flash(f'In House görevleri yüklenirken hata oluştu: {str(e)}', 'danger')
-        return redirect(url_for('gorev.gorev_listesi'))
+        flash(f"In House görevleri yüklenirken hata oluştu: {str(e)}", "danger")
+        return redirect(url_for("gorev.gorev_listesi"))
 
 
-@gorev_bp.route('/arrivals')
+@gorev_bp.route("/arrivals")
 @login_required
-@rol_gerekli('kat_sorumlusu', 'depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+@rol_gerekli("kat_sorumlusu", "depo_sorumlusu", "sistem_yoneticisi", "admin")
 def arrivals_gorevler():
     """
     Arrivals görevleri sayfası
@@ -252,42 +278,46 @@ def arrivals_gorevler():
     """
     try:
         from utils.authorization import get_kullanici_otelleri
-        
+
         kullanici = get_current_user()
-        tarih_str = request.args.get('tarih', date.today().isoformat())
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
-        
+        tarih_str = request.args.get("tarih", date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, "%Y-%m-%d").date()
+
         # Kullanıcının otelini al (OTEL BAZLI görevler için)
         kullanici_otelleri = get_kullanici_otelleri()
         otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
-        
+
         if not otel_id:
-            flash('Otel atamanız bulunamadı.', 'danger')
-            return redirect(url_for('dashboard'))
-        
+            flash("Otel atamanız bulunamadı.", "danger")
+            return redirect(url_for("dashboard"))
+
         # Sadece Arrivals görevleri filtrele (OTEL BAZLI)
         bekleyen = GorevService.get_pending_tasks(otel_id, tarih)
-        arrivals_bekleyen = [g for g in bekleyen if g['gorev_tipi'] == 'arrival_kontrol']
-        
+        arrivals_bekleyen = [
+            g for g in bekleyen if g["gorev_tipi"] == "arrival_kontrol"
+        ]
+
         tamamlanan = GorevService.get_completed_tasks(otel_id, tarih)
-        arrivals_tamamlanan = [g for g in tamamlanan if g['gorev_tipi'] == 'arrival_kontrol']
-        
+        arrivals_tamamlanan = [
+            g for g in tamamlanan if g["gorev_tipi"] == "arrival_kontrol"
+        ]
+
         return render_template(
-            'kat_sorumlusu/arrivals_gorevler.html',
+            "kat_sorumlusu/arrivals_gorevler.html",
             bekleyen=arrivals_bekleyen,
             tamamlanan=arrivals_tamamlanan,
             tarih=tarih,
-            kullanici=kullanici
+            kullanici=kullanici,
         )
-        
+
     except Exception as e:
-        flash(f'Arrivals görevleri yüklenirken hata oluştu: {str(e)}', 'danger')
-        return redirect(url_for('gorev.gorev_listesi'))
+        flash(f"Arrivals görevleri yüklenirken hata oluştu: {str(e)}", "danger")
+        return redirect(url_for("gorev.gorev_listesi"))
 
 
-@gorev_bp.route('/dnd')
+@gorev_bp.route("/dnd")
 @login_required
-@rol_gerekli('kat_sorumlusu', 'depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+@rol_gerekli("kat_sorumlusu", "depo_sorumlusu", "sistem_yoneticisi", "admin")
 def dnd_listesi():
     """
     DND odaları listesi sayfası
@@ -295,36 +325,36 @@ def dnd_listesi():
     """
     try:
         from utils.authorization import get_kullanici_otelleri
-        
+
         kullanici = get_current_user()
-        tarih_str = request.args.get('tarih', date.today().isoformat())
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
-        
+        tarih_str = request.args.get("tarih", date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, "%Y-%m-%d").date()
+
         # Kullanıcının otelini al (OTEL BAZLI görevler için)
         kullanici_otelleri = get_kullanici_otelleri()
         otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
-        
+
         if not otel_id:
-            flash('Otel atamanız bulunamadı.', 'danger')
-            return redirect(url_for('dashboard'))
-        
+            flash("Otel atamanız bulunamadı.", "danger")
+            return redirect(url_for("dashboard"))
+
         dnd_gorevler = GorevService.get_dnd_tasks(otel_id, tarih)
-        
+
         return render_template(
-            'kat_sorumlusu/dnd_listesi.html',
+            "kat_sorumlusu/dnd_listesi.html",
             dnd_gorevler=dnd_gorevler,
             tarih=tarih,
-            kullanici=kullanici
+            kullanici=kullanici,
         )
-        
+
     except Exception as e:
-        flash(f'DND listesi yüklenirken hata oluştu: {str(e)}', 'danger')
-        return redirect(url_for('gorev.gorev_listesi'))
+        flash(f"DND listesi yüklenirken hata oluştu: {str(e)}", "danger")
+        return redirect(url_for("gorev.gorev_listesi"))
 
 
-@gorev_bp.route('/<int:gorev_detay_id>/tamamla', methods=['POST'])
+@gorev_bp.route("/<int:gorev_detay_id>/tamamla", methods=["POST"])
 @login_required
-@rol_gerekli('kat_sorumlusu', 'depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+@rol_gerekli("kat_sorumlusu", "depo_sorumlusu", "sistem_yoneticisi", "admin")
 def gorev_tamamla(gorev_detay_id):
     """
     Görevi tamamla
@@ -332,29 +362,29 @@ def gorev_tamamla(gorev_detay_id):
     """
     try:
         kullanici = get_current_user()
-        notlar = request.form.get('notlar', '')
-        
-        GorevService.complete_task(gorev_detay_id, kullanici.id, notlar)
-        
-        flash('Görev başarıyla tamamlandı.', 'success')
-        
+        notlar = request.form.get("notlar", "")
+
+        GorevService.complete_task(gorev_detay_id, kullanici.id, notlar)  # pyright: ignore[reportOptionalMemberAccess]
+
+        flash("Görev başarıyla tamamlandı.", "success")
+
         # AJAX isteği ise JSON döndür
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': True, 'message': 'Görev tamamlandı'})
-        
-        return redirect(url_for('gorev.gorev_listesi'))
-        
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"success": True, "message": "Görev tamamlandı"})
+
+        return redirect(url_for("gorev.gorev_listesi"))
+
     except Exception as e:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'error': str(e)}), 400
-        
-        flash(f'Görev tamamlanırken hata oluştu: {str(e)}', 'danger')
-        return redirect(url_for('gorev.gorev_listesi'))
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 400
+
+        flash(f"Görev tamamlanırken hata oluştu: {str(e)}", "danger")
+        return redirect(url_for("gorev.gorev_listesi"))
 
 
-@gorev_bp.route('/<int:gorev_detay_id>/dnd', methods=['POST'])
+@gorev_bp.route("/<int:gorev_detay_id>/dnd", methods=["POST"])
 @login_required
-@rol_gerekli('kat_sorumlusu', 'depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+@rol_gerekli("kat_sorumlusu", "depo_sorumlusu", "sistem_yoneticisi", "admin")
 def gorev_dnd(gorev_detay_id):
     """
     Odayı DND olarak işaretle
@@ -362,36 +392,43 @@ def gorev_dnd(gorev_detay_id):
     """
     try:
         kullanici = get_current_user()
-        notlar = request.form.get('notlar', '')
-        
-        result = GorevService.mark_dnd(gorev_detay_id, kullanici.id, notlar)
-        
-        if result.get('min_kontrol_tamamlandi'):
-            flash(f'Oda DND - {result["dnd_sayisi"]}. kontrol kaydedildi. (Min. kontrol tamamlandı)', 'info')
+        notlar = request.form.get("notlar", "")
+
+        result = GorevService.mark_dnd(gorev_detay_id, kullanici.id, notlar)  # pyright: ignore[reportOptionalMemberAccess]
+
+        if result.get("min_kontrol_tamamlandi"):
+            flash(
+                f"Oda DND - {result['dnd_sayisi']}. kontrol kaydedildi. (Min. kontrol tamamlandı)",
+                "info",
+            )
         else:
-            flash(f'Oda DND olarak işaretlendi. ({result["dnd_sayisi"]}/2 kontrol)', 'warning')
-        
+            flash(
+                f"Oda DND olarak işaretlendi. ({result['dnd_sayisi']}/2 kontrol)",
+                "warning",
+            )
+
         # AJAX isteği ise JSON döndür
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': True, **result})
-        
-        return redirect(url_for('gorev.gorev_listesi'))
-        
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"success": True, **result})
+
+        return redirect(url_for("gorev.gorev_listesi"))
+
     except Exception as e:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'error': str(e)}), 400
-        
-        flash(f'DND işaretlenirken hata oluştu: {str(e)}', 'danger')
-        return redirect(url_for('gorev.gorev_listesi'))
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 400
+
+        flash(f"DND işaretlenirken hata oluştu: {str(e)}", "danger")
+        return redirect(url_for("gorev.gorev_listesi"))
 
 
 # ============================================
 # DEPO SORUMLUSU ROUTE'LARI
 # ============================================
 
-@gorev_bp.route('/depo/gorevler')
+
+@gorev_bp.route("/depo/gorevler")
 @login_required
-@rol_gerekli('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+@rol_gerekli("depo_sorumlusu", "sistem_yoneticisi", "admin")
 def depo_gorevler():
     """
     Depo sorumlusu yükleme görevleri
@@ -399,27 +436,27 @@ def depo_gorevler():
     """
     try:
         kullanici = get_current_user()
-        tarih_str = request.args.get('tarih', date.today().isoformat())
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
-        
+        tarih_str = request.args.get("tarih", date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, "%Y-%m-%d").date()
+
         # Bekleyen yükleme görevleri
-        bekleyen = YuklemeGorevService.get_pending_uploads(kullanici.id, tarih)
-        
+        bekleyen = YuklemeGorevService.get_pending_uploads(kullanici.id, tarih)  # pyright: ignore[reportOptionalMemberAccess]
+
         return render_template(
-            'depo_sorumlusu/yukleme_gorevleri.html',
+            "depo_sorumlusu/yukleme_gorevleri.html",
             bekleyen=bekleyen,
             tarih=tarih,
-            kullanici=kullanici
+            kullanici=kullanici,
         )
-        
+
     except Exception as e:
-        flash(f'Yükleme görevleri yüklenirken hata oluştu: {str(e)}', 'danger')
-        return redirect(url_for('dashboard'))
+        flash(f"Yükleme görevleri yüklenirken hata oluştu: {str(e)}", "danger")
+        return redirect(url_for("dashboard"))
 
 
-@gorev_bp.route('/depo/personel-gorevler')
+@gorev_bp.route("/depo/personel-gorevler")
 @login_required
-@rol_gerekli('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+@rol_gerekli("depo_sorumlusu", "sistem_yoneticisi", "admin")
 def depo_personel_gorevler():
     """
     Otel bazlı görev durumları - Depo sorumlusu için
@@ -427,108 +464,113 @@ def depo_personel_gorevler():
     """
     try:
         from utils.authorization import get_kullanici_otelleri
-        from models import GunlukGorev, GorevDetay, Otel, Kat, Oda
-        from sqlalchemy import func
-        
+        from models import GunlukGorev, GorevDetay, Kat, Oda
+
         kullanici = get_current_user()
-        tarih_str = request.args.get('tarih', date.today().isoformat())
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
-        
+        tarih_str = request.args.get("tarih", date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, "%Y-%m-%d").date()
+
         # Kullanıcının erişebildiği otelleri al
         kullanici_otelleri = get_kullanici_otelleri()
         otel_ids = [o.id for o in kullanici_otelleri] if kullanici_otelleri else []
-        
+
         # Seçili otel (varsa)
-        secili_otel_id = request.args.get('otel_id', type=int)
+        secili_otel_id = request.args.get("otel_id", type=int)
         if secili_otel_id and secili_otel_id not in otel_ids:
             secili_otel_id = otel_ids[0] if otel_ids else None
         elif not secili_otel_id and otel_ids:
             secili_otel_id = otel_ids[0]
-        
+
         otel_gorev_detaylari = []
-        
+
         for otel in kullanici_otelleri:
             # Bu otelin bugünkü görevlerini al
             gorevler = GunlukGorev.query.filter(
-                GunlukGorev.otel_id == otel.id,
-                GunlukGorev.gorev_tarihi == tarih
+                GunlukGorev.otel_id == otel.id, GunlukGorev.gorev_tarihi == tarih
             ).all()
-            
-            otel_ozet = {
-                'otel_id': otel.id,
-                'otel_adi': otel.ad,
-                'gorev_tipleri': []
-            }
-            
+
+            otel_ozet = {"otel_id": otel.id, "otel_adi": otel.ad, "gorev_tipleri": []}
+
             for gorev in gorevler:
                 # Görev detaylarını al
                 detaylar = GorevDetay.query.filter(
                     GorevDetay.gorev_id == gorev.id
                 ).all()
-                
+
                 # Durum sayıları
                 toplam = len(detaylar)
-                tamamlanan = sum(1 for d in detaylar if d.durum == 'completed')
-                bekleyen = sum(1 for d in detaylar if d.durum == 'pending')
-                devam_eden = sum(1 for d in detaylar if d.durum == 'in_progress')
-                dnd = sum(1 for d in detaylar if d.durum == 'dnd_pending')
-                
+                tamamlanan = sum(1 for d in detaylar if d.durum == "completed")
+                bekleyen = sum(1 for d in detaylar if d.durum == "pending")
+                devam_eden = sum(1 for d in detaylar if d.durum == "in_progress")
+                dnd = sum(1 for d in detaylar if d.durum == "dnd_pending")
+
                 # Oda detayları
                 oda_detaylari = []
                 for detay in detaylar:
-                    oda = Oda.query.get(detay.oda_id)
-                    kat = Kat.query.get(oda.kat_id) if oda else None
-                    oda_detaylari.append({
-                        'detay_id': detay.id,
-                        'oda_id': detay.oda_id,
-                        'oda_no': oda.oda_no if oda else '-',
-                        'kat_adi': kat.kat_adi if kat else '-',
-                        'durum': detay.durum,
-                        'dnd_sayisi': detay.dnd_sayisi or 0,
-                        'tamamlanma_zamani': detay.kontrol_zamani.strftime('%H:%M') if detay.kontrol_zamani else None
-                    })
-                
+                    oda = db.session.get(Oda, detay.oda_id)
+                    kat = db.session.get(Kat, oda.kat_id) if oda else None
+                    oda_detaylari.append(
+                        {
+                            "detay_id": detay.id,
+                            "oda_id": detay.oda_id,
+                            "oda_no": oda.oda_no if oda else "-",
+                            "kat_adi": kat.kat_adi if kat else "-",
+                            "durum": detay.durum,
+                            "dnd_sayisi": detay.dnd_sayisi or 0,
+                            "tamamlanma_zamani": detay.kontrol_zamani.strftime("%H:%M")
+                            if detay.kontrol_zamani
+                            else None,
+                        }
+                    )
+
                 # Görev tipi label
                 gorev_tipi_labels = {
-                    'inhouse_kontrol': 'In House',
-                    'arrival_kontrol': 'Arrivals',
-                    'departure_kontrol': 'Departures'
+                    "inhouse_kontrol": "In House",
+                    "arrival_kontrol": "Arrivals",
+                    "departure_kontrol": "Departures",
                 }
-                
-                otel_ozet['gorev_tipleri'].append({
-                    'gorev_id': gorev.id,
-                    'gorev_tipi': gorev.gorev_tipi,
-                    'gorev_tipi_label': gorev_tipi_labels.get(gorev.gorev_tipi, gorev.gorev_tipi),
-                    'toplam': toplam,
-                    'tamamlanan': tamamlanan,
-                    'bekleyen': bekleyen,
-                    'devam_eden': devam_eden,
-                    'dnd': dnd,
-                    'tamamlanma_orani': round((tamamlanan / toplam * 100), 1) if toplam > 0 else 0,
-                    'oda_detaylari': oda_detaylari
-                })
-            
+
+                otel_ozet["gorev_tipleri"].append(
+                    {
+                        "gorev_id": gorev.id,
+                        "gorev_tipi": gorev.gorev_tipi,
+                        "gorev_tipi_label": gorev_tipi_labels.get(
+                            gorev.gorev_tipi, gorev.gorev_tipi
+                        ),
+                        "toplam": toplam,
+                        "tamamlanan": tamamlanan,
+                        "bekleyen": bekleyen,
+                        "devam_eden": devam_eden,
+                        "dnd": dnd,
+                        "tamamlanma_orani": round((tamamlanan / toplam * 100), 1)
+                        if toplam > 0
+                        else 0,
+                        "oda_detaylari": oda_detaylari,
+                    }
+                )
+
             otel_gorev_detaylari.append(otel_ozet)
-        
+
         return render_template(
-            'depo_sorumlusu/otel_gorev_detay.html',
+            "depo_sorumlusu/otel_gorev_detay.html",
             otel_gorev_detaylari=otel_gorev_detaylari,
             secili_otel_id=secili_otel_id,
             tarih=tarih,
             kullanici=kullanici,
-            kullanici_otelleri=kullanici_otelleri
+            kullanici_otelleri=kullanici_otelleri,
         )
-        
+
     except Exception as e:
         import traceback
+
         traceback.print_exc()
-        flash(f'Görev detayları yüklenirken hata oluştu: {str(e)}', 'danger')
-        return redirect(url_for('depo_dashboard'))
+        flash(f"Görev detayları yüklenirken hata oluştu: {str(e)}", "danger")
+        return redirect(url_for("depo_dashboard"))
 
 
-@gorev_bp.route('/depo/gorev-raporlari')
+@gorev_bp.route("/depo/gorev-raporlari")
 @login_required
-@rol_gerekli('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+@rol_gerekli("depo_sorumlusu", "sistem_yoneticisi", "admin")
 def depo_gorev_raporlari():
     """
     Görev raporları
@@ -536,58 +578,65 @@ def depo_gorev_raporlari():
     """
     try:
         kullanici = get_current_user()
-        baslangic_str = request.args.get('baslangic', (date.today() - timedelta(days=7)).isoformat())
-        bitis_str = request.args.get('bitis', date.today().isoformat())
-        
-        baslangic = datetime.strptime(baslangic_str, '%Y-%m-%d').date()
-        bitis = datetime.strptime(bitis_str, '%Y-%m-%d').date()
-        
+        baslangic_str = request.args.get(
+            "baslangic", (date.today() - timedelta(days=7)).isoformat()
+        )
+        bitis_str = request.args.get("bitis", date.today().isoformat())
+
+        baslangic = datetime.strptime(baslangic_str, "%Y-%m-%d").date()
+        bitis = datetime.strptime(bitis_str, "%Y-%m-%d").date()
+
         # Tarih aralığındaki raporları hazırla
         raporlar = []
         current = baslangic
         while current <= bitis:
             # Bağlı kat sorumlularının özetlerini al
             kat_sorumluları = Kullanici.query.filter(
-                Kullanici.depo_sorumlusu_id == kullanici.id,
-                Kullanici.rol == 'kat_sorumlusu'
+                Kullanici.depo_sorumlusu_id == kullanici.id,  # pyright: ignore[reportOptionalMemberAccess]
+                Kullanici.rol == "kat_sorumlusu",
             ).all()
-            
-            gun_toplam = {'toplam': 0, 'tamamlanan': 0, 'bekleyen': 0, 'dnd': 0}
+
+            gun_toplam = {"toplam": 0, "tamamlanan": 0, "bekleyen": 0, "dnd": 0}
             for ks in kat_sorumluları:
                 ozet = GorevService.get_task_summary(ks.id, current)
-                gun_toplam['toplam'] += ozet['toplam']
-                gun_toplam['tamamlanan'] += ozet['tamamlanan']
-                gun_toplam['bekleyen'] += ozet['bekleyen']
-                gun_toplam['dnd'] += ozet['dnd']
-            
-            gun_toplam['tarih'] = current.isoformat()
-            gun_toplam['tamamlanma_orani'] = round((gun_toplam['tamamlanan'] / gun_toplam['toplam'] * 100), 1) if gun_toplam['toplam'] > 0 else 0
+                gun_toplam["toplam"] += ozet["toplam"]
+                gun_toplam["tamamlanan"] += ozet["tamamlanan"]
+                gun_toplam["bekleyen"] += ozet["bekleyen"]
+                gun_toplam["dnd"] += ozet["dnd"]
+
+            gun_toplam["tarih"] = current.isoformat()  # type: ignore[assignment]
+            gun_toplam["tamamlanma_orani"] = (  # type: ignore[assignment]
+                round((gun_toplam["tamamlanan"] / gun_toplam["toplam"] * 100), 1)
+                if gun_toplam["toplam"] > 0
+                else 0
+            )
             raporlar.append(gun_toplam)
-            
+
             current += timedelta(days=1)
-        
+
         return render_template(
-            'depo_sorumlusu/gorev_raporlari.html',
+            "depo_sorumlusu/gorev_raporlari.html",
             raporlar=raporlar,
             baslangic=baslangic,
             bitis=bitis,
             kullanici=kullanici,
             today=date.today(),
-            timedelta=timedelta
+            timedelta=timedelta,
         )
-        
+
     except Exception as e:
-        flash(f'Görev raporları yüklenirken hata oluştu: {str(e)}', 'danger')
-        return redirect(url_for('dashboard'))
+        flash(f"Görev raporları yüklenirken hata oluştu: {str(e)}", "danger")
+        return redirect(url_for("dashboard"))
 
 
 # ============================================
 # SİSTEM YÖNETİCİSİ ROUTE'LARI
 # ============================================
 
-@gorev_bp.route('/sistem/gorev-ozeti')
+
+@gorev_bp.route("/sistem/gorev-ozeti")
 @login_required
-@rol_gerekli('sistem_yoneticisi', 'admin')
+@rol_gerekli("sistem_yoneticisi", "admin")
 def sistem_gorev_ozeti():
     """
     Otel geneli görev özeti
@@ -595,50 +644,55 @@ def sistem_gorev_ozeti():
     """
     try:
         kullanici = get_current_user()
-        tarih_str = request.args.get('tarih', date.today().isoformat())
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
-        
+        tarih_str = request.args.get("tarih", date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, "%Y-%m-%d").date()
+
         # Tüm kat sorumlularının özetlerini al
         kat_sorumluları = Kullanici.query.filter(
-            Kullanici.rol == 'kat_sorumlusu',
-            Kullanici.aktif == True
+            Kullanici.rol == "kat_sorumlusu", Kullanici.aktif
         ).all()
-        
-        genel_ozet = {'toplam': 0, 'tamamlanan': 0, 'bekleyen': 0, 'dnd': 0}
+
+        genel_ozet = {"toplam": 0, "tamamlanan": 0, "bekleyen": 0, "dnd": 0}
         personel_ozetleri = []
-        
+
         for ks in kat_sorumluları:
             ozet = GorevService.get_task_summary(ks.id, tarih)
-            genel_ozet['toplam'] += ozet['toplam']
-            genel_ozet['tamamlanan'] += ozet['tamamlanan']
-            genel_ozet['bekleyen'] += ozet['bekleyen']
-            genel_ozet['dnd'] += ozet['dnd']
-            
-            personel_ozetleri.append({
-                'personel_id': ks.id,
-                'personel_adi': f"{ks.ad} {ks.soyad}",
-                'otel_adi': ks.otel.ad if ks.otel else 'Atanmamış',
-                **ozet
-            })
-        
-        genel_ozet['tamamlanma_orani'] = round((genel_ozet['tamamlanan'] / genel_ozet['toplam'] * 100), 1) if genel_ozet['toplam'] > 0 else 0
-        
+            genel_ozet["toplam"] += ozet["toplam"]
+            genel_ozet["tamamlanan"] += ozet["tamamlanan"]
+            genel_ozet["bekleyen"] += ozet["bekleyen"]
+            genel_ozet["dnd"] += ozet["dnd"]
+
+            personel_ozetleri.append(
+                {
+                    "personel_id": ks.id,
+                    "personel_adi": f"{ks.ad} {ks.soyad}",
+                    "otel_adi": ks.otel.ad if ks.otel else "Atanmamış",
+                    **ozet,
+                }
+            )
+
+        genel_ozet["tamamlanma_orani"] = (  # type: ignore[assignment]
+            round((genel_ozet["tamamlanan"] / genel_ozet["toplam"] * 100), 1)
+            if genel_ozet["toplam"] > 0
+            else 0
+        )
+
         return render_template(
-            'sistem_yoneticisi/gorev_ozeti.html',
+            "sistem_yoneticisi/gorev_ozeti.html",
             genel_ozet=genel_ozet,
             personel_ozetleri=personel_ozetleri,
             tarih=tarih,
-            kullanici=kullanici
+            kullanici=kullanici,
         )
-        
+
     except Exception as e:
-        flash(f'Görev özeti yüklenirken hata oluştu: {str(e)}', 'danger')
-        return redirect(url_for('dashboard'))
+        flash(f"Görev özeti yüklenirken hata oluştu: {str(e)}", "danger")
+        return redirect(url_for("dashboard"))
 
 
-@gorev_bp.route('/personel/<int:personel_id>/gorev-detay')
+@gorev_bp.route("/personel/<int:personel_id>/gorev-detay")
 @login_required
-@rol_gerekli('sistem_yoneticisi', 'admin', 'depo_sorumlusu')
+@rol_gerekli("sistem_yoneticisi", "admin", "depo_sorumlusu")
 def personel_gorev_detay(personel_id):
     """
     Personelin oda bazlı görev detayları
@@ -646,24 +700,23 @@ def personel_gorev_detay(personel_id):
     """
     try:
         kullanici = get_current_user()
-        tarih_str = request.args.get('tarih', date.today().isoformat())
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
-        
+        tarih_str = request.args.get("tarih", date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, "%Y-%m-%d").date()
+
         # Personeli bul
         personel = Kullanici.query.get_or_404(personel_id)
-        
+
         # Depo sorumlusu sadece kendi kat sorumlularını görebilir
-        if kullanici.rol == 'depo_sorumlusu':
-            if personel.depo_sorumlusu_id != kullanici.id:
-                flash('Bu personelin görevlerini görüntüleme yetkiniz yok', 'danger')
-                return redirect(url_for('gorev.depo_personel_gorevler'))
-        
+        if kullanici.rol == "depo_sorumlusu":  # pyright: ignore[reportOptionalMemberAccess]
+            if personel.depo_sorumlusu_id != kullanici.id:  # pyright: ignore[reportOptionalMemberAccess]
+                flash("Bu personelin görevlerini görüntüleme yetkiniz yok", "danger")
+                return redirect(url_for("gorev.depo_personel_gorevler"))
+
         # Personelin o günkü ana görevlerini al
         ana_gorevler = GunlukGorev.query.filter(
-            GunlukGorev.personel_id == personel_id,
-            GunlukGorev.gorev_tarihi == tarih
+            GunlukGorev.personel_id == personel_id, GunlukGorev.gorev_tarihi == tarih
         ).all()
-        
+
         # Tüm görev detaylarını topla
         gorevler = []
         for ag in ana_gorevler:
@@ -675,43 +728,48 @@ def personel_gorev_detay(personel_id):
                 elif detay.oda_id:
                     # İlişki kopuksa, oda ve tarih ile misafir kaydını bul
                     from models import MisafirKayit
+
                     misafir_kayit = MisafirKayit.query.filter(
                         MisafirKayit.oda_id == detay.oda_id,
                         MisafirKayit.giris_tarihi <= tarih,
-                        MisafirKayit.cikis_tarihi > tarih
+                        MisafirKayit.cikis_tarihi > tarih,
                     ).first()
                     if misafir_kayit:
                         misafir_sayisi = misafir_kayit.misafir_sayisi or 0
-                
-                gorevler.append({
-                    'id': detay.id,
-                    'oda_no': detay.oda.oda_no if detay.oda else '-',
-                    'gorev_tipi': ag.gorev_tipi,
-                    'durum': detay.durum,
-                    'misafir_sayisi': misafir_sayisi,
-                    'kontrol_zamani': detay.kontrol_zamani
-                })
-        
+
+                gorevler.append(
+                    {
+                        "id": detay.id,
+                        "oda_no": detay.oda.oda_no if detay.oda else "-",
+                        "gorev_tipi": ag.gorev_tipi,
+                        "durum": detay.durum,
+                        "misafir_sayisi": misafir_sayisi,
+                        "kontrol_zamani": detay.kontrol_zamani,
+                    }
+                )
+
         # Oda numarasına göre sırala
-        gorevler.sort(key=lambda x: x['oda_no'])
-        
+        gorevler.sort(key=lambda x: x["oda_no"])
+
         # Görevleri kategorize et
-        tamamlanan = [g for g in gorevler if g['durum'] == 'completed']
-        bekleyen = [g for g in gorevler if g['durum'] == 'pending']
-        devam_eden = [g for g in gorevler if g['durum'] == 'in_progress']
-        dnd = [g for g in gorevler if g['durum'] == 'dnd_pending']
-        
+        tamamlanan = [g for g in gorevler if g["durum"] == "completed"]
+        bekleyen = [g for g in gorevler if g["durum"] == "pending"]
+        devam_eden = [g for g in gorevler if g["durum"] == "in_progress"]
+        dnd = [g for g in gorevler if g["durum"] == "dnd_pending"]
+
         ozet = {
-            'toplam': len(gorevler),
-            'tamamlanan': len(tamamlanan),
-            'bekleyen': len(bekleyen),
-            'devam_eden': len(devam_eden),
-            'dnd': len(dnd),
-            'tamamlanma_orani': round((len(tamamlanan) / len(gorevler) * 100), 1) if gorevler else 0
+            "toplam": len(gorevler),
+            "tamamlanan": len(tamamlanan),
+            "bekleyen": len(bekleyen),
+            "devam_eden": len(devam_eden),
+            "dnd": len(dnd),
+            "tamamlanma_orani": round((len(tamamlanan) / len(gorevler) * 100), 1)
+            if gorevler
+            else 0,
         }
-        
+
         return render_template(
-            'sistem_yoneticisi/personel_gorev_detay.html',
+            "sistem_yoneticisi/personel_gorev_detay.html",
             personel=personel,
             gorevler=gorevler,
             tamamlanan=tamamlanan,
@@ -720,20 +778,21 @@ def personel_gorev_detay(personel_id):
             dnd=dnd,
             ozet=ozet,
             tarih=tarih,
-            kullanici=kullanici
+            kullanici=kullanici,
         )
-        
+
     except Exception as e:
         import traceback
-        print(f"personel_gorev_detay HATA: {str(e)}")
-        print(traceback.format_exc())
-        flash(f'Görev detayları yüklenirken hata oluştu: {str(e)}', 'danger')
-        return redirect(url_for('gorev.sistem_gorev_ozeti'))
+
+        logger.error(f"personel_gorev_detay HATA: {str(e)}")
+        logger.error(traceback.format_exc())
+        flash(f"Görev detayları yüklenirken hata oluştu: {str(e)}", "danger")
+        return redirect(url_for("gorev.sistem_gorev_ozeti"))
 
 
-@gorev_bp.route('/sistem/yukleme-takip')
+@gorev_bp.route("/sistem/yukleme-takip")
 @login_required
-@rol_gerekli('sistem_yoneticisi', 'admin')
+@rol_gerekli("sistem_yoneticisi", "admin")
 def sistem_yukleme_takip():
     """
     Yükleme takip raporu
@@ -741,31 +800,33 @@ def sistem_yukleme_takip():
     """
     try:
         kullanici = get_current_user()
-        baslangic_str = request.args.get('baslangic', (date.today() - timedelta(days=7)).isoformat())
-        bitis_str = request.args.get('bitis', date.today().isoformat())
-        
-        baslangic = datetime.strptime(baslangic_str, '%Y-%m-%d').date()
-        bitis = datetime.strptime(bitis_str, '%Y-%m-%d').date()
-        
+        baslangic_str = request.args.get(
+            "baslangic", (date.today() - timedelta(days=7)).isoformat()
+        )
+        bitis_str = request.args.get("bitis", date.today().isoformat())
+
+        baslangic = datetime.strptime(baslangic_str, "%Y-%m-%d").date()
+        bitis = datetime.strptime(bitis_str, "%Y-%m-%d").date()
+
         # Eksik yüklemeleri tespit et
         eksik_yuklemeler = YuklemeGorevService.get_missing_uploads(baslangic, bitis)
-        
+
         return render_template(
-            'sistem_yoneticisi/yukleme_takip.html',
+            "sistem_yoneticisi/yukleme_takip.html",
             eksik_yuklemeler=eksik_yuklemeler,
             baslangic=baslangic,
             bitis=bitis,
-            kullanici=kullanici
+            kullanici=kullanici,
         )
-        
+
     except Exception as e:
-        flash(f'Yükleme takip raporu yüklenirken hata oluştu: {str(e)}', 'danger')
-        return redirect(url_for('dashboard'))
+        flash(f"Yükleme takip raporu yüklenirken hata oluştu: {str(e)}", "danger")
+        return redirect(url_for("dashboard"))
 
 
-@gorev_bp.route('/sistem/dnd-bildirimleri')
+@gorev_bp.route("/sistem/dnd-bildirimleri")
 @login_required
-@rol_gerekli('sistem_yoneticisi', 'admin')
+@rol_gerekli("sistem_yoneticisi", "admin")
 def sistem_dnd_bildirimleri():
     """
     DND bildirimleri
@@ -773,44 +834,55 @@ def sistem_dnd_bildirimleri():
     """
     try:
         kullanici = get_current_user()
-        tarih_str = request.args.get('tarih', date.today().isoformat())
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
-        
+        tarih_str = request.args.get("tarih", date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, "%Y-%m-%d").date()
+
         # Tamamlanmayan DND görevlerini bul
-        tamamlanmayan_dnd = GorevDetay.query.join(GunlukGorev).filter(
-            GunlukGorev.gorev_tarihi == tarih,
-            GorevDetay.dnd_sayisi > 0,
-            GorevDetay.dnd_sayisi < 3,
-            GorevDetay.durum != 'completed'
-        ).all()
-        
+        tamamlanmayan_dnd = (
+            GorevDetay.query.join(GunlukGorev)
+            .filter(
+                GunlukGorev.gorev_tarihi == tarih,
+                GorevDetay.dnd_sayisi > 0,
+                GorevDetay.dnd_sayisi < 3,
+                GorevDetay.durum != "completed",
+            )
+            .all()
+        )
+
         dnd_listesi = []
         for detay in tamamlanmayan_dnd:
-            dnd_listesi.append({
-                'detay_id': detay.id,
-                'oda_no': detay.oda.oda_no if detay.oda else 'Bilinmiyor',
-                'dnd_sayisi': detay.dnd_sayisi,
-                'son_dnd_zamani': detay.son_dnd_zamani.isoformat() if detay.son_dnd_zamani else None,
-                'personel_adi': f"{detay.gorev.personel.ad} {detay.gorev.personel.soyad}" if detay.gorev and detay.gorev.personel else 'Bilinmiyor'
-            })
-        
+            dnd_listesi.append(
+                {
+                    "detay_id": detay.id,
+                    "oda_no": detay.oda.oda_no if detay.oda else "Bilinmiyor",
+                    "dnd_sayisi": detay.dnd_sayisi,
+                    "son_dnd_zamani": detay.son_dnd_zamani.isoformat()
+                    if detay.son_dnd_zamani
+                    else None,
+                    "personel_adi": f"{detay.gorev.personel.ad} {detay.gorev.personel.soyad}"
+                    if detay.gorev and detay.gorev.personel
+                    else "Bilinmiyor",
+                }
+            )
+
         return render_template(
-            'sistem_yoneticisi/dnd_bildirimleri.html',
+            "sistem_yoneticisi/dnd_bildirimleri.html",
             dnd_listesi=dnd_listesi,
             tarih=tarih,
-            kullanici=kullanici
+            kullanici=kullanici,
         )
-        
+
     except Exception as e:
-        flash(f'DND bildirimleri yüklenirken hata oluştu: {str(e)}', 'danger')
-        return redirect(url_for('dashboard'))
+        flash(f"DND bildirimleri yüklenirken hata oluştu: {str(e)}", "danger")
+        return redirect(url_for("dashboard"))
 
 
 # ============================================
 # API ROUTE'LARI
 # ============================================
 
-@gorev_bp.route('/api/bekleyen')
+
+@gorev_bp.route("/api/bekleyen")
 @login_required
 def api_bekleyen_gorevler():
     """
@@ -819,31 +891,33 @@ def api_bekleyen_gorevler():
     """
     try:
         from utils.authorization import get_kullanici_otelleri
-        
-        kullanici = get_current_user()
+
+        get_current_user()
         tarih = date.today()
-        
+
         # Kullanıcının otelini al (OTEL BAZLI görevler için)
         kullanici_otelleri = get_kullanici_otelleri()
         otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
-        
+
         if not otel_id:
-            return jsonify({'success': False, 'error': 'Otel ataması bulunamadı'}), 400
-        
+            return jsonify({"success": False, "error": "Otel ataması bulunamadı"}), 400
+
         ozet = GorevService.get_task_summary(otel_id, tarih)
-        
-        return jsonify({
-            'success': True,
-            'bekleyen': ozet['bekleyen'],
-            'dnd': ozet['dnd'],
-            'toplam': ozet['toplam']
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+
+        return jsonify(
+            {
+                "success": True,
+                "bekleyen": ozet["bekleyen"],
+                "dnd": ozet["dnd"],
+                "toplam": ozet["toplam"],
+            }
+        )
+
+    except Exception:
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
-@gorev_bp.route('/api/countdown/<int:gorev_detay_id>')
+@gorev_bp.route("/api/countdown/<int:gorev_detay_id>")
 @login_required
 def api_countdown(gorev_detay_id):
     """
@@ -851,25 +925,22 @@ def api_countdown(gorev_detay_id):
     GET /gorevler/api/countdown/<id>
     """
     try:
-        detay = GorevDetay.query.get(gorev_detay_id)
+        detay = db.session.get(GorevDetay, gorev_detay_id)
         if not detay:
-            return jsonify({'success': False, 'error': 'Görev bulunamadı'}), 404
-        
+            return jsonify({"success": False, "error": "Görev bulunamadı"}), 404
+
         if not detay.varis_saati:
-            return jsonify({'success': False, 'error': 'Varış saati yok'}), 400
-        
+            return jsonify({"success": False, "error": "Varış saati yok"}), 400
+
         countdown = GorevService.calculate_countdown(detay.varis_saati)
-        
-        return jsonify({
-            'success': True,
-            **countdown
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+
+        return jsonify({"success": True, **countdown})
+
+    except Exception:
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
-@gorev_bp.route('/api/bildirim-oku', methods=['POST'])
+@gorev_bp.route("/api/bildirim-oku", methods=["POST"])
 @login_required
 def api_bildirim_oku():
     """
@@ -877,21 +948,21 @@ def api_bildirim_oku():
     POST /gorevler/api/bildirim-oku
     """
     try:
-        bildirim_id = request.json.get('bildirim_id')
+        bildirim_id = request.json.get("bildirim_id")
         if not bildirim_id:
-            return jsonify({'success': False, 'error': 'Bildirim ID gerekli'}), 400
-        
-        BildirimService.mark_notification_read(bildirim_id)
-        
-        return jsonify({'success': True})
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Bildirim ID gerekli"}), 400
+
+        BildirimService.mark_notification_read(bildirim_id)  # pyright: ignore[reportAttributeAccessIssue]
+
+        return jsonify({"success": True})
+
+    except Exception:
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
-@gorev_bp.route('/yazdir')
+@gorev_bp.route("/yazdir")
 @login_required
-@rol_gerekli('kat_sorumlusu', 'depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+@rol_gerekli("kat_sorumlusu", "depo_sorumlusu", "sistem_yoneticisi", "admin")
 def gorev_yazdir():
     """
     Görev listesi yazdırma sayfası
@@ -899,59 +970,67 @@ def gorev_yazdir():
     """
     try:
         from utils.authorization import get_kullanici_otelleri
-        
+
         kullanici = get_current_user()
-        tarih_str = request.args.get('tarih', date.today().isoformat())
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
-        
+        tarih_str = request.args.get("tarih", date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, "%Y-%m-%d").date()
+
         # Gün adını hesapla
-        gun_adlari = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']
+        gun_adlari = [
+            "Pazartesi",
+            "Salı",
+            "Çarşamba",
+            "Perşembe",
+            "Cuma",
+            "Cumartesi",
+            "Pazar",
+        ]
         gun_adi = gun_adlari[tarih.weekday()]
-        
+
         # Kullanıcının otelini al (OTEL BAZLI görevler için)
         kullanici_otelleri = get_kullanici_otelleri()
         otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
-        
+
         if not otel_id:
-            flash('Otel atamanız bulunamadı.', 'danger')
-            return redirect(url_for('gorev.gorev_yonetimi'))
-        
+            flash("Otel atamanız bulunamadı.", "danger")
+            return redirect(url_for("gorev.gorev_yonetimi"))
+
         # Görev özetini al (OTEL BAZLI)
         ozet = GorevService.get_task_summary(otel_id, tarih)
-        
+
         # Tüm görevleri al (OTEL BAZLI)
         bekleyen = GorevService.get_pending_tasks(otel_id, tarih)
         tamamlanan = GorevService.get_completed_tasks(otel_id, tarih)
         tum_gorevler = bekleyen + tamamlanan
-        
+
         # Sıralama: Önce bekleyenler (öncelik sırasına göre), sonra DND, en son tamamlananlar
         def siralama_key(g):
-            durum_sirasi = {'pending': 0, 'dnd_pending': 1, 'completed': 2}
-            durum = durum_sirasi.get(g['durum'], 3)
-            
+            durum_sirasi = {"pending": 0, "dnd_pending": 1, "completed": 2}
+            durum = durum_sirasi.get(g["durum"], 3)
+
             # Arrivals için varış saatine göre sırala
-            if g.get('gorev_tipi') == 'arrival_kontrol' and g.get('varis_saati'):
-                return (durum, 0, g.get('varis_saati', '99:99'))
+            if g.get("gorev_tipi") == "arrival_kontrol" and g.get("varis_saati"):
+                return (durum, 0, g.get("varis_saati", "99:99"))
             # Diğerleri için öncelik sırasına göre
-            return (durum, 1, g.get('oncelik_sirasi') or 999, g.get('oda_no', ''))
-        
+            return (durum, 1, g.get("oncelik_sirasi") or 999, g.get("oda_no", ""))
+
         tum_gorevler.sort(key=siralama_key)
-        
+
         return render_template(
-            'kat_sorumlusu/gorev_yazdir.html',
+            "kat_sorumlusu/gorev_yazdir.html",
             ozet=ozet,
             gorevler=tum_gorevler,
             tarih=tarih,
             gun_adi=gun_adi,
-            kullanici=kullanici
+            kullanici=kullanici,
         )
-        
+
     except Exception as e:
-        flash(f'Yazdırma sayfası yüklenirken hata oluştu: {str(e)}', 'danger')
-        return redirect(url_for('gorev.gorev_yonetimi'))
+        flash(f"Yazdırma sayfası yüklenirken hata oluştu: {str(e)}", "danger")
+        return redirect(url_for("gorev.gorev_yonetimi"))
 
 
-@gorev_bp.route('/api/bildirimler')
+@gorev_bp.route("/api/bildirimler")
 @login_required
 def api_bildirimler():
     """
@@ -960,22 +1039,26 @@ def api_bildirimler():
     """
     try:
         kullanici = get_current_user()
-        sadece_okunmamis = request.args.get('sadece_okunmamis', 'false').lower() == 'true'
-        
-        bildirimler = BildirimService.get_notifications(kullanici.id, sadece_okunmamis)
-        okunmamis_sayisi = BildirimService.get_unread_count(kullanici.id)
-        
-        return jsonify({
-            'success': True,
-            'bildirimler': bildirimler,
-            'okunmamis_sayisi': okunmamis_sayisi
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        sadece_okunmamis = (
+            request.args.get("sadece_okunmamis", "false").lower() == "true"
+        )
+
+        bildirimler = BildirimService.get_notifications(kullanici.id, sadece_okunmamis)  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
+        okunmamis_sayisi = BildirimService.get_unread_count(kullanici.id)  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
+
+        return jsonify(
+            {
+                "success": True,
+                "bildirimler": bildirimler,
+                "okunmamis_sayisi": okunmamis_sayisi,
+            }
+        )
+
+    except Exception:
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
-@gorev_bp.route('/api/dnd-kontroller/<int:gorev_detay_id>')
+@gorev_bp.route("/api/dnd-kontroller/<int:gorev_detay_id>")
 @login_required
 def api_dnd_kontroller(gorev_detay_id):
     """
@@ -984,36 +1067,50 @@ def api_dnd_kontroller(gorev_detay_id):
     """
     try:
         from models import DNDKontrol
-        
-        detay = GorevDetay.query.get(gorev_detay_id)
+
+        detay = db.session.get(GorevDetay, gorev_detay_id)
         if not detay:
-            return jsonify({'success': False, 'error': 'Görev bulunamadı'}), 404
-        
+            return jsonify({"success": False, "error": "Görev bulunamadı"}), 404
+
         # DND kontrol kayıtlarını getir
-        kontroller = DNDKontrol.query.filter_by(gorev_detay_id=gorev_detay_id).order_by(DNDKontrol.kontrol_zamani.desc()).all()
-        
+        kontroller = (
+            DNDKontrol.query.filter_by(gorev_detay_id=gorev_detay_id)
+            .order_by(DNDKontrol.kontrol_zamani.desc())
+            .all()
+        )
+
         kontrol_listesi = []
         for k in kontroller:
-            kontrol_listesi.append({
-                'id': k.id,
-                'kontrol_zamani': k.kontrol_zamani.strftime('%H:%M') if k.kontrol_zamani else '-',
-                'kontrol_tarihi': k.kontrol_zamani.strftime('%d.%m.%Y') if k.kontrol_zamani else '-',
-                'kontrol_eden': f"{k.kontrol_eden.ad} {k.kontrol_eden.soyad}" if k.kontrol_eden else 'Bilinmiyor',
-                'notlar': k.notlar or ''
-            })
-        
-        return jsonify({
-            'success': True,
-            'oda_no': detay.oda.oda_no if detay.oda else 'Bilinmiyor',
-            'dnd_sayisi': detay.dnd_sayisi,
-            'kontroller': kontrol_listesi
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+            kontrol_listesi.append(
+                {
+                    "id": k.id,
+                    "kontrol_zamani": k.kontrol_zamani.strftime("%H:%M")
+                    if k.kontrol_zamani
+                    else "-",
+                    "kontrol_tarihi": k.kontrol_zamani.strftime("%d.%m.%Y")
+                    if k.kontrol_zamani
+                    else "-",
+                    "kontrol_eden": f"{k.kontrol_eden.ad} {k.kontrol_eden.soyad}"
+                    if k.kontrol_eden
+                    else "Bilinmiyor",
+                    "notlar": k.notlar or "",
+                }
+            )
+
+        return jsonify(
+            {
+                "success": True,
+                "oda_no": detay.oda.oda_no if detay.oda else "Bilinmiyor",
+                "dnd_sayisi": detay.dnd_sayisi,
+                "kontroller": kontrol_listesi,
+            }
+        )
+
+    except Exception:
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
-@gorev_bp.route('/api/gorev-detay/<int:gorev_detay_id>')
+@gorev_bp.route("/api/gorev-detay/<int:gorev_detay_id>")
 @login_required
 def api_gorev_detay(gorev_detay_id):
     """
@@ -1022,85 +1119,100 @@ def api_gorev_detay(gorev_detay_id):
     """
     try:
         from models import GorevDurumLog, OdaKontrolKaydi
-        
-        detay = GorevDetay.query.get(gorev_detay_id)
+
+        detay = db.session.get(GorevDetay, gorev_detay_id)
         if not detay:
-            return jsonify({'success': False, 'error': 'Görev bulunamadı'}), 404
-        
+            return jsonify({"success": False, "error": "Görev bulunamadı"}), 404
+
         # Kontrol kaydını oda_id ve tarih ile bul - en son kaydı al
         kontrol_tarihi = detay.gorev.gorev_tarihi if detay.gorev else date.today()
-        kontrol_kaydi = OdaKontrolKaydi.query.filter_by(
-            oda_id=detay.oda_id,
-            kontrol_tarihi=kontrol_tarihi
-        ).order_by(OdaKontrolKaydi.bitis_zamani.desc()).first()
-        
+        kontrol_kaydi = (
+            OdaKontrolKaydi.query.filter_by(
+                oda_id=detay.oda_id, kontrol_tarihi=kontrol_tarihi
+            )
+            .order_by(OdaKontrolKaydi.bitis_zamani.desc())
+            .first()
+        )
+
         baslangic = None
         bitis = None
         sure = None
-        
+
         if kontrol_kaydi:
             if kontrol_kaydi.baslangic_zamani:
-                baslangic = kontrol_kaydi.baslangic_zamani.strftime('%H:%M')
+                baslangic = kontrol_kaydi.baslangic_zamani.strftime("%H:%M")
             if kontrol_kaydi.bitis_zamani:
-                bitis = kontrol_kaydi.bitis_zamani.strftime('%H:%M')
+                bitis = kontrol_kaydi.bitis_zamani.strftime("%H:%M")
             if kontrol_kaydi.baslangic_zamani and kontrol_kaydi.bitis_zamani:
                 delta = kontrol_kaydi.bitis_zamani - kontrol_kaydi.baslangic_zamani
                 dakika = int(delta.total_seconds() // 60)
                 saniye = int(delta.total_seconds() % 60)
                 sure = f"{dakika} dk {saniye} sn"
         elif detay.kontrol_zamani:
-            bitis = detay.kontrol_zamani.strftime('%H:%M')
-        
+            bitis = detay.kontrol_zamani.strftime("%H:%M")
+
         # Tamamlama tipini belirle
-        tamamlama_tipi = 'Manuel'
+        tamamlama_tipi = "Manuel"
         if detay.notlar:
-            if 'Sarfiyat yok' in detay.notlar:
-                tamamlama_tipi = 'Sarfiyat Yok'
-            elif 'Ürün eklendi' in detay.notlar:
-                tamamlama_tipi = 'Ürün Eklendi'
-            elif 'DND' in detay.notlar:
-                tamamlama_tipi = 'DND Kontrolü'
-        
+            if "Sarfiyat yok" in detay.notlar:
+                tamamlama_tipi = "Sarfiyat Yok"
+            elif "Ürün eklendi" in detay.notlar:
+                tamamlama_tipi = "Ürün Eklendi"
+            elif "DND" in detay.notlar:
+                tamamlama_tipi = "DND Kontrolü"
+
         # Durum geçmişini al
-        loglar = GorevDurumLog.query.filter_by(gorev_detay_id=gorev_detay_id).order_by(GorevDurumLog.degisiklik_zamani.desc()).all()
-        
+        loglar = (
+            GorevDurumLog.query.filter_by(gorev_detay_id=gorev_detay_id)
+            .order_by(GorevDurumLog.degisiklik_zamani.desc())
+            .all()
+        )
+
         gecmis = []
         for log in loglar:
-            gecmis.append({
-                'onceki_durum': log.onceki_durum or 'Yeni',
-                'yeni_durum': log.yeni_durum,
-                'zaman': log.degisiklik_zamani.strftime('%H:%M') if log.degisiklik_zamani else '-',
-                'aciklama': log.aciklama or ''
-            })
-        
-        return jsonify({
-            'success': True,
-            'oda_no': detay.oda.oda_no if detay.oda else 'Bilinmiyor',
-            'baslangic': baslangic,
-            'bitis': bitis,
-            'sure': sure,
-            'tamamlama_tipi': tamamlama_tipi,
-            'notlar': detay.notlar,
-            'gecmis': gecmis,
-            'kaynak_silindi': detay.misafir_kayit_id is None  # Kaynak silindi göstergesi
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+            gecmis.append(
+                {
+                    "onceki_durum": log.onceki_durum or "Yeni",
+                    "yeni_durum": log.yeni_durum,
+                    "zaman": log.degisiklik_zamani.strftime("%H:%M")
+                    if log.degisiklik_zamani
+                    else "-",
+                    "aciklama": log.aciklama or "",
+                }
+            )
+
+        return jsonify(
+            {
+                "success": True,
+                "oda_no": detay.oda.oda_no if detay.oda else "Bilinmiyor",
+                "baslangic": baslangic,
+                "bitis": bitis,
+                "sure": sure,
+                "tamamlama_tipi": tamamlama_tipi,
+                "notlar": detay.notlar,
+                "gecmis": gecmis,
+                "kaynak_silindi": detay.misafir_kayit_id
+                is None,  # Kaynak silindi göstergesi
+            }
+        )
+
+    except Exception:
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 # ============================================
 # AKILLI GÖREV ÖNCELİKLENDİRME API'LERİ
 # ============================================
 
-@gorev_bp.route('/api/oncelik-plani')
+
+@gorev_bp.route("/api/oncelik-plani")
 @login_required
-@rol_gerekli('kat_sorumlusu', 'depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+@rol_gerekli("kat_sorumlusu", "depo_sorumlusu", "sistem_yoneticisi", "admin")
 def api_oncelik_plani():
     """
     Akıllı görev öncelik planı API
     GET /gorevler/api/oncelik-plani?tarih=2025-12-01
-    
+
     Öncelik Kriterleri:
     1. Departure-Arrival Çakışması (En kritik)
     2. Arrival odaları (15dk önce hazır)
@@ -1111,31 +1223,35 @@ def api_oncelik_plani():
     try:
         from utils.gorev_oncelik_service import GorevOncelikService
         from utils.authorization import get_kullanici_otelleri
-        
+
         kullanici = get_current_user()
-        tarih_str = request.args.get('tarih', date.today().isoformat())
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
-        
+        tarih_str = request.args.get("tarih", date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, "%Y-%m-%d").date()
+
         # Kullanıcının otelini al (OTEL BAZLI görevler için)
         kullanici_otelleri = get_kullanici_otelleri()
         otel_id = kullanici_otelleri[0].id if kullanici_otelleri else None
-        
+
         if not otel_id:
-            return jsonify({'success': False, 'error': 'Otel atamanız bulunamadı.'}), 400
-        
+            return jsonify(
+                {"success": False, "error": "Otel atamanız bulunamadı."}
+            ), 400
+
         plan = GorevOncelikService.get_oncelikli_gorev_plani(
-            kullanici.id, tarih, otel_id
+            kullanici.id,  # pyright: ignore[reportOptionalMemberAccess]
+            tarih,
+            otel_id,
         )
-        
+
         return jsonify(plan)
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+
+    except Exception:
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
-@gorev_bp.route('/api/kat-oncelik-plani/<int:kat_id>')
+@gorev_bp.route("/api/kat-oncelik-plani/<int:kat_id>")
 @login_required
-@rol_gerekli('kat_sorumlusu', 'depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+@rol_gerekli("kat_sorumlusu", "depo_sorumlusu", "sistem_yoneticisi", "admin")
 def api_kat_oncelik_plani(kat_id):
     """
     Belirli bir kat için öncelik planı API
@@ -1143,24 +1259,26 @@ def api_kat_oncelik_plani(kat_id):
     """
     try:
         from utils.gorev_oncelik_service import GorevOncelikService
-        
+
         kullanici = get_current_user()
-        tarih_str = request.args.get('tarih', date.today().isoformat())
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
-        
+        tarih_str = request.args.get("tarih", date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, "%Y-%m-%d").date()
+
         plan = GorevOncelikService.get_kat_oncelik_plani(
-            kullanici.id, kat_id, tarih
+            kullanici.id,  # pyright: ignore[reportOptionalMemberAccess]
+            kat_id,
+            tarih,
         )
-        
+
         return jsonify(plan)
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+
+    except Exception:
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
-@gorev_bp.route('/api/cakisma-kontrol')
+@gorev_bp.route("/api/cakisma-kontrol")
 @login_required
-@rol_gerekli('kat_sorumlusu', 'depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+@rol_gerekli("kat_sorumlusu", "depo_sorumlusu", "sistem_yoneticisi", "admin")
 def api_cakisma_kontrol():
     """
     Departure-Arrival çakışma kontrolü API
@@ -1168,41 +1286,46 @@ def api_cakisma_kontrol():
     """
     try:
         from utils.gorev_oncelik_service import GorevOncelikService
-        
+
         kullanici = get_current_user()
-        tarih_str = request.args.get('tarih', date.today().isoformat())
-        tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
-        
-        otel_id = kullanici.otel_id if kullanici.otel_id else None
-        
-        cakismalar = GorevOncelikService._tespit_cakismalar(tarih, otel_id)
-        
+        tarih_str = request.args.get("tarih", date.today().isoformat())
+        tarih = datetime.strptime(tarih_str, "%Y-%m-%d").date()
+
+        otel_id = kullanici.otel_id if kullanici.otel_id else None  # pyright: ignore[reportOptionalMemberAccess]
+
+        cakismalar = GorevOncelikService._tespit_cakismalar(tarih, otel_id)  # type: ignore[arg-type]
+
         # Oda bilgilerini ekle
         from models import Oda
+
         sonuc = []
         for oda_id, cakisma in cakismalar.items():
-            oda = Oda.query.get(oda_id)
+            oda = db.session.get(Oda, oda_id)
             if oda:
-                sonuc.append({
-                    'oda_id': oda_id,
-                    'oda_no': oda.oda_no,
-                    'kat_adi': oda.kat.kat_adi if oda.kat else '-',
-                    'departure_saati': cakisma['departure_saati'].strftime('%H:%M'),
-                    'arrival_saati': cakisma['arrival_saati'].strftime('%H:%M'),
-                    'aradaki_sure_dakika': cakisma['aradaki_sure_dakika'],
-                    'kritik': cakisma['kritik']
-                })
-        
+                sonuc.append(
+                    {
+                        "oda_id": oda_id,
+                        "oda_no": oda.oda_no,
+                        "kat_adi": oda.kat.kat_adi if oda.kat else "-",
+                        "departure_saati": cakisma["departure_saati"].strftime("%H:%M"),
+                        "arrival_saati": cakisma["arrival_saati"].strftime("%H:%M"),
+                        "aradaki_sure_dakika": cakisma["aradaki_sure_dakika"],
+                        "kritik": cakisma["kritik"],
+                    }
+                )
+
         # Kritik olanları önce göster
-        sonuc.sort(key=lambda x: (not x['kritik'], x['aradaki_sure_dakika']))
-        
-        return jsonify({
-            'success': True,
-            'tarih': tarih.isoformat(),
-            'toplam_cakisma': len(sonuc),
-            'kritik_cakisma': sum(1 for c in sonuc if c['kritik']),
-            'cakismalar': sonuc
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        sonuc.sort(key=lambda x: (not x["kritik"], x["aradaki_sure_dakika"]))
+
+        return jsonify(
+            {
+                "success": True,
+                "tarih": tarih.isoformat(),
+                "toplam_cakisma": len(sonuc),
+                "kritik_cakisma": sum(1 for c in sonuc if c["kritik"]),
+                "cakismalar": sonuc,
+            }
+        )
+
+    except Exception:
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500

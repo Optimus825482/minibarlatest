@@ -3,12 +3,11 @@ Misafir QR Kod Route'ları
 """
 
 from flask import jsonify, request, render_template, session
-from models import db, Oda, MinibarDolumTalebi
+from models import db, MinibarDolumTalebi
 from utils.qr_service import QRKodService
 from utils.rate_limiter import QRRateLimiter
 from utils.helpers import log_islem, log_hata
 from utils.bildirim_service import royalbar_talebi_bildirimi
-from flask_wtf.csrf import CSRFProtect
 import bleach
 
 
@@ -21,7 +20,7 @@ def register_misafir_qr_routes(app):
         try:
             # Rate limit kontrolü
             ip = request.remote_addr
-            if not QRRateLimiter.check_qr_scan_limit(ip):
+            if not QRRateLimiter.check_qr_scan_limit(ip):  # type: ignore[arg-type]
                 return render_template('errors/429.html'), 429
             
             # Token'ı doğrula
@@ -72,7 +71,7 @@ def register_misafir_qr_routes(app):
         try:
             # Rate limit kontrolü
             ip = request.remote_addr
-            if not QRRateLimiter.check_qr_scan_limit(ip):
+            if not QRRateLimiter.check_qr_scan_limit(ip):  # type: ignore[arg-type]
                 return jsonify({
                     'success': False,
                     'message': 'Çok fazla deneme. Lütfen 1 dakika bekleyin.'
@@ -137,11 +136,11 @@ def register_misafir_qr_routes(app):
                     otel_id = oda.kat.otel.id if oda.kat and oda.kat.otel else None
                     kat_adi = oda.kat.kat_adi if oda.kat else 'Bilinmeyen Kat'
                     royalbar_talebi_bildirimi(
-                        otel_id=otel_id,
+                        otel_id=otel_id,  # type: ignore[arg-type]
                         oda_no=oda.oda_no,
                         kat_adi=kat_adi,
                         oda_id=oda.id,
-                        notlar=notlar
+                        notlar=notlar,
                     )
                 except Exception as bildirim_err:
                     log_hata(bildirim_err, modul='royalbar_talebi_bildirim')

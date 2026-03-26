@@ -35,7 +35,7 @@
   <meta name="application-name" content="Minibar Takip" />
 
   <!-- PWA Manifest -->
-  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}" />
 
   <!-- Apple Touch Icons -->
   <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='icons/ios/180.png') }}" />
@@ -180,6 +180,7 @@
 
     .ui-widget-overlay {
       background: rgba(15, 23, 42, 0.75);
+      -webkit-backdrop-filter: blur(4px);
       backdrop-filter: blur(4px);
     }
 
@@ -247,6 +248,7 @@
     div.jquery-modal.blocker,
     div.jquery-modal.blocker.current {
       background: rgba(15, 23, 42, 0.75) !important;
+      -webkit-backdrop-filter: blur(4px) !important;
       backdrop-filter: blur(4px) !important;
       z-index: 999999 !important;
       padding: 5vh 2vw !important;
@@ -352,6 +354,9 @@
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
+  <!-- DOMPurify CDN - XSS sanitization -->
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
+
   <!-- Custom CSS -->
   <style>
     /* Scrollbar Hide Utility */
@@ -441,7 +446,6 @@
     /* Smooth scrolling */
     .mobile-scroll {
       overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
     }
 
     /* Sidebar - Hide scrollbar */
@@ -587,7 +591,6 @@
     .table-wrapper {
       overflow-x: auto;
       overflow-y: visible;
-      -webkit-overflow-scrolling: touch;
       position: relative;
       border-radius: 0.5rem;
     }
@@ -877,6 +880,18 @@
         font-size: 0.8125rem !important;
       }
     }
+
+    /* Tema karti gradient renkleri */
+    .tema-grad-mavi { background: linear-gradient(180deg, #38BDF8, #0284C7); }
+    .tema-grad-yesil { background: linear-gradient(180deg, #34D399, #059669); }
+    .tema-grad-mor { background: linear-gradient(180deg, #A78BFA, #7C3AED); }
+    .tema-grad-turuncu { background: linear-gradient(180deg, #FB923C, #C2410C); }
+    .tema-grad-kirmizi { background: linear-gradient(180deg, #F87171, #B91C1C); }
+    .tema-grad-pembe { background: linear-gradient(180deg, #F472B6, #BE185D); }
+    .tema-grad-sari { background: linear-gradient(180deg, #FDE047, #A16207); }
+    .tema-grad-lacivert { background: linear-gradient(180deg, #818CF8, #4338CA); }
+    #tema-preview-badge { background: #2563EB; }
+    #tema-preview-button { background: linear-gradient(180deg, #0284C7, #0284C7); }
   </style>
 
   {% block extra_head %}{% endblock %}
@@ -912,14 +927,13 @@
   <div class="flex h-full">
     <!-- Sidebar -->
     <div id="sidebar"
-      class="fixed inset-y-0 left-0 z-40 bg-white dark:bg-slate-800 shadow-2xl sidebar-transition sidebar-open"
-      style="width: 16rem">
+      class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-slate-800 shadow-2xl sidebar-transition sidebar-open">
       <div class="flex flex-col h-full overflow-hidden">
         <!-- Logo & Close Button -->
         <div class="flex items-center justify-between h-16 px-4 bg-slate-600 dark:bg-slate-700 flex-shrink-0">
           <h1 class="text-xl font-bold text-white truncate">Minibar Takip</h1>
           <!-- Kibar Kapatma Butonu (sadece tablet/desktop) -->
-          <button id="sidebar-close-button"
+          <button id="sidebar-close-button" title="Menüyü kapat"
             class="hidden md:flex text-white hover:bg-slate-500 dark:hover:bg-slate-600 p-1.5 rounded-md transition-colors group">
             <svg class="w-5 h-5 transform group-hover:rotate-180 transition-transform duration-300" fill="none"
               stroke="currentColor" viewBox="0 0 24 24">
@@ -1579,7 +1593,7 @@
 
           <!-- PWA Install Button - Kat Sorumlusu -->
           <div class="mt-6 px-4">
-            <button id="pwa-sidebar-install-btn"
+            <button id="pwa-sidebar-install-btn-kat"
               class="pwa-install-button hidden w-full flex items-center justify-center px-3 py-2 text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors border border-purple-200 dark:border-purple-800">
               <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -2542,7 +2556,8 @@
             </div>
             <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Kullanım Kılavuzları</h3>
           </div>
-          <button onclick="closeKilavuzModal()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+          <button onclick="closeKilavuzModal()" title="Kapat" aria-label="Kapat"
+            class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -2644,7 +2659,8 @@
               <p class="text-sm text-slate-600 dark:text-slate-400">Oda kontrol ekranında kullanılacak renkleri seçin</p>
             </div>
           </div>
-          <button onclick="temaAyarlariModalKapat()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+          <button onclick="temaAyarlariModalKapat()" title="Kapat" aria-label="Kapat"
+            class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -2697,6 +2713,7 @@
                 type="color" 
                 id="aktif-color-picker" 
                 value="#2563EB"
+                title="Renk seçici"
                 onchange="aktifRenkSecildi(this.value)"
                 class="w-16 h-16 rounded-lg cursor-pointer border-2 border-slate-300 dark:border-slate-600 shadow-lg"
               />
@@ -2727,8 +2744,8 @@
                 <span class="text-xs text-slate-500 dark:text-slate-400">Profesyonel</span>
               </div>
               <div class="flex gap-2">
-                <div class="flex-1 h-12 rounded-md" style="background: #2563EB;"></div>
-                <div class="flex-1 h-12 rounded-md" style="background: linear-gradient(180deg, #38BDF8, #0284C7);"></div>
+                <div class="flex-1 h-12 rounded-md bg-[#2563EB]"></div>
+                <div class="flex-1 h-12 rounded-md tema-grad-mavi"></div>
               </div>
             </button>
 
@@ -2740,8 +2757,8 @@
                 <span class="text-xs text-slate-500 dark:text-slate-400">Canlı</span>
               </div>
               <div class="flex gap-2">
-                <div class="flex-1 h-12 rounded-md" style="background: #16A34A;"></div>
-                <div class="flex-1 h-12 rounded-md" style="background: linear-gradient(180deg, #34D399, #059669);"></div>
+                <div class="flex-1 h-12 rounded-md bg-[#16A34A]"></div>
+                <div class="flex-1 h-12 rounded-md tema-grad-yesil"></div>
               </div>
             </button>
 
@@ -2753,8 +2770,8 @@
                 <span class="text-xs text-slate-500 dark:text-slate-400">Modern</span>
               </div>
               <div class="flex gap-2">
-                <div class="flex-1 h-12 rounded-md" style="background: #9333EA;"></div>
-                <div class="flex-1 h-12 rounded-md" style="background: linear-gradient(180deg, #A78BFA, #7C3AED);"></div>
+                <div class="flex-1 h-12 rounded-md bg-[#9333EA]"></div>
+                <div class="flex-1 h-12 rounded-md tema-grad-mor"></div>
               </div>
             </button>
 
@@ -2766,8 +2783,8 @@
                 <span class="text-xs text-slate-500 dark:text-slate-400">Enerjik</span>
               </div>
               <div class="flex gap-2">
-                <div class="flex-1 h-12 rounded-md" style="background: #EA580C;"></div>
-                <div class="flex-1 h-12 rounded-md" style="background: linear-gradient(180deg, #FB923C, #C2410C);"></div>
+                <div class="flex-1 h-12 rounded-md bg-[#EA580C]"></div>
+                <div class="flex-1 h-12 rounded-md tema-grad-turuncu"></div>
               </div>
             </button>
 
@@ -2779,8 +2796,8 @@
                 <span class="text-xs text-slate-500 dark:text-slate-400">Güçlü</span>
               </div>
               <div class="flex gap-2">
-                <div class="flex-1 h-12 rounded-md" style="background: #DC2626;"></div>
-                <div class="flex-1 h-12 rounded-md" style="background: linear-gradient(180deg, #F87171, #B91C1C);"></div>
+                <div class="flex-1 h-12 rounded-md bg-[#DC2626]"></div>
+                <div class="flex-1 h-12 rounded-md tema-grad-kirmizi"></div>
               </div>
             </button>
 
@@ -2792,8 +2809,8 @@
                 <span class="text-xs text-slate-500 dark:text-slate-400">Yumuşak</span>
               </div>
               <div class="flex gap-2">
-                <div class="flex-1 h-12 rounded-md" style="background: #DB2777;"></div>
-                <div class="flex-1 h-12 rounded-md" style="background: linear-gradient(180deg, #F472B6, #BE185D);"></div>
+                <div class="flex-1 h-12 rounded-md bg-[#DB2777]"></div>
+                <div class="flex-1 h-12 rounded-md tema-grad-pembe"></div>
               </div>
             </button>
 
@@ -2805,8 +2822,8 @@
                 <span class="text-xs text-slate-500 dark:text-slate-400">Neşeli</span>
               </div>
               <div class="flex gap-2">
-                <div class="flex-1 h-12 rounded-md" style="background: #CA8A04;"></div>
-                <div class="flex-1 h-12 rounded-md" style="background: linear-gradient(180deg, #FDE047, #A16207);"></div>
+                <div class="flex-1 h-12 rounded-md bg-[#CA8A04]"></div>
+                <div class="flex-1 h-12 rounded-md tema-grad-sari"></div>
               </div>
             </button>
 
@@ -2818,8 +2835,8 @@
                 <span class="text-xs text-slate-500 dark:text-slate-400">Klasik</span>
               </div>
               <div class="flex gap-2">
-                <div class="flex-1 h-12 rounded-md" style="background: #4F46E5;"></div>
-                <div class="flex-1 h-12 rounded-md" style="background: linear-gradient(180deg, #818CF8, #4338CA);"></div>
+                <div class="flex-1 h-12 rounded-md bg-[#4F46E5]"></div>
+                <div class="flex-1 h-12 rounded-md tema-grad-lacivert"></div>
               </div>
             </button>
           </div>
@@ -2842,8 +2859,8 @@
                 <!-- Badge Önizleme -->
                 <div class="flex items-center gap-2">
                   <span class="text-xs text-slate-600 dark:text-slate-400">Setup:</span>
-                  <div id="tema-preview-badge" class="w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-medium shadow-lg" 
-                    style="background: #2563EB;">
+                  <div id="tema-preview-badge"
+                    class="w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-medium shadow-lg">
                     2
                   </div>
                 </div>
@@ -2851,8 +2868,7 @@
                 <!-- Buton Önizleme -->
                 <div class="flex items-center gap-2">
                   <span class="text-xs text-slate-600 dark:text-slate-400">Buton:</span>
-                  <button id="tema-preview-button" class="px-4 py-1.5 rounded-md text-white text-sm font-medium shadow-lg" 
-                    style="background: linear-gradient(180deg, #0284C7, #0284C7);">
+                  <button id="tema-preview-button" class="px-4 py-1.5 rounded-md text-white text-sm font-medium shadow-lg">
                     Ekle
                   </button>
                 </div>

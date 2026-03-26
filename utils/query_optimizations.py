@@ -3,11 +3,9 @@ Query Optimization Implementations
 Mevcut route'larda N+1 problemlerini düzeltmek için helper fonksiyonlar
 """
 
-from utils.query_helpers import (
-    get_zimmetler_optimized,
-    get_minibar_islemler_optimized,
-    get_stok_hareketleri_optimized
-)
+import logging
+logger = logging.getLogger(__name__)
+
 
 
 # Bu fonksiyonlar mevcut route'larda kullanılabilir

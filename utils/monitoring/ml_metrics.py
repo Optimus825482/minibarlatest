@@ -6,7 +6,7 @@ import logging
 import os
 import json
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -103,10 +103,8 @@ class MLMetrics:
             
             # Model dosyasından metadata oku
             import os
-            import pickle
             
             metrics = None
-            model_file = f"ml_models/{model_name}.pkl"
             metadata_file = f"ml_models/{model_name}_metrics.json"
             
             # Metadata dosyası varsa oku
@@ -180,8 +178,8 @@ class MLMetrics:
                                 try:
                                     time_ms = float(line.split('prediction_time:')[1].split('ms')[0].strip())
                                     total_time += time_ms
-                                except:
-                                    pass
+                                except Exception:
+                                    logger.debug("Sessiz hata yakalandi", exc_info=True)
                             if 'error' in line.lower():
                                 errors += 1
                 except Exception as e:

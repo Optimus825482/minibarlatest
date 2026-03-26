@@ -4,7 +4,6 @@ Anomali tespit motoru: Z-Score ve Isolation Forest algoritmaları
 """
 
 from datetime import datetime, timezone, timedelta
-from sqlalchemy import func
 import numpy as np
 import pickle
 import logging
@@ -141,8 +140,8 @@ class AnomalyDetector:
                 z_score = abs((current_value - mean) / std) if std > 0 else 0
                 
                 # Modeli bellekten temizle
-                del model_package
-                
+                del model_package  # noqa: F821
+
                 # -1: anomali, 1: normal
                 is_anomaly = predictions[-1] == -1
                 
@@ -161,51 +160,51 @@ class AnomalyDetector:
                 
                 # Model'i temizle
                 try:
-                    del model_package
-                except:
-                    pass
+                    del model_package  # noqa: F821
+                except Exception:
+                    logger.debug("Sessiz hata yakalandi", exc_info=True)
                 
                 # Fallback: Z-Score
                 return self.detect_with_zscore(values)
-            
-        except FileNotFoundError as e:
+
+        except FileNotFoundError:
             # Dosya bulunamadı
             self.fallback_count += 1
-            self.fallback_reasons['file_not_found'] += 1
-            
+            self.fallback_reasons["file_not_found"] += 1
+
             logger.warning(
                 f"⚠️  [FALLBACK_FILE_NOT_FOUND] Model dosyası bulunamadı: {metric_type} | "
                 f"Fallback rate: {self._get_fallback_rate():.1f}%"
             )
-            
+
             self._check_fallback_rate_alert()
             return self.detect_with_zscore(values)
-            
+
         except (EOFError, pickle.UnpicklingError) as e:
             # Corrupt file
             self.fallback_count += 1
-            self.fallback_reasons['corrupt_file'] += 1
-            
+            self.fallback_reasons["corrupt_file"] += 1
+
             logger.error(
                 f"❌ [FALLBACK_CORRUPT_FILE] Model dosyası bozuk: {metric_type} | "
                 f"Error: {str(e)} | "
                 f"Fallback rate: {self._get_fallback_rate():.1f}%"
             )
-            
+
             self._check_fallback_rate_alert()
             return self.detect_with_zscore(values)
-            
+
         except Exception as e:
             # Genel hata
             self.fallback_count += 1
-            self.fallback_reasons['load_error'] += 1
-            
+            self.fallback_reasons["load_error"] += 1
+
             logger.error(
                 f"❌ [FALLBACK_LOAD_ERROR] Model yükleme hatası: {metric_type} | "
                 f"Error: {str(e)} | "
                 f"Fallback rate: {self._get_fallback_rate():.1f}%"
             )
-            
+
             self._check_fallback_rate_alert()
             return self.detect_with_zscore(values)
     
@@ -245,16 +244,16 @@ class AnomalyDetector:
                     # Son 1 saatte aynı ürün için alert var mı kontrol et
                     son_1_saat = datetime.now(timezone.utc) - timedelta(hours=1)
                     existing_alert = MLAlert.query.filter(
-                        MLAlert.alert_type == 'stok_anomali',
-                        MLAlert.entity_type == 'urun',
+                        MLAlert.alert_type == "stok_anomali",
+                        MLAlert.entity_type == "urun",
                         MLAlert.entity_id == urun.id,
                         MLAlert.created_at >= son_1_saat,
-                        MLAlert.is_false_positive == False
+                        not MLAlert.is_false_positive,
                     ).first()
                     
                     if not existing_alert:
                         message = f"🚨 NEGATİF STOK: {urun.urun_adi} - Mevcut stok: {int(current_value)}"
-                        suggested_action = f"ACİL: Stok hareketlerini kontrol edin. Veri tutarsızlığı var!"
+                        suggested_action = "ACİL: Stok hareketlerini kontrol edin. Veri tutarsızlığı var!"
                         
                         alert = MLAlert(
                             alert_type='stok_anomali',
@@ -288,10 +287,10 @@ class AnomalyDetector:
                     # Aynı ürün için son 1 saatte alert var mı kontrol et
                     son_1_saat = datetime.now(timezone.utc) - timedelta(hours=1)
                     existing_alert = MLAlert.query.filter(
-                        MLAlert.alert_type == 'stok_anomali',
+                        MLAlert.alert_type == "stok_anomali",
                         MLAlert.entity_id == urun.id,
                         MLAlert.created_at >= son_1_saat,
-                        MLAlert.is_false_positive == False
+                        not MLAlert.is_false_positive,
                     ).first()
                     
                     if not existing_alert:
@@ -373,10 +372,10 @@ class AnomalyDetector:
                         # Aynı oda için son 6 saatte alert var mı kontrol et
                         son_6_saat = datetime.now(timezone.utc) - timedelta(hours=6)
                         existing_alert = MLAlert.query.filter(
-                            MLAlert.alert_type == 'tuketim_anomali',
+                            MLAlert.alert_type == "tuketim_anomali",
                             MLAlert.entity_id == oda.id,
                             MLAlert.created_at >= son_6_saat,
-                            MLAlert.is_false_positive == False
+                            not MLAlert.is_false_positive,
                         ).first()
                         
                         if not existing_alert:
@@ -461,10 +460,10 @@ class AnomalyDetector:
                         # Aynı personel için son 12 saatte alert var mı kontrol et
                         son_12_saat = datetime.now(timezone.utc) - timedelta(hours=12)
                         existing_alert = MLAlert.query.filter(
-                            MLAlert.alert_type == 'dolum_gecikme',
+                            MLAlert.alert_type == "dolum_gecikme",
                             MLAlert.entity_id == personel.id,
                             MLAlert.created_at >= son_12_saat,
-                            MLAlert.is_false_positive == False
+                            not MLAlert.is_false_positive,
                         ).first()
                         
                         if not existing_alert:
@@ -534,10 +533,10 @@ class AnomalyDetector:
                         # Son 24 saatte aynı personel için alert var mı?
                         son_24_saat = datetime.now(timezone.utc) - timedelta(hours=24)
                         existing_alert = MLAlert.query.filter(
-                            MLAlert.alert_type == 'zimmet_fire_yuksek',
+                            MLAlert.alert_type == "zimmet_fire_yuksek",
                             MLAlert.entity_id == personel.id,
                             MLAlert.created_at >= son_24_saat,
-                            MLAlert.is_false_positive == False
+                            not MLAlert.is_false_positive,
                         ).first()
                         
                         if not existing_alert:
@@ -580,10 +579,11 @@ class AnomalyDetector:
                     if son_kullanim < 30:
                         son_24_saat = datetime.now(timezone.utc) - timedelta(hours=24)
                         existing_alert = MLAlert.query.filter(
-                            MLAlert.alert_type == 'zimmet_fire_yuksek',  # Düzeltildi: zimmet_kullanim_dusuk kaldırıldı
+                            MLAlert.alert_type
+                            == "zimmet_fire_yuksek",  # Düzeltildi: zimmet_kullanim_dusuk kaldırıldı
                             MLAlert.entity_id == personel.id,
                             MLAlert.created_at >= son_24_saat,
-                            MLAlert.is_false_positive == False
+                            not MLAlert.is_false_positive,
                         ).first()
                         
                         if not existing_alert:
@@ -639,10 +639,10 @@ class AnomalyDetector:
                 # Bu oda için son 6 saatte alert var mı?
                 son_6_saat = datetime.now(timezone.utc) - timedelta(hours=6)
                 existing_alert = MLAlert.query.filter(
-                    MLAlert.alert_type == 'bosta_tuketim_var',
+                    MLAlert.alert_type == "bosta_tuketim_var",
                     MLAlert.entity_id == metrik.entity_id,
                     MLAlert.created_at >= son_6_saat,
-                    MLAlert.is_false_positive == False
+                    not MLAlert.is_false_positive,
                 ).first()
                 
                 if not existing_alert:
@@ -703,10 +703,10 @@ class AnomalyDetector:
                 # Bu talep için son 1 saatte alert var mı?
                 son_1_saat = datetime.now(timezone.utc) - timedelta(hours=1)
                 existing_alert = MLAlert.query.filter(
-                    MLAlert.alert_type == 'talep_yanitlanmadi',
+                    MLAlert.alert_type == "talep_yanitlanmadi",
                     MLAlert.entity_id == talep.oda_id,
                     MLAlert.created_at >= son_1_saat,
-                    MLAlert.is_false_positive == False
+                    not MLAlert.is_false_positive,
                 ).first()
                 
                 if not existing_alert:
@@ -786,10 +786,10 @@ class AnomalyDetector:
                         # Son 24 saatte alert var mı?
                         son_24_saat = datetime.now(timezone.utc) - timedelta(hours=24)
                         existing_alert = MLAlert.query.filter(
-                            MLAlert.alert_type == 'qr_kullanim_dusuk',
+                            MLAlert.alert_type == "qr_kullanim_dusuk",
                             MLAlert.entity_id == personel.id,
                             MLAlert.created_at >= son_24_saat,
-                            MLAlert.is_false_positive == False
+                            not MLAlert.is_false_positive,
                         ).first()
                         
                         if not existing_alert:

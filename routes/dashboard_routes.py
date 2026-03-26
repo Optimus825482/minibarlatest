@@ -17,6 +17,10 @@ Roller:
 - kat_sorumlusu
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from flask import render_template, redirect, url_for, flash, session
 from datetime import datetime, timedelta
 import pytz
@@ -28,7 +32,7 @@ def get_kktc_now():
     """Kıbrıs saat diliminde şu anki zamanı döndürür."""
     return datetime.now(KKTC_TZ)
 
-from models import db, Kat, Oda, Kullanici, UrunGrup, Urun, StokHareket, PersonelZimmet, PersonelZimmetDetay, MinibarIslem, MinibarIslemDetay
+from models import db, Kullanici, UrunGrup, Urun, StokHareket, PersonelZimmet, PersonelZimmetDetay, MinibarIslem, MinibarIslemDetay
 from utils.decorators import login_required, role_required
 from utils.helpers import get_kritik_stok_urunler, get_tum_urunler_stok_durumlari, get_kat_sorumlusu_kritik_stoklar
 
@@ -40,7 +44,6 @@ except ImportError:
 
 # Cache + Eager Loading servisleri (1.1.2026)
 from utils.dashboard_data_service import DashboardDataService
-from utils.master_data_service import MasterDataService
 
 
 def register_dashboard_routes(app):
@@ -92,7 +95,6 @@ def register_dashboard_routes(app):
             
             if ml_enabled:
                 try:
-                    from models import MLAlert
                     from utils.ml.alert_manager import AlertManager
                 
                     alert_manager = AlertManager(db)
@@ -100,7 +102,7 @@ def register_dashboard_routes(app):
                     ml_alerts = alert_manager.get_active_alerts(limit=5)
                     ml_alert_count = len(alert_manager.get_active_alerts())
                 except Exception as e:
-                    print(f"ML alert hatası: {str(e)}")
+                    logger.error(f"ML alert hatası: {str(e)}")
         
             # Tüm oteller için doluluk raporları
             otel_doluluk_raporlari = []
@@ -118,7 +120,7 @@ def register_dashboard_routes(app):
                     doluluk['otel'] = otel
                     otel_doluluk_raporlari.append(doluluk)
             except Exception as e:
-                print(f"Doluluk raporları hatası: {str(e)}")
+                logger.error(f"Doluluk raporları hatası: {str(e)}")
         
             # İstatistikler - Cache + Eager Loading ile optimize edildi (1.1.2026)
             # Genel istatistikler (cached)
@@ -156,7 +158,7 @@ def register_dashboard_routes(app):
             try:
                 stok_durumlari = get_tum_urunler_stok_durumlari()
             except Exception as e:
-                print(f"Stok durumları hatası: {str(e)}")
+                logger.error(f"Stok durumları hatası: {str(e)}")
                 flash(f'Stok durumları yüklenirken hata oluştu: {str(e)}', 'warning')
                 stok_durumlari = {
                     'kritik': [],
@@ -180,7 +182,7 @@ def register_dashboard_routes(app):
             }
             if DashboardBildirimServisi:
                 try:
-                    kullanici_id = session.get('kullanici_id')
+                    kullanici_id: int = session.get("kullanici_id")  # type: ignore[assignment]
                     dashboard_bildirimleri = DashboardBildirimServisi.get_dashboard_bildirimleri(
                         kullanici_id, 'sistem_yoneticisi'
                     )
@@ -188,7 +190,7 @@ def register_dashboard_routes(app):
                         kullanici_id, 'sistem_yoneticisi'
                     )
                 except Exception as e:
-                    print(f"Dashboard bildirimleri hatası: {str(e)}")
+                    logger.error(f"Dashboard bildirimleri hatası: {str(e)}")
                     db.session.rollback()  # Transaction'ı temizle
         
             # Sipariş istatistikleri (eski modül kaldırıldı)
@@ -200,14 +202,10 @@ def register_dashboard_routes(app):
             try:
                 ana_depo_tedarik_sayisi = AnaDepoTedarik.query.filter_by(sistem_yoneticisi_goruldu=False).count()
             except Exception as e:
-                print(f"Ana depo tedarik sayısı hatası: {str(e)}")
+                logger.error(f"Ana depo tedarik sayısı hatası: {str(e)}")
                 db.session.rollback()
-        
-            # bugun değişkeni tanımlı değilse tanımla
-            try:
-                bugun
-            except NameError:
-                bugun = get_kktc_now().date()
+
+            bugun = get_kktc_now().date()
         
             # Günlük Yükleme Görev Özeti (Sistem Yöneticisi için)
             yukleme_gorev_ozeti = None
@@ -263,7 +261,7 @@ def register_dashboard_routes(app):
                         'departures_durum': departures_durum
                     }
             except Exception as e:
-                print(f"Sistem yöneticisi yükleme görev özeti hatası: {str(e)}")
+                logger.error(f"Sistem yöneticisi yükleme görev özeti hatası: {str(e)}")
             
             # Eksik Doluluk Yüklemeleri Kontrolü (Sistem Yöneticisi için - Saat 10:00 sonrası)
             eksik_doluluk_yuklemeleri = []
@@ -314,7 +312,7 @@ def register_dashboard_routes(app):
                                 depo_sorumlu_atamalari = KullaniciOtel.query.join(Kullanici).filter(
                                     KullaniciOtel.otel_id == otel.id,
                                     Kullanici.rol == 'depo_sorumlusu',
-                                    Kullanici.aktif == True
+                                    Kullanici.aktif
                                 ).all()
                                 
                                 depo_sorumlulari = [
@@ -328,7 +326,7 @@ def register_dashboard_routes(app):
                                     'depo_sorumlulari': depo_sorumlulari
                                 })
             except Exception as e:
-                print(f"Eksik doluluk yüklemeleri kontrolü hatası: {str(e)}")
+                logger.error(f"Eksik doluluk yüklemeleri kontrolü hatası: {str(e)}")
             
             # Kat Sorumlusu Görevleri Özeti (Sistem Yöneticisi için)
             kat_sorumlusu_gorev_ozeti = None
@@ -371,7 +369,7 @@ def register_dashboard_routes(app):
                         'departure': {'toplam': departure, 'tamamlanan': departure_tamamlanan}
                     }
             except Exception as e:
-                print(f"Kat sorumlusu görev özeti hatası: {str(e)}")
+                logger.error(f"Kat sorumlusu görev özeti hatası: {str(e)}")
             
             return render_template('sistem_yoneticisi/dashboard.html',
                                  otel_doluluk_raporlari=otel_doluluk_raporlari,
@@ -405,7 +403,7 @@ def register_dashboard_routes(app):
                                  eksik_doluluk_yuklemeleri=eksik_doluluk_yuklemeleri,
                                  ana_depo_tedarik_sayisi=ana_depo_tedarik_sayisi)
         except Exception as e:
-            print(f"Sistem yöneticisi dashboard hatası: {str(e)}")
+            logger.error(f"Sistem yöneticisi dashboard hatası: {str(e)}")
             import traceback
             traceback.print_exc()
             flash(f'Dashboard yüklenirken hata oluştu: {str(e)}', 'danger')
@@ -483,7 +481,7 @@ def register_dashboard_routes(app):
         try:
             stok_durumlari = get_tum_urunler_stok_durumlari()
         except Exception as e:
-            print(f"Stok durumları hatası: {str(e)}")
+            logger.error(f"Stok durumları hatası: {str(e)}")
             flash(f'Stok durumları yüklenirken hata oluştu: {str(e)}', 'warning')
             stok_durumlari = {
                 'kritik': [],
@@ -575,7 +573,7 @@ def register_dashboard_routes(app):
         }
         if DashboardBildirimServisi and atanan_oteller:
             try:
-                kullanici_id = session.get('kullanici_id')
+                kullanici_id: int = session.get("kullanici_id")  # type: ignore[assignment]
                 # İlk atanan otel için bildirimleri al
                 otel_id = atanan_oteller[0].id
                 dashboard_bildirimleri = DashboardBildirimServisi.get_dashboard_bildirimleri(
@@ -585,7 +583,7 @@ def register_dashboard_routes(app):
                     kullanici_id, 'depo_sorumlusu', otel_id
                 )
             except Exception as e:
-                print(f"Dashboard bildirimleri hatası: {str(e)}")
+                logger.error(f"Dashboard bildirimleri hatası: {str(e)}")
         
         # Ürün bazlı tüketim verileri (Son 30 günün en çok tüketilen ürünleri)
         otuz_gun_once = bugun - timedelta(days=30)
@@ -618,8 +616,8 @@ def register_dashboard_routes(app):
             from utils.authorization import get_kullanici_otelleri
             
             bugun = date.today()
-            kullanici_id = session.get('kullanici_id')
-            
+            kullanici_id: int = session.get("kullanici_id")  # type: ignore[assignment]
+
             # Kullanıcının otellerini al
             kullanici_otelleri = get_kullanici_otelleri()
             otel_ids = [o.id for o in kullanici_otelleri] if kullanici_otelleri else []
@@ -674,14 +672,14 @@ def register_dashboard_routes(app):
                     'departures_durum': departures_durum
                 }
         except Exception as e:
-            print(f"Yükleme görev özeti hatası: {str(e)}")
+            logger.error(f"Yükleme görev özeti hatası: {str(e)}")
         
         # Oda kontrol görevleri özeti (tüm yüklemeler tamamlandığında göster) - OTEL BAZLI
         oda_kontrol_ozeti = None
         oda_kontrol_ozeti_otel_bazli = []  # Her otel için ayrı özet
         try:
             if yukleme_gorev_ozeti and yukleme_gorev_ozeti.get('tamamlanma_orani') == 100:
-                from models import GunlukGorev, GorevDetay, Otel
+                from models import GunlukGorev, GorevDetay
                 from utils.authorization import get_kullanici_otelleri
                 
                 kullanici_otelleri = get_kullanici_otelleri()
@@ -763,7 +761,7 @@ def register_dashboard_routes(app):
                             'departure': {'toplam': departure_toplam, 'tamamlanan': departure_tamamlanan}
                         }
         except Exception as e:
-            print(f"Oda kontrol özeti hatası: {str(e)}")
+            logger.error(f"Oda kontrol özeti hatası: {str(e)}")
         
         return render_template('depo_sorumlusu/dashboard.html',
                              otel_doluluk_bilgileri=otel_doluluk_bilgileri,
@@ -814,7 +812,7 @@ def register_dashboard_routes(app):
             else:
                 gorev_ozeti = {'toplam': 0, 'tamamlanan': 0, 'bekleyen': 0, 'dnd': 0, 'tamamlanma_orani': 0}
         except Exception as e:
-            print(f"Görev özeti hatası: {str(e)}")
+            logger.error(f"Görev özeti hatası: {str(e)}")
             gorev_ozeti = {'toplam': 0, 'tamamlanan': 0, 'bekleyen': 0, 'dnd': 0, 'tamamlanma_orani': 0}
         
         # Doluluk raporu - Bugün için
@@ -828,7 +826,7 @@ def register_dashboard_routes(app):
                 else:
                     doluluk_raporu['doluluk_orani'] = 0
         except Exception as e:
-            print(f"Doluluk raporu hatası: {str(e)}")
+            logger.error(f"Doluluk raporu hatası: {str(e)}")
         
         # İstatistikler
         aktif_zimmetler = PersonelZimmet.query.filter_by(

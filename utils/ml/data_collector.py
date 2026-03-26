@@ -195,7 +195,7 @@ class DataCollector:
         Returns: Toplanan metrik sayısı
         """
         try:
-            from models import Kullanici, PersonelZimmet, PersonelZimmetDetay, MLMetric
+            from models import Kullanici, PersonelZimmet, MLMetric
             
             # Aktif kat sorumluları
             kat_sorumlulari = Kullanici.query.filter_by(
@@ -441,7 +441,7 @@ class DataCollector:
                 qr_count = QRKodOkutmaLog.query.filter(
                     QRKodOkutmaLog.kullanici_id == personel.id,
                     QRKodOkutmaLog.okutma_tarihi >= son_24_saat,
-                    QRKodOkutmaLog.basarili == True
+                    QRKodOkutmaLog.basarili
                 ).count()
                 
                 if qr_count > 0:

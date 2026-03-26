@@ -34,21 +34,26 @@ Roller:
 - kat_sorumlusu
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from flask import jsonify, request, session
 from datetime import datetime, timedelta
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-
-def get_kktc_now():
-    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
-    return datetime.now(KKTC_TZ)
+from models import get_kktc_now
 
 from models import (
-    db, Oda, Kat, OdaTipi, UrunGrup, Urun, StokHareket, 
-    PersonelZimmet, PersonelZimmetDetay, MinibarIslem, MinibarIslemDetay,
-    Kullanici
+    db,
+    Oda,
+    Kat,
+    UrunGrup,
+    Urun,
+    StokHareket,
+    PersonelZimmet,
+    PersonelZimmetDetay,
+    MinibarIslem,
+    MinibarIslemDetay,
+    Kullanici,
 )
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem, log_hata
@@ -58,7 +63,7 @@ def register_api_routes(app):
     """API route'larını kaydet"""
     
     # CSRF protection instance'ını al
-    csrf = app.extensions.get('csrf')
+    app.extensions.get("csrf")
     
     # AJAX endpoint - Tüm otelleri getir
     @app.route('/api/oteller-liste')
@@ -78,7 +83,9 @@ def register_api_routes(app):
             })
         except Exception as e:
             log_hata(e, modul='api_oteller_liste')
-            return jsonify({'success': False, 'error': str(e), 'oteller': []}), 500
+            return jsonify(
+                {"success": False, "error": "Sunucu hatasi olustu", "oteller": []}
+            ), 500
     
     # AJAX endpoint - Tüm odaları getir
     @app.route('/api/odalar')
@@ -97,7 +104,7 @@ def register_api_routes(app):
             } for oda in odalar])
         except Exception as e:
             log_hata(e, modul='api_odalar')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # AJAX endpoint - Kata göre odaları getir
     @app.route('/api/odalar-by-kat/<int:kat_id>')
@@ -113,7 +120,7 @@ def register_api_routes(app):
             } for oda in odalar])
         except Exception as e:
             log_hata(e, modul='odalar_by_kat')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # AJAX endpoint - Ürün gruplarını getir
     @app.route('/api/urun-gruplari')
@@ -129,7 +136,7 @@ def register_api_routes(app):
             } for grup in gruplar])
         except Exception as e:
             log_hata(e, modul='api_urun_gruplari')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # AJAX endpoint - Tüm ürünleri getir
     @app.route('/api/urunler')
@@ -167,7 +174,7 @@ def register_api_routes(app):
             return jsonify(urun_listesi)
         except Exception as e:
             log_hata(e, modul='api_urunler')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # AJAX endpoint - Gruba göre ürünleri getir
     @app.route('/api/urunler-by-grup/<int:grup_id>')
@@ -204,7 +211,7 @@ def register_api_routes(app):
             return jsonify(urun_listesi)
         except Exception as e:
             log_hata(e, modul='urunler_by_grup')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # AJAX endpoint - Stok girişi yap
     @app.route('/api/stok-giris', methods=['POST'])
@@ -575,7 +582,7 @@ def register_api_routes(app):
             })
         except Exception as e:
             log_hata(e, modul='urun_stok')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # AJAX endpoint - Kat sorumlusunun zimmet bilgileri
     @app.route('/api/zimmetim')
@@ -611,7 +618,7 @@ def register_api_routes(app):
             } for detay in zimmet_detaylar])
         except Exception as e:
             log_hata(e, modul='api_zimmetim')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # AJAX endpoint - Minibar içeriği
     @app.route('/api/minibar-icerigi/<int:oda_id>')
@@ -655,7 +662,7 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_minibar_icerigi')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # AJAX endpoint - Minibar doldur
     @app.route('/api/minibar-doldur', methods=['POST'])
@@ -687,9 +694,9 @@ def register_api_routes(app):
                 return jsonify({'success': False, 'error': 'Ürün bulunamadı'})
             
             # Otel bazlı zimmet kontrolü
-            from utils.otel_zimmet_servisleri import OtelZimmetServisi, OtelZimmetStokYetersizError
-            
-            personel = Kullanici.query.get(kullanici_id)
+            from utils.otel_zimmet_servisleri import OtelZimmetServisi
+
+            personel = db.session.get(Kullanici, kullanici_id)
             if not personel or not personel.otel_id:
                 return jsonify({'success': False, 'error': 'Otel atamanız bulunamadı'})
             
@@ -728,7 +735,7 @@ def register_api_routes(app):
             yeni_stok = gercek_mevcut_stok + eklenen_miktar
             
             # Oda bilgisini al
-            oda = Oda.query.get(oda_id)
+            oda = db.session.get(Oda, oda_id)
             
             # Otel zimmet stoğundan düş ve kullanım kaydı oluştur
             otel_stok_updated, kullanim = OtelZimmetServisi.stok_dusu(
@@ -790,7 +797,7 @@ def register_api_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, modul='api_minibar_doldur')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # AJAX endpoint - Toplu oda mevcut durum
     @app.route('/api/toplu-oda-mevcut-durum', methods=['POST'])
@@ -845,9 +852,9 @@ def register_api_routes(app):
         except Exception as e:
             import traceback
             error_detail = traceback.format_exc()
-            print(f"Mevcut durum hatası: {error_detail}")
+            logger.error(f"Mevcut durum hatası: {error_detail}")
             log_hata(e, modul='api_toplu_oda_mevcut_durum')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # AJAX endpoint - Toplu oda doldur
     @app.route('/api/toplu-oda-doldur', methods=['POST'])
@@ -892,9 +899,9 @@ def register_api_routes(app):
             toplam_gerekli = eklenen_miktar * len(oda_ids)
 
             # Otel bazlı zimmet kontrolü
-            from utils.otel_zimmet_servisleri import OtelZimmetServisi, OtelZimmetStokYetersizError
-            
-            personel = Kullanici.query.get(kullanici_id)
+            from utils.otel_zimmet_servisleri import OtelZimmetServisi
+
+            personel = db.session.get(Kullanici, kullanici_id)
             if not personel or not personel.otel_id:
                 return jsonify({'success': False, 'error': 'Otel atamanız bulunamadı'})
             
@@ -1021,9 +1028,9 @@ def register_api_routes(app):
             db.session.rollback()
             import traceback
             error_detail = traceback.format_exc()
-            print(f"Toplu doldurma hatası: {error_detail}")
+            logger.error(f"Toplu doldurma hatası: {error_detail}")
             log_hata(e, modul='api_toplu_oda_doldur')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # AJAX endpoint - Kat rapor verisi
     @app.route('/api/kat-rapor-veri', methods=['GET'])
@@ -1069,7 +1076,11 @@ def register_api_routes(app):
                 )
                 if query_filter:
                     islemler_query = islemler_query.filter(*query_filter)
-                islemler = islemler_query.order_by(MinibarIslem.islem_tarihi.desc()).all()
+                islemler = (
+                    islemler_query.order_by(MinibarIslem.islem_tarihi.desc())
+                    .limit(500)
+                    .all()
+                )
 
                 # Son işlem tarihi
                 son_islem = islemler[0] if islemler else None
@@ -1145,7 +1156,7 @@ def register_api_routes(app):
 
         except Exception as e:
             log_hata(e, modul='api_kat_rapor_veri')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # ============================================================================
     # OTEL YÖNETİMİ API
@@ -1159,7 +1170,7 @@ def register_api_routes(app):
             from models import Otel, Kat
             
             # Otel var mı kontrol et
-            otel = Otel.query.get_or_404(otel_id)
+            Otel.query.get_or_404(otel_id)
             
             # Sadece aktif katları getir
             katlar = Kat.query.filter_by(
@@ -1175,7 +1186,7 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_otel_katlar')
-            return jsonify({'error': str(e)}), 500
+            return jsonify({"error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/oteller/<int:otel_id>/odalar', methods=['GET'])
     @login_required
@@ -1185,13 +1196,16 @@ def register_api_routes(app):
             from models import Otel, Kat, Oda
             
             # Otel var mı kontrol et
-            otel = Otel.query.get_or_404(otel_id)
+            Otel.query.get_or_404(otel_id)
             
             # Otele ait tüm odaları getir (kat üzerinden)
-            odalar = db.session.query(Oda).join(Kat).filter(
-                Kat.otel_id == otel_id,
-                Oda.aktif == True
-            ).order_by(Kat.kat_no, Oda.oda_no).all()
+            odalar = (
+                db.session.query(Oda)
+                .join(Kat)
+                .filter(Kat.otel_id == otel_id, Oda.aktif)
+                .order_by(Kat.kat_no, Oda.oda_no)
+                .all()
+            )
             
             return jsonify([{
                 'id': oda.id,
@@ -1202,7 +1216,7 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_otel_odalar')
-            return jsonify({'error': str(e)}), 500
+            return jsonify({"error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/katlar/<int:kat_id>/odalar', methods=['GET'])
     @login_required
@@ -1212,7 +1226,7 @@ def register_api_routes(app):
             from models import Kat, Oda
             
             # Kat var mı kontrol et
-            kat = Kat.query.get_or_404(kat_id)
+            Kat.query.get_or_404(kat_id)
             
             # Sadece aktif odaları getir
             odalar = Oda.query.filter_by(
@@ -1232,7 +1246,7 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_kat_odalar')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
     
 
     # AJAX endpoint - Kat bilgisini getir (otel_id dahil)
@@ -1258,7 +1272,7 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_kat_bilgi')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
     
     # AJAX endpoint - Otele göre depo sorumlularını getir
     @app.route('/api/oteller/<int:otel_id>/depo-sorumluları')
@@ -1270,16 +1284,20 @@ def register_api_routes(app):
             from models import Otel, Kullanici, KullaniciOtel
             
             # Otel var mı kontrol et
-            otel = Otel.query.get_or_404(otel_id)
+            Otel.query.get_or_404(otel_id)
             
             # Bu otele atanmış depo sorumlularını getir
-            depo_sorumlular = db.session.query(Kullanici).join(
-                KullaniciOtel, Kullanici.id == KullaniciOtel.kullanici_id
-            ).filter(
-                KullaniciOtel.otel_id == otel_id,
-                Kullanici.rol == 'depo_sorumlusu',
-                Kullanici.aktif == True
-            ).order_by(Kullanici.ad, Kullanici.soyad).all()
+            depo_sorumlular = (
+                db.session.query(Kullanici)
+                .join(KullaniciOtel, Kullanici.id == KullaniciOtel.kullanici_id)
+                .filter(
+                    KullaniciOtel.otel_id == otel_id,
+                    Kullanici.rol == "depo_sorumlusu",
+                    Kullanici.aktif,
+                )
+                .order_by(Kullanici.ad, Kullanici.soyad)
+                .all()
+            )
             
             return jsonify([{
                 'id': depo.id,
@@ -1290,7 +1308,7 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_otel_depo_sorumluları')
-            return jsonify({'error': str(e)}), 500
+            return jsonify({"error": "Sunucu hatasi olustu"}), 500
 
     # AJAX endpoint - Otele göre oda tiplerini getir
     @app.route('/api/oteller/<int:otel_id>/oda-tipleri', methods=['GET'])
@@ -1314,19 +1332,14 @@ def register_api_routes(app):
             
             for kat in katlar:
                 # Bu kattaki oda tiplerini grupla ve say
-                oda_tipleri = db.session.query(
-                    OdaTipi.ad,
-                    func.count(Oda.id).label('sayi')
-                ).join(
-                    Oda, Oda.oda_tipi_id == OdaTipi.id
-                ).filter(
-                    Oda.kat_id == kat.id,
-                    Oda.aktif == True
-                ).group_by(
-                    OdaTipi.ad
-                ).order_by(
-                    func.count(Oda.id).desc()
-                ).all()
+                oda_tipleri = (
+                    db.session.query(OdaTipi.ad, func.count(Oda.id).label("sayi"))
+                    .join(Oda, Oda.oda_tipi_id == OdaTipi.id)
+                    .filter(Oda.kat_id == kat.id, Oda.aktif)
+                    .group_by(OdaTipi.ad)
+                    .order_by(func.count(Oda.id).desc())
+                    .all()
+                )
                 
                 if oda_tipleri:
                     kat_oda_sayisi = sum([sayi for _, sayi in oda_tipleri])
@@ -1357,33 +1370,35 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_otel_oda_tipleri')
-            return jsonify({
-                'success': False,
-                'error': str(e),
-                'kat_bazli': {},
-                'toplam_oda': 0
-            }), 500
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "Sunucu hatasi olustu",
+                    "kat_bazli": {},
+                    "toplam_oda": 0,
+                }
+            ), 500
     
     @app.route('/api/oteller/<int:otel_id>/oda-tipleri-liste', methods=['GET'])
     @login_required
     def api_otel_oda_tipleri_liste(otel_id):
         """Bir oteldeki oda tiplerini basit liste olarak getir (oda formu için)"""
         try:
-            from sqlalchemy import distinct
             from models import Otel, Kat, Oda, OdaTipi
             
             # Otel kontrolü
-            otel = Otel.query.get_or_404(otel_id)
+            Otel.query.get_or_404(otel_id)
             
             # Otele ait tüm oda tiplerini getir (OdaTipi tablosundan)
-            oda_tipleri_query = db.session.query(OdaTipi).join(
-                Oda, Oda.oda_tipi_id == OdaTipi.id
-            ).join(
-                Kat, Oda.kat_id == Kat.id
-            ).filter(
-                Kat.otel_id == otel_id,
-                Oda.aktif == True
-            ).distinct().order_by(OdaTipi.ad).all()
+            oda_tipleri_query = (
+                db.session.query(OdaTipi)
+                .join(Oda, Oda.oda_tipi_id == OdaTipi.id)
+                .join(Kat, Oda.kat_id == Kat.id)
+                .filter(Kat.otel_id == otel_id, Oda.aktif)
+                .distinct()
+                .order_by(OdaTipi.ad)
+                .all()
+            )
             
             # Oda tiplerini liste olarak döndür
             oda_tipleri_list = []
@@ -1401,21 +1416,17 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_otel_oda_tipleri_liste')
-            return jsonify({
-                'success': False,
-                'error': str(e),
-                'oda_tipleri': []
-            }), 500
+            return jsonify(
+                {"success": False, "error": "Sunucu hatasi olustu", "oda_tipleri": []}
+            ), 500
 
     # AJAX endpoint - Yeni oda ekle
-    @app.route('/api/oda-ekle', methods=['POST'])
-    @csrf.exempt
-    @login_required
+    @app.route("/api/oda-ekle", methods=["POST"])
     @role_required('sistem_yoneticisi', 'admin')
     def api_oda_ekle():
         """AJAX ile yeni oda ekle"""
         try:
-            from models import Oda, Kat, Otel
+            from models import Oda, Kat
             from utils.audit import audit_create, serialize_model
             
             data = request.get_json()
@@ -1440,7 +1451,7 @@ def register_api_routes(app):
                 }), 400
             
             # Kat'ın seçilen otele ait olduğunu kontrol et
-            kat = Kat.query.get(data['kat_id'])
+            kat = db.session.get(Kat, data["kat_id"])
             if not kat:
                 return jsonify({
                     'success': False,
@@ -1521,7 +1532,7 @@ def register_api_routes(app):
             from models import Oda, Kat
             
             oda = Oda.query.get_or_404(oda_id)
-            kat = Kat.query.get(oda.kat_id)
+            kat = db.session.get(Kat, oda.kat_id)
             
             return jsonify({
                 'success': True,
@@ -1538,10 +1549,7 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_oda_bilgi')
-            return jsonify({
-                'success': False,
-                'error': str(e)
-            }), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # AJAX endpoint - Oda güncelle
     @app.route('/api/oda-guncelle/<int:oda_id>', methods=['PUT'])
@@ -1581,7 +1589,7 @@ def register_api_routes(app):
                 }), 400
             
             # Kat'ın seçilen otele ait olduğunu kontrol et
-            kat = Kat.query.get(data['kat_id'])
+            kat = db.session.get(Kat, data["kat_id"])
             if not kat:
                 return jsonify({
                     'success': False,
@@ -1679,10 +1687,7 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_oda_no_kontrol')
-            return jsonify({
-                'success': False,
-                'error': str(e)
-            }), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # ============================================================================
     # ZİMMET ŞABLON API'LERİ
@@ -1694,20 +1699,24 @@ def register_api_routes(app):
     def api_zimmet_sablonlar():
         """Zimmet şablonlarını listele"""
         try:
-            from models import ZimmetSablon, ZimmetSablonDetay
+            from models import ZimmetSablon
             from utils.authorization import get_kullanici_otelleri
             
             oteller = get_kullanici_otelleri()
             otel_ids = [o.id for o in oteller]  # Otel objelerinden ID listesi çıkar
             
             # Kullanıcının erişebildiği otellerin şablonları + genel şablonlar
-            sablonlar = ZimmetSablon.query.filter(
-                ZimmetSablon.aktif == True,
-                db.or_(
-                    ZimmetSablon.otel_id.in_(otel_ids) if otel_ids else False,
-                    ZimmetSablon.otel_id == None
+            sablonlar = (
+                ZimmetSablon.query.filter(
+                    ZimmetSablon.aktif,
+                    db.or_(
+                        ZimmetSablon.otel_id.in_(otel_ids) if otel_ids else False,
+                        ZimmetSablon.otel_id is None,
+                    ),
                 )
-            ).order_by(ZimmetSablon.sablon_adi).all()
+                .order_by(ZimmetSablon.sablon_adi)
+                .all()
+            )
             
             result = []
             for sablon in sablonlar:
@@ -1733,7 +1742,7 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_zimmet_sablonlar')
-            return jsonify({'error': str(e)}), 500
+            return jsonify({"error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/zimmet-sablon-kaydet', methods=['POST'])
     @login_required
@@ -1805,7 +1814,7 @@ def register_api_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, modul='api_zimmet_sablon_kaydet')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/zimmet-sablon-sil/<int:sablon_id>', methods=['DELETE'])
     @login_required
@@ -1829,7 +1838,7 @@ def register_api_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, modul='api_zimmet_sablon_sil')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/zimmet-tum-urunler', methods=['GET'])
     @login_required
@@ -1893,7 +1902,7 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_zimmet_tum_urunler')
-            return jsonify({'error': str(e)}), 500
+            return jsonify({"error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/zimmet-hizli-ata', methods=['POST'])
     @login_required
@@ -2031,7 +2040,7 @@ def register_api_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, modul='api_zimmet_hizli_ata')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/zimmet-tek-urun-ata', methods=['POST'])
     @login_required
@@ -2113,10 +2122,10 @@ def register_api_routes(app):
             # Stok hareket kaydı
             hareket = StokHareket(
                 urun_id=urun_id,
-                hareket_tipi='cikis',
+                hareket_tipi="cikis",
                 miktar=miktar,
-                aciklama=f'Hızlı zimmet atama',
-                islem_yapan_id=session['kullanici_id']
+                aciklama="Hızlı zimmet atama",
+                islem_yapan_id=session["kullanici_id"],
             )
             db.session.add(hareket)
             
@@ -2137,7 +2146,7 @@ def register_api_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, modul='api_zimmet_tek_urun_ata')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/zimmet-detay/<int:zimmet_id>', methods=['GET'])
     @login_required
@@ -2145,7 +2154,7 @@ def register_api_routes(app):
     def api_zimmet_detay(zimmet_id):
         """Zimmet detaylarını getir"""
         try:
-            from models import PersonelZimmet, PersonelZimmetDetay
+            from models import PersonelZimmet
             
             zimmet = db.session.get(PersonelZimmet, zimmet_id)
             if not zimmet:
@@ -2172,7 +2181,7 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_zimmet_detay')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/zimmet-iptal/<int:zimmet_id>', methods=['POST'])
     @login_required
@@ -2180,7 +2189,13 @@ def register_api_routes(app):
     def api_zimmet_iptal(zimmet_id):
         """Zimmet sil - kullanılmamışsa, FIFO kayıtlarını geri al ve kaydı sil"""
         try:
-            from models import PersonelZimmet, PersonelZimmetDetay, UrunStok, StokFifoKayit, StokFifoKullanim, StokHareket
+            from models import (
+                PersonelZimmet,
+                UrunStok,
+                StokFifoKayit,
+                StokFifoKullanim,
+                StokHareket,
+            )
             
             zimmet = db.session.get(PersonelZimmet, zimmet_id)
             if not zimmet:
@@ -2242,7 +2257,7 @@ def register_api_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, modul='api_zimmet_iptal')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/zimmet-detay-iptal/<int:detay_id>', methods=['POST'])
     @login_required
@@ -2307,7 +2322,7 @@ def register_api_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, modul='api_zimmet_detay_iptal')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/zimmet-listesi', methods=['GET'])
     @login_required
@@ -2348,7 +2363,7 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_zimmet_listesi')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/zimmet-urun-ara', methods=['GET'])
     @login_required
@@ -2375,10 +2390,13 @@ def register_api_routes(app):
                 return jsonify([])
             
             # Ürün adında arama yap
-            urunler = Urun.query.filter(
-                Urun.aktif == True,
-                Urun.urun_adi.ilike(f'%{q}%')
-            ).join(UrunGrup).order_by(Urun.urun_adi).limit(15).all()
+            urunler = (
+                Urun.query.filter(Urun.aktif, Urun.urun_adi.ilike(f"%{q}%"))
+                .join(UrunGrup)
+                .order_by(Urun.urun_adi)
+                .limit(15)
+                .all()
+            )
             
             result = []
             for urun in urunler:
@@ -2397,9 +2415,9 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_zimmet_urun_ara')
-            return jsonify({'error': str(e)}), 500
+            return jsonify({"error": "Sunucu hatasi olustu"}), 500
 
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # ==================== SATIN ALMA API'LERİ ====================
     
@@ -2443,7 +2461,7 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_urunler_stok')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     @app.route('/api/otel-zimmet-stok-ekle', methods=['POST'])
     @login_required
@@ -2462,171 +2480,206 @@ def register_api_routes(app):
             
             if not stok_id or miktar <= 0:
                 return jsonify({'success': False, 'error': 'Stok ID ve miktar gerekli'}), 400
-            
-            stok = OtelZimmetStok.query.get(stok_id)
+
+            stok = db.session.get(OtelZimmetStok, stok_id)
             if not stok:
-                return jsonify({'success': False, 'error': 'Stok kaydı bulunamadı'}), 404
-            
+                return jsonify(
+                    {"success": False, "error": "Stok kaydı bulunamadı"}
+                ), 404
+
             # Stok ekle
             stok.toplam_miktar += miktar
             stok.kalan_miktar += miktar
             stok.son_guncelleme = get_kktc_now()
-            
+
             db.session.commit()
-            
-            log_islem('ekleme', 'otel_zimmet_stok', {
-                'stok_id': stok_id,
-                'miktar': miktar,
-                'yeni_toplam': stok.toplam_miktar,
-                'yeni_kalan': stok.kalan_miktar
-            })
-            
-            return jsonify({
-                'success': True,
-                'message': f'{miktar} adet stok eklendi',
-                'yeni_toplam': stok.toplam_miktar,
-                'yeni_kalan': stok.kalan_miktar
-            })
-            
+
+            log_islem(
+                "ekleme",
+                "otel_zimmet_stok",
+                {
+                    "stok_id": stok_id,
+                    "miktar": miktar,
+                    "yeni_toplam": stok.toplam_miktar,
+                    "yeni_kalan": stok.kalan_miktar,
+                },
+            )
+
+            return jsonify(
+                {
+                    "success": True,
+                    "message": f"{miktar} adet stok eklendi",
+                    "yeni_toplam": stok.toplam_miktar,
+                    "yeni_kalan": stok.kalan_miktar,
+                }
+            )
+
         except Exception as e:
             db.session.rollback()
-            log_hata(e, modul='api_otel_zimmet_stok_ekle')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            log_hata(e, modul="api_otel_zimmet_stok_ekle")
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
-    @app.route('/api/otel-zimmet-stoklari', methods=['GET'])
+    @app.route("/api/otel-zimmet-stoklari", methods=["GET"])
     @login_required
-    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    @role_required("depo_sorumlusu", "sistem_yoneticisi", "admin")
     def api_otel_zimmet_stoklari():
         """Belirli bir otelin zimmet stoklarını getir"""
         try:
-            from models import OtelZimmetStok, Otel
-            
-            otel_id = request.args.get('otel_id', type=int)
+            from models import OtelZimmetStok
+
+            otel_id = request.args.get("otel_id", type=int)
             if not otel_id:
-                return jsonify({'success': False, 'error': 'Otel ID gerekli'}), 400
-            
-            stoklar = OtelZimmetStok.query.filter_by(otel_id=otel_id).join(Urun).order_by(Urun.urun_adi).all()
-            
+                return jsonify({"success": False, "error": "Otel ID gerekli"}), 400
+
+            stoklar = (
+                OtelZimmetStok.query.filter_by(otel_id=otel_id)
+                .join(Urun)
+                .order_by(Urun.urun_adi)
+                .all()
+            )
+
             result = []
             for s in stoklar:
                 if s.kalan_miktar == 0:
-                    durum = 'stokout'
+                    durum = "stokout"
                 elif s.kalan_miktar <= (s.kritik_stok_seviyesi or 10):
-                    durum = 'kritik'
+                    durum = "kritik"
                 elif s.kalan_miktar <= (s.kritik_stok_seviyesi or 10) * 1.5:
-                    durum = 'dikkat'
+                    durum = "dikkat"
                 else:
-                    durum = 'normal'
-                
-                result.append({
-                    'id': s.id,
-                    'urun_id': s.urun_id,
-                    'urun_adi': s.urun.urun_adi if s.urun else 'Bilinmiyor',
-                    'grup_adi': s.urun.grup.grup_adi if s.urun and s.urun.grup else 'Genel',
-                    'birim': s.urun.birim if s.urun else 'Adet',
-                    'toplam_miktar': s.toplam_miktar,
-                    'kullanilan_miktar': s.kullanilan_miktar,
-                    'kalan_miktar': s.kalan_miktar,
-                    'durum': durum
-                })
-            
-            return jsonify({'success': True, 'stoklar': result})
-            
-        except Exception as e:
-            log_hata(e, modul='api_otel_zimmet_stoklari')
-            return jsonify({'success': False, 'error': str(e)}), 500
+                    durum = "normal"
 
-    @app.route('/api/urunler-zimmet-icin', methods=['GET'])
+                result.append(
+                    {
+                        "id": s.id,
+                        "urun_id": s.urun_id,
+                        "urun_adi": s.urun.urun_adi if s.urun else "Bilinmiyor",
+                        "grup_adi": s.urun.grup.grup_adi
+                        if s.urun and s.urun.grup
+                        else "Genel",
+                        "birim": s.urun.birim if s.urun else "Adet",
+                        "toplam_miktar": s.toplam_miktar,
+                        "kullanilan_miktar": s.kullanilan_miktar,
+                        "kalan_miktar": s.kalan_miktar,
+                        "durum": durum,
+                    }
+                )
+
+            return jsonify({"success": True, "stoklar": result})
+
+        except Exception as e:
+            log_hata(e, modul="api_otel_zimmet_stoklari")
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
+
+    @app.route("/api/urunler-zimmet-icin", methods=["GET"])
     @login_required
-    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    @role_required("depo_sorumlusu", "sistem_yoneticisi", "admin")
     def api_urunler_zimmet_icin():
         """Zimmet için ürün listesi - Ana depo stok ve otel zimmet stoğu ile"""
         try:
             from models import OtelZimmetStok, UrunStok, UrunGrup
-            
-            otel_id = request.args.get('otel_id', type=int)
+
+            otel_id = request.args.get("otel_id", type=int)
             if not otel_id:
-                return jsonify({'success': False, 'error': 'Otel ID gerekli'}), 400
-            
+                return jsonify({"success": False, "error": "Otel ID gerekli"}), 400
+
             # Tüm aktif ürünleri getir
             urunler = Urun.query.filter_by(aktif=True).order_by(Urun.urun_adi).all()
-            
+
             # Ana depo stokları (UrunStok tablosundan)
-            ana_depo_stoklar = {s.urun_id: s.mevcut_stok for s in UrunStok.query.filter_by(otel_id=otel_id).all()}
-            
+            ana_depo_stoklar = {
+                s.urun_id: s.mevcut_stok
+                for s in UrunStok.query.filter_by(otel_id=otel_id).all()
+            }
+
             # Otel zimmet stokları
-            otel_zimmet_stoklar = {s.urun_id: s.kalan_miktar for s in OtelZimmetStok.query.filter_by(otel_id=otel_id).all()}
-            
+            otel_zimmet_stoklar = {
+                s.urun_id: s.kalan_miktar
+                for s in OtelZimmetStok.query.filter_by(otel_id=otel_id).all()
+            }
+
             result = []
             for u in urunler:
                 grup = db.session.get(UrunGrup, u.grup_id) if u.grup_id else None
-                result.append({
-                    'id': u.id,
-                    'urun_adi': u.urun_adi,
-                    'birim': u.birim or 'Adet',
-                    'grup_id': u.grup_id or 0,
-                    'grup_adi': grup.grup_adi if grup else 'Genel',
-                    'ana_depo_stok': ana_depo_stoklar.get(u.id, 0),
-                    'otel_zimmet_stok': otel_zimmet_stoklar.get(u.id, 0)
-                })
-            
-            return jsonify({'success': True, 'urunler': result})
-            
-        except Exception as e:
-            log_hata(e, modul='api_urunler_zimmet_icin')
-            return jsonify({'success': False, 'error': str(e)}), 500
+                result.append(
+                    {
+                        "id": u.id,
+                        "urun_adi": u.urun_adi,
+                        "birim": u.birim or "Adet",
+                        "grup_id": u.grup_id or 0,
+                        "grup_adi": grup.grup_adi if grup else "Genel",
+                        "ana_depo_stok": ana_depo_stoklar.get(u.id, 0),
+                        "otel_zimmet_stok": otel_zimmet_stoklar.get(u.id, 0),
+                    }
+                )
 
-    @app.route('/api/otel-zimmet-ekle', methods=['POST'])
+            return jsonify({"success": True, "urunler": result})
+
+        except Exception as e:
+            log_hata(e, modul="api_urunler_zimmet_icin")
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
+
+    @app.route("/api/otel-zimmet-ekle", methods=["POST"])
     @login_required
-    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    @role_required("depo_sorumlusu", "sistem_yoneticisi", "admin")
     def api_otel_zimmet_ekle():
         """Otel zimmet stoğuna yeni ürün ekle veya mevcut stoğu artır - Ana depodan düşer"""
         try:
             from models import OtelZimmetStok, UrunStok
             from utils.fifo_servisler import FifoStokServisi
-            
+
             data = request.get_json()
             if not data:
-                return jsonify({'success': False, 'error': 'Geçersiz veri'}), 400
-            
-            otel_id = data.get('otel_id')
-            urun_id = data.get('urun_id')
-            miktar = data.get('miktar', 0)
-            
+                return jsonify({"success": False, "error": "Geçersiz veri"}), 400
+
+            otel_id = data.get("otel_id")
+            urun_id = data.get("urun_id")
+            miktar = data.get("miktar", 0)
+
             if not otel_id or not urun_id or miktar <= 0:
-                return jsonify({'success': False, 'error': 'Otel, ürün ve miktar gerekli'}), 400
-            
+                return jsonify(
+                    {"success": False, "error": "Otel, ürün ve miktar gerekli"}
+                ), 400
+
             # Ana depo stok kontrolü
-            ana_depo_stok = UrunStok.query.filter_by(otel_id=otel_id, urun_id=urun_id).first()
+            ana_depo_stok = UrunStok.query.filter_by(
+                otel_id=otel_id, urun_id=urun_id
+            ).first()
             mevcut_ana_depo = ana_depo_stok.mevcut_stok if ana_depo_stok else 0
-            
+
             if mevcut_ana_depo < miktar:
                 urun = db.session.get(Urun, urun_id)
-                urun_adi = urun.urun_adi if urun else 'Bilinmiyor'
-                return jsonify({
-                    'success': False, 
-                    'error': f'Ana depoda yetersiz stok! {urun_adi}: Mevcut {mevcut_ana_depo}, İstenen {miktar}'
-                }), 400
-            
+                urun_adi = urun.urun_adi if urun else "Bilinmiyor"
+                return jsonify(
+                    {
+                        "success": False,
+                        "error": f"Ana depoda yetersiz stok! {urun_adi}: Mevcut {mevcut_ana_depo}, İstenen {miktar}",
+                    }
+                ), 400
+
             # FIFO ile ana depodan stok çıkışı yap
             fifo_sonuc = FifoStokServisi.fifo_stok_cikis(
                 otel_id=otel_id,
                 urun_id=urun_id,
                 miktar=miktar,
-                islem_tipi='zimmet_transfer',
+                islem_tipi="zimmet_transfer",
                 referans_id=None,
-                kullanici_id=session.get('kullanici_id')
+                kullanici_id=session.get("kullanici_id"),
             )
-            
-            if not fifo_sonuc['success']:
-                return jsonify({
-                    'success': False, 
-                    'error': f'Stok çıkışı hatası: {fifo_sonuc["message"]}'
-                }), 400
-            
+
+            if not fifo_sonuc["success"]:
+                return jsonify(
+                    {
+                        "success": False,
+                        "error": f"Stok çıkışı hatası: {fifo_sonuc['message']}",
+                    }
+                ), 400
+
             # Otel zimmet stoğuna ekle
-            stok = OtelZimmetStok.query.filter_by(otel_id=otel_id, urun_id=urun_id).first()
-            
+            stok = OtelZimmetStok.query.filter_by(
+                otel_id=otel_id, urun_id=urun_id
+            ).first()
+
             if stok:
                 # Mevcut stoğa ekle
                 stok.toplam_miktar += miktar
@@ -2640,56 +2693,63 @@ def register_api_routes(app):
                     toplam_miktar=miktar,
                     kullanilan_miktar=0,
                     kalan_miktar=miktar,
-                    kritik_stok_seviyesi=50
+                    kritik_stok_seviyesi=50,
                 )
                 db.session.add(stok)
-            
+
             db.session.commit()
-            
+
             # Güncel ana depo stoğunu al
-            ana_depo_stok = UrunStok.query.filter_by(otel_id=otel_id, urun_id=urun_id).first()
+            ana_depo_stok = UrunStok.query.filter_by(
+                otel_id=otel_id, urun_id=urun_id
+            ).first()
             yeni_ana_depo_stok = ana_depo_stok.mevcut_stok if ana_depo_stok else 0
-            
-            log_islem('ekleme', 'otel_zimmet_stok', {
-                'otel_id': otel_id,
-                'urun_id': urun_id,
-                'miktar': miktar,
-                'yeni_toplam': stok.toplam_miktar,
-                'ana_depo_onceki': mevcut_ana_depo,
-                'ana_depo_sonraki': yeni_ana_depo_stok
-            })
-            
-            return jsonify({
-                'success': True,
-                'message': f'{miktar} adet ürün eklendi (Ana depodan düşüldü)',
-                'yeni_toplam': stok.toplam_miktar,
-                'yeni_kalan': stok.kalan_miktar,
-                'ana_depo_stok': yeni_ana_depo_stok
-            })
-            
+
+            log_islem(
+                "ekleme",
+                "otel_zimmet_stok",
+                {
+                    "otel_id": otel_id,
+                    "urun_id": urun_id,
+                    "miktar": miktar,
+                    "yeni_toplam": stok.toplam_miktar,
+                    "ana_depo_onceki": mevcut_ana_depo,
+                    "ana_depo_sonraki": yeni_ana_depo_stok,
+                },
+            )
+
+            return jsonify(
+                {
+                    "success": True,
+                    "message": f"{miktar} adet ürün eklendi (Ana depodan düşüldü)",
+                    "yeni_toplam": stok.toplam_miktar,
+                    "yeni_kalan": stok.kalan_miktar,
+                    "ana_depo_stok": yeni_ana_depo_stok,
+                }
+            )
+
         except Exception as e:
             db.session.rollback()
-            log_hata(e, modul='api_otel_zimmet_ekle')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            log_hata(e, modul="api_otel_zimmet_ekle")
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
-    @app.route('/api/otel-zimmet-islemleri', methods=['GET'])
+    @app.route("/api/otel-zimmet-islemleri", methods=["GET"])
     @login_required
-    @role_required('depo_sorumlusu', 'sistem_yoneticisi', 'admin')
+    @role_required("depo_sorumlusu", "sistem_yoneticisi", "admin")
     def api_otel_zimmet_islemleri():
         """Otel zimmet işlemlerini listele - Güne göre gruplu, en yeni en üstte
-        
+
         OtelZimmetStok tablosundaki son_guncelleme tarihine göre GÜN BAZLI gruplama yapar.
         Her gün için ayrı bir kart gösterilir.
         """
         try:
             from models import OtelZimmetStok, Otel
-            from sqlalchemy import func, desc
-            
-            otel_id = request.args.get('otel_id', type=int)
+
+            otel_id = request.args.get("otel_id", type=int)
             if not otel_id:
-                return jsonify({'success': False, 'error': 'Otel ID gerekli'}), 400
-            
-            otel = Otel.query.get(otel_id)
+                return jsonify({"success": False, "error": "Otel ID gerekli"}), 400
+
+            otel = db.session.get(Otel, otel_id)
             if not otel:
                 return jsonify({'success': False, 'error': 'Otel bulunamadı'}), 404
             
@@ -2754,7 +2814,7 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_otel_zimmet_islemleri')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     @app.route('/api/zimmet-listesi-filtreli', methods=['GET'])
     @login_required
@@ -2768,9 +2828,8 @@ def register_api_routes(app):
         - Toplam stok bilgisi
         """
         try:
-            from models import OtelZimmetStok, Otel, Urun, UrunGrup, PersonelZimmetKullanim
+            from models import OtelZimmetStok, Otel, Urun
             from utils.authorization import get_kullanici_otelleri
-            from sqlalchemy import func
             
             oteller = get_kullanici_otelleri()
             otel_ids = [o.id for o in oteller]
@@ -2828,7 +2887,7 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_zimmet_listesi_filtreli')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     @app.route('/api/urunler-stoklu', methods=['GET'])
     @login_required
@@ -2877,7 +2936,7 @@ def register_api_routes(app):
             
         except Exception as e:
             log_hata(e, modul='api_urunler_stoklu')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     @app.route('/api/zimmet-ata', methods=['POST'])
     @login_required
@@ -2887,7 +2946,6 @@ def register_api_routes(app):
         try:
             from models import PersonelZimmet, PersonelZimmetDetay, UrunStok
             from utils.fifo_servisler import FifoStokServisi
-            from utils.authorization import get_kullanici_otelleri
             
             data = request.get_json()
             if not data:
@@ -2998,7 +3056,7 @@ def register_api_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, modul='api_zimmet_ata')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
     @app.route('/api/otel-zimmet-iptal', methods=['POST'])
@@ -3096,7 +3154,7 @@ def register_api_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, modul='api_otel_zimmet_iptal')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
     # AJAX endpoint - Görev detay odaları (kat bazlı)

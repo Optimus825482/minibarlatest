@@ -1,0 +1,61 @@
+C:\Python313\Lib\site-packages\pytest_asyncio\plugin.py:247: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+============================= test session starts =============================
+collected 5 items
+
+tests\test_api_routes.py FFFFF                                           [100%]
+
+================================== FAILURES ===================================
+__________________ TestHealthCheck.test_health_returns_json ___________________
+tests\test_api_routes.py:20: in test_health_returns_json
+    assert resp.status_code in (200, 500)
+E   assert 503 in (200, 500)
+E    +  where 503 = <WrapperTestResponse streamed [503 SERVICE UNAVAILABLE]>.status_code
+---------------------------- Captured stdout setup ----------------------------
+✅ Scheduler başlatıldı (Günlük dosya temizleme: 02:00)
+----------------------------- Captured log setup ------------------------------
+INFO     app:app.py:96 ✅ Database engine yenilendi, metadata reflect edildi ve bağlantı test edildi
+INFO     app:app.py:104 ℹ️ Cache devre dışı - Redis sadece Celery broker olarak kullanılıyor
+INFO     utils.rate_limiter:rate_limiter.py:102 🔧 Rate Limiter: Memory storage
+INFO     utils.rate_limiter:rate_limiter.py:135 ✅ Rate Limiter başarıyla aktifleştirildi
+INFO     app:app.py:115 ✅ Rate Limiter aktifleştirildi
+INFO     utils.cache_manager:cache_manager.py:265 ✅ Cache aktif (Redis: redis://localhost:6379/0...)
+INFO     app:app.py:130 ✅ Cache Manager aktifleştirildi (sadece master data)
+INFO     utils.monitoring.query_analyzer:query_analyzer.py:487 ✅ SQLAlchemy query logging aktif edildi (threshold: 100ms)
+INFO     utils.monitoring.query_analyzer:query_analyzer.py:487 ✅ SQLAlchemy query logging aktif edildi (threshold: 100ms)
+INFO     app:app.py:159 ✅ Database bağlantısı başarılı (Deneme 1/3)
+INFO     middleware.metrics_middleware:metrics_middleware.py:71 ✅ Metrics middleware başlatıldı
+INFO     routes:__init__.py:168 ✅ CSRF exemptions uygulandı (restore, restore_v2, developer, stok, celery, db_optimization)
+INFO     routes:__init__.py:174 ✅ Tüm route modülleri başarıyla register edildi!
+INFO     apscheduler.scheduler:base.py:507 Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO     apscheduler.scheduler:base.py:1090 Added job "Eski doluluk dosyalarını temizle" to job store "default"
+INFO     apscheduler.scheduler:base.py:214 Scheduler started
+____________________ TestApiUrunStok.test_admin_with_seed _____________________
+tests\test_api_routes.py:231: in test_admin_with_seed
+    assert resp.status_code in (200, 404)
+E   assert 403 in (200, 404)
+E    +  where 403 = <WrapperTestResponse streamed [403 FORBIDDEN]>.status_code
+__________________ TestApiMinibarDoldur.test_admin_with_seed __________________
+tests\test_api_routes.py:382: in test_admin_with_seed
+    assert resp.status_code in (200, 400)
+E   assert 403 in (200, 400)
+E    +  where 403 = <WrapperTestResponse streamed [403 FORBIDDEN]>.status_code
+________________ TestApiUrunlerZimmetIcin.test_admin_can_query ________________
+tests\test_api_routes.py:516: in test_admin_can_query
+    assert resp.status_code in (200, 403)
+E   assert 400 in (200, 403)
+E    +  where 400 = <WrapperTestResponse streamed [400 BAD REQUEST]>.status_code
+______________ TestApiTopluOdaMevcutDurum.test_admin_empty_list _______________
+tests\test_api_routes.py:585: in test_admin_empty_list
+    assert resp.status_code in (200, 400)
+E   assert 403 in (200, 400)
+E    +  where 403 = <WrapperTestResponse streamed [403 FORBIDDEN]>.status_code
+=========================== short test summary info ===========================
+FAILED tests/test_api_routes.py::TestHealthCheck::test_health_returns_json - ...
+FAILED tests/test_api_routes.py::TestApiUrunStok::test_admin_with_seed - asse...
+FAILED tests/test_api_routes.py::TestApiMinibarDoldur::test_admin_with_seed
+FAILED tests/test_api_routes.py::TestApiUrunlerZimmetIcin::test_admin_can_query
+FAILED tests/test_api_routes.py::TestApiTopluOdaMevcutDurum::test_admin_empty_list
+======================= 5 failed, 8 warnings in 14.99s ========================

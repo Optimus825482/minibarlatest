@@ -19,23 +19,23 @@ Roller:
 """
 
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
-from datetime import datetime, date, timezone
-import pytz
 import logging
-from models import db, Otel, Kat, Oda, OdaTipi, Kullanici, SistemLog
+from models import (
+    db,
+    Otel,
+    Kat,
+    Oda,
+    OdaTipi,
+    Kullanici,
+    SistemLog,
+    get_kktc_now,
+)
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem, log_hata
 from utils.audit import audit_create, audit_update, audit_delete, serialize_model
 
 # Logger tanımla
 logger = logging.getLogger(__name__)
-
-# KKTC Timezone (Kıbrıs - Europe/Nicosia)
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-
-def get_kktc_now():
-    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
-    return datetime.now(KKTC_TZ)
 
 
 def register_sistem_yoneticisi_routes(app):
@@ -180,8 +180,11 @@ def register_sistem_yoneticisi_routes(app):
             form = KatForm()
             
             # Otel listesini form'a yükle
-            form.otel_id.choices = [(0, 'Otel Seçin...')] + [(o.id, o.ad) for o in Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()]
-            
+            form.otel_id.choices = [(0, "Otel Seçin...")] + [
+                (o.id, o.ad)
+                for o in Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
+            ]  # type: ignore[assignment]
+
             if form.validate_on_submit():
                 try:
                     # Otel seçimi kontrolü
@@ -233,8 +236,9 @@ def register_sistem_yoneticisi_routes(app):
             return render_template('sistem_yoneticisi/kat_tanimla.html', katlar=katlar, form=form)
         except Exception as e:
             import traceback
-            print(f"❌ KAT TANIMLA HATASI: {e}")
-            print(traceback.format_exc())
+
+            logger.error(f"❌ KAT TANIMLA HATASI: {e}")
+            logger.error(traceback.format_exc())
             flash('Sayfa yüklenirken hata oluştu.', 'danger')
             return redirect(url_for('dashboard'))
     
@@ -344,7 +348,6 @@ def register_sistem_yoneticisi_routes(app):
         from forms import OdaForm
         from models import Otel
         from flask import send_file
-        from datetime import datetime
         import io
         
         # Excel export kontrolü
@@ -362,6 +365,7 @@ def register_sistem_yoneticisi_routes(app):
                 # Excel workbook oluştur
                 wb = Workbook()
                 ws = wb.active
+                assert ws is not None
                 ws.title = "Odalar"
                 
                 # Başlık satırı
@@ -437,14 +441,16 @@ def register_sistem_yoneticisi_routes(app):
         
         # Otel listesini form'a yükle
         oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
-        form.otel_id.choices = [(0, 'Otel Seçin...')] + [(o.id, o.ad) for o in oteller]
+        form.otel_id.choices = [(0, "Otel Seçin...")] + [(o.id, o.ad) for o in oteller]  # type: ignore[assignment]
         form.kat_id.choices = [(0, 'Önce otel seçin...')]
         
         # Oda tipi listesini form'a yükle
         from models import OdaTipi
         oda_tipleri = OdaTipi.query.filter_by(aktif=True).order_by(OdaTipi.ad).all()
-        form.oda_tipi_id.choices = [(0, 'Oda Tipi Seçin...')] + [(t.id, t.ad) for t in oda_tipleri]
-        
+        form.oda_tipi_id.choices = [(0, "Oda Tipi Seçin...")] + [
+            (t.id, t.ad) for t in oda_tipleri
+        ]  # type: ignore[assignment]
+
         if form.validate_on_submit():
             try:
                 # Otel ve kat seçimi kontrolü
@@ -457,7 +463,7 @@ def register_sistem_yoneticisi_routes(app):
                     return render_template('sistem_yoneticisi/oda_tanimla.html', katlar=[], odalar=[], form=form)
                 
                 # Kat'ın seçilen otele ait olduğunu kontrol et
-                kat = Kat.query.get(form.kat_id.data)
+                kat = db.session.get(Kat, form.kat_id.data)
                 if not kat or kat.otel_id != form.otel_id.data:
                     flash('Seçilen kat, seçilen otele ait değil!', 'danger')
                     return render_template('sistem_yoneticisi/oda_tanimla.html', katlar=[], odalar=[], form=form)
@@ -547,12 +553,14 @@ def register_sistem_yoneticisi_routes(app):
         # Oda tipi listesini yükle
         from models import OdaTipi
         oda_tipleri = OdaTipi.query.filter_by(aktif=True).order_by(OdaTipi.ad).all()
-        form.oda_tipi_id.choices = [(0, 'Oda Tipi Seçin...')] + [(t.id, t.ad) for t in oda_tipleri]
-        
+        form.oda_tipi_id.choices = [(0, "Oda Tipi Seçin...")] + [
+            (t.id, t.ad) for t in oda_tipleri
+        ]  # type: ignore[assignment]
+
         if form.validate_on_submit():
             try:
                 # Kat'ın seçilen otele ait olduğunu kontrol et
-                kat = Kat.query.get(form.kat_id.data)
+                kat = db.session.get(Kat, form.kat_id.data)
                 if not kat or kat.otel_id != form.otel_id.data:
                     flash('Seçilen kat, seçilen otele ait değil!', 'danger')
                     return render_template('sistem_yoneticisi/oda_duzenle.html', oda=oda, form=form, oteller=oteller)
@@ -647,19 +655,14 @@ def register_sistem_yoneticisi_routes(app):
             kat = Kat.query.get_or_404(kat_id)
             
             # Oda tiplerini grupla ve say
-            oda_tipleri = db.session.query(
-                OdaTipi.ad,
-                func.count(Oda.id).label('sayi')
-            ).join(
-                Oda, Oda.oda_tipi_id == OdaTipi.id
-            ).filter(
-                Oda.kat_id == kat_id,
-                Oda.aktif == True
-            ).group_by(
-                OdaTipi.ad
-            ).order_by(
-                func.count(Oda.id).desc()
-            ).all()
+            oda_tipleri = (
+                db.session.query(OdaTipi.ad, func.count(Oda.id).label("sayi"))
+                .join(Oda, Oda.oda_tipi_id == OdaTipi.id)
+                .filter(Oda.kat_id == kat_id, Oda.aktif)
+                .group_by(OdaTipi.ad)
+                .order_by(func.count(Oda.id).desc())
+                .all()
+            )
             
             # Sonuçları formatla
             sonuc = []
@@ -681,10 +684,7 @@ def register_sistem_yoneticisi_routes(app):
             
         except Exception as e:
             log_hata(e, 'api_kat_oda_tipleri')
-            return {
-                'success': False,
-                'error': str(e)
-            }, 500
+            return {"success": False, "error": "Sunucu hatasi olustu"}, 500
 
     # ============================================================================
     # API ENDPOINTS - Oda Tipi Yönetimi
@@ -720,7 +720,7 @@ def register_sistem_yoneticisi_routes(app):
                     # Setup adlarını al
                     setup_adlari = []
                     for sid in setup_ids:
-                        setup = Setup.query.get(sid)
+                        setup = db.session.get(Setup, sid)
                         if setup:
                             setup_adlari.append(setup.ad)
                 else:
@@ -744,10 +744,7 @@ def register_sistem_yoneticisi_routes(app):
             
         except Exception as e:
             log_hata(e, 'api_oda_tipleri_listele')
-            return jsonify({
-                'success': False,
-                'error': str(e)
-            }), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
     
     @app.route('/api/oda-tipleri', methods=['POST'])
     @csrf.exempt
@@ -791,7 +788,7 @@ def register_sistem_yoneticisi_routes(app):
                     # Setup'ları güncelle (many-to-many)
                     mevcut.setuplar.clear()
                     for setup_id in setup_ids:
-                        setup = Setup.query.get(setup_id)
+                        setup = db.session.get(Setup, setup_id)
                         if setup:
                             mevcut.setuplar.append(setup)
                     
@@ -823,7 +820,7 @@ def register_sistem_yoneticisi_routes(app):
             
             # Setup'ları ekle (many-to-many)
             for setup_id in setup_ids:
-                setup = Setup.query.get(setup_id)
+                setup = db.session.get(Setup, setup_id)
                 if setup:
                     yeni_tip.setuplar.append(setup)
             
@@ -847,10 +844,7 @@ def register_sistem_yoneticisi_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, 'api_oda_tipi_ekle')
-            return {
-                'success': False,
-                'error': str(e)
-            }, 500
+            return {"success": False, "error": "Sunucu hatasi olustu"}, 500
     
     @app.route('/api/oda-tipleri/<int:tip_id>', methods=['PUT'])
     @csrf.exempt
@@ -898,7 +892,7 @@ def register_sistem_yoneticisi_routes(app):
             # Setup'ları güncelle (many-to-many)
             oda_tipi.setuplar.clear()
             for setup_id in setup_ids:
-                setup = Setup.query.get(setup_id)
+                setup = db.session.get(Setup, setup_id)
                 if setup:
                     oda_tipi.setuplar.append(setup)
             
@@ -921,10 +915,7 @@ def register_sistem_yoneticisi_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, 'api_oda_tipi_guncelle')
-            return {
-                'success': False,
-                'error': str(e)
-            }, 500
+            return {"success": False, "error": "Sunucu hatasi olustu"}, 500
     
     @app.route('/api/oda-tipleri/<int:tip_id>', methods=['DELETE'])
     @csrf.exempt
@@ -961,10 +952,7 @@ def register_sistem_yoneticisi_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, 'api_oda_tipi_sil')
-            return {
-                'success': False,
-                'error': str(e)
-            }, 500
+            return {"success": False, "error": "Sunucu hatasi olustu"}, 500
 
     # ============================================================================
     # SETUP YÖNETİMİ
@@ -988,7 +976,6 @@ def register_sistem_yoneticisi_routes(app):
         """Tüm setup'ları listele"""
         try:
             from models import Setup, SetupIcerik, OdaTipi, Otel, oda_tipi_setup
-            from sqlalchemy import distinct
             
             # Sadece aktif setup'ları getir
             setuplar = Setup.query.filter_by(aktif=True).all()
@@ -1023,7 +1010,7 @@ def register_sistem_yoneticisi_routes(app):
                         continue
                     
                     # Otel adını al
-                    otel = Otel.query.get(otel_id) if otel_id else None
+                    otel = db.session.get(Otel, otel_id) if otel_id else None
                     otel_adi = otel.ad if otel else "Bilinmeyen Otel"
                     
                     # Dict'e ekle
@@ -1062,10 +1049,7 @@ def register_sistem_yoneticisi_routes(app):
             
         except Exception as e:
             log_hata(e, 'api_setuplar_listele')
-            return {
-                'success': False,
-                'error': str(e)
-            }, 500
+            return {"success": False, "error": "Sunucu hatasi olustu"}, 500
     
     @app.route('/api/setuplar', methods=['POST'])
     @login_required
@@ -1112,10 +1096,7 @@ def register_sistem_yoneticisi_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, 'api_setup_ekle')
-            return {
-                'success': False,
-                'error': str(e)
-            }, 500
+            return {"success": False, "error": "Sunucu hatasi olustu"}, 500
 
     @app.route('/api/setuplar/<int:setup_id>', methods=['PUT', 'PATCH', 'POST'])
     @login_required
@@ -1123,7 +1104,7 @@ def register_sistem_yoneticisi_routes(app):
     def api_setup_guncelle(setup_id):
         """Setup güncelle"""
         try:
-            from models import Setup, Oda
+            from models import Setup
             
             data = request.get_json()
             ad = data.get('ad', '').strip()
@@ -1176,10 +1157,7 @@ def register_sistem_yoneticisi_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, 'api_setup_guncelle')
-            return {
-                'success': False,
-                'error': str(e)
-            }, 500
+            return {"success": False, "error": "Sunucu hatasi olustu"}, 500
 
     @app.route('/api/setuplar/<int:setup_id>', methods=['DELETE'])
     @login_required
@@ -1206,10 +1184,7 @@ def register_sistem_yoneticisi_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, 'api_setup_sil')
-            return {
-                'success': False,
-                'error': str(e)
-            }, 500
+            return {"success": False, "error": "Sunucu hatasi olustu"}, 500
     
     @app.route('/api/setuplar/<int:setup_id>/icerik', methods=['GET'])
     @login_required
@@ -1231,7 +1206,7 @@ def register_sistem_yoneticisi_routes(app):
                     if icerik.urun and icerik.urun.alis_fiyati:
                         alis_fiyati = float(icerik.urun.alis_fiyati)
                 except Exception as fiyat_hata:
-                    print(f"Fiyat çekme hatası: {fiyat_hata}")
+                    logger.error(f"Fiyat çekme hatası: {fiyat_hata}")
                 
                 tutar = alis_fiyati * icerik.adet
                 toplam_maliyet += tutar
@@ -1253,10 +1228,7 @@ def register_sistem_yoneticisi_routes(app):
             
         except Exception as e:
             log_hata(e, 'api_setup_icerik_listele')
-            return {
-                'success': False,
-                'error': str(e)
-            }, 500
+            return {"success": False, "error": "Sunucu hatasi olustu"}, 500
     
     @app.route('/api/setuplar/<int:setup_id>/icerik', methods=['POST'])
     @login_required
@@ -1300,10 +1272,7 @@ def register_sistem_yoneticisi_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, 'api_setup_icerik_ekle')
-            return {
-                'success': False,
-                'error': str(e)
-            }, 500
+            return {"success": False, "error": "Sunucu hatasi olustu"}, 500
 
     @app.route('/api/setup-icerik/<int:icerik_id>', methods=['DELETE'])
     @login_required
@@ -1328,10 +1297,7 @@ def register_sistem_yoneticisi_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, 'api_setup_icerik_sil')
-            return {
-                'success': False,
-                'error': str(e)
-            }, 500
+            return {"success": False, "error": "Sunucu hatasi olustu"}, 500
     
     @app.route('/api/setup-atama', methods=['POST'])
     @login_required
@@ -1367,7 +1333,7 @@ def register_sistem_yoneticisi_routes(app):
                 }, 400
             
             # Otel kontrolü
-            otel = Otel.query.get(otel_id)
+            otel = db.session.get(Otel, otel_id)
             if not otel:
                 return {
                     'success': False,
@@ -1375,7 +1341,7 @@ def register_sistem_yoneticisi_routes(app):
                 }, 404
             
             # Oda tipini bul
-            oda_tipi = OdaTipi.query.get(oda_tipi_id)
+            oda_tipi = db.session.get(OdaTipi, oda_tipi_id)
             if not oda_tipi:
                 return {
                     'success': False,
@@ -1395,7 +1361,7 @@ def register_sistem_yoneticisi_routes(app):
             # Yeni setup'ları ekle
             if setup_ids:
                 for setup_id in setup_ids:
-                    setup = Setup.query.get(setup_id)
+                    setup = db.session.get(Setup, setup_id)
                     if setup:
                         db.session.execute(
                             oda_tipi_setup.insert().values(
@@ -1417,10 +1383,7 @@ def register_sistem_yoneticisi_routes(app):
         except Exception as e:
             db.session.rollback()
             log_hata(e, 'api_setup_atama')
-            return {
-                'success': False,
-                'error': str(e)
-            }, 500
+            return {"success": False, "error": "Sunucu hatasi olustu"}, 500
     
     @app.route('/api/urunler-liste', methods=['GET'])
     @login_required
@@ -1444,10 +1407,7 @@ def register_sistem_yoneticisi_routes(app):
             
         except Exception as e:
             log_hata(e, 'api_urunler_liste')
-            return {
-                'success': False,
-                'error': str(e)
-            }, 500
+            return {"success": False, "error": "Sunucu hatasi olustu"}, 500
     
     @app.route('/api/urun-gruplari-liste', methods=['GET'])
     @login_required
@@ -1469,10 +1429,7 @@ def register_sistem_yoneticisi_routes(app):
             
         except Exception as e:
             log_hata(e, 'api_urun_gruplari_liste')
-            return {
-                'success': False,
-                'error': str(e)
-            }, 500
+            return {"success": False, "error": "Sunucu hatasi olustu"}, 500
 
     # İLK STOK YÜKLEME ROUTE'LARI
     # ============================================================================
@@ -1604,7 +1561,7 @@ def register_sistem_yoneticisi_routes(app):
             
         except Exception as e:
             log_hata(e, 'api_otel_stok_durumu')
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
     # ==================== ANA DEPO TEDARİK GEÇMİŞİ ====================

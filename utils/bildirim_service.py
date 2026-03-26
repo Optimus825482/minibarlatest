@@ -7,12 +7,17 @@ Bu modül uygulama içi bildirimleri yönetir:
 - Okundu işaretleme
 - SSE stream desteği
 """
+from __future__ import annotations
 
-from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any
+import logging
+from datetime import datetime
+from typing import List, Dict, Any, Optional
+
 import pytz
 
 from models import db
+
+logger = logging.getLogger(__name__)
 
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
 
@@ -38,13 +43,13 @@ class BildirimService:
         hedef_rol: str,
         bildirim_tipi: str,
         baslik: str,
-        mesaj: str = None,
-        hedef_otel_id: int = None,
-        hedef_kullanici_id: int = None,
-        oda_id: int = None,
-        gorev_id: int = None,
-        gonderen_id: int = None
-    ) -> int:
+        mesaj: Optional[str] = None,
+        hedef_otel_id: Optional[int] = None,
+        hedef_kullanici_id: Optional[int] = None,
+        oda_id: Optional[int] = None,
+        gorev_id: Optional[int] = None,
+        gonderen_id: Optional[int] = None,
+    ) -> Optional[int]:
         """
         Yeni bildirim oluşturur
         
@@ -94,16 +99,16 @@ class BildirimService:
             
         except Exception as e:
             db.session.rollback()
-            print(f"Bildirim oluşturma hatası: {e}")
+            logger.error(f"Bildirim oluşturma hatası: {e}")
             return None
     
     @staticmethod
     def kullanici_bildirimlerini_getir(
         kullanici_id: int,
         kullanici_rol: str,
-        otel_id: int = None,
+        otel_id: Optional[int] = None,
         sadece_okunmamis: bool = False,
-        limit: int = 50
+        limit: int = 50,
     ) -> List[Dict[str, Any]]:
         """
         Kullanıcının bildirimlerini getirir
@@ -162,11 +167,13 @@ class BildirimService:
             return bildirimler
             
         except Exception as e:
-            print(f"Bildirim getirme hatası: {e}")
+            logger.error(f"Bildirim getirme hatası: {e}")
             return []
     
     @staticmethod
-    def okunmamis_sayisi(kullanici_id: int, kullanici_rol: str, otel_id: int = None) -> int:
+    def okunmamis_sayisi(
+        kullanici_id: int, kullanici_rol: str, otel_id: Optional[int] = None
+    ) -> int:
         """Okunmamış bildirim sayısını döndürür"""
         try:
             sql = """
@@ -182,10 +189,7 @@ class BildirimService:
             }
             
             if otel_id:
-                sql = sql.replace(
-                    "AND okundu = FALSE",
-                    "AND (hedef_otel_id = :otel_id OR hedef_otel_id IS NULL) AND okundu = FALSE"
-                )
+                sql += " AND (hedef_otel_id = :otel_id OR hedef_otel_id IS NULL)"
                 params['otel_id'] = otel_id
             
             result = db.session.execute(db.text(sql), params)
@@ -194,7 +198,7 @@ class BildirimService:
             
         except Exception as e:
             db.session.rollback()
-            print(f"Okunmamış sayısı hatası: {e}")
+            logger.error(f"Okunmamış sayısı hatası: {e}")
             return 0
     
     @staticmethod
@@ -207,11 +211,37 @@ class BildirimService:
             return True
         except Exception as e:
             db.session.rollback()
-            print(f"Okundu işaretleme hatası: {e}")
+            logger.error(f"Okundu işaretleme hatası: {e}")
             return False
-    
+
     @staticmethod
-    def tumunu_okundu_isaretle(kullanici_id: int, kullanici_rol: str, otel_id: int = None) -> bool:
+    def send_upload_warning(
+        depo_sorumlusu_id: int, dosya_tipi: str, otel_id: int
+    ) -> None:
+        """Eksik yükleme uyarısı bildirimi gönderir"""
+        BildirimService.bildirim_olustur(
+            hedef_rol="depo_sorumlusu",
+            bildirim_tipi="eksik_yukleme",
+            baslik=f"⚠️ Eksik {dosya_tipi} yüklemesi",
+            mesaj=f"Bugün için {dosya_tipi} dosyası yüklenmedi.",
+            hedef_otel_id=otel_id,
+            hedef_kullanici_id=depo_sorumlusu_id,
+        )
+
+    @staticmethod
+    def send_dnd_incomplete_notification(detay_ids: list) -> None:
+        """DND tamamlanmayan görevler için bildirim gönderir"""
+        BildirimService.bildirim_olustur(
+            hedef_rol="depo_sorumlusu",
+            bildirim_tipi="dnd_incomplete",
+            baslik=f"🔔 {len(detay_ids)} DND görevi tamamlanmadı",
+            mesaj=f"Gün sonu kontrolünde {len(detay_ids)} DND görevi incomplete olarak işaretlendi.",
+        )
+
+    @staticmethod
+    def tumunu_okundu_isaretle(
+        kullanici_id: int, kullanici_rol: str, otel_id: Optional[int] = None
+    ) -> bool:
         """Tüm bildirimleri okundu olarak işaretler"""
         try:
             sql = """
@@ -219,33 +249,27 @@ class BildirimService:
                 WHERE (hedef_rol = :hedef_rol OR hedef_kullanici_id = :kullanici_id)
                 AND okundu = FALSE
             """
-            
-            params = {
-                'hedef_rol': kullanici_rol,
-                'kullanici_id': kullanici_id
-            }
-            
+
+            params = {"hedef_rol": kullanici_rol, "kullanici_id": kullanici_id}
+
             if otel_id:
-                sql = sql.replace(
-                    "AND okundu = FALSE",
-                    "AND (hedef_otel_id = :otel_id OR hedef_otel_id IS NULL) AND okundu = FALSE"
-                )
-                params['otel_id'] = otel_id
-            
+                sql += " AND (hedef_otel_id = :otel_id OR hedef_otel_id IS NULL)"
+                params["otel_id"] = otel_id
+
             db.session.execute(db.text(sql), params)
             db.session.commit()
             return True
         except Exception as e:
             db.session.rollback()
-            print(f"Tümünü okundu işaretleme hatası: {e}")
+            logger.error(f"Tümünü okundu işaretleme hatası: {e}")
             return False
     
     @staticmethod
     def yeni_bildirimler_var_mi(
         kullanici_id: int,
         kullanici_rol: str,
-        otel_id: int = None,
-        son_kontrol: datetime = None
+        otel_id: Optional[int] = None,
+        son_kontrol: Optional[datetime] = None,
     ) -> List[Dict[str, Any]]:
         """
         Son kontrolden sonra gelen yeni bildirimleri getirir (SSE için)
@@ -294,12 +318,14 @@ class BildirimService:
             
         except Exception as e:
             db.session.rollback()
-            print(f"Yeni bildirim kontrolü hatası: {e}")
+            logger.error(f"Yeni bildirim kontrolü hatası: {e}")
             return []
 
 
 # Yardımcı fonksiyonlar - Kolay kullanım için
-def gorev_olusturuldu_bildirimi(otel_id: int, otel_adi: str, gorev_sayisi: int, gonderen_id: int = None):
+def gorev_olusturuldu_bildirimi(
+    otel_id: int, otel_adi: str, gorev_sayisi: int, gonderen_id: Optional[int] = None
+):
     """Görev oluşturulduğunda kat sorumlularına bildirim gönderir"""
     return BildirimService.bildirim_olustur(
         hedef_rol='kat_sorumlusu',
@@ -315,9 +341,9 @@ def gorev_tamamlandi_bildirimi(
     otel_id: int,
     oda_no: str,
     personel_adi: str,
-    gorev_id: int = None,
-    oda_id: int = None,
-    gonderen_id: int = None
+    gorev_id: Optional[int] = None,
+    oda_id: Optional[int] = None,
+    gonderen_id: Optional[int] = None,
 ):
     """Görev tamamlandığında depo sorumlusuna bildirim gönderir"""
     return BildirimService.bildirim_olustur(
@@ -337,8 +363,8 @@ def dnd_bildirimi(
     oda_no: str,
     personel_adi: str,
     deneme_sayisi: int,
-    oda_id: int = None,
-    gonderen_id: int = None
+    oda_id: Optional[int] = None,
+    gonderen_id: Optional[int] = None,
 ):
     """DND kaydı oluşturulduğunda depo sorumlusuna bildirim gönderir"""
     return BildirimService.bildirim_olustur(
@@ -356,8 +382,8 @@ def sarfiyat_yok_bildirimi(
     otel_id: int,
     oda_no: str,
     personel_adi: str,
-    oda_id: int = None,
-    gonderen_id: int = None
+    oda_id: Optional[int] = None,
+    gonderen_id: Optional[int] = None,
 ):
     """Sarfiyat yok kaydı oluşturulduğunda depo sorumlusuna bildirim gönderir"""
     return BildirimService.bildirim_olustur(
@@ -371,7 +397,9 @@ def sarfiyat_yok_bildirimi(
     )
 
 
-def doluluk_yuklendi_bildirimi(otel_id: int, otel_adi: str, tarih: str, gonderen_id: int = None):
+def doluluk_yuklendi_bildirimi(
+    otel_id: int, otel_adi: str, tarih: str, gonderen_id: Optional[int] = None
+):
     """Doluluk bilgileri yüklendiğinde kat sorumlularına bildirim gönderir"""
     return BildirimService.bildirim_olustur(
         hedef_rol='kat_sorumlusu',
@@ -387,8 +415,8 @@ def royalbar_talebi_bildirimi(
     otel_id: int,
     oda_no: str,
     kat_adi: str,
-    oda_id: int = None,
-    notlar: str = None
+    oda_id: Optional[int] = None,
+    notlar: Optional[str] = None,
 ):
     """Yeni Royalbar kişiselleştirme talebi geldiğinde kat sorumlusu ve yöneticilere bildirim gönderir"""
     mesaj = f"{kat_adi} - Oda {oda_no} misafiri Royalbar kişiselleştirme talebi gönderdi."
@@ -430,13 +458,13 @@ def bildirim_olustur(
     hedef_rol: str,
     bildirim_tipi: str,
     baslik: str,
-    mesaj: str = None,
-    hedef_otel_id: int = None,
-    hedef_kullanici_id: int = None,
-    oda_id: int = None,
-    gorev_id: int = None,
-    gonderen_id: int = None
-) -> int:
+    mesaj: Optional[str] = None,
+    hedef_otel_id: Optional[int] = None,
+    hedef_kullanici_id: Optional[int] = None,
+    oda_id: Optional[int] = None,
+    gorev_id: Optional[int] = None,
+    gonderen_id: Optional[int] = None,
+) -> Optional[int]:
     """Wrapper for BildirimService.bildirim_olustur - backward compatible import"""
     return BildirimService.bildirim_olustur(
         hedef_rol=hedef_rol,

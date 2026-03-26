@@ -28,14 +28,14 @@ depends_on = None
 
 def upgrade():
     # ENUM tipleri oluştur (eğer yoksa)
-    gorev_tipi_enum = postgresql.ENUM(
+    postgresql.ENUM(
         'inhouse_kontrol', 'arrival_kontrol', 'departure_kontrol',
         'inhouse_yukleme', 'arrivals_yukleme', 'departures_yukleme',
         name='gorev_tipi_enum',
         create_type=False
     )
     
-    gorev_durum_enum = postgresql.ENUM(
+    postgresql.ENUM(
         'pending', 'in_progress', 'completed', 'dnd_pending', 'incomplete',
         name='gorev_durum_enum',
         create_type=False

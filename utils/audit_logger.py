@@ -8,7 +8,6 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 from functools import wraps
 from flask import request, g
-from models import db
 
 logger = logging.getLogger(__name__)
 
@@ -247,7 +246,7 @@ class AuditLogger:
             return []
 
 
-def audit_log(event_type: str, description: str = None):
+def audit_log(event_type: str, description: str | None = None):
     """
     Audit logging decorator
     

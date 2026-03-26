@@ -7,7 +7,7 @@ Data Collector V2 - Optimized ML Data Collection System
 """
 
 from datetime import datetime, timezone, timedelta
-from sqlalchemy import func, and_
+from sqlalchemy import func
 import logging
 
 logger = logging.getLogger(__name__)

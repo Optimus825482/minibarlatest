@@ -6,7 +6,6 @@ Task başlatma, durum sorgulama ve sonuç alma endpoint'leri
 from flask import Blueprint, request, jsonify
 from utils.decorators import login_required, role_required
 from celery.result import AsyncResult
-from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
@@ -38,8 +37,8 @@ def start_donemsel_kar_task():
         }
     """
     try:
-        from celery_app import donemsel_kar_hesapla_async
-        
+        from celery_app import donemsel_kar_hesapla_async  # pyright: ignore[reportAttributeAccessIssue]
+
         data = request.get_json()
         
         # Validasyon
@@ -99,9 +98,8 @@ def start_tuketim_trendi_task():
         data = request.get_json() or {}
         
         # Task'ı başlat
-        task = tuketim_trendi_guncelle_async.delay(
-            otel_id=data.get('otel_id'),
-            donem=data.get('donem', 'aylik')
+        task = tuketim_trendi_guncelle_async.delay(  # pyright: ignore[reportFunctionMemberAccess]
+            otel_id=data.get("otel_id"), donem=data.get("donem", "aylik")
         )
         
         logger.info(f"Tüketim trendi güncelleme task başlatıldı - Task ID: {task.id}")
@@ -145,8 +143,8 @@ def start_stok_devir_task():
         data = request.get_json() or {}
         
         # Task'ı başlat
-        task = stok_devir_guncelle_async.delay(
-            otel_id=data.get('otel_id')
+        task = stok_devir_guncelle_async.delay(  # pyright: ignore[reportFunctionMemberAccess]
+            otel_id=data.get("otel_id")
         )
         
         logger.info(f"Stok devir güncelleme task başlatıldı - Task ID: {task.id}")
@@ -387,8 +385,8 @@ def start_doluluk_uyari_task():
         from celery_app import doluluk_yukleme_uyari_kontrolu_task
         
         # Task'ı başlat
-        task = doluluk_yukleme_uyari_kontrolu_task.delay()
-        
+        task = doluluk_yukleme_uyari_kontrolu_task.delay()  # pyright: ignore[reportFunctionMemberAccess]
+
         logger.info(f"Doluluk uyarı kontrolü task başlatıldı - Task ID: {task.id}")
         
         return jsonify({
@@ -421,7 +419,7 @@ def check_doluluk_uyari_status():
         }
     """
     try:
-        from models import db, Otel, Kullanici, KullaniciOtel, YuklemeGorev
+        from models import Otel, Kullanici, KullaniciOtel, YuklemeGorev
         from datetime import date
         
         bugun = date.today()
@@ -464,7 +462,7 @@ def check_doluluk_uyari_status():
                 depo_sorumlu_atamalari = KullaniciOtel.query.join(Kullanici).filter(
                     KullaniciOtel.otel_id == otel.id,
                     Kullanici.rol == 'depo_sorumlusu',
-                    Kullanici.aktif == True
+                    Kullanici.aktif
                 ).all()
                 
                 depo_sorumlulari = [

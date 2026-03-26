@@ -3,7 +3,7 @@ Yetkilendirme Helper Fonksiyonları
 Otel bazlı erişim kontrolü için yardımcı fonksiyonlar
 """
 
-from models import Kullanici, Otel, KullaniciOtel
+from models import db, Kullanici, Otel, KullaniciOtel
 from flask import session
 
 
@@ -18,11 +18,14 @@ def get_depo_sorumlusu_oteller(kullanici_id):
         List[Otel]: Erişilebilir oteller listesi
     """
     from models import db
-    
-    oteller = db.session.query(Otel).join(KullaniciOtel).filter(
-        KullaniciOtel.kullanici_id == kullanici_id,
-        Otel.aktif == True
-    ).order_by(Otel.id).all()
+
+    oteller = (
+        db.session.query(Otel)
+        .join(KullaniciOtel)
+        .filter(KullaniciOtel.kullanici_id == kullanici_id, Otel.aktif)
+        .order_by(Otel.id)
+        .all()
+    )
     
     return oteller
 
@@ -56,7 +59,7 @@ def get_kat_sorumlusu_otel(kullanici_id):
     Returns:
         Otel: Atandığı otel veya None
     """
-    kullanici = Kullanici.query.get(kullanici_id)
+    kullanici = db.session.get(Kullanici, kullanici_id)
     
     if kullanici and kullanici.otel_id:
         return kullanici.otel
@@ -75,7 +78,7 @@ def kat_sorumlusu_otel_erisimi(kullanici_id, otel_id):
     Returns:
         bool: Erişim varsa True, yoksa False
     """
-    kullanici = Kullanici.query.get(kullanici_id)
+    kullanici = db.session.get(Kullanici, kullanici_id)
     
     if not kullanici:
         return False
@@ -98,8 +101,8 @@ def get_kullanici_otelleri(kullanici_id=None):
     
     if not kullanici_id:
         return []
-    
-    kullanici = Kullanici.query.get(kullanici_id)
+
+    kullanici = db.session.get(Kullanici, kullanici_id)
     
     if not kullanici:
         return []
@@ -131,7 +134,7 @@ def kullanici_otel_erisimi(kullanici_id, otel_id):
     Returns:
         bool: Erişim varsa True, yoksa False
     """
-    kullanici = Kullanici.query.get(kullanici_id)
+    kullanici = db.session.get(Kullanici, kullanici_id)
     
     if not kullanici:
         return False
@@ -149,6 +152,14 @@ def kullanici_otel_erisimi(kullanici_id, otel_id):
         return kat_sorumlusu_otel_erisimi(kullanici_id, otel_id)
     
     return False
+
+
+def otel_erisim_kontrol(kullanici_id, otel_id, rol=None):
+    """
+    Kullanıcının belirli bir otele erişimi var mı kontrol et.
+    decorators.py tarafından kullanılan kısayol fonksiyon.
+    """
+    return kullanici_otel_erisimi(kullanici_id, otel_id)
 
 
 def get_otel_filtreleme_secenekleri(kullanici_id=None):

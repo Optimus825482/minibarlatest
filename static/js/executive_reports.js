@@ -201,7 +201,7 @@ async function onOtelChange() {
     );
     const data = await resp.json();
     data.forEach((k) => {
-      katSelect.innerHTML += `<option value="${k.id}">${k.ad}</option>`;
+      katSelect.innerHTML += `<option value="${k.id}">${escHtml(k.ad)}</option>`;
     });
   } catch (e) {
     console.error("Kat yükleme hatası:", e);
@@ -226,7 +226,7 @@ async function onKatChange() {
     );
     const data = await resp.json();
     data.forEach((o) => {
-      odaSelect.innerHTML += `<option value="${o.id}">${o.no}</option>`;
+      odaSelect.innerHTML += `<option value="${o.id}">${escHtml(o.no)}</option>`;
     });
   } catch (e) {
     console.error("Oda yükleme hatası:", e);
@@ -242,7 +242,7 @@ function onGrupChange() {
     ? ALL_URUNLER.filter((u) => u.grup_id == grupId)
     : ALL_URUNLER;
   filtered.forEach((u) => {
-    urunSelect.innerHTML += `<option value="${u.id}" data-grup="${u.grup_id}">${u.ad}</option>`;
+    urunSelect.innerHTML += `<option value="${u.id}" data-grup="${u.grup_id}">${escHtml(u.ad)}</option>`;
   });
   onFilterChange();
 }
@@ -257,7 +257,7 @@ async function loadPersonnelList() {
     const resp = await fetch(url);
     const data = await resp.json();
     data.forEach((p) => {
-      select.innerHTML += `<option value="${p.id}">${p.ad_soyad} (${p.rol})</option>`;
+      select.innerHTML += `<option value="${p.id}">${escHtml(p.ad_soyad)} (${escHtml(p.rol)})</option>`;
     });
   } catch (e) {
     console.error("Personel yükleme hatası:", e);
@@ -676,7 +676,7 @@ function renderProductTable(data) {
     "</tr>";
 
   const tbody = document.getElementById("report-tbody");
-  tbody.innerHTML = data
+  tbody.innerHTML = DOMPurify.sanitize(data
     .map(
       (row) =>
         "<tr>" +
@@ -695,7 +695,7 @@ function renderProductTable(data) {
           .join("") +
         "</tr>",
     )
-    .join("");
+    .join(""));
 }
 
 // ==========================================
@@ -1289,7 +1289,7 @@ function renderComparativeCards(comp, periods) {
       </div>`;
   }
   html += `</div>`;
-  container.innerHTML = html;
+  container.innerHTML = DOMPurify.sanitize(html);
 }
 
 function formatTR(dateStr) {
@@ -2100,7 +2100,7 @@ function showAuditDetail(log) {
     </div>`;
   }
 
-  content.innerHTML = html;
+  content.innerHTML = DOMPurify.sanitize(html);
   modal.style.display = "flex";
 }
 

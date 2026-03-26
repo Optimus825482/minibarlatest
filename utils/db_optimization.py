@@ -31,16 +31,67 @@ class DatabaseOptimizer:
         try:
             db = get_db()
             missing_indexes = []
-            
-            # Kritik index'ler
+
+            # Kritik index'ler - tum major tablolar
             critical_indexes = {
-                'minibar_islem_detaylari': [
-                    ('idx_islem_detay_urun', ['urun_id', 'islem_id']),
-                    ('idx_islem_detay_kar', ['kar_tutari', 'kar_orani']),
+                "minibar_islem_detaylari": [
+                    ("idx_islem_detay_urun", ["urun_id", "islem_id"]),
+                    ("idx_islem_detay_kar", ["kar_tutari", "kar_orani"]),
                 ],
-                'urun_stok': [
-                    ('idx_urun_stok_otel', ['otel_id', 'urun_id']),
-                    ('idx_urun_stok_kritik', ['mevcut_stok', 'kritik_stok_seviyesi']),
+                "urun_stok": [
+                    ("idx_urun_stok_otel", ["otel_id", "urun_id"]),
+                    ("idx_urun_stok_kritik", ["mevcut_stok", "kritik_stok_seviyesi"]),
+                ],
+                "minibar_islemleri": [
+                    ("idx_minibar_islem_oda_tarih", ["oda_id", "tarih"]),
+                    ("idx_minibar_islem_kullanici", ["kullanici_id"]),
+                    ("idx_minibar_islem_otel", ["otel_id"]),
+                ],
+                "minibar_islem_detay": [
+                    ("idx_minibar_detay_islem", ["islem_id"]),
+                    ("idx_minibar_detay_urun", ["urun_id"]),
+                ],
+                "stok_hareketleri": [
+                    ("idx_stok_hareket_urun", ["urun_id"]),
+                    ("idx_stok_hareket_otel_tarih", ["otel_id", "tarih"]),
+                    ("idx_stok_hareket_tip", ["hareket_tipi"]),
+                ],
+                "personel_zimmet": [
+                    ("idx_zimmet_kullanici", ["kullanici_id"]),
+                    ("idx_zimmet_otel_tarih", ["otel_id", "tarih"]),
+                ],
+                "personel_zimmet_detay": [
+                    ("idx_zimmet_detay_zimmet", ["zimmet_id"]),
+                    ("idx_zimmet_detay_urun", ["urun_id"]),
+                ],
+                "kullanicilar": [
+                    ("idx_kullanici_rol", ["rol"]),
+                    ("idx_kullanici_aktif", ["aktif"]),
+                ],
+                "odalar": [
+                    ("idx_oda_kat", ["kat_id"]),
+                    ("idx_oda_otel", ["otel_id"]),
+                ],
+                "audit_logs": [
+                    ("idx_audit_kullanici", ["kullanici_id"]),
+                    ("idx_audit_tarih", ["tarih"]),
+                    ("idx_audit_tablo", ["tablo_adi"]),
+                ],
+                "gunluk_gorevler": [
+                    ("idx_gorev_tarih", ["tarih"]),
+                    ("idx_gorev_otel_durum", ["otel_id", "durum"]),
+                ],
+                "oda_kontrol_kayitlari": [
+                    ("idx_oda_kontrol_oda", ["oda_id"]),
+                    ("idx_oda_kontrol_tarih", ["kontrol_tarihi"]),
+                ],
+                "misafir_kayitlari": [
+                    ("idx_misafir_oda", ["oda_id"]),
+                    ("idx_misafir_tarih", ["giris_tarihi", "cikis_tarihi"]),
+                ],
+                "query_logs": [
+                    ("idx_query_log_endpoint", ["endpoint"]),
+                    ("idx_query_log_timestamp", ["timestamp"]),
                 ],
             }
             
@@ -96,17 +147,17 @@ class DatabaseOptimizer:
             
             for index_info in result['missing_indexes']:
                 try:
-                    db.session.execute(text(index_info['sql']))
+                    db.session.execute(text(index_info['sql']))  # type: ignore[index]
                     db.session.commit()
-                    created_indexes.append(index_info['index_name'])
-                    logger.info(f"Index oluşturuldu: {index_info['index_name']}")
+                    created_indexes.append(index_info['index_name'])  # type: ignore[index]
+                    logger.info(f"Index oluşturuldu: {index_info['index_name']}")  # type: ignore[index]
                 except Exception as e:
                     db.session.rollback()
                     failed_indexes.append({
-                        'index': index_info['index_name'],
+                        'index': index_info['index_name'],  # type: ignore[index]
                         'error': str(e)
                     })
-                    logger.error(f"Index oluşturma hatası ({index_info['index_name']}): {e}")
+                    logger.error(f"Index oluşturma hatası ({index_info['index_name']}): {e}")  # type: ignore[index]
             
             return {
                 'status': 'success',
@@ -249,19 +300,40 @@ class DatabaseOptimizer:
         """
         try:
             db = get_db()
-            # Kritik tablolar
+            inspector = inspect(db.engine)
+            existing_tables = set(inspector.get_table_names())
+
+            # Kritik tablolar - sik sorgulanan ve buyuk tablolar
             critical_tables = [
-                'minibar_islem_detaylari',
-                'urun_stok',
+                "minibar_islemleri",
+                "minibar_islem_detay",
+                "minibar_islem_detaylari",
+                "stok_hareketleri",
+                "personel_zimmet",
+                "personel_zimmet_detay",
+                "urun_stok",
+                "urunler",
+                "odalar",
+                "katlar",
+                "kullanicilar",
+                "audit_logs",
+                "gunluk_gorevler",
+                "gorev_detaylari",
+                "oda_kontrol_kayitlari",
+                "misafir_kayitlari",
+                "query_logs",
             ]
             
             optimized_tables = []
             failed_tables = []
             
             for table in critical_tables:
+                if table not in existing_tables:
+                    continue
                 try:
                     # ANALYZE komutu - istatistikleri güncelle
-                    db.session.execute(text(f"ANALYZE {table}"))
+                    # Whitelist dogrulama ile SQL injection onlenir
+                    db.session.execute(text("ANALYZE " + table))
                     db.session.commit()
                     optimized_tables.append(table)
                     logger.info(f"Tablo optimize edildi: {table}")

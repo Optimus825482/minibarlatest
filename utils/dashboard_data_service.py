@@ -17,8 +17,8 @@ KULLANIM:
 """
 
 import logging
-from datetime import datetime, timedelta, date
-from typing import Dict, List, Any, Optional
+from datetime import datetime, timedelta
+from typing import Dict, List, Any
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy import func
 

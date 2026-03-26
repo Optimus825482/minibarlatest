@@ -2,7 +2,7 @@
 Admin Kullanıcı Yönetimi Route'ları
 """
 
-from flask import render_template, request, redirect, url_for, flash, jsonify
+from flask import render_template, request, redirect, url_for, flash
 from functools import wraps
 from models import db, Kullanici, AuditLog
 from datetime import datetime
@@ -165,11 +165,11 @@ def register_admin_user_routes(app):
                     admin.soyad = soyad
                 
                 if admin.email != email:
-                    degisiklikler.append(f"Email güncellendi")
+                    degisiklikler.append("Email güncellendi")
                     admin.email = email if email else None
                 
                 if admin.telefon != telefon:
-                    degisiklikler.append(f"Telefon güncellendi")
+                    degisiklikler.append("Telefon güncellendi")
                     admin.telefon = telefon if telefon else None
                 
                 # Şifre değişikliği
@@ -265,7 +265,6 @@ def register_admin_user_routes(app):
     @role_required('sistem_yoneticisi', 'admin')
     def depo_sorumlusu_duzenle(kullanici_id):
         """Depo sorumlusu düzenle (çoklu otel)"""
-        from forms import DepoSorumlusuDuzenleForm
         from models import Otel, KullaniciOtel
         from werkzeug.security import generate_password_hash
         from flask import session

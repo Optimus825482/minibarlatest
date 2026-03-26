@@ -7,8 +7,6 @@ import json
 import hashlib
 from functools import wraps
 from typing import Any, Callable, Optional
-from datetime import timedelta
-from flask import request
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +28,8 @@ class CacheStrategy:
         """Redis client'ı getir"""
         if self.redis is None:
             try:
-                from extensions import redis_client
+                from extensions import redis_client  # type: ignore[import]
+
                 self.redis = redis_client
             except Exception as e:
                 logger.warning(f"Redis client alınamadı: {str(e)}")
@@ -177,7 +176,9 @@ class CacheStrategy:
 _cache_strategy = CacheStrategy()
 
 
-def cached(ttl: int = 300, key_prefix: str = None, invalidate_on_error: bool = False):
+def cached(
+    ttl: int = 300, key_prefix: str | None = None, invalidate_on_error: bool = False
+):
     """
     Cache decorator
     
@@ -222,9 +223,9 @@ def cached(ttl: int = 300, key_prefix: str = None, invalidate_on_error: bool = F
                 # Hata durumunda cache'i sil
                 if invalidate_on_error:
                     try:
-                        _cache_strategy.delete(cache_key)
-                    except:
-                        pass
+                        _cache_strategy.delete(cache_key)  # type: ignore[possibly-undefined]
+                    except Exception:
+                        logger.debug("Sessiz hata yakalandi", exc_info=True)
                 
                 # Fonksiyonu normal çalıştır
                 return f(*args, **kwargs)

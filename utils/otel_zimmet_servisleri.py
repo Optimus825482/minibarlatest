@@ -11,11 +11,16 @@ Yeni Sistem:
 """
 
 from models import (
-    db, OtelZimmetStok, PersonelZimmetKullanim, 
-    Kullanici, Urun, Otel, PersonelZimmet, PersonelZimmetDetay
+    db,
+    OtelZimmetStok,
+    PersonelZimmetKullanim,
+    Kullanici,
+    Urun,
+    Otel,
+    PersonelZimmet,
 )
 from datetime import datetime
-from sqlalchemy import func, desc
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 import pytz
 import logging
@@ -139,8 +144,8 @@ class OtelZimmetServisi:
         ).first()
         
         if not stok:
-            urun = Urun.query.get(urun_id)
-            otel = Otel.query.get(otel_id)
+            urun = db.session.get(Urun, urun_id)
+            otel = db.session.get(Otel, otel_id)
             raise OtelZimmetStokYetersizError(
                 urun.urun_adi if urun else 'Ürün',
                 0,
@@ -149,8 +154,8 @@ class OtelZimmetServisi:
             )
         
         if stok.kalan_miktar < miktar:
-            urun = Urun.query.get(urun_id)
-            otel = Otel.query.get(otel_id)
+            urun = db.session.get(Urun, urun_id)
+            otel = db.session.get(Otel, otel_id)
             raise OtelZimmetStokYetersizError(
                 urun.urun_adi if urun else 'Ürün',
                 stok.kalan_miktar,
@@ -162,14 +167,14 @@ class OtelZimmetServisi:
     
     @staticmethod
     def stok_dusu(
-        otel_id: int, 
-        urun_id: int, 
-        miktar: int, 
+        otel_id: int,
+        urun_id: int,
+        miktar: int,
         personel_id: int,
-        islem_tipi: str = 'minibar_kullanim',
-        referans_id: int = None,
-        aciklama: str = None,
-        olusturan_id: int = None
+        islem_tipi: str = "minibar_kullanim",
+        referans_id: int | None = None,
+        aciklama: str | None = None,
+        olusturan_id: int | None = None,
     ) -> tuple:
         """
         Otel zimmet deposundan stok düşer ve kullanım kaydı oluşturur
@@ -231,10 +236,7 @@ class OtelZimmetServisi:
     
     @staticmethod
     def stok_ekle(
-        otel_id: int,
-        urun_id: int,
-        miktar: int,
-        aciklama: str = None
+        otel_id: int, urun_id: int, miktar: int, aciklama: str | None = None
     ) -> OtelZimmetStok:
         """
         Otel zimmet deposuna stok ekler
@@ -275,9 +277,9 @@ class OtelZimmetServisi:
         urun_id: int,
         miktar: int,
         personel_id: int,
-        referans_id: int = None,
-        aciklama: str = None,
-        olusturan_id: int = None
+        referans_id: int | None = None,
+        aciklama: str | None = None,
+        olusturan_id: int | None = None,
     ) -> tuple:
         """
         Otel zimmet deposuna stok iade eder
@@ -330,7 +332,9 @@ class OtelZimmetServisi:
             raise
 
     @staticmethod
-    def get_personel_kullanim_ozeti(personel_id: int, otel_id: int = None) -> list:
+    def get_personel_kullanim_ozeti(
+        personel_id: int, otel_id: int | None = None
+    ) -> list:
         """
         Personelin zimmet kullanım özetini getir
         
@@ -383,7 +387,9 @@ class OtelZimmetServisi:
         ]
     
     @staticmethod
-    def get_otel_kullanim_raporu(otel_id: int, baslangic_tarihi=None, bitis_tarihi=None) -> dict:
+    def get_otel_kullanim_raporu(
+        otel_id: int, baslangic_tarihi=None, bitis_tarihi=None
+    ) -> dict | None:
         """
         Otel bazlı zimmet kullanım raporu
         
@@ -396,7 +402,7 @@ class OtelZimmetServisi:
             dict: Rapor verisi
         """
         # Otel bilgisi
-        otel = Otel.query.get(otel_id)
+        otel = db.session.get(Otel, otel_id)
         if not otel:
             return None
         
@@ -496,7 +502,7 @@ class OtelZimmetServisi:
         }
     
     @staticmethod
-    def get_kritik_stok_urunleri(otel_id: int = None) -> list:
+    def get_kritik_stok_urunleri(otel_id: int | None = None) -> list:
         """
         Kritik stok seviyesindeki ürünleri getir
         
@@ -546,9 +552,9 @@ def otel_zimmet_stok_dusu(
     urun_id: int,
     miktar: int,
     personel_id: int,
-    islem_tipi: str = 'minibar_kullanim',
-    referans_id: int = None,
-    aciklama: str = None
+    islem_tipi: str = "minibar_kullanim",
+    referans_id: int | None = None,
+    aciklama: str | None = None,
 ):
     """
     Otel zimmet deposundan stok düşer
@@ -577,7 +583,7 @@ def otel_zimmet_stok_dusu(
     )
 
 
-def get_personel_otel_id(personel_id: int) -> int:
+def get_personel_otel_id(personel_id: int) -> int | None:
     """
     Personelin bağlı olduğu otel ID'sini getir
     
@@ -587,7 +593,7 @@ def get_personel_otel_id(personel_id: int) -> int:
     Returns:
         int: Otel ID veya None
     """
-    personel = Kullanici.query.get(personel_id)
+    personel = db.session.get(Kullanici, personel_id)
     if personel and personel.otel_id:
         return personel.otel_id
     return None
@@ -685,7 +691,7 @@ def migrate_personel_zimmet_to_otel_stok(otel_id: int, dry_run: bool = True) -> 
 
         # Otel zimmet stokuna ekle/güncelle
         for urun_id, miktarlar in urun_toplamlari.items():
-            urun = Urun.query.get(urun_id)
+            urun = db.session.get(Urun, urun_id)
             urun_adi = urun.urun_adi if urun else f"Ürün #{urun_id}"
             
             result['detaylar'].append({

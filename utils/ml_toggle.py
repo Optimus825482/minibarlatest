@@ -6,7 +6,6 @@ SistemAyar tablosundaki 'ml_sistem_aktif' anahtarını kullanır.
 """
 
 import logging
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -45,10 +44,10 @@ def is_ml_enabled():
         else:
             # Ayar yoksa default aktif
             enabled = True
-        
-        _ml_cache['enabled'] = enabled
-        _ml_cache['last_check'] = now
-        
+
+        _ml_cache["enabled"] = enabled  # type: ignore[assignment]
+        _ml_cache["last_check"] = now  # type: ignore[assignment]
+
         return enabled
         
     except Exception as e:
@@ -57,7 +56,7 @@ def is_ml_enabled():
         return _ml_cache['enabled'] if _ml_cache['enabled'] is not None else True
 
 
-def set_ml_enabled(enabled: bool, user_id: int = None):
+def set_ml_enabled(enabled: bool, user_id: int | None = None):
     """
     ML sistemini aç/kapat.
     Args:
@@ -85,9 +84,10 @@ def set_ml_enabled(enabled: bool, user_id: int = None):
         
         # Cache güncelle
         import time
-        _ml_cache['enabled'] = enabled
-        _ml_cache['last_check'] = time.time()
-        
+
+        _ml_cache["enabled"] = enabled  # type: ignore[assignment]
+        _ml_cache["last_check"] = time.time()  # type: ignore[assignment]
+
         # Log
         durum = 'aktif' if enabled else 'devre dışı'
         log_islem('guncelleme', 'ml_sistem_toggle', {

@@ -5,7 +5,6 @@ Oda QR kodlarının oluşturulması, doğrulanması ve yönetimi
 
 import qrcode
 import qrcode.image.svg
-import secrets
 import random
 from flask import request
 from datetime import datetime
@@ -57,7 +56,7 @@ class QRKodService:
             # QR kod oluştur - basit ve büyük (800x800)
             qr = qrcode.QRCode(
                 version=1,  # Otomatik boyutlandırma
-                error_correction=qrcode.constants.ERROR_CORRECT_L,  # En düşük hata düzeltme (%7) - daha basit
+                error_correction=qrcode.constants.ERROR_CORRECT_L,  # type: ignore[attr-defined]  # En düşük hata düzeltme (%7) - daha basit
                 box_size=2,  # Her kutu 2 birim - düşük yoğunluk
                 border=0,  # Kenarsız - maksimum alan kullanımı
             )

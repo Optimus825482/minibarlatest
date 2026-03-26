@@ -15,7 +15,16 @@ Roller:
 """
 
 from flask import render_template, request, redirect, url_for, flash, session, jsonify, send_file
-from models import db, PersonelZimmet, PersonelZimmetDetay, Kullanici, StokHareket, Otel, OtelZimmetStok, PersonelZimmetKullanim, Urun
+from models import (
+    db,
+    PersonelZimmet,
+    PersonelZimmetDetay,
+    Kullanici,
+    StokHareket,
+    Otel,
+    OtelZimmetStok,
+    PersonelZimmetKullanim,
+)
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem, log_hata, get_kktc_now
 from utils.audit import serialize_model, audit_update
@@ -31,12 +40,13 @@ def register_admin_zimmet_routes(app):
         """Otel zimmet raporunu Excel'e aktar"""
         try:
             from openpyxl import Workbook
-            from openpyxl.styles import Font, Alignment, PatternFill
+            from openpyxl.styles import Font, PatternFill
             
             wb = Workbook()
             
             # ===== SAYFA 1: ÖZET =====
             ws_ozet = wb.active
+            assert ws_ozet is not None
             ws_ozet.title = "Rapor"
             
             # Başlık
@@ -120,7 +130,7 @@ def register_admin_zimmet_routes(app):
             ozet_bilgiler = {}
             
             if otel_id:
-                secili_otel = Otel.query.get(otel_id)
+                secili_otel = db.session.get(Otel, otel_id)
                 
                 if secili_otel:
                     # O oteldeki kat sorumluları

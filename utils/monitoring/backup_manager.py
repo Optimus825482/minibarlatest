@@ -60,7 +60,6 @@ class BackupManager:
             )
             self.db.session.add(backup_history)
             self.db.session.flush()  # ID'yi al ama commit etme
-            history_id = backup_history.id
             self.db.session.commit()
             
             # PostgreSQL backup komutu
@@ -127,8 +126,8 @@ class BackupManager:
                 logger.error(f"Rollback hatası: {str(rollback_error)}")
                 try:
                     self.db.session.rollback()
-                except:
-                    pass
+                except Exception:
+                    logger.debug("Sessiz hata yakalandi", exc_info=True)
             
             return {
                 'success': False,

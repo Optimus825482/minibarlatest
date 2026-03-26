@@ -5,19 +5,24 @@ Açıklama: Setup bazlı minibar kontrol için iş mantığı fonksiyonları
 """
 
 from models import (
-    db, Oda, OdaTipi, Setup, SetupIcerik, Urun,
-    MinibarIslem, MinibarIslemDetay, PersonelZimmetDetay,
-    PersonelZimmet
+    db,
+    Oda,
+    OdaTipi,
+    Setup,
+    SetupIcerik,
+    Urun,
+    MinibarIslem,
+    MinibarIslemDetay,
 )
-from datetime import datetime, timezone
+from datetime import datetime
+from sqlalchemy import desc
+import logging
 import pytz
 
 # KKTC Timezone
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
 def get_kktc_now():
     return datetime.now(KKTC_TZ)
-from sqlalchemy import desc
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -80,13 +85,13 @@ def oda_setup_durumu_getir(oda_id):
         # Oda tipi kontrolü
         if not oda.oda_tipi_id:
             raise OdaTipiNotFoundError(oda.oda_no)
-        
-        oda_tipi = OdaTipi.query.get(oda.oda_tipi_id)
+
+        oda_tipi = db.session.get(OdaTipi, oda.oda_tipi_id)
         if not oda_tipi:
             raise OdaTipiNotFoundError(oda.oda_no)
         
         # Odanın otelini bul (kat üzerinden)
-        kat = Kat.query.get(oda.kat_id)
+        kat = db.session.get(Kat, oda.kat_id)
         if not kat:
             raise OdaTipiNotFoundError(oda.oda_no)
         
@@ -106,7 +111,7 @@ def oda_setup_durumu_getir(oda_id):
         
         # Setup'ları getir
         if setup_ids:
-            setuplar = Setup.query.filter(Setup.id.in_(setup_ids), Setup.aktif == True).all()
+            setuplar = Setup.query.filter(Setup.id.in_(setup_ids), Setup.aktif).all()
         else:
             # Otel bazlı atama yoksa, geriye uyumluluk için global ilişkiyi kullan
             setuplar = [s for s in oda_tipi.setuplar if s.aktif]
@@ -124,9 +129,12 @@ def oda_setup_durumu_getir(oda_id):
                 continue
                 
             # Setup içeriğini getir
-            icerikler = SetupIcerik.query.filter_by(
-                setup_id=setup.id
-            ).join(Urun).filter(Urun.aktif == True).all()
+            icerikler = (
+                SetupIcerik.query.filter_by(setup_id=setup.id)
+                .join(Urun)
+                .filter(Urun.aktif)
+                .all()
+            )
             
             urun_listesi = []
             
@@ -277,14 +285,14 @@ def zimmet_stok_kontrol(personel_id, urun_id, miktar):
     Raises:
         ZimmetStokYetersizError: Stok yetersizse
     """
-    from models import Kullanici, OtelZimmetStok
+    from models import Kullanici
     from utils.otel_zimmet_servisleri import OtelZimmetServisi, OtelZimmetStokYetersizError
     
     try:
         # Personelin otel_id'sini bul
-        personel = Kullanici.query.get(personel_id)
+        personel = db.session.get(Kullanici, personel_id)
         if not personel or not personel.otel_id:
-            urun = Urun.query.get(urun_id)
+            urun = db.session.get(Urun, urun_id)
             raise ZimmetStokYetersizError(
                 urun.urun_adi if urun else 'Ürün',
                 0,
@@ -332,7 +340,7 @@ def zimmet_stok_dusu(personel_id, urun_id, miktar, zimmet_detay_id=None, referan
     
     try:
         # Personelin otel_id'sini bul
-        personel = Kullanici.query.get(personel_id)
+        personel = db.session.get(Kullanici, personel_id)
         if not personel or not personel.otel_id:
             raise ZimmetStokYetersizError('Ürün', 0, miktar)
         
@@ -345,9 +353,9 @@ def zimmet_stok_dusu(personel_id, urun_id, miktar, zimmet_detay_id=None, referan
                 urun_id=urun_id,
                 miktar=miktar,
                 personel_id=personel_id,
-                islem_tipi='minibar_kullanim',
-                referans_id=referans_id,
-                aciklama=f"Minibar kullanımı - Personel: {personel.ad} {personel.soyad}"
+                islem_tipi="minibar_kullanim",
+                referans_id=referans_id,  # type: ignore[arg-type]
+                aciklama=f"Minibar kullanımı - Personel: {personel.ad} {personel.soyad}",
             )
             return otel_stok
         except OtelZimmetStokYetersizError as e:
@@ -389,9 +397,9 @@ def minibar_stok_guncelle(oda_id, urun_id, yeni_miktar, ekstra_miktar=0):
             baslangic_stok = son_islem_detay.bitis_stok or 0
         else:
             # İlk işlem - Setup miktarını bul
-            oda = Oda.query.get(oda_id)
+            oda = db.session.get(Oda, oda_id)
             if oda and oda.oda_tipi_id:
-                oda_tipi = OdaTipi.query.get(oda.oda_tipi_id)
+                oda_tipi = db.session.get(OdaTipi, oda.oda_tipi_id)
                 if oda_tipi:
                     # Oda tipinin setup'larından ürünü bul
                     for setup in oda_tipi.setuplar:
@@ -468,7 +476,7 @@ def tuketim_kaydet(oda_id, urun_id, miktar, personel_id, islem_tipi='setup_kontr
             from datetime import date
             
             bugun = date.today()
-            kullanici = Kullanici.query.get(personel_id)
+            kullanici = db.session.get(Kullanici, personel_id)
             
             if kullanici and kullanici.otel_id:
                 # OTEL BAZLI görevlerde otel_id ile sorgula
@@ -485,7 +493,7 @@ def tuketim_kaydet(oda_id, urun_id, miktar, personel_id, islem_tipi='setup_kontr
                     gorev_detay.kontrol_zamani = get_kktc_now()
                     
                     # Ürün bilgisini al
-                    urun = Urun.query.get(urun_id)
+                    urun = db.session.get(Urun, urun_id)
                     urun_adi = urun.urun_adi if urun else 'Ürün'
                     
                     if miktar > 0:
@@ -521,7 +529,8 @@ def tuketim_kaydet(oda_id, urun_id, miktar, personel_id, islem_tipi='setup_kontr
                     # Bildirim gönder
                     try:
                         from utils.bildirim_service import gorev_tamamlandi_bildirimi
-                        oda = Oda.query.get(oda_id)
+
+                        oda = db.session.get(Oda, oda_id)
                         if oda and kullanici:
                             personel_adi = f"{kullanici.ad} {kullanici.soyad}"
                             gorev_tamamlandi_bildirimi(
@@ -551,7 +560,9 @@ def tuketim_kaydet(oda_id, urun_id, miktar, personel_id, islem_tipi='setup_kontr
             if dnd_sonuc and dnd_sonuc.get('success'):
                 logger.info(f"✅ DND otomatik tamamlandı: {dnd_sonuc.get('mesaj')}")
             else:
-                logger.debug(f"ℹ️ DND otomatik tamamlama: Aktif DND kaydı yok veya zaten tamamlanmış")
+                logger.debug(
+                    "ℹ️ DND otomatik tamamlama: Aktif DND kaydı yok veya zaten tamamlanmış"
+                )
         except Exception as dnd_err:
             logger.warning(f"⚠️ DND otomatik tamamlama hatası: {str(dnd_err)}")
             # Hata olsa bile ana işlemi etkilemesin

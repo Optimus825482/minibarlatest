@@ -20,6 +20,7 @@ class CacheService:
             redis_client: Redis client instance (None ise yeni oluşturulur)
         """
         try:
+            self.redis: Any = None
             if redis_client:
                 self.redis = redis_client
             else:
@@ -184,8 +185,8 @@ class CacheService:
                 # JSON parse dene
                 try:
                     value = json.loads(value)
-                except:
-                    pass
+                except Exception:
+                    logger.debug("Sessiz hata yakalandi", exc_info=True)
             elif key_type == 'list':
                 value = self.redis.lrange(key, 0, 100)  # İlk 100 item
                 size = self.redis.llen(key)

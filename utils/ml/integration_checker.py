@@ -24,10 +24,10 @@ class IntegrationChecker:
             collector = DataCollectorV2(self.db)
             
             # Test: Duplicate kontrolü çalışıyor mu?
-            test1 = collector._check_duplicate('test_metric', 1, datetime.now())
+            collector._check_duplicate('test_metric', 1, datetime.now())
             
             # Test: Son toplama zamanı alınıyor mu?
-            test2 = collector._get_last_collection_time('stok_seviye')
+            collector._get_last_collection_time('stok_seviye')
             
             self.checks['data_collector_v2'] = {
                 'status': 'OK',
@@ -180,7 +180,7 @@ class IntegrationChecker:
         warning_count = sum(1 for c in self.checks.values() if c['status'] == 'WARNING')
         error_count = sum(1 for c in self.checks.values() if c['status'] == 'ERROR')
         
-        report.append(f"\nÖZET:")
+        report.append("\nÖZET:")
         report.append(f"  ✅ OK: {ok_count}")
         report.append(f"  ⚠️  WARNING: {warning_count}")
         report.append(f"  ❌ ERROR: {error_count}")
@@ -195,7 +195,6 @@ def check_system_integration():
     try:
         from models import db
         from app import app
-        from datetime import datetime
         
         with app.app_context():
             checker = IntegrationChecker(db)

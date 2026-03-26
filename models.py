@@ -1,26 +1,18 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timezone
+from datetime import datetime
 from sqlalchemy import Numeric
 from sqlalchemy.dialects.postgresql import JSONB
 import enum
-import pytz
+
+from utils.timezone import KKTC_TZ, get_kktc_now
 
 db = SQLAlchemy()
-
-# KKTC Timezone (Kıbrıs - Europe/Nicosia)
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-
-
-def get_kktc_now():
-    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
-    return datetime.now(KKTC_TZ)
 
 # PostgreSQL Only - MySQL support removed
 JSONType = JSONB
 
 # PostgreSQL ENUM Types
-# Bu enum'lar hem MySQL hem PostgreSQL ile uyumlu çalışır
 class KullaniciRol(str, enum.Enum):
     SUPERADMIN = 'superadmin'
     SISTEM_YONETICISI = 'sistem_yoneticisi'
@@ -115,7 +107,7 @@ class Otel(db.Model):
                 KullaniciOtel.otel_id == self.id,
                 Kullanici.rol == 'depo_sorumlusu'
             ).count()
-        except Exception as e:
+        except Exception:
             return 0
     
     def get_kat_sorumlu_sayisi(self):
@@ -126,7 +118,7 @@ class Otel(db.Model):
                 Kullanici.otel_id == self.id,
                 Kullanici.rol == 'kat_sorumlusu'
             ).count()
-        except Exception as e:
+        except Exception:
             return 0
     
     def __repr__(self):
@@ -166,7 +158,10 @@ class Kullanici(db.Model):
     soyad = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100))
     telefon = db.Column(db.String(20))
-    rol = db.Column(db.Enum('superadmin', 'sistem_yoneticisi', 'admin', 'depo_sorumlusu', 'kat_sorumlusu', name='kullanici_rol'), nullable=False)
+    rol = db.Column(
+        db.Enum(KullaniciRol, name="kullanici_rol", values_callable=lambda x: [e.value for e in x]),
+        nullable=False
+    )
     aktif = db.Column(db.Boolean, default=True)
     olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
     son_giris = db.Column(db.DateTime(timezone=True))
@@ -1180,8 +1175,8 @@ class UrunStok(db.Model):
             elif self.mevcut_stok >= self.maksimum_stok:
                 return 'fazla'
             return 'normal'
-        except Exception as e:
-            return 'bilinmiyor'
+        except Exception:
+            return "bilinmiyor"
 
     def stok_guncelle(self, miktar, islem_tipi, kullanici_id):
         """Stok miktarını güncelle"""
@@ -1895,12 +1890,11 @@ class StokFifoKayit(db.Model):
             self.tukendi = True
         
         # Kullanım kaydı oluştur
-        kullanim = StokFifoKullanim(
-            fifo_kayit_id=self.id,
-            miktar=miktar,
-            islem_tipi=islem_tipi,
-            referans_id=referans_id
-        )
+        kullanim = StokFifoKullanim()
+        kullanim.fifo_kayit_id = self.id
+        kullanim.miktar = miktar
+        kullanim.islem_tipi = islem_tipi
+        kullanim.referans_id = referans_id
         db.session.add(kullanim)
         
         return kullanim
@@ -1919,139 +1913,178 @@ class StokFifoKullanim(db.Model):
     islem_tipi = db.Column(db.String(50), nullable=False)  # zimmet, minibar_dolum, setup_kontrol, iade, iptal
     referans_id = db.Column(db.Integer, nullable=True)  # İlgili işlemin ID'si
     islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
-    
+
     __table_args__ = (
-        db.Index('idx_fifo_kullanim_kayit', 'fifo_kayit_id'),
-        db.Index('idx_fifo_kullanim_tarih', 'islem_tarihi'),
-        db.Index('idx_fifo_kullanim_tip', 'islem_tipi'),
+        db.Index("idx_fifo_kullanim_kayit", "fifo_kayit_id"),
+        db.Index("idx_fifo_kullanim_tarih", "islem_tarihi"),
+        db.Index("idx_fifo_kullanim_tip", "islem_tipi"),
     )
-    
+
     def __repr__(self):
-        return f'<StokFifoKullanim fifo={self.fifo_kayit_id} miktar={self.miktar} tip={self.islem_tipi}>'
+        return f"<StokFifoKullanim fifo={self.fifo_kayit_id} miktar={self.miktar} tip={self.islem_tipi}>"
 
 
 # ============================================================================
 # OTEL BAZLI ZİMMET STOK SİSTEMİ
 # ============================================================================
 
+
 class OtelZimmetStok(db.Model):
     """
     Otel bazlı ortak zimmet deposu
-    
+
     Tüm kat sorumluları aynı otelin ortak zimmet deposundan kullanır.
     Bu tablo otel bazında toplam zimmet stoğunu tutar.
     """
-    __tablename__ = 'otel_zimmet_stok'
-    
+
+    __tablename__ = "otel_zimmet_stok"
+
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    otel_id = db.Column(db.Integer, db.ForeignKey('oteller.id', ondelete='CASCADE'), nullable=False)
-    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=False)
+    otel_id = db.Column(
+        db.Integer, db.ForeignKey("oteller.id", ondelete="CASCADE"), nullable=False
+    )
+    urun_id = db.Column(
+        db.Integer, db.ForeignKey("urunler.id", ondelete="CASCADE"), nullable=False
+    )
     toplam_miktar = db.Column(db.Integer, nullable=False, default=0)
     kullanilan_miktar = db.Column(db.Integer, nullable=False, default=0)
     kalan_miktar = db.Column(db.Integer, nullable=False, default=0)
     kritik_stok_seviyesi = db.Column(db.Integer, default=50)
-    son_guncelleme = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
-    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
-    
+    son_guncelleme = db.Column(
+        db.DateTime(timezone=True), default=lambda: get_kktc_now()
+    )
+    olusturma_tarihi = db.Column(
+        db.DateTime(timezone=True), default=lambda: get_kktc_now()
+    )
+
     # Unique constraint
     __table_args__ = (
-        db.UniqueConstraint('otel_id', 'urun_id', name='uq_otel_urun_zimmet'),
-        db.Index('idx_otel_zimmet_stok_otel', 'otel_id'),
-        db.Index('idx_otel_zimmet_stok_urun', 'urun_id'),
-        db.Index('idx_otel_zimmet_stok_kalan', 'kalan_miktar'),
+        db.UniqueConstraint("otel_id", "urun_id", name="uq_otel_urun_zimmet"),
+        db.Index("idx_otel_zimmet_stok_otel", "otel_id"),
+        db.Index("idx_otel_zimmet_stok_urun", "urun_id"),
+        db.Index("idx_otel_zimmet_stok_kalan", "kalan_miktar"),
     )
-    
+
     # İlişkiler
-    otel = db.relationship('Otel', backref=db.backref('zimmet_stoklari', lazy='dynamic'))
-    urun = db.relationship('Urun', backref=db.backref('otel_zimmet_stoklari', lazy='dynamic'))
-    kullanimlar = db.relationship('PersonelZimmetKullanim', backref='otel_zimmet_stok', lazy='dynamic')
-    
+    otel = db.relationship(
+        "Otel", backref=db.backref("zimmet_stoklari", lazy="dynamic")
+    )
+    urun = db.relationship(
+        "Urun", backref=db.backref("otel_zimmet_stoklari", lazy="dynamic")
+    )
+    kullanimlar = db.relationship(
+        "PersonelZimmetKullanim", backref="otel_zimmet_stok", lazy="dynamic"
+    )
+
     @property
     def kullanim_yuzdesi(self):
         """Kullanım yüzdesini hesapla"""
         if self.toplam_miktar == 0:
             return 0
         return round((self.kullanilan_miktar / self.toplam_miktar) * 100, 1)
-    
+
     @property
     def stok_durumu(self):
         """Stok durumunu belirle: kritik, dikkat, normal"""
         if self.kalan_miktar == 0:
-            return 'stokout'
+            return "stokout"
         elif self.kalan_miktar <= self.kritik_stok_seviyesi:
-            return 'kritik'
+            return "kritik"
         elif self.kalan_miktar <= self.kritik_stok_seviyesi * 1.5:
-            return 'dikkat'
-        return 'normal'
-    
+            return "dikkat"
+        return "normal"
+
     def stok_ekle(self, miktar):
         """Depoya stok ekle"""
         self.toplam_miktar += miktar
         self.kalan_miktar += miktar
         self.son_guncelleme = get_kktc_now()
-    
-    def stok_kullan(self, miktar, personel_id=None, islem_tipi='minibar_kullanim', referans_id=None, aciklama=None):
+
+    def stok_kullan(
+        self,
+        miktar,
+        personel_id=None,
+        islem_tipi="minibar_kullanim",
+        referans_id=None,
+        aciklama=None,
+    ):
         """
         Depodan stok kullan ve kullanım kaydı oluştur
-        
+
         Args:
             miktar: Kullanılacak miktar
             personel_id: Kullanan personel ID
             islem_tipi: İşlem tipi (minibar_kullanim, iade, duzeltme)
             referans_id: İlgili işlem ID (MinibarIslem ID vb.)
             aciklama: Açıklama
-            
+
         Returns:
             PersonelZimmetKullanim: Oluşturulan kullanım kaydı
-            
+
         Raises:
             ValueError: Yetersiz stok durumunda
         """
         if self.kalan_miktar < miktar:
-            raise ValueError(f"Yetersiz zimmet stoğu. Mevcut: {self.kalan_miktar}, İstenen: {miktar}")
-        
+            raise ValueError(
+                f"Yetersiz zimmet stoğu. Mevcut: {self.kalan_miktar}, İstenen: {miktar}"
+            )
+
         self.kullanilan_miktar += miktar
         self.kalan_miktar -= miktar
         self.son_guncelleme = get_kktc_now()
-        
+
         # Kullanım kaydı oluştur
-        kullanim = PersonelZimmetKullanim(
-            otel_zimmet_stok_id=self.id,
-            personel_id=personel_id,
-            urun_id=self.urun_id,
-            kullanilan_miktar=miktar,
-            islem_tipi=islem_tipi,
-            referans_islem_id=referans_id,
-            aciklama=aciklama
-        )
+        kullanim = PersonelZimmetKullanim()
+        kullanim.otel_zimmet_stok_id = self.id
+        kullanim.personel_id = personel_id
+        kullanim.urun_id = self.urun_id
+        kullanim.kullanilan_miktar = miktar
+        kullanim.islem_tipi = islem_tipi
+        kullanim.referans_islem_id = referans_id
+        kullanim.aciklama = aciklama
         db.session.add(kullanim)
-        
+
         return kullanim
-    
+
     def __repr__(self):
-        return f'<OtelZimmetStok otel={self.otel_id} urun={self.urun_id} kalan={self.kalan_miktar}>'
+        return f"<OtelZimmetStok otel={self.otel_id} urun={self.urun_id} kalan={self.kalan_miktar}>"
 
 
 class PersonelZimmetKullanim(db.Model):
     """
     Personel bazlı zimmet kullanım takibi
-    
+
     Her personelin otel zimmet deposundan ne kadar kullandığını takip eder.
     Raporlama ve analiz için kullanılır.
     """
-    __tablename__ = 'personel_zimmet_kullanim'
-    
+
+    __tablename__ = "personel_zimmet_kullanim"
+
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    otel_zimmet_stok_id = db.Column(db.Integer, db.ForeignKey('otel_zimmet_stok.id', ondelete='CASCADE'), nullable=False)
-    personel_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='CASCADE'), nullable=False)
-    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='CASCADE'), nullable=False)
+    otel_zimmet_stok_id = db.Column(
+        db.Integer,
+        db.ForeignKey("otel_zimmet_stok.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    personel_id = db.Column(
+        db.Integer, db.ForeignKey("kullanicilar.id", ondelete="CASCADE"), nullable=False
+    )
+    urun_id = db.Column(
+        db.Integer, db.ForeignKey("urunler.id", ondelete="CASCADE"), nullable=False
+    )
     kullanilan_miktar = db.Column(db.Integer, nullable=False, default=0)
     islem_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
-    islem_tipi = db.Column(db.String(50), default='minibar_kullanim')  # minibar_kullanim, iade, duzeltme
-    referans_islem_id = db.Column(db.Integer, nullable=True)  # MinibarIslem ID referansı
+    islem_tipi = db.Column(
+        db.String(50), default="minibar_kullanim"
+    )  # minibar_kullanim, iade, duzeltme
+    referans_islem_id = db.Column(
+        db.Integer, nullable=True
+    )  # MinibarIslem ID referansı
     aciklama = db.Column(db.Text)
-    olusturan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id'), nullable=True)
-    
+    olusturan_id = db.Column(
+        db.Integer, db.ForeignKey("kullanicilar.id"), nullable=True
+    )
+
     __table_args__ = (
         db.Index('idx_pzk_otel_zimmet', 'otel_zimmet_stok_id'),
         db.Index('idx_pzk_personel', 'personel_id'),

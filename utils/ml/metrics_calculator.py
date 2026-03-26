@@ -207,7 +207,7 @@ class MetricsCalculator:
                         MLAlert.alert_type == 'stok_bitis_uyari',
                         MLAlert.entity_id == urun.id,
                         MLAlert.created_at >= son_24_saat,
-                        MLAlert.is_false_positive == False
+                        not MLAlert.is_false_positive
                     ).first()
                     
                     if not existing_alert:

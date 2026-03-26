@@ -5,7 +5,7 @@ En önemli feature'ları seçer, gereksizleri kaldırır
 
 import numpy as np
 import pandas as pd
-from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif
+from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.ensemble import RandomForestClassifier
 import logging
 
@@ -166,10 +166,12 @@ class FeatureSelector:
         if self.feature_scores is None:
             return None
         
-        ranking = pd.DataFrame({
-            'feature_index': range(len(self.feature_scores)),
-            'score': self.feature_scores
-        }).sort_values('score', ascending=False)
+        ranking = pd.DataFrame(
+            {
+                "feature_index": range(len(self.feature_scores)),  # type: ignore[arg-type]
+                "score": self.feature_scores,
+            }
+        ).sort_values("score", ascending=False)
         
         return ranking
 

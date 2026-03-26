@@ -45,7 +45,7 @@ def get_user_info():
         if session:
             kullanici_id = session.get('kullanici_id')
             if kullanici_id:
-                kullanici = Kullanici.query.get(kullanici_id)
+                kullanici = db.session.get(Kullanici, kullanici_id)
                 if kullanici:
                     return kullanici.id, kullanici.kullanici_adi, kullanici.rol
                 return kullanici_id, 'Bilinmeyen', 'bilinmeyen'
@@ -183,11 +183,11 @@ def log_audit(
         
     except Exception as e:
         # Audit log hatası ana işlemi etkilememeli
-        print(f"⚠️ Audit log hatası: {str(e)}")
+        logger.error(f"⚠️ Audit log hatası: {str(e)}")
         try:
             db.session.rollback()
         except Exception:
-            pass
+            logger.debug("Sessiz hata yakalandi", exc_info=True)
         return None
 
 

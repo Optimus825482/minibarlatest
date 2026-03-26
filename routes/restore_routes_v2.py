@@ -3,13 +3,17 @@ Backup Restore Routes V2
 Gelişmiş yedek yükleme ve geri yükleme sistemi
 """
 
-from flask import Blueprint, render_template, request, jsonify, session, flash, redirect, url_for
-from werkzeug.utils import secure_filename
-from sqlalchemy import create_engine, text, inspect
-from models import db
-from utils.decorators import login_required, role_required
+import logging
 import os
 import re
+
+from flask import Blueprint, render_template, request, jsonify, session
+from werkzeug.utils import secure_filename
+from sqlalchemy import text, inspect
+from models import db
+from utils.decorators import login_required, role_required
+
+logger = logging.getLogger(__name__)
 
 restore_v2_bp = Blueprint('restore_v2', __name__)
 
@@ -46,9 +50,16 @@ def upload_backup():
         
         if not allowed_file(file.filename):
             return jsonify({'error': 'Sadece .sql dosyaları yüklenebilir'}), 400
-        
+
+        # Dosya boyutu kontrolü
+        file.stream.seek(0, 2)
+        file_size_check = file.stream.tell()
+        file.stream.seek(0)
+        if file_size_check > MAX_FILE_SIZE:
+            return jsonify({"error": "Dosya boyutu çok büyük (maks 100MB)"}), 400
+
         # Dosyayı kaydet
-        filename = secure_filename(file.filename)
+        filename = secure_filename(file.filename)  # type: ignore[arg-type]
         filepath = os.path.join(UPLOAD_FOLDER, filename)
         
         with open(filepath, 'wb') as f:
@@ -112,7 +123,7 @@ def upload_backup():
                 with db.engine.connect() as conn:
                     result = conn.execute(text(f"SELECT COUNT(*) FROM {table}"))
                     current_counts[table] = result.scalar() or 0
-            except:
+            except Exception:
                 current_counts[table] = 0
         
         # Bağımlılıkları bul
@@ -123,8 +134,8 @@ def upload_backup():
                 deps = [fk['referred_table'] for fk in fks if 'referred_table' in fk]
                 if deps:
                     dependencies[table] = deps
-            except:
-                pass
+            except Exception:
+                logger.debug("Sessiz hata yakalandi", exc_info=True)
         
         # Karşılaştırma verisi
         comparison = []
@@ -150,11 +161,12 @@ def upload_backup():
             'total_tables': len(backup_tables),
             'comparison': comparison
         })
-    
-    except Exception as e:
+
+    except Exception:
         import traceback
+
         traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": "Sunucu hatasi olustu"}), 500
 
 @restore_v2_bp.route('/api/restore_tables', methods=['POST'])
 @login_required
@@ -190,7 +202,7 @@ def restore_tables():
                         with db.engine.connect() as conn:
                             conn.execute(text(create_sql))
                             conn.commit()
-                    except Exception as create_error:
+                    except Exception:
                         # CREATE TABLE hatası - devam et
                         pass
             else:
@@ -202,14 +214,14 @@ def restore_tables():
                         conn.execute(text(f"TRUNCATE TABLE {table_name} CASCADE"))
                         conn.execute(text("SET session_replication_role = 'origin'"))
                         conn.commit()
-                except Exception as truncate_error:
+                except Exception:
                     # TRUNCATE hatası - DELETE dene
                     try:
                         with db.engine.connect() as conn:
                             conn.execute(text(f"DELETE FROM {table_name}"))
                             conn.commit()
-                    except:
-                        pass
+                    except Exception:
+                        logger.debug("Sessiz hata yakalandi", exc_info=True)
             
             # INSERT'leri çalıştır
             success_count = 0
@@ -243,7 +255,8 @@ def restore_tables():
                                 error_count += 1
                                 # Hata logla ama devam et
                                 import traceback
-                                print(f"INSERT hatası: {str(e)[:100]}")
+
+                                logger.error(f"INSERT hatası: {str(e)[:100]}")
                             
                             in_insert = False
                             current_statement = []
@@ -255,15 +268,14 @@ def restore_tables():
                 'error_count': error_count,
                 'created': not table_exists
             })
-            
-        except Exception as e:
+
+        except Exception:
             import traceback
+
             traceback.print_exc()
-            results.append({
-                'table': table_name,
-                'success': False,
-                'error': str(e)
-            })
+            results.append(
+                {"table": table_name, "success": False, "error": "Sunucu hatasi olustu"}
+            )
     
     return jsonify({
         'success': True,
@@ -331,18 +343,21 @@ def restore_full():
                             # Kritik olmayan hataları logla ve devam et
                             error_msg = str(e)
                             if 'already exists' not in error_msg.lower():
-                                print(f"SQL Hatası: {error_msg[:200]}")
+                                logger.error(f"SQL Hatası: {error_msg[:200]}")
                     
                     current_statement = []
         
-        return jsonify({
-            'success': True,
-            'message': f'Full restore tamamlandı!',
-            'success_count': success_count,
-            'error_count': error_count
-        })
-        
-    except Exception as e:
+        return jsonify(
+            {
+                "success": True,
+                "message": "Full restore tamamlandı!",
+                "success_count": success_count,
+                "error_count": error_count,
+            }
+        )
+
+    except Exception:
         import traceback
+
         traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": "Sunucu hatasi olustu"}), 500

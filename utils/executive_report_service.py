@@ -4,16 +4,22 @@ Executive Report Service
 Ürün, Personel, Otel bazlı detaylı raporlama
 """
 
-from datetime import datetime, timedelta, date
-from sqlalchemy import func, desc, asc, cast, Date, extract, case, and_, or_, text
+from datetime import datetime, timedelta
+from sqlalchemy import func, desc, asc, cast, Date, case, and_, or_
 from models import (
-    db, Kullanici, Otel, Oda, Urun, UrunGrup, Kat,
-    MinibarIslem, MinibarIslemDetay, StokHareket,
-    PersonelZimmet, PersonelZimmetDetay,
-    AuditLog, SistemLog, GunlukGorev, GorevDetay,
-    OdaKontrolKaydi, MinibarIslemTipi, KullaniciRol,
-    GorevDurum, GorevTipi, HareketTipi,
-    OdaDNDKayit, OdaDNDKontrol, DNDKontrol
+    db,
+    Kullanici,
+    Otel,
+    Oda,
+    Urun,
+    UrunGrup,
+    Kat,
+    MinibarIslem,
+    MinibarIslemDetay,
+    GunlukGorev,
+    GorevDetay,
+    OdaKontrolKaydi,
+    OdaDNDKayit,
 )
 import logging
 import pytz
@@ -307,7 +313,7 @@ class ExecutiveReportService:
             if not end_date:
                 end_date = get_kktc_now().date()
 
-            oteller_query = db.session.query(Otel).filter(Otel.aktif == True)
+            oteller_query = db.session.query(Otel).filter(Otel.aktif)
             if otel_id:
                 oteller_query = oteller_query.filter(Otel.id == otel_id)
             oteller = oteller_query.all()
@@ -315,9 +321,11 @@ class ExecutiveReportService:
             data = []
             for otel in oteller:
                 # Oda sayısı
-                oda_sayisi = Oda.query.join(Kat).filter(
-                    Kat.otel_id == otel.id, Oda.aktif == True
-                ).count()
+                oda_sayisi = (
+                    Oda.query.join(Kat)
+                    .filter(Kat.otel_id == otel.id, Oda.aktif)
+                    .count()
+                )
 
                 # Tüketim
                 tuketim = db.session.query(
@@ -718,9 +726,9 @@ class ExecutiveReportService:
             # Otel bazlı karşılaştırma
             otel_data = []
             if not otel_id:
-                oteller = Otel.query.filter(Otel.aktif == True).all()
+                oteller = Otel.query.filter(Otel.aktif).all()
                 for otel in oteller:
-                    o_p1 = get_period_metrics(period1_start, period1_end)
+                    get_period_metrics(period1_start, period1_end)
                     # Otel bazlı hızlı sorgu
                     o_tuk1 = db.session.query(
                         func.sum(MinibarIslemDetay.tuketim)
@@ -910,9 +918,9 @@ class ExecutiveReportService:
                 personel_adi = '-'
                 personel_id_val = None
                 if r.gorev_detay_id:
-                    gd = GorevDetay.query.get(r.gorev_detay_id)
+                    gd = db.session.get(GorevDetay, r.gorev_detay_id)
                     if gd and gd.gorev:
-                        p = Kullanici.query.get(gd.gorev.personel_id)
+                        p = db.session.get(Kullanici, gd.gorev.personel_id)
                         if p and p.kullanici_adi not in EXCLUDED_USERNAMES:
                             personel_adi = p.ad_soyad
                             personel_id_val = p.id
@@ -1070,9 +1078,11 @@ class ExecutiveReportService:
     def get_filter_options():
         """Rapor filtreleri için dropdown verileri"""
         try:
-            oteller = Otel.query.filter(Otel.aktif == True).order_by(Otel.ad).all()
-            urun_gruplari = UrunGrup.query.filter(UrunGrup.aktif == True).order_by(UrunGrup.grup_adi).all()
-            urunler = Urun.query.filter(Urun.aktif == True).order_by(Urun.urun_adi).all()
+            oteller = Otel.query.filter(Otel.aktif).order_by(Otel.ad).all()
+            urun_gruplari = (
+                UrunGrup.query.filter(UrunGrup.aktif).order_by(UrunGrup.grup_adi).all()
+            )
+            urunler = Urun.query.filter(Urun.aktif).order_by(Urun.urun_adi).all()
 
             return {
                 'oteller': [{'id': o.id, 'ad': o.ad} for o in oteller],
@@ -1087,9 +1097,11 @@ class ExecutiveReportService:
     def get_floors_by_hotel(otel_id):
         """Otel'e göre katları getir"""
         try:
-            katlar = Kat.query.filter(
-                Kat.otel_id == otel_id, Kat.aktif == True
-            ).order_by(Kat.kat_no).all()
+            katlar = (
+                Kat.query.filter(Kat.otel_id == otel_id, Kat.aktif)
+                .order_by(Kat.kat_no)
+                .all()
+            )
             return [{'id': k.id, 'ad': k.kat_adi, 'no': k.kat_no} for k in katlar]
         except Exception:
             return []
@@ -1098,9 +1110,11 @@ class ExecutiveReportService:
     def get_rooms_by_floor(kat_id):
         """Kat'a göre odaları getir"""
         try:
-            odalar = Oda.query.filter(
-                Oda.kat_id == kat_id, Oda.aktif == True
-            ).order_by(Oda.oda_no).all()
+            odalar = (
+                Oda.query.filter(Oda.kat_id == kat_id, Oda.aktif)
+                .order_by(Oda.oda_no)
+                .all()
+            )
             return [{'id': o.id, 'no': o.oda_no} for o in odalar]
         except Exception:
             return []
@@ -1110,8 +1124,7 @@ class ExecutiveReportService:
         """Personel listesi"""
         try:
             query = Kullanici.query.filter(
-                Kullanici.aktif == True,
-                ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
+                Kullanici.aktif, ~Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
             )
             if rol:
                 query = query.filter(Kullanici.rol == rol)

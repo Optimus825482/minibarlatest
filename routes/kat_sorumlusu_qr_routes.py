@@ -3,7 +3,6 @@ Kat Sorumlusu QR Kod Route'ları
 """
 
 from flask import jsonify, request, render_template, session
-from models import db, Oda
 from utils.qr_service import QRKodService
 from utils.rate_limiter import QRRateLimiter
 from utils.helpers import log_islem, log_hata
@@ -42,7 +41,7 @@ def register_kat_sorumlusu_qr_routes(app):
             
             # Rate limit kontrolü
             ip = request.remote_addr
-            if not QRRateLimiter.check_qr_scan_limit(ip):
+            if not QRRateLimiter.check_qr_scan_limit(ip):  # type: ignore[arg-type]
                 return jsonify({
                     'success': False,
                     'message': 'Çok fazla QR okutma denemesi. Lütfen 1 dakika bekleyin.'

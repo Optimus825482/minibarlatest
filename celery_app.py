@@ -3,20 +3,17 @@ Celery Asenkron İşlemler Konfigürasyonu
 Fiyatlandırma ve Karlılık Sistemi için ağır hesaplamaları arka planda çalıştırır
 """
 
+from __future__ import annotations
+
 from celery import Celery
 from celery.schedules import crontab
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from decimal import Decimal
+from typing import Any, Tuple
 import logging
 import os
-import pytz
 
-# KKTC Timezone (Kıbrıs - Europe/Nicosia)
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-
-def get_kktc_now():
-    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
-    return datetime.now(KKTC_TZ)
+from utils.timezone import KKTC_TZ, get_kktc_now
 
 # Logging
 logger = logging.getLogger(__name__)
@@ -25,7 +22,7 @@ logger = logging.getLogger(__name__)
 _flask_app = None
 _db = None
 
-def get_flask_app():
+def get_flask_app() -> Tuple[Any, Any]:
     """Flask app'i lazy loading ile al - Celery worker'lar için"""
     global _flask_app, _db
     if _flask_app is None:
@@ -138,7 +135,6 @@ def tuketim_trendi_guncelle_async(self, otel_id=None, donem='aylik'):
         app, db = get_flask_app()
         from models import Urun, MinibarIslemDetay, MinibarIslem
         from sqlalchemy import func
-        from datetime import datetime, timedelta
         
         with app.app_context():
             logger.info(f"Tüketim trendi güncelleme başladı - Otel: {otel_id}, Dönem: {donem}")
@@ -263,7 +259,6 @@ def stok_devir_guncelle_async(self, otel_id=None):
         app, db = get_flask_app()
         from models import UrunStok, StokHareket
         from sqlalchemy import func
-        from datetime import datetime, timedelta
         
         with app.app_context():
             logger.info(f"Stok devir hızı güncelleme başladı - Otel: {otel_id}")
@@ -350,9 +345,8 @@ def haftalik_trend_analizi_task():
             
             for otel in oteller:
                 # Asenkron task başlat
-                tuketim_trendi_guncelle_async.delay(
-                    otel_id=otel.id,
-                    donem='haftalik'
+                tuketim_trendi_guncelle_async.delay(  # type: ignore[attr-defined]
+                    otel_id=otel.id, donem="haftalik"
                 )
             
             logger.info(f"Haftalık trend analizi task'ları başlatıldı - {len(oteller)} otel")
@@ -388,8 +382,8 @@ def aylik_stok_devir_analizi_task():
             
             for otel in oteller:
                 # Asenkron task başlat
-                stok_devir_guncelle_async.delay(otel_id=otel.id)
-            
+                stok_devir_guncelle_async.delay(otel_id=otel.id)  # type: ignore[attr-defined]
+
             logger.info(f"Aylık stok devir analizi task'ları başlatıldı - {len(oteller)} otel")
             
             return {
@@ -447,7 +441,6 @@ def eksik_yukleme_uyarisi_task():
     """
     try:
         app, db = get_flask_app()
-        from utils.yukleme_gorev_service import YuklemeGorevService
         from utils.bildirim_service import BildirimService
         from models import YuklemeGorev
         from datetime import date
@@ -528,9 +521,8 @@ def dnd_tamamlanmayan_kontrol_task():
         
         with app.app_context():
             logger.info("DND tamamlanmayan görev kontrolü yapılıyor...")
-            
+
             tarih = date.today()
-            simdi = get_kktc_now()
             
             # Bugün için 3 kez kontrol edilmemiş DND görevlerini bul
             tamamlanmayan_dnd = GorevDetay.query.join(GunlukGorev).filter(
@@ -737,8 +729,8 @@ def ml_anomali_tespiti_task():
                 son_5_dk = get_kktc_now() - timedelta(minutes=5)
                 kritik_alertler = MLAlert.query.filter(
                     MLAlert.created_at >= son_5_dk,
-                    MLAlert.severity.in_(['kritik', 'yuksek']),
-                    MLAlert.is_false_positive == False
+                    MLAlert.severity.in_(["kritik", "yuksek"]),
+                    MLAlert.is_false_positive.is_(False),
                 ).all()
                 
                 for alert in kritik_alertler:
@@ -772,7 +764,6 @@ def ml_model_egitimi_task():
     try:
         app, db = get_flask_app()
         from utils.ml.model_trainer import ModelTrainer
-        from utils.ml.data_collector import DataCollector
         from models import MLMetric
         
         with app.app_context():
@@ -906,10 +897,10 @@ def ml_stok_bitis_kontrolu_task():
             if alert_count > 0:
                 son_1_saat = get_kktc_now() - timedelta(hours=1)
                 kritik_alertler = MLAlert.query.filter(
-                    MLAlert.alert_type == 'stok_bitis_uyari',
+                    MLAlert.alert_type == "stok_bitis_uyari",
                     MLAlert.created_at >= son_1_saat,
-                    MLAlert.severity.in_(['kritik', 'yuksek']),
-                    MLAlert.is_false_positive == False
+                    MLAlert.severity.in_(["kritik", "yuksek"]),
+                    MLAlert.is_false_positive.is_(False),
                 ).all()
                 
                 for alert in kritik_alertler:
@@ -1283,6 +1274,73 @@ def eski_loglari_temizle_task():
         return {'status': 'error', 'message': str(e)}
 
 
+# ============================================================================
+# RAPOR EXPORT TASK'LARI
+# ============================================================================
+
+
+@celery.task(name="export.excel_rapor", bind=True, max_retries=2)
+def excel_export_task(self, rapor_tipi, filters=None):
+    """Excel raporu arka planda olustur ve dosyaya kaydet."""
+    import os
+
+    app, _db = get_flask_app()
+    with app.app_context():
+        try:
+            from utils.rapor_export_service import generate_excel, get_export_filename
+
+            output = generate_excel(rapor_tipi, filters)
+
+            exports_dir = os.path.join(app.root_path, "exports")
+            os.makedirs(exports_dir, exist_ok=True)
+
+            filename = get_export_filename(rapor_tipi, "xlsx")
+            filepath = os.path.join(exports_dir, filename)
+            with open(filepath, "wb") as f:
+                f.write(output.getvalue())
+
+            return {
+                "status": "success",
+                "filename": filename,
+                "filepath": filepath,
+                "rapor_tipi": rapor_tipi,
+            }
+        except Exception as e:
+            logger.error("Excel export task hatasi: %s", str(e), exc_info=True)
+            return {"status": "error", "message": str(e)}
+
+
+@celery.task(name="export.pdf_rapor", bind=True, max_retries=2)
+def pdf_export_task(self, rapor_tipi, filters=None):
+    """PDF raporu arka planda olustur ve dosyaya kaydet."""
+    import os
+
+    app, _db = get_flask_app()
+    with app.app_context():
+        try:
+            from utils.rapor_export_service import generate_pdf, get_export_filename
+
+            output = generate_pdf(rapor_tipi, filters)
+
+            exports_dir = os.path.join(app.root_path, "exports")
+            os.makedirs(exports_dir, exist_ok=True)
+
+            filename = get_export_filename(rapor_tipi, "pdf")
+            filepath = os.path.join(exports_dir, filename)
+            with open(filepath, "wb") as f:
+                f.write(output.getvalue())
+
+            return {
+                "status": "success",
+                "filename": filename,
+                "filepath": filepath,
+                "rapor_tipi": rapor_tipi,
+            }
+        except Exception as e:
+            logger.error("PDF export task hatasi: %s", str(e), exc_info=True)
+            return {"status": "error", "message": str(e)}
+
+
 # ============================================
 # CELERY BEAT SCHEDULE (Periyodik Task'lar)
 # ============================================
@@ -1291,129 +1349,132 @@ celery.conf.beat_schedule = {
     # ============================================
     # ML ANALİZ SİSTEMİ SCHEDULE
     # ============================================
-    
     # ML Veri Toplama - Sabah 08:00 - Akşam 20:00 arası her saat başı
     # UTC saat = KKTC saat - 2 (yaz saati) veya - 3 (kış saati)
     # KKTC 08:00-20:00 = UTC 06:00-18:00 (kış) veya 05:00-17:00 (yaz)
-    'ml-veri-toplama': {
-        'task': 'ml.veri_toplama',
-        'schedule': crontab(hour='5-17', minute=0),  # UTC 05:00-17:00 = KKTC ~08:00-20:00
+    "ml-veri-toplama": {
+        "task": "ml.veri_toplama",
+        "schedule": crontab(
+            hour="5-17", minute="0"
+        ),  # UTC 05:00-17:00 = KKTC ~08:00-20:00
     },
     # ML Anomali Tespiti - Sabah 08:30 - Akşam 20:30 arası her saat (veri toplamadan 30dk sonra)
-    'ml-anomali-tespiti': {
-        'task': 'ml.anomali_tespiti',
-        'schedule': crontab(hour='5-17', minute=30),  # UTC 05:30-17:30 = KKTC ~08:30-20:30
+    "ml-anomali-tespiti": {
+        "task": "ml.anomali_tespiti",
+        "schedule": crontab(
+            hour="5-17", minute="30"
+        ),  # UTC 05:30-17:30 = KKTC ~08:30-20:30
     },
     # ML Model Eğitimi - Her gece 00:00'da (UTC 22:00 = KKTC 00:00)
-    'ml-model-egitimi': {
-        'task': 'ml.model_egitimi',
-        'schedule': crontab(hour=22, minute=0),  # UTC 22:00 = KKTC 00:00
+    "ml-model-egitimi": {
+        "task": "ml.model_egitimi",
+        "schedule": crontab(hour="22", minute="0"),  # UTC 22:00 = KKTC 00:00
     },
     # ML Eski Verileri Temizle - Her gün 01:00'de
-    'ml-eski-verileri-temizle': {
-        'task': 'ml.eski_verileri_temizle',
-        'schedule': crontab(hour=23, minute=0),  # UTC 23:00 = KKTC 01:00
+    "ml-eski-verileri-temizle": {
+        "task": "ml.eski_verileri_temizle",
+        "schedule": crontab(hour="23", minute="0"),  # UTC 23:00 = KKTC 01:00
     },
     # ML Günlük Alert Özeti - KALDIRILDI (Erkan talebi)
     # ML Stok Bitiş Kontrolü - Her 6 saatte bir
-    'ml-stok-bitis-kontrolu': {
-        'task': 'ml.stok_bitis_kontrolu',
-        'schedule': 21600.0,  # 6 saat
+    "ml-stok-bitis-kontrolu": {
+        "task": "ml.stok_bitis_kontrolu",
+        "schedule": 21600.0,  # 6 saat
     },
-    
     # ============================================
     # FİYATLANDIRMA SİSTEMİ SCHEDULE
     # ============================================
-    
     # Her Pazartesi sabah 06:00'da haftalık trend analizi
-    'haftalik-trend-analizi': {
-        'task': 'fiyatlandirma.haftalik_trend_analizi',
-        'schedule': crontab(day_of_week=1, hour=4, minute=0),  # UTC 04:00 = KKTC 06:00
+    "haftalik-trend-analizi": {
+        "task": "fiyatlandirma.haftalik_trend_analizi",
+        "schedule": crontab(
+            day_of_week="1", hour="4", minute="0"
+        ),  # UTC 04:00 = KKTC 06:00
     },
     # Her ayın 1'i sabah 07:00'de stok devir analizi
-    'aylik-stok-devir-analizi': {
-        'task': 'fiyatlandirma.aylik_stok_devir_analizi',
-        'schedule': crontab(day_of_month=1, hour=5, minute=0),  # UTC 05:00 = KKTC 07:00
+    "aylik-stok-devir-analizi": {
+        "task": "fiyatlandirma.aylik_stok_devir_analizi",
+        "schedule": crontab(
+            day_of_month="1", hour="5", minute="0"
+        ),  # UTC 05:00 = KKTC 07:00
     },
-    
     # ============================================
     # GÖREVLENDİRME SİSTEMİ SCHEDULE
     # ============================================
-    
     # Her gün 00:01'de yükleme görevleri oluştur
-    'gunluk-yukleme-gorevleri': {
-        'task': 'gorevlendirme.gunluk_yukleme_gorevleri_olustur',
-        'schedule': crontab(hour=22, minute=1),  # UTC 22:01 = KKTC 00:01
+    "gunluk-yukleme-gorevleri": {
+        "task": "gorevlendirme.gunluk_yukleme_gorevleri_olustur",
+        "schedule": crontab(hour="22", minute="1"),  # UTC 22:01 = KKTC 00:01
     },
     # Her gün 18:00'da eksik yükleme uyarısı
-    'eksik-yukleme-uyarisi': {
-        'task': 'gorevlendirme.eksik_yukleme_uyarisi',
-        'schedule': crontab(hour=16, minute=0),  # UTC 16:00 = KKTC 18:00
+    "eksik-yukleme-uyarisi": {
+        "task": "gorevlendirme.eksik_yukleme_uyarisi",
+        "schedule": crontab(hour="16", minute="0"),  # UTC 16:00 = KKTC 18:00
     },
     # Her gün 23:59'da DND tamamlanmayan kontrol
-    'dnd-tamamlanmayan-kontrol': {
-        'task': 'gorevlendirme.dnd_tamamlanmayan_kontrol',
-        'schedule': crontab(hour=21, minute=59),  # UTC 21:59 = KKTC 23:59
+    "dnd-tamamlanmayan-kontrol": {
+        "task": "gorevlendirme.dnd_tamamlanmayan_kontrol",
+        "schedule": crontab(hour="21", minute="59"),  # UTC 21:59 = KKTC 23:59
     },
     # Her gün KKTC saatiyle 10:00'da doluluk yükleme uyarısı
-    'doluluk-yukleme-uyari': {
-        'task': 'gorevlendirme.doluluk_yukleme_uyari_kontrolu',
-        'schedule': crontab(hour=8, minute=0),  # UTC 08:00 = KKTC 10:00
+    "doluluk-yukleme-uyari": {
+        "task": "gorevlendirme.doluluk_yukleme_uyari_kontrolu",
+        "schedule": crontab(hour="8", minute="0"),  # UTC 08:00 = KKTC 10:00
     },
-    
     # ============================================
     # YEDEKLEME SİSTEMİ SCHEDULE
     # ============================================
-    
     # Her gün 23:59'da otomatik yedekleme
-    'otomatik-yedekleme': {
-        'task': 'backup.otomatik_yedekleme',
-        'schedule': crontab(hour=21, minute=59),  # UTC 21:59 = KKTC 23:59
+    "otomatik-yedekleme": {
+        "task": "backup.otomatik_yedekleme",
+        "schedule": crontab(hour="21", minute="59"),  # UTC 21:59 = KKTC 23:59
     },
     # Her gün 00:30'da eski yedekleri temizle
-    'eski-yedekleri-temizle': {
-        'task': 'backup.eski_yedekleri_temizle',
-        'schedule': crontab(hour=22, minute=30),  # UTC 22:30 = KKTC 00:30
+    "eski-yedekleri-temizle": {
+        "task": "backup.eski_yedekleri_temizle",
+        "schedule": crontab(hour="22", minute="30"),  # UTC 22:30 = KKTC 00:30
     },
-    
     # ============================================
     # RAPOR SİSTEMİ SCHEDULE
     # ============================================
-    
     # Her sabah 08:00'de (KKTC) görev tamamlanma raporu
-    'gunluk-gorev-raporu': {
-        'task': 'rapor.gunluk_gorev_raporu',
-        'schedule': crontab(hour=6, minute=0),  # UTC 06:00 = KKTC 08:00
+    "gunluk-gorev-raporu": {
+        "task": "rapor.gunluk_gorev_raporu",
+        "schedule": crontab(hour="6", minute="0"),  # UTC 06:00 = KKTC 08:00
     },
     # Her sabah 08:05'de (KKTC) minibar sarfiyat raporu
-    'gunluk-minibar-sarfiyat-raporu': {
-        'task': 'rapor.gunluk_minibar_sarfiyat_raporu',
-        'schedule': crontab(hour=6, minute=5),  # UTC 06:05 = KKTC 08:05
+    "gunluk-minibar-sarfiyat-raporu": {
+        "task": "rapor.gunluk_minibar_sarfiyat_raporu",
+        "schedule": crontab(hour="6", minute="5"),  # UTC 06:05 = KKTC 08:05
     },
-    
     # ============================================
     # VERİTABANI TEMİZLİK SCHEDULE
     # ============================================
-    
     # Her gün gece 03:00'de (KKTC) query_logs günlük temizliği
-    'query-logs-gunluk-temizle': {
-        'task': 'maintenance.query_logs_gunluk_temizle',
-        'schedule': crontab(hour=1, minute=0),  # UTC 01:00 = KKTC 03:00
+    "query-logs-gunluk-temizle": {
+        "task": "maintenance.query_logs_gunluk_temizle",
+        "schedule": crontab(hour="1", minute="0"),  # UTC 01:00 = KKTC 03:00
     },
     # Her Pazar gecesi 02:00'de query_logs haftalık temizliği
-    'query-logs-temizle': {
-        'task': 'maintenance.query_logs_temizle',
-        'schedule': crontab(day_of_week=0, hour=0, minute=0),  # UTC 00:00 Pazar = KKTC 02:00 Pazar
+    "query-logs-temizle": {
+        "task": "maintenance.query_logs_temizle",
+        "schedule": crontab(
+            day_of_week="0", hour="0", minute="0"
+        ),  # UTC 00:00 Pazar = KKTC 02:00 Pazar
     },
     # Her Pazartesi gece 03:30'da (KKTC) ml_metrics temizliği
-    'ml-metrics-temizle': {
-        'task': 'maintenance.ml_metrics_temizle',
-        'schedule': crontab(day_of_week=1, hour=1, minute=30),  # UTC 01:30 Pazartesi = KKTC 03:30 Pazartesi
+    "ml-metrics-temizle": {
+        "task": "maintenance.ml_metrics_temizle",
+        "schedule": crontab(
+            day_of_week="1", hour="1", minute="30"
+        ),  # UTC 01:30 Pazartesi = KKTC 03:30 Pazartesi
     },
     # Her Pazar gecesi 02:30'da eski logları temizle
-    'eski-loglari-temizle': {
-        'task': 'maintenance.eski_loglari_temizle',
-        'schedule': crontab(day_of_week=0, hour=0, minute=30),  # UTC 00:30 Pazar = KKTC 02:30 Pazar
+    "eski-loglari-temizle": {
+        "task": "maintenance.eski_loglari_temizle",
+        "schedule": crontab(
+            day_of_week="0", hour="0", minute="30"
+        ),  # UTC 00:30 Pazar = KKTC 02:30 Pazar
     },
 }
 

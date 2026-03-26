@@ -4,7 +4,6 @@ Ham verilerden anlamlı özellikler (features) çıkarır
 """
 
 from datetime import datetime, timezone, timedelta
-from sqlalchemy import func
 import numpy as np
 import pandas as pd
 import logging
@@ -140,7 +139,7 @@ class FeatureEngineer:
             timestamps = [m.timestamp for m in metrics]
             
             # Ürün bilgisi
-            urun = Urun.query.get(urun_id)
+            urun = self.db.session.get(Urun, urun_id)
             kritik_seviye = urun.kritik_stok_seviyesi if urun else 0
             
             # Feature'lar
@@ -223,7 +222,7 @@ class FeatureEngineer:
             timestamps = [m.timestamp for m in metrics]
             
             # Oda bilgisi
-            oda = Oda.query.get(oda_id)
+            oda = self.db.session.get(Oda, oda_id)
             
             # Doluluk bilgisi
             doluluk_count = MisafirKayit.query.filter(
@@ -313,7 +312,7 @@ class FeatureEngineer:
             timestamps = [m.timestamp for m in metrics]
             
             # Personel bilgisi
-            personel = Kullanici.query.get(personel_id)
+            personel = self.db.session.get(Kullanici, personel_id)
             
             # Zaman dilimi analizi (sabah/öğle/akşam)
             morning_values = []  # 06:00-12:00

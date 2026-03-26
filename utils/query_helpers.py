@@ -6,7 +6,7 @@ PostgreSQL için optimize edilmiş query helper'ları
 from sqlalchemy.orm import joinedload, selectinload
 from models import (
     PersonelZimmet, PersonelZimmetDetay, MinibarIslem, MinibarIslemDetay,
-    Urun, UrunGrup, StokHareket, Kullanici, Oda, Kat
+    Urun, StokHareket, Oda
 )
 
 

@@ -1,4 +1,4 @@
-"""
+﻿"""
 System Monitor Routes
 Sistem performans izleme ve log takibi API endpoint'leri
 Superadmin erişimli — Executive Dashboard'a entegre
@@ -126,7 +126,7 @@ def register_system_monitor_routes(app):
             })
         except Exception as e:
             logger.error(f"System overview hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({'success': False, 'error': 'Sunucu hatasi olustu'}), 500
 
     @app.route('/api/system-monitor/endpoints')
     @login_required
@@ -138,8 +138,8 @@ def register_system_monitor_routes(app):
             stats = APIMetrics.get_endpoint_stats(sort_by=sort_by)
             # Top 20
             return jsonify({'success': True, 'data': stats[:20]})
-        except Exception as e:
-            return jsonify({'success': False, 'error': str(e)}), 500
+        except Exception:
+            return jsonify({'success': False, 'error': 'Sunucu hatasi olustu'}), 500
 
     @app.route('/api/system-monitor/db-stats')
     @login_required
@@ -155,9 +155,9 @@ def register_system_monitor_routes(app):
                 'active_queries': _get_active_queries()
             }
             return jsonify({'success': True, 'data': stats})
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({'success': False, 'error': 'Sunucu hatasi olustu'}), 500
 
     @app.route('/api/system-monitor/error-log')
     @login_required
@@ -169,8 +169,8 @@ def register_system_monitor_routes(app):
             logs = _error_log_buffer[-limit:]
             logs.reverse()  # newest first
             return jsonify({'success': True, 'data': logs, 'total': len(_error_log_buffer)})
-        except Exception as e:
-            return jsonify({'success': False, 'error': str(e)}), 500
+        except Exception:
+            return jsonify({'success': False, 'error': 'Sunucu hatasi olustu'}), 500
 
 
 # ---- Helper functions ----

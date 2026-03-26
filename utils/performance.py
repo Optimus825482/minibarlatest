@@ -3,18 +3,29 @@ Performance Monitoring
 Query performance tracking ve slow query detection
 """
 
+import logging
+import os
 import time
+import random
 import hashlib
+import threading
 from functools import wraps
-from datetime import datetime, timezone
+from datetime import datetime
 import pytz
 
 # KKTC Timezone
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
 def get_kktc_now():
     return datetime.now(KKTC_TZ)
-from flask import request
-from models import db
+
+
+logger = logging.getLogger(__name__)
+
+# Query logging configuration
+QUERY_LOGGING_ENABLED = (
+    os.environ.get("QUERY_LOGGING_ENABLED", "true").lower() == "true"
+)
+QUERY_LOG_SAMPLING_RATE = float(os.environ.get("QUERY_LOG_SAMPLING_RATE", "1.0"))
 
 
 class PerformanceMonitor:
@@ -27,6 +38,7 @@ class PerformanceMonitor:
         """
         self.slow_query_threshold = slow_query_threshold
         self.query_stats = []
+        self._lock = threading.Lock()
     
     def track_query(self, func):
         """
@@ -55,11 +67,14 @@ class PerformanceMonitor:
                     )
                 
                 # Store stats
-                self.query_stats.append({
-                    'function': func.__name__,
-                    'execution_time': execution_time,
-                    'timestamp': get_kktc_now().isoformat()
-                })
+                with self._lock:
+                    self.query_stats.append(
+                        {
+                            "function": func.__name__,
+                            "execution_time": execution_time,
+                            "timestamp": get_kktc_now().isoformat(),
+                        }
+                    )
                 
                 return result
                 
@@ -75,13 +90,17 @@ class PerformanceMonitor:
         return wrapper
     
     def _log_slow_query(self, func_name, execution_time, args, kwargs):
-        """Log slow query to database"""
+        """Log slow query (sampling-aware)"""
+        if not QUERY_LOGGING_ENABLED:
+            return
+        if QUERY_LOG_SAMPLING_RATE < 1.0 and random.random() > QUERY_LOG_SAMPLING_RATE:
+            return
         try:
-            query_hash = hashlib.md5(func_name.encode()).hexdigest()
+            hashlib.md5(func_name.encode()).hexdigest()
             
             # Bu kısım query_performance_log tablosuna yazacak
             # Şimdilik print ediyoruz
-            print(f"⚠️  SLOW QUERY: {func_name} took {execution_time:.2f}s")
+            logger.warning(f"⚠️  SLOW QUERY: {func_name} took {execution_time:.2f}s")
             
             # TODO: Save to query_performance_log table
             # from models import QueryPerformanceLog
@@ -95,35 +114,36 @@ class PerformanceMonitor:
             # db.session.commit()
             
         except Exception as e:
-            print(f"Error logging slow query: {str(e)}")
+            logger.error(f"Error logging slow query: {str(e)}")
     
     def _log_failed_query(self, func_name, execution_time, error):
         """Log failed query"""
-        print(f"❌ FAILED QUERY: {func_name} failed after {execution_time:.2f}s: {error}")
+        logger.error(
+            f"❌ FAILED QUERY: {func_name} failed after {execution_time:.2f}s: {error}"
+        )
     
     def get_stats(self):
         """Get performance statistics"""
-        if not self.query_stats:
+        with self._lock:
+            if not self.query_stats:
+                return {"total_queries": 0, "avg_time": 0, "max_time": 0, "min_time": 0}
+
+            times = [s["execution_time"] for s in self.query_stats]
+
             return {
-                'total_queries': 0,
-                'avg_time': 0,
-                'max_time': 0,
-                'min_time': 0
+                "total_queries": len(self.query_stats),
+                "avg_time": sum(times) / len(times),
+                "max_time": max(times),
+                "min_time": min(times),
+                "slow_queries": len(
+                    [t for t in times if t > self.slow_query_threshold]
+                ),
             }
-        
-        times = [s['execution_time'] for s in self.query_stats]
-        
-        return {
-            'total_queries': len(self.query_stats),
-            'avg_time': sum(times) / len(times),
-            'max_time': max(times),
-            'min_time': min(times),
-            'slow_queries': len([t for t in times if t > self.slow_query_threshold])
-        }
     
     def reset_stats(self):
         """Reset statistics"""
-        self.query_stats = []
+        with self._lock:
+            self.query_stats = []
 
 
 # Global monitor instance

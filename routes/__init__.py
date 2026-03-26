@@ -4,6 +4,10 @@ Routes Package - Merkezi Route Registration
 Bu modül tüm route modüllerini tek bir yerden register eder.
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def register_all_routes(app):
     """Tüm route modüllerini register et"""
@@ -72,7 +76,12 @@ def register_all_routes(app):
     # Kat Sorumlusu Routes
     from routes.kat_sorumlusu_routes import register_kat_sorumlusu_routes
     register_kat_sorumlusu_routes(app)
-    
+
+    # Zimmet Routes (Depo Sorumlusu)
+    from routes.zimmet_routes import register_zimmet_routes
+
+    register_zimmet_routes(app)
+
     # Health Check Routes
     from routes.health_routes import health_bp
     app.register_blueprint(health_bp)
@@ -97,10 +106,10 @@ def register_all_routes(app):
     from routes.ml_routes import register_ml_routes
     register_ml_routes(app)
     
-    # Restore Routes
-    from routes.restore_routes import restore_bp
-    app.register_blueprint(restore_bp)
-    
+    # Restore V1 Routes - Devre dışı (restore_routes_v2 kullanılıyor)
+    # from routes.restore_routes import restore_bp
+    # app.register_blueprint(restore_bp)
+
     # Restore V2 Routes (Gelişmiş)
     from routes.restore_routes_v2 import restore_v2_bp
     app.register_blueprint(restore_v2_bp)
@@ -116,7 +125,12 @@ def register_all_routes(app):
     # Celery Task Yönetimi Routes
     from routes.celery_routes import celery_bp
     app.register_blueprint(celery_bp)
-    
+
+    # Export API Routes
+    from routes.export_routes import register_export_routes
+
+    register_export_routes(app)
+
     # Database Optimizasyon Routes
     from routes.db_optimization_routes import db_optimization_bp
     app.register_blueprint(db_optimization_bp)
@@ -145,14 +159,16 @@ def register_all_routes(app):
     # Blueprint'leri register ettikten sonra CSRF exempt yap
     if hasattr(app, 'extensions') and 'csrf' in app.extensions:
         csrf_protect = app.extensions['csrf']
-        csrf_protect.exempt(restore_bp)
+        # restore_bp (v1) devre dışı - restore_v2_bp kullanılıyor
         csrf_protect.exempt(restore_v2_bp)
         csrf_protect.exempt(developer_bp)
         csrf_protect.exempt(stok_bp)
         csrf_protect.exempt(celery_bp)
         csrf_protect.exempt(db_optimization_bp)
-        print("✅ CSRF exemptions uygulandı (restore, restore_v2, developer, stok, celery, db_optimization)")
+        logger.info(
+            "✅ CSRF exemptions uygulandı (restore_v2, developer, stok, celery, db_optimization)"
+        )
     else:
-        print("⚠️ CSRF extension bulunamadı")
-    
-    print("✅ Tüm route modülleri başarıyla register edildi!")
+        logger.warning("⚠️ CSRF extension bulunamadı")
+
+    logger.info("✅ Tüm route modülleri başarıyla register edildi!")

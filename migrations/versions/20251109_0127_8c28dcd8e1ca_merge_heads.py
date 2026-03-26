@@ -5,8 +5,6 @@ Revises: 30d14e9fbd43, 20251108_occupancy
 Create Date: 2025-11-09 01:27:44.226119
 
 """
-from alembic import op
-import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.

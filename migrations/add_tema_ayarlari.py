@@ -15,8 +15,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dotenv import load_dotenv
 load_dotenv()
 
-from models.base import db
-from models.kullanici import Kullanici
 from sqlalchemy import text
 from config import Config
 

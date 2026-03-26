@@ -32,7 +32,7 @@ def migrate():
             try:
                 db.session.execute(text('ALTER TABLE oda_tipi_satis_fiyatlari ADD CONSTRAINT fk_oda_tipi_satis_fiyatlari_oda_tipi FOREIGN KEY (oda_tipi_id) REFERENCES oda_tipleri(id)'))
                 db.session.commit()
-            except:
+            except Exception:
                 db.session.rollback()
             
             # Mapping
@@ -68,7 +68,7 @@ def migrate():
             try:
                 db.session.execute(text('ALTER TABLE tuketim_kalibi ADD CONSTRAINT fk_tuketim_kalibi_oda_tipi FOREIGN KEY (oda_tipi_id) REFERENCES oda_tipleri(id)'))
                 db.session.commit()
-            except:
+            except Exception:
                 db.session.rollback()
             
             # Mapping

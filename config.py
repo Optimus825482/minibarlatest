@@ -9,10 +9,12 @@ class Config:
 
     ENV = os.getenv('FLASK_ENV', os.getenv('ENV', 'production')).lower()
     IS_DEVELOPMENT = ENV in {'development', 'dev', 'local'}
-    
-    # Template Caching - Production'da bile template değişikliklerini algıla
-    TEMPLATES_AUTO_RELOAD = True
-    SEND_FILE_MAX_AGE_DEFAULT = 0  # Static dosyalar için cache'i devre dışı bırak
+
+    # Template Caching
+    TEMPLATES_AUTO_RELOAD = IS_DEVELOPMENT  # Production'da kapalı, dev'de açık
+    SEND_FILE_MAX_AGE_DEFAULT = (
+        0 if IS_DEVELOPMENT else 31536000
+    )  # Dev: cache yok, Prod: 1 yıl
 
     # Database Configuration - PostgreSQL Only (MySQL support removed)
     DATABASE_URL = os.getenv('DATABASE_URL')
@@ -52,32 +54,26 @@ class Config:
     # PostgreSQL Optimized Engine Options - Performance Optimized
     SQLALCHEMY_ENGINE_OPTIONS = {
         # Connection Pool Configuration - OPTIMIZED FOR GUNICORN (4 workers × 4 threads)
-        'pool_size': 8,                     # 8 connections per worker (matches thread count)
-        'max_overflow': 8,                  # Max 16 connections per worker
-        'pool_timeout': 30,                 # 30 saniye wait timeout
-        'pool_recycle': 900,                # 15 dakikada bir recycle (cloud-friendly)
-        'pool_pre_ping': True,              # Health check before use
-        
+        "pool_size": 5,  # 5 connections per worker (3 workers x 6 threads, toplam 15 base)
+        "max_overflow": 10,  # Max 15 additional overflow connectionsnnections
+        "pool_timeout": 30,  # 30 saniye wait timeout
+        "pool_recycle": 900,  # 15 dakikada bir recycle (cloud-friendly)
+        "pool_pre_ping": True,  # Health check before use
         # Connection Management
-        'pool_reset_on_return': 'rollback',  # Reset connections on return
-        
+        "pool_reset_on_return": "rollback",  # Reset connections on return
         # PostgreSQL Specific Options
-        'connect_args': {
-            'connect_timeout': 10,          # 10 saniye connection timeout
-            'options': '-c timezone=Europe/Nicosia -c statement_timeout=60000',  # 60 saniye statement timeout (raporlar için)
-            'application_name': 'minibar_takip',
-            
+        "connect_args": {
+            "connect_timeout": 10,  # 10 saniye connection timeout
+            "options": "-c timezone=Europe/Nicosia -c statement_timeout=60000",  # 60 saniye statement timeout (raporlar için)
+            "application_name": "minibar_takip",
             # Keep-alive settings (cloud deployment uyumlu)
-            'keepalives': 1,
-            'keepalives_idle': 30,
-            'keepalives_interval': 10,
-            'keepalives_count': 5,
+            "keepalives": 1,
+            "keepalives_idle": 30,
+            "keepalives_interval": 10,
+            "keepalives_count": 5,
         },
-        
         # Execution Options
-        'execution_options': {
-            'isolation_level': 'READ COMMITTED'
-        }
+        "execution_options": {"isolation_level": "READ COMMITTED"},
     }
     # Flask ayarları - GÜVENLİK İYİLEŞTİRMELERİ
     SECRET_KEY = os.getenv('SECRET_KEY')
@@ -92,10 +88,15 @@ class Config:
         raise ValueError("SECRET_KEY must be at least 32 characters long for security.")
     
     # Oturum ayarları - GÜVENLİK: Session güvenliği artırıldı
-    # Coolify HTTP kullanıyorsa SECURE=False olmalı
-    SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
+    # Coolify HTTP kullanıyorsa SECURE=False olmalı, production default True
+    SESSION_COOKIE_SECURE = (
+        os.getenv(
+            "SESSION_COOKIE_SECURE", "false" if IS_DEVELOPMENT else "true"
+        ).lower()
+        == "true"
+    )
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'  # 'Strict' önerilen ama 'Lax' uyumluluk için
+    SESSION_COOKIE_SAMESITE = "Lax"
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)  # 8 saat - otel personeli gün boyu çalışır
     
     # WTF Forms ayarları - GÜVENLİK
@@ -110,15 +111,14 @@ class Config:
     
     # GÜVENLİK HEADERS - Production için önerilen
     SECURITY_HEADERS = {
-        'X-Content-Type-Options': 'nosniff',
-        'X-Frame-Options': 'DENY',
-        'X-XSS-Protection': '1; mode=block',
-        'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' cdn.jsdelivr.net; img-src 'self' data: https:; connect-src 'self'",
-        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'  # HTTPS için
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "X-XSS-Protection": "1; mode=block",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Content-Security-Policy": "default-src 'self'; script-src 'self' cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' cdn.jsdelivr.net; img-src 'self' data: https:; connect-src 'self'",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains",  # HTTPS için
     }
     
-    # Celery Configuration (Redis sadece broker olarak kullanılıyor, cache yok)
     # Celery Configuration (Redis sadece broker olarak kullanılıyor, cache yok)
     # Easypanel/Docker: REDIS_URL env var'ından authenticated URL alınır
     # Örnek: redis://default:password@minibar_redis:6379/0

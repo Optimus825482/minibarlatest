@@ -5,9 +5,6 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import cm
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
 from io import BytesIO
 from flask import session, request
 from models import Kullanici, StokHareket, Urun, SistemLog, HataLog, db
@@ -15,7 +12,9 @@ from sqlalchemy import case
 import json
 import traceback
 import logging
-import pytz
+from utils.timezone import KKTC_TZ, get_kktc_now, get_kktc_today, utc_to_kktc, kktc_to_utc
+
+logger = logging.getLogger(__name__)
 
 # Raporlardan hariç tutulacak sistem/test kullanıcıları
 EXCLUDED_USERNAMES = ['superadmin', 'superadmindepo', 'ERKANKAT']
@@ -24,101 +23,29 @@ EXCLUDED_USERNAMES = ['superadmin', 'superadmindepo', 'ERKANKAT']
 def get_excluded_user_ids():
     """Raporlardan hariç tutulacak kullanıcı ID'lerini döndürür (cache'li)"""
     if not hasattr(get_excluded_user_ids, '_cache'):
-        get_excluded_user_ids._cache = None
-    if get_excluded_user_ids._cache is None:
+        get_excluded_user_ids._cache = None  # type: ignore[attr-defined]
+    if get_excluded_user_ids._cache is None:  # type: ignore[attr-defined]
         try:
             ids = [u.id for u in Kullanici.query.filter(
                 Kullanici.kullanici_adi.in_(EXCLUDED_USERNAMES)
             ).all()]
-            get_excluded_user_ids._cache = ids
+            get_excluded_user_ids._cache = ids  # type: ignore[attr-defined]
         except Exception:
             return []
-    return get_excluded_user_ids._cache
-
-# Logging yapılandırması
-logging.basicConfig(
-    filename='minibar_errors.log',
-    level=logging.ERROR,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-
-# KKTC Timezone (Kıbrıs - Europe/Nicosia)
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-
-
-def get_kktc_now():
-    """
-    Kıbrıs saat diliminde şu anki zamanı döndürür.
-    Tüm sistemde saat kaydı için bu fonksiyon kullanılmalıdır.
-    
-    Returns:
-        datetime: KKTC timezone'unda şu anki zaman
-    """
-    return datetime.now(KKTC_TZ)
-
-
-def get_kktc_today():
-    """
-    Kıbrıs saat diliminde bugünün tarihini döndürür.
-    
-    Returns:
-        date: KKTC timezone'unda bugünün tarihi
-    """
-    return datetime.now(KKTC_TZ).date()
-
-
-def utc_to_kktc(utc_datetime):
-    """
-    UTC datetime'ı KKTC timezone'una çevirir.
-    
-    Args:
-        utc_datetime: UTC timezone'unda datetime
-        
-    Returns:
-        datetime: KKTC timezone'unda datetime
-    """
-    if utc_datetime is None:
-        return None
-    if utc_datetime.tzinfo is None:
-        utc_datetime = utc_datetime.replace(tzinfo=timezone.utc)
-    return utc_datetime.astimezone(KKTC_TZ)
-
-
-def kktc_to_utc(kktc_datetime):
-    """
-    KKTC datetime'ı UTC timezone'una çevirir.
-    
-    Args:
-        kktc_datetime: KKTC timezone'unda datetime
-        
-    Returns:
-        datetime: UTC timezone'unda datetime
-    """
-    if kktc_datetime is None:
-        return None
-    if kktc_datetime.tzinfo is None:
-        kktc_datetime = KKTC_TZ.localize(kktc_datetime)
-    return kktc_datetime.astimezone(timezone.utc)
-
-# Logging yapılandırması
-logging.basicConfig(
-    filename='minibar_errors.log',
-    level=logging.ERROR,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+    return get_excluded_user_ids._cache  # type: ignore[attr-defined]
 
 
 def get_current_user():
     """Oturumdaki kullanıcıyı getir"""
     if 'kullanici_id' in session:
         try:
-            return Kullanici.query.get(session['kullanici_id'])
+            return db.session.get(Kullanici, session['kullanici_id'])
         except Exception as e:
             # Transaction hatası durumunda rollback yap ve tekrar dene
             logging.error(f"❌ get_current_user hatası: {str(e)}")
             db.session.rollback()
             try:
-                return Kullanici.query.get(session['kullanici_id'])
+                return db.session.get(Kullanici, session['kullanici_id'])
             except Exception as retry_error:
                 logging.error(f"❌ get_current_user retry hatası: {str(retry_error)}")
                 return None
@@ -191,7 +118,7 @@ def get_stok_durumu(urun_id, stok_cache=None):
             'yuzde': float (stok doluluk yüzdesi)
         }
     """
-    urun = Urun.query.get(urun_id)
+    urun = db.session.get(Urun, urun_id)
     if not urun:
         return None
     
@@ -304,6 +231,7 @@ def excel_export_stok_raporu():
     """Stok durumu Excel raporu oluştur"""
     wb = Workbook()
     ws = wb.active
+    assert ws is not None
     ws.title = "Stok Raporu"
     
     # Başlık stili
@@ -372,10 +300,11 @@ def excel_export_stok_raporu():
 
 def excel_export_zimmet_raporu(personel_id):
     """Personel zimmet Excel raporu oluştur"""
-    from models import PersonelZimmet, PersonelZimmetDetay
+    from models import PersonelZimmet
     
     wb = Workbook()
     ws = wb.active
+    assert ws is not None
     ws.title = "Zimmet Raporu"
     
     # Stil tanımlamaları
@@ -555,11 +484,11 @@ def log_islem(islem_tipi, modul, islem_detay=None):
         
     except Exception as e:
         # Log hatası uygulamayı durdurmamalı
-        print(f'Log hatası: {str(e)}')
+        logger.error(f"Log hatası: {str(e)}")
         try:
             db.session.rollback()
         except Exception:
-            pass
+            logger.debug("Sessiz hata yakalandi", exc_info=True)
 
 
 def get_son_loglar(limit=50):
@@ -649,12 +578,12 @@ def log_hata(exception, modul=None, extra_info=None):
         
     except Exception as e:
         # Hata loglama hatası uygulamayı durdurmamalı
-        print(f'HATA LOGLAMA HATASI: {str(e)}')
+        logger.error(f"HATA LOGLAMA HATASI: {str(e)}")
         logging.error(f'Hata loglama hatası: {str(e)}')
         try:
             db.session.rollback()
         except Exception:
-            pass
+            logger.debug("Sessiz hata yakalandi", exc_info=True)
         return None
 
 
@@ -671,7 +600,7 @@ def get_cozulmemis_hatalar():
 def hata_cozuldu_isaretle(hata_id, cozum_notu=None):
     """Hatayı çözüldü olarak işaretle"""
     try:
-        hata = HataLog.query.get(hata_id)
+        hata = db.session.get(HataLog, hata_id)
         if hata:
             hata.cozuldu = True
             hata.cozum_notu = cozum_notu
@@ -716,7 +645,7 @@ def get_depo_stok_durumu(grup_id=None, depo_sorumlusu_id=None, otel_id=None):
         ]
     """
     try:
-        from models import UrunGrup, PersonelZimmet, PersonelZimmetDetay, Kullanici, UrunStok
+        from models import PersonelZimmet, PersonelZimmetDetay, Kullanici, UrunStok
         
         # Ürünleri getir
         query = Urun.query.filter_by(aktif=True)
@@ -752,7 +681,7 @@ def get_depo_stok_durumu(grup_id=None, depo_sorumlusu_id=None, otel_id=None):
         ).filter(
             PersonelZimmet.durum == 'aktif',
             Kullanici.rol == 'kat_sorumlusu',
-            Kullanici.aktif == True
+            Kullanici.aktif
         )
         
         # Otel filtresi varsa, o oteldeki kat sorumlularının zimmetlerini filtrele
@@ -914,7 +843,7 @@ def get_oda_minibar_detay(oda_id):
         from models import Oda, MinibarIslem
         
         # Odayı getir
-        oda = Oda.query.get(oda_id)
+        oda = db.session.get(Oda, oda_id)
         if not oda:
             return None
         
@@ -1106,6 +1035,7 @@ def export_depo_stok_excel(stok_listesi, otel_adi=None):
     try:
         wb = Workbook()
         ws = wb.active
+        assert ws is not None
         ws.title = "Depo Stokları"
         
         # Başlık stili
@@ -1235,14 +1165,14 @@ def get_kat_sorumlusu_zimmet_stoklari(personel_id):
         ]
     """
     try:
-        from models import OtelZimmetStok, Kullanici, Otel, Urun, UrunGrup
+        from models import OtelZimmetStok, Kullanici, Otel, Urun
         
         # Personelin otel bilgisini al
-        personel = Kullanici.query.get(personel_id)
+        personel = db.session.get(Kullanici, personel_id)
         if not personel or not personel.otel_id:
             return []
         
-        otel = Otel.query.get(personel.otel_id)
+        otel = db.session.get(Otel, personel.otel_id)
         if not otel:
             return []
         
@@ -1345,7 +1275,6 @@ def get_kat_sorumlusu_kritik_stoklar(personel_id):
         }
     """
     try:
-        from models import PersonelZimmet, PersonelZimmetDetay
         
         # Tüm zimmet stoklarını getir
         zimmet_stoklari = get_kat_sorumlusu_zimmet_stoklari(personel_id)
@@ -1543,7 +1472,7 @@ def kaydet_siparis_talebi(personel_id, siparis_listesi, aciklama=None):
         dict: {'success': bool, 'talep_id': int or None, 'talep_no': str, 'message': str}
     """
     try:
-        from models import db, KatSorumlusuSiparisTalebi, KatSorumlusuSiparisTalepDetay
+        from models import KatSorumlusuSiparisTalebi, KatSorumlusuSiparisTalepDetay
         from utils.audit import audit_create
         
         if not siparis_listesi or len(siparis_listesi) == 0:
@@ -1665,7 +1594,7 @@ def get_zimmet_urun_gecmisi(personel_id, urun_id, gun_sayisi=30):
         from datetime import timedelta
         
         # Ürünü getir
-        urun = Urun.query.get(urun_id)
+        urun = db.session.get(Urun, urun_id)
         if not urun:
             return None
         
@@ -1720,8 +1649,8 @@ def get_zimmet_urun_gecmisi(personel_id, urun_id, gun_sayisi=30):
         en_cok_gun = None
         en_az_gun = None
         if gunluk_kullanim:
-            en_cok_gun = max(gunluk_kullanim, key=gunluk_kullanim.get)
-            en_az_gun = min(gunluk_kullanim, key=gunluk_kullanim.get)
+            en_cok_gun = max(gunluk_kullanim, key=gunluk_kullanim.get)  # type: ignore[arg-type]
+            en_az_gun = min(gunluk_kullanim, key=gunluk_kullanim.get)  # type: ignore[arg-type]
         
         return {
             'urun': urun,
@@ -1771,7 +1700,7 @@ def guncelle_kritik_seviye(zimmet_detay_id, kritik_seviye):
             }
         
         # Zimmet detayını getir
-        detay = PersonelZimmetDetay.query.get(zimmet_detay_id)
+        detay = db.session.get(PersonelZimmetDetay, zimmet_detay_id)
         if not detay:
             return {
                 'success': False,
@@ -1849,6 +1778,7 @@ def export_zimmet_stok_excel(personel_id):
         
         wb = Workbook()
         ws = wb.active
+        assert ws is not None
         ws.title = "Zimmet Stokları"
         
         # Başlık stili

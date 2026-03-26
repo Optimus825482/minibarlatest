@@ -3,13 +3,15 @@ Stok Yönetimi API Route'ları
 Stok durumu, kritik stoklar, sayım ve raporlama
 """
 
+import logging
+
 from flask import Blueprint, request, jsonify
-from datetime import datetime, date
-from decimal import Decimal
-from models import db
+from datetime import datetime
 from utils.fiyatlandirma_servisler import StokYonetimServisi
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem
+
+logger = logging.getLogger(__name__)
 
 # Blueprint tanımla
 stok_bp = Blueprint('stok', __name__, url_prefix='/api/v1/stok')
@@ -235,7 +237,7 @@ def stok_sayimi():
         sonuc = StokYonetimServisi.stok_sayim_yap(
             otel_id=otel_id,
             sayim_verileri=sayim_verileri,
-            kullanici_id=request.current_user.id
+            kullanici_id=request.current_user.id,  # pyright: ignore[reportAttributeAccessIssue]
         )
         
         # Log kaydı
@@ -462,8 +464,8 @@ def stok_guncelle():
             urun_id=urun_id,
             miktar=int(miktar),
             islem_tipi=islem_tipi,
-            kullanici_id=request.current_user.id,
-            aciklama=aciklama
+            kullanici_id=request.current_user.id,  # pyright: ignore[reportAttributeAccessIssue]
+            aciklama=aciklama,
         )
         
         # Log kaydı

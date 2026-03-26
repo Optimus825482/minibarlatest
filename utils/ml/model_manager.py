@@ -10,7 +10,7 @@ import joblib  # pickle yerine joblib (daha güvenli)
 import logging
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List
 import shutil
 
 logger = logging.getLogger(__name__)
@@ -344,8 +344,7 @@ class ModelManager:
             # 30 günden eski inactive modelleri sil
             cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
             old_models = MLModel.query.filter(
-                MLModel.is_active == False,
-                MLModel.training_date < cutoff_date
+                not MLModel.is_active, MLModel.training_date < cutoff_date
             ).all()
             
             for model in old_models:
@@ -648,6 +647,7 @@ class ModelManager:
                     # Geçici dosyaya yaz ve joblib ile yükle (pickle.loads güvensiz)
                     import tempfile
                     try:
+                        tmp_path: str
                         with tempfile.NamedTemporaryFile(delete=False, suffix='.pkl') as tmp_file:
                             tmp_file.write(model_record.model_data)
                             tmp_path = tmp_file.name
@@ -656,14 +656,14 @@ class ModelManager:
                         model = joblib.load(tmp_path)
                         
                         # Geçici dosyayı sil
-                        os.unlink(tmp_path)
+                        os.unlink(tmp_path)  # type: ignore
                     except Exception as load_error:
                         self.logger.error(f"❌ Model yükleme hatası: {str(load_error)}")
-                        if 'tmp_path' in locals():
+                        if "tmp_path" in locals():
                             try:
-                                os.unlink(tmp_path)
-                            except:
-                                pass
+                                os.unlink(tmp_path)  # type: ignore
+                            except Exception:
+                                logger.debug("Sessiz hata yakalandi", exc_info=True)
                         return None
                     
                     # Modeli dosyaya kaydet (migration) - joblib ile
@@ -708,7 +708,7 @@ class ModelManager:
         duration_ms: float,
         file_size_mb: float,
         success: bool,
-        error: str = None
+        error: str | None = None,
     ):
         """
         Model işlem performans metriğini logla (MLPerformanceLog tablosuna)

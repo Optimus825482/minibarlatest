@@ -1,4 +1,4 @@
-"""
+﻿"""
 Executive Report Routes
 Üst yönetici raporlama merkezi route'ları
 """
@@ -6,9 +6,8 @@ Executive Report Routes
 from flask import render_template, jsonify, request, make_response
 from utils.decorators import login_required, role_required
 from utils.executive_report_service import ExecutiveReportService, parse_date
-from models import Otel, db
+from models import db
 import logging
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +102,7 @@ def register_executive_report_routes(app):
             return jsonify(result)
         except Exception as e:
             logger.error(f"Ürün tüketim raporu API hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
     @app.route('/api/executive/reports/personnel')
@@ -122,7 +121,7 @@ def register_executive_report_routes(app):
             return jsonify(result)
         except Exception as e:
             logger.error(f"Personel raporu API hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     @app.route('/api/executive/reports/hotel')
     @login_required
@@ -138,7 +137,7 @@ def register_executive_report_routes(app):
             return jsonify(result)
         except Exception as e:
             logger.error(f"Otel raporu API hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     @app.route('/api/executive/reports/daily-trend')
     @login_required
@@ -155,7 +154,7 @@ def register_executive_report_routes(app):
             return jsonify(result)
         except Exception as e:
             logger.error(f"Günlük trend API hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     @app.route('/api/executive/reports/task-performance')
     @login_required
@@ -172,7 +171,7 @@ def register_executive_report_routes(app):
             return jsonify(result)
         except Exception as e:
             logger.error(f"Görev performans API hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     @app.route('/api/executive/reports/comparative')
     @login_required
@@ -190,7 +189,7 @@ def register_executive_report_routes(app):
             return jsonify(result)
         except Exception as e:
             logger.error(f"Karşılaştırmalı analiz API hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     @app.route('/api/executive/reports/dnd')
     @login_required
@@ -210,7 +209,7 @@ def register_executive_report_routes(app):
             return jsonify(result)
         except Exception as e:
             logger.error(f"DND raporu API hatası: {e}")
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # ---- AUDIT TRAIL API ----
 
@@ -338,7 +337,7 @@ def register_executive_report_routes(app):
             })
         except Exception as e:
             logger.error(f"Audit trail API hatası: {e}", exc_info=True)
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
     # ---- FİLTRE API'leri ----
 
@@ -384,21 +383,28 @@ def register_executive_report_routes(app):
             from reportlab.lib import colors
             from reportlab.lib.units import mm, cm
             from reportlab.lib.styles import ParagraphStyle
-            from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+            from reportlab.lib.enums import TA_CENTER
             from reportlab.platypus import (
-                BaseDocTemplate, Frame, PageTemplate, Table, TableStyle,
-                Paragraph, Spacer, HRFlowable, Image
+                BaseDocTemplate,
+                Frame,
+                PageTemplate,
+                Table,
+                TableStyle,
+                Paragraph,
+                Spacer,
+                HRFlowable,
             )
             from reportlab.pdfbase import pdfmetrics
             from reportlab.pdfbase.ttfonts import TTFont
-            import io, os
+            import io
+            import os
             from datetime import datetime
 
             data = request.get_json()
             if not data:
                 return jsonify({'success': False, 'error': 'Veri gönderilmedi'}), 400
 
-            report_type = data.get('report_type', 'product')
+            data.get("report_type", "product")
             report_title = data.get('title', 'Rapor')
             date_range = data.get('date_range', '')
             summary = data.get('summary', [])
@@ -428,7 +434,7 @@ def register_executive_report_routes(app):
             MERIT_LIGHT = colors.HexColor('#f8fafc')
             MERIT_BORDER = colors.HexColor('#e2e8f0')
             MERIT_TEXT = colors.HexColor('#1e293b')
-            MERIT_TEXT_LIGHT = colors.HexColor('#475569')
+            colors.HexColor("#475569")
 
             # Logo yolu
             logo_path = os.path.join(app.root_path, 'static', 'icons', 'icon-for-pdf-18.png')
@@ -458,7 +464,7 @@ def register_executive_report_routes(app):
                             preserveAspectRatio=True, mask='auto'
                         )
                     except Exception:
-                        pass
+                        logger.debug("Sessiz hata yakalandi", exc_info=True)
 
                 # Şirket adı (logo yanı)
                 canvas.setFont(FONT_BOLD, 11)
@@ -537,9 +543,8 @@ def register_executive_report_routes(app):
                 'MeritSection', fontName=FONT_BOLD, fontSize=11,
                 textColor=MERIT_DARK, spaceBefore=10, spaceAfter=6
             )
-            normal_style = ParagraphStyle(
-                'MeritNormal', fontName=FONT, fontSize=8,
-                textColor=MERIT_TEXT
+            ParagraphStyle(
+                "MeritNormal", fontName=FONT, fontSize=8, textColor=MERIT_TEXT
             )
 
             elements = []
@@ -567,7 +572,7 @@ def register_executive_report_routes(app):
 
                 col_count = len(summary_data)
                 if col_count > 0:
-                    avail_width = frame._width
+                    avail_width = frame._width  # pyright: ignore[reportAttributeAccessIssue]
                     col_w = avail_width / col_count
 
                     val_cells = [Paragraph(
@@ -626,7 +631,7 @@ def register_executive_report_routes(app):
                     all_rows.append(cells)
 
                 col_count = len(table_headers)
-                avail_width = frame._width
+                avail_width = frame._width  # pyright: ignore[reportAttributeAccessIssue]
                 col_w = avail_width / col_count
 
                 data_table = Table(
@@ -670,4 +675,4 @@ def register_executive_report_routes(app):
 
         except Exception as e:
             logger.error(f"PDF oluşturma hatası: {e}", exc_info=True)
-            return jsonify({'success': False, 'error': str(e)}), 500
+            return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500

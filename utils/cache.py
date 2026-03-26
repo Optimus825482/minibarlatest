@@ -7,7 +7,6 @@ from functools import lru_cache, wraps
 from datetime import datetime, timedelta
 from typing import Any, Optional
 import hashlib
-import json
 import pytz
 
 # KKTC Timezone

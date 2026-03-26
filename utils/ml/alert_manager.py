@@ -90,7 +90,7 @@ class AlertManager:
             
             query = MLAlert.query.filter(
                 MLAlert.created_at >= cutoff_date,
-                MLAlert.is_false_positive == False
+                not MLAlert.is_false_positive
             )
             
             if severity:
@@ -194,14 +194,14 @@ class AlertManager:
             # Okunmamış alert sayısı
             unread_alerts = MLAlert.query.filter(
                 MLAlert.created_at >= cutoff_date,
-                MLAlert.is_read == False,
-                MLAlert.is_false_positive == False
+                not MLAlert.is_read,
+                not MLAlert.is_false_positive
             ).count()
             
             # Yanlış pozitif sayısı
             false_positives = MLAlert.query.filter(
                 MLAlert.created_at >= cutoff_date,
-                MLAlert.is_false_positive == True
+                MLAlert.is_false_positive
             ).count()
             
             # Severity dağılımı
@@ -210,7 +210,7 @@ class AlertManager:
                 func.count(MLAlert.id)
             ).filter(
                 MLAlert.created_at >= cutoff_date,
-                MLAlert.is_false_positive == False
+                not MLAlert.is_false_positive
             ).group_by(MLAlert.severity).all()
             
             # Alert tipi dağılımı
@@ -219,7 +219,7 @@ class AlertManager:
                 func.count(MLAlert.id)
             ).filter(
                 MLAlert.created_at >= cutoff_date,
-                MLAlert.is_false_positive == False
+                not MLAlert.is_false_positive
             ).group_by(MLAlert.alert_type).all()
             
             return {
@@ -256,14 +256,14 @@ class AlertManager:
                 # Kritik ve yüksek alertler için sistem yöneticileri + depo sorumluları
                 alicilar = Kullanici.query.filter(
                     Kullanici.rol.in_(['sistem_yoneticisi', 'admin', 'depo_sorumlusu']),
-                    Kullanici.aktif == True,
+                    Kullanici.aktif,
                     Kullanici.email.isnot(None)
                 ).all()
             else:
                 # Düşük ve orta alertler için sadece sistem yöneticileri
                 alicilar = Kullanici.query.filter(
                     Kullanici.rol.in_(['sistem_yoneticisi', 'admin']),
-                    Kullanici.aktif == True,
+                    Kullanici.aktif,
                     Kullanici.email.isnot(None)
                 ).all()
             
@@ -408,7 +408,7 @@ Minibar Takip ML Sistemi
             kritik_alertler = MLAlert.query.filter(
                 MLAlert.created_at >= son_24_saat,
                 MLAlert.severity.in_(['kritik', 'yuksek']),
-                MLAlert.is_false_positive == False
+                not MLAlert.is_false_positive
             ).order_by(MLAlert.severity.desc(), MLAlert.created_at.desc()).all()
             
             if not kritik_alertler:
@@ -418,7 +418,7 @@ Minibar Takip ML Sistemi
             # Sistem yöneticilerini al
             alicilar = Kullanici.query.filter(
                 Kullanici.rol.in_(['sistem_yoneticisi', 'admin']),
-                Kullanici.aktif == True,
+                Kullanici.aktif,
                 Kullanici.email.isnot(None)
             ).all()
             
@@ -507,7 +507,7 @@ Minibar Takip ML Sistemi
             
             deleted_count = MLAlert.query.filter(
                 MLAlert.created_at < cutoff_date,
-                MLAlert.is_read == True
+                MLAlert.is_read
             ).delete()
             
             self.db.session.commit()

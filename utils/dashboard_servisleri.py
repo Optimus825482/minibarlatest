@@ -8,10 +8,8 @@ Bildirim Tipleri:
 - Kritik stok uyarıları
 """
 
-from datetime import datetime, date, timedelta
 from typing import List, Dict, Optional
-from sqlalchemy import and_, or_
-from models import db, UrunStok, Urun, Otel
+from models import db, UrunStok
 from flask import url_for
 import logging
 

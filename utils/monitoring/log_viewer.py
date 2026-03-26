@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 class LogViewer:
     """Log dosyalarını okuma ve filtreleme servisi"""
-    
-    def __init__(self, log_file_path: str = None):
+
+    def __init__(self, log_file_path: str | None = None):
         """
         LogViewer servisini başlat
         

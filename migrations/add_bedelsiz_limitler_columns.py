@@ -5,7 +5,6 @@ Erkan için - Database Schema Fix
 
 from app import app, db
 from sqlalchemy import text
-from datetime import datetime, timezone
 
 def upgrade():
     """Eksik kolonları ekle"""

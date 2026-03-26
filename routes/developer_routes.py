@@ -1,4 +1,4 @@
-"""
+﻿"""
 Developer Dashboard Routes
 Sistem geliştiricisi için özel dashboard ve araçlar
 """
@@ -13,6 +13,7 @@ import logging
 import pytz
 
 # KKTC Timezone
+logger = logging.getLogger(__name__)
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
 
 def get_kktc_now():
@@ -68,19 +69,19 @@ def dashboard():
     """Ana developer dashboard"""
     try:
         # Sistem metrikleri
-        system_metrics = get_system_metrics()
+        get_system_metrics()
         
         # Database istatistikleri
-        db_stats = get_database_stats()
+        get_database_stats()
         
         # Son hatalar
-        recent_errors = get_recent_errors()
+        get_recent_errors()
         
         # Aktif kullanıcılar
-        active_users = get_active_users_stats()
+        get_active_users_stats()
         
         # Ürün istatistikleri
-        product_stats = get_product_stats()
+        get_product_stats()
         
         # Yeni enhanced dashboard kullan
         return render_template('developer/dashboard_enhanced.html')
@@ -106,8 +107,8 @@ def system_health():
             'timestamp': get_kktc_now().isoformat()
         }
         return jsonify(health)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        return jsonify({"error": "Sunucu hatasi olustu"}), 500
 
 @developer_bp.route('/api/metrics/summary')
 @developer_required
@@ -177,13 +178,14 @@ def metrics_summary():
         
         # Ortalama response time (QueryLog'dan)
         try:
+            from models import QueryLog
             avg_exec_time = db.session.query(
                 func.avg(QueryLog.execution_time)
             ).filter(
                 QueryLog.timestamp >= one_hour_ago
             ).scalar() or 0
             avg_response_time = round(avg_exec_time * 1000, 1)  # ms'ye çevir
-        except:
+        except Exception:
             avg_response_time = 0
         
         summary = {
@@ -198,7 +200,7 @@ def metrics_summary():
         return jsonify({'success': True, 'data': summary})
     except Exception as e:
         logging.error(f"Metrics summary error: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 @developer_bp.route('/api/logs')
 @developer_required
@@ -214,8 +216,8 @@ def get_logs():
             return jsonify({'logs': logs})
         else:
             return jsonify({'logs': []})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        return jsonify({"error": "Sunucu hatasi olustu"}), 500
 
 @developer_bp.route('/api/check-negative-stock')
 @developer_required
@@ -233,15 +235,15 @@ def check_negative_stock():
         })
     except Exception as e:
         logging.error(f"Negatif stok kontrolü hatası: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 @developer_bp.route('/api/fix-negative-stock', methods=['POST'])
 @developer_required
 def fix_negative_stock():
     """Negatif stokları düzelt"""
     try:
-        from utils.fix_negative_stock import fix_negative_stocks
-        
+        from utils.fix_negative_stock import fix_negative_stocks  # type: ignore[import]
+
         fixed_items = fix_negative_stocks(dry_run=False)
         
         return jsonify({
@@ -251,7 +253,7 @@ def fix_negative_stock():
         })
     except Exception as e:
         logging.error(f"Negatif stok düzeltme hatası: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 # Helper Functions
 def get_system_metrics():
@@ -298,8 +300,8 @@ def get_database_stats():
             stats['new_rezervasyons_24h'] = MinibarIslem.query.filter(
                 MinibarIslem.islem_tarihi >= yesterday
             ).count()
-        except:
-            stats['new_rezervasyons_24h'] = 0
+        except Exception:
+            stats["new_rezervasyons_24h"] = 0
         
         return stats
     except Exception as e:
@@ -347,7 +349,7 @@ def get_product_stats():
     try:
         from models import Urun, UrunGrup, StokHareket
         from sqlalchemy import func
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         
         total_products = Urun.query.filter_by(aktif=True).count()
         total_groups = UrunGrup.query.filter_by(aktif=True).count()
@@ -554,10 +556,7 @@ def cache_stats():
         })
     except Exception as e:
         logging.error(f"Cache stats hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/cache/keys')
@@ -580,10 +579,7 @@ def cache_keys():
         })
     except Exception as e:
         logging.error(f"Cache keys hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/cache/key/<path:key>')
@@ -608,10 +604,7 @@ def cache_key_details(key):
         })
     except Exception as e:
         logging.error(f"Cache key details hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/cache/clear', methods=['POST'])
@@ -630,10 +623,7 @@ def cache_clear():
         return jsonify(result)
     except Exception as e:
         logging.error(f"Cache clear hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/cache/metrics')
@@ -652,10 +642,7 @@ def cache_metrics():
         })
     except Exception as e:
         logging.error(f"Cache metrics hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/cache/key/<path:key>', methods=['DELETE'])
@@ -674,10 +661,7 @@ def cache_delete_key(key):
         })
     except Exception as e:
         logging.error(f"Cache delete key hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/cache/key/<path:key>/ttl', methods=['PUT'])
@@ -699,10 +683,7 @@ def cache_set_ttl(key):
         })
     except Exception as e:
         logging.error(f"Cache set TTL hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 # ============================================
@@ -732,10 +713,7 @@ def queries_recent():
         })
     except Exception as e:
         logging.error(f"Recent queries hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/queries/slow')
@@ -763,10 +741,7 @@ def queries_slow():
         })
     except Exception as e:
         logging.error(f"Slow queries hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/queries/stats')
@@ -787,10 +762,7 @@ def queries_stats():
         })
     except Exception as e:
         logging.error(f"Query stats hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/queries/explain', methods=['POST'])
@@ -815,10 +787,7 @@ def queries_explain():
         return jsonify(result)
     except Exception as e:
         logging.error(f"Query explain hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/queries/optimize/<int:query_id>')
@@ -834,10 +803,7 @@ def queries_optimize(query_id):
         return jsonify(suggestions)
     except Exception as e:
         logging.error(f"Query optimize hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/queries/<int:query_id>')
@@ -862,10 +828,7 @@ def queries_detail(query_id):
         })
     except Exception as e:
         logging.error(f"Query detail hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 # ============================================
@@ -890,10 +853,7 @@ def metrics_endpoints():
         })
     except Exception as e:
         logging.error(f"Metrics endpoints hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/metrics/endpoint/<path:endpoint_name>')
@@ -917,10 +877,7 @@ def metrics_endpoint_detail(endpoint_name):
         })
     except Exception as e:
         logging.error(f"Metrics endpoint detail hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/metrics/errors')
@@ -940,10 +897,7 @@ def metrics_errors():
         })
     except Exception as e:
         logging.error(f"Metrics errors hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/metrics/performance')
@@ -961,10 +915,7 @@ def metrics_performance():
         })
     except Exception as e:
         logging.error(f"Metrics performance hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/metrics/reset', methods=['POST'])
@@ -985,10 +936,7 @@ def metrics_reset():
         })
     except Exception as e:
         logging.error(f"Metrics reset hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 # ============================================
@@ -1012,10 +960,7 @@ def jobs_active():
         })
     except Exception as e:
         logging.error(f"Active jobs hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/jobs/pending')
@@ -1035,10 +980,7 @@ def jobs_pending():
         })
     except Exception as e:
         logging.error(f"Pending jobs hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/jobs/completed')
@@ -1060,10 +1002,7 @@ def jobs_completed():
         })
     except Exception as e:
         logging.error(f"Completed jobs hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/jobs/failed')
@@ -1085,10 +1024,7 @@ def jobs_failed():
         })
     except Exception as e:
         logging.error(f"Failed jobs hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/jobs/<job_id>')
@@ -1113,10 +1049,7 @@ def jobs_detail(job_id):
         })
     except Exception as e:
         logging.error(f"Job detail hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/jobs/<job_id>/retry', methods=['POST'])
@@ -1142,10 +1075,7 @@ def jobs_retry(job_id):
         })
     except Exception as e:
         logging.error(f"Job retry hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/jobs/<job_id>/cancel', methods=['DELETE'])
@@ -1170,10 +1100,7 @@ def jobs_cancel(job_id):
         })
     except Exception as e:
         logging.error(f"Job cancel hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/jobs/stats')
@@ -1194,10 +1121,7 @@ def jobs_stats():
         })
     except Exception as e:
         logging.error(f"Job stats hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 # ============================================
@@ -1220,10 +1144,7 @@ def redis_status():
         })
     except Exception as e:
         logging.error(f"Redis status hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/redis/memory')
@@ -1242,10 +1163,7 @@ def redis_memory():
         })
     except Exception as e:
         logging.error(f"Redis memory hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/redis/keys')
@@ -1264,10 +1182,7 @@ def redis_keys():
         })
     except Exception as e:
         logging.error(f"Redis keys hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/redis/clients')
@@ -1287,10 +1202,7 @@ def redis_clients():
         })
     except Exception as e:
         logging.error(f"Redis clients hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/redis/slowlog')
@@ -1312,10 +1224,7 @@ def redis_slowlog():
         })
     except Exception as e:
         logging.error(f"Redis slowlog hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/redis/summary')
@@ -1334,10 +1243,7 @@ def redis_summary():
         })
     except Exception as e:
         logging.error(f"Redis summary hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 # ============================================
@@ -1361,10 +1267,7 @@ def ml_models():
         })
     except Exception as e:
         logging.error(f"ML models hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/ml/model/<model_name>/metrics')
@@ -1389,10 +1292,7 @@ def ml_model_metrics(model_name):
         })
     except Exception as e:
         logging.error(f"ML model metrics hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/ml/model/<model_name>/predictions')
@@ -1413,10 +1313,7 @@ def ml_model_predictions(model_name):
         })
     except Exception as e:
         logging.error(f"ML predictions hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/ml/model/<model_name>/history')
@@ -1438,10 +1335,7 @@ def ml_model_history(model_name):
         })
     except Exception as e:
         logging.error(f"ML history hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/ml/model/<model_name>/features')
@@ -1460,10 +1354,7 @@ def ml_model_features(model_name):
         })
     except Exception as e:
         logging.error(f"ML features hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/ml/alerts')
@@ -1486,10 +1377,7 @@ def ml_alerts():
         })
     except Exception as e:
         logging.error(f"ML alerts hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/ml/summary')
@@ -1508,10 +1396,7 @@ def ml_summary():
         })
     except Exception as e:
         logging.error(f"ML summary hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/ml/alert/<int:alert_id>/read', methods=['PUT'])
@@ -1536,10 +1421,7 @@ def ml_alert_read(alert_id):
         })
     except Exception as e:
         logging.error(f"ML alert read hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 # ============================================
@@ -1565,10 +1447,7 @@ def logs_tail():
         })
     except Exception as e:
         logging.error(f"Logs tail hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/logs/filter')
@@ -1592,10 +1471,7 @@ def logs_filter():
         })
     except Exception as e:
         logging.error(f"Logs filter hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/logs/stats')
@@ -1616,10 +1492,7 @@ def logs_stats():
         })
     except Exception as e:
         logging.error(f"Logs stats hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/logs/errors')
@@ -1641,10 +1514,7 @@ def logs_errors():
         })
     except Exception as e:
         logging.error(f"Logs errors hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/logs/search')
@@ -1678,10 +1548,7 @@ def logs_search():
         })
     except Exception as e:
         logging.error(f"Logs search hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 # ============================================
@@ -1704,10 +1571,7 @@ def backup_create():
         return jsonify(result)
     except Exception as e:
         logging.error(f"Backup create hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/backup/list')
@@ -1727,10 +1591,7 @@ def backup_list():
         })
     except Exception as e:
         logging.error(f"Backup list hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/backup/<backup_id>')
@@ -1755,10 +1616,7 @@ def backup_details(backup_id):
         })
     except Exception as e:
         logging.error(f"Backup details hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/backup/<backup_id>/restore', methods=['POST'])
@@ -1774,10 +1632,7 @@ def backup_restore(backup_id):
         return jsonify(result)
     except Exception as e:
         logging.error(f"Backup restore hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/backup/<backup_id>', methods=['DELETE'])
@@ -1802,10 +1657,7 @@ def backup_delete(backup_id):
         })
     except Exception as e:
         logging.error(f"Backup delete hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 # ============================================
@@ -1829,10 +1681,7 @@ def config_files():
         })
     except Exception as e:
         logging.error(f"Config files hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/config/file/<filename>')
@@ -1860,10 +1709,7 @@ def config_file_content(filename):
         })
     except Exception as e:
         logging.error(f"Config file content hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/config/validate', methods=['POST'])
@@ -1892,10 +1738,7 @@ def config_validate():
         })
     except Exception as e:
         logging.error(f"Config validate hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/config/file/<filename>', methods=['PUT'])
@@ -1925,10 +1768,7 @@ def config_file_save(filename):
         return jsonify(result)
     except Exception as e:
         logging.error(f"Config file save hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/config/file/<filename>/history')
@@ -1950,10 +1790,7 @@ def config_file_history(filename):
         })
     except Exception as e:
         logging.error(f"Config history hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/config/file/<filename>/rollback', methods=['POST'])
@@ -1978,10 +1815,7 @@ def config_file_rollback(filename):
         return jsonify(result)
     except Exception as e:
         logging.error(f"Config rollback hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 # ============================================
@@ -2013,10 +1847,7 @@ def profiler_start():
         })
     except Exception as e:
         logging.error(f"Profiler start hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/profiler/stop', methods=['POST'])
@@ -2040,10 +1871,7 @@ def profiler_stop():
         return jsonify(result)
     except Exception as e:
         logging.error(f"Profiler stop hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/profiler/<profile_id>/results')
@@ -2067,10 +1895,7 @@ def profiler_results(profile_id):
         })
     except Exception as e:
         logging.error(f"Profiler results hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/profiler/<profile_id>/cpu')
@@ -2089,10 +1914,7 @@ def profiler_cpu_hotspots(profile_id):
         })
     except Exception as e:
         logging.error(f"Profiler CPU hotspots hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/profiler/<profile_id>/memory')
@@ -2110,10 +1932,7 @@ def profiler_memory(profile_id):
         })
     except Exception as e:
         logging.error(f"Profiler memory hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/profiler/<profile_id>/export')
@@ -2139,10 +1958,7 @@ def profiler_export(profile_id):
         })
     except Exception as e:
         logging.error(f"Profiler export hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500
 
 
 @developer_bp.route('/api/profiler/list')
@@ -2161,7 +1977,4 @@ def profiler_list():
         })
     except Exception as e:
         logging.error(f"Profiler list hatası: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({"success": False, "error": "Sunucu hatasi olustu"}), 500

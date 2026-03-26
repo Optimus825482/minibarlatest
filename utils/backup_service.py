@@ -22,16 +22,16 @@ import os
 import subprocess
 import gzip
 import shutil
-from datetime import datetime, timezone, timedelta
+import logging
+import uuid
+from pathlib import Path
+from datetime import datetime, timedelta
 import pytz
 
 # KKTC Timezone
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
 def get_kktc_now():
     return datetime.now(KKTC_TZ)
-from pathlib import Path
-import logging
-import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -311,8 +311,8 @@ class BackupService:
             # Gzip dosyasını aç
             with gzip.open(filepath, 'rb') as f_in:
                 with open(temp_filepath, 'wb') as f_out:
-                    shutil.copyfileobj(f_in, f_out)
-            
+                    shutil.copyfileobj(f_in, f_out)  # type: ignore[arg-type]
+
             logger.info(f"Yedek geri yükleniyor: {backup.filename}")
             
             # psql ile geri yükle - GÜVENLİ: PGPASSWORD sadece subprocess env'de
@@ -482,8 +482,8 @@ class BackupService:
                     db.session.add(ayar)
             
             db.session.commit()
-            
-            logger.info(f"✅ Yedekleme ayarları güncellendi")
+
+            logger.info("✅ Yedekleme ayarları güncellendi")
             
             return {'success': True, 'message': 'Ayarlar kaydedildi'}
             

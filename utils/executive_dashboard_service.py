@@ -3,16 +3,23 @@ Executive Dashboard Data Service
 Üst yönetici paneli için veri toplama ve analiz servisi
 """
 
-from datetime import datetime, timedelta, date
-from sqlalchemy import func, desc, cast, Date, extract, case, and_, or_
+from datetime import datetime, timedelta
+from sqlalchemy import func, desc, extract
 from models import (
-    db, Kullanici, Otel, Oda, Urun, UrunGrup, Kat,
-    MinibarIslem, MinibarIslemDetay, StokHareket,
-    PersonelZimmet, PersonelZimmetDetay,
-    AuditLog, SistemLog, GunlukGorev, GorevDetay,
-    OdaKontrolKaydi, MinibarIslemTipi, KullaniciRol,
-    GorevDurum, GorevTipi, HareketTipi,
-    OdaDNDKayit, OdaDNDKontrol
+    db,
+    Kullanici,
+    Otel,
+    Oda,
+    Urun,
+    Kat,
+    MinibarIslem,
+    MinibarIslemDetay,
+    AuditLog,
+    GunlukGorev,
+    GorevDetay,
+    OdaKontrolKaydi,
+    GorevDurum,
+    OdaDNDKayit,
 )
 import logging
 from utils.helpers import get_excluded_user_ids
@@ -152,9 +159,7 @@ class ExecutiveDashboardService:
             now = get_kktc_now()
             today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-            users = Kullanici.query.filter(
-                Kullanici.aktif == True
-            ).all()
+            users = Kullanici.query.filter(Kullanici.aktif).all()
             user_stats = []
 
             for user in users:
@@ -207,9 +212,11 @@ class ExecutiveDashboardService:
             hotel_data = []
 
             for otel in oteller:
-                oda_sayisi = Oda.query.join(Kat).filter(
-                    Kat.otel_id == otel.id, Oda.aktif == True
-                ).count()
+                oda_sayisi = (
+                    Oda.query.join(Kat)
+                    .filter(Kat.otel_id == otel.id, Oda.aktif)
+                    .count()
+                )
 
                 kontrol = OdaKontrolKaydi.query.join(Oda).join(Kat).filter(
                     Kat.otel_id == otel.id,
@@ -370,7 +377,11 @@ class ExecutiveDashboardService:
 
             result = []
             for a in activities:
-                kullanici = Kullanici.query.get(a.kullanici_id) if a.kullanici_id else None
+                kullanici = (
+                    db.session.get(Kullanici, a.kullanici_id)
+                    if a.kullanici_id
+                    else None
+                )
                 result.append({
                     'id': a.id,
                     'zaman': a.islem_tarihi.strftime('%H:%M:%S') if a.islem_tarihi else '',

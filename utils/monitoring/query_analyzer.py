@@ -5,7 +5,7 @@ Developer Dashboard için query analiz ve optimizasyon servisi
 import logging
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
-from sqlalchemy import text, inspect
+from sqlalchemy import text
 from models import db, QueryLog
 
 logger = logging.getLogger(__name__)
@@ -261,7 +261,7 @@ class QueryAnalyzer:
             Dict: Optimizasyon önerileri
         """
         try:
-            query_log = QueryLog.query.get(query_id)
+            query_log = db.session.get(QueryLog, query_id)
             if not query_log:
                 return {
                     'success': False,
@@ -352,7 +352,7 @@ class QueryAnalyzer:
             Dict: Query detayları
         """
         try:
-            query_log = QueryLog.query.get(query_id)
+            query_log = db.session.get(QueryLog, query_id)
             if not query_log:
                 return None
             
@@ -421,10 +421,11 @@ class QueryAnalyzer:
 # SQLAlchemy Event Listener - Otomatik Query Logging
 # ============================================
 
-from sqlalchemy import event
-from sqlalchemy.engine import Engine
-import time
-from flask import has_request_context, request, g
+from sqlalchemy import event  # noqa: E402
+from sqlalchemy.engine import Engine  # noqa: E402
+import time  # noqa: E402
+from flask import has_request_context, request  # noqa: E402
+
 
 @event.listens_for(Engine, "before_cursor_execute")
 def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
@@ -455,7 +456,6 @@ def after_cursor_execute(conn, cursor, statement, parameters, context, executema
                 # Raw SQL kullan - session.add() yerine
                 from models import db
                 from sqlalchemy import text
-                import uuid
                 
                 # Yeni connection al (mevcut transaction'dan bağımsız)
                 with db.engine.connect() as log_conn:

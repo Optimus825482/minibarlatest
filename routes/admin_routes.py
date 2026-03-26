@@ -24,13 +24,18 @@ Roller:
 - admin
 """
 
-from flask import render_template, request, redirect, url_for, flash, session, jsonify
-from models import db, Kullanici, UrunGrup, Urun, StokHareket
+from flask import render_template, request, redirect, url_for, flash, jsonify
+from typing import Any
+from models import db, Kullanici, KullaniciOtel, UrunGrup, Urun, StokHareket
+from sqlalchemy.orm import joinedload, selectinload
 from utils.decorators import login_required, role_required
 from utils.helpers import log_islem, log_hata
 from utils.audit import audit_create, audit_update, audit_delete, serialize_model
 
 
+import logging
+
+logger = logging.getLogger(__name__)
 def register_admin_routes(app):
     """Admin route'larını kaydet"""
     
@@ -44,10 +49,9 @@ def register_admin_routes(app):
     def personel_tanimla():
         """Personel tanımlama ve listeleme - Rol bazlı form gösterimi"""
         from forms import PersonelForm, DepoSorumlusuForm, KatSorumlusuForm
-        from models import Otel, KullaniciOtel
+        from models import Otel
         from sqlalchemy.exc import IntegrityError
         from flask import jsonify
-        from werkzeug.security import generate_password_hash
 
         # AJAX POST isteği kontrolü
         if request.method == 'POST' and request.is_json:
@@ -132,17 +136,21 @@ def register_admin_routes(app):
         
         # Otelleri yükle
         oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
-        
-        form = None
+
+        form: Any = None
         if rol_secimi == 'depo_sorumlusu':
             form = DepoSorumlusuForm()
-            form.otel_ids.choices = [(o.id, o.ad) for o in oteller]
+            form.otel_ids.choices = [(o.id, o.ad) for o in oteller]  # type: ignore[assignment]
         elif rol_secimi == 'kat_sorumlusu':
             form = KatSorumlusuForm()
-            form.otel_id.choices = [(0, 'Otel Seçin...')] + [(o.id, o.ad) for o in oteller]
+            form.otel_id.choices = [(0, "Otel Seçin...")] + [
+                (o.id, o.ad) for o in oteller
+            ]  # type: ignore[assignment]
             # Depo sorumlularını yükle
             depo_sorumlular = Kullanici.query.filter_by(rol='depo_sorumlusu', aktif=True).order_by(Kullanici.ad, Kullanici.soyad).all()
-            form.depo_sorumlusu_id.choices = [(0, 'Seçiniz (Opsiyonel)')] + [(d.id, f"{d.ad} {d.soyad}") for d in depo_sorumlular]
+            form.depo_sorumlusu_id.choices = [(0, "Seçiniz (Opsiyonel)")] + [
+                (d.id, f"{d.ad} {d.soyad}") for d in depo_sorumlular
+            ]  # type: ignore[assignment]
         else:
             form = PersonelForm()
 
@@ -210,10 +218,20 @@ def register_admin_routes(app):
                 log_hata(e, modul='personel_tanimla')
 
         # Personel listesi - otel bilgileri ile (tüm roller dahil)
-        personeller = Kullanici.query.filter(
-            Kullanici.rol.in_(['sistem_yoneticisi', 'admin', 'depo_sorumlusu', 'kat_sorumlusu']),
-            Kullanici.rol != 'superadmin'
-        ).order_by(Kullanici.olusturma_tarihi.desc()).all()
+        personeller = (
+            Kullanici.query.options(
+                joinedload(Kullanici.otel),
+                selectinload(Kullanici.atanan_oteller).joinedload(KullaniciOtel.otel),
+            )
+            .filter(
+                Kullanici.rol.in_(
+                    ["sistem_yoneticisi", "admin", "depo_sorumlusu", "kat_sorumlusu"]
+                ),
+                Kullanici.rol != "superadmin",
+            )
+            .order_by(Kullanici.olusturma_tarihi.desc())
+            .all()
+        )
         
         # Her personel için otel bilgilerini hazırla
         personel_data = []
@@ -252,7 +270,7 @@ def register_admin_routes(app):
     def personel_duzenle(personel_id):
         """Personel düzenleme - Rol bazlı form gösterimi"""
         from forms import PersonelDuzenleForm, DepoSorumlusuDuzenleForm, KatSorumlusuDuzenleForm
-        from models import Otel, KullaniciOtel
+        from models import Otel
         from sqlalchemy.exc import IntegrityError
 
         personel = Kullanici.query.get_or_404(personel_id)
@@ -261,19 +279,24 @@ def register_admin_routes(app):
         oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
         
         # Rol bazlı form seçimi
+        form: Any
         if personel.rol == 'depo_sorumlusu':
             form = DepoSorumlusuDuzenleForm(obj=personel)
-            form.otel_ids.choices = [(o.id, o.ad) for o in oteller]
+            form.otel_ids.choices = [(o.id, o.ad) for o in oteller]  # type: ignore[assignment]
             # Mevcut otel atamalarını yükle
             if request.method == 'GET':
                 mevcut_oteller = [atama.otel_id for atama in personel.atanan_oteller]
                 form.otel_ids.data = mevcut_oteller
         elif personel.rol == 'kat_sorumlusu':
             form = KatSorumlusuDuzenleForm(obj=personel)
-            form.otel_id.choices = [(0, 'Otel Seçin...')] + [(o.id, o.ad) for o in oteller]
+            form.otel_id.choices = [(0, "Otel Seçin...")] + [
+                (o.id, o.ad) for o in oteller
+            ]  # type: ignore[assignment]
             # Depo sorumlularını yükle
             depo_sorumlular = Kullanici.query.filter_by(rol='depo_sorumlusu', aktif=True).order_by(Kullanici.ad, Kullanici.soyad).all()
-            form.depo_sorumlusu_id.choices = [(0, 'Seçiniz (Opsiyonel)')] + [(d.id, f"{d.ad} {d.soyad}") for d in depo_sorumlular]
+            form.depo_sorumlusu_id.choices = [(0, "Seçiniz (Opsiyonel)")] + [
+                (d.id, f"{d.ad} {d.soyad}") for d in depo_sorumlular
+            ]  # type: ignore[assignment]
         else:
             form = PersonelDuzenleForm(obj=personel)
 
@@ -545,10 +568,10 @@ def register_admin_routes(app):
 
         # Grup seçeneklerini doldur (form oluşturmadan önce)
         gruplar = UrunGrup.query.filter_by(aktif=True).order_by(UrunGrup.grup_adi).all()
-        grup_choices = [(g.id, g.grup_adi) for g in gruplar]
-        
-        form = UrunForm()
-        form.grup_id.choices = grup_choices
+        grup_choices = [(g.id, str(g.grup_adi)) for g in gruplar]
+
+        form: Any = UrunForm()
+        form.grup_id.choices = grup_choices  # type: ignore[assignment]
 
         if form.validate_on_submit():
             try:
@@ -604,10 +627,10 @@ def register_admin_routes(app):
 
         urun = Urun.query.get_or_404(urun_id)
         gruplar = UrunGrup.query.filter_by(aktif=True).order_by(UrunGrup.grup_adi).all()
-        grup_choices = [(g.id, g.grup_adi) for g in gruplar]
+        grup_choices = [(g.id, str(g.grup_adi)) for g in gruplar]
 
-        form = UrunForm(obj=urun)
-        form.grup_id.choices = grup_choices
+        form: Any = UrunForm(obj=urun)
+        form.grup_id.choices = grup_choices  # type: ignore[assignment]
 
         # AJAX isteği kontrolü
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -640,7 +663,7 @@ def register_admin_routes(app):
                 # AJAX isteği ise JSON döndür
                 if is_ajax:
                     # Grup adını al
-                    grup = UrunGrup.query.get(urun.grup_id)
+                    grup = db.session.get(UrunGrup, urun.grup_id)
                     return jsonify({
                         'success': True,
                         'message': 'Ürün başarıyla güncellendi.',

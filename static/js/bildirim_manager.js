@@ -156,10 +156,10 @@ class BildirimManager {
       return;
     }
 
-    liste.innerHTML = this.bildirimler
+    liste.innerHTML = DOMPurify.sanitize(this.bildirimler
       .slice(0, 20)
       .map((b) => this.bildirimHTML(b))
-      .join("");
+      .join(""));
   }
 
   bildirimHTML(bildirim) {

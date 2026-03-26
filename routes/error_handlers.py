@@ -11,6 +11,9 @@ Error Handler'lar:
 - CSRFError - CSRF Token Hatası
 """
 
+import logging
+logger = logging.getLogger(__name__)
+
 from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_wtf.csrf import CSRFError
 from utils.helpers import log_hata
@@ -54,11 +57,11 @@ def register_error_handlers(app):
         import sys
         
         # Hatayı stderr'e yazdır (Railway loglarında görünür)
-        print(f"=== 500 ERROR ===", file=sys.stderr)
-        print(f"Error: {error}", file=sys.stderr)
-        print(f"Traceback:", file=sys.stderr)
+        logger.error("=== 500 ERROR ===")
+        logger.error(f"Error: {error}")
+        logger.error("Traceback:")
         traceback.print_exc(file=sys.stderr)
-        print(f"=== END ERROR ===", file=sys.stderr)
+        logger.error("=== END ERROR ===")
         
         db.session.rollback()
         return render_template('errors/500.html'), 500

@@ -2,8 +2,9 @@
 Admin QR Kod Yönetimi Route'ları
 """
 
-from flask import jsonify, request, send_file, session
-from models import db, Oda, Kat
+from flask import jsonify, request, send_file
+from models import db, Oda, Kat, get_kktc_now
+from sqlalchemy.orm import joinedload
 from utils.qr_service import QRKodService
 from utils.rate_limiter import QRRateLimiter
 from utils.helpers import log_islem, log_hata
@@ -12,15 +13,6 @@ from utils.decorators import login_required, role_required
 import bleach
 import zipfile
 import io
-from datetime import datetime
-import pytz
-
-# KKTC Timezone
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-
-def get_kktc_now():
-    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
-    return datetime.now(KKTC_TZ)
 
 
 def register_admin_qr_routes(app):
@@ -33,7 +25,7 @@ def register_admin_qr_routes(app):
         """Tek oda için QR kod oluştur"""
         try:
             # Rate limit kontrolü
-            ip = request.remote_addr
+            ip = request.remote_addr or ""
             if not QRRateLimiter.check_qr_generate_limit(ip):
                 return jsonify({
                     'success': False,
@@ -102,7 +94,7 @@ def register_admin_qr_routes(app):
             mod = data.get('mod', 'qrsiz')  # 'tumu' veya 'qrsiz'
             
             # Rate limit kontrolü
-            ip = request.remote_addr
+            ip = request.remote_addr or ""
             if not QRRateLimiter.check_qr_generate_limit(ip):
                 return jsonify({
                     'success': False,
@@ -151,16 +143,18 @@ def register_admin_qr_routes(app):
                 'basarisiz': basarisiz,
                 'toplam': len(odalar)
             })
-            
-            return jsonify({
-                'success': True,
-                'message': f'Toplu QR oluşturma tamamlandı',
-                'data': {
-                    'basarili': basarili,
-                    'basarisiz': basarisiz,
-                    'toplam': len(odalar)
+
+            return jsonify(
+                {
+                    "success": True,
+                    "message": "Toplu QR oluşturma tamamlandı",
+                    "data": {
+                        "basarili": basarili,
+                        "basarisiz": basarisiz,
+                        "toplam": len(odalar),
+                    },
                 }
-            })
+            )
             
         except Exception as e:
             db.session.rollback()
@@ -262,10 +256,11 @@ def register_admin_qr_routes(app):
         """Tüm QR kodları ZIP olarak indir"""
         try:
             # QR'ı olan odaları getir
-            odalar = Oda.query.filter(
-                Oda.aktif == True,
-                Oda.qr_kod_token.isnot(None)
-            ).all()
+            odalar = (
+                Oda.query.options(joinedload(Oda.kat).joinedload(Kat.otel))
+                .filter(Oda.aktif, Oda.qr_kod_token.isnot(None))
+                .all()
+            )
             
             if not odalar:
                 return jsonify({

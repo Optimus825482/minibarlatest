@@ -18,6 +18,7 @@ class RedisMonitor:
         Args:
             redis_client: Redis client instance (None ise yeni oluşturulur)
         """
+        self.redis: Any = None
         try:
             if redis_client:
                 self.redis = redis_client

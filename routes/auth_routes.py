@@ -15,24 +15,18 @@ Roller:
 """
 
 from flask import render_template, request, redirect, url_for, flash, session
-from datetime import datetime, timezone
+from datetime import datetime
 from sqlalchemy.exc import IntegrityError, OperationalError
-import pytz
 
 from models import db, Otel, Kullanici, SistemAyar
-
-# KKTC Timezone (Kıbrıs - Europe/Nicosia)
-KKTC_TZ = pytz.timezone('Europe/Nicosia')
-
-def get_kktc_now():
-    """Kıbrıs saat diliminde şu anki zamanı döndürür."""
-    return datetime.now(KKTC_TZ)
+from utils.timezone import get_kktc_now
 from utils.decorators import setup_not_completed, setup_required
 from utils.helpers import log_islem, log_hata
 from utils.audit import audit_login, audit_logout
 
 
 def register_auth_routes(app):
+    from utils.rate_limiter import limiter, LOGIN_LIMIT
     """Auth route'larını kaydet"""
     
     @app.route('/')
@@ -54,6 +48,7 @@ def register_auth_routes(app):
     
     
     @app.route('/setup', methods=['GET', 'POST'])
+    @limiter.limit(LOGIN_LIMIT)
     @setup_not_completed
     def setup():
         """İlk kurulum sayfası"""
@@ -142,8 +137,18 @@ def register_auth_routes(app):
             ).first()
 
             if kullanici and kullanici.sifre_kontrol(form.sifre.data):
+                # Session fixation koruması: eski session verisini sakla, yeni session oluştur
+                remember = form.remember_me.data
                 session.clear()
-                session.permanent = form.remember_me.data
+                session.modified = True
+                # Flask-Session'da yeni SID üretimi için
+                if hasattr(session, "sid"):
+                    from flask import current_app
+
+                    si = current_app.session_interface
+                    if hasattr(si, "regenerate"):
+                        si.regenerate(session)  # type: ignore[union-attr]
+                session.permanent = remember
 
                 session['kullanici_id'] = kullanici.id
                 session['kullanici_adi'] = kullanici.kullanici_adi

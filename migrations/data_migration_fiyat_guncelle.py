@@ -7,8 +7,7 @@ import os
 # Proje kök dizinini path'e ekle
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from models import db, Urun, UrunFiyatGecmisi
-from sqlalchemy import func
+from models import db, Urun, UrunFiyatGecmisi  # type: ignore[attr-defined]
 
 def migrate_fiyat_data():
     """Fiyat geçmişindeki en son alış fiyatlarını urunler tablosuna aktar"""

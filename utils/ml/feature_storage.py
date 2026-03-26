@@ -5,7 +5,6 @@ Feature'ları veritabanından okuma ve kullanma servisi
 
 from datetime import datetime, timezone, timedelta
 import pandas as pd
-import numpy as np
 import logging
 
 logger = logging.getLogger(__name__)
@@ -273,20 +272,22 @@ def example_usage():
         storage = FeatureStorage(db)
         
         # 1. En son feature'ları getir
-        latest = storage.get_latest_features('stok_seviye', urun_id=1)
-        print(f"Latest features: {latest}")
+        latest = storage.get_latest_features("stok_seviye", entity_id=1)
+        logger.debug(f"Latest features: {latest}")
         
         # 2. Feature matrix oluştur
         df = storage.get_feature_matrix('stok_seviye', lookback_days=30)
-        print(f"Feature matrix shape: {df.shape if df is not None else None}")
+        logger.debug(f"Feature matrix shape: {df.shape if df is not None else None}")
         
         # 3. Feature history
         history = storage.get_feature_history('stok_seviye', 1, 'mean', lookback_days=30)
-        print(f"Mean history: {len(history) if history is not None else 0} points")
+        logger.debug(
+            f"Mean history: {len(history) if history is not None else 0} points"
+        )
         
         # 4. Cleanup
         deleted = storage.cleanup_old_features(days_to_keep=90)
-        print(f"Deleted {deleted} old features")
+        logger.info(f"Deleted {deleted} old features")
 
 
 if __name__ == '__main__':

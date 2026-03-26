@@ -20,12 +20,15 @@ from utils.decorators import login_required, role_required
 from utils.helpers import log_islem
 from utils.email_service import EmailService
 from utils.backup_service import BackupService
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 import io
 import pytz
 
 # KKTC Timezone
+import logging
+
+logger = logging.getLogger(__name__)
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
 
 def get_kktc_now():
@@ -108,7 +111,7 @@ def register_sistem_ayarlari_routes(app):
             
             if result['success']:
                 # Test maili gönder
-                kullanici = Kullanici.query.get(session.get('kullanici_id'))
+                kullanici = db.session.get(Kullanici, session.get("kullanici_id"))
                 if kullanici and kullanici.email:
                     test_result = EmailService.send_email(
                         to_email=kullanici.email,
@@ -205,8 +208,8 @@ def register_sistem_ayarlari_routes(app):
         """Email okundu takibi - 1x1 pixel döndürür"""
         try:
             EmailService.mark_as_read(tracking_id)
-        except:
-            pass
+        except Exception:
+            logger.debug("Sessiz hata yakalandi", exc_info=True)
         
         # 1x1 transparent GIF
         gif_data = b'GIF89a\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;'
@@ -435,10 +438,11 @@ def register_sistem_ayarlari_routes(app):
         oteller = Otel.query.filter_by(aktif=True).order_by(Otel.ad).all()
         
         # Kullanıcı bazlı bildirim listesi (superadmin hariç)
-        bildirim_kullanicilari = Kullanici.query.filter(
-            Kullanici.aktif == True,
-            Kullanici.rol != 'superadmin'
-        ).order_by(Kullanici.rol, Kullanici.ad).all()
+        bildirim_kullanicilari = (
+            Kullanici.query.filter(Kullanici.aktif, Kullanici.rol != "superadmin")
+            .order_by(Kullanici.rol, Kullanici.ad)
+            .all()
+        )
         
         return render_template('sistem_yoneticisi/sistem_ayarlari.html',
                              active_tab='bildirimler',
@@ -475,7 +479,7 @@ def register_sistem_ayarlari_routes(app):
             
             result = set_ml_enabled(
                 enabled=bool(enabled),
-                user_id=session.get('kullanici_id')
+                user_id=session.get("kullanici_id"),  # pyright: ignore[reportArgumentType]
             )
             
             if result['success']:

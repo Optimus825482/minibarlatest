@@ -56,7 +56,7 @@ function qrGoruntule(odaId) {
           svgContent = svgContent.replace(/^data:image\/svg\+xml[^,]*,/, "");
         }
 
-        qrContainer.innerHTML = svgContent;
+        qrContainer.innerHTML = DOMPurify.sanitize(svgContent);
 
         // SVG'yi sabit boyutta tut (256x256)
         const svgElement = qrContainer.querySelector("svg");
@@ -400,7 +400,7 @@ function odaDuzenle(odaId, odaNo, katId, qrVar) {
           if (svgContent.startsWith("data:image/svg+xml")) {
             svgContent = svgContent.replace(/^data:image\/svg\+xml[^,]*,/, "");
           }
-          qrContainer.innerHTML = svgContent;
+          qrContainer.innerHTML = DOMPurify.sanitize(svgContent);
 
           const svgElement = qrContainer.querySelector("svg");
           if (svgElement) {
@@ -510,7 +510,7 @@ function qrYenile() {
         if (svgContent.startsWith("data:image/svg+xml")) {
           svgContent = svgContent.replace(/^data:image\/svg\+xml[^,]*,/, "");
         }
-        qrContainer.innerHTML = svgContent;
+        qrContainer.innerHTML = DOMPurify.sanitize(svgContent);
 
         const svgElement = qrContainer.querySelector("svg");
         if (svgElement) {

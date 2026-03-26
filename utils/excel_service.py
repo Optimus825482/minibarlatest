@@ -7,14 +7,14 @@ Desteklenen formatlar:
 2. P4001 formatı (Depo yöneticisi): Header 8. satırda (R.No, Arrival, Departure, Adl)
 """
 
+import logging
 import openpyxl
 import pandas as pd
-from datetime import datetime, date, time
-from models import db, MisafirKayit, DosyaYukleme, Oda, Kat
-from sqlalchemy import and_
 import traceback
 import re
 import pytz
+from datetime import datetime, date, time
+from models import db, MisafirKayit, Oda, Kat
 
 # KKTC Timezone
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
@@ -22,6 +22,8 @@ KKTC_TZ = pytz.timezone('Europe/Nicosia')
 def get_kktc_now():
     """Kıbrıs saat diliminde şu anki zamanı döndürür."""
     return datetime.now(KKTC_TZ)
+
+logger = logging.getLogger(__name__)
 
 
 class ExcelProcessingService:
@@ -59,19 +61,19 @@ class ExcelProcessingService:
         headers_lower = [h.lower() for h in headers_str]
         
         # Debug log
-        print(f"📋 Excel Headers: {headers_str}")
+        logger.info(f"📋 Excel Headers: {headers_str}")
         
         # DEPARTURES dosyası için özel sütunlar (case-insensitive)
         if 'Dep.Time' in headers_str or 'dep.time' in headers_lower or 'deptime' in headers_lower:
-            print("✅ Dosya tipi: DEPARTURES")
+            logger.info("✅ Dosya tipi: DEPARTURES")
             return 'departures'
         
         # ARRIVALS dosyası için özel sütunlar (case-insensitive)
         if 'Hsk.St.' in headers_str or 'Arr.Time' in headers_str or 'arr.time' in headers_lower or 'hsk.st.' in headers_lower:
-            print("✅ Dosya tipi: ARRIVALS")
+            logger.info("✅ Dosya tipi: ARRIVALS")
             return 'arrivals'
-        
-        print("✅ Dosya tipi: IN HOUSE")
+
+        logger.info("✅ Dosya tipi: IN HOUSE")
         return 'in_house'
     
     @staticmethod
@@ -105,11 +107,11 @@ class ExcelProcessingService:
             p4001_info = ExcelProcessingService._detect_p4001_format(file_path)
             
             if p4001_info.get('is_p4001'):
-                print(f"📋 P4001 formatı tespit edildi, özel işleme başlıyor...")
+                logger.info("📋 P4001 formatı tespit edildi, özel işleme başlıyor...")
                 # Override varsa P4001 info'ya ekle
                 if override_dosya_tipi:
                     p4001_info['dosya_tipi'] = override_dosya_tipi
-                    print(f"📋 Kullanıcı override: {override_dosya_tipi}")
+                    logger.info(f"📋 Kullanıcı override: {override_dosya_tipi}")
                 return ExcelProcessingService._process_p4001_file(
                     file_path, islem_kodu, user_id, otel_id, p4001_info
                 )
@@ -120,13 +122,13 @@ class ExcelProcessingService:
             
             # İlk satırdan başlıkları al
             headers = []
-            for cell in sheet[1]:
+            for cell in sheet[1]:  # type: ignore[index]
                 headers.append(cell.value)
             
             # Kullanıcı override ettiyse direkt onu kullan
             if override_dosya_tipi and override_dosya_tipi in ['in_house', 'arrivals', 'departures']:
                 dosya_tipi = override_dosya_tipi
-                print(f"✅ Kullanıcı onaylı dosya tipi: {dosya_tipi}")
+                logger.info(f"✅ Kullanıcı onaylı dosya tipi: {dosya_tipi}")
             else:
                 # Önce header bazlı dosya tipini algıla
                 header_dosya_tipi = ExcelProcessingService.detect_file_type(headers)
@@ -146,14 +148,18 @@ class ExcelProcessingService:
                         
                         if smart_dosya_tipi:
                             dosya_tipi = smart_dosya_tipi
-                            print(f"✅ Standart format - Tarih bazlı akıllı algılama: {dosya_tipi}")
+                            logger.info(
+                                f"✅ Standart format - Tarih bazlı akıllı algılama: {dosya_tipi}"
+                            )
                         else:
                             dosya_tipi = header_dosya_tipi
-                            print(f"✅ Standart format - Header bazlı algılama: {dosya_tipi}")
+                            logger.info(
+                                f"✅ Standart format - Header bazlı algılama: {dosya_tipi}"
+                            )
                     else:
                         dosya_tipi = header_dosya_tipi
                 except Exception as e:
-                    print(f"⚠️ Standart format akıllı algılama hatası: {str(e)}")
+                    logger.error(f"⚠️ Standart format akıllı algılama hatası: {str(e)}")
                     dosya_tipi = header_dosya_tipi
             
             # Kayıt tipini belirle
@@ -183,8 +189,10 @@ class ExcelProcessingService:
             basarili_satir = 0
             hatali_satir = 0
             hatalar = []
-            
-            for row_idx, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
+
+            for row_idx, row in enumerate(
+                sheet.iter_rows(min_row=2, values_only=True), start=2  # type: ignore[union-attr]
+            ):
                 toplam_satir += 1
                 
                 try:
@@ -275,7 +283,7 @@ class ExcelProcessingService:
                 )
             except Exception as hook_error:
                 # Hook hatası ana işlemi etkilemesin
-                print(f"Görev oluşturma hook hatası: {str(hook_error)}")
+                logger.error(f"Görev oluşturma hook hatası: {str(hook_error)}")
             
             return {
                 'success': True,
@@ -521,7 +529,7 @@ class ExcelProcessingService:
             return None
             
         except Exception as e:
-            print(f"Oda arama hatası: {str(e)}")
+            logger.error(f"Oda arama hatası: {str(e)}")
             return None
 
     @staticmethod
@@ -559,8 +567,10 @@ class ExcelProcessingService:
                 'departures': 'departures'
             }
             mevcut_dosya_tipi = dosya_tipi_map.get(dosya_tipi, dosya_tipi)
-            
-            print(f"📊 Otel {otel_id} - Mevcut yüklenen dosya: {mevcut_dosya_tipi}")
+
+            logger.debug(
+                f"📊 Otel {otel_id} - Mevcut yüklenen dosya: {mevcut_dosya_tipi}"
+            )
             
             # 3 dosya tipi için yükleme durumlarını kontrol et
             # NOT: Mevcut yüklenen dosyayı 'completed' olarak say (henüz DB'de güncellenmemiş)
@@ -577,8 +587,10 @@ class ExcelProcessingService:
                         YuklemeGorev.dosya_tipi == tip
                     ).first()
                     yukleme_durumlari[tip] = yukleme.durum if yukleme else 'pending'
-            
-            print(f"📊 Otel {otel_id} - Yükleme durumları (mevcut dahil): {yukleme_durumlari}")
+
+            logger.debug(
+                f"📊 Otel {otel_id} - Yükleme durumları (mevcut dahil): {yukleme_durumlari}"
+            )
             
             # 3 dosya da yüklendi mi kontrol et
             tum_dosyalar_yuklendi = all(
@@ -591,7 +603,9 @@ class ExcelProcessingService:
                 return
             
             # 3 dosya da yüklendi - görevleri oluştur
-            print(f"✅ Otel {otel_id} - 3 dosya da yüklendi! Görevler oluşturuluyor...")
+            logger.info(
+                f"✅ Otel {otel_id} - 3 dosya da yüklendi! Görevler oluşturuluyor..."
+            )
             
             from utils.gorev_service import GorevService
             from utils.bildirim_service import BildirimService
@@ -603,8 +617,8 @@ class ExcelProcessingService:
                 from models import Kullanici
                 kat_sorumluları = Kullanici.query.filter(
                     Kullanici.otel_id == otel_id,
-                    Kullanici.rol == 'kat_sorumlusu',
-                    Kullanici.aktif == True
+                    Kullanici.rol == "kat_sorumlusu",
+                    Kullanici.aktif,
                 ).all()
                 
                 # Tüm görev tipleri için bildirim gönder
@@ -617,16 +631,16 @@ class ExcelProcessingService:
                 for ks in kat_sorumluları:
                     for gorev_tipi, oda_sayisi in gorev_tipleri:
                         if oda_sayisi > 0:
-                            BildirimService.send_task_created_notification(
+                            BildirimService.send_task_created_notification(  # pyright: ignore[reportAttributeAccessIssue]
                                 personel_id=ks.id,
                                 gorev_tipi=gorev_tipi,
-                                oda_sayisi=oda_sayisi
+                                oda_sayisi=oda_sayisi,
                             )
-            
-            print(f"✅ Görevler oluşturuldu: {result}")
+
+            logger.info(f"✅ Görevler oluşturuldu: {result}")
             
         except Exception as e:
-            print(f"⚠️ Görev oluşturma hatası: {str(e)}")
+            logger.error(f"⚠️ Görev oluşturma hatası: {str(e)}")
 
     # ==================== TARİH BAZLI AKILLI ALGILAMA ====================
     
@@ -679,17 +693,19 @@ class ExcelProcessingService:
                         departures_list.append(departure_date)
                         
                 except Exception as e:
-                    print(f"⚠️ Satır {idx} parse hatası: {str(e)}")
+                    logger.error(f"⚠️ Satır {idx} parse hatası: {str(e)}")
                     continue
             
             if not arrivals_list or not departures_list:
-                print(f"⚠️ Tarih listesi boş - arrivals: {len(arrivals_list)}, departures: {len(departures_list)}")
+                logger.warning(
+                    f"⚠️ Tarih listesi boş - arrivals: {len(arrivals_list)}, departures: {len(departures_list)}"
+                )
                 return None
             
             # Debug: İlk birkaç tarihi göster
-            print(f"📊 Tarih analizi - Bugün: {bugun}")
-            print(f"📊 İlk 3 Arrival: {arrivals_list[:3]}")
-            print(f"📊 İlk 3 Departure: {departures_list[:3]}")
+            logger.debug(f"📊 Tarih analizi - Bugün: {bugun}")
+            logger.debug(f"📊 İlk 3 Arrival: {arrivals_list[:3]}")
+            logger.debug(f"📊 İlk 3 Departure: {departures_list[:3]}")
             
             # Sayaçlar - her kayıt için ayrı ayrı say
             inhouse_count = 0  # Giriş < Bugün VE Çıkış > Bugün
@@ -711,7 +727,9 @@ class ExcelProcessingService:
                     inhouse_count += 1
             
             total_valid = min(len(arrivals_list), len(departures_list))
-            print(f"📊 Sonuçlar - IN HOUSE: {inhouse_count}, DEPARTURES: {departure_count}, ARRIVALS: {arrival_count} / Toplam: {total_valid}")
+            logger.debug(
+                f"📊 Sonuçlar - IN HOUSE: {inhouse_count}, DEPARTURES: {departure_count}, ARRIVALS: {arrival_count} / Toplam: {total_valid}"
+            )
             
             # ÖNCELİK SIRASI VE EŞİKLER:
             # - DEPARTURES: %100 (tüm çıkışlar bugün olmalı)
@@ -720,25 +738,31 @@ class ExcelProcessingService:
             
             # 1. DEPARTURES: Çıkış = Bugün (%100 - tüm kayıtlar)
             if departure_count == total_valid and total_valid > 0:
-                print(f"📊 Standart format - Tarih analizi: Çıkış = Bugün ({departure_count}/{total_valid}) → DEPARTURES")
+                logger.debug(
+                    f"📊 Standart format - Tarih analizi: Çıkış = Bugün ({departure_count}/{total_valid}) → DEPARTURES"
+                )
                 return 'departures'
             
             # 2. ARRIVALS: Giriş = Bugün (%100 - tüm kayıtlar)
             if arrival_count == total_valid and total_valid > 0:
-                print(f"📊 Standart format - Tarih analizi: Giriş = Bugün ({arrival_count}/{total_valid}) → ARRIVALS")
+                logger.debug(
+                    f"📊 Standart format - Tarih analizi: Giriş = Bugün ({arrival_count}/{total_valid}) → ARRIVALS"
+                )
                 return 'arrivals'
             
             # 3. IN HOUSE: Giriş < Bugün VE Çıkış > Bugün (%70)
             if inhouse_count >= total_valid * 0.7:
-                print(f"📊 Standart format - Tarih analizi: Giriş < Bugün VE Çıkış > Bugün ({inhouse_count}/{total_valid}) → IN HOUSE")
+                logger.debug(
+                    f"📊 Standart format - Tarih analizi: Giriş < Bugün VE Çıkış > Bugün ({inhouse_count}/{total_valid}) → IN HOUSE"
+                )
                 return 'in_house'
             
             # Hiçbiri eşiği geçmediyse, varsayılan IN HOUSE (en güvenli seçenek)
-            print(f"📊 Standart format - Eşik geçilemedi, varsayılan IN HOUSE")
+            logger.debug("📊 Standart format - Eşik geçilemedi, varsayılan IN HOUSE")
             return 'in_house'
             
         except Exception as e:
-            print(f"⚠️ Standart format tarih bazlı algılama hatası: {str(e)}")
+            logger.error(f"⚠️ Standart format tarih bazlı algılama hatası: {str(e)}")
             import traceback
             traceback.print_exc()
             return None
@@ -760,9 +784,9 @@ class ExcelProcessingService:
         # pandas Timestamp veya datetime64
         if hasattr(date_value, 'date'):
             try:
-                return date_value.date()
+                return date_value.date()  # type: ignore[union-attr]
             except Exception:
-                pass
+                logger.debug("Sessiz hata yakalandi", exc_info=True)
         
         # pandas NaT kontrolü
         if pd.isna(date_value):
@@ -786,7 +810,7 @@ class ExcelProcessingService:
             if isinstance(date_value, np.datetime64):
                 return pd.Timestamp(date_value).date()
         except Exception:
-            pass
+            logger.debug("Sessiz hata yakalandi", exc_info=True)
         
         return None
     
@@ -856,7 +880,9 @@ class ExcelProcessingService:
                     departure_count += 1
             
             if departure_count >= len(departures_list) * 0.7:
-                print(f"📊 P4001 - Tarih analizi: Çıkış = Bugün ({departure_count}/{len(departures_list)}) → DEPARTURES")
+                logger.debug(
+                    f"📊 P4001 - Tarih analizi: Çıkış = Bugün ({departure_count}/{len(departures_list)}) → DEPARTURES"
+                )
                 return 'departures'
             
             # 2. ARRIVALS: Giriş tarihi = Bugün (en az %70)
@@ -866,7 +892,9 @@ class ExcelProcessingService:
                     arrival_count += 1
             
             if arrival_count >= len(arrivals_list) * 0.7:
-                print(f"📊 P4001 - Tarih analizi: Giriş = Bugün ({arrival_count}/{len(arrivals_list)}) → ARRIVALS")
+                logger.debug(
+                    f"📊 P4001 - Tarih analizi: Giriş = Bugün ({arrival_count}/{len(arrivals_list)}) → ARRIVALS"
+                )
                 return 'arrivals'
             
             # 3. IN HOUSE: Giriş < Bugün VE Çıkış > Bugün (en az %70)
@@ -876,13 +904,15 @@ class ExcelProcessingService:
                     inhouse_count += 1
             
             if inhouse_count >= len(arrivals_list) * 0.7:
-                print(f"📊 P4001 - Tarih analizi: Giriş < Bugün VE Çıkış > Bugün ({inhouse_count}/{len(arrivals_list)}) → IN HOUSE")
+                logger.debug(
+                    f"📊 P4001 - Tarih analizi: Giriş < Bugün VE Çıkış > Bugün ({inhouse_count}/{len(arrivals_list)}) → IN HOUSE"
+                )
                 return 'in_house'
             
             return None  # Belirlenemedi, header bazlı algılamaya devam et
             
         except Exception as e:
-            print(f"⚠️ Tarih bazlı dosya tipi algılama hatası: {str(e)}")
+            logger.error(f"⚠️ Tarih bazlı dosya tipi algılama hatası: {str(e)}")
             return None
     
     @staticmethod
@@ -953,16 +983,18 @@ class ExcelProcessingService:
                 
                 if smart_dosya_tipi:
                     dosya_tipi = smart_dosya_tipi
-                    print(f"✅ Tarih bazlı akıllı algılama: {dosya_tipi}")
+                    logger.info(f"✅ Tarih bazlı akıllı algılama: {dosya_tipi}")
                 else:
                     dosya_tipi = header_dosya_tipi
-                    print(f"✅ Header bazlı algılama: {dosya_tipi}")
+                    logger.info(f"✅ Header bazlı algılama: {dosya_tipi}")
                     
             except Exception as e:
-                print(f"⚠️ Akıllı algılama hatası, header bazlı devam: {str(e)}")
+                logger.error(f"⚠️ Akıllı algılama hatası, header bazlı devam: {str(e)}")
                 dosya_tipi = header_dosya_tipi
-            
-            print(f"📋 P4001 Format algılandı: {dosya_tipi}, Rapor tarihi: {rapor_tarihi}")
+
+            logger.info(
+                f"📋 P4001 Format algılandı: {dosya_tipi}, Rapor tarihi: {rapor_tarihi}"
+            )
             
             return {
                 'is_p4001': True,
@@ -973,7 +1005,7 @@ class ExcelProcessingService:
             }
             
         except Exception as e:
-            print(f"P4001 format algılama hatası: {str(e)}")
+            logger.error(f"P4001 format algılama hatası: {str(e)}")
             return {'is_p4001': False}
     
     @staticmethod
@@ -1094,15 +1126,15 @@ class ExcelProcessingService:
                     continue
                 
                 # "(continued)" ve tarih satırlarını atla
-                first_col = str(df.iloc[idx, 0]) if pd.notna(df.iloc[idx, 0]) else ''
+                first_col = str(df.iloc[idx, 0]) if pd.notna(df.iloc[idx, 0]) else ""  # type: ignore[call-overload]
                 if 'continued' in first_col.lower():
                     continue
                 if re.search(r'(Arrival|Departure|Date)\s*:', first_col, re.IGNORECASE):
                     continue
                 
                 toplam_satir += 1
-                excel_row = idx + 10  # Excel satır numarası
-                
+                excel_row = idx + 10  # Excel satır numarası  # type: ignore[operator]
+
                 try:
                     oda_no_str = str(int(oda_no) if isinstance(oda_no, float) else oda_no).strip()
                     
@@ -1189,7 +1221,7 @@ class ExcelProcessingService:
                     basarili_satir=basarili_satir
                 )
             except Exception as hook_error:
-                print(f"Görev oluşturma hook hatası: {str(hook_error)}")
+                logger.error(f"Görev oluşturma hook hatası: {str(hook_error)}")
             
             return {
                 'success': True,

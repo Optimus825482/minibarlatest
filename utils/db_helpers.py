@@ -3,11 +3,20 @@ Database Helper Functions
 PostgreSQL migration için database utility fonksiyonları
 """
 
-from functools import wraps
-from sqlalchemy.exc import OperationalError, DBAPIError
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+import logging
 import time
+from functools import wraps
+from sqlalchemy import text
+from sqlalchemy.exc import OperationalError, DBAPIError
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 from models import db
+
+logger = logging.getLogger(__name__)
 
 
 def execute_with_retry(query, max_attempts=3):
@@ -79,7 +88,6 @@ def check_connection():
         bool: Bağlantı durumu
     """
     try:
-        from sqlalchemy import text
         db.session.execute(text('SELECT 1'))
         return True
     except Exception:
@@ -144,14 +152,16 @@ def with_auto_reconnect(max_retries=3, delay=2):
                     
                     # Fonksiyonu çalıştır
                     return func(*args, **kwargs)
-                    
+
                 except (OperationalError, DBAPIError) as e:
                     last_exception = e
-                    
+
                     # Connection error ise yeniden bağlan
                     if "connection" in str(e).lower() or "server" in str(e).lower():
-                        print(f"Connection error, attempt {attempt + 1}/{max_retries}")
-                        
+                        logger.warning(
+                            f"Connection error, attempt {attempt + 1}/{max_retries}"
+                        )
+
                         if attempt < max_retries - 1:
                             time.sleep(delay * (attempt + 1))  # Exponential backoff
                             reconnect_database()
@@ -160,8 +170,8 @@ def with_auto_reconnect(max_retries=3, delay=2):
                     else:
                         # Diğer hatalar için retry yapma
                         raise
-                        
-                except Exception as e:
+
+                except Exception:
                     # Diğer hatalar için retry yapma
                     raise
             

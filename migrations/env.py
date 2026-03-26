@@ -79,9 +79,9 @@ def run_migrations_online() -> None:
     """
     
     # Get configuration
-    configuration = config.get_section(config.config_ini_section)
-    configuration['sqlalchemy.url'] = database_url
-    
+    configuration = config.get_section(config.config_ini_section) or {}  # type: ignore[assignment]
+    configuration["sqlalchemy.url"] = database_url or ""  # type: ignore[index]
+
     # Create engine with connection pooling
     connectable = engine_from_config(
         configuration,

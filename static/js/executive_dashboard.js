@@ -429,7 +429,7 @@ async function loadHotelComparison() {
   });
 
   html += "</tbody></table>";
-  container.innerHTML = html;
+  container.innerHTML = DOMPurify.sanitize(html);
 }
 
 async function loadTaskCompletion() {
@@ -477,7 +477,7 @@ async function loadTaskCompletion() {
     html += "</div></div>";
   });
 
-  container.innerHTML = html;
+  container.innerHTML = DOMPurify.sanitize(html);
 }
 
 // ---- ACTIVITY FEED ----
@@ -494,7 +494,7 @@ async function loadActivityFeed() {
     return;
   }
 
-  container.innerHTML = data
+  container.innerHTML = DOMPurify.sanitize(data
     .map(
       (a) =>
         '<div class="exec-feed-item">' +
@@ -507,11 +507,11 @@ async function loadActivityFeed() {
         "</div>" +
         '<div class="exec-feed-action">' +
         a.islem +
-        (a.detay ? " — " + a.detay.substring(0, 80) : "") +
+        (a.detay ? " \u2014 " + a.detay.substring(0, 80) : "") +
         "</div>" +
         "</div></div>",
     )
-    .join("");
+    .join(""));
 
   const timeEl = document.getElementById("feed-update-time");
   if (timeEl) {

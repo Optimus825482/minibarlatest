@@ -3,21 +3,17 @@ Görevlendirme Sistemi - YuklemeGorevService
 Depo sorumluları için günlük doluluk yükleme görevlerinin yönetimi
 """
 
-from datetime import datetime, date, timezone, timedelta
+from datetime import datetime, date, timedelta
+from typing import List, Dict, Optional
 import pytz
+from sqlalchemy.orm import joinedload
+
+from models import db, YuklemeGorev, Kullanici, Otel, KullaniciOtel
 
 # KKTC Timezone
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
 def get_kktc_now():
     return datetime.now(KKTC_TZ)
-from typing import List, Dict, Optional
-from sqlalchemy import and_, or_, func
-from sqlalchemy.orm import joinedload
-
-from models import (
-    db, YuklemeGorev, DosyaYukleme, Kullanici, Otel, 
-    KullaniciOtel, GorevDurum
-)
 
 
 class YuklemeGorevService:
@@ -40,8 +36,7 @@ class YuklemeGorevService:
             
             # Tüm aktif depo sorumlularını bul
             depo_sorumluları = Kullanici.query.filter(
-                Kullanici.rol == 'depo_sorumlusu',
-                Kullanici.aktif == True
+                Kullanici.rol == "depo_sorumlusu", Kullanici.aktif
             ).all()
             
             for depo_sorumlusu in depo_sorumluları:
@@ -146,7 +141,9 @@ class YuklemeGorevService:
             raise Exception(f"Yükleme görevi oluşturma hatası: {str(e)}")
     
     @staticmethod
-    def complete_upload_task(otel_id: int, dosya_tipi: str, dosya_yukleme_id: int, tarih: date = None) -> bool:
+    def complete_upload_task(
+        otel_id: int, dosya_tipi: str, dosya_yukleme_id: int, tarih: date | None = None
+    ) -> bool:
         """
         Yükleme görevini tamamlar.
         
@@ -177,11 +174,15 @@ class YuklemeGorevService:
             if not gorev:
                 # Görev yoksa oluştur ve tamamla
                 # Önce depo sorumlusunu bul
-                atama = KullaniciOtel.query.join(Kullanici).filter(
-                    KullaniciOtel.otel_id == otel_id,
-                    Kullanici.rol == 'depo_sorumlusu',
-                    Kullanici.aktif == True
-                ).first()
+                atama = (
+                    KullaniciOtel.query.join(Kullanici)
+                    .filter(
+                        KullaniciOtel.otel_id == otel_id,
+                        Kullanici.rol == "depo_sorumlusu",
+                        Kullanici.aktif,
+                    )
+                    .first()
+                )
                 
                 if atama:
                     gorev = YuklemeGorev(
@@ -211,7 +212,9 @@ class YuklemeGorevService:
             raise Exception(f"Yükleme görevi tamamlama hatası: {str(e)}")
     
     @staticmethod
-    def get_pending_uploads(depo_sorumlusu_id: int, tarih: date = None) -> List[Dict]:
+    def get_pending_uploads(
+        depo_sorumlusu_id: int, tarih: date | None = None
+    ) -> List[Dict]:
         """
         Bekleyen yükleme görevlerini getirir.
         
@@ -249,7 +252,7 @@ class YuklemeGorevService:
             raise Exception(f"Bekleyen yükleme getirme hatası: {str(e)}")
     
     @staticmethod
-    def get_upload_status(otel_id: int, tarih: date = None) -> Dict:
+    def get_upload_status(otel_id: int, tarih: date | None = None) -> Dict:
         """
         Yükleme durumunu getirir.
         
@@ -299,7 +302,9 @@ class YuklemeGorevService:
             raise Exception(f"Yükleme durumu getirme hatası: {str(e)}")
     
     @staticmethod
-    def get_missing_uploads(baslangic: date, bitis: date, otel_id: int = None) -> List[Dict]:
+    def get_missing_uploads(
+        baslangic: date, bitis: date, otel_id: int | None = None
+    ) -> List[Dict]:
         """
         Eksik yükleme günlerini tespit eder.
         
@@ -316,9 +321,9 @@ class YuklemeGorevService:
             
             # Otelleri bul
             if otel_id:
-                oteller = [Otel.query.get(otel_id)]
+                oteller = [db.session.get(Otel, otel_id)]
             else:
-                oteller = Otel.query.filter(Otel.aktif == True).all()
+                oteller = Otel.query.filter(Otel.aktif).all()
             
             # Her gün için kontrol et
             current_date = baslangic

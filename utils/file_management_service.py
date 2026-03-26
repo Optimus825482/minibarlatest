@@ -3,20 +3,24 @@ Dosya Yönetim Servisi
 Excel dosyalarının yüklenmesi, silinmesi ve temizlenmesi işlemlerini yönetir
 """
 
+import logging
 import os
 import uuid
-from datetime import datetime, timedelta, timezone
+from typing import Tuple, Dict
+from datetime import datetime, timedelta
 import pytz
+from werkzeug.utils import secure_filename
+from models import db, DosyaYukleme, MisafirKayit
+from sqlalchemy import and_
+from utils.audit import log_audit
 
 # KKTC Timezone
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
 def get_kktc_now():
     return datetime.now(KKTC_TZ)
-from typing import Tuple, Dict
-from werkzeug.utils import secure_filename
-from models import db, DosyaYukleme, MisafirKayit
-from sqlalchemy import and_
-from utils.audit import log_audit
+
+
+logger = logging.getLogger(__name__)
 
 
 class FileManagementService:
@@ -99,7 +103,9 @@ class FileManagementService:
             return False, None, None, f'Dosya kaydetme hatası: {str(e)}'
     
     @staticmethod
-    def delete_upload_by_islem_kodu(islem_kodu: str, user_id: int = None) -> Tuple[bool, str, Dict]:
+    def delete_upload_by_islem_kodu(
+        islem_kodu: str, user_id: int | None = None
+    ) -> Tuple[bool, str, Dict]:
         """
         İşlem koduna göre yüklemeyi ve ilgili kayıtları siler.
         Tamamlanmış görevleri korur, bekleyen görevleri siler.
@@ -165,7 +171,6 @@ class FileManagementService:
             # YuklemeGorev tablosunu güncelle (dashboard senkronizasyonu için)
             try:
                 from models import YuklemeGorev
-                from datetime import date
                 
                 # Dosya tipini YuklemeGorev formatına çevir
                 dosya_tipi_map = {
@@ -173,7 +178,7 @@ class FileManagementService:
                     'arrivals': 'arrivals', 
                     'departures': 'departures'
                 }
-                yukleme_dosya_tipi = dosya_tipi_map.get(dosya_tipi, dosya_tipi)
+                dosya_tipi_map.get(dosya_tipi, dosya_tipi)
                 
                 # İlgili yükleme görevini bul ve pending'e çevir
                 yukleme_gorev = YuklemeGorev.query.filter(
@@ -186,7 +191,7 @@ class FileManagementService:
                     yukleme_gorev.dosya_yukleme_id = None
                     summary['reset_yukleme_gorev'] = 1
             except Exception as yg_err:
-                print(f"YuklemeGorev güncelleme hatası: {yg_err}")
+                logger.error(f"YuklemeGorev güncelleme hatası: {yg_err}")
             
             # Fiziksel dosyayı sil
             if os.path.exists(dosya_yukleme.dosya_yolu):
@@ -194,7 +199,7 @@ class FileManagementService:
                     os.remove(dosya_yukleme.dosya_yolu)
                 except Exception as e:
                     # Dosya silme hatası kritik değil, log'la ve devam et
-                    print(f"Dosya silme hatası: {str(e)}")
+                    logger.error(f"Dosya silme hatası: {str(e)}")
             
             # Dosya yükleme kaydını tamamen sil
             db.session.delete(dosya_yukleme)
@@ -307,7 +312,9 @@ class FileManagementService:
                         os.remove(upload.dosya_yolu)
                         deleted_count += 1
                     except Exception as e:
-                        print(f"Dosya silme hatası ({upload.dosya_yolu}): {str(e)}")
+                        logger.error(
+                            f"Dosya silme hatası ({upload.dosya_yolu}): {str(e)}"
+                        )
                 
                 # Durumu güncelle
                 upload.durum = 'silindi'
@@ -392,6 +399,6 @@ class FileManagementService:
             
         except Exception as e:
             db.session.rollback()
-            print(f"Durum güncelleme hatası: {str(e)}")
+            logger.error(f"Durum güncelleme hatası: {str(e)}")
             return False
 

@@ -38,14 +38,20 @@ class ModelTrainer:
         """
         try:
             from sklearn.preprocessing import StandardScaler
-            
+
+            df = None
+            X = None
+            feature_cols: list = []
+
             # Feature Engineering kullan
             if use_feature_engineering:
                 # Önce kaydedilmiş feature'ları dene
                 if use_stored_features:
                     from utils.ml.feature_storage import FeatureStorage
-                    
-                    logger.info(f"🎓 Model eğitimi başladı (Kaydedilmiş Feature'lar ile)...")
+
+                    logger.info(
+                        "🎓 Model eğitimi başladı (Kaydedilmiş Feature'lar ile)..."
+                    )
                     
                     storage = FeatureStorage(self.db)
                     df = storage.get_feature_matrix(metric_type, lookback_days=30)
@@ -59,8 +65,8 @@ class ModelTrainer:
                 # Kaydedilmiş feature yoksa veya yetersizse, yeni hesapla
                 if not use_stored_features:
                     from utils.ml.feature_engineer import FeatureEngineer
-                    
-                    logger.info(f"🎓 Model eğitimi başladı (Feature Engineering ile)...")
+
+                    logger.info("🎓 Model eğitimi başladı (Feature Engineering ile)...")
                     
                     engineer = FeatureEngineer(self.db)
                     df = engineer.create_feature_matrix(metric_type, lookback_days=30)
@@ -82,7 +88,7 @@ class ModelTrainer:
             
             # Ham veri kullan
             if not use_feature_engineering:
-                logger.info(f"🎓 Model eğitimi başladı (Ham veri ile)...")
+                logger.info("🎓 Model eğitimi başladı (Ham veri ile)...")
                 if len(data) < self.min_data_points:
                     logger.warning(f"Yetersiz veri: {len(data)} < {self.min_data_points}")
                     return None, None, None, 0, 0, 0
@@ -113,7 +119,7 @@ class ModelTrainer:
             # Performans metrikleri - Gerçek hesaplama
             # Isolation Forest: -1 = anomali, 1 = normal
             anomaly_count = np.sum(predictions == -1)
-            normal_count = np.sum(predictions == 1)
+            np.sum(predictions == 1)
             total_count = len(predictions)
             
             # Beklenen anomali oranı (contamination parametresi)
@@ -132,8 +138,8 @@ class ModelTrainer:
             decision_scores = model.decision_function(X_test_scaled)
             
             # Anomali threshold'u (negatif score = anomali)
-            anomaly_threshold = np.percentile(decision_scores, 10)  # En düşük %10
-            
+            np.percentile(decision_scores, 10)  # En düşük %10
+
             # True anomalies: Z-score > 2.5 olan değerler (istatistiksel anomali)
             z_scores = np.abs((X_test_scaled - np.mean(X_test_scaled, axis=0)) / (np.std(X_test_scaled, axis=0) + 1e-6))
             statistical_anomalies = np.any(z_scores > 2.5, axis=1)
@@ -148,7 +154,7 @@ class ModelTrainer:
             # False Negatives: İstatistik anomali diyor ama model demiyor
             fn = np.sum(~model_anomalies & statistical_anomalies)
             # True Negatives: İkisi de normal diyor
-            tn = np.sum(~model_anomalies & ~statistical_anomalies)
+            np.sum(~model_anomalies & ~statistical_anomalies)
             
             # Precision: TP / (TP + FP)
             precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
@@ -162,7 +168,7 @@ class ModelTrainer:
                 recall = 0.80    # Varsayılan
             
             logger.info(f"✅ Model eğitildi: {metric_type}")
-            logger.info(f"   - Veri sayısı: {len(X)}")
+            logger.info(f"   - Veri sayısı: {len(X)}")  # type: ignore[arg-type]
             logger.info(f"   - Feature sayısı: {len(feature_cols)}")
             logger.info(f"   - Accuracy: {accuracy:.2%}")
             logger.info(f"   - Precision: {precision:.2%}")

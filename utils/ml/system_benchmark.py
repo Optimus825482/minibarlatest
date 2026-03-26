@@ -6,7 +6,6 @@ Tüm ML özelliklerinin performansını ölçer
 import time
 import psutil
 import numpy as np
-import pandas as pd
 from datetime import datetime
 import logging
 

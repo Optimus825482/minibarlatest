@@ -267,7 +267,7 @@ class ConfigEditor:
             Dict: Rollback sonucu
         """
         try:
-            audit = ConfigAudit.query.get(version)
+            audit = db.session.get(ConfigAudit, version)
             if not audit or audit.filename != filename:
                 return {
                     'success': False,

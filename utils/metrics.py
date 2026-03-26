@@ -3,9 +3,11 @@ Database Metrics Collector
 PostgreSQL database metrics collection
 """
 
+import logging
 from sqlalchemy import text
 from models import db
-from datetime import datetime, timezone
+
+logger = logging.getLogger(__name__)
 
 
 class DatabaseMetrics:
@@ -50,7 +52,7 @@ class DatabaseMetrics:
                 'idle_in_transaction': result[3]
             }
         except Exception as e:
-            print(f"Error getting connection stats: {str(e)}")
+            logger.error(f"Error getting connection stats: {str(e)}")
             return {}
     
     def get_table_sizes(self):
@@ -77,7 +79,7 @@ class DatabaseMetrics:
                 for row in results
             ]
         except Exception as e:
-            print(f"Error getting table sizes: {str(e)}")
+            logger.error(f"Error getting table sizes: {str(e)}")
             return []
     
     def get_index_usage(self):
@@ -111,7 +113,7 @@ class DatabaseMetrics:
                 for row in results
             ]
         except Exception as e:
-            print(f"Error getting index usage: {str(e)}")
+            logger.error(f"Error getting index usage: {str(e)}")
             return []
     
     def get_cache_hit_ratio(self):
@@ -139,7 +141,7 @@ class DatabaseMetrics:
                 'ratio': float(result[2] or 0)
             }
         except Exception as e:
-            print(f"Error getting cache hit ratio: {str(e)}")
+            logger.error(f"Error getting cache hit ratio: {str(e)}")
             return {'ratio': 0}
     
     def get_database_size(self):
@@ -152,7 +154,7 @@ class DatabaseMetrics:
             result = db.session.execute(query).scalar()
             return result
         except Exception as e:
-            print(f"Error getting database size: {str(e)}")
+            logger.error(f"Error getting database size: {str(e)}")
             return "Unknown"
     
     def get_mysql_connection_stats(self):
@@ -164,7 +166,7 @@ class DatabaseMetrics:
                 'total': int(result[1]) if result else 0
             }
         except Exception as e:
-            print(f"Error getting MySQL connection stats: {str(e)}")
+            logger.error(f"Error getting MySQL connection stats: {str(e)}")
             return {}
     
     def get_mysql_database_size(self):
@@ -180,7 +182,7 @@ class DatabaseMetrics:
             result = db.session.execute(query).scalar()
             return f"{result} MB" if result else "Unknown"
         except Exception as e:
-            print(f"Error getting MySQL database size: {str(e)}")
+            logger.error(f"Error getting MySQL database size: {str(e)}")
             return "Unknown"
     
     def get_slow_queries(self, limit=10):
@@ -214,7 +216,7 @@ class DatabaseMetrics:
             ]
         except Exception as e:
             # pg_stat_statements extension may not be enabled
-            print(f"Note: pg_stat_statements not available: {str(e)}")
+            logger.warning(f"Note: pg_stat_statements not available: {str(e)}")
             return []
 
 

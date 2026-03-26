@@ -6,7 +6,6 @@
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import mysql, postgresql
 from datetime import datetime, timezone
 
 # revision identifiers

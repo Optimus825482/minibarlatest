@@ -8,7 +8,6 @@ Fiyatlandırma/karlılık fonksiyonları bu modülde yer almaz.
 from models import db, UrunStok, Urun, StokHareket
 from models.base import get_kktc_now
 from sqlalchemy import func
-from datetime import timedelta
 import logging
 
 logger = logging.getLogger(__name__)

@@ -135,7 +135,7 @@ function renderKatPlani(katPlani) {
       odalar += '<span class="px-2 py-1 text-xs text-slate-500">+' + (kat.gorevler.length - 6) + '</span>';
     }
     
-    katDiv.innerHTML = '<div class="flex items-center justify-between mb-3"><div class="flex items-center space-x-3"><div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center"><span class="text-indigo-600 dark:text-indigo-400 font-bold">' + kat.kat_no + '</span></div><div><h5 class="font-semibold text-slate-900 dark:text-white">' + kat.kat_adi + '</h5><span class="text-xs text-slate-500">' + kat.toplam_gorev + ' gorev</span></div></div><div class="flex items-center space-x-2">' + kritikBadge + '<span class="px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium rounded-full">#' + (index + 1) + '</span></div></div><div class="flex flex-wrap gap-2">' + odalar + '</div>';
+    katDiv.innerHTML = DOMPurify.sanitize('<div class="flex items-center justify-between mb-3"><div class="flex items-center space-x-3"><div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center"><span class="text-indigo-600 dark:text-indigo-400 font-bold">' + kat.kat_no + '</span></div><div><h5 class="font-semibold text-slate-900 dark:text-white">' + kat.kat_adi + '</h5><span class="text-xs text-slate-500">' + kat.toplam_gorev + ' gorev</span></div></div><div class="flex items-center space-x-2">' + kritikBadge + '<span class="px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium rounded-full">#' + (index + 1) + '</span></div></div><div class="flex flex-wrap gap-2">' + odalar + '</div>');
     
     container.appendChild(katDiv);
   });
@@ -175,7 +175,7 @@ function renderOncelikListesi(plan) {
       kalanDiv = '<div class="text-right ml-2"><div class="text-xs text-slate-500">Kalan</div>' + kalanSureText + '</div>';
     }
     
-    gorevDiv.innerHTML = '<div class="w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm mr-3 flex-shrink-0">' + gorev.oncelik_sirasi + '</div><div class="flex-1 min-w-0"><div class="flex flex-wrap items-center gap-1"><span class="font-bold text-slate-900 dark:text-white">Oda ' + gorev.oda_no + '</span><span class="text-xs px-2 py-0.5 rounded-full ' + getOncelikBadgeClass(gorev.oncelik_tipi) + '">' + getOncelikLabel(gorev.oncelik_tipi) + '</span></div><div class="text-xs text-slate-500 truncate">' + gorev.aciklama + '</div></div>' + kalanDiv;
+    gorevDiv.innerHTML = DOMPurify.sanitize('<div class="w-8 h-8 bg-indigo-500 text-white rounded-full flex items-center justify-center font-bold text-sm mr-3 flex-shrink-0">' + gorev.oncelik_sirasi + '</div><div class="flex-1 min-w-0"><div class="flex flex-wrap items-center gap-1"><span class="font-bold text-slate-900 dark:text-white">Oda ' + gorev.oda_no + '</span><span class="text-xs px-2 py-0.5 rounded-full ' + getOncelikBadgeClass(gorev.oncelik_tipi) + '">' + getOncelikLabel(gorev.oncelik_tipi) + '</span></div><div class="text-xs text-slate-500 truncate">' + gorev.aciklama + '</div></div>' + kalanDiv);
     
     container.appendChild(gorevDiv);
   });

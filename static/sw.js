@@ -10,7 +10,7 @@ const urlsToCache = [
   '/static/js/loading.js',
   '/static/js/toast.js',
   '/static/js/theme.js',
-  '/static/manifest.json',
+  '/static/manifest.webmanifest',
   '/static/icons/ios/32.png',
   '/static/icons/android/android-launchericon-144-144.png'
 ];

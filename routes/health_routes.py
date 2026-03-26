@@ -3,8 +3,12 @@ Health Check ve Monitoring Routes
 PostgreSQL migration için health check ve database monitoring endpoint'leri
 """
 
-from flask import Blueprint, jsonify, request
-from datetime import datetime, timezone
+import logging
+
+logger = logging.getLogger(__name__)
+
+from flask import Blueprint, jsonify
+from datetime import datetime
 from sqlalchemy import text
 from models import db
 import os
@@ -60,13 +64,15 @@ def health_check():
         }
         
         return jsonify(response), 200
-        
-    except Exception as e:
-        return jsonify({
-            'status': 'unhealthy',
-            'error': str(e),
-            'timestamp': get_kktc_now().isoformat()
-        }), 503
+
+    except Exception:
+        return jsonify(
+            {
+                "status": "unhealthy",
+                "error": "Sunucu hatasi olustu",
+                "timestamp": get_kktc_now().isoformat(),
+            }
+        ), 503
 
 
 @health_bp.route('/health/database', methods=['GET'])
@@ -151,13 +157,15 @@ def database_health():
             'metrics': metrics,
             'timestamp': get_kktc_now().isoformat()
         }), 200
-        
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'error': str(e),
-            'timestamp': get_kktc_now().isoformat()
-        }), 500
+
+    except Exception:
+        return jsonify(
+            {
+                "status": "error",
+                "error": "Sunucu hatasi olustu",
+                "timestamp": get_kktc_now().isoformat(),
+            }
+        ), 500
 
 
 @health_bp.route('/health/pool-stats', methods=['GET'])
@@ -182,12 +190,11 @@ def pool_statistics():
         }
         
         return jsonify(stats), 200
-        
-    except Exception as e:
-        return jsonify({
-            'error': str(e),
-            'timestamp': get_kktc_now().isoformat()
-        }), 500
+
+    except Exception:
+        return jsonify(
+            {"error": "Sunucu hatasi olustu", "timestamp": get_kktc_now().isoformat()}
+        ), 500
 
 
 @health_bp.route('/health/celery', methods=['GET'])
@@ -255,13 +262,15 @@ def celery_health():
         
         status_code = 200 if result['status'] == 'healthy' else 503
         return jsonify(result), status_code
-        
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'error': str(e),
-            'timestamp': get_kktc_now().isoformat()
-        }), 500
+
+    except Exception:
+        return jsonify(
+            {
+                "status": "error",
+                "error": "Sunucu hatasi olustu",
+                "timestamp": get_kktc_now().isoformat(),
+            }
+        ), 500
 
 
 @health_bp.route('/health/routes', methods=['GET'])
@@ -274,11 +283,13 @@ def list_routes():
         
         routes = []
         for rule in current_app.url_map.iter_rules():
-            routes.append({
-                'endpoint': rule.endpoint,
-                'methods': list(rule.methods),
-                'path': str(rule)
-            })
+            routes.append(
+                {
+                    "endpoint": rule.endpoint,
+                    "methods": list(rule.methods or []),
+                    "path": str(rule),
+                }
+            )
         
         # Alfabetik sırala
         routes.sort(key=lambda x: x['path'])
@@ -288,9 +299,8 @@ def list_routes():
             'routes': routes,
             'timestamp': get_kktc_now().isoformat()
         }), 200
-        
-    except Exception as e:
-        return jsonify({
-            'error': str(e),
-            'timestamp': get_kktc_now().isoformat()
-        }), 500
+
+    except Exception:
+        return jsonify(
+            {"error": "Sunucu hatasi olustu", "timestamp": get_kktc_now().isoformat()}
+        ), 500

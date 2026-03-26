@@ -21,14 +21,10 @@ Kullanım:
     FifoStokServisi.fifo_stok_cikis(otel_id, urun_id, miktar, islem_tipi, referans_id)
 """
 
-from datetime import datetime
-from decimal import Decimal
 from models import (
-    db, Otel, Urun, UrunStok, StokFifoKayit, StokFifoKullanim,
-    StokHareket, get_kktc_now
+    db, Otel, Urun, UrunStok, StokFifoKayit, StokHareket, get_kktc_now
 )
 from utils.helpers import log_islem, log_hata
-from utils.audit import audit_create
 
 
 class FifoStokServisi:
@@ -78,12 +74,13 @@ class FifoStokServisi:
             )
             db.session.add(fifo_kayit)
             db.session.flush()  # ID almak için
-            
-            # UrunStok güncelle veya oluştur
-            urun_stok = UrunStok.query.filter_by(
-                otel_id=otel_id, 
-                urun_id=urun_id
-            ).first()
+
+            # UrunStok güncelle veya oluştur (pessimistic lock)
+            urun_stok = (
+                UrunStok.query.filter_by(otel_id=otel_id, urun_id=urun_id)
+                .with_for_update()
+                .first()
+            )
             
             if not urun_stok:
                 urun_stok = UrunStok(
@@ -157,18 +154,28 @@ class FifoStokServisi:
                 return {'success': False, 'message': 'Miktar sıfırdan büyük olmalıdır'}
             
             # Mevcut FIFO kayıtlarını al (en eski önce - FIFO)
-            fifo_kayitlar = StokFifoKayit.query.filter(
-                StokFifoKayit.otel_id == otel_id,
-                StokFifoKayit.urun_id == urun_id,
-                StokFifoKayit.tukendi == False,
-                StokFifoKayit.kalan_miktar > 0
-            ).order_by(StokFifoKayit.giris_tarihi.asc()).all()
+            # with_for_update() ile pessimistic lock - race condition önleme
+            fifo_kayitlar = (
+                StokFifoKayit.query.filter(
+                    StokFifoKayit.otel_id == otel_id,
+                    StokFifoKayit.urun_id == urun_id,
+                    not StokFifoKayit.tukendi,
+                    StokFifoKayit.kalan_miktar > 0,
+                )
+                .order_by(StokFifoKayit.giris_tarihi.asc())
+                .with_for_update()
+                .all()
+            )
             
             # Toplam mevcut FIFO stok
             toplam_fifo = sum(f.kalan_miktar for f in fifo_kayitlar)
-            
-            # UrunStok'tan mevcut stok kontrolü
-            urun_stok = UrunStok.query.filter_by(otel_id=otel_id, urun_id=urun_id).first()
+
+            # UrunStok'tan mevcut stok kontrolü (pessimistic lock)
+            urun_stok = (
+                UrunStok.query.filter_by(otel_id=otel_id, urun_id=urun_id)
+                .with_for_update()
+                .first()
+            )
             toplam_urun_stok = urun_stok.mevcut_stok if urun_stok else 0
             
             # FIFO kaydı yoksa veya yetersizse ama UrunStok'ta varsa, otomatik FIFO kaydı oluştur
@@ -219,12 +226,13 @@ class FifoStokServisi:
                 })
                 
                 kalan_miktar -= alinacak
-            
-            # UrunStok güncelle
-            urun_stok = UrunStok.query.filter_by(
-                otel_id=otel_id, 
-                urun_id=urun_id
-            ).first()
+
+            # UrunStok güncelle (zaten kilitli)
+            urun_stok = (
+                UrunStok.query.filter_by(otel_id=otel_id, urun_id=urun_id)
+                .with_for_update()
+                .first()
+            )
             
             if urun_stok:
                 urun_stok.mevcut_stok -= miktar
@@ -282,7 +290,7 @@ class FifoStokServisi:
         try:
             query = StokFifoKayit.query.filter(
                 StokFifoKayit.otel_id == otel_id,
-                StokFifoKayit.tukendi == False
+                not StokFifoKayit.tukendi
             )
             
             if urun_id:
@@ -437,7 +445,7 @@ class FifoStokServisi:
             ).filter(
                 StokFifoKayit.otel_id == otel_id,
                 StokFifoKayit.urun_id == urun_id,
-                StokFifoKayit.tukendi == False
+                not StokFifoKayit.tukendi
             ).scalar()
             
             return int(toplam) if toplam else 0
@@ -464,7 +472,7 @@ class FifoStokServisi:
                 db.func.sum(StokFifoKayit.kalan_miktar).label('toplam')
             ).filter(
                 StokFifoKayit.otel_id == otel_id,
-                StokFifoKayit.tukendi == False
+                not StokFifoKayit.tukendi
             )
             
             if urun_ids:

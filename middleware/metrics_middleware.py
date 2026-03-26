@@ -46,17 +46,17 @@ def init_metrics_middleware(app):
             # User ID (session'dan)
             user_id = None
             if hasattr(request, 'user_id'):
-                user_id = request.user_id
-            
+                user_id = request.user_id  # type: ignore[attr-defined]
+
             # Metrics'e kaydet
             if endpoint and not g.request_tracked:
                 from utils.monitoring.api_metrics import APIMetrics
                 APIMetrics.track_request(
-                    endpoint=endpoint,
+                    endpoint=endpoint or "",  # type: ignore[arg-type]
                     duration=duration,
                     status_code=status_code,
                     method=method,
-                    user_id=user_id
+                    user_id=user_id,
                 )
                 g.request_tracked = True
             
@@ -92,10 +92,10 @@ def track_endpoint(f):
             # Track metrics
             from utils.monitoring.api_metrics import APIMetrics
             APIMetrics.track_request(
-                endpoint=request.endpoint,
+                endpoint=request.endpoint or "",  # type: ignore[arg-type]
                 duration=duration,
                 status_code=200,  # Başarılı response
-                method=request.method
+                method=request.method,
             )
             
             return response
@@ -105,10 +105,10 @@ def track_endpoint(f):
             # Track error
             from utils.monitoring.api_metrics import APIMetrics
             APIMetrics.track_request(
-                endpoint=request.endpoint,
+                endpoint=request.endpoint or "",  # type: ignore[arg-type]
                 duration=duration,
                 status_code=500,  # Error response
-                method=request.method
+                method=request.method,
             )
             
             raise e

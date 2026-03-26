@@ -18,7 +18,6 @@ class ReportGenerator:
     def generate_weekly_report(self):
         """Haftalık anomali raporu oluştur"""
         try:
-            from models import MLAlert
             from utils.ml.alert_manager import AlertManager
             
             alert_manager = AlertManager(self.db)
