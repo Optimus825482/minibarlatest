@@ -94,6 +94,7 @@ services:
         condition: service_healthy
     networks:
       - minibar_network
+      - coolify
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
@@ -110,3 +111,5 @@ volumes:
 networks:
   minibar_network:
     driver: bridge
+  coolify:
+    external: true
