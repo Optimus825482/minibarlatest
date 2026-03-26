@@ -1341,6 +1341,27 @@ def pdf_export_task(self, rapor_tipi, filters=None):
             return {"status": "error", "message": str(e)}
 
 
+@celery.task(name='maintenance.cleanup_old_files')
+def cleanup_old_files_task():
+    """
+    Eski doluluk dosyalarını temizle - Her gün 02:00'de (KKTC)
+    4 günden eski dosyaları otomatik siler
+    """
+    try:
+        app, db = get_flask_app()
+        from utils.file_management_service import FileManagementService
+
+        with app.app_context():
+            logger.info("🗑️ Eski dosya temizleme başladı...")
+            result = FileManagementService.cleanup_old_files()
+            logger.info(f"✅ Eski dosya temizleme tamamlandı: {result}")
+            return {'status': 'success', 'message': str(result)}
+
+    except Exception as e:
+        logger.error(f"Eski dosya temizleme hatası: {str(e)}")
+        return {'status': 'error', 'message': str(e)}
+
+
 # ============================================
 # CELERY BEAT SCHEDULE (Periyodik Task'lar)
 # ============================================
@@ -1446,6 +1467,14 @@ celery.conf.beat_schedule = {
     "gunluk-minibar-sarfiyat-raporu": {
         "task": "rapor.gunluk_minibar_sarfiyat_raporu",
         "schedule": crontab(hour="6", minute="5"),  # UTC 06:05 = KKTC 08:05
+    },
+    # ============================================
+    # DOSYA TEMİZLİK SCHEDULE
+    # ============================================
+    # Her gün 02:00'de (KKTC) eski doluluk dosyalarını temizle
+    "eski-dosyalari-temizle": {
+        "task": "maintenance.cleanup_old_files",
+        "schedule": crontab(hour="0", minute="0"),  # UTC 00:00 = KKTC 02:00
     },
     # ============================================
     # VERİTABANI TEMİZLİK SCHEDULE

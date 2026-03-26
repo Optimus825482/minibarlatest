@@ -53,15 +53,9 @@ def pre_fork(server, worker):
     """Called just before a worker is forked."""
     pass
 
-_first_worker_set = False
-
 
 def post_fork(server, worker):
     """Called just after a worker has been forked."""
-    global _first_worker_set
-    if not _first_worker_set:
-        _first_worker_set = True
-        os.environ["SCHEDULER_WORKER_ID"] = "1"
     server.log.info(f"Worker spawned (pid: {worker.pid})")
 
 def pre_exec(server):
