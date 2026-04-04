@@ -95,6 +95,13 @@ services:
     networks:
       - minibar_network
       - coolify
+    labels:
+      - "traefik.http.services.minibar-app.loadbalancer.server.port=5000"
+      - "traefik.http.services.minibar-app.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.minibar-app.loadbalancer.healthcheck.interval=15s"
+      - "traefik.http.services.minibar-app.loadbalancer.healthcheck.timeout=10s"
+      - "traefik.http.middlewares.minibar-retry.retry.attempts=2"
+      - "traefik.http.middlewares.minibar-retry.retry.initialinterval=500ms"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s

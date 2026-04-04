@@ -28,7 +28,7 @@ health_bp = Blueprint('health', __name__)
 def health_check():
     """
     Sistem health check endpoint'i
-    Database bağlantısı, connection pool durumu ve temel metrikleri kontrol eder
+    Database, Redis ve Celery durumunu kontrol eder
     """
     try:
         # Database connection test
@@ -44,26 +44,58 @@ def health_check():
             'overflow': pool.overflow(),
             'checked_in': pool.size() - pool.checkedout()
         }
-        
+
+        # Redis connection test
+        redis_status = "unknown"
+        try:
+            import redis as redis_lib
+
+            redis_url = os.getenv(
+                "REDIS_URL", os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+            )
+            r = redis_lib.from_url(redis_url, socket_timeout=3)
+            r.ping()
+            redis_status = "healthy"
+        except Exception:
+            redis_status = "unhealthy"
+
+        # Celery worker check (lightweight ping, 3s timeout)
+        celery_status = "unknown"
+        try:
+            from celery_app import celery
+
+            ping_result = celery.control.ping(timeout=3)
+            celery_status = "healthy" if ping_result else "no_workers"
+        except Exception:
+            celery_status = "unhealthy"
+
         # Database version
         if db_type == 'postgresql':
             version_result = db.session.execute(text('SELECT version()')).scalar()
         else:
             version_result = db.session.execute(text('SELECT VERSION()')).scalar()
-        
+
+        # Overall status
+        overall = "healthy"
+        if redis_status != "healthy" or celery_status not in ("healthy",):
+            overall = "degraded"
+
         response = {
-            'status': 'healthy',
-            'timestamp': get_kktc_now().isoformat(),
-            'database': {
-                'status': db_status,
-                'type': db_type,
-                'version': version_result.split()[0] if version_result else 'unknown'
+            "status": overall,
+            "timestamp": get_kktc_now().isoformat(),
+            "database": {
+                "status": db_status,
+                "type": db_type,
+                "version": version_result.split()[0] if version_result else "unknown",
             },
-            'connection_pool': pool_stats,
-            'environment': os.getenv('FLASK_ENV', 'production')
+            "redis": {"status": redis_status},
+            "celery": {"status": celery_status},
+            "connection_pool": pool_stats,
+            "environment": os.getenv("FLASK_ENV", "production"),
         }
-        
-        return jsonify(response), 200
+
+        status_code = 200 if overall in ("healthy", "degraded") else 503
+        return jsonify(response), status_code
 
     except Exception:
         return jsonify(

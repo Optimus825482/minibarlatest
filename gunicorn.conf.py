@@ -25,7 +25,7 @@ reload_extra_files = []  # Template dosyaları için (isteğe bağlı)
 # Timeouts
 timeout = int(os.getenv('GUNICORN_TIMEOUT', '300'))  # 300s default (app import ~120s sürüyor)
 graceful_timeout = 30
-keepalive = 5
+keepalive = 65  # Traefik idle timeout (default ~90s) altında ama yeterince yüksek
 
 # Logging
 accesslog = '-'
