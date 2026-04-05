@@ -24,9 +24,11 @@ if os.path.exists(_models_py_path):
     # Base exports
     db = _models_main.db
     get_kktc_now = _models_main.get_kktc_now
-    KKTC_TZ = _models_main.KKTC_TZ
     JSONType = _models_main.JSONType
-    
+
+    # KKTC_TZ models.py'de tanımlı değil, doğrudan timezone modülünden al
+    from utils.timezone import KKTC_TZ  # noqa: E402
+
     # Enum'lar
     KullaniciRol = _models_main.KullaniciRol
     HareketTipi = _models_main.HareketTipi
