@@ -4,15 +4,16 @@ PostgreSQL migration için health check ve database monitoring endpoint'leri
 """
 
 import logging
+from datetime import datetime
+
+import pytz
+from flask import Blueprint, jsonify
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+
+from models import db
 
 logger = logging.getLogger(__name__)
-
-from flask import Blueprint, jsonify
-from datetime import datetime
-from sqlalchemy import text
-from models import db
-import os
-import pytz
 
 # KKTC Timezone (Kıbrıs - Europe/Nicosia)
 KKTC_TZ = pytz.timezone('Europe/Nicosia')
@@ -27,84 +28,23 @@ health_bp = Blueprint('health', __name__)
 @health_bp.route('/health', methods=['GET'])
 def health_check():
     """
-    Sistem health check endpoint'i
-    Database, Redis ve Celery durumunu kontrol eder
+    Lightweight health check — sadece DB ping.
+    Traefik ve Docker HEALTHCHECK bunu kullanır, hızlı olmalı (<100ms).
+    Redis/Celery detayı için /health/celery endpoint'ini kullan.
     """
     try:
-        # Database connection test
         db.session.execute(text('SELECT 1'))
-        db_status = 'healthy'
-        db_type = 'postgresql' if 'postgresql' in str(db.engine.url) else 'mysql'
-        
-        # Connection pool statistics
-        pool = db.engine.pool
-        pool_stats = {
-            'size': pool.size(),
-            'checked_out': pool.checkedout(),
-            'overflow': pool.overflow(),
-            'checked_in': pool.size() - pool.checkedout()
-        }
-
-        # Redis connection test
-        redis_status = "unknown"
-        try:
-            import redis as redis_lib
-
-            redis_url = os.getenv(
-                "REDIS_URL", os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
-            )
-            r = redis_lib.from_url(redis_url, socket_timeout=3)
-            r.ping()
-            redis_status = "healthy"
-        except Exception:
-            redis_status = "unhealthy"
-
-        # Celery worker check (lightweight ping, 3s timeout)
-        celery_status = "unknown"
-        try:
-            from celery_app import celery
-
-            ping_result = celery.control.ping(timeout=3)
-            celery_status = "healthy" if ping_result else "no_workers"
-        except Exception:
-            celery_status = "unhealthy"
-
-        # Database version
-        if db_type == 'postgresql':
-            version_result = db.session.execute(text('SELECT version()')).scalar()
-        else:
-            version_result = db.session.execute(text('SELECT VERSION()')).scalar()
-
-        # Overall status
-        overall = "healthy"
-        if redis_status != "healthy" or celery_status not in ("healthy",):
-            overall = "degraded"
-
-        response = {
-            "status": overall,
+        return jsonify({
+            "status": "healthy",
             "timestamp": get_kktc_now().isoformat(),
-            "database": {
-                "status": db_status,
-                "type": db_type,
-                "version": version_result.split()[0] if version_result else "unknown",
-            },
-            "redis": {"status": redis_status},
-            "celery": {"status": celery_status},
-            "connection_pool": pool_stats,
-            "environment": os.getenv("FLASK_ENV", "production"),
-        }
+        }), 200
 
-        status_code = 200 if overall in ("healthy", "degraded") else 503
-        return jsonify(response), status_code
-
-    except Exception:
-        return jsonify(
-            {
-                "status": "unhealthy",
-                "error": "Sunucu hatasi olustu",
-                "timestamp": get_kktc_now().isoformat(),
-            }
-        ), 503
+    except SQLAlchemyError:
+        return jsonify({
+            "status": "unhealthy",
+            "error": "Sunucu hatasi olustu",
+            "timestamp": get_kktc_now().isoformat(),
+        }), 503
 
 
 @health_bp.route('/health/database', methods=['GET'])
@@ -190,14 +130,12 @@ def database_health():
             'timestamp': get_kktc_now().isoformat()
         }), 200
 
-    except Exception:
-        return jsonify(
-            {
-                "status": "error",
-                "error": "Sunucu hatasi olustu",
-                "timestamp": get_kktc_now().isoformat(),
-            }
-        ), 500
+    except SQLAlchemyError:
+        return jsonify({
+            "status": "error",
+            "error": "Sunucu hatasi olustu",
+            "timestamp": get_kktc_now().isoformat(),
+        }), 500
 
 
 @health_bp.route('/health/pool-stats', methods=['GET'])
@@ -223,10 +161,11 @@ def pool_statistics():
         
         return jsonify(stats), 200
 
-    except Exception:
-        return jsonify(
-            {"error": "Sunucu hatasi olustu", "timestamp": get_kktc_now().isoformat()}
-        ), 500
+    except SQLAlchemyError:
+        return jsonify({
+            "error": "Sunucu hatasi olustu",
+            "timestamp": get_kktc_now().isoformat(),
+        }), 500
 
 
 @health_bp.route('/health/celery', methods=['GET'])
@@ -250,9 +189,9 @@ def celery_health():
         try:
             celery.control.ping(timeout=2)
             result['broker']['status'] = 'connected'
-        except Exception as e:
-            result['broker']['status'] = 'disconnected'
-            result['broker']['error'] = str(e)
+        except (ConnectionError, OSError, TimeoutError) as e:
+            result["broker"]["status"] = "disconnected"
+            result["broker"]["error"] = str(e)
         
         # Worker durumunu kontrol et
         try:
@@ -266,9 +205,9 @@ def celery_health():
             else:
                 result['worker_count'] = 0
                 result['status'] = 'no_workers'
-        except Exception as e:
-            result['status'] = 'error'
-            result['error'] = str(e)
+        except (ConnectionError, OSError, TimeoutError) as e:
+            result["status"] = "error"
+            result["error"] = str(e)
         
         # Zamanlanmış görevleri kontrol et (Beat çalışıyor mu?)
         try:
@@ -281,8 +220,8 @@ def celery_health():
             else:
                 # Beat çalışıyor olabilir ama henüz zamanlanmış görev yok
                 result['beat']['status'] = 'no_scheduled_tasks'
-        except Exception as e:
-            result['beat']['error'] = str(e)
+        except (ConnectionError, OSError, TimeoutError) as e:
+            result["beat"]["error"] = str(e)
         
         # Genel durum belirleme
         if result['broker']['status'] == 'connected' and result.get('worker_count', 0) > 0:
@@ -295,14 +234,12 @@ def celery_health():
         status_code = 200 if result['status'] == 'healthy' else 503
         return jsonify(result), status_code
 
-    except Exception:
-        return jsonify(
-            {
-                "status": "error",
-                "error": "Sunucu hatasi olustu",
-                "timestamp": get_kktc_now().isoformat(),
-            }
-        ), 500
+    except (ImportError, RuntimeError):
+        return jsonify({
+            "status": "error",
+            "error": "Sunucu hatasi olustu",
+            "timestamp": get_kktc_now().isoformat(),
+        }), 500
 
 
 @health_bp.route('/health/routes', methods=['GET'])
@@ -332,7 +269,8 @@ def list_routes():
             'timestamp': get_kktc_now().isoformat()
         }), 200
 
-    except Exception:
-        return jsonify(
-            {"error": "Sunucu hatasi olustu", "timestamp": get_kktc_now().isoformat()}
-        ), 500
+    except RuntimeError:
+        return jsonify({
+            "error": "Sunucu hatasi olustu",
+            "timestamp": get_kktc_now().isoformat(),
+        }), 500

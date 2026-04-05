@@ -13,7 +13,7 @@ from typing import Any, Tuple
 import logging
 import os
 
-from utils.timezone import KKTC_TZ, get_kktc_now
+from utils.timezone import get_kktc_now
 
 # Logging
 logger = logging.getLogger(__name__)

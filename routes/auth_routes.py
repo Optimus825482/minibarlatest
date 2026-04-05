@@ -15,7 +15,6 @@ Roller:
 """
 
 from flask import render_template, request, redirect, url_for, flash, session
-from datetime import datetime
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from models import db, Otel, Kullanici, SistemAyar

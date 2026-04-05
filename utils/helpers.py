@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from reportlab.lib import colors
@@ -12,7 +11,7 @@ from sqlalchemy import case
 import json
 import traceback
 import logging
-from utils.timezone import KKTC_TZ, get_kktc_now, get_kktc_today, utc_to_kktc, kktc_to_utc
+from utils.timezone import get_kktc_now
 
 logger = logging.getLogger(__name__)
 

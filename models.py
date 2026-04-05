@@ -1,11 +1,10 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
 from sqlalchemy import Numeric
 from sqlalchemy.dialects.postgresql import JSONB
 import enum
 
-from utils.timezone import KKTC_TZ, get_kktc_now
+from utils.timezone import get_kktc_now
 
 db = SQLAlchemy()
 
