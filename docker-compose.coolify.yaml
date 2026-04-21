@@ -95,7 +95,7 @@ services:
     networks:
       - minibar_network
       - coolify
-        labels:
+    labels:
       - "traefik.enable=true"
       - "traefik.docker.network=coolify"
 
@@ -110,7 +110,7 @@ services:
       - "traefik.http.services.minibar.loadbalancer.healthcheck.timeout=10s"
 
       - "traefik.http.middlewares.minibar-redirect.redirectscheme.scheme=https"
-      - "traefik.http.routers.minibar-http.rule=Host(`minibartakip.com`) || Host(`www.minibartakip.com`)"
+      - "traefik.http.routers.minibar-http.rule=Host(`minibartakip.com`)"
       - "traefik.http.routers.minibar-http.entrypoints=http"
       - "traefik.http.routers.minibar-http.middlewares=minibar-redirect"
 
