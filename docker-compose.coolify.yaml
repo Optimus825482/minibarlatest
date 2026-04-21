@@ -95,13 +95,29 @@ services:
     networks:
       - minibar_network
       - coolify
-    labels:
-      - "traefik.http.services.minibar-app.loadbalancer.server.port=5000"
-      - "traefik.http.services.minibar-app.loadbalancer.healthcheck.path=/health"
-      - "traefik.http.services.minibar-app.loadbalancer.healthcheck.interval=15s"
-      - "traefik.http.services.minibar-app.loadbalancer.healthcheck.timeout=10s"
+        labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=coolify"
+
+      - "traefik.http.routers.minibar.rule=Host(`minibartakip.com`) || Host(`www.minibartakip.com`)"
+      - "traefik.http.routers.minibar.entrypoints=http,https"
+      - "traefik.http.routers.minibar.tls=true"
+      - "traefik.http.routers.minibar.tls.certresolver=letsencrypt"
+
+      - "traefik.http.services.minibar.loadbalancer.server.port=5000"
+      - "traefik.http.services.minibar.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.minibar.loadbalancer.healthcheck.interval=15s"
+      - "traefik.http.services.minibar.loadbalancer.healthcheck.timeout=10s"
+
+      - "traefik.http.middlewares.minibar-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.minibar-http.rule=Host(`minibartakip.com`) || Host(`www.minibartakip.com`)"
+      - "traefik.http.routers.minibar-http.entrypoints=http"
+      - "traefik.http.routers.minibar-http.middlewares=minibar-redirect"
+
       - "traefik.http.middlewares.minibar-retry.retry.attempts=2"
       - "traefik.http.middlewares.minibar-retry.retry.initialinterval=500ms"
+      - "traefik.http.routers.minibar.middlewares=minibar-retry"
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 60s
