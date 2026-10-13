@@ -18,6 +18,12 @@ def _ensure_dolum_talebi_columns():
     if _SCHEMA_CHECKED:
         return
     try:
+        try:
+            with db.engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+                conn.execute(db.text("ALTER TYPE dolum_talep_durum ADD VALUE IF NOT EXISTS 'iptal'"))
+        except Exception:
+            pass
+
         db.session.execute(db.text(
             "ALTER TABLE minibar_dolum_talepleri "
             "ADD COLUMN IF NOT EXISTS tamamlayan_id INTEGER REFERENCES kullanicilar(id) ON DELETE SET NULL, "
@@ -26,7 +32,8 @@ def _ensure_dolum_talebi_columns():
             "ADD COLUMN IF NOT EXISTS kapatma_aciklamasi TEXT, "
             "ADD COLUMN IF NOT EXISTS iptal_aciklamasi TEXT, "
             "ADD COLUMN IF NOT EXISTS iptal_eden_id INTEGER REFERENCES kullanicilar(id) ON DELETE SET NULL, "
-            "ADD COLUMN IF NOT EXISTS iptal_tarihi TIMESTAMPTZ"
+            "ADD COLUMN IF NOT EXISTS iptal_tarihi TIMESTAMPTZ, "
+            "ADD COLUMN IF NOT EXISTS notlar TEXT"
         ))
         db.session.commit()
         _SCHEMA_CHECKED = True
