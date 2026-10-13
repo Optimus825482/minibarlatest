@@ -1,9 +1,9 @@
-{% extends "base.html" %} {% block title %}Royalbar Kişiselleştirme Talepleri -
-Minibar Takip Sistemi{% endblock %} {% block page_title %}Royalbar
-Kişiselleştirme Talepleri Yönetimi{% endblock %} {% block content %}
+{% extends "base.html" %} {% block title %}Mybar Kişiselleştirme Talepleri Raporu -
+Minibar Takip Sistemi{% endblock %} {% block page_title %}Mybar
+Kişiselleştirme Talepleri ve Görülme Raporu{% endblock %} {% block content %}
 <div class="space-y-6">
   <!-- İstatistikler -->
-  <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+  <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
     <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
       <div class="p-5">
         <div class="flex items-center">
@@ -32,6 +32,49 @@ Kişiselleştirme Talepleri Yönetimi{% endblock %} {% block content %}
               <dd
                 class="text-lg font-semibold text-slate-900 dark:text-slate-100"
                 id="stat_bekleyen"
+              >
+                -
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800 overflow-hidden shadow rounded-lg">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg
+              class="h-6 w-6 text-amber-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              ></path>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              ></path>
+            </svg>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt
+                class="text-sm font-medium text-slate-500 dark:text-slate-400 truncate"
+              >
+                Henüz Görülmeyen (Bekleyen)
+              </dt>
+              <dd
+                class="text-lg font-semibold text-amber-600 dark:text-amber-400"
+                id="stat_gorulmemis"
               >
                 -
               </dd>
@@ -119,29 +162,37 @@ Kişiselleştirme Talepleri Yönetimi{% endblock %} {% block content %}
   <!-- Talepler Tablosu -->
   <div class="bg-white dark:bg-slate-800 shadow rounded-lg">
     <div class="px-4 py-5 sm:p-6">
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h3
             class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100"
           >
-            Tüm Royalbar Kişiselleştirme Talepleri
+            Tüm Mybar Kişiselleştirme Talepleri & Görülme Takibi
           </h3>
           <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Misafirlerden gelen tüm Royalbar kişiselleştirme talepleri
+            Misafirlerden gelen Mybar taleplerinin hangi kat sorumlusu tarafından ne zaman görüldüğünü ve tamamlandığını izleyin
           </p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
+          <select
+            id="gorulme_filtre"
+            onchange="talepleriYukle()"
+            class="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          >
+            <option value="tumu">Görülme: Tümü</option>
+            <option value="goruldu">Sadece Görülenler</option>
+            <option value="gorulmedi">Henüz Görülmeyenler</option>
+          </select>
           <select
             id="durum_filtre"
             onchange="talepleriYukle()"
             class="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           >
-            <option value="tumu" class="bg-white dark:bg-slate-800">
-              Tümü
+            <option value="tumu" selected class="bg-white dark:bg-slate-800">
+              Durum: Tümü
             </option>
             <option
               value="beklemede"
-              selected
               class="bg-white dark:bg-slate-800"
             >
               Bekleyen
@@ -150,7 +201,7 @@ Kişiselleştirme Talepleri Yönetimi{% endblock %} {% block content %}
             <option value="iptal">İptal Edilen</option>
           </select>
           <button
-            onclick="talepleriYukle()"
+            onclick="talepleriYukle(); istatistikleriYukle();"
             class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
           >
             <svg
@@ -225,11 +276,11 @@ Kişiselleştirme Talepleri Yönetimi{% endblock %} {% block content %}
     talepleriYukle();
     istatistikleriYukle();
 
-    // Her 30 saniyede bir otomatik yenile
+    // Her 20 saniyede bir otomatik yenile
     setInterval(() => {
       talepleriYukle();
       istatistikleriYukle();
-    }, 30000);
+    }, 20000);
   });
 
   // İstatistikleri yükle
@@ -240,6 +291,11 @@ Kişiselleştirme Talepleri Yönetimi{% endblock %} {% block content %}
 
       if (data.success) {
         document.getElementById("stat_bekleyen").textContent = data.bekleyen;
+        const gorulmemisEl = document.getElementById("stat_gorulmemis");
+        if (gorulmemisEl) {
+          gorulmemisEl.textContent =
+            data.gorulmemis_bekleyen !== undefined ? data.gorulmemis_bekleyen : "-";
+        }
         document.getElementById("stat_tamamlanan").textContent =
           data.tamamlanan_bugun;
         document.getElementById("stat_iptal").textContent = data.iptal_bugun;
@@ -252,12 +308,16 @@ Kişiselleştirme Talepleri Yönetimi{% endblock %} {% block content %}
   // Talepleri yükle
   async function talepleriYukle() {
     const durum = document.getElementById("durum_filtre").value;
+    const gorulme = document.getElementById("gorulme_filtre")?.value || "tumu";
 
     try {
+      const params = new URLSearchParams();
+      if (durum !== "tumu") params.set("durum", durum);
+      if (gorulme !== "tumu") params.set("gorulme", gorulme);
+
       let url = "/api/dolum-talepleri-admin";
-      if (durum !== "tumu") {
-        url += `?durum=${durum}`;
-      }
+      const qs = params.toString();
+      if (qs) url += `?${qs}`;
 
       const response = await fetch(url);
       const data = await response.json();
@@ -280,6 +340,16 @@ Kişiselleştirme Talepleri Yönetimi{% endblock %} {% block content %}
     }
   }
 
+  function escapeHtml(str) {
+    if (str == null) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   // Talep listesini göster
   function talepListesiGoster(talepler) {
     const container = document.getElementById("talep_listesi");
@@ -298,26 +368,43 @@ Kişiselleştirme Talepleri Yönetimi{% endblock %} {% block content %}
     }
 
     let html = `
-            <div class="overflow-hidden">
-                <table class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet" style="table-layout: fixed;">
+            <div class="overflow-x-auto">
+                <table class="w-full divide-y divide-slate-200 dark:divide-slate-700 table-compact-tablet">
                     <thead class="bg-slate-50 dark:bg-slate-900">
                         <tr>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Oda</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Kat</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Oda / Kat</th>
                             <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Talep Tarihi</th>
                             <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Durum</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tamamlanma</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Misafir Notu</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Gören Kat Sorumlusu</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Görülme Zamanı</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tamamlanma / İşleyen</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Seçili Ürünler / Not (TR)</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
         `;
 
     talepler.forEach((talep) => {
-      const talepTarihi = new Date(talep.talep_tarihi).toLocaleString("tr-TR");
+      const talepTarihiObj = new Date(talep.talep_tarihi);
+      const talepTarihi = talepTarihiObj.toLocaleString("tr-TR");
       const tamamlanmaTarihi = talep.tamamlanma_tarihi
         ? new Date(talep.tamamlanma_tarihi).toLocaleString("tr-TR")
         : "-";
+
+      let gorulmeBlok = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200">👁️ Henüz Görülmedi</span>';
+      let gorulmeZamaniStr = "-";
+
+      if (talep.goruldu && talep.goren_ad && talep.goren_ad !== "-") {
+        gorulmeBlok = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200"><i class="fas fa-check-double"></i> ${escapeHtml(talep.goren_ad)}</span>`;
+      }
+
+      if (talep.gorulme_tarihi) {
+        const gorulmeObj = new Date(talep.gorulme_tarihi);
+        gorulmeZamaniStr = gorulmeObj.toLocaleString("tr-TR");
+        const farkSn = Math.max(0, Math.round((gorulmeObj - talepTarihiObj) / 1000));
+        const farkBilgi = farkSn < 60 ? `${farkSn} sn sonra` : `${Math.round(farkSn / 60)} dk sonra`;
+        gorulmeZamaniStr += `<div class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">(${farkBilgi})</div>`;
+      }
 
       let durumBadge = "";
       if (talep.durum === "beklemede") {
@@ -331,14 +418,36 @@ Kişiselleştirme Talepleri Yönetimi{% endblock %} {% block content %}
           '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200">İptal</span>';
       }
 
+      const urunChips =
+        talep.secili_urunler && talep.secili_urunler.length > 0
+          ? `<div class="flex flex-wrap gap-1 mb-1">${talep.secili_urunler
+              .map(
+                (u) =>
+                  `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200">${escapeHtml(u)}</span>`,
+              )
+              .join("")}</div>`
+          : "";
+      const notBlock = talep.notlar
+        ? `<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded p-1.5 text-xs text-blue-800 dark:text-blue-200">${escapeHtml(talep.notlar)}</div>`
+        : "";
+
+      const tamamlayanBilgi =
+        talep.tamamlayan_ad && talep.tamamlayan_ad !== "-"
+          ? `<div class="text-xs text-slate-600 dark:text-slate-300 font-medium">${escapeHtml(talep.tamamlayan_ad)}</div>`
+          : "";
+
       html += `
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                    <td class="px-3 py-3 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">${talep.oda_no}</td>
-                    <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">${talep.kat_adi}</td>
+                    <td class="px-3 py-3 whitespace-nowrap">
+                        <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">Oda ${escapeHtml(talep.oda_no)}</div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400">${escapeHtml(talep.kat_adi)}${talep.otel_adi ? ' • ' + escapeHtml(talep.otel_adi) : ''}</div>
+                    </td>
                     <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">${talepTarihi}</td>
                     <td class="px-3 py-3 whitespace-nowrap">${durumBadge}</td>
-                    <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">${tamamlanmaTarihi}</td>
-                    <td class="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">${talep.notlar ? '<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded p-1.5 text-xs text-blue-800 dark:text-blue-200">' + talep.notlar + "</div>" : "-"}</td>
+                    <td class="px-3 py-3 whitespace-nowrap">${gorulmeBlok}</td>
+                    <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">${gorulmeZamaniStr}</td>
+                    <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">${tamamlanmaTarihi}${tamamlayanBilgi}</td>
+                    <td class="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">${urunChips || notBlock ? urunChips + notBlock : "-"}</td>
                 </tr>
             `;
     });

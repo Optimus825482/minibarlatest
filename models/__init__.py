@@ -79,6 +79,7 @@ if os.path.exists(_models_py_path):
     MinibarIslem = _models_main.MinibarIslem
     MinibarIslemDetay = _models_main.MinibarIslemDetay
     MinibarDolumTalebi = _models_main.MinibarDolumTalebi
+    MinibarDolumTalebiDetay = _models_main.MinibarDolumTalebiDetay
     
     # Görev modelleri
     GunlukGorev = _models_main.GunlukGorev
@@ -144,7 +145,7 @@ __all__ = [
     # Zimmet
     'PersonelZimmet', 'PersonelZimmetDetay', 'ZimmetSablon', 'ZimmetSablonDetay', 'PersonelZimmetKullanim',
     # Minibar
-    'MinibarIslem', 'MinibarIslemDetay', 'MinibarDolumTalebi',
+    'MinibarIslem', 'MinibarIslemDetay', 'MinibarDolumTalebi', 'MinibarDolumTalebiDetay',
     # Görev
     'GunlukGorev', 'GorevDetay', 'GorevDurumLog', 'YuklemeGorev',
     'DNDKontrol', 'OdaDNDKayit', 'OdaDNDKontrol', 'OdaKontrolKaydi',

@@ -17,6 +17,12 @@ load_dotenv()
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+# Bootstrap utils before models to avoid circular import:
+# models.py -> utils.timezone -> utils/__init__ -> helpers -> from models import ...
+# Importing utils.timezone first lets utils/__init__ finish, so the later
+# `from models import` inside helpers resolves against a fully-loaded models.py
+import utils.timezone  # noqa: E402
+
 # Import models
 from models import db
 from config import Config

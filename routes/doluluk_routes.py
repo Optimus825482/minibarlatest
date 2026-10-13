@@ -281,6 +281,7 @@ def kat_doluluk_detay(kat_id):
             MinibarIslem,
             DNDKontrol,
             OdaDNDKayit,
+            MinibarDolumTalebi,
         )
 
         # Tarihi al
@@ -301,6 +302,39 @@ def kat_doluluk_detay(kat_id):
             Oda.query.filter_by(kat_id=kat_id, aktif=True).order_by(Oda.oda_no).all()
         )
         oda_ids = [oda.id for oda in odalar]
+
+        # Bekleyen Mybar dolum taleplerini al
+        mybar_talep_map = {}
+        if oda_ids:
+            aktif_mybar_talepleri = (
+                MinibarDolumTalebi.query.filter(
+                    MinibarDolumTalebi.oda_id.in_(oda_ids),
+                    MinibarDolumTalebi.durum == "beklemede",
+                )
+                .order_by(MinibarDolumTalebi.talep_tarihi.desc())
+                .all()
+            )
+            for talep in aktif_mybar_talepleri:
+                if talep.oda_id not in mybar_talep_map:
+                    mybar_talep_map[talep.oda_id] = {
+                        "id": talep.id,
+                        "talep_tarihi": talep.talep_tarihi.strftime("%d.%m.%Y %H:%M")
+                        if talep.talep_tarihi
+                        else "",
+                        "notlar": talep.notlar or "",
+                        "secili_urunler": [
+                            d.urun.urun_adi for d in talep.detaylar if d.urun
+                        ],
+                        "goruldu": bool(talep.goren_id),
+                        "goren_ad": f"{talep.goren.ad} {talep.goren.soyad}"
+                        if talep.goren
+                        else None,
+                        "gorulme_tarihi": talep.gorulme_tarihi.strftime(
+                            "%d.%m.%Y %H:%M"
+                        )
+                        if talep.gorulme_tarihi
+                        else None,
+                    }
 
         # Görev durumlarını ve detaylarını al (varış/çıkış saatleri için)
         gorev_durumlari = {}
@@ -524,6 +558,8 @@ def kat_doluluk_detay(kat_id):
                     # ✅ YENİ: BOŞ ODALAR İÇİN EK BİLGİLER
                     "son_cikis_tarihi": son_cikis_tarihi if not misafir else None,
                     "son_kontrol_tarihi": son_kontrol_tarihi if not misafir else None,
+                    # ✅ MYBAR KİŞİSELLEŞTİRME TALEBİ
+                    "mybar_talebi": mybar_talep_map.get(oda.id, None),
                 }
             )
 

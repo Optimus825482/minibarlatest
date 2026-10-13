@@ -7,6 +7,22 @@
 
 {% block content %}
 <div class="space-y-6">
+    <!-- Mybar Kişiselleştirme Talepleri ve Görülme Raporu Kısayolu -->
+    <div class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800 shadow-sm rounded-lg p-4 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-500 text-white flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-concierge-bell text-lg"></i>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Mybar Kişiselleştirme Talepleri & Görülme Raporu</h4>
+                <p class="text-xs text-slate-600 dark:text-slate-400">Gönderilen Mybar taleplerinin hangi kat sorumlusu tarafından ve ne zaman görüldüğünü izleyin</p>
+            </div>
+        </div>
+        <a href="{{ url_for('dolum_talepleri') }}" class="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg text-white bg-amber-600 hover:bg-amber-700 shadow-sm transition-colors">
+            <i class="fas fa-eye mr-2"></i> Talepleri ve Görülme Zamanlarını İzle
+        </a>
+    </div>
+
     <!-- Rapor Filtreleri -->
     <div class="bg-white shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">

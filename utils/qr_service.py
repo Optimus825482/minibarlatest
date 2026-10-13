@@ -156,19 +156,28 @@ class QRKodService:
         """
         QR okutma logunu kaydet
         Args:
-            oda_id (int): Oda ID
-            okutma_tipi (str): 'kat_sorumlusu' veya 'misafir'
+            oda_id (int | None): Oda ID
+            okutma_tipi (str): 'misafir_okutma', 'personel_kontrol', 'sistem_kontrol' (veya 'misafir', 'kat_sorumlusu')
             kullanici_id (int, optional): Kullanıcı ID (kat sorumlusu için)
             basarili (bool): İşlem başarılı mı
             hata_mesaji (str, optional): Hata mesajı
         Returns:
-            QRKodOkutmaLog: Oluşturulan log kaydı
+            QRKodOkutmaLog | None: Oluşturulan log kaydı
         """
+        tip_haritasi = {
+            'misafir': 'misafir_okutma',
+            'kat_sorumlusu': 'personel_kontrol',
+        }
+        normalized_tip = tip_haritasi.get(okutma_tipi, okutma_tipi)
+
+        if oda_id is None:
+            return None
+
         try:
             log = QRKodOkutmaLog(
                 oda_id=oda_id,
                 kullanici_id=kullanici_id,
-                okutma_tipi=okutma_tipi,
+                okutma_tipi=normalized_tip,
                 ip_adresi=request.remote_addr if request else None,
                 user_agent=request.headers.get('User-Agent', '') if request else '',
                 basarili=basarili,
@@ -213,8 +222,8 @@ class QRKodService:
             basarili_okutma = query.filter_by(basarili=True).count()
             basarisiz_okutma = query.filter_by(basarili=False).count()
             
-            kat_sorumlusu_okutma = query.filter_by(okutma_tipi='kat_sorumlusu').count()
-            misafir_okutma = query.filter_by(okutma_tipi='misafir').count()
+            kat_sorumlusu_okutma = query.filter_by(okutma_tipi='personel_kontrol').count()
+            misafir_okutma = query.filter_by(okutma_tipi='misafir_okutma').count()
             
             return {
                 'toplam_okutma': toplam_okutma,

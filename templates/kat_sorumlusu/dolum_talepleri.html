@@ -1,5 +1,5 @@
-{% extends "base.html" %} {% block title %}Royalbar Kişiselleştirme Talepleri -
-Minibar Takip Sistemi{% endblock %} {% block page_title %}Royalbar
+{% extends "base.html" %} {% block title %}Mybar Kişiselleştirme Talepleri -
+Minibar Takip Sistemi{% endblock %} {% block page_title %}Mybar
 Kişiselleştirme Talepleri{% endblock %} {% block content %}
 <div class="space-y-6">
   <!-- Bekleyen Talepler -->
@@ -10,10 +10,10 @@ Kişiselleştirme Talepleri{% endblock %} {% block content %}
           <h3
             class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100"
           >
-            Bekleyen Royalbar Kişiselleştirme Talepleri
+            Bekleyen Mybar Kişiselleştirme Talepleri
           </h3>
           <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Misafirlerden gelen Royalbar kişiselleştirme talepleri
+            Misafirlerden gelen Mybar kişiselleştirme talepleri
           </p>
         </div>
         <button
@@ -79,7 +79,7 @@ Kişiselleştirme Talepleri{% endblock %} {% block content %}
           <h3
             class="text-lg leading-6 font-medium text-slate-900 dark:text-slate-100"
           >
-            Tamamlanan Royalbar Kişiselleştirme Talepleri
+            Tamamlanan Mybar Kişiselleştirme Talepleri
           </h3>
           <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Son 7 gün içinde tamamlanan talepler
@@ -375,6 +375,17 @@ Kişiselleştirme Talepleri{% endblock %} {% block content %}
 <script>
   let aktifTalepId = null;
 
+  // XSS koruması — ürün/not metnini HTML'e güvenli göm
+  function escapeHtml(str) {
+    if (str == null) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   // Toastr ayarları
   toastr.options = {
     closeButton: true,
@@ -446,7 +457,7 @@ Kişiselleştirme Talepleri{% endblock %} {% block content %}
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <h3 class="mt-4 text-lg font-medium text-slate-900 dark:text-slate-100">Bekleyen talep yok</h3>
-                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Şu anda bekleyen Royalbar kişiselleştirme talebi bulunmuyor</p>
+                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Şu anda bekleyen Mybar kişiselleştirme talebi bulunmuyor</p>
                 </div>
             `;
       return;
@@ -458,13 +469,26 @@ Kişiselleştirme Talepleri{% endblock %} {% block content %}
     talepler.forEach((talep) => {
       const talepTarihi = new Date(talep.talep_tarihi).toLocaleString("tr-TR");
       const gecenSure = hesaplaGecenSure(talep.talep_tarihi);
+      const gorulmeTarihiStr = talep.gorulme_tarihi
+        ? new Date(talep.gorulme_tarihi).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })
+        : "";
+
+      const gorulmeDurumHtml = talep.goruldu
+        ? `<div class="flex items-center text-xs font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg px-2.5 py-1.5">
+             <i class="fas fa-check-double mr-1.5"></i>
+             <span>Görüldü: ${escapeHtml(talep.goren_ad || "Personel")} ${gorulmeTarihiStr ? "(" + gorulmeTarihiStr + ")" : ""}</span>
+           </div>`
+        : `<button type="button" onclick="talepGorulduOnayla(${talep.id})"
+                   class="w-full inline-flex items-center justify-center px-3 py-2 text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-lg transition-colors">
+             <i class="fas fa-eye mr-1.5"></i> Talebi Gördüm (Onayla)
+           </button>`;
 
       html += `
                 <div class="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
                     <div class="flex items-start justify-between mb-3">
                         <div>
-                            <h4 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Oda ${talep.oda_no}</h4>
-                            <p class="text-sm text-slate-500 dark:text-slate-400">${talep.kat_adi}</p>
+                            <h4 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Oda ${escapeHtml(talep.oda_no)}</h4>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">${escapeHtml(talep.kat_adi)}</p>
                         </div>
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 badge-touch">
                             Bekliyor
@@ -484,6 +508,26 @@ Kişiselleştirme Talepleri{% endblock %} {% block content %}
                             </svg>
                             ${gecenSure.metin}
                         </div>
+                        <div>${gorulmeDurumHtml}</div>
+                        ${
+                          talep.secili_urunler && talep.secili_urunler.length > 0
+                            ? `
+                        <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mt-2">
+                            <div class="text-sm text-amber-800 dark:text-amber-200">
+                                <span class="font-semibold block mb-1">Seçili Ürünler:</span>
+                                <div class="flex flex-wrap gap-1">
+                                    ${talep.secili_urunler
+                                      .map(
+                                        (u) =>
+                                          `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-200 dark:bg-amber-800 text-amber-900 dark:text-amber-100">${escapeHtml(u)}</span>`,
+                                      )
+                                      .join("")}
+                                </div>
+                            </div>
+                        </div>
+                        `
+                            : ""
+                        }
                         ${
                           talep.notlar
                             ? `
@@ -493,8 +537,8 @@ Kişiselleştirme Talepleri{% endblock %} {% block content %}
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
                                 </svg>
                                 <div>
-                                    <span class="font-semibold block mb-0.5">Misafir Notu:</span>
-                                    ${talep.notlar}
+                                    <span class="font-semibold block mb-0.5">Misafir Notu (Türkçe):</span>
+                                    ${escapeHtml(talep.notlar)}
                                 </div>
                             </div>
                         </div>
@@ -511,6 +555,7 @@ Kişiselleştirme Talepleri{% endblock %} {% block content %}
                             </svg>
                             Tamamla
                         </button>
+                        {% if current_user.rol in ['depo_sorumlusu', 'sistem_yoneticisi', 'admin', 'superadmin'] %}
                         <button onclick="iptalModalAc(${talep.id}, '${talep.oda_no}', '${talepTarihi}')"
                                 class="flex-1 inline-flex justify-center items-center px-4 py-2.5 border border-red-300 dark:border-red-700 text-base font-semibold rounded-xl text-red-700 dark:text-red-300 bg-white dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 active:scale-95 touch-manipulation transition-transform">
                             <svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -518,6 +563,7 @@ Kişiselleştirme Talepleri{% endblock %} {% block content %}
                             </svg>
                             İptal
                         </button>
+                        {% endif %}
                     </div>
                 </div>
             `;
@@ -525,6 +571,29 @@ Kişiselleştirme Talepleri{% endblock %} {% block content %}
 
     html += "</div>";
     container.innerHTML = html;
+  }
+
+  // Talebi görüldü olarak onayla
+  async function talepGorulduOnayla(talepId) {
+    try {
+      const response = await fetch(`/api/dolum-talebi-goruldu/${talepId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": "{{ csrf_token() }}",
+        },
+      });
+      const data = await response.json();
+      if (data.success) {
+        toastr.success("Talep görüldü olarak onaylandı");
+        talepleriYukle();
+      } else {
+        toastr.error(data.message || "Hata oluştu");
+      }
+    } catch (error) {
+      console.error("Hata:", error);
+      toastr.error("İşlem sırasında hata oluştu");
+    }
   }
 
   // Geçen süreyi hesapla
@@ -591,7 +660,7 @@ Kişiselleştirme Talepleri{% endblock %} {% block content %}
             "Content-Type": "application/json",
             "X-CSRFToken": "{{ csrf_token() }}",
           },
-          body: JSON.stringify({ notlar }),
+          body: JSON.stringify({ notlar, aciklama: notlar, onaylandi_eksik: false }),
         },
       );
 
@@ -601,6 +670,37 @@ Kişiselleştirme Talepleri{% endblock %} {% block content %}
         toastr.success(data.message);
         $.modal.close();
         talepleriYukle();
+      } else if (data.eksik_var) {
+        const eksikUrunlerStr = (data.eksik_urunler || []).join(", ");
+        const onay = confirm(`Bu talepteki bazı ürünler odaya henüz eklenmemiştir:\n${eksikUrunlerStr}\n\nYine de eksik ürün açıklaması yazarak kapatmak istiyor musunuz?`);
+        if (onay) {
+          const aciklama = prompt("Bu talebi kapatmak için eksik olan ürünler için açıklama yazmalısınız (en az 3 kelime):", notlar);
+          if (!aciklama) return;
+          const kelimeler = aciklama.trim().split(/\s+/).filter((w) => w.length > 0);
+          if (kelimeler.length < 3 || aciklama.trim().length < 10) {
+            toastr.error("Açıklama en az 3 kelime ve 10 karakter olmalıdır. Bir veya iki kelimelik açıklamalar kabul edilmez.");
+            return;
+          }
+          const zorunluRes = await fetch(
+            `/api/dolum-talebi-tamamla/${aktifTalepId}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token() }}",
+              },
+              body: JSON.stringify({ aciklama: aciklama.trim(), onaylandi_eksik: true }),
+            }
+          );
+          const zorunluData = await zorunluRes.json();
+          if (zorunluData.success) {
+            toastr.success(zorunluData.message);
+            $.modal.close();
+            talepleriYukle();
+          } else {
+            toastr.error(zorunluData.message);
+          }
+        }
       } else {
         toastr.error(data.message);
       }
@@ -613,9 +713,10 @@ Kişiselleştirme Talepleri{% endblock %} {% block content %}
   // Talebi iptal et
   async function talepIptal() {
     const notlar = document.getElementById("iptal_notlar").value.trim();
+    const kelimeler = notlar.length > 0 ? notlar.split(/\s+/).filter((w) => w.length > 0) : [];
 
-    if (!notlar) {
-      toastr.error("İptal nedeni giriniz");
+    if (kelimeler.length < 3 || notlar.length < 10) {
+      toastr.error("İptal edilen Mybar talepleri için en az 3 kelimelik geçerli bir açıklama girmek zorunludur (bir veya iki kelimelik açıklamalar kabul edilmez).");
       return;
     }
 
@@ -626,7 +727,7 @@ Kişiselleştirme Talepleri{% endblock %} {% block content %}
           "Content-Type": "application/json",
           "X-CSRFToken": "{{ csrf_token() }}",
         },
-        body: JSON.stringify({ notlar }),
+        body: JSON.stringify({ notlar, aciklama: notlar }),
       });
 
       const data = await response.json();
@@ -771,9 +872,17 @@ Kişiselleştirme Talepleri{% endblock %} {% block content %}
           <td class="px-2 py-3 text-sm text-slate-600 dark:text-slate-400 hide-tablet">${
             talep.tamamlayan_ad || "-"
           }</td>
-          <td class="px-2 py-3 text-sm text-slate-600 dark:text-slate-400 hide-tablet truncate">${
-            talep.notlar || "-"
-          }</td>
+          <td class="px-2 py-3 text-sm text-slate-600 dark:text-slate-400 hide-tablet">
+            ${
+              talep.secili_urunler && talep.secili_urunler.length > 0
+                ? `<div class="flex flex-wrap gap-1 mb-1">${talep.secili_urunler
+                    .map(
+                      (u) =>
+                        `<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200">${escapeHtml(u)}</span>`,
+                    )
+                    .join("")}</div>`
+                : ""
+            }${talep.notlar ? `<div class="truncate">${escapeHtml(talep.notlar)}</div>` : (talep.secili_urunler && talep.secili_urunler.length > 0 ? "" : "-")}</td>
         </tr>
       `;
     });

@@ -643,10 +643,39 @@ class MinibarDolumTalebi(db.Model):
     talep_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now(), nullable=False)
     durum = db.Column(db.Enum('beklemede', 'onaylandi', 'reddedildi', 'tamamlandi', 'iptal', name='dolum_talep_durum'), default='beklemede', nullable=False)
     tamamlanma_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    tamamlayan_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    goren_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    gorulme_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
+    kapatma_aciklamasi = db.Column(db.Text, nullable=True)
+    iptal_aciklamasi = db.Column(db.Text, nullable=True)
+    iptal_eden_id = db.Column(db.Integer, db.ForeignKey('kullanicilar.id', ondelete='SET NULL'), nullable=True)
+    iptal_tarihi = db.Column(db.DateTime(timezone=True), nullable=True)
     notlar = db.Column(db.Text, nullable=True)
-    
+
+    # İlişkiler
+    detaylar = db.relationship('MinibarDolumTalebiDetay', backref='talep', lazy=True, cascade='all, delete-orphan')
+    goren = db.relationship('Kullanici', foreign_keys=[goren_id], lazy='joined')
+    tamamlayan = db.relationship('Kullanici', foreign_keys=[tamamlayan_id], lazy='joined')
+    iptal_eden = db.relationship('Kullanici', foreign_keys=[iptal_eden_id], lazy='joined')
+
     def __repr__(self):
         return f'<MinibarDolumTalebi #{self.id} - Oda {self.oda_id} - {self.durum}>'
+
+
+class MinibarDolumTalebiDetay(db.Model):
+    """Misafir dolum talebine eklenen seçili ürünler"""
+    __tablename__ = 'minibar_dolum_talebi_detay'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    talep_id = db.Column(db.Integer, db.ForeignKey('minibar_dolum_talepleri.id', ondelete='CASCADE'), nullable=False, index=True)
+    urun_id = db.Column(db.Integer, db.ForeignKey('urunler.id', ondelete='RESTRICT'), nullable=False)
+    olusturma_tarihi = db.Column(db.DateTime(timezone=True), default=lambda: get_kktc_now())
+
+    # İlişki
+    urun = db.relationship('Urun', backref='dolum_talebi_detaylari')
+
+    def __repr__(self):
+        return f'<MinibarDolumTalebiDetay talep:{self.talep_id} urun:{self.urun_id}>'
 
 
 class QRKodOkutmaLog(db.Model):

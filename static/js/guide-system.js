@@ -392,6 +392,103 @@ const PAGE_GUIDES = {
       { icon: "fa-download", text: "Logları indirin" },
     ],
   },
+
+  // Kat Sorumlusu ve Mybar Sayfaları
+  kat_sorumlusu_dashboard: {
+    title: "Kat Sorumlusu Ana Sayfa",
+    icon: "fa-home",
+    roles: ["kat_sorumlusu"],
+    tips: [
+      { icon: "fa-tasks", text: "Günlük oda kontrol görevlerinizi ve ilerleme durumunuzu izleyin" },
+      { icon: "fa-bell", text: "Gelen Mybar misafir kişiselleştirme taleplerini anında görün" },
+      { icon: "fa-boxes", text: "Zimmet araba stoğunuzu ve kritik ürünleri kontrol edin" },
+      { icon: "fa-door-open", text: "Hızlıca Oda Kontrol ekranına geçiş yapın" },
+    ],
+  },
+  oda_kontrol: {
+    title: "Oda Kontrol & Minibar İşlemleri",
+    icon: "fa-door-open",
+    roles: ["kat_sorumlusu"],
+    tips: [
+      { icon: "fa-qrcode", text: "Oda QR kodunu okutarak veya listeden seçerek odayı açın" },
+      { icon: "fa-concierge-bell", text: "Mybar talebi varsa 'Mybar Talebi Görüntüle' butonu ile ürünleri inceleyin" },
+      { icon: "fa-plus-circle", text: "'Tümünü Odaya Ekle' veya adet seçerek Mybar ürünlerini teslim edin" },
+      { icon: "fa-shield-alt", text: "Mybar teslimatı misafire TÜKETİM YAZMAZ (0 Tüketim); zimmet stoğunuzdan düşer" },
+      { icon: "fa-check-double", text: "Talebi kapatırken eksik ürün varsa en az 3 kelimelik gerekçe girilmesi zorunludur" },
+      { icon: "fa-wine-bottle", text: "Rutin dolumda eksilen ürünleri tamamlayın; bu işlem tüketim kaydı oluşturur" },
+    ],
+  },
+  dolum_talepleri: {
+    title: "Mybar Kişiselleştirme Talepleri",
+    icon: "fa-concierge-bell",
+    roles: ["kat_sorumlusu", "depo_sorumlusu", "sistem_yoneticisi", "admin"],
+    tips: [
+      { icon: "fa-bell", text: "Misafirlerin QR kod ile ilettiği Mybar tercihlerini anlık takip edin" },
+      { icon: "fa-check", text: "'Talebi Gördüm / Onayla' ile sorumluluğu ve görülme saatini kaydedin" },
+      { icon: "fa-language", text: "Yabancı dildeki misafir notları otomatik Türkçeye çevrilir" },
+      { icon: "fa-door-open", text: "Odaya git butonuna basarak doğrudan oda kontrol ekranına geçin" },
+      { icon: "fa-ban", text: "Talep iptali yalnızca Depo ve Sistem Yöneticisi yetkisindedir (gerekçe zorunludur)" },
+    ],
+  },
+  sistem_yoneticisi_dolum_talepleri: {
+    title: "Mybar Talepleri Yönetimi",
+    icon: "fa-concierge-bell",
+    roles: ["sistem_yoneticisi", "admin"],
+    tips: [
+      { icon: "fa-eye", text: "Tüm otellerdeki Mybar taleplerini ve durumlarını (Görüldü, Tamamlandı, İptal) izleyin" },
+      { icon: "fa-user-clock", text: "Talebi hangi personelin ne zaman gördüğünü ve tamamladığını denetleyin" },
+      { icon: "fa-ban", text: "Gerektiğinde en az 3 kelimelik açıklama girerek talebi iptal edin" },
+    ],
+  },
+  kat_doluluk_detay: {
+    title: "Kat Doluluk & Oda Durumları",
+    icon: "fa-layer-group",
+    roles: ["kat_sorumlusu", "depo_sorumlusu", "sistem_yoneticisi", "admin"],
+    tips: [
+      { icon: "fa-bed", text: "Kattaki tüm odaların doluluk ve temizlik durumunu görün" },
+      { icon: "fa-bell", text: "Üzerinde yanıp sönen altın zil ikonu olan odalarda aktif Mybar talebi vardır" },
+      { icon: "fa-mouse-pointer", text: "Zil ikonuna tıklayarak doğrudan Mybar talep detayını açın" },
+    ],
+  },
+  "doluluk.kat_doluluk_detay": {
+    title: "Kat Doluluk & Oda Durumları",
+    icon: "fa-layer-group",
+    roles: ["kat_sorumlusu", "depo_sorumlusu", "sistem_yoneticisi", "admin"],
+    tips: [
+      { icon: "fa-bed", text: "Kattaki tüm odaların doluluk ve temizlik durumunu görün" },
+      { icon: "fa-bell", text: "Üzerinde yanıp sönen altın zil ikonu olan odalarda aktif Mybar talebi vardır" },
+      { icon: "fa-mouse-pointer", text: "Zil ikonuna tıklayarak doğrudan Mybar talep detayını açın" },
+    ],
+  },
+  kat_sorumlusu_gorev_listesi: {
+    title: "Görev Listesi",
+    icon: "fa-clipboard-list",
+    roles: ["kat_sorumlusu"],
+    tips: [
+      { icon: "fa-list-ol", text: "Bugün kontrol etmeniz gereken odaların listesini sırayla takip edin" },
+      { icon: "fa-check-circle", text: "Kontrolü tamamlanan odalar yeşil olarak işaretlenir" },
+      { icon: "fa-ban", text: "DND (Rahatsız Etmeyin) olan odaları kaydederek durumu bildirin" },
+    ],
+  },
+  kat_sorumlusu_zimmet_stoklarim: {
+    title: "Zimmet Stoklarım (Araba Stoğu)",
+    icon: "fa-box-open",
+    roles: ["kat_sorumlusu"],
+    tips: [
+      { icon: "fa-truck", text: "Kat arabanızda zimmetinizde bulunan güncel ürün adetlerini görün" },
+      { icon: "fa-exclamation-triangle", text: "Kritik seviyenin altına düşen ürünler için depoya sipariş verin" },
+      { icon: "fa-history", text: "Odalara yaptığınız dolum ve Mybar teslimat geçmişini inceleyin" },
+    ],
+  },
+  kat_sorumlusu_siparis_hazirla: {
+    title: "Depodan Sipariş İste",
+    icon: "fa-shopping-cart",
+    roles: ["kat_sorumlusu"],
+    tips: [
+      { icon: "fa-plus-circle", text: "Arabanızda azalan ürünleri seçip depodan talep edin" },
+      { icon: "fa-check-circle", text: "Depo sorumlusu onayladığında ürünler araba stoğunuza aktarılır" },
+    ],
+  },
 };
 
 // ============================================
@@ -653,42 +750,54 @@ const SYSTEM_GUIDE_BY_ROLE = {
       },
       {
         id: "minibar",
-        title: "Minibar Operasyonları",
+        title: "Minibar & Mybar Operasyonları",
         icon: "fa-wine-bottle",
         color: "purple",
         items: [
           {
-            title: "Minibar Kontrol Süreci",
-            description: "Kat sorumlusunun minibar kontrol işlem akışı.",
+            title: "Standart Minibar Kontrol Süreci",
+            description: "Kat sorumlusunun rutin minibar kontrol ve eksik tamamlama akışı.",
             steps: [
-              "Kat sorumlusu görev listesinden oda seçer",
+              "Kat sorumlusu görev listesinden veya kat doluluktan odayı seçer",
               "Odaya gider ve minibarı kontrol eder",
-              "Setup'a göre eksik ürünleri görür",
-              "Eksikleri zimmetinden tamamlar",
-              "Tüketim kaydı otomatik oluşur",
-              "Görevi tamamlar",
+              "Standart setup şablonuna göre eksilen ürünleri araba stoğundan tamamlar",
+              "Tamamlanan eksikler sisteme TÜKETİM olarak işlenir ve misafire yansıtılır",
+              "Hiç eksik yoksa 'Sarfiyat Yok' olarak, misafir odadaysa 'DND' olarak işaretlenir",
             ],
           },
           {
-            title: "Tüketim Takibi",
-            description: "Minibar tüketimlerini izleyin ve raporlayın.",
+            title: "Mybar Misafir Kişiselleştirme Modülü",
+            description: "Misafirin QR kod ile yaptığı kişisel minibar tercihleri ve operasyonel karşılama akışı.",
             steps: [
-              '"Minibar İşlemleri" sayfasına gidin',
-              "Tarih aralığı ve otel seçin",
-              "Oda bazlı tüketimleri görün",
-              "Ürün bazlı analiz yapın",
-              "Raporları Excel/PDF olarak indirin",
+              "Misafir oda QR kodunu okutarak Mybar seçimlerini yapar (Türkçe, İngilizce, Almanca, Rusça, Arapça)",
+              "Yabancı dildeki misafir notları otomatik Türkçeye çevrilir",
+              "Kat sorumlusunun ekranına sesli ve teyitli 'Yeni Mybar Talebi' diyalog penceresi açılır",
+              "'Talebi Gördüm / Onayla' butonuna basılarak sorumluluk ve görülme zaman damgası sisteme işlenir",
+              "Kat doluluk ekranında ilgili odanın üzerinde altın sarısı yanıp sönen zil ikonu belirir",
+              "Kat görevlisi odaya giderek 'Mybar Talebi Görüntüle' ile ürünleri açar",
+              "İster tek tek adet seçerek ister 'Tümünü Odaya Ekle' butonu ile ürünleri odaya teslim eder",
+              "ÖNEMLİ: Mybar ürünleri misafire TÜKETİM OLARAK YAZILMAZ (0 Tüketim / Ücretsiz); ancak kat görevlisinin zimmet stoğundan OTOMATİK DÜŞER",
+              "Eksiksiz karşılandıysa doğrudan kapanır; eksik ürün varsa kapatmak için en az 3 kelimelik açıklama zorunludur",
             ],
           },
           {
-            title: "Dolum Talepleri",
-            description: "Kat sorumlularının stok talep işlemlerini yönetin.",
+            title: "Mybar Talep İptali (Yönetici & Depo Yetkisi)",
+            description: "Mybar taleplerinin sistem yetkilileri tarafından iptal prosedürü.",
             steps: [
-              '"Dolum Talepleri" sayfasına gidin',
-              "Bekleyen talepleri görün",
-              "Talep detaylarını inceleyin",
-              "Onaylayın veya reddedin",
-              "Onaylanan talepler zimmet olarak işlenir",
+              "Kat sorumlusunun talep iptal yetkisi YOKTUR",
+              "İptal yetkisi yalnızca Sistem Yöneticisi ve Depo Sorumlusuna aittir",
+              "İptal işlemi yapılırken en az 3 kelimelik ve 10 karakterlik geçerli iptal gerekçesi girilmesi zorunludur",
+              "İptal edilen talepler ve gerekçeleri raporlarda şeffaf olarak saklanır",
+            ],
+          },
+          {
+            title: "Tüketim & Mybar Takip Raporları",
+            description: "Minibar tüketimlerini ve Mybar performansını izleyin.",
+            steps: [
+              '"Minibar İşlemleri" ve "Raporlar" sayfasına gidin',
+              "Standart tüketimler ile Mybar ekstra eklemelerini ayrı ayrı inceleyin",
+              "Kat görevlilerinin talepleri görme sürelerini ve tamamlama oranlarını denetleyin",
+              "Raporları Excel veya PDF formatında dışa aktarın",
             ],
           },
         ],
@@ -1145,6 +1254,154 @@ const SYSTEM_GUIDE_BY_ROLE = {
           },
         ],
       },
+      {
+        id: "mybar-operasyonlari",
+        title: "Mybar Operasyonları & İptal",
+        icon: "fa-concierge-bell",
+        color: "purple",
+        items: [
+          {
+            title: "Mybar Taleplerinin Takibi",
+            description: "Misafirlerin oluşturduğu ve kat personelinin üstlendiği Mybar taleplerini izleyin.",
+            steps: [
+              '"Dolum Talepleri" ekranından tüm Mybar taleplerini anlık görün',
+              "Talebi hangi kat sorumlusunun gördüğünü ve tamamladığını kontrol edin",
+              "Odada tamamlanan Mybar ürünlerinin kat sorumlusunun zimmet stoğundan düşüşünü inceleyin",
+              "Mybar ürünlerinin misafire TÜKETİM OLARAK YAZILMADIĞINI (0 Tüketim / Ücretsiz) teyit edin",
+            ],
+          },
+          {
+            title: "Yetkili Talep İptali (Zorunlu Gerekçe)",
+            description: "Misafir veya operasyonel zorunluluklar sebebiyle Mybar talebinin iptali.",
+            steps: [
+              "Kat personelinin iptal yetkisi yoktur; iptal yetkisi Depo Sorumlusu ve Sistem Yöneticisindedir",
+              "İptal etmek istediğiniz talebin yanındaki 'İptal Et' butonuna tıklayın",
+              "Açılan pencereye EN AZ 3 KELİMELİK ve 10 KARAKTERLİK açıklama / iptal gerekçesi yazın",
+              "Gerekçesiz veya 1-2 kelimelik iptal talepleri sistem tarafından engellenir",
+              "İptal kaydı zaman damgası ve kullanıcı adınızla denetim günlüğüne işlenir",
+            ],
+          },
+        ],
+      },
+    ],
+  },
+
+  // Kat Sorumlusu için özel detaylı sistem rehberi
+  kat_sorumlusu: {
+    sections: [
+      {
+        id: "gunluk-isler",
+        title: "Günlük İş Akışı",
+        icon: "fa-calendar-day",
+        color: "blue",
+        items: [
+          {
+            title: "Güne Başlarken",
+            description: "Günlük operasyona başlamadan önce yapılması gereken kontroller.",
+            steps: [
+              "1. Dashboard'dan zimmet stoğunuzu ve kat arabanızdaki ürünleri sayın",
+              "2. Eksik veya kritik seviyedeki ürünler için 'Sipariş Ver' ekranından depoya talep iletin",
+              "3. Görev listesinden bugün kontrol edilecek odaları ve kat doluluk durumunu inceleyin",
+              "4. Aktif Mybar taleplerini bildirim panelinden kontrol edin",
+            ],
+          },
+          {
+            title: "Oda Kontrolü ve Rutin Minibar Dolumu",
+            description: "Standart oda kontrollerinde minibar eksik tamamlama süreci.",
+            steps: [
+              "1. Odaya girin ve minibardaki ürünleri kontrol edin",
+              "2. Setup şablonuna göre eksilen ürünleri zimmet arabanızdan minibara yerleştirin",
+              "3. Tamamlanan eksikler sisteme TÜKETİM olarak kaydedilir (misafire yansıtılır)",
+              "4. Hiç eksik yoksa 'Sarfiyat Yok' butonuna basarak odayı tamamlayın",
+              "5. Misafir odadaysa veya 'Rahatsız Etmeyin' asılıysa 'DND' olarak işaretleyin",
+            ],
+          },
+        ],
+      },
+      {
+        id: "mybar-akisi",
+        title: "Mybar Misafir Talepleri",
+        icon: "fa-concierge-bell",
+        color: "amber",
+        items: [
+          {
+            title: "Mybar Talebi Bildirimi & Görülme Teyidi",
+            description: "Misafir odasındaki QR kod ile Mybar tercihi yaptığında izlenecek adımlar.",
+            steps: [
+              "1. Ekranda sesli/onaylı 'Yeni Mybar Talebi' diyalog penceresi açılır",
+              "2. 'Talebi Gördüm / Onayla' butonuna basarak talebi üstlendiğinizi ve görülme saatinizi kaydedin",
+              "3. Kat doluluk ekranında ilgili odanın üzerinde yanıp sönen altın zil ikonu belirir",
+              "4. Misafir notu yabancı dilde yazılmış olsa bile sistem otomatik Türkçe çevirisini gösterir",
+            ],
+          },
+          {
+            title: "Odaya Mybar Teslimatı & Stok Mantığı",
+            description: "Mybar ürünlerinin odaya yerleştirilmesi ve stok düşümü.",
+            steps: [
+              "1. Odaya gidin ve Oda Kontrol ekranında 'Mybar Talebi Görüntüle' butonuna basın",
+              "2. Talep edilen ürünleri inceleyin; her ürünün yanında mevcut zimmet stoğunuz görünür",
+              "3. 'Tümünü Odaya Ekle' butonuna basarak veya adet seçerek ürünleri odaya teslim edin",
+              "4. ÖNEMLİ KURAL: Mybar ürünleri misafire TÜKETİM OLARAK YAZILMAZ (0 Tüketim, ekstra ekleme)",
+              "5. Teslim edilen ürünler kat sorumlusunun zimmet stoğundan OTOMATİK DÜŞER",
+            ],
+          },
+          {
+            title: "Mybar Talebini Kapatma & Eksik Ürün Kuralı",
+            description: "Talebin başarıyla tamamlanması ve istisnai durumlar.",
+            steps: [
+              "1. Talep edilen tüm ürünler eksiksiz odaya konulduysa 'Mybar Talebini Kapat' butonuna basarak doğrudan kapatın",
+              "2. Kat arabanızda bazı ürünler eksikse ve kısmi karşılama yaptıysanız sistem eksik kalanları listeler",
+              "3. Talebi eksik kapatmak için EN AZ 3 KELİMELİK GEÇERLİ BİR GEREKÇE (açıklama) yazılması zorunludur",
+              "4. Yetersiz veya 1-2 kelimelik kısa açıklamalar sistem tarafından kabul edilmez",
+              "5. Kat personeli talebi iptal edemez; iptal gerekiyorsa Depo Sorumlusu veya Sistem Yöneticisine bilgi verin",
+            ],
+          },
+        ],
+      },
+      {
+        id: "stok-ve-siparis",
+        title: "Stok & Sipariş Yönetimi",
+        icon: "fa-boxes",
+        color: "emerald",
+        items: [
+          {
+            title: "Araba Stoğu ve Kritik Seviyeler",
+            description: "Zimmetinizdeki minibar ürünlerini yönetin.",
+            steps: [
+              "1. 'Stoklarım' sayfasından elinizdeki ürünlerin güncel adetlerini izleyin",
+              "2. Kritik seviyeye inen ürünler kırmızı uyarıyla vurgulanır",
+              "3. 'Sipariş Ver' butonunu kullanarak depodan takviye talep edin",
+              "4. Depo sorumlusu siparişinizi onayladığında ürünler otomatik olarak zimmetinize eklenir",
+            ],
+          },
+        ],
+      },
+      {
+        id: "raporlar-ve-ipucu",
+        title: "Raporlarım & İpuçları",
+        icon: "fa-chart-line",
+        color: "purple",
+        items: [
+          {
+            title: "Gün Sonu Raporu",
+            description: "Vardiya bitiminde gün sonu kontrolü.",
+            steps: [
+              "1. 'Gün Sonu Raporum' ekranına giderek bugün tamamladığınız oda sayısını inceleyin",
+              "2. Odaya eklenen rutin ve Mybar ürün miktarlarını kontrol edin",
+              "3. Kalan araba stoğunuz ile fiziksel ürün sayımınızı eşleştirin",
+            ],
+          },
+          {
+            title: "Hızlı İpuçları",
+            description: "İşlerinizi kolaylaştıracak pratik bilgiler.",
+            steps: [
+              "1. Oda kapısındaki QR kodu telefonunuzla okutarak odayı 1 saniyede açabilirsiniz",
+              "2. Altın zil ikonu yanıp sönen odalara öncelik vererek misafir memnuniyetini artırın",
+              "3. Eksik ürün kalması durumunda açıklamayı detaylı yazarak operasyonel takibi kolaylaştırın",
+            ],
+          },
+        ],
+      },
     ],
   },
 };
@@ -1326,7 +1583,11 @@ function openSystemGuide() {
   const guide = getSystemGuideForRole();
   const role = getCurrentUserRole();
   const roleTitle =
-    role === "depo_sorumlusu" ? "Depo Sorumlusu" : "Sistem Yöneticisi";
+    role === "depo_sorumlusu"
+      ? "Depo Sorumlusu"
+      : role === "kat_sorumlusu"
+      ? "Kat Sorumlusu"
+      : "Sistem Yöneticisi";
 
   const modal = document.createElement("div");
   modal.id = "system-guide-modal";
@@ -1513,6 +1774,7 @@ document.addEventListener("DOMContentLoaded", function () {
   if (
     userRole === "sistem_yoneticisi" ||
     userRole === "depo_sorumlusu" ||
+    userRole === "kat_sorumlusu" ||
     userRole === "admin"
   ) {
     pageGuide = new PageGuide();

@@ -13,6 +13,7 @@ let modalData = {};
 let acikAkordiyonlar = new Set(); // Açık akordiyonları takip et
 let mevcutGorevDetayId = null; // Görev detay ID (görev listesinden gelirse)
 let katDetayGeriDonUrl = null; // Kat detaylarından gelindiyse geri dönüş URL'i
+let mevcutMybarTalebi = null; // Seçili odanın bekleyen Mybar talebi
 
 // Sayfa yüklendiğinde
 document.addEventListener("DOMContentLoaded", async function () {
@@ -265,6 +266,18 @@ async function setupListesiYukle(odaId) {
 
     // Kontrol durumu badge'ini göster
     kontrolDurumuBadgeGoster(data.kontrol_durumu);
+
+    // Mybar talebi kontrolü (varsa butonları göster)
+    mevcutMybarTalebi = data.mybar_talebi || null;
+    const mybarBtn = document.getElementById("mybar_talep_btn");
+    const mybarKapatBtn = document.getElementById("mybar_talep_kapat_btn");
+    if (mevcutMybarTalebi) {
+      if (mybarBtn) mybarBtn.classList.remove("hidden");
+      if (mybarKapatBtn) mybarKapatBtn.classList.remove("hidden");
+    } else {
+      if (mybarBtn) mybarBtn.classList.add("hidden");
+      if (mybarKapatBtn) mybarKapatBtn.classList.add("hidden");
+    }
 
     renderSetupListesi(data.setuplar, data.gunluk_islemler || []);
 
@@ -805,6 +818,580 @@ function setupListesiniTemizle() {
   mevcutSetuplar = [];
   zimmetStoklar = {};
   acikAkordiyonlar.clear(); // Açık akordiyonları temizle
+
+  // Mybar butonunu temizle
+  mevcutMybarTalebi = null;
+  const mybarBtn = document.getElementById("mybar_talep_btn");
+  if (mybarBtn) mybarBtn.classList.add("hidden");
+  const mybarKapatBtn = document.getElementById("mybar_talep_kapat_btn");
+  if (mybarKapatBtn) mybarKapatBtn.classList.add("hidden");
+}
+
+// HTML escape yardımcısı
+function escapeHtml(text) {
+  if (text === null || text === undefined) return "";
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// Mybar Talep Modalı Fonksiyonları
+async function mybarTalepModalAc() {
+  if (!mevcutMybarTalebi) return;
+
+  const modal = document.getElementById("mybarTalepModal");
+  if (!modal) return;
+
+  const odaNo = document.getElementById("oda_no_text")?.textContent || "";
+  const odaTextEl = document.getElementById("mybar_modal_oda_text");
+  if (odaTextEl) odaTextEl.textContent = `Oda ${odaNo}`;
+
+  const tarihEl = document.getElementById("mybar_modal_tarih");
+  if (tarihEl) tarihEl.textContent = mevcutMybarTalebi.talep_tarihi || "-";
+
+  // Görülme durumu
+  const badgeContainer = document.getElementById("mybar_modal_gorulme_badge");
+  const onayBtn = document.getElementById("mybar_modal_onay_btn");
+  if (badgeContainer) {
+    if (mevcutMybarTalebi.goruldu) {
+      badgeContainer.innerHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300"><i class="fas fa-check-double text-xs"></i> Görüldü: ${mevcutMybarTalebi.goren_ad || 'Personel'} (${mevcutMybarTalebi.gorulme_tarihi || ''})</span>`;
+      if (onayBtn) onayBtn.classList.add("hidden");
+    } else {
+      badgeContainer.innerHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"><i class="fas fa-eye-slash text-xs"></i> Henüz Görülmedi</span>`;
+      if (onayBtn) onayBtn.classList.remove("hidden");
+    }
+  }
+
+  // Durum kontrolü API'sini çağırarak odaya daha önce eklenmiş miktarları çek
+  let durumData = null;
+  try {
+    const res = await fetch(`/api/dolum-talebi-durum-kontrol/${mevcutMybarTalebi.id}`);
+    const d = await res.json();
+    if (d.success) durumData = d;
+  } catch (err) {
+    console.warn("Durum kontrolü çekilemedi:", err);
+  }
+
+  const eklenenMap = {};
+  if (durumData && durumData.eklenen_urunler) {
+    durumData.eklenen_urunler.forEach(item => {
+      if (item && item.urun_id) {
+        eklenenMap[item.urun_id] = (eklenenMap[item.urun_id] || 0) + (item.eklenen_miktar || 0);
+      }
+    });
+  }
+
+  // Ürünler Listesi (Adet seçici ve Zimmet stok kontrolü ile)
+  const urunlerDiv = document.getElementById("mybar_modal_urunler");
+  if (urunlerDiv) {
+    urunlerDiv.innerHTML = "";
+    
+    // Ürün detaylarını al (secili_urun_detaylar veya secili_urunler)
+    let urunListesi = mevcutMybarTalebi.secili_urun_detaylar || [];
+    
+    if (urunListesi.length === 0 && mevcutMybarTalebi.secili_urunler && mevcutMybarTalebi.secili_urunler.length > 0) {
+      // Fallback: İsim listesinden setup ve zimmetStoklar ile eşleştir
+      urunListesi = mevcutMybarTalebi.secili_urunler.map((urunAdi, idx) => {
+        let matchedId = null;
+        for (const uid in zimmetStoklar) {
+          if (zimmetStoklar[uid]?.urun_adi === urunAdi) {
+            matchedId = parseInt(uid);
+            break;
+          }
+        }
+        return {
+          urun_id: matchedId || (idx + 1),
+          urun_adi: urunAdi,
+          istenen_miktar: 1
+        };
+      });
+    }
+
+    if (urunListesi.length > 0) {
+      urunListesi.forEach((urun) => {
+        const urunId = urun.urun_id;
+        const istenenMiktar = urun.istenen_miktar || 1;
+        const eklenenMiktar = eklenenMap[urunId] || 0;
+        const eksikMiktar = Math.max(0, istenenMiktar - eklenenMiktar);
+        const zimmetStok = (zimmetStoklar[urunId]?.miktar || 0);
+
+        // Varsayılan input değeri: eksik miktar kadar (stok yetiyorsa) veya min(eksik, zimmetStok)
+        const defaultSecim = Math.min(eksikMiktar, Math.max(0, zimmetStok));
+
+        const card = document.createElement("div");
+        card.className = "p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3";
+
+        const durumBadge = eksikMiktar === 0 
+          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300"><i class="fas fa-check-circle"></i> Karşılandı (${eklenenMiktar}/${istenenMiktar})</span>`
+          : (eklenenMiktar > 0
+              ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300"><i class="fas fa-adjust"></i> Kısmi: ${eklenenMiktar}/${istenenMiktar} (Eksik: ${eksikMiktar})</span>`
+              : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300"><i class="fas fa-clock"></i> Bekliyor (${istenenMiktar} Adet)</span>`);
+
+        const stokClass = zimmetStok > 0 ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-rose-600 dark:text-rose-400 font-bold";
+
+        card.innerHTML = `
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-bold text-slate-900 dark:text-white text-sm truncate">${escapeHtml(urun.urun_adi)}</span>
+              ${durumBadge}
+            </div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-3">
+              <span>İstenen: <strong class="text-slate-800 dark:text-slate-200">${istenenMiktar} Adet</strong></span>
+              <span>•</span>
+              <span>Zimmet Stoğunuz: <span class="${stokClass}">${zimmetStok} Adet</span></span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <div class="flex items-center border border-slate-300 dark:border-slate-600 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-900">
+              <button 
+                type="button" 
+                onclick="mybarAdetDegistir(${urunId}, -1, ${zimmetStok})" 
+                class="w-8 h-8 flex items-center justify-center bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 transition-colors font-bold text-sm">
+                -
+              </button>
+              <input 
+                type="number" 
+                id="mybar_adet_input_${urunId}" 
+                data-mybar-urun-id="${urunId}"
+                data-istenen-miktar="${istenenMiktar}"
+                data-eklenen-miktar="${eklenenMiktar}"
+                data-zimmet-stok="${zimmetStok}"
+                min="0" 
+                max="${zimmetStok}" 
+                value="${defaultSecim}" 
+                class="w-12 h-8 text-center bg-transparent border-0 text-sm font-bold text-slate-900 dark:text-white focus:ring-0 p-0" />
+              <button 
+                type="button" 
+                onclick="mybarAdetDegistir(${urunId}, 1, ${zimmetStok})" 
+                class="w-8 h-8 flex items-center justify-center bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 transition-colors font-bold text-sm">
+                +
+              </button>
+            </div>
+            <button 
+              type="button" 
+              onclick="mybarTekUrunOdayaEkle(${urunId})" 
+              class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-lg text-xs font-bold inline-flex items-center gap-1 shadow transition-all">
+              <i class="fas fa-plus"></i> Ekle
+            </button>
+          </div>
+        `;
+
+        urunlerDiv.appendChild(card);
+      });
+    } else {
+      urunlerDiv.innerHTML = '<span class="text-xs text-slate-400">Talep edilen ürün bulunamadı</span>';
+    }
+  }
+
+  // Not
+  const notP = document.getElementById("mybar_modal_not");
+  if (notP) {
+    notP.textContent = mevcutMybarTalebi.notlar || "Özel bir not belirtilmemiş.";
+  }
+
+  modal.classList.remove("hidden");
+}
+
+function mybarTalepModalKapat() {
+  const modal = document.getElementById("mybarTalepModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function mybarAdetDegistir(urunId, delta, maxVal) {
+  const input = document.getElementById(`mybar_adet_input_${urunId}`);
+  if (!input) return;
+  let val = parseInt(input.value) || 0;
+  val += delta;
+  if (val < 0) val = 0;
+  if (maxVal !== undefined && val > maxVal) {
+    val = maxVal;
+    if (typeof toastGoster === "function") {
+      toastGoster(`Zimmet stoğunuzda en fazla ${maxVal} adet bulunmaktadır`, "warning");
+    }
+  }
+  input.value = val;
+}
+
+// Tek ürünü girilen adet kadar odaya ekle
+async function mybarTekUrunOdayaEkle(urunId) {
+  const input = document.getElementById(`mybar_adet_input_${urunId}`);
+  if (!input) return;
+  const miktar = parseInt(input.value) || 0;
+  if (miktar <= 0) {
+    if (typeof toastGoster === "function") toastGoster("Lütfen en az 1 adet seçiniz", "warning");
+    return;
+  }
+  await mybarUrunleriGonderVeKaydet(mevcutOdaId, mevcutMybarTalebi.id, [{ urun_id: urunId, miktar: miktar }]);
+}
+
+// Tüm ürünleri talep edilen/eksik miktarları kadar (stoğun yettiği ölçüde) tek tıkla ekle
+async function mybarTumunuOdayaEkle() {
+  if (!mevcutMybarTalebi || !mevcutMybarTalebi.id) return;
+  const odaId = mevcutOdaId;
+  if (!odaId) {
+    if (typeof toastGoster === "function") toastGoster("Oda seçilmedi", "error");
+    return;
+  }
+
+  const inputs = document.querySelectorAll("[data-mybar-urun-id]");
+  const urunler = [];
+
+  inputs.forEach((input) => {
+    const urunId = parseInt(input.getAttribute("data-mybar-urun-id"));
+    const istenen = parseInt(input.getAttribute("data-istenen-miktar")) || 1;
+    const eklenen = parseInt(input.getAttribute("data-eklenen-miktar")) || 0;
+    const eksik = Math.max(0, istenen - eklenen);
+    const zimmetStok = parseInt(input.getAttribute("data-zimmet-stok")) || (zimmetStoklar[urunId]?.miktar || 0);
+
+    const eklenecek = Math.min(eksik > 0 ? eksik : istenen, zimmetStok);
+    if (eklenecek > 0) {
+      urunler.push({ urun_id: urunId, miktar: eklenecek });
+    }
+  });
+
+  if (urunler.length === 0) {
+    if (typeof toastGoster === "function") {
+      toastGoster("Odaya eklenecek eksik ürün veya yeterli zimmet stoğunuz bulunmuyor", "warning");
+    }
+    return;
+  }
+
+  await mybarUrunleriGonderVeKaydet(odaId, mevcutMybarTalebi.id, urunler);
+}
+
+// Girilen tüm input miktarlarını toplayıp odaya ekle
+async function mybarSecilenleriOdayaEkle() {
+  if (!mevcutMybarTalebi || !mevcutMybarTalebi.id) return;
+  const odaId = mevcutOdaId;
+  if (!odaId) {
+    if (typeof toastGoster === "function") toastGoster("Oda seçilmedi", "error");
+    return;
+  }
+
+  const inputs = document.querySelectorAll("[data-mybar-urun-id]");
+  const urunler = [];
+
+  inputs.forEach((input) => {
+    const urunId = parseInt(input.getAttribute("data-mybar-urun-id"));
+    const miktar = parseInt(input.value) || 0;
+    if (miktar > 0) {
+      urunler.push({ urun_id: urunId, miktar: miktar });
+    }
+  });
+
+  if (urunler.length === 0) {
+    if (typeof toastGoster === "function") {
+      toastGoster("Lütfen odaya eklemek için en az 1 ürünün adetini artırınız", "warning");
+    }
+    return;
+  }
+
+  await mybarUrunleriGonderVeKaydet(odaId, mevcutMybarTalebi.id, urunler);
+}
+
+// API Çağrısı: Tüketimsiz (tüketim=0) ve zimmet stoğundan düşerek odaya kaydet
+async function mybarUrunleriGonderVeKaydet(odaId, talepId, urunler) {
+  const btn1 = document.getElementById("mybar_tumunu_ekle_btn");
+  const btn2 = document.getElementById("mybar_secilenleri_ekle_btn");
+  if (btn1) btn1.disabled = true;
+  if (btn2) btn2.disabled = true;
+
+  try {
+    const res = await fetch("/api/kat-sorumlusu/mybar-karsila", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": typeof getCsrfToken === "function" ? getCsrfToken() : "",
+      },
+      body: JSON.stringify({
+        oda_id: odaId,
+        talep_id: talepId,
+        urunler: urunler,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || "Mybar ürünleri eklenirken hata oluştu");
+    }
+
+    if (typeof toastGoster === "function") {
+      toastGoster(data.message, "success");
+    }
+
+    // Zimmet stoğunu frontend nesnesinde güncelle
+    if (urunler && Array.isArray(urunler)) {
+      urunler.forEach((item) => {
+        if (zimmetStoklar[item.urun_id] && zimmetStoklar[item.urun_id].miktar !== undefined) {
+          zimmetStoklar[item.urun_id].miktar -= item.miktar;
+          if (zimmetStoklar[item.urun_id].miktar < 0) zimmetStoklar[item.urun_id].miktar = 0;
+        }
+      });
+    }
+
+    // Setup listesini ve Mybar modalını tazele
+    if (typeof setupListesiYukle === "function") {
+      await setupListesiYukle(odaId);
+    }
+    await mybarTalepModalAc();
+
+  } catch (err) {
+    console.error("Mybar karşılama hatası:", err);
+    if (typeof toastGoster === "function") {
+      toastGoster(err.message || "İşlem başarısız", "error");
+    } else {
+      alert(err.message || "Hata oluştu");
+    }
+  } finally {
+    if (btn1) btn1.disabled = false;
+    if (btn2) btn2.disabled = false;
+  }
+}
+
+async function mybarTalepGorulduOnayla() {
+  if (!mevcutMybarTalebi || !mevcutMybarTalebi.id) return;
+  try {
+    const response = await fetch(`/api/dolum-talebi-goruldu/${mevcutMybarTalebi.id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": typeof getCsrfToken === "function" ? getCsrfToken() : "",
+      },
+    });
+    const res = await response.json();
+    if (res.success) {
+      mevcutMybarTalebi.goruldu = true;
+      mevcutMybarTalebi.goren_ad = res.goren_ad || "Siz";
+      mevcutMybarTalebi.gorulme_tarihi = res.gorulme_tarihi || "Şimdi";
+      if (typeof toastGoster === "function") {
+        toastGoster("Mybar talebi onaylandı / görüldü olarak kaydedildi", "success");
+      }
+      await mybarTalepModalAc(); // Yenile
+    } else {
+      alert(res.message || "Hata oluştu");
+    }
+  } catch (e) {
+    console.error("Mybar talep onay hatası:", e);
+  }
+}
+
+// ==========================================
+// MYBAR TALEP KAPATMA (EKSİK KONTROLÜ & AÇIKLAMA)
+// ==========================================
+let mybarKapatmaSonDurum = null;
+
+async function mybarTalebiKapatModalAc() {
+  if (!mevcutMybarTalebi || !mevcutMybarTalebi.id) return;
+
+  const modal = document.getElementById("mybarKapatModal");
+  if (!modal) return;
+
+  const odaNo = document.getElementById("oda_no_text")?.textContent || "";
+  const odaTextTam = document.getElementById("mybar_kapat_oda_text_tam");
+  if (odaTextTam) odaTextTam.textContent = `Oda ${odaNo} • Tüm İstenen Ürünler Eklendi`;
+  const odaTextEksik = document.getElementById("mybar_kapat_oda_text_eksik");
+  if (odaTextEksik) odaTextEksik.textContent = `Oda ${odaNo} • Talep Henüz Tam Olarak Karşılanmadı`;
+
+  // Modal içini sıfırla
+  const aciklamaInput = document.getElementById("mybar_kapatma_aciklama_input");
+  if (aciklamaInput) aciklamaInput.value = "";
+  const hataKutu = document.getElementById("mybar_kapatma_hata_kutu");
+  if (hataKutu) {
+    hataKutu.classList.add("hidden");
+    hataKutu.textContent = "";
+  }
+  mybarKapatmaKelimeSay();
+
+  // Durum kontrolü API'sini çağır
+  try {
+    const res = await fetch(`/api/dolum-talebi-durum-kontrol/${mevcutMybarTalebi.id}`);
+    const data = await res.json();
+    if (!data.success) {
+      alert(data.message || "Talep durumu kontrol edilemedi");
+      return;
+    }
+
+    mybarKapatmaSonDurum = data;
+
+    const headerTam = document.getElementById("mybar_kapat_tam_header");
+    const headerEksik = document.getElementById("mybar_kapat_eksik_header");
+    const icerikTam = document.getElementById("mybar_kapat_tam_icerik");
+    const icerikEksik1 = document.getElementById("mybar_kapat_eksik_asama1");
+    const icerikEksik2 = document.getElementById("mybar_kapat_eksik_asama2");
+
+    if (data.tam_karsilandi) {
+      // 1. Durum: Tam karşılandı
+      if (headerTam) headerTam.classList.remove("hidden");
+      if (headerEksik) headerEksik.classList.add("hidden");
+      if (icerikTam) icerikTam.classList.remove("hidden");
+      if (icerikEksik1) icerikEksik1.classList.add("hidden");
+      if (icerikEksik2) icerikEksik2.classList.add("hidden");
+
+      const urunListesi = document.getElementById("mybar_kapat_tam_urun_listesi");
+      if (urunListesi) {
+        urunListesi.innerHTML = "";
+        (data.eklenen_urunler || []).forEach((u) => {
+          const badge = document.createElement("span");
+          badge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800";
+          badge.innerHTML = `<i class="fas fa-check-circle text-emerald-600"></i> ${escapeHtml(u.urun_adi)} (${u.eklenen_miktar}/${u.istenen_miktar} adet)`;
+          urunListesi.appendChild(badge);
+        });
+      }
+    } else {
+      // 2. Durum: Eksik ürünler var
+      if (headerTam) headerTam.classList.add("hidden");
+      if (headerEksik) headerEksik.classList.remove("hidden");
+      if (icerikTam) icerikTam.classList.add("hidden");
+      if (icerikEksik1) icerikEksik1.classList.remove("hidden");
+      if (icerikEksik2) icerikEksik2.classList.add("hidden");
+
+      const urunListesi = document.getElementById("mybar_kapat_eksik_urun_listesi");
+      if (urunListesi) {
+        urunListesi.innerHTML = "";
+        // Eklenenler
+        (data.eklenen_urunler || []).forEach((u) => {
+          const item = document.createElement("div");
+          item.className = "flex items-center justify-between p-2 rounded-lg bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs";
+          item.innerHTML = `
+            <span class="font-semibold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
+              <i class="fas fa-check text-emerald-600"></i> ${escapeHtml(u.urun_adi)}
+            </span>
+            <span class="font-bold text-emerald-700 dark:text-emerald-300">${u.eklenen_miktar} / ${u.istenen_miktar} eklendi</span>
+          `;
+          urunListesi.appendChild(item);
+        });
+        // Eksik kalanlar
+        (data.eksik_urunler || []).forEach((u) => {
+          const item = document.createElement("div");
+          item.className = "flex items-center justify-between p-2 rounded-lg bg-rose-50/80 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs";
+          item.innerHTML = `
+            <span class="font-semibold text-rose-900 dark:text-rose-200 flex items-center gap-1.5">
+              <i class="fas fa-times-circle text-rose-600"></i> ${escapeHtml(u.urun_adi)}
+            </span>
+            <span class="font-bold text-rose-700 dark:text-rose-300">${u.eklenen_miktar} / ${u.istenen_miktar} (${u.eksik_miktar} eksik)</span>
+          `;
+          urunListesi.appendChild(item);
+        });
+      }
+    }
+
+    modal.classList.remove("hidden");
+  } catch (e) {
+    console.error("Durum kontrol hatası:", e);
+    alert("Talep durumu kontrol edilirken bağlantı hatası oluştu.");
+  }
+}
+
+function mybarKapatModalKapat() {
+  const modal = document.getElementById("mybarKapatModal");
+  if (modal) modal.classList.add("hidden");
+  const hataKutu = document.getElementById("mybar_kapatma_hata_kutu");
+  if (hataKutu) {
+    hataKutu.classList.add("hidden");
+    hataKutu.textContent = "";
+  }
+}
+
+function mybarKapatEksikAciklamaGoster() {
+  const icerikEksik1 = document.getElementById("mybar_kapat_eksik_asama1");
+  const icerikEksik2 = document.getElementById("mybar_kapat_eksik_asama2");
+  if (icerikEksik1) icerikEksik1.classList.add("hidden");
+  if (icerikEksik2) icerikEksik2.classList.remove("hidden");
+  const aciklamaInput = document.getElementById("mybar_kapatma_aciklama_input");
+  if (aciklamaInput) aciklamaInput.focus();
+}
+
+function mybarKapatEksikAsama1eDon() {
+  const icerikEksik1 = document.getElementById("mybar_kapat_eksik_asama1");
+  const icerikEksik2 = document.getElementById("mybar_kapat_eksik_asama2");
+  if (icerikEksik2) icerikEksik2.classList.add("hidden");
+  if (icerikEksik1) icerikEksik1.classList.remove("hidden");
+}
+
+function mybarKapatmaKelimeSay() {
+  const aciklama = (document.getElementById("mybar_kapatma_aciklama_input")?.value || "").trim();
+  const kelimeler = aciklama.length > 0 ? aciklama.split(/\s+/).filter((w) => w.length > 0) : [];
+  const sayiEl = document.getElementById("mybar_kapatma_kelime_sayisi");
+  if (sayiEl) {
+    sayiEl.textContent = kelimeler.length;
+    if (kelimeler.length >= 3 && aciklama.length >= 10) {
+      sayiEl.className = "text-emerald-600 font-bold";
+    } else {
+      sayiEl.className = "text-red-500 font-bold";
+    }
+  }
+}
+
+function mybarKapatEksikOnayla() {
+  const aciklama = (document.getElementById("mybar_kapatma_aciklama_input")?.value || "").trim();
+  const kelimeler = aciklama.length > 0 ? aciklama.split(/\s+/).filter((w) => w.length > 0) : [];
+  const hataKutu = document.getElementById("mybar_kapatma_hata_kutu");
+
+  if (kelimeler.length < 3 || aciklama.length < 10) {
+    if (hataKutu) {
+      hataKutu.textContent = "Bu talebi kapatmak için eksik olan ürünler için açıklama yazmalısınız. Bir veya iki kelimelik açıklamalar kabul edilmez (en az 3 kelime zorunludur).";
+      hataKutu.classList.remove("hidden");
+    }
+    return;
+  }
+  if (hataKutu) hataKutu.classList.add("hidden");
+  mybarKapatTamamlaKaydet(true, aciklama);
+}
+
+async function mybarKapatTamamlaKaydet(onaylandiEksik = false, aciklama = "") {
+  if (!mevcutMybarTalebi || !mevcutMybarTalebi.id) return;
+
+  try {
+    const payload = {
+      onaylandi_eksik: Boolean(onaylandiEksik),
+      aciklama: aciklama
+    };
+
+    const response = await fetch(`/api/dolum-talebi-tamamla/${mevcutMybarTalebi.id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": typeof getCsrfToken === "function" ? getCsrfToken() : "",
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const res = await response.json();
+    if (res.success) {
+      mybarKapatModalKapat();
+      if (typeof toastGoster === "function") {
+        toastGoster(res.message || "Mybar talebi başarıyla kapatıldı", "success");
+      }
+      mevcutMybarTalebi = null;
+      const mybarBtn = document.getElementById("mybar_talep_btn");
+      if (mybarBtn) mybarBtn.classList.add("hidden");
+      const mybarKapatBtn = document.getElementById("mybar_talep_kapat_btn");
+      if (mybarKapatBtn) mybarKapatBtn.classList.add("hidden");
+
+      if (mevcutOdaId) {
+        setupListesiYukle(mevcutOdaId);
+      }
+    } else {
+      if (res.eksik_kalan_var) {
+        // Eksik kalan ürün var ama açıklamasız kapatılmak istenmiş
+        const hataKutu = document.getElementById("mybar_kapatma_hata_kutu");
+        if (hataKutu) {
+          hataKutu.textContent = res.message || "Eksik ürünler var. Lütfen en az 3 kelimelik açıklama giriniz.";
+          hataKutu.classList.remove("hidden");
+        }
+        mybarKapatEksikAciklamaGoster();
+      } else {
+        alert(res.message || "Talep kapatılırken hata oluştu");
+      }
+    }
+  } catch (e) {
+    console.error("Mybar talep kapatma hatası:", e);
+    alert("İşlem sırasında bir hata oluştu: " + e.message);
+  }
 }
 
 // Modal fonksiyonları

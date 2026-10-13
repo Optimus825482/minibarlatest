@@ -32,7 +32,7 @@ class BildirimTipi:
     DND_KAYDI = 'dnd_kaydi'
     SARFIYAT_YOK = 'sarfiyat_yok'
     DOLULUK_YUKLENDI = 'doluluk_yuklendi'
-    ROYALBAR_TALEBI = 'royalbar_talebi'
+    MYBAR_TALEBI = 'mybar_talebi'
 
 
 class BildirimService:
@@ -411,46 +411,65 @@ def doluluk_yuklendi_bildirimi(
     )
 
 
-def royalbar_talebi_bildirimi(
+def mybar_talebi_bildirimi(
     otel_id: int,
     oda_no: str,
     kat_adi: str,
     oda_id: Optional[int] = None,
     notlar: Optional[str] = None,
+    secili_urunler: Optional[list] = None,
+    talep_id: Optional[int] = None,
 ):
-    """Yeni Royalbar kişiselleştirme talebi geldiğinde kat sorumlusu ve yöneticilere bildirim gönderir"""
-    mesaj = f"{kat_adi} - Oda {oda_no} misafiri Royalbar kişiselleştirme talebi gönderdi."
+    """Yeni Mybar kişiselleştirme talebi geldiğinde kat sorumlusu, depo sorumlusu ve yöneticilere bildirim gönderir"""
+    mesaj = f"{kat_adi} - Oda {oda_no} misafiri Mybar kişiselleştirme talebi gönderdi."
+    if secili_urunler:
+        urun_listesi = ", ".join(str(u) for u in secili_urunler[:20])
+        mesaj += f" Seçili ürünler: {urun_listesi}"
     if notlar:
-        mesaj += f" Not: {notlar[:100]}"
+        mesaj += f" Not: {notlar[:150]}"
     
     # Kat sorumlusuna bildirim
     BildirimService.bildirim_olustur(
         hedef_rol='kat_sorumlusu',
-        bildirim_tipi=BildirimTipi.ROYALBAR_TALEBI,
-        baslik=f"🛎️ Oda {oda_no} - Yeni Royalbar Kişiselleştirme Talebi",
+        bildirim_tipi=BildirimTipi.MYBAR_TALEBI,
+        baslik=f"🛎️ Oda {oda_no} - Yeni Mybar Kişiselleştirme Talebi",
         mesaj=mesaj,
         hedef_otel_id=otel_id,
-        oda_id=oda_id
+        oda_id=oda_id,
+        gorev_id=talep_id
+    )
+    
+    # Depo sorumlusuna bildirim
+    BildirimService.bildirim_olustur(
+        hedef_rol='depo_sorumlusu',
+        bildirim_tipi=BildirimTipi.MYBAR_TALEBI,
+        baslik=f"🛎️ Oda {oda_no} - Yeni Mybar Kişiselleştirme Talebi",
+        mesaj=mesaj,
+        hedef_otel_id=otel_id,
+        oda_id=oda_id,
+        gorev_id=talep_id
     )
     
     # Yöneticilere bildirim
     BildirimService.bildirim_olustur(
         hedef_rol='sistem_yoneticisi',
-        bildirim_tipi=BildirimTipi.ROYALBAR_TALEBI,
-        baslik=f"🛎️ Oda {oda_no} - Yeni Royalbar Kişiselleştirme Talebi",
+        bildirim_tipi=BildirimTipi.MYBAR_TALEBI,
+        baslik=f"🛎️ Oda {oda_no} - Yeni Mybar Kişiselleştirme Talebi",
         mesaj=mesaj,
         hedef_otel_id=otel_id,
-        oda_id=oda_id
+        oda_id=oda_id,
+        gorev_id=talep_id
     )
     
     # Admin rolüne de bildirim
     BildirimService.bildirim_olustur(
         hedef_rol='admin',
-        bildirim_tipi=BildirimTipi.ROYALBAR_TALEBI,
-        baslik=f"🛎️ Oda {oda_no} - Yeni Royalbar Kişiselleştirme Talebi",
+        bildirim_tipi=BildirimTipi.MYBAR_TALEBI,
+        baslik=f"🛎️ Oda {oda_no} - Yeni Mybar Kişiselleştirme Talebi",
         mesaj=mesaj,
         hedef_otel_id=otel_id,
-        oda_id=oda_id
+        oda_id=oda_id,
+        gorev_id=talep_id
     )
 
 # Standalone wrapper - allows `from utils.bildirim_service import bildirim_olustur`

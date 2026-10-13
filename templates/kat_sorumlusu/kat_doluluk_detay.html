@@ -195,8 +195,22 @@ Doluluk Detayı{% endblock %} {% block content %}
         <!-- Boş Oda - Tıklanabilir -->
         <a
           href="{{ url_for('oda_kontrol') }}?kat_id={{ kat.id }}&oda_id={{ oda_detay.oda.id }}&from_kat_detay=1"
-          class="relative block h-full min-h-[160px] p-4 rounded-lg bg-slate-50 dark:bg-slate-900 flex flex-col justify-center transition-colors {% if oda_detay.kontrol_durumu == 'dnd' %} border-4 border-orange-500 dark:border-orange-400 shadow-lg shadow-orange-200 dark:shadow-orange-900/30 {% elif oda_detay.kontrol_durumu == 'completed' %} border-4 border-green-500 dark:border-green-400 shadow-lg shadow-green-200 dark:shadow-green-900/30 {% else %} border-2 border-slate-300 dark:border-slate-600 {% endif %}"
+          class="relative block h-full min-h-[160px] p-4 rounded-lg bg-slate-50 dark:bg-slate-900 flex flex-col justify-center transition-colors {% if oda_detay.mybar_talebi %} ring-4 ring-amber-400 dark:ring-amber-500 shadow-xl shadow-amber-300/40 dark:shadow-amber-900/40 {% endif %} {% if oda_detay.kontrol_durumu == 'dnd' %} border-4 border-orange-500 dark:border-orange-400 shadow-lg shadow-orange-200 dark:shadow-orange-900/30 {% elif oda_detay.kontrol_durumu == 'completed' %} border-4 border-green-500 dark:border-green-400 shadow-lg shadow-green-200 dark:shadow-green-900/30 {% else %} border-2 border-slate-300 dark:border-slate-600 {% endif %}"
         >
+          {% if oda_detay.mybar_talebi %}
+          <!-- Yanıp Sönen Mybar İkonu -->
+          <div class="absolute top-2 left-2 z-20">
+            <button
+              type="button"
+              onclick="event.preventDefault(); event.stopPropagation(); katDetayMybarModalAc('{{ oda_detay.oda.oda_no }}', {{ oda_detay.mybar_talebi | tojson | forceescape }});"
+              class="mybar-pulse-badge flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-lg shadow-amber-500/50 hover:brightness-110 active:scale-95 transition-all text-xs font-bold"
+              title="Mybar Kişiselleştirme Talebi Mevcut - Tıklayıp Görün"
+            >
+              <i class="fas fa-concierge-bell text-xs animate-bounce"></i>
+              <span class="text-[10px] tracking-wider uppercase font-black">Mybar</span>
+            </button>
+          </div>
+          {% endif %}
           {% if oda_detay.kontrol_durumu == 'completed' %}
           <span
             class="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-green-500 text-white"
@@ -259,8 +273,22 @@ Doluluk Detayı{% endblock %} {% block content %}
         <!-- Dolu Oda -->
         <a
           href="{{ url_for('oda_kontrol') }}?kat_id={{ kat.id }}&oda_id={{ oda_detay.oda.id }}&from_kat_detay=1"
-          class="relative block h-full min-h-[160px] p-4 rounded-lg transition-colors flex flex-col {% if oda_detay.kontrol_durumu == 'dnd' or oda_detay.gorev_durumu == 'dnd_pending' %} border-4 border-orange-500 dark:border-orange-400 shadow-lg shadow-orange-200 dark:shadow-orange-900/30 bg-orange-100 dark:bg-orange-900/40 {% elif oda_detay.kontrol_durumu == 'completed' or oda_detay.gorev_durumu == 'completed' %} border-4 border-green-500 dark:border-green-400 shadow-lg shadow-green-200 dark:shadow-green-900/30 bg-green-100 dark:bg-green-900/40 {% elif oda_detay.durum == 'bugun_giris' %} border-2 border-emerald-400 dark:border-emerald-500 bg-emerald-100 dark:bg-emerald-900/40 {% elif oda_detay.durum == 'bugun_cikis' %} border-2 border-purple-400 dark:border-purple-600 bg-purple-100 dark:bg-purple-900/40 {% else %} border-2 border-yellow-400 dark:border-yellow-500 bg-yellow-200 dark:bg-yellow-700 {% endif %}"
+          class="relative block h-full min-h-[160px] p-4 rounded-lg transition-colors flex flex-col {% if oda_detay.mybar_talebi %} ring-4 ring-amber-400 dark:ring-amber-500 shadow-xl shadow-amber-300/40 dark:shadow-amber-900/40 {% endif %} {% if oda_detay.kontrol_durumu == 'dnd' or oda_detay.gorev_durumu == 'dnd_pending' %} border-4 border-orange-500 dark:border-orange-400 shadow-lg shadow-orange-200 dark:shadow-orange-900/30 bg-orange-100 dark:bg-orange-900/40 {% elif oda_detay.kontrol_durumu == 'completed' or oda_detay.gorev_durumu == 'completed' %} border-4 border-green-500 dark:border-green-400 shadow-lg shadow-green-200 dark:shadow-green-900/30 bg-green-100 dark:bg-green-900/40 {% elif oda_detay.durum == 'bugun_giris' %} border-2 border-emerald-400 dark:border-emerald-500 bg-emerald-100 dark:bg-emerald-900/40 {% elif oda_detay.durum == 'bugun_cikis' %} border-2 border-purple-400 dark:border-purple-600 bg-purple-100 dark:purple-900/40 {% else %} border-2 border-yellow-400 dark:border-yellow-500 bg-yellow-200 dark:bg-yellow-700 {% endif %}"
         >
+          {% if oda_detay.mybar_talebi %}
+          <!-- Yanıp Sönen Mybar İkonu -->
+          <div class="absolute top-2 left-2 z-20">
+            <button
+              type="button"
+              onclick="event.preventDefault(); event.stopPropagation(); katDetayMybarModalAc('{{ oda_detay.oda.oda_no }}', {{ oda_detay.mybar_talebi | tojson | forceescape }});"
+              class="mybar-pulse-badge flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-lg shadow-amber-500/50 hover:brightness-110 active:scale-95 transition-all text-xs font-bold"
+              title="Mybar Kişiselleştirme Talebi Mevcut - Tıklayıp Görün"
+            >
+              <i class="fas fa-concierge-bell text-xs animate-bounce"></i>
+              <span class="text-[10px] tracking-wider uppercase font-black">Mybar</span>
+            </button>
+          </div>
+          {% endif %}
           {% if oda_detay.kontrol_durumu == 'completed' or
           oda_detay.gorev_durumu == 'completed' %}
           <span
@@ -471,6 +499,26 @@ Doluluk Detayı{% endblock %} {% block content %}
   .bos-oda-toggle-wrapper input:checked + .bos-oda-toggle .toggle-off {
     opacity: 0;
   }
+
+  /* Mybar Yanıp Sönen İkon Animasyonu */
+  @keyframes mybarPulseGlow {
+    0% {
+      box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.85);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
+      transform: scale(1.08);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.85);
+      transform: scale(1);
+    }
+  }
+
+  .mybar-pulse-badge {
+    animation: mybarPulseGlow 1.4s infinite ease-in-out;
+  }
 </style>
 
 <script>
@@ -620,6 +668,155 @@ Doluluk Detayı{% endblock %} {% block content %}
     setInterval(updateCountdowns, 1000);
     setInterval(updateDndTimers, 1000);
   });
+
+  let aktifKatMybarVeri = null;
+
+  function katDetayMybarModalAc(odaNo, mybarData) {
+    if (!mybarData) return;
+    aktifKatMybarVeri = mybarData;
+    document.getElementById("kat_mybar_oda_text").textContent = `Oda ${odaNo}`;
+    document.getElementById("kat_mybar_tarih").textContent = mybarData.talep_tarihi || "-";
+
+    const badgeContainer = document.getElementById("kat_mybar_gorulme_badge");
+    const onayBtn = document.getElementById("kat_mybar_onay_btn");
+    if (badgeContainer) {
+      if (mybarData.goruldu) {
+        badgeContainer.innerHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300"><i class="fas fa-check-double text-xs"></i> Görüldü: ${mybarData.goren_ad || 'Personel'} (${mybarData.gorulme_tarihi || ''})</span>`;
+        if (onayBtn) onayBtn.classList.add("hidden");
+      } else {
+        badgeContainer.innerHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"><i class="fas fa-eye-slash text-xs"></i> Henüz Görülmedi</span>`;
+        if (onayBtn) onayBtn.classList.remove("hidden");
+      }
+    }
+
+    const urunlerDiv = document.getElementById("kat_mybar_urunler");
+    if (urunlerDiv) {
+      urunlerDiv.innerHTML = "";
+      if (mybarData.secili_urunler && mybarData.secili_urunler.length > 0) {
+        mybarData.secili_urunler.forEach((urun) => {
+          const span = document.createElement("span");
+          span.className = "inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 shadow-sm";
+          span.innerHTML = `<i class="fas fa-check text-amber-500 mr-1.5"></i>${urun}`;
+          urunlerDiv.appendChild(span);
+        });
+      } else {
+        urunlerDiv.innerHTML = '<span class="text-xs text-slate-400">Ürün seçilmemiş</span>';
+      }
+    }
+
+    const notP = document.getElementById("kat_mybar_not");
+    if (notP) {
+      notP.textContent = mybarData.notlar || "Özel bir not belirtilmemiş.";
+    }
+
+    const modal = document.getElementById("katDetayMybarModal");
+    if (modal) modal.classList.remove("hidden");
+  }
+
+  function katDetayMybarModalKapat() {
+    const modal = document.getElementById("katDetayMybarModal");
+    if (modal) modal.classList.add("hidden");
+  }
+
+  async function katDetayMybarGorulduOnayla() {
+    if (!aktifKatMybarVeri || !aktifKatMybarVeri.id) return;
+    try {
+      const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+      const token = csrfMeta ? csrfMeta.getAttribute("content") : "";
+      const response = await fetch(`/api/dolum-talebi-goruldu/${aktifKatMybarVeri.id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": token,
+        },
+      });
+      const res = await response.json();
+      if (res.success) {
+        aktifKatMybarVeri.goruldu = true;
+        aktifKatMybarVeri.goren_ad = res.goren_ad || "Siz";
+        aktifKatMybarVeri.gorulme_tarihi = res.gorulme_tarihi || "Şimdi";
+        katDetayMybarModalAc(document.getElementById("kat_mybar_oda_text").textContent.replace("Oda ", ""), aktifKatMybarVeri);
+      } else {
+        alert(res.message || "Hata oluştu");
+      }
+    } catch (e) {
+      console.error("Mybar onay hatası:", e);
+    }
+  }
 </script>
+
+<!-- Kat Detayı Mybar Modal Dialog -->
+<div
+  id="katDetayMybarModal"
+  class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+  onclick="if(event.target === this) katDetayMybarModalKapat()"
+>
+  <div
+    class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto transform transition-all"
+  >
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-amber-500 to-yellow-500 px-6 py-4 rounded-t-2xl flex items-center justify-between text-white">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+          <i class="fas fa-concierge-bell text-lg"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold">Mybar Kişiselleştirme Talebi</h3>
+          <p id="kat_mybar_oda_text" class="text-xs text-amber-100 font-medium">Oda -</p>
+        </div>
+      </div>
+      <button onclick="katDetayMybarModalKapat()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
+        <i class="fas fa-times text-white"></i>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="p-6 space-y-4">
+      <!-- Talep Zamanı ve Görülme Durumu -->
+      <div class="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 text-sm">
+        <div class="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-medium">
+          <i class="far fa-clock"></i>
+          <span id="kat_mybar_tarih">-</span>
+        </div>
+        <div id="kat_mybar_gorulme_badge"></div>
+      </div>
+
+      <!-- İstenen Ürünler -->
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+          <i class="fas fa-wine-bottle mr-1.5 text-amber-500"></i>İstenen Ürünler (Setup)
+        </label>
+        <div id="kat_mybar_urunler" class="flex flex-wrap gap-2 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 min-h-[50px]"></div>
+      </div>
+
+      <!-- Misafir Ek Notu (Türkçe Çevirisi) -->
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+          <i class="fas fa-comment-alt mr-1.5 text-blue-500"></i>Misafir Notu (Türkçe)
+        </label>
+        <div class="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+          <p id="kat_mybar_not" class="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed italic">
+            Not belirtilmemiş.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Buttons -->
+    <div class="bg-slate-50 dark:bg-slate-900 px-6 py-4 border-t border-slate-200 dark:border-slate-700 rounded-b-2xl flex gap-3">
+      <button
+        onclick="katDetayMybarModalKapat()"
+        class="flex-1 px-4 py-3 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-xl border-2 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all text-sm">
+        Kapat
+      </button>
+      <button
+        id="kat_mybar_onay_btn"
+        onclick="katDetayMybarGorulduOnayla()"
+        class="flex-1 px-4 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-amber-500/30 text-sm inline-flex items-center justify-center">
+        <i class="fas fa-check-circle mr-2"></i>Talebi Gördüm / Onayla
+      </button>
+    </div>
+  </div>
+</div>
 
 {% endblock %}

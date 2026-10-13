@@ -105,9 +105,11 @@ def register_kat_sorumlusu_routes(app):
     
     @app.route('/dolum-talepleri')
     @login_required
-    @role_required('kat_sorumlusu', 'sistem_yoneticisi', 'admin')
+    @role_required('kat_sorumlusu', 'depo_sorumlusu', 'sistem_yoneticisi', 'admin', 'superadmin')
     def dolum_talepleri():
-        """Dolum talepleri sayfası"""
+        """Mybar kişiselleştirme talepleri sayfası"""
+        if session.get('rol') in ('depo_sorumlusu', 'sistem_yoneticisi', 'admin', 'superadmin'):
+            return render_template('sistem_yoneticisi/dolum_talepleri.html')
         return render_template('kat_sorumlusu/dolum_talepleri.html')
     
     @app.route('/minibar-kontrol', methods=['GET', 'POST'])
@@ -911,6 +913,44 @@ def register_kat_sorumlusu_routes(app):
                 }
 
             sonuc["kontrol_durumu"] = kontrol_durumu
+
+            # Bekleyen Mybar kişiselleştirme talebini kontrol et
+            from models import MinibarDolumTalebi
+            mybar_talebi = (
+                MinibarDolumTalebi.query.filter(
+                    MinibarDolumTalebi.oda_id == oda_id,
+                    MinibarDolumTalebi.durum == "beklemede",
+                )
+                .order_by(MinibarDolumTalebi.talep_tarihi.desc())
+                .first()
+            )
+            if mybar_talebi:
+                goren_ad = None
+                if getattr(mybar_talebi, 'goren', None):
+                    goren_ad = f"{mybar_talebi.goren.ad} {mybar_talebi.goren.soyad}"
+                elif getattr(mybar_talebi, 'goren_id', None):
+                    k_goren = db.session.get(Kullanici, mybar_talebi.goren_id)
+                    if k_goren:
+                        goren_ad = f"{k_goren.ad} {k_goren.soyad}"
+
+                sonuc["mybar_talebi"] = {
+                    "id": mybar_talebi.id,
+                    "talep_tarihi": mybar_talebi.talep_tarihi.strftime("%d.%m.%Y %H:%M")
+                    if mybar_talebi.talep_tarihi
+                    else "",
+                    "secili_urunler": [
+                        d.urun.urun_adi for d in mybar_talebi.detaylar if d.urun
+                    ],
+                    "notlar": mybar_talebi.notlar or "",
+                    "goruldu": bool(mybar_talebi.goren_id),
+                    "goren_id": mybar_talebi.goren_id,
+                    "goren_ad": goren_ad,
+                    "gorulme_tarihi": mybar_talebi.gorulme_tarihi.strftime("%d.%m.%Y %H:%M")
+                    if mybar_talebi.gorulme_tarihi
+                    else None,
+                }
+            else:
+                sonuc["mybar_talebi"] = None
 
             # Audit log
             audit_create(

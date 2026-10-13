@@ -135,7 +135,15 @@
             <p id="gorev_bilgi_text" class="text-xs text-slate-500 dark:text-slate-400">Bu oda için kontrol görevi mevcut</p>
           </div>
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2 items-center">
+          <button id="mybar_talep_kapat_btn" onclick="mybarTalebiKapatModalAc()" 
+            class="hidden flex-1 sm:flex-none px-5 py-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl text-base font-bold inline-flex items-center justify-center touch-manipulation active:scale-95 transition-all shadow-lg shadow-emerald-600/30">
+            <i class="fas fa-check-double mr-2"></i>Mybar Talebini Kapat
+          </button>
+          <button id="mybar_talep_btn" onclick="mybarTalepModalAc()" 
+            class="hidden flex-1 sm:flex-none px-5 py-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white rounded-xl text-base font-bold inline-flex items-center justify-center touch-manipulation active:scale-95 transition-all shadow-lg shadow-amber-500/30">
+            <i class="fas fa-concierge-bell mr-2 animate-bounce"></i>Mybar Talebi Görüntüle
+          </button>
           <button onclick="dndOnayla()" 
             class="flex-1 sm:flex-none px-5 py-4 bg-orange-600 text-white rounded-xl text-base font-bold inline-flex items-center justify-center touch-manipulation active:scale-95 transition-all">
             <i class="fas fa-door-closed mr-2"></i>DND
@@ -678,6 +686,293 @@
           </span>
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mybar Talep Görüntüleme Modalı -->
+<div
+  id="mybarTalepModal"
+  class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn"
+  onclick="if(event.target === this) mybarTalepModalKapat()"
+>
+  <div
+    class="bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto transform transition-all animate-slideUp"
+  >
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-amber-500 to-yellow-500 px-6 py-4 rounded-t-2xl sm:rounded-t-2xl flex items-center justify-between text-white">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+          <i class="fas fa-concierge-bell text-lg"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold">Mybar Kişiselleştirme Talebi</h3>
+          <p id="mybar_modal_oda_text" class="text-xs text-amber-100 font-medium">Oda Bilgisi</p>
+        </div>
+      </div>
+      <button onclick="mybarTalepModalKapat()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
+        <i class="fas fa-times text-white"></i>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="p-6 space-y-4">
+      <!-- Talep Tarihi & Durum -->
+      <div class="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 text-sm">
+        <div class="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-medium">
+          <i class="far fa-clock"></i>
+          <span id="mybar_modal_tarih">-</span>
+        </div>
+        <div id="mybar_modal_gorulme_badge">
+          <!-- Görüldü veya Bekliyor badge -->
+        </div>
+      </div>
+
+      <!-- Seçili Ürünler ve Karşılama Kontrolü -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <i class="fas fa-wine-bottle mr-1.5 text-amber-500"></i>İstenen Ürünler & Odaya Karşılama
+          </label>
+          <span class="text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1">
+            <i class="fas fa-shield-alt"></i> Stoğunuzdan düşer, tüketim yazılmaz
+          </span>
+        </div>
+
+        <!-- Ürünler Listesi / Adet Seçiciler -->
+        <div id="mybar_modal_urunler" class="space-y-2 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 min-h-[60px]">
+          <!-- JS ile ürün kartları, adet seçiciler ve zimmet stok durumları buraya doldurulacak -->
+        </div>
+
+        <!-- Karşılama Aksiyon Butonları -->
+        <div id="mybar_modal_karsila_aksiyonlar" class="flex flex-col sm:flex-row gap-2 mt-3">
+          <button
+            type="button"
+            onclick="mybarTumunuOdayaEkle()"
+            id="mybar_tumunu_ekle_btn"
+            class="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 inline-flex items-center justify-center gap-1.5 transition-all touch-manipulation">
+            <i class="fas fa-check-double text-sm"></i>
+            <span>Tümünü Odaya Ekle / Karşıla</span>
+          </button>
+          <button
+            type="button"
+            onclick="mybarSecilenleriOdayaEkle()"
+            id="mybar_secilenleri_ekle_btn"
+            class="flex-1 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 inline-flex items-center justify-center gap-1.5 transition-all touch-manipulation">
+            <i class="fas fa-plus-circle text-sm"></i>
+            <span>Girilen Adetleri Odaya Ekle</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Misafir Ek Notu (Türkçe) -->
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+          <i class="fas fa-comment-alt mr-1.5 text-blue-500"></i>Misafir Notu (Türkçe)
+        </label>
+        <div class="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+          <p id="mybar_modal_not" class="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed italic">
+            Not belirtilmemiş.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Buttons -->
+    <div class="sticky bottom-0 bg-slate-50 dark:bg-slate-900 px-6 py-4 border-t border-slate-200 dark:border-slate-700 rounded-b-2xl flex gap-3">
+      <button
+        onclick="mybarTalepModalKapat()"
+        class="flex-1 px-4 py-3 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-xl border-2 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all text-sm">
+        Kapat
+      </button>
+      <button
+        id="mybar_modal_onay_btn"
+        onclick="mybarTalepGorulduOnayla()"
+        class="flex-1 px-4 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-amber-500/30 text-sm inline-flex items-center justify-center">
+        <i class="fas fa-check-circle mr-2"></i>Talebi Gördüm / Onayla
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Mybar Talep Kapatma Modalı (Eksik Kontrolü & Açıklama) -->
+<div
+  id="mybarKapatModal"
+  class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn"
+  onclick="if(event.target === this) mybarKapatModalKapat()"
+>
+  <div
+    class="bg-white dark:bg-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto transform transition-all animate-slideUp"
+  >
+    <!-- 1. Durum: Tüm Ürünler Karşılandı (Yeşil Başlık) -->
+    <div id="mybar_kapat_tam_header" class="bg-gradient-to-r from-emerald-600 to-green-600 px-6 py-4 rounded-t-2xl sm:rounded-t-2xl flex items-center justify-between text-white">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+          <i class="fas fa-check-circle text-xl"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold">Mybar Talebini Kapat</h3>
+          <p id="mybar_kapat_oda_text_tam" class="text-xs text-emerald-100 font-medium">Tüm İstenen Ürünler Odaya Eklendi</p>
+        </div>
+      </div>
+      <button onclick="mybarKapatModalKapat()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
+        <i class="fas fa-times text-white"></i>
+      </button>
+    </div>
+
+    <!-- 2. Durum: Eksik Ürünler Var (Amber Başlık) -->
+    <div id="mybar_kapat_eksik_header" class="hidden bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-4 rounded-t-2xl sm:rounded-t-2xl flex items-center justify-between text-white">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+          <i class="fas fa-exclamation-triangle text-xl"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold">Eksik Kalan Ürünler Var!</h3>
+          <p id="mybar_kapat_oda_text_eksik" class="text-xs text-amber-100 font-medium">Talep Henüz Tam Olarak Karşılanmadı</p>
+        </div>
+      </div>
+      <button onclick="mybarKapatModalKapat()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
+        <i class="fas fa-times text-white"></i>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="p-6 space-y-4">
+      
+      <!-- A. Tam Karşılandı İçeriği -->
+      <div id="mybar_kapat_tam_icerik" class="space-y-4">
+        <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 text-sm text-emerald-900 dark:text-emerald-200 flex items-start gap-3">
+          <i class="fas fa-check-double text-emerald-600 text-lg mt-0.5"></i>
+          <div>
+            <p class="font-bold">Tüm Ürünler Eksiksiz Olarak Karşılandı!</p>
+            <p class="text-xs text-emerald-800 dark:text-emerald-300 mt-1">
+              Misafirin Mybar talebinde seçtiği tüm ürünler odaya eklenmiş durumdadır.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+            Karşılanan Ürünler:
+          </label>
+          <div id="mybar_kapat_tam_urun_listesi" class="flex flex-wrap gap-2 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+            <!-- JS ile doldurulacak -->
+          </div>
+        </div>
+
+        <p class="text-sm font-semibold text-slate-700 dark:text-slate-300 text-center pt-2">
+          Bu Mybar talebini tamamlandı olarak kapatıp kaydetmek istiyor musunuz?
+        </p>
+
+        <div class="flex gap-3 pt-2">
+          <button
+            onclick="mybarKapatModalKapat()"
+            class="flex-1 px-4 py-3 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-xl border-2 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all text-sm">
+            Vazgeç
+          </button>
+          <button
+            onclick="mybarKapatTamamlaKaydet(false)"
+            class="flex-1 px-4 py-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-emerald-600/30 text-sm inline-flex items-center justify-center">
+            <i class="fas fa-check-circle mr-2"></i>Talebi Kapat ve Kaydet
+          </button>
+        </div>
+      </div>
+
+      <!-- B. Eksik Ürünler Uyarısı - Aşama 1: Soru -->
+      <div id="mybar_kapat_eksik_asama1" class="hidden space-y-4">
+        <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 text-sm text-amber-900 dark:text-amber-200">
+          <div class="flex items-start gap-2">
+            <i class="fas fa-exclamation-circle text-amber-600 text-base mt-0.5"></i>
+            <div>
+              <p class="font-bold">Talep Edilen Bazı Ürünler Henüz Eklenmedi!</p>
+              <p class="text-xs text-amber-800 dark:text-amber-300 mt-1">
+                Aşağıdaki ürünlerden bazıları odaya henüz eklenmemiştir:
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+            Ürün Durumu:
+          </label>
+          <div id="mybar_kapat_eksik_urun_listesi" class="flex flex-col gap-2 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+            <!-- JS ile doldurulacak -->
+          </div>
+        </div>
+
+        <div class="p-3 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-xs text-red-800 dark:text-red-200 font-medium">
+          <i class="fas fa-info-circle mr-1"></i> Eksik kalan ürünler bulunmaktadır. Yine de talebi kapatmak istiyor musunuz?
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button
+            onclick="mybarKapatModalKapat()"
+            class="flex-1 px-4 py-3 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-xl border-2 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all text-sm">
+            <i class="fas fa-plus mr-1"></i> Vazgeç / Ürün Ekle
+          </button>
+          <button
+            onclick="mybarKapatEksikAciklamaGoster()"
+            class="flex-1 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-amber-500/30 text-sm inline-flex items-center justify-center">
+            <i class="fas fa-edit mr-2"></i> Evet, Açıklama Yazarak Kapat
+          </button>
+        </div>
+      </div>
+
+      <!-- C. Eksik Ürünler Uyarısı - Aşama 2: Zorunlu Açıklama Kutusu -->
+      <div id="mybar_kapat_eksik_asama2" class="hidden space-y-4">
+        <!-- Zorunlu Uyarı Metni -->
+        <div class="p-4 bg-red-50 dark:bg-red-900/30 border-2 border-red-500 rounded-xl text-red-900 dark:text-red-100">
+          <div class="flex items-start gap-2">
+            <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 text-lg mt-0.5"></i>
+            <div>
+              <p class="font-bold text-sm">Zorunlu Açıklama Uyarısı</p>
+              <p class="text-xs mt-1 leading-relaxed font-semibold">
+                Bu talebi kapatmak için eksik olan ürünler için açıklama yazmalısınız, aksi halde talep kapatılamaz.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+            Eksik Kapatma Açıklaması <span class="text-red-500">* (En az 3 kelime)</span>
+          </label>
+          <textarea
+            id="mybar_kapatma_aciklama_input"
+            rows="3"
+            oninput="mybarKapatmaKelimeSay()"
+            class="w-full px-3.5 py-2.5 text-sm rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+            placeholder="Eksik ürünlerin neden eklenemediğini açıklayınız (örn: Misafir fıstık istemediğini belirtti, depodan temin edilemedi vb.)..."
+          ></textarea>
+          
+          <div class="flex justify-between items-center text-xs mt-1 px-1">
+            <span id="mybar_kapatma_sayac_metin" class="text-slate-500 dark:text-slate-400 font-medium">
+              Kelime Sayısı: <strong id="mybar_kapatma_kelime_sayisi" class="text-red-500">0</strong> / min 3 kelime
+            </span>
+            <span class="text-slate-400 dark:text-slate-500 italic text-[11px]">Bir veya iki kelime kabul edilmez</span>
+          </div>
+
+          <!-- Hata Uyarısı Kutusu -->
+          <div id="mybar_kapatma_hata_kutu" class="hidden mt-2 p-2.5 bg-red-100 dark:bg-red-900/40 border border-red-300 dark:border-red-700 rounded-lg text-xs font-bold text-red-800 dark:text-red-200">
+            <!-- Hata metni -->
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button
+            onclick="mybarKapatEksikAsama1eDon()"
+            class="flex-1 px-4 py-3 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-xl border-2 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all text-sm">
+            <i class="fas fa-arrow-left mr-1"></i> Geri
+          </button>
+          <button
+            onclick="mybarKapatEksikOnayla()"
+            class="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-red-500/30 text-sm inline-flex items-center justify-center">
+            <i class="fas fa-check mr-2"></i> Talebi Kapat / Kaydet
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
