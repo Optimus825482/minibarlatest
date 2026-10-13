@@ -67,7 +67,7 @@ services:
     ports:
       - "${PORT:-5000}:5000"
     environment:
-      DATABASE_URL: postgresql://${DB_USER:-minibar_user}:${DB_PASSWORD}@minibar-db:5432/${DB_NAME:-minibar_takip}
+      DATABASE_URL: postgresql+psycopg2://${DB_USER:-minibar_user}:${DB_PASSWORD}@minibar-db:5432/${DB_NAME:-minibar_takip}
       DB_TYPE: postgresql
       SECRET_KEY: ${SECRET_KEY}
       FLASK_ENV: production

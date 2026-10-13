@@ -51,6 +51,12 @@ def get_flask_app() -> Tuple[Any, Any]:
             # Database bağlantısı
             database_url = os.getenv('DATABASE_URL')
             if database_url:
+                if database_url.startswith('postgres://'):
+                    database_url = database_url.replace('postgres://', 'postgresql+psycopg2://', 1)
+                elif database_url.startswith('postgresql://'):
+                    database_url = database_url.replace('postgresql://', 'postgresql+psycopg2://', 1)
+                elif not database_url.startswith('postgresql+'):
+                    database_url = database_url.replace('postgresql:', 'postgresql+psycopg2:', 1)
                 flask_app.config['SQLALCHEMY_DATABASE_URI'] = database_url
             
             models_db.init_app(flask_app)

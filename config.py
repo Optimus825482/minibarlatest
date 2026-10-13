@@ -28,12 +28,13 @@ class Config:
     
     # Database URI Construction
     if DATABASE_URL:
-        # Coolify/Heroku DATABASE_URL kullan
+        # Coolify/Heroku DATABASE_URL kullan - her zaman psycopg2 sürücüsünü garanti et
         if DATABASE_URL.startswith('postgres://'):
-            # Heroku postgres:// -> postgresql://
-            SQLALCHEMY_DATABASE_URI = DATABASE_URL.replace('postgres://', 'postgresql://')
+            SQLALCHEMY_DATABASE_URI = DATABASE_URL.replace('postgres://', 'postgresql+psycopg2://', 1)
         elif DATABASE_URL.startswith('postgresql://'):
-            SQLALCHEMY_DATABASE_URI = DATABASE_URL
+            SQLALCHEMY_DATABASE_URI = DATABASE_URL.replace('postgresql://', 'postgresql+psycopg2://', 1)
+        elif not DATABASE_URL.startswith('postgresql+'):
+            SQLALCHEMY_DATABASE_URI = DATABASE_URL.replace('postgresql:', 'postgresql+psycopg2:', 1)
         else:
             SQLALCHEMY_DATABASE_URI = DATABASE_URL
     elif PGHOST and PGUSER:
